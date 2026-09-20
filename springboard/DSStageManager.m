@@ -302,10 +302,68 @@ static BOOL sSystemEdgePullAvailable;
     [self liftCardBy:0.0 notification:notification];
 }
 
+// The keyboard belongs on the screen, not in the card. An app draws its keyboard
+// inside its own window, and on the stage that window is the card - so a staged app
+// left to itself would put a squeezed keyboard inside a card a third of the screen
+// tall. SpringBoard has the alternative already: for iPad multitasking it hosts the
+// keyboard in a window of its own across the whole display, above every app. That is
+// the one the stage asks for, and this is where SpringBoard is asked to look again
+// now that there is a second app on screen.
+- (void)askSpringBoardToKeepTheKeyboardOutsideTheStage {
+    id sceneManager = [DSSceneHost mainDisplaySceneManager];
+    if (!sceneManager) return;
+
+    SEL update = NSSelectorFromString(@"_updateMedusaHostedKeyboardWindow");
+    if ([sceneManager respondsToSelector:update]) {
+        @try {
+            ((void (*)(id, SEL))objc_msgSend)(sceneManager, update);
+        } @catch (NSException *exception) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: asking about keyboard placement threw %@",
+                                      exception.name ?: @"?");
+            return;
+        }
+    }
+
+    SEL using = NSSelectorFromString(@"_isUsingMedusaHostedKeyboardWindow");
+    BOOL outside = [sceneManager respondsToSelector:using]
+        ? ((BOOL (*)(id, SEL))objc_msgSend)(sceneManager, using)
+        : NO;
+    DSDiagnosticsRecordFormat(@"SpringBoard: a keyboard for the staged app would be %@",
+                              outside ? @"SpringBoard's own, across the screen"
+                                      : @"drawn by the app inside the card");
+}
+
+// SpringBoard's hosted keyboard window appearing is the one keyboard signal that
+// arrives whoever raised it - the staged app's keyboard is raised in another process
+// and posts nothing here.
+- (void)keyboardWindowOutsideStage:(UIWindow *)window hidden:(BOOL)hidden {
+    if (!self.isStageVisible) return;
+
+    if (hidden || !window) {
+        [self liftCardBy:0.0 duration:0.25];
+        return;
+    }
+
+    CGRect keyboard = window.frame;
+    CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+    CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard);
+    [self liftCardBy:MAX(overlap + 10.0, 0.0) duration:0.25];
+
+    if (!_notedKeyboardOnce) {
+        _notedKeyboardOnce = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: keyboard came up outside the card at %@",
+                                  NSStringFromCGRect(keyboard));
+    }
+}
+
 - (void)liftCardBy:(CGFloat)offset notification:(NSNotification *)notification {
+    [self liftCardBy:offset
+            duration:[notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
+}
+
+- (void)liftCardBy:(CGFloat)offset duration:(NSTimeInterval)duration {
     if (fabs(offset - _container.liftOffset) < 0.5) return;
 
-    NSTimeInterval duration = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     void (^lift)(void) = ^{
         [self->_container setLiftOffset:offset];
     };
@@ -1277,6 +1335,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     [self applyStageRotation];
     [self requestKeyboardFocusForStage];
+    [self askSpringBoardToKeepTheKeyboardOutsideTheStage];
     [self updateHomeAffordance];
     [self returnFrontToWhereItWas];
 

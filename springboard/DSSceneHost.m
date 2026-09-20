@@ -462,6 +462,10 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 }
 
 - (id)mainDisplaySceneManager {
+    return [DSSceneHost mainDisplaySceneManager];
+}
+
++ (id)mainDisplaySceneManager {
     Class coordinator = objc_getClass("SBSceneManagerCoordinator");
     if (!coordinator) return nil;
     if ([coordinator respondsToSelector:@selector(mainDisplaySceneManager)]) {

@@ -197,6 +197,29 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
 
 %end
 
+#pragma mark - The keyboard stays out of the card
+
+// The keyboard SpringBoard hosts for itself spans the display and sits above every
+// app, which is where a keyboard belongs when an app is in a card. It is also the
+// only keyboard the stage can see: a staged app raises its keyboard in its own
+// process and posts nothing here. This says when it arrives and how tall it is, so
+// the card can move above it rather than be covered by it.
+%group HostedKeyboard
+
+%hook SBMedusaHostedKeyboardWindow
+
+- (void)setHidden:(BOOL)hidden {
+    %orig;
+    UIWindow *window = (UIWindow *)self;
+    DSTell(^(DSStageManager *manager) {
+        [manager keyboardWindowOutsideStage:window hidden:hidden];
+    });
+}
+
+%end
+
+%end
+
 #pragma mark - Keeping the hosted app's asserts off SpringBoard
 
 // An app view the stage made is not part of SpringBoard's scene layout, so when the
@@ -327,15 +350,15 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
 #pragma mark - iPad multitasking capability
 
 // SpringBoard keeps a per-application flag for whether an app may be handed a
-// scene that is not the whole display (the iPad multitasking path). An app the
-// user has set to iPad mode needs it on, otherwise the resized scene is snapped
-// straight back to full screen. It is only lifted for the app on the stage, so
-// nothing else in SpringBoard changes behaviour.
+// scene that is not the whole display - the iPad multitasking path. Without it a
+// resized scene is snapped straight back to full screen, and SpringBoard will not
+// take the app's keyboard out of the app's own window either, which is what puts a
+// squeezed keyboard inside the card. On for the app on the stage, and only for that
+// app, so nothing else in SpringBoard changes behaviour.
 static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
     if (identifier.length == 0) return NO;
     return DSAsk(^BOOL(DSStageManager *manager) {
-        if (![identifier isEqualToString:manager.stageBundleIdentifier]) return NO;
-        return [[DSPreferences sharedPreferences] launchTypeForApplication:identifier] == DSLaunchTypePad;
+        return [identifier isEqualToString:manager.stageBundleIdentifier];
     });
 }
 
@@ -503,8 +526,14 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
 
     %init(_ungrouped);
 
-    DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed, corner pull will come from %@",
-                              systemPull ? @"the system edge gesture" : @"a window in the corner");
+    // Only where SpringBoard has such a window to hook. Where it does not, a staged
+    // app's keyboard is the app's own business and the stage never hears about it.
+    BOOL hostedKeyboard = objc_getClass("SBMedusaHostedKeyboardWindow") != Nil;
+    if (hostedKeyboard) %init(HostedKeyboard);
+
+    DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed, corner pull will come from %@, keyboard outside the card is %@",
+                              systemPull ? @"the system edge gesture" : @"a window in the corner",
+                              hostedKeyboard ? @"available" : @"not a thing on this build");
 
     } @catch (NSException *exception) {
         // Half-installed hooks are still safer than a SpringBoard that will not

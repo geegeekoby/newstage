@@ -54,6 +54,10 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // to know which ones are the stage's.
 + (BOOL)ownsAppViewController:(id)controller;
 
+// SpringBoard's scene manager for the built-in display. It owns where a hosted
+// app's keyboard goes, among other things.
++ (id)mainDisplaySceneManager;
+
 // Every scene that passes through the settings hooks is remembered, so an app's
 // scene can still be found on a build where none of the usual ways to ask for it
 // exist any more.

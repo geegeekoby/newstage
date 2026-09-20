@@ -35,6 +35,9 @@
 - (void)showIntroIfNeeded;
 // Opens the stage as though the corner had been pulled all the way up.
 - (void)openStageAnimated:(BOOL)animated;
+
+// SpringBoard's own keyboard window, the one that spans the display, came or went.
+- (void)keyboardWindowOutsideStage:(UIWindow *)window hidden:(BOOL)hidden;
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;
 

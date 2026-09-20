@@ -235,6 +235,29 @@ If a build has no app view controller to give - the class or the scene entity is
 the older by-hand routes are still there behind it, and the diagnostics page says which one
 answered.
 
+## The keyboard
+
+The keyboard is never inside the card. That takes two different things, because there are
+two different keyboards involved.
+
+The stage's own search field is SpringBoard's text field, so its keyboard is SpringBoard's:
+the ordinary one, full width, at the bottom of the display, above the card. The card is
+raised above it for as long as it is there and put back when it goes.
+
+A staged app's keyboard is harder, because an app draws its keyboard inside its own window -
+and on the stage that window is the card. Left alone, an app would put a squeezed keyboard
+inside a card a third of the screen tall. SpringBoard already has the alternative, because
+iPad multitasking needs it: `SBMedusaHostedKeyboardWindow`, a window of SpringBoard's own
+that spans the display and sits above every app. The stage asks for it - the app on the
+stage is marked as able to live in a scene smaller than the display, which is the condition
+for it, and SpringBoard is asked to reconsider keyboard placement as soon as the app is on
+the card.
+
+That window is also the only keyboard signal the stage can see. A staged app raises its
+keyboard in its own process and posts nothing in SpringBoard, so the window appearing is
+what tells the stage a keyboard exists and how tall it is. Where SpringBoard has no such
+window, the diagnostics page says so rather than the card silently sitting under a keyboard.
+
 ## Staying out of the way
 
 A tweak in SpringBoard can leave a device that only works in safe mode, so the parts that

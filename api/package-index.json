@@ -1,10 +1,10 @@
 {
-  "stanza": "Package: com.recreated.dynamicstage\nName: Dynamic Stage\nVersion: 1.3.0\nArchitecture: iphoneos-arm64\nDescription: Stage Manager Reimagined for iPhone\nDepends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader\nConflicts: me.tomt000.stageduo\nSection: Tweaks\nTag: compatible::ios16\nAuthor: Dynamic Stage Recreation\nMaintainer: Dynamic Stage Recreation\nInstalled-Size: 1156\nFilename: debs/com.recreated.dynamicstage_1.3.0_iphoneos-arm64.deb\nSize: 247056\nMD5sum: 99ca7b0ca2968b4450a3f86692ab6409\nSHA1: 464b4b0900ec907049d11e93245f6df64e9a4624\nSHA256: c5510d0bc23b4d5c3b507935bd1ae686e226fb4b7074221238c7fd40a59345cb\n",
+  "stanza": "Package: com.recreated.dynamicstage\nName: Dynamic Stage\nVersion: 1.3.0\nArchitecture: iphoneos-arm64\nDescription: Stage Manager Reimagined for iPhone\nDepends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader\nConflicts: me.tomt000.stageduo\nSection: Tweaks\nTag: compatible::ios16\nAuthor: Dynamic Stage Recreation\nMaintainer: Dynamic Stage Recreation\nInstalled-Size: 1156\nFilename: debs/com.recreated.dynamicstage_1.3.0_iphoneos-arm64.deb\nSize: 247662\nMD5sum: caf1496113239579e03745f27fc2be4c\nSHA1: 97be65c5210bf61dcd82bacaabcd2b0604888259\nSHA256: 7e77074eca5340fdf1019745ddc03ba1793fcb165422a9d3e6652d64424e9c38\n",
   "package": "com.recreated.dynamicstage",
   "name": "Dynamic Stage",
   "version": "1.3.0",
   "description": "Stage Manager Reimagined for iPhone",
   "author": "Dynamic Stage Recreation",
-  "size": 247056,
+  "size": 247662,
   "deb": "com.recreated.dynamicstage_1.3.0_iphoneos-arm64.deb"
 }

@@ -435,6 +435,22 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
                                 @selector(grabberTongueBeganPulling:withDistance:andVelocity:andGesture:)) != NULL;
     [DSStageManager setSystemEdgePullAvailable:systemPull];
 
+    // The rest of the edge pull's shape on this build, written down while it is
+    // still stock. If the pull ever needs more of SpringBoard's own sequence than
+    // its beginning, this is the list to work from.
+    if (fluidManager != Nil) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(fluidManager, &count);
+        NSMutableArray<NSString *> *pullMethods = [NSMutableArray array];
+        for (unsigned int i = 0; i < count; i++) {
+            NSString *name = NSStringFromSelector(method_getName(methods[i]));
+            if ([name hasPrefix:@"grabberTongue"]) [pullMethods addObject:name];
+        }
+        free(methods);
+        DSDiagnosticsRecordFormat(@"SpringBoard: edge pull reported through %@",
+                                  pullMethods.count > 0 ? [pullMethods componentsJoinedByString:@", "] : @"nothing named like a grabber tongue");
+    }
+
     CFNotificationCenterRef center = CFNotificationCenterGetDarwinNotifyCenter();
     CFNotificationCenterAddObserver(center, NULL, DSPreferencesChanged,
                                     CFSTR(kDSPreferencesChangedNotification), NULL,

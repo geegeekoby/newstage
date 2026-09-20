@@ -4,6 +4,7 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/Release", "destination": "/api/repo?file=release" },
     { "source": "/Packages", "destination": "/api/repo?file=packages" },
     { "source": "/Packages.gz", "destination": "/api/repo?file=packages.gz" },
     { "source": "/depiction.json", "destination": "/api/repo?file=depiction" },
@@ -13,13 +14,6 @@
     {
       "source": "/(.*)",
       "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
-    },
-    {
-      "source": "/Release",
-      "headers": [
-        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
-        { "key": "Cache-Control", "value": "no-store, max-age=0" }
-      ]
     },
     {
       "source": "/debs/(.*).deb",

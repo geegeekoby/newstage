@@ -11,6 +11,7 @@
  * /sileo-featured.json here.
  */
 
+const crypto = require("crypto");
 const zlib = require("zlib");
 const index = require("./package-index.json");
 
@@ -31,6 +32,39 @@ function packages(base) {
     `Icon: ${base}/assets/icon.png\n` +
     `Depiction: ${base}/depiction.json\n` +
     `SileoDepiction: ${base}/depiction.json\n`
+  );
+}
+
+// Release has to carry the hash of the exact index bytes the client is about to
+// fetch, and the index names its own host, so the two are generated together
+// here rather than Release being written out once by tools/make_repo.py. A
+// package manager that finds no hash for Packages is entitled to ignore the
+// index, which looks from the device like the repo having nothing new in it.
+function release(base) {
+  const index_bytes = Buffer.from(packages(base), "utf8");
+  const gzipped = zlib.gzipSync(index_bytes, { level: 9 });
+
+  const digest = (buffer, algorithm) => crypto.createHash(algorithm).update(buffer).digest("hex");
+  const entry = (algorithm) =>
+    [
+      ` ${digest(index_bytes, algorithm)} ${index_bytes.length} Packages`,
+      ` ${digest(gzipped, algorithm)} ${gzipped.length} Packages.gz`,
+    ].join("\n");
+
+  return (
+    `Origin: ${index.name}\n` +
+    `Label: ${index.name}\n` +
+    "Suite: stable\n" +
+    "Version: 1.0\n" +
+    "Codename: ios\n" +
+    "Architectures: iphoneos-arm64\n" +
+    "Components: main\n" +
+    `Description: ${index.name} - ${index.shortDescription || "Stage Manager Reimagined for iPhone"}\n` +
+    `Date: ${new Date().toUTCString().replace("GMT", "UTC")}\n` +
+    `Depiction: ${base}/depiction.json\n` +
+    `SileoDepiction: ${base}/depiction.json\n` +
+    `MD5Sum:\n${entry("md5")}\n` +
+    `SHA256:\n${entry("sha256")}\n`
   );
 }
 
@@ -142,6 +176,10 @@ module.exports = (req, res) => {
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
   switch (file) {
+    case "release":
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      return res.status(200).send(release(base));
+
     case "packages":
       res.setHeader("Content-Type", "text/plain; charset=utf-8");
       return res.status(200).send(packages(base));

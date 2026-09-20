@@ -25,6 +25,7 @@ const PORT = Number(process.argv[2] || process.env.PORT || 43117);
 const HOST = process.env.HOST || "127.0.0.1";
 
 const REWRITES = {
+  "/Release": "release",
   "/Packages": "packages",
   "/Packages.gz": "packages.gz",
   "/depiction.json": "depiction",

@@ -7,6 +7,12 @@
 
 static UIWindow *sIntroWindow;
 
+@interface DSIntroViewController ()
+@property (nonatomic, assign) NSTimeInterval lastInteraction;
+- (void)startIdleWatchdog;
+- (void)noteInteraction;
+@end
+
 @interface DSIntroWindow : UIWindow
 @end
 
@@ -43,6 +49,7 @@ static UIWindow *sIntroWindow;
 
     NSArray<DSIntroStep *> *_steps;
     NSInteger _step;
+    NSTimer *_watchdog;
 }
 
 + (BOOL)isPresenting {
@@ -52,32 +59,87 @@ static UIWindow *sIntroWindow;
 + (void)presentIntro {
     if (sIntroWindow) return;
 
-    DSIntroViewController *controller = [[DSIntroViewController alloc] init];
+    // Written now rather than when the walkthrough is finished. It covers the
+    // whole screen at alert level, so if anything in here ever went wrong it
+    // would be in the way of the entire device - and then the one thing that must
+    // be true is that restarting gets rid of it instead of bringing it back.
+    // "Show Walkthrough" in Settings is how it is seen again on purpose.
+    [[DSPreferences sharedPreferences] setIntroShown:YES];
 
-    UIWindowScene *scene = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
-            if ([candidate isKindOfClass:UIWindowScene.class]) {
-                scene = (UIWindowScene *)candidate;
-                break;
+    @try {
+        DSIntroViewController *controller = [[DSIntroViewController alloc] init];
+
+        UIWindowScene *scene = nil;
+        if (@available(iOS 13.0, *)) {
+            for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
+                if ([candidate isKindOfClass:UIWindowScene.class]) {
+                    scene = (UIWindowScene *)candidate;
+                    break;
+                }
             }
         }
+
+        DSIntroWindow *window = scene ? [[DSIntroWindow alloc] initWithWindowScene:scene]
+                                      : [[DSIntroWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+        window.frame = UIScreen.mainScreen.bounds;
+        window.windowLevel = UIWindowLevelAlert + 20.0;
+        window.rootViewController = controller;
+        window.backgroundColor = UIColor.clearColor;
+        window.opaque = NO;
+        sIntroWindow = window;
+
+        window.alpha = 0.0;
+        [window makeKeyAndVisible];
+        [UIView animateWithDuration:0.45 animations:^{
+            window.alpha = 1.0;
+        }];
+
+        [controller startIdleWatchdog];
+    } @catch (NSException *exception) {
+        // A half built walkthrough would be an opaque sheet with no buttons on it,
+        // covering everything. Take it straight back down.
+        UIWindow *window = sIntroWindow;
+        sIntroWindow = nil;
+        window.hidden = YES;
+        window.rootViewController = nil;
     }
+}
 
-    DSIntroWindow *window = scene ? [[DSIntroWindow alloc] initWithWindowScene:scene]
-                                  : [[DSIntroWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
-    window.frame = UIScreen.mainScreen.bounds;
-    window.windowLevel = UIWindowLevelAlert + 20.0;
-    window.rootViewController = controller;
-    window.backgroundColor = UIColor.clearColor;
-    window.opaque = NO;
-    sIntroWindow = window;
+#pragma mark - Getting out of the way
 
-    window.alpha = 0.0;
-    [window makeKeyAndVisible];
-    [UIView animateWithDuration:0.45 animations:^{
-        window.alpha = 1.0;
+// Nothing else can be used while this is up, so it must not be able to stay up.
+// Three minutes without a touch and it leaves on its own; a two-finger double tap
+// dismisses it immediately, wherever the buttons ended up.
+- (void)startIdleWatchdog {
+    _lastInteraction = NSDate.timeIntervalSinceReferenceDate;
+
+    UITapGestureRecognizer *escape = [[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                            action:@selector(finish)];
+    escape.numberOfTouchesRequired = 2;
+    escape.numberOfTapsRequired = 2;
+    [self.view addGestureRecognizer:escape];
+
+    __weak __typeof(self) weakSelf = self;
+    _watchdog = [NSTimer scheduledTimerWithTimeInterval:30.0 repeats:YES block:^(NSTimer *timer) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || sIntroWindow != strongSelf.view.window) {
+            [timer invalidate];
+            return;
+        }
+        if (NSDate.timeIntervalSinceReferenceDate - strongSelf.lastInteraction > 180.0) {
+            [timer invalidate];
+            [strongSelf finish];
+        }
     }];
+}
+
+- (void)noteInteraction {
+    _lastInteraction = NSDate.timeIntervalSinceReferenceDate;
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [super touchesBegan:touches withEvent:event];
+    [self noteInteraction];
 }
 
 #pragma mark - Lifecycle
@@ -288,6 +350,7 @@ static UIWindow *sIntroWindow;
 }
 
 - (void)advance {
+    [self noteInteraction];
     if (_step >= (NSInteger)_steps.count - 1) {
         [self finish];
         return;
@@ -296,12 +359,15 @@ static UIWindow *sIntroWindow;
 }
 
 - (void)retreat {
+    [self noteInteraction];
     if (_step == 0) return;
     [self applyStep:_step - 1 animated:YES];
 }
 
 - (void)finish {
     [[DSPreferences sharedPreferences] setIntroShown:YES];
+    [_watchdog invalidate];
+    _watchdog = nil;
     [_demo stop];
 
     UIWindow *window = sIntroWindow;

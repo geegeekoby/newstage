@@ -188,10 +188,25 @@ def packages_stanza(fields: dict, deb_name: str, digests: dict, base_url: str | 
     return "\n".join(lines) + "\n"
 
 
-def write_release(fields: dict):
-    # No hash entries: the index is composed per request so the deployment can
-    # name its own host in it, which means its digest is not known here. Package
-    # managers only warn about that on a flat, unsigned repo, which this is.
+def write_release(stanza: str):
+    """Release for the static, fixed-URL form of the repo.
+
+    A package manager that finds no hash for the index it just downloaded may
+    ignore that index, and on the device that is indistinguishable from the repo
+    having nothing new in it - so Release carries the digests of the exact
+    Packages bytes written alongside it. The dynamic form has no file here at all:
+    api/repo.js composes Release and the index together per request, because the
+    index names its own host and only the deployment knows what that is.
+    """
+    index_bytes = stanza.encode()
+    gzipped = gzip.compress(index_bytes, mtime=0)
+
+    def entries(algorithm):
+        return "\n".join(
+            f" {algorithm(payload).hexdigest()} {len(payload)} {name}"
+            for payload, name in ((index_bytes, "Packages"), (gzipped, "Packages.gz"))
+        )
+
     release = "\n".join(
         [
             "Origin: Dynamic Stage",
@@ -203,6 +218,10 @@ def write_release(fields: dict):
             "Components: main",
             "Description: Stage Manager Reimagined for iPhone, rebuilt for rootless jailbreaks",
             "Date: " + email.utils.formatdate(usegmt=True),
+            "MD5Sum:",
+            entries(hashlib.md5),
+            "SHA256:",
+            entries(hashlib.sha256),
         ]
     ) + "\n"
     with open(os.path.join(PUBLIC, "Release"), "w") as handle:
@@ -237,7 +256,6 @@ def main():
     }
 
     fields = control_fields(deb)
-    write_release(fields)
     write_repo_icon()
     write_banner()
 
@@ -262,9 +280,13 @@ def main():
             handle.write(stanza)
         with gzip.open(os.path.join(PUBLIC, "Packages.gz"), "wb", mtime=0) as handle:
             handle.write(stanza.encode())
+        write_release(stanza)
         print("wrote static Packages for", args.url)
     else:
-        for name in ("Packages", "Packages.gz"):
+        # Left to api/repo.js. A file here would win over the rewrite that routes
+        # these to the handler, and a Release whose hashes do not match the index
+        # the handler serves is worse than no Release file.
+        for name in ("Packages", "Packages.gz", "Release"):
             stale = os.path.join(PUBLIC, name)
             if os.path.exists(stale):
                 os.remove(stale)

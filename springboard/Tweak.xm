@@ -197,6 +197,30 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
 
 %end
 
+#pragma mark - Keeping the hosted app's asserts off SpringBoard
+
+// An app view the stage made is not part of SpringBoard's scene layout, so when the
+// app it shows changes its mind about being foreground, SpringBoard finds a state it
+// did not put there and asserts - which is not an exception that unwinds, it is
+// SpringBoard going down. Contained here, and only for the stage's own app views:
+// SpringBoard's own must be left to fail loudly as they would without this tweak.
+%hook SBAppViewController
+
+- (void)sceneHandle:(id)handle didUpdateSettingsWithDiff:(id)diff previousSettings:(id)previousSettings {
+    if ([DSSceneHost ownsAppViewController:self]) {
+        @try {
+            %orig;
+        } @catch (NSException *exception) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: contained a scene update from the staged app (%@)",
+                                      exception.reason ?: exception.name ?: @"?");
+        }
+        return;
+    }
+    %orig;
+}
+
+%end
+
 #pragma mark - Corner pull
 
 // This is where the stage is opened from. SpringBoard recognises pulls off the

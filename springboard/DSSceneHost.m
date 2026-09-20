@@ -28,6 +28,29 @@ static NSMapTable<NSString *, FBScene *> *DSLiveScenes(void) {
     return scenes;
 }
 
+// The app view controllers the stage made, so the hook that contains their asserts
+// can tell them from SpringBoard's own. Weak: this is a way of recognising them,
+// never a reason for one to stay alive.
+static NSHashTable *DSOwnedAppViewControllers(void) {
+    static NSHashTable *controllers;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        controllers = [NSHashTable weakObjectsHashTable];
+    });
+    return controllers;
+}
+
+static id DSIvar(id object, NSString *name) {
+    if (!object || name.length == 0) return nil;
+    Ivar ivar = class_getInstanceVariable([object class], name.UTF8String);
+    if (!ivar) return nil;
+    @try {
+        return object_getIvar(object, ivar);
+    } @catch (NSException *exception) {
+        return nil;
+    }
+}
+
 static NSLock *DSSceneOverridesLock(void) {
     static NSLock *lock;
     static dispatch_once_t token;
@@ -91,10 +114,14 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     FBScene *_scene;
     FBSceneHostManager *_hostManager;
     UIView *_hostView;
+    // SpringBoard's own app view, when it could be had.
+    SBAppViewController *_appViewController;
+    SBDeviceApplicationSceneEntity *_entity;
     // Only set when the stage had to create the scene itself, which makes the
     // stage responsible for taking it down again.
     UIScenePresenter *_presenter;
     NSString *_ownSceneIdentifier;
+    BOOL _nudgedThisLaunch;
     CGRect _stageFrame;
     UIEdgeInsets _safeAreaInsets;
     BOOL _foreground;
@@ -271,12 +298,231 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     return nil;
 }
 
+#pragma mark - SpringBoard's own app view
+
+// The way the app switcher and iPad multitasking put a live app in a view. Handing
+// the job to SpringBoard is the difference between the stage assembling a scene out
+// of parts - launching the app, finding the scene, hosting its layers, forcing its
+// size, and hoping keyboard focus follows - and simply asking for an app view. It
+// launches the app itself, so nothing needs to be started first.
+- (BOOL)hostThroughAppViewController {
+    if (_appViewController) return YES;
+
+    SBApplication *application = [self application];
+    UIViewController *parent = self.parentViewController;
+    if (!application || !parent) return NO;
+
+    Class entityClass = objc_getClass("SBDeviceApplicationSceneEntity");
+    Class viewControllerClass = objc_getClass("SBAppViewController");
+    if (!entityClass || !viewControllerClass) {
+        DSDiagnosticsRecord(@"SpringBoard: no app view controller on this build, falling back to raw hosting");
+        return NO;
+    }
+
+    @try {
+        id sceneManager = [self mainDisplaySceneManager];
+        id displayIdentity = [sceneManager respondsToSelector:@selector(displayIdentity)]
+            ? ((id (*)(id, SEL))objc_msgSend)(sceneManager, @selector(displayIdentity))
+            : nil;
+
+        SBDeviceApplicationSceneEntity *entity = nil;
+        if ([entityClass respondsToSelector:@selector(defaultEntityWithApplication:sceneHandleProvider:displayIdentity:)] &&
+            sceneManager && displayIdentity) {
+            entity = [entityClass defaultEntityWithApplication:application
+                                          sceneHandleProvider:sceneManager
+                                              displayIdentity:displayIdentity];
+        }
+        if (!entity && [entityClass instancesRespondToSelector:@selector(initWithApplicationForMainDisplay:)]) {
+            entity = [[entityClass alloc] initWithApplicationForMainDisplay:application];
+        }
+        if (!entity) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: no scene entity for %@", _bundleIdentifier);
+            return NO;
+        }
+
+        SBAppViewController *controller =
+            [[viewControllerClass alloc] initWithIdentifier:_bundleIdentifier andApplicationSceneEntity:entity];
+        if (!controller) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: no app view controller for %@", _bundleIdentifier);
+            return NO;
+        }
+
+        _entity = entity;
+        _appViewController = controller;
+        [DSOwnedAppViewControllers() addObject:controller];
+
+        [parent addChildViewController:controller];
+        if ([controller respondsToSelector:@selector(setIgnoresOcclusions:)]) {
+            [controller setIgnoresOcclusions:NO];
+        }
+        // Mode 2 is the live one. Anything else and the view shows a snapshot.
+        if ([controller respondsToSelector:@selector(_setCurrentMode:)]) [controller _setCurrentMode:2];
+
+        // Activation settings left over from however the app was last opened decide
+        // things like orientation and whether it animates; cleared so the stage's
+        // own settings are the only ones in play.
+        id activationSettings = DSIvar(controller, @"_activationSettings");
+        if ([activationSettings respondsToSelector:@selector(clearActivationSettings)]) {
+            ((void (*)(id, SEL))objc_msgSend)(activationSettings, @selector(clearActivationSettings));
+        }
+
+        [self beginSceneTransactionDeliveringActions:YES];
+
+        if ([controller respondsToSelector:@selector(_createSceneViewController)]) {
+            [controller _createSceneViewController];
+        }
+        // 4 is live content: the app's own render rather than a still of it.
+        if ([controller respondsToSelector:@selector(setDisplayMode:animationFactory:completion:)]) {
+            [controller setDisplayMode:4 animationFactory:nil completion:nil];
+        }
+
+        UIView *view = controller.view;
+        if (!view) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@'s app view controller has no view", _bundleIdentifier);
+            [self tearDownAppViewController];
+            return NO;
+        }
+        view.backgroundColor = UIColor.clearColor;
+        view.clipsToBounds = YES;
+        _hostView = view;
+
+        [self noteSceneSource:@"SpringBoard's own app view"];
+        return YES;
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: asking for an app view for %@ threw %@ - %@",
+                                  _bundleIdentifier, exception.name ?: @"?", exception.reason ?: @"?");
+        [self tearDownAppViewController];
+        return NO;
+    }
+}
+
+- (id)mainDisplaySceneManager {
+    Class coordinator = objc_getClass("SBSceneManagerCoordinator");
+    if (!coordinator) return nil;
+    if ([coordinator respondsToSelector:@selector(mainDisplaySceneManager)]) {
+        return ((id (*)(id, SEL))objc_msgSend)(coordinator, @selector(mainDisplaySceneManager));
+    }
+    if ([coordinator respondsToSelector:@selector(sharedInstance)]) {
+        id shared = ((id (*)(id, SEL))objc_msgSend)(coordinator, @selector(sharedInstance));
+        if ([shared respondsToSelector:@selector(mainDisplaySceneManager)]) {
+            return ((id (*)(id, SEL))objc_msgSend)(shared, @selector(mainDisplaySceneManager));
+        }
+    }
+    return nil;
+}
+
+// Every size change has to go through one of these or the app keeps drawing for
+// whatever size it was given last. Actions are delivered only on the first one,
+// which is what launches the app.
+- (void)beginSceneTransactionDeliveringActions:(BOOL)deliveringActions {
+    SBAppViewController *controller = _appViewController;
+    if (![controller respondsToSelector:@selector(_createSceneUpdateTransactionForApplicationSceneEntity:deliveringActions:)]) {
+        return;
+    }
+    @try {
+        id transaction = [controller _createSceneUpdateTransactionForApplicationSceneEntity:_entity
+                                                                        deliveringActions:deliveringActions];
+        if (!transaction) return;
+        id transactions = DSIvar(controller, @"_activeTransitions");
+        if ([transactions respondsToSelector:@selector(addObject:)]) {
+            ((void (*)(id, SEL, id))objc_msgSend)(transactions, @selector(addObject:), transaction);
+        }
+        if ([transaction respondsToSelector:@selector(begin)]) {
+            ((void (*)(id, SEL))objc_msgSend)(transaction, @selector(begin));
+        }
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: resizing %@ threw %@", _bundleIdentifier, exception.name ?: @"?");
+    }
+}
+
+// The app view controller re-pins the scene to the whole display on every
+// transaction, so the stage's size has to be written after it - last write wins.
+// A cold-launching app is not ready to be told for the first second or two either,
+// which is why this is repeated: without it the card stays black until something
+// else happens to resize it.
+- (void)deliverStageSizeToApp {
+    if (!_appViewController) return;
+    [self beginSceneTransactionDeliveringActions:NO];
+    [self forceSceneGeometry];
+}
+
+- (void)forceSceneGeometry {
+    FBScene *scene = [self appViewScene];
+    if (!scene) return;
+    _scene = scene;
+    [self registerGeometryOnlyOverride];
+
+    CGRect frame = [self frameForScene];
+    UIEdgeInsets insets = _safeAreaInsets;
+    DSUpdateSceneSettings(scene, ^(FBSMutableSceneSettings *settings) {
+        DSApplyGeometry(settings, frame, insets);
+    });
+}
+
+- (FBScene *)appViewScene {
+    SBAppViewController *controller = _appViewController;
+    if (!controller) return nil;
+    @try {
+        id handle = DSIvar(controller, @"_sceneHandle");
+        if (!handle && [controller respondsToSelector:@selector(sceneHandle)]) handle = controller.sceneHandle;
+        if ([handle respondsToSelector:@selector(scene)]) {
+            return ((FBScene * (*)(id, SEL))objc_msgSend)(handle, @selector(scene));
+        }
+    } @catch (NSException *exception) {
+    }
+    return nil;
+}
+
+// Geometry only, never lifecycle: an app view controller of the stage's own making
+// is outside SpringBoard's scene layout, and telling its scene it is foreground
+// behind SpringBoard's back is what makes it assert.
+- (void)registerGeometryOnlyOverride {
+    NSString *identifier = [_scene respondsToSelector:@selector(identifier)] ? _scene.identifier : nil;
+    if (identifier.length == 0) return;
+    [DSSceneOverridesLock() lock];
+    DSSceneOverrides()[identifier] = @{
+        @"frame" : [NSValue valueWithCGRect:[self frameForScene]],
+        @"insets" : [NSValue valueWithUIEdgeInsets:_safeAreaInsets],
+        @"geometryOnly" : @YES,
+    };
+    [DSSceneOverridesLock() unlock];
+    _registeredOverride = YES;
+}
+
+// The app view controller asserts in dealloc if it is released while still showing
+// a live app, so it is stood down in order first.
+- (void)tearDownAppViewController {
+    SBAppViewController *controller = _appViewController;
+    _appViewController = nil;
+    _entity = nil;
+    if (!controller) return;
+
+    [DSOwnedAppViewControllers() removeObject:controller];
+    @try {
+        if ([controller respondsToSelector:@selector(_setCurrentMode:)]) [controller _setCurrentMode:0];
+        if ([controller respondsToSelector:@selector(invalidate)]) [controller invalidate];
+        [controller willMoveToParentViewController:nil];
+        [controller.view removeFromSuperview];
+        [controller removeFromParentViewController];
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: putting %@'s app view away threw %@",
+                                  _bundleIdentifier, exception.name ?: @"?");
+    }
+}
+
 #pragma mark - Launching
 
 - (void)prepareWithCompletion:(DSSceneHostReadyBlock)completion {
     if (![self application]) {
         DSDiagnosticsRecordFormat(@"SpringBoard: SpringBoard has no application called %@", _bundleIdentifier);
         if (completion) completion(NO);
+        return;
+    }
+
+    // SpringBoard's own app view first: it is the only route that does not depend on
+    // the app already having a scene, and the one the system itself uses.
+    if ([self hostThroughAppViewController]) {
+        if (completion) completion(YES);
         return;
     }
 
@@ -593,15 +839,60 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     return _hostView != nil;
 }
 
+- (void)noteHostViewAttached {
+    SBAppViewController *controller = _appViewController;
+    if (!controller || !self.parentViewController) return;
+    @try {
+        [controller didMoveToParentViewController:self.parentViewController];
+    } @catch (NSException *exception) {
+    }
+}
+
+- (FBScene *)hostedScene {
+    if (_appViewController) {
+        FBScene *scene = [self appViewScene];
+        if (scene) return scene;
+    }
+    return _scene;
+}
+
 #pragma mark - Geometry
 
 - (void)setStageFrame:(CGRect)frame safeAreaInsets:(UIEdgeInsets)insets {
     _contentScale = [DSPreferences sharedPreferences].scale;
     _stageFrame = frame;
     _safeAreaInsets = insets;
+    [self layoutHostView];
+
+    if (_appViewController) {
+        [self deliverStageSizeToApp];
+        [self nudgeStageSizeWhileAppStarts];
+        return;
+    }
+
     [self registerOverride];
     [self pushSettings];
-    [self layoutHostView];
+}
+
+// An app that is still launching is not listening yet, and one told its size too
+// early draws nothing: the card stays black until something else resizes it. So the
+// size is re-sent over the first few seconds of its life. Each one is a no-op once
+// the app is up.
+- (void)nudgeStageSizeWhileAppStarts {
+    if (_nudgedThisLaunch) return;
+    _nudgedThisLaunch = YES;
+
+    __weak __typeof(self) weakSelf = self;
+    for (NSNumber *delay in @[ @0.4, @0.9, @1.6, @2.6, @4.0, @6.0 ]) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || !strongSelf->_appViewController) return;
+            [strongSelf.hostView setNeedsLayout];
+            [strongSelf.hostView layoutIfNeeded];
+            [strongSelf deliverStageSizeToApp];
+        });
+    }
 }
 
 - (CGRect)logicalFrame {
@@ -635,6 +926,15 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 
 - (void)setForeground:(BOOL)foreground {
     _foreground = foreground;
+
+    // SpringBoard's app view owns the app's lifecycle, and telling its scene it is
+    // foreground from outside is exactly what makes it assert - which takes
+    // SpringBoard with it. So under an app view the stage only ever dictates size.
+    if (_appViewController) {
+        [self registerGeometryOnlyOverride];
+        return;
+    }
+
     [self registerOverride];
     [self pushSettings];
 }
@@ -667,6 +967,10 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 }
 
 - (void)pushSettings {
+    if (_appViewController) {
+        [self forceSceneGeometry];
+        return;
+    }
     if (!_scene) return;
     CGRect logical = [self frameForScene];
     UIEdgeInsets insets = _safeAreaInsets;
@@ -702,6 +1006,17 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 
 - (void)relinquishKeepingBackgrounded:(BOOL)background {
     [self removeOverride];
+
+    // SpringBoard's app view takes itself apart, including handing the app back to
+    // whatever SpringBoard wants to do with it next.
+    if (_appViewController) {
+        [self tearDownAppViewController];
+        _hostView = nil;
+        _scene = nil;
+        _nudgedThisLaunch = NO;
+        _tookOverForegroundLaunch = NO;
+        return;
+    }
 
     // A scene the stage made is the stage's to take down, and there is nothing to
     // hand back: the app keeps running, it simply loses this window.
@@ -838,6 +1153,11 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         return NO;
     }
     return YES;
+}
+
++ (BOOL)ownsAppViewController:(id)controller {
+    if (!controller) return NO;
+    return [DSOwnedAppViewControllers() containsObject:controller];
 }
 
 + (void)noteLiveScene:(FBScene *)scene {

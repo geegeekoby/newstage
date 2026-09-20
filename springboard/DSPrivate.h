@@ -174,6 +174,43 @@
 - (NSArray<SBApplication *> *)allApplications;
 @end
 
+// SpringBoard's own way of showing a live app in a view ------------------------
+//
+// This is what the app switcher and iPad multitasking use, and it does the whole
+// job: it makes the scene, launches the app if it is not running, hosts its render,
+// and keeps it in SpringBoard's own lifecycle and keyboard-focus bookkeeping. The
+// stage asks for it by name rather than assembling any of that itself.
+
+@interface SBSceneManagerCoordinator : NSObject
++ (instancetype)sharedInstance;
++ (id)mainDisplaySceneManager;
+- (id)mainDisplaySceneManager;
+@end
+
+@interface SBDeviceApplicationSceneEntity : NSObject
++ (instancetype)defaultEntityWithApplication:(id)application
+                         sceneHandleProvider:(id)provider
+                             displayIdentity:(id)displayIdentity;
+- (instancetype)initWithApplicationForMainDisplay:(id)application;
+@property (nonatomic, readonly) id sceneHandle;
+@end
+
+@interface SBSceneHandle : NSObject
+- (FBScene *)scene;
+- (FBScene *)sceneIfExists;
+@end
+
+@interface SBAppViewController : UIViewController
+- (instancetype)initWithIdentifier:(NSString *)identifier andApplicationSceneEntity:(id)entity;
+- (void)setIgnoresOcclusions:(BOOL)ignoresOcclusions;
+- (void)_setCurrentMode:(long long)mode;
+- (id)_createSceneUpdateTransactionForApplicationSceneEntity:(id)entity deliveringActions:(BOOL)deliveringActions;
+- (void)_createSceneViewController;
+- (void)setDisplayMode:(long long)mode animationFactory:(id)factory completion:(id)completion;
+- (void)invalidate;
+- (SBSceneHandle *)sceneHandle;
+@end
+
 @interface SBLockScreenManager : NSObject
 + (instancetype)sharedInstance;
 @property (nonatomic, readonly) BOOL isUILocked;

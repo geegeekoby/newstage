@@ -105,6 +105,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
     NSString *_splitHostBundleIdentifier;
     NSString *_bundleIdentifierToRestoreInFront;
+    BOOL _notedKeyboardOnce;
     NSTimer *_autoKillTimer;
     NSInteger _stageQuarterTurns;
 
@@ -229,7 +230,7 @@ static BOOL sSystemEdgePullAvailable;
 // or in an app hosted on it. SpringBoard gets its window back when the stage
 // leaves, so nothing else on the device notices.
 - (void)takeKeyWindow {
-    if (!_window || _window.hidden || _window.isKeyWindow) return;
+    if (!_window || _window.isKeyWindow) return;
 
     if (!_windowBeforeStage) {
         for (UIWindow *window in UIApplication.sharedApplication.windows) {
@@ -240,7 +241,12 @@ static BOOL sSystemEdgePullAvailable;
         }
     }
     @try {
-        [_window makeKeyWindow];
+        // Both halves in one call. Being merely unhidden and merely key are not the
+        // same as being a window UIKit will bring a keyboard up for.
+        [_window makeKeyAndVisible];
+        if (!_window.isKeyWindow) {
+            DSDiagnosticsRecord(@"SpringBoard: the stage window would not become key, so nothing can be typed");
+        }
     } @catch (NSException *exception) {
         DSDiagnosticsRecordFormat(@"SpringBoard: could not take the key window - %@", exception.reason ?: @"?");
     }
@@ -273,6 +279,14 @@ static BOOL sSystemEdgePullAvailable;
     if (!self.isStageVisible) return;
 
     CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    // Whether a keyboard ever comes up is the whole question when typing does not
+    // work, and it is not something a user can be expected to describe.
+    if (!_notedKeyboardOnce) {
+        _notedKeyboardOnce = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: a keyboard came up over the stage (%@, stage window is %@)",
+                                  NSStringFromCGRect(keyboard),
+                                  _window.isKeyWindow ? @"key" : @"not key");
+    }
     CGRect screen = [self screenBounds];
     if (CGRectIsEmpty(keyboard) || CGRectGetMinY(keyboard) >= CGRectGetMaxY(screen)) {
         [self liftCardBy:0.0 notification:notification];
@@ -1182,6 +1196,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     DSSceneHost *host = _sceneHost ?: [[DSSceneHost alloc] initWithBundleIdentifier:entry.bundleIdentifier];
     _sceneHost = host;
+    // SpringBoard's app view has to belong to a view controller to know which way up
+    // the app should be, and the stage window's own is the one it will live in.
+    host.parentViewController = _window.rootViewController;
 
     DSDiagnosticsRecordFormat(@"SpringBoard: putting %@ on the stage", entry.bundleIdentifier);
 
@@ -1255,6 +1272,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [_container setBackdropHidden:YES];
     hostView.frame = _container.contentView.bounds;
     [_container.contentView insertSubview:hostView atIndex:0];
+    [_sceneHost noteHostViewAttached];
 
     [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     [self applyStageRotation];
@@ -1530,23 +1548,31 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [self reevaluateKeyboardFocusStealing:NO];
 }
 
+// Which scene the keyboard types into is SpringBoard's decision, and the way to
+// influence it is the same one SpringBoard uses when a user taps a window: tell the
+// focus coordinator that this scene is the one the user picked. Nothing is forced -
+// if the coordinator refuses, the keyboard stays where it was.
 - (void)reevaluateKeyboardFocusStealing:(BOOL)stealing {
-    NSArray<NSString *> *classNames = @[ @"SBKeyboardFocusController", @"SBSceneKeyboardFocusController" ];
-    SEL selector = @selector(reevaluateFocusedSceneIdentityForKeyboardFocusWithChangeInformation:stealingKeyboardOnSuccess:);
-    for (NSString *name in classNames) {
+    if (!stealing) return;
+
+    FBScene *scene = [_sceneHost hostedScene];
+    if (!scene) return;
+
+    SEL selector = NSSelectorFromString(@"userFocusRequestForScene:reason:completion:");
+    for (NSString *name in @[ @"SBKeyboardFocusCoordinator", @"SBKeyboardFocusController" ]) {
         Class candidate = objc_getClass(name.UTF8String);
-        if (!candidate) continue;
         if (![candidate respondsToSelector:@selector(sharedInstance)]) continue;
         id instance = ((id (*)(id, SEL))objc_msgSend)(candidate, @selector(sharedInstance));
         if (![instance respondsToSelector:selector]) continue;
         @try {
-            ((void (*)(id, SEL, id, BOOL))objc_msgSend)(instance, selector, nil, stealing);
+            ((void (*)(id, SEL, id, id, id))objc_msgSend)(instance, selector, scene, @"Dynamic Stage", nil);
+            DSDiagnosticsRecordFormat(@"SpringBoard: asked %@ to point the keyboard at the staged app", name);
         } @catch (NSException *exception) {
             DSDiagnosticsRecordFormat(@"SpringBoard: asking %@ about the keyboard threw %@", name, exception.name ?: @"?");
         }
         return;
     }
-    DSDiagnosticsRecord(@"SpringBoard: no keyboard focus controller on this build");
+    DSDiagnosticsRecord(@"SpringBoard: no keyboard focus coordinator on this build");
 }
 
 #pragma mark - In-stage gestures

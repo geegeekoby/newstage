@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "public",
+  "cleanUrls": false,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/Packages", "destination": "/api/repo?file=packages" },
+    { "source": "/Packages.gz", "destination": "/api/repo?file=packages.gz" },
+    { "source": "/depiction.json", "destination": "/api/repo?file=depiction" },
+    { "source": "/sileo-featured.json", "destination": "/api/repo?file=featured" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
+    },
+    {
+      "source": "/Release",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    },
+    {
+      "source": "/debs/(.*).deb",
+      "headers": [
+        { "key": "Content-Type", "value": "application/vnd.debian.binary-package" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    }
+  ]
+}

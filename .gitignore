@@ -3,3 +3,4 @@ packages/
 agent-tools/
 *.dSYM/
 research/
+tools/__pycache__/

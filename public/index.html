@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Dynamic Stage — Sileo repo</title>
+    <meta
+      name="description"
+      content="Sileo repository for Dynamic Stage, Stage Manager multitasking for rootless jailbroken iPhones."
+    />
+    <meta name="theme-color" content="#08080a" />
+    <link rel="icon" href="/assets/icon.png" />
+    <link rel="apple-touch-icon" href="/assets/icon.png" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg: #08080a;
+        --panel: rgba(255, 255, 255, 0.055);
+        --line: rgba(255, 255, 255, 0.11);
+        --text: #f4f4f6;
+        --muted: #9a9aa4;
+        --tint: #0a84ff;
+        --radius: 18px;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 0 20px calc(64px + env(safe-area-inset-bottom));
+        background: var(--bg);
+        color: var(--text);
+        font: 400 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter,
+          system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: -30vh 0 auto;
+        height: 90vh;
+        pointer-events: none;
+        background: radial-gradient(38% 42% at 18% 22%, rgba(238, 140, 32, 0.34), transparent 70%),
+          radial-gradient(34% 38% at 82% 12%, rgba(198, 58, 44, 0.32), transparent 70%),
+          radial-gradient(46% 50% at 50% 46%, rgba(34, 56, 146, 0.4), transparent 72%),
+          radial-gradient(40% 44% at 88% 62%, rgba(214, 104, 132, 0.26), transparent 72%);
+        filter: blur(14px);
+      }
+
+      main {
+        position: relative;
+        max-width: 720px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: calc(64px + env(safe-area-inset-top)) 0 34px;
+      }
+
+      header img {
+        width: 76px;
+        height: 76px;
+        border-radius: 19px;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 31px;
+        line-height: 1.15;
+        letter-spacing: -0.021em;
+        font-weight: 700;
+      }
+
+      header p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      section {
+        margin-top: 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .url {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .url code {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 14px 16px;
+        border-radius: 13px;
+        background: rgba(0, 0, 0, 0.42);
+        border: 1px solid var(--line);
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+        font-size: 15px;
+      }
+
+      button,
+      .btn {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+        font-size: 16px;
+        text-decoration: none;
+        color: var(--text);
+        padding: 14px 20px;
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--line);
+        transition: background 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+        white-space: nowrap;
+      }
+
+      button:hover,
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      button:active,
+      .btn:active {
+        transform: scale(0.975);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .btn.primary {
+        flex: 1 1 200px;
+        text-align: center;
+        background: var(--tint);
+        border-color: transparent;
+        box-shadow: 0 10px 26px rgba(10, 132, 255, 0.32);
+      }
+
+      .btn.primary:hover {
+        background: #2b95ff;
+      }
+
+      ol,
+      ul {
+        margin: 0;
+        padding-left: 1.25em;
+      }
+
+      li + li {
+        margin-top: 9px;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 18px 24px;
+      }
+
+      .meta div span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .meta div strong {
+        font-weight: 600;
+        font-size: 17px;
+      }
+
+      .note {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      code.inline {
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+        font-size: 0.92em;
+      }
+
+      footer {
+        margin-top: 30px;
+        color: var(--muted);
+        font-size: 14px;
+        text-align: center;
+      }
+
+      @media (max-width: 560px) {
+        header {
+          padding-top: calc(42px + env(safe-area-inset-top));
+          gap: 14px;
+        }
+
+        header img {
+          width: 62px;
+          height: 62px;
+          border-radius: 16px;
+        }
+
+        h1 {
+          font-size: 26px;
+        }
+
+        section {
+          padding: 20px;
+        }
+
+        .url {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="/assets/icon.png" alt="Dynamic Stage icon" />
+        <div>
+          <h1>Dynamic Stage</h1>
+          <p>Stage Manager Reimagined for iPhone</p>
+        </div>
+      </header>
+
+      <section>
+        <h2>Repo URL</h2>
+        <div class="url">
+          <code id="repo-url">…</code>
+          <button id="copy" type="button">Copy</button>
+        </div>
+        <div class="actions">
+          <a class="btn primary" id="add-sileo" href="#">Add to Sileo</a>
+          <a class="btn" id="add-zebra" href="#">Zebra</a>
+          <a class="btn" id="download" href="/depiction.json">Download .deb</a>
+        </div>
+        <p class="note">
+          Open this page on the iPhone itself for the buttons to work — they hand the URL
+          straight to the package manager. On a Mac or PC, copy the URL and paste it into
+          Sileo › Sources › <code class="inline">+</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Installing</h2>
+        <ol>
+          <li>Add the repo above, then install <strong>Dynamic Stage</strong> from it.</li>
+          <li>Respring when Sileo offers to.</li>
+          <li>
+            Open <strong>Settings › Dynamic Stage</strong> and pick the apps you want on the
+            stage. First pull shows a short walkthrough.
+          </li>
+          <li>
+            Pull up from the bottom-right corner of any app to bring the stage in. Drag it
+            down past halfway for Split View, flick it away to dismiss.
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Requirements</h2>
+        <div class="meta">
+          <div><span>Version</span><strong id="version">—</strong></div>
+          <div><span>iOS</span><strong>14.0 – 16.7</strong></div>
+          <div><span>Jailbreak</span><strong>Rootless (/var/jb)</strong></div>
+          <div><span>Architecture</span><strong>arm64</strong></div>
+        </div>
+        <p class="note">
+          Built and tested against an iPhone 14 Pro Max on iOS 16.5.1 with NathanLR. Needs
+          ElleKit (or Substitute) and PreferenceLoader, both of which every rootless
+          jailbreak ships with. Rootful jailbreaks are not supported by this build.
+        </p>
+      </section>
+
+      <footer>Unsigned repo — Sileo will warn about that, which is normal for tweak repos.</footer>
+    </main>
+
+    <script>
+      const base = location.origin;
+      const url = base + "/";
+
+      document.getElementById("repo-url").textContent = url;
+      document.getElementById("add-sileo").href = "sileo://source/" + url;
+      document.getElementById("add-zebra").href = "zbra://sources/add/" + url;
+
+      const copy = document.getElementById("copy");
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(url);
+          copy.textContent = "Copied";
+        } catch {
+          copy.textContent = "Copy failed";
+        }
+        setTimeout(() => (copy.textContent = "Copy"), 1600);
+      });
+
+      // The index names the build, so the page follows whatever is published
+      // instead of hardcoding a version and a filename that go stale.
+      fetch("/Packages")
+        .then((response) => (response.ok ? response.text() : Promise.reject()))
+        .then((text) => {
+          const field = (name) => (text.match(new RegExp("^" + name + ": (.+)$", "m")) || [])[1];
+          const version = field("Version");
+          const filename = field("Filename");
+          if (version) document.getElementById("version").textContent = version;
+          if (filename) {
+            const link = document.getElementById("download");
+            link.href = "/" + filename;
+            link.setAttribute("download", "");
+          }
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>

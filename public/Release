@@ -1,0 +1,9 @@
+Origin: Dynamic Stage
+Label: Dynamic Stage
+Suite: stable
+Version: 1.0
+Codename: ios
+Architectures: iphoneos-arm64
+Components: main
+Description: Stage Manager Reimagined for iPhone, rebuilt for rootless jailbreaks
+Date: Sun, 20 Sep 2026 09:06:45 GMT

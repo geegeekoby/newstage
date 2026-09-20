@@ -20,8 +20,9 @@ script that draws the artwork.
 - Release before the halfway point and the card floats over the app you were in (Overlay).
   Release past it and the app behind resizes into the top half (Split View). A haptic tap
   marks the crossover.
-- The card is full-width, flush with the bottom of the display, and its corners trace the
-  display's own corner radius, so it reads as part of the hardware.
+- Floating, the card is inset 10pt from the left, right and bottom edges, with corners
+  concentric to the display's own. In Split View it goes edge to edge and takes the
+  display's radius, keeping only the 10pt gap below the app above it.
 - Drag the top of the card up or down to move between Overlay and Split View after the fact.
 - Drag from the card's bottom-right corner, or flick the card down, to put it away. The app
   on the stage keeps running.
@@ -66,9 +67,76 @@ script that draws the artwork.
 | `shared/` | Preference reading and layout constants used by all three |
 | `layout/` | Files copied to the device as-is, including the per-app compatibility table |
 | `tools/make_resources.py` | Draws the icons, wordmark and Settings artwork; no binary assets are hand-made |
+| `public/` | The hosted Sileo repo: `Release`, the `.deb`, the repo icon and the landing page |
+| `api/repo.js` | Serves the package index and depiction, filling in the deployment's own host |
+| `tools/make_repo.py` | Rebuilds `public/` from the newest `.deb` in `packages/` |
+| `tools/serve_repo.mjs` | Serves the repo locally with the hosted routing, for testing it |
 
 The two tweaks and the Settings bundle are separate Theos subprojects that ship in one
 package, because SpringBoard and the apps need different hooks and different filters.
+
+## Installing
+
+The built package is in the repository at `public/debs/`, so it can be installed either
+straight off disk or from the Sileo repo this project also serves.
+
+Over SSH, from a checkout:
+
+```bash
+scp public/debs/com.recreated.dynamicstage_*.deb mobile@<device>:/tmp/
+ssh mobile@<device> "sudo dpkg -i /tmp/com.recreated.dynamicstage_*.deb && sudo sbreload"
+```
+
+Or open the `.deb` with Filza on the device and install it there.
+
+## The Sileo repo
+
+`public/` is a flat APT repository — the same shape as any tweak repo you would add in
+Sileo — and it is deployable as-is. Deploying this project publishes it; the repo URL is
+then just the deployment's root URL, which you add under Sileo › Sources › **+**. The
+landing page at that URL shows the URL, an **Add to Sileo** button and a direct `.deb`
+download.
+
+What it serves:
+
+| Route | What it is |
+| --- | --- |
+| `/` | Landing page, with the repo URL and the `sileo://` and `zbra://` add links |
+| `/Release` | Flat-repo release record, `iphoneos-arm64` |
+| `/Packages`, `/Packages.gz` | Package index, generated per request so it can name its own host |
+| `/depiction.json` | Sileo native depiction: description, features, changelog |
+| `/sileo-featured.json` | Featured banner for the repo page |
+| `/CydiaIcon.png` | Repo icon Sileo shows in the sources list |
+| `/debs/*.deb` | The package itself |
+
+A package's icon and depiction have to be absolute URLs, and the domain is not known when
+the index is written, so `api/repo.js` composes those three files from
+`api/package-index.json` using the host it is answering on. That means the same output works
+on any domain with nothing to edit after deploying.
+
+After building a new `.deb`, refresh the repo and redeploy:
+
+```bash
+make package FINALPACKAGE=1
+python3 tools/make_repo.py
+```
+
+To check it before deploying, serve it exactly as the hosting does and point `apt` at it:
+
+```bash
+node tools/serve_repo.mjs 43117
+curl http://127.0.0.1:43117/Packages
+```
+
+Static hosting that cannot run the handler (GitHub Pages, S3) needs the URLs baked in
+instead, which also writes out a static index:
+
+```bash
+python3 tools/make_repo.py --url https://repo.example.com
+```
+
+Sileo will say the repo is unsigned. That is expected: it has no GPG key, like most tweak
+repos, and `[trusted=yes]` is implied for the sources Sileo adds.
 
 ## Building
 
@@ -79,15 +147,9 @@ export THEOS=/path/to/theos
 make package
 ```
 
-The `.deb` lands in `packages/`. Install it with Sileo, Zebra, or over SSH:
-
-```bash
-make package
-scp packages/com.recreated.dynamicstage_*.deb mobile@<device>:/tmp/
-ssh mobile@<device> "sudo dpkg -i /tmp/com.recreated.dynamicstage_*.deb && sudo sbreload"
-```
-
-To build and install in one step with the device reachable over SSH:
+The `.deb` lands in `packages/`; copy it into the repo with `python3 tools/make_repo.py` or
+install it directly as above. To build and install in one step with the device reachable
+over SSH:
 
 ```bash
 make package install THEOS_DEVICE_IP=<device> THEOS_DEVICE_PORT=22

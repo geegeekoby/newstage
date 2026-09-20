@@ -20,6 +20,9 @@ const handler = require("../api/repo.js");
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = join(ROOT, "public");
 const PORT = Number(process.argv[2] || process.env.PORT || 43117);
+// HOST=0.0.0.0 makes it reachable from the phone on the same network, which is
+// enough to add the repo in Sileo without hosting it anywhere.
+const HOST = process.env.HOST || "127.0.0.1";
 
 const REWRITES = {
   "/Packages": "packages",
@@ -46,7 +49,13 @@ function shim(res) {
 }
 
 const server = createServer(async (req, res) => {
-  const { pathname } = new URL(req.url, `http://${req.headers.host}`);
+  let pathname;
+  try {
+    ({ pathname } = new URL(req.url, `http://${req.headers.host}`));
+  } catch {
+    res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("bad request\n");
+  }
 
   const file = REWRITES[pathname];
   if (file) {
@@ -77,6 +86,16 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`repo serving on http://127.0.0.1:${PORT}/`);
+// A malformed request should be answered, not fatal: this stays up for as long
+// as a device is pointed at it.
+server.on("clientError", (error, socket) => {
+  if (socket.writable) socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("request failed:", error.message);
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`repo serving on http://${HOST}:${PORT}/`);
 });

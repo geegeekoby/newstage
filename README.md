@@ -128,6 +128,13 @@ node tools/serve_repo.mjs 43117
 curl http://127.0.0.1:43117/Packages
 ```
 
+Serving it on the network instead is enough to install from the device without hosting the
+repo anywhere — add `http://<computer-ip>:43117/` in Sileo while it runs:
+
+```bash
+HOST=0.0.0.0 node tools/serve_repo.mjs 43117
+```
+
 Static hosting that cannot run the handler (GitHub Pages, S3) needs the URLs baked in
 instead, which also writes out a static index:
 

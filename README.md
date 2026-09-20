@@ -203,33 +203,37 @@ Notes on the build:
 
 ## Getting an app onto the stage
 
-The card shows an app's own live render, not a picture of it, which means the stage needs
-the app's scene - the object SpringBoard and the app share to agree on a window. Everything
-about opening an app on the stage comes down to getting hold of one, and there is no single
-way that works, so `springboard/DSSceneHost.m` tries them in order of how little each one
-disturbs the screen, and writes down which one answered:
+The card shows the app's own live render, not a picture of it. SpringBoard already has a
+thing that does this - `SBAppViewController`, which is what the app switcher and iPad
+multitasking use - and that is what the stage asks for. It is a view controller you hand an
+app to; it makes the scene, launches the app if it is not running, hosts its layers, and
+keeps the app inside SpringBoard's own lifecycle and keyboard bookkeeping.
 
-1. **Ask for the scene the app already has.** Its base scene identifier, then its scene
-   handles, then every scene FrontBoard knows, then the scenes seen going past the settings
-   hook. `-[SBApplication mainScene]`, which is what this used at first, was removed in
-   iOS 13 - on 16.5 it answers nothing, every launch ended with the picker coming back, and
-   that is why the chain exists.
-2. **Start the app without opening it**, twice over: through SpringBoard, then through
-   FrontBoard directly, waiting two seconds after each for a scene to turn up. An app that
-   has never been opened since boot has no scene, and a suspended launch does not always
-   make one.
-3. **Make a scene of the stage's own.** Against the app's running process, presented in a
-   view on the card, under the stage's own scene identifier so it can never collide with
-   SpringBoard's. This is what current iPad-style multitasking projects do, and it needs
-   nothing from SpringBoard except a process to attach to.
-4. **Open the app the ordinary way**, as a last resort. That makes it the front app for a
-   moment, so whoever was in front before is put back once the app's layer is on the card.
+This matters because the first version of `springboard/DSSceneHost.m` did all of that by
+hand: find the app's existing scene, and if there is none, start the app suspended and wait
+for one to appear. An app that has not been opened since boot has no scene, and starting it
+suspended does not make one, so nothing ever arrived and the picker came back - which is
+exactly what it did on 16.5. Asking SpringBoard for an app view has none of that problem,
+because making the scene is part of what it does.
 
-Whichever way it arrived, the app is then told what size it is - by pushing scene settings
-and by holding those settings against SpringBoard's own layout passes from the `FBScene`
-hook, so the app cannot be resized back to full screen behind the stage's back. A scene the
-stage created itself is also the stage's to destroy when the card goes away; a borrowed one
-is handed back full screen so the app is not left believing it is stage sized.
+Two things about it are not obvious and both are load-bearing:
+
+- **The size has to be re-sent while the app starts.** The app view re-pins the scene to the
+  whole display on every update it makes, so the stage's size is written after each one -
+  last write wins. A launching app is not listening for the first second or two either, so
+  the size goes out again at 0.4s, 0.9s, 1.6s, 2.6s, 4s and 6s. Without that the card stays
+  black until something else happens to resize it.
+- **Its asserts have to be contained.** An app view the stage made is not part of
+  SpringBoard's scene layout, so when the app changes its mind about being foreground,
+  SpringBoard finds a state it did not put there and asserts - and that is not an exception
+  that unwinds, it is SpringBoard going down. `SBAppViewController` hooks in
+  `springboard/Tweak.xm` catch it, and only for the stage's own app views. For the same
+  reason nothing writes the app's lifecycle from outside any more; the app view is told to
+  run the lifecycle itself, from whether its view is on screen.
+
+If a build has no app view controller to give - the class or the scene entity is missing -
+the older by-hand routes are still there behind it, and the diagnostics page says which one
+answered.
 
 ## Staying out of the way
 

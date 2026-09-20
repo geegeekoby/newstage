@@ -325,20 +325,43 @@ typedef BOOL (^DSSceneHostAttempt)(void);
             ? ((id (*)(id, SEL))objc_msgSend)(sceneManager, @selector(displayIdentity))
             : nil;
 
+        // Which of these a build has changes with the iOS version, and the later ones
+        // are not simply newer names for the earlier: the "generating new primary
+        // scene" one is the only one that promises a scene for an app that has none,
+        // which is the case the stage exists for.
         SBDeviceApplicationSceneEntity *entity = nil;
-        if ([entityClass respondsToSelector:@selector(defaultEntityWithApplication:sceneHandleProvider:displayIdentity:)] &&
-            sceneManager && displayIdentity) {
-            entity = [entityClass defaultEntityWithApplication:application
-                                          sceneHandleProvider:sceneManager
-                                              displayIdentity:displayIdentity];
+        NSString *entityRoute = nil;
+
+        SEL withProvider = NSSelectorFromString(@"defaultEntityWithApplication:sceneHandleProvider:displayIdentity:");
+        if (!entity && sceneManager && displayIdentity && [entityClass respondsToSelector:withProvider]) {
+            entity = ((id (*)(id, SEL, id, id, id))objc_msgSend)(entityClass, withProvider,
+                                                                 application, sceneManager, displayIdentity);
+            entityRoute = @"default entity with a scene handle provider";
         }
+
+        SEL generating = NSSelectorFromString(@"initWithApplicationForMainDisplay:generatingNewPrimarySceneIfRequired:");
+        if (!entity && [entityClass instancesRespondToSelector:generating]) {
+            entity = ((id (*)(id, SEL, id, BOOL))objc_msgSend)([entityClass alloc], generating, application, YES);
+            entityRoute = @"entity that makes a scene if the app has none";
+        }
+
+        SEL defaultForMainDisplay = NSSelectorFromString(@"defaultEntityWithApplicationForMainDisplay:");
+        if (!entity && [entityClass respondsToSelector:defaultForMainDisplay]) {
+            entity = ((id (*)(id, SEL, id))objc_msgSend)(entityClass, defaultForMainDisplay, application);
+            entityRoute = @"default entity for the main display";
+        }
+
         if (!entity && [entityClass instancesRespondToSelector:@selector(initWithApplicationForMainDisplay:)]) {
             entity = [[entityClass alloc] initWithApplicationForMainDisplay:application];
+            entityRoute = @"plain entity for the main display";
         }
+
         if (!entity) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: no scene entity for %@", _bundleIdentifier);
+            DSDiagnosticsRecordFormat(@"SpringBoard: no scene entity for %@ - none of the ways of asking exist here",
+                                      _bundleIdentifier);
             return NO;
         }
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ got its %@", _bundleIdentifier, entityRoute);
 
         SBAppViewController *controller =
             [[viewControllerClass alloc] initWithIdentifier:_bundleIdentifier andApplicationSceneEntity:entity];
@@ -355,8 +378,19 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         if ([controller respondsToSelector:@selector(setIgnoresOcclusions:)]) {
             [controller setIgnoresOcclusions:NO];
         }
+        // The app view runs the app's lifecycle from its own view's appearance, which
+        // is what the stage wants: the app is awake while the card is on screen and
+        // suspends when it is put away, decided by SpringBoard rather than dictated to
+        // it from outside.
+        if ([controller respondsToSelector:@selector(setAutomatesLifecycle:)]) {
+            ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setAutomatesLifecycle:), YES);
+        }
         // Mode 2 is the live one. Anything else and the view shows a snapshot.
         if ([controller respondsToSelector:@selector(_setCurrentMode:)]) [controller _setCurrentMode:2];
+
+        // Told before the app starts, so it launches at the card's size instead of
+        // launching full screen and being cut down afterwards.
+        [self setContentReferenceSizeOnAppView];
 
         // Activation settings left over from however the app was last opened decide
         // things like orientation and whether it animates; cleared so the stage's
@@ -375,6 +409,11 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         if ([controller respondsToSelector:@selector(setDisplayMode:animationFactory:completion:)]) {
             [controller setDisplayMode:4 animationFactory:nil completion:nil];
         }
+        // An app that is only hosted is on screen but asleep; this is what makes it
+        // the running, typed-into app the stage is supposed to be showing.
+        if ([controller respondsToSelector:NSSelectorFromString(@"_activateApp")]) {
+            ((void (*)(id, SEL))objc_msgSend)(controller, NSSelectorFromString(@"_activateApp"));
+        }
 
         UIView *view = controller.view;
         if (!view) {
@@ -387,6 +426,7 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         _hostView = view;
 
         [self noteSceneSource:@"SpringBoard's own app view"];
+        [self reportHostingOutcome];
         return YES;
     } @catch (NSException *exception) {
         DSDiagnosticsRecordFormat(@"SpringBoard: asking for an app view for %@ threw %@ - %@",
@@ -394,6 +434,31 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         [self tearDownAppViewController];
         return NO;
     }
+}
+
+// "It showed the logo and went back to the picker" and "the app is there but has
+// not drawn yet" look identical from outside, so the app view is asked once it has
+// had time to start, and the answer is written down.
+- (void)reportHostingOutcome {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        SBAppViewController *controller = strongSelf ? strongSelf->_appViewController : nil;
+        if (!controller) return;
+        @try {
+            SEL hosting = NSSelectorFromString(@"isHostingAnApp");
+            BOOL isHosting = [controller respondsToSelector:hosting]
+                ? ((BOOL (*)(id, SEL))objc_msgSend)(controller, hosting)
+                : NO;
+            FBScene *scene = [strongSelf appViewScene];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ after two seconds - %@, %@, view %@",
+                                      strongSelf->_bundleIdentifier,
+                                      isHosting ? @"hosting the app" : @"not hosting anything",
+                                      scene ? @"scene present" : @"no scene",
+                                      controller.view.superview ? @"in the card" : @"not in the card");
+        } @catch (NSException *exception) {
+        }
+    });
 }
 
 - (id)mainDisplaySceneManager {
@@ -442,8 +507,25 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 // else happens to resize it.
 - (void)deliverStageSizeToApp {
     if (!_appViewController) return;
+    [self setContentReferenceSizeOnAppView];
     [self beginSceneTransactionDeliveringActions:NO];
     [self forceSceneGeometry];
+}
+
+// The app view's own idea of how big the app is. It is the size the app view then
+// puts into the scene, so it has to be set before each transaction rather than
+// corrected after one.
+- (void)setContentReferenceSizeOnAppView {
+    SBAppViewController *controller = _appViewController;
+    SEL selector = @selector(setContentReferenceSize:withInterfaceOrientation:);
+    if (![controller respondsToSelector:selector]) return;
+    CGRect frame = [self logicalFrame];
+    if (CGRectIsEmpty(frame)) return;
+    @try {
+        ((void (*)(id, SEL, CGSize, long long))objc_msgSend)(controller, selector, frame.size,
+                                                            (long long)UIInterfaceOrientationPortrait);
+    } @catch (NSException *exception) {
+    }
 }
 
 - (void)forceSceneGeometry {

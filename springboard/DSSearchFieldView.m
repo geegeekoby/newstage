@@ -1,5 +1,6 @@
 #import "DSSearchFieldView.h"
 #import "DSConstants.h"
+#import "DSDiagnostics.h"
 
 @interface DSSearchFieldView () <UITextFieldDelegate>
 @end
@@ -107,6 +108,26 @@
 }
 
 #pragma mark - UITextFieldDelegate
+
+// Typing goes to the key window, and this field's window is SpringBoard's only when
+// the stage put it there. Asked for again here because this is the moment it
+// actually matters, whatever happened when the stage opened.
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
+    UIWindow *window = self.window;
+    if (window && !window.isKeyWindow) {
+        @try {
+            [window makeKeyWindow];
+        } @catch (NSException *exception) {
+        }
+    }
+    static BOOL noted = NO;
+    if (!noted) {
+        noted = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: search field asked for the keyboard, window is %@",
+                                  window.isKeyWindow ? @"key" : @"still not key");
+    }
+    return YES;
+}
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     [textField resignFirstResponder];

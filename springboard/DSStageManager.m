@@ -572,6 +572,50 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 #pragma mark - Split View corner mask
 
+// A rounded rectangle whose corners follow the same superellipse the display mask
+// uses, rather than the plain arcs UIBezierPath draws. Sixteen samples a corner
+// is past the point where the difference is visible.
+static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRectCorner corners) {
+    static const NSInteger kSamples = 16;
+    static const CGFloat kExponent = 5.0;
+
+    radius = MIN(radius, MIN(CGRectGetWidth(rect), CGRectGetHeight(rect)) / 2.0);
+    UIBezierPath *path = [UIBezierPath bezierPath];
+
+    CGFloat minX = CGRectGetMinX(rect), maxX = CGRectGetMaxX(rect);
+    CGFloat minY = CGRectGetMinY(rect), maxY = CGRectGetMaxY(rect);
+
+    // Each corner is walked as a quarter superellipse from one edge to the next.
+    // Going clockwise, the sweep runs the other way on every second corner.
+    void (^corner)(CGPoint, CGFloat, CGFloat, BOOL, BOOL) =
+        ^(CGPoint centre, CGFloat sx, CGFloat sy, BOOL rounded, BOOL reverse) {
+        if (!rounded) {
+            [path addLineToPoint:CGPointMake(centre.x + sx * radius, centre.y + sy * radius)];
+            return;
+        }
+        for (NSInteger i = 0; i <= kSamples; i++) {
+            CGFloat fraction = (CGFloat)i / (CGFloat)kSamples;
+            CGFloat t = (reverse ? 1.0 - fraction : fraction) * M_PI_2;
+            CGFloat dx = pow(cos(t), 2.0 / kExponent);
+            CGFloat dy = pow(sin(t), 2.0 / kExponent);
+            [path addLineToPoint:CGPointMake(centre.x + sx * radius * dx,
+                                            centre.y + sy * radius * dy)];
+        }
+    };
+
+    [path moveToPoint:CGPointMake(minX + radius, minY)];
+    [path addLineToPoint:CGPointMake(maxX - radius, minY)];
+    corner(CGPointMake(maxX - radius, minY + radius), 1.0, -1.0, (corners & UIRectCornerTopRight) != 0, YES);
+    [path addLineToPoint:CGPointMake(maxX, maxY - radius)];
+    corner(CGPointMake(maxX - radius, maxY - radius), 1.0, 1.0, (corners & UIRectCornerBottomRight) != 0, NO);
+    [path addLineToPoint:CGPointMake(minX + radius, maxY)];
+    corner(CGPointMake(minX + radius, maxY - radius), -1.0, 1.0, (corners & UIRectCornerBottomLeft) != 0, YES);
+    [path addLineToPoint:CGPointMake(minX, minY + radius)];
+    corner(CGPointMake(minX + radius, minY + radius), -1.0, -1.0, (corners & UIRectCornerTopLeft) != 0, NO);
+    [path closePath];
+    return path;
+}
+
 // SpringBoard does not round a scene it has resized, but the stock tweak's
 // Split View clearly has the same corner profile on the bottom of the top app as
 // the display itself. Everything around the resized app is black, so painting
@@ -595,15 +639,15 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     _splitCornerMask.frame = host;
     CAShapeLayer *shape = (CAShapeLayer *)_splitCornerMask.layer.sublayers.firstObject;
 
-    // Only the bottom corners: the top two are the display's own.
-    CGRect strip = CGRectMake(0, CGRectGetHeight(host) - radius, CGRectGetWidth(host), radius);
-    UIBezierPath *path = [UIBezierPath bezierPathWithRect:strip];
-    UIBezierPath *rounded = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, CGRectGetHeight(host) - radius * 2.0, CGRectGetWidth(host), radius * 2.0)
-                                                 byRoundingCorners:UIRectCornerBottomLeft | UIRectCornerBottomRight
-                                                       cornerRadii:CGSizeMake(radius, radius)];
-    [path appendPath:rounded];
+    // The host's whole rectangle minus the same rectangle with its bottom corners
+    // rounded, which leaves exactly the two wedges to paint. Only the bottom two:
+    // the top corners are the display's own.
+    CGRect bounds = _splitCornerMask.bounds;
+    UIBezierPath *path = [UIBezierPath bezierPathWithRect:bounds];
+    [path appendPath:DSContinuousRoundedPath(bounds, radius,
+                                             UIRectCornerBottomLeft | UIRectCornerBottomRight)];
     shape.path = path.CGPath;
-    shape.frame = _splitCornerMask.bounds;
+    shape.frame = bounds;
     _splitCornerMask.hidden = NO;
 }
 

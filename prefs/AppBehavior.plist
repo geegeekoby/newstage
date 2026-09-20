@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Application Behavior</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Application</string>
+			<key>id</key>
+			<string>appLabel</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Disabled</string>
+			<key>key</key>
+			<string>disabled</string>
+			<key>id</key>
+			<string>disabled</string>
+			<key>default</key>
+			<false/>
+			<key>get</key>
+			<string>readPreferenceValue:</string>
+			<key>set</key>
+			<string>setPreferenceValue:specifier:</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Application Launch Mode</string>
+			<key>footerText</key>
+			<string>When the app is launched from SpringBoard in iPad mode, it allows dynamic resizing without relaunching the app (for Split View / App Backgrounding). Unfortunately this behavior is not supported in many apps and can result in glitches, rotation issues and other unexpected behaviors.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>key</key>
+			<string>type</string>
+			<key>id</key>
+			<string>type</string>
+			<key>default</key>
+			<integer>1</integer>
+			<key>validTitles</key>
+			<array>
+				<string>iPad</string>
+				<string>iPhone</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+			</array>
+			<key>get</key>
+			<string>readPreferenceValue:</string>
+			<key>set</key>
+			<string>setPreferenceValue:specifier:</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>iPad Mode</string>
+			<key>id</key>
+			<string>ipadLabel</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Disable Landscape</string>
+			<key>key</key>
+			<string>disable_ipad_landscape</string>
+			<key>id</key>
+			<string>disable_ipad_landscape</string>
+			<key>default</key>
+			<false/>
+			<key>get</key>
+			<string>readPreferenceValue:</string>
+			<key>set</key>
+			<string>setPreferenceValue:specifier:</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Backgrounding</string>
+			<key>id</key>
+			<string>backgroundLabel</string>
+			<key>footerText</key>
+			<string>Some apps (*not all*) will only send push notifications to the device when backgrounded or closed. Therefore when the stage is minimized, these apps will not alert you of new notifications if this option is not enabled.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Background on minimize</string>
+			<key>key</key>
+			<string>background_on_minimize</string>
+			<key>id</key>
+			<string>background_on_minimize</string>
+			<key>default</key>
+			<false/>
+			<key>get</key>
+			<string>readPreferenceValue:</string>
+			<key>set</key>
+			<string>setPreferenceValue:specifier:</string>
+		</dict>
+	</array>
+</dict>
+</plist>

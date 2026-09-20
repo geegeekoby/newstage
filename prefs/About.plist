@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>About</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Dynamic Stage</string>
+			<key>footerText</key>
+			<string>Pull up from the bottom right corner to bring the stage in, pick an app, and drag the stage down to hand the top half back to whatever you were using. Hold an app in the picker to open it full screen instead.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Original tweak by @tomt000</string>
+			<key>action</key>
+			<string>openOriginalAuthor</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Recovery</string>
+			<key>footerText</key>
+			<string>The safe mode flag keeps every hook out of SpringBoard on the next respring without uninstalling anything. Use it if a future iOS update makes the stage misbehave.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Create Safe Mode Flag</string>
+			<key>id</key>
+			<string>killSwitch</string>
+			<key>hidesDisclosureIndicator</key>
+			<true/>
+			<key>action</key>
+			<string>toggleKillSwitch</string>
+		</dict>
+	</array>
+</dict>
+</plist>

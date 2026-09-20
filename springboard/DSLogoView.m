@@ -6,20 +6,20 @@ static UIBezierPath *DSArrowPath(CGFloat side) {
     UIBezierPath *path = [UIBezierPath bezierPath];
 
     // Tail: starts low on the right, sweeps left and then turns upward.
-    [path moveToPoint:CGPointMake(74.0 * u, 80.0 * u)];
+    [path moveToPoint:CGPointMake(84.0 * u, 90.0 * u)];
     [path addCurveToPoint:CGPointMake(50.0 * u, 46.0 * u)
-            controlPoint1:CGPointMake(60.0 * u, 79.0 * u)
+            controlPoint1:CGPointMake(58.0 * u, 82.0 * u)
             controlPoint2:CGPointMake(50.0 * u, 66.0 * u)];
     [path addLineToPoint:CGPointMake(50.0 * u, 34.0 * u)];
 
     // Head.
-    [path addLineToPoint:CGPointMake(33.0 * u, 34.0 * u)];
-    [path addLineToPoint:CGPointMake(50.0 * u, 14.0 * u)];
-    [path addLineToPoint:CGPointMake(67.0 * u, 34.0 * u)];
+    [path addLineToPoint:CGPointMake(32.0 * u, 34.0 * u)];
+    [path addLineToPoint:CGPointMake(50.0 * u, 13.0 * u)];
+    [path addLineToPoint:CGPointMake(68.0 * u, 34.0 * u)];
     [path addLineToPoint:CGPointMake(58.0 * u, 34.0 * u)];
 
     [path addLineToPoint:CGPointMake(58.0 * u, 46.0 * u)];
-    [path addCurveToPoint:CGPointMake(74.0 * u, 68.0 * u)
+    [path addCurveToPoint:CGPointMake(78.0 * u, 73.0 * u)
             controlPoint1:CGPointMake(58.0 * u, 60.0 * u)
             controlPoint2:CGPointMake(64.0 * u, 68.0 * u)];
     [path closePath];

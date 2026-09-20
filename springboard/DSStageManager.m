@@ -690,12 +690,12 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 // frame, so the target and its rectangle are published to disk plus a Darwin
 // notification for anything already running.
 - (void)publishStageStateForBundleIdentifier:(NSString *)identifier frame:(CGRect)frame active:(BOOL)active {
-    NSDictionary *state = @{
-        @"stage" : identifier ?: @"",
-        @"active" : @(active),
-        @"width" : @(CGRectGetWidth(frame)),
-        @"height" : @(CGRectGetHeight(frame)),
-    };
+    // The same file carries the recents list, so merge rather than overwrite.
+    NSMutableDictionary *state = [([NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath] ?: @{}) mutableCopy];
+    state[@"stage"] = identifier ?: @"";
+    state[@"active"] = @(active);
+    state[@"width"] = @(CGRectGetWidth(frame));
+    state[@"height"] = @(CGRectGetHeight(frame));
     [state writeToFile:kDSSharedStatePath atomically:YES];
     notify_post(kDSStageGeometryNotification);
 }

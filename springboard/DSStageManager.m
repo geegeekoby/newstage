@@ -104,6 +104,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     DSLaunchPlaceholderView *_launchPlaceholder;
 
     NSString *_splitHostBundleIdentifier;
+    NSString *_bundleIdentifierToRestoreInFront;
     NSTimer *_autoKillTimer;
     NSInteger _stageQuarterTurns;
 
@@ -1149,9 +1150,16 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (void)launchEntry:(DSAppEntry *)entry {
-    if (entry.bundleIdentifier.length == 0) return;
+    if (entry.bundleIdentifier.length == 0) {
+        DSDiagnosticsRecord(@"SpringBoard: a plate was tapped with no app behind it");
+        return;
+    }
     DSPreferences *preferences = [DSPreferences sharedPreferences];
-    if ([preferences isApplicationDisabled:entry.bundleIdentifier]) return;
+    if ([preferences isApplicationDisabled:entry.bundleIdentifier]) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ is switched off in its own settings, so it was not opened",
+                                  entry.bundleIdentifier);
+        return;
+    }
 
     // Swap out whatever was already on the stage.
     if (_sceneHost && ![_sceneHost.bundleIdentifier isEqualToString:entry.bundleIdentifier]) {
@@ -1159,6 +1167,12 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         _sceneHost = nil;
         [previous relinquishKeepingBackgrounded:[preferences backgroundsOnMinimize:previous.bundleIdentifier]];
     }
+
+    // Remembered before anything is launched: if the app turns out to need opening
+    // for real, this is who has to be put back in front afterwards.
+    SBApplication *wasInFront = [self frontApplication];
+    _bundleIdentifierToRestoreInFront =
+        [wasInFront.bundleIdentifier isEqualToString:entry.bundleIdentifier] ? nil : wasInFront.bundleIdentifier;
 
     [preferences noteApplicationOpened:entry.bundleIdentifier];
     [self publishStageStateForBundleIdentifier:entry.bundleIdentifier
@@ -1178,6 +1192,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         if (!ready || strongSelf->_sceneHost != host) {
             DSDiagnosticsRecordFormat(@"SpringBoard: %@ did not make it onto the stage, back to the picker",
                                       host.bundleIdentifier);
+            strongSelf->_bundleIdentifierToRestoreInFront = nil;
             [strongSelf dismissLaunchPlaceholder];
             if (strongSelf->_sceneHost == host) {
                 strongSelf->_sceneHost = nil;
@@ -1229,6 +1244,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     UIView *hostView = _sceneHost.hostView;
     if (!hostView) {
         DSDiagnosticsRecordFormat(@"SpringBoard: %@ was ready but handed over no view", _sceneHost.bundleIdentifier);
+        _bundleIdentifierToRestoreInFront = nil;
         [self dismissLaunchPlaceholder];
         return;
     }
@@ -1244,6 +1260,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [self applyStageRotation];
     [self requestKeyboardFocusForStage];
     [self updateHomeAffordance];
+    [self returnFrontToWhereItWas];
 
     UIView *placeholder = _launchPlaceholder;
     _launchPlaceholder = nil;
@@ -1252,6 +1269,44 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     } completion:^(BOOL finished) {
         [placeholder removeFromSuperview];
     }];
+}
+
+// Only ever needed when an app refused to start in the background and had to be
+// opened for real, which makes it the front app for as long as it takes to get its
+// layer into the card. Putting the screen back where it was is the difference
+// between the stage opening an app and the stage throwing the user into one.
+- (void)returnFrontToWhereItWas {
+    NSString *previous = _bundleIdentifierToRestoreInFront;
+    _bundleIdentifierToRestoreInFront = nil;
+    if (!_sceneHost.tookOverForegroundLaunch) return;
+
+    SpringBoard *springBoard = (SpringBoard *)UIApplication.sharedApplication;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            if (previous.length > 0 &&
+                [springBoard respondsToSelector:@selector(launchApplicationWithIdentifier:suspended:)]) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: putting %@ back in front", previous);
+                [springBoard launchApplicationWithIdentifier:previous suspended:NO];
+                return;
+            }
+            for (NSString *name in @[ @"_simulateHomeButtonPress", @"clickedMenuButton" ]) {
+                SEL selector = NSSelectorFromString(name);
+                id target = [springBoard respondsToSelector:selector] ? springBoard : nil;
+                if (!target) {
+                    Class controller = objc_getClass("SBUIController");
+                    id shared = [controller respondsToSelector:@selector(sharedInstance)]
+                        ? ((id (*)(id, SEL))objc_msgSend)(controller, @selector(sharedInstance))
+                        : nil;
+                    target = [shared respondsToSelector:selector] ? shared : nil;
+                }
+                if (!target) continue;
+                DSDiagnosticsRecord(@"SpringBoard: back to the home screen behind the stage");
+                ((void (*)(id, SEL))objc_msgSend)(target, selector);
+                return;
+            }
+        } @catch (NSException *exception) {
+        }
+    });
 }
 
 // Back to the picker, app stays alive.

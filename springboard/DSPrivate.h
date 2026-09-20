@@ -69,6 +69,74 @@
 @property (nonatomic, readonly) NSInteger pid;
 @end
 
+// Making a scene from nothing -----------------------------------------------
+//
+// The usual way to put an app on the stage is to borrow the scene SpringBoard
+// already keeps for it. An app that has never been opened has no such scene, and
+// nothing SpringBoard is willing to do short of opening the app full screen will
+// create one. These are the pieces needed to create a scene of the stage's own
+// against a running app process and present it in a view - the same route used by
+// every current iPad-style multitasking project.
+
+@interface RBSProcessIdentity : NSObject
++ (instancetype)identityForEmbeddedApplicationIdentifier:(NSString *)identifier;
+@end
+
+@interface RBSProcessPredicate : NSObject
++ (instancetype)predicateMatchingIdentity:(RBSProcessIdentity *)identity;
+@end
+
+@interface RBSProcessHandle : NSObject
++ (instancetype)handleForPredicate:(RBSProcessPredicate *)predicate error:(NSError **)error;
+@property (nonatomic, readonly) pid_t pid;
+@property (nonatomic, readonly, copy) RBSProcessIdentity *identity;
+@end
+
+@interface FBSSceneIdentity : NSObject
++ (instancetype)identityForIdentifier:(NSString *)identifier;
+@end
+
+@interface FBSSceneClientIdentity : NSObject
++ (instancetype)identityForProcessIdentity:(RBSProcessIdentity *)identity;
+@end
+
+@interface FBSMutableSceneDefinition : NSObject
++ (instancetype)definition;
+@property (nonatomic, strong) FBSSceneIdentity *identity;
+@property (nonatomic, strong) FBSSceneClientIdentity *clientIdentity;
+@property (nonatomic, strong) id specification;
+@end
+
+@interface FBSMutableSceneParameters : NSObject
++ (instancetype)parametersForSpecification:(id)specification;
+@property (nonatomic, strong) FBSSceneSettings *settings;
+@property (nonatomic, strong) FBSSceneClientSettings *clientSettings;
+@end
+
+@interface FBSceneManager : NSObject
++ (instancetype)sharedInstance;
+- (FBScene *)sceneWithIdentifier:(NSString *)identifier;
+- (FBScene *)createSceneWithDefinition:(FBSMutableSceneDefinition *)definition
+                     initialParameters:(FBSMutableSceneParameters *)parameters;
+- (void)destroyScene:(NSString *)identifier withTransitionContext:(id)context;
+@end
+
+@interface UIScenePresenter : NSObject
+@property (nonatomic, readonly) UIView *presentationView;
+- (void)activate;
+- (void)deactivate;
+- (void)invalidate;
+- (void)modifyPresentationContext:(void (^)(id context))block;
+@end
+
+@interface UIScenePresentationManager : NSObject
+- (UIScenePresenter *)createPresenterWithIdentifier:(NSString *)identifier;
+@end
+
+@interface FBScene (DSPresentation)
+- (UIScenePresentationManager *)uiPresentationManager;
+@end
+
 // SpringBoard ---------------------------------------------------------------
 
 @interface SBApplicationInfo : NSObject
@@ -138,6 +206,7 @@
 
 @interface UIScreen (DSPrivate)
 - (CGFloat)_displayCornerRadius;
+- (id)displayConfiguration;
 @end
 
 @interface UIGestureRecognizer (DSPrivate)

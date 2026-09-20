@@ -201,6 +201,36 @@ Notes on the build:
 - `tools/make_resources.py` regenerates `prefs/Resources/*.png`; it needs `pillow` and
   `numpy` and is only required if you change the artwork.
 
+## Getting an app onto the stage
+
+The card shows an app's own live render, not a picture of it, which means the stage needs
+the app's scene - the object SpringBoard and the app share to agree on a window. Everything
+about opening an app on the stage comes down to getting hold of one, and there is no single
+way that works, so `springboard/DSSceneHost.m` tries them in order of how little each one
+disturbs the screen, and writes down which one answered:
+
+1. **Ask for the scene the app already has.** Its base scene identifier, then its scene
+   handles, then every scene FrontBoard knows, then the scenes seen going past the settings
+   hook. `-[SBApplication mainScene]`, which is what this used at first, was removed in
+   iOS 13 - on 16.5 it answers nothing, every launch ended with the picker coming back, and
+   that is why the chain exists.
+2. **Start the app without opening it**, twice over: through SpringBoard, then through
+   FrontBoard directly, waiting two seconds after each for a scene to turn up. An app that
+   has never been opened since boot has no scene, and a suspended launch does not always
+   make one.
+3. **Make a scene of the stage's own.** Against the app's running process, presented in a
+   view on the card, under the stage's own scene identifier so it can never collide with
+   SpringBoard's. This is what current iPad-style multitasking projects do, and it needs
+   nothing from SpringBoard except a process to attach to.
+4. **Open the app the ordinary way**, as a last resort. That makes it the front app for a
+   moment, so whoever was in front before is put back once the app's layer is on the card.
+
+Whichever way it arrived, the app is then told what size it is - by pushing scene settings
+and by holding those settings against SpringBoard's own layout passes from the `FBScene`
+hook, so the app cannot be resized back to full screen behind the stage's back. A scene the
+stage created itself is also the stage's to destroy when the card goes away; a borrowed one
+is handed back full screen so the app is not left believing it is stage sized.
+
 ## Staying out of the way
 
 A tweak in SpringBoard can leave a device that only works in safe mode, so the parts that

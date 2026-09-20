@@ -14,6 +14,9 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // Logical size handed to the app, which is the stage size multiplied by the
 // scale preference; the host view is then transformed back down.
 @property (nonatomic, readonly) CGFloat contentScale;
+// Set when the app could only be started by opening it for real, which leaves it
+// as the front app; whoever was in front before has to be put back.
+@property (nonatomic, readonly) BOOL tookOverForegroundLaunch;
 
 - (instancetype)initWithBundleIdentifier:(NSString *)bundleIdentifier;
 

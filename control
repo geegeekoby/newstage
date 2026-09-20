@@ -1,0 +1,13 @@
+Package: com.recreated.dynamicstage
+Name: Dynamic Stage
+Version: 1.2.0
+Architecture: iphoneos-arm64
+Description: Stage Manager reimagined for iPhone. Split View and an overlay stage for two live apps at once, driven by a single corner gesture.
+Depends: mobilesubstrate (>= 0.9.5000), com.opa334.altlist, preferenceloader, firmware (>= 14.0)
+Conflicts: me.tomt000.stageduo
+Replaces: me.tomt000.stageduo
+Maintainer: Dynamic Stage Recreation
+Author: Dynamic Stage Recreation
+Section: Tweaks
+Tag: compatible::ios16
+Icon: file:///Library/PreferenceBundles/DynamicStagePrefs.bundle/icon@3x.png

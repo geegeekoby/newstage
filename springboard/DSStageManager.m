@@ -97,6 +97,8 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     DSSceneHost *_sceneHost;
 
     UIView *_hostSnapshot;
+    UIView *_hostBackdrop;
+    UIView *_splitCornerMask;
     UIImageView *_openAppIcon;
     DSLaunchPlaceholderView *_launchPlaceholder;
 
@@ -229,20 +231,27 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 - (CGRect)stageFrameForState:(DSStageState)state {
     CGRect bounds = [self screenBounds];
-    CGFloat height = CGRectGetHeight(bounds) - [self splitLine];
+    CGFloat screenHeight = CGRectGetHeight(bounds);
+
+    // Overlay rests a few points lower than the Split View divider, which is
+    // what gives the floating card its sliver of app above it.
+    CGFloat overlayTop = round(screenHeight * kDSOverlayTopRatio);
+    CGFloat splitTop = [self splitLine] + kDSSplitDividerGap;
+
     switch (state) {
         case DSStageStateSplit:
+            return CGRectMake(0, splitTop, CGRectGetWidth(bounds), screenHeight - splitTop);
         case DSStageStateOverlay:
-            return CGRectMake(0, CGRectGetHeight(bounds) - height, CGRectGetWidth(bounds), height);
+            return CGRectMake(0, overlayTop, CGRectGetWidth(bounds), screenHeight - overlayTop);
         default:
             // Parked just below the bottom edge.
-            return CGRectMake(0, CGRectGetHeight(bounds), CGRectGetWidth(bounds), height);
+            return CGRectMake(0, screenHeight, CGRectGetWidth(bounds), screenHeight - overlayTop);
     }
 }
 
 - (CGRect)hostFrameForSplit {
     CGRect bounds = [self screenBounds];
-    return CGRectMake(0, 0, CGRectGetWidth(bounds), [self splitLine] - kDSSplitDividerGap);
+    return CGRectMake(0, 0, CGRectGetWidth(bounds), [self splitLine]);
 }
 
 - (UIEdgeInsets)stageSafeAreaInsets {
@@ -370,6 +379,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     _container.alpha = 1.0;
     _window.hidden = NO;
 
+    // The app behind starts shrinking from the first millimetre of the drag, so
+    // the still it is swapped for has to exist before the first update.
+    [self prepareHostSnapshot];
     if (self.hasHostedApp) [_sceneHost setForeground:YES];
 }
 
@@ -384,10 +396,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     BOOL passedSplit = progress >= kDSSplitProgress;
     if (passedSplit != _trackingPassedSplit) {
         _trackingPassedSplit = passedSplit;
-        if (passedSplit) {
-            [self prepareHostSnapshot];
-            [_feedback impactOccurred];
-        }
+        // Past this point releasing lands in Split View rather than overlay, so
+        // the hand gets told about it.
+        if (passedSplit) [_feedback impactOccurred];
     }
     [self updateHostSnapshotForProgress:progress];
 }
@@ -412,12 +423,13 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 }
 
 - (void)cancelTracking {
-    [self discardHostSnapshotAnimated:YES];
     DSStageState previous = _stateBeforeTracking;
     [self animateSpring:^{
+        [self animateHostSnapshotToFullScreen];
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
         self->_container.cornerRadius = [self displayCornerRadius];
     } completion:^{
+        [self discardHostSnapshotAnimated:YES];
         self->_state = previous == DSStageStateMinimized ? DSStageStateMinimized : DSStageStateClosed;
         if (self->_state == DSStageStateMinimized) {
             [self updateOpenAppIcon];
@@ -464,8 +476,11 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 #pragma mark - Host snapshot
 
-// A still of the screen stands in for the app behind while its scene catches up
-// with the new geometry, so the resize never flashes.
+// A still of the screen stands in for the app behind for the length of the
+// gesture. The recordings show that app shrinking to 0.872 about the screen
+// centre over black while the corner is pulled, which is not something a live
+// scene can be asked to do sixty times a second, and the still also covers the
+// moment the real scene catches up with its new geometry in Split View.
 - (void)prepareHostSnapshot {
     if (_hostSnapshot) return;
     UIView *snapshot = nil;
@@ -474,37 +489,115 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     }
     if (!snapshot) return;
 
-    snapshot.frame = [self screenBounds];
+    CGRect screen = [self screenBounds];
+
+    UIView *backdrop = [[UIView alloc] initWithFrame:screen];
+    backdrop.backgroundColor = UIColor.blackColor;
+    backdrop.alpha = 0.0;
+    backdrop.userInteractionEnabled = NO;
+    [_window.rootViewController.view insertSubview:backdrop atIndex:0];
+    _hostBackdrop = backdrop;
+
+    snapshot.frame = screen;
     snapshot.layer.cornerCurve = kCACornerCurveContinuous;
     snapshot.layer.masksToBounds = YES;
     snapshot.layer.cornerRadius = [self displayCornerRadius];
     snapshot.userInteractionEnabled = NO;
-    [_window.rootViewController.view insertSubview:snapshot atIndex:0];
+    [_window.rootViewController.view insertSubview:snapshot aboveSubview:backdrop];
     _hostSnapshot = snapshot;
 }
 
 - (void)updateHostSnapshotForProgress:(CGFloat)progress {
     if (!_hostSnapshot) return;
-    CGFloat phase = MIN(MAX((progress - kDSSplitProgress) / (1.2 - kDSSplitProgress), 0.0), 1.0);
+
     CGRect screen = [self screenBounds];
+    CGFloat shrinkPhase = MIN(MAX(progress / kDSSplitProgress, 0.0), 1.0);
+    CGFloat scale = 1.0 - (1.0 - kDSHostShrinkScale) * shrinkPhase;
+
+    _hostSnapshot.transform = CGAffineTransformIdentity;
+    _hostSnapshot.frame = screen;
+    _hostSnapshot.transform = CGAffineTransformMakeScale(scale, scale);
+    // The black only has to appear once the app has actually left the edges.
+    _hostBackdrop.alpha = MIN(shrinkPhase * 4.0, 1.0);
+}
+
+// Split View: the still grows back to full width and settles into the top half,
+// so the app appears to resize rather than jump.
+- (void)animateHostSnapshotIntoSplit {
+    if (!_hostSnapshot) return;
     CGRect target = [self hostFrameForSplit];
-    CGFloat height = CGRectGetHeight(screen) + (CGRectGetHeight(target) - CGRectGetHeight(screen)) * phase;
-    _hostSnapshot.frame = CGRectMake(0, 0, CGRectGetWidth(screen), height);
+    _hostSnapshot.transform = CGAffineTransformIdentity;
+    _hostSnapshot.frame = target;
+}
+
+- (void)animateHostSnapshotToFullScreen {
+    if (!_hostSnapshot) return;
+    _hostSnapshot.transform = CGAffineTransformIdentity;
+    _hostSnapshot.frame = [self screenBounds];
+    _hostBackdrop.alpha = 0.0;
 }
 
 - (void)discardHostSnapshotAnimated:(BOOL)animated {
     UIView *snapshot = _hostSnapshot;
-    if (!snapshot) return;
+    UIView *backdrop = _hostBackdrop;
+    if (!snapshot && !backdrop) return;
     _hostSnapshot = nil;
+    _hostBackdrop = nil;
+
     if (!animated) {
         [snapshot removeFromSuperview];
+        [backdrop removeFromSuperview];
         return;
     }
     [UIView animateWithDuration:0.2 animations:^{
         snapshot.alpha = 0.0;
+        backdrop.alpha = 0.0;
     } completion:^(BOOL finished) {
         [snapshot removeFromSuperview];
+        [backdrop removeFromSuperview];
     }];
+}
+
+#pragma mark - Split View corner mask
+
+// SpringBoard does not round a scene it has resized, but the stock tweak's
+// Split View clearly has the same corner profile on the bottom of the top app as
+// the display itself. Everything around the resized app is black, so painting
+// black wedges over its bottom corners is indistinguishable from masking it.
+- (void)updateSplitCornerMask {
+    CGRect host = [self hostFrameForSplit];
+    CGFloat radius = [self displayCornerRadius];
+
+    if (!_splitCornerMask) {
+        _splitCornerMask = [[UIView alloc] initWithFrame:host];
+        _splitCornerMask.userInteractionEnabled = NO;
+        _splitCornerMask.backgroundColor = UIColor.clearColor;
+
+        CAShapeLayer *shape = [CAShapeLayer layer];
+        shape.fillColor = UIColor.blackColor.CGColor;
+        shape.fillRule = kCAFillRuleEvenOdd;
+        [_splitCornerMask.layer addSublayer:shape];
+        [_window.rootViewController.view insertSubview:_splitCornerMask belowSubview:_container];
+    }
+
+    _splitCornerMask.frame = host;
+    CAShapeLayer *shape = (CAShapeLayer *)_splitCornerMask.layer.sublayers.firstObject;
+
+    // Only the bottom corners: the top two are the display's own.
+    CGRect strip = CGRectMake(0, CGRectGetHeight(host) - radius, CGRectGetWidth(host), radius);
+    UIBezierPath *path = [UIBezierPath bezierPathWithRect:strip];
+    UIBezierPath *rounded = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, CGRectGetHeight(host) - radius * 2.0, CGRectGetWidth(host), radius * 2.0)
+                                                 byRoundingCorners:UIRectCornerBottomLeft | UIRectCornerBottomRight
+                                                       cornerRadii:CGSizeMake(radius, radius)];
+    [path appendPath:rounded];
+    shape.path = path.CGPath;
+    shape.frame = _splitCornerMask.bounds;
+    _splitCornerMask.hidden = NO;
+}
+
+- (void)removeSplitCornerMask {
+    [_splitCornerMask removeFromSuperview];
+    _splitCornerMask = nil;
 }
 
 #pragma mark - States
@@ -519,6 +612,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     if (self.hasHostedApp) [_sceneHost setForeground:YES];
 
     void (^layout)(void) = ^{
+        // The app behind is untouched in overlay, so the still springs back to
+        // full screen before it is thrown away.
+        [self animateHostSnapshotToFullScreen];
         self->_container.frame = [self stageFrameForState:DSStageStateOverlay];
         self->_container.cornerRadius = [self displayCornerRadius];
     };
@@ -544,8 +640,10 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
     if (self.hasHostedApp) [_sceneHost setForeground:YES];
     [self applySplitHostLayout];
+    [self updateSplitCornerMask];
 
     void (^layout)(void) = ^{
+        [self animateHostSnapshotIntoSplit];
         self->_container.frame = [self stageFrameForState:DSStageStateSplit];
         self->_container.cornerRadius = [self displayCornerRadius];
     };
@@ -659,6 +757,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 }
 
 - (void)restoreHostLayout {
+    [self removeSplitCornerMask];
     if (!_splitHostBundleIdentifier) return;
 
     Class controllerClass = objc_getClass("SBApplicationController");

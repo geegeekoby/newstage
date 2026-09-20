@@ -83,20 +83,29 @@ typedef NS_ENUM(NSInteger, DSStageState) {
 
 // Layout ---------------------------------------------------------------------
 // Measured off the stock tweak's own 60fps walkthrough recordings, which were
-// captured on a 430x932pt device (iPhone 14 Pro Max, same as the target):
+// captured on a 430x932pt device (iPhone 14 Pro Max, same as the target). Every
+// number below came out of a pixel trace of those frames:
 //
-//   * the stage card is full width, flush with the bottom of the display and
-//     its top edge sits at exactly half the screen height in every state;
-//   * all four of its corners trace the same profile as the display mask, so
+//   * the stage card is full width and flush with the bottom of the display in
+//     every state, so only its top edge moves;
+//   * resting overlay top edge: 622/1218 video px -> 475.9pt, i.e. 0.5107 of the
+//     display height, a touch lower than the Split View divider;
+//   * Split View divider: a single black row at exactly half the display height,
+//     with the stage starting 1pt under it;
+//   * all four stage corners trace the same profile as the display mask (the
+//     traced outline matches the display's own bottom corner within a pixel), so
 //     the radius is _displayCornerRadius rather than a hand-picked number;
-//   * in Split View the app behind keeps the top half minus a ~3pt black gap;
+//   * the app behind scales to 0.872 about the screen centre while the corner is
+//     being pulled, over black, then either springs back (overlay) or resizes
+//     into the top half (split);
 //   * picker content is inset 10pt from each side of the card.
 
-static const CGFloat kDSStageHeightRatio = 0.5;
+static const CGFloat kDSOverlayTopRatio = 0.5107;
 static const CGFloat kDSSplitRatio = 0.5;
-static const CGFloat kDSSplitDividerGap = 3.0;
+static const CGFloat kDSSplitDividerGap = 1.0;
 static const CGFloat kDSFallbackDisplayCornerRadius = 55.0;
 static const CGFloat kDSContentInset = 10.0;
+static const CGFloat kDSHostShrinkScale = 0.872;
 
 // The hot corner that pulls the stage up, and the matching zone inside the
 // stage that pushes it back down.
@@ -105,9 +114,9 @@ static const CGFloat kDSTriggerHeight = 28.0;
 
 // Card that lifts out of the corner and follows the finger before the stage
 // takes its resting shape.
-static const CGFloat kDSPeekWidth = 168.0;
-static const CGFloat kDSPeekHeight = 168.0;
-static const CGFloat kDSPeekCornerRadius = 32.0;
+static const CGFloat kDSPeekWidth = 200.0;
+static const CGFloat kDSPeekHeight = 150.0;
+static const CGFloat kDSPeekCornerRadius = 26.0;
 
 // Spring used by every stage transition: ~0.42s response with a single small
 // overshoot, which is what the recordings settle to.

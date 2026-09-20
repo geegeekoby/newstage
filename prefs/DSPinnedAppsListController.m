@@ -186,7 +186,10 @@ moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    if ([super respondsToSelector:@selector(tableView:willDisplayCell:forRowAtIndexPath:)]) {
+    // Super has to be asked about its own instances: asked directly it answers for
+    // this class, says yes to the method being written here, and sends it on to a
+    // superclass that need not have it.
+    if ([DSPinnedAppsListController.superclass instancesRespondToSelector:_cmd]) {
         [super tableView:tableView willDisplayCell:cell forRowAtIndexPath:indexPath];
     }
     cell.showsReorderControl = indexPath.section == [self pinnedGroupIndex];

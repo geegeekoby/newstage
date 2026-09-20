@@ -8,7 +8,8 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
 
 - (NSMutableArray *)specifiers {
     if (!_specifiers) {
-        _specifiers = [self loadSpecifiersFromPlistName:@"About" target:self];
+        _specifiers = [self loadSpecifiersFromPlistName:@"About" target:self]
+                       ?: [NSMutableArray array];
         [self refreshKillSwitchRow];
         [self refreshLaunchGuardRow];
     }

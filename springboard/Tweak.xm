@@ -385,6 +385,15 @@ static void DSCloseStage(CFNotificationCenterRef center, void *observer, CFStrin
     });
 }
 
+static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFStringRef name,
+                        const void *object, CFDictionaryRef userInfo) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSTell(^(DSStageManager *manager) {
+            [manager openStageAnimated:YES];
+        });
+    });
+}
+
 %ctor {
     if (!DSTweakEnabled()) return;
 
@@ -409,6 +418,9 @@ static void DSCloseStage(CFNotificationCenterRef center, void *observer, CFStrin
     }
     CFNotificationCenterAddObserver(center, NULL, DSCloseStage,
                                     CFSTR(kDSCloseStageNotification), NULL,
+                                    CFNotificationSuspensionBehaviorCoalesce);
+    CFNotificationCenterAddObserver(center, NULL, DSOpenStage,
+                                    CFSTR(kDSOpenStageNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
 
     %init(_ungrouped);

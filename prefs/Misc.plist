@@ -42,7 +42,15 @@
 			<key>label</key>
 			<string>MISC</string>
 			<key>footerText</key>
-			<string>Showing the first install intro will require a respring. If you have questions about how to use the tweak, this is a good place to start 😉</string>
+			<string>Opening the stage from here puts it over Settings, the same as pulling up from the bottom-right corner would. Showing the first install intro will require a respring. If you have questions about how to use the tweak, this is a good place to start 😉</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Open Stage Now</string>
+			<key>action</key>
+			<string>openStage</string>
 		</dict>
 		<dict>
 			<key>cell</key>

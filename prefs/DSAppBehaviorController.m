@@ -17,7 +17,8 @@
 
 - (NSMutableArray *)specifiers {
     if (!_specifiers) {
-        _specifiers = [self loadSpecifiersFromPlistName:@"AppBehavior" target:self];
+        _specifiers = [self loadSpecifiersFromPlistName:@"AppBehavior" target:self]
+                       ?: [NSMutableArray array];
         [self applyApplicationContext];
     }
     return _specifiers;

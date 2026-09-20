@@ -84,7 +84,7 @@
 			<key>key</key>
 			<string>disableOnHomeScreen</string>
 			<key>default</key>
-			<true/>
+			<false/>
 			<key>get</key>
 			<string>readPreferenceValue:</string>
 			<key>set</key>

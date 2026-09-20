@@ -44,6 +44,61 @@ class Failure(Exception):
     pass
 
 
+def strings_in_section(data, base, sections, name):
+    if name not in sections:
+        return set()
+    _, size, fileoff = sections[name]
+    blob = data[base + fileoff : base + fileoff + size]
+    return {piece.decode("utf-8", "replace") for piece in blob.split(b"\0") if piece}
+
+
+def check_preference_bundle(root, problems):
+    """Every action and controller a specifier names has to exist in the binary.
+
+    A specifier pointing at a selector or class that is not there is not a
+    degraded row: Settings raises when the row is tapped, or while the page is
+    being built, and the crash looks like the whole tweak being broken.
+    """
+    import plistlib
+
+    bundles = [
+        os.path.join(directory, entry)
+        for directory, dirs, _ in os.walk(root)
+        for entry in dirs
+        if entry.endswith(".bundle")
+    ]
+    for bundle in bundles:
+        binary = os.path.join(bundle, os.path.basename(bundle)[: -len(".bundle")])
+        if not os.path.exists(binary):
+            continue
+
+        with open(binary, "rb") as handle:
+            data = handle.read()
+        classes, selectors = set(), set()
+        for cputype, cpusubtype, offset, _ in slices(data):
+            sections, _ = sections_and_commands(data, offset)
+            classes |= strings_in_section(data, offset, sections, "__TEXT,__objc_classname")
+            selectors |= strings_in_section(data, offset, sections, "__TEXT,__objc_methname")
+
+        for name in sorted(os.listdir(bundle)):
+            if not name.endswith(".plist") or name == "Info.plist":
+                continue
+            with open(os.path.join(bundle, name), "rb") as handle:
+                try:
+                    specifiers = plistlib.load(handle).get("items", [])
+                except Exception:
+                    continue
+
+            for item in specifiers:
+                action = item.get("action")
+                if action and action not in selectors:
+                    problems.append(f"{name}: no method named {action} in the bundle")
+                for key in ("detail", "cellClass", "class"):
+                    value = item.get(key)
+                    if value and value.startswith("DS") and value not in classes:
+                        problems.append(f"{name}: no class named {value} in the bundle")
+
+
 def slices(data):
     """Every (cputype, cpusubtype, offset) in a fat or thin Mach-O."""
     magic = struct.unpack(">I", data[:4])[0]
@@ -198,6 +253,8 @@ def main():
                     continue
                 binaries += 1
                 check_macho(path, os.path.relpath(path, root), problems)
+
+        check_preference_bundle(root, problems)
 
         if not binaries:
             problems.append("no Mach-O binaries in the package at all")

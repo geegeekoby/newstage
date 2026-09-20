@@ -14,7 +14,8 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
 
 - (NSMutableArray *)specifiers {
     if (!_specifiers) {
-        _specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self];
+        _specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self]
+                       ?: [NSMutableArray array];
     }
     return _specifiers;
 }
@@ -137,7 +138,11 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
 #pragma mark - UIScrollViewDelegate
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    if ([super respondsToSelector:@selector(scrollViewDidScroll:)]) {
+    // Asking super whether it responds to a selector still answers for this
+    // class, so it says yes to the method being written right here and then sends
+    // it to a superclass that need not implement it. The superclass has to be
+    // asked about its own instances instead.
+    if ([DSRootListController.superclass instancesRespondToSelector:_cmd]) {
         [super scrollViewDidScroll:scrollView];
     }
     [_banner updateForContentOffset:scrollView.contentOffset];

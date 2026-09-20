@@ -14,6 +14,11 @@
 #define kDSResetIntroNotification "com.recreated.dynamicstage.intro.reset"
 #define kDSCloseStageNotification "com.recreated.dynamicstage.stage.close"
 
+// Opens the stage without the gesture, from the button on the Misc page. Useful
+// on its own, and it separates "the stage does not work" from "the pull is not
+// being picked up" without needing a log.
+#define kDSOpenStageNotification "com.recreated.dynamicstage.stage.open"
+
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"

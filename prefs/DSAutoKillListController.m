@@ -17,7 +17,8 @@ static NSArray<NSString *> *DSAutoKillTitles(void) {
 
 - (NSMutableArray *)specifiers {
     if (!_specifiers) {
-        _specifiers = [self loadSpecifiersFromPlistName:@"AutoKill" target:self];
+        _specifiers = [self loadSpecifiersFromPlistName:@"AutoKill" target:self]
+                       ?: [NSMutableArray array];
         [self refreshCheckmarks];
     }
     return _specifiers;

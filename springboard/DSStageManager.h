@@ -26,6 +26,8 @@
 - (void)noteDisplayDidTurnOff;
 
 - (void)showIntroIfNeeded;
+// Opens the stage as though the corner had been pulled all the way up.
+- (void)openStageAnimated:(BOOL)animated;
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;
 

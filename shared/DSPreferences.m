@@ -83,8 +83,11 @@ static const NSInteger kDSMaxRecents = 12;
     return [[self valueForKey:kDSPrefShowOpenAppIcon fallback:@YES] boolValue];
 }
 
+// Off by default: the first thing anyone does with this installed is pull the
+// corner on the home screen, and a stage that does nothing there reads as a tweak
+// that does not work at all.
 - (BOOL)disableOnHomeScreen {
-    return [[self valueForKey:kDSPrefDisableOnHomeScreen fallback:@YES] boolValue];
+    return [[self valueForKey:kDSPrefDisableOnHomeScreen fallback:@NO] boolValue];
 }
 
 - (DSAppearance)appearance {

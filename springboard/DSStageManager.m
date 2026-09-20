@@ -762,6 +762,19 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     }
 }
 
+// The same place the pull lands, reachable without the pull.
+- (void)openStageAnimated:(BOOL)animated {
+    if (!_activated) return;
+    if (_state == DSStageStateOverlay || _state == DSStageStateSplit) return;
+    if (_state != DSStageStateMinimized && ![self canActivateStage]) return;
+
+    if (!self.hasHostedApp) {
+        [_picker resetScrollPosition];
+        [self showPickerImmediately];
+    }
+    [self enterStateOverlayAnimated:animated];
+}
+
 - (void)closeStageAnimated:(BOOL)animated {
     [self cancelAutoKill];
     [self restoreHostLayout];

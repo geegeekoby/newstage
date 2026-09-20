@@ -9,7 +9,8 @@
 
 - (NSMutableArray *)specifiers {
     if (!_specifiers) {
-        _specifiers = [self loadSpecifiersFromPlistName:@"Misc" target:self];
+        _specifiers = [self loadSpecifiersFromPlistName:@"Misc" target:self]
+                       ?: [NSMutableArray array];
         [self appendStageSpecifiers];
     }
     return _specifiers;
@@ -91,6 +92,13 @@
 }
 
 #pragma mark - Actions
+
+// Opens the stage over Settings. Worth having on its own, and it answers the
+// question the corner pull cannot: if the stage comes up from here, the stage
+// works and it is the pull that is not being picked up.
+- (void)openStage {
+    notify_post(kDSOpenStageNotification);
+}
 
 // Bound to the confirmation on the "Show First Install Intro" button.
 - (void)resetIntro {

@@ -7,6 +7,13 @@
 
 + (instancetype)sharedManager;
 
+// Set once at load time, from whether SpringBoard on this build still reports its
+// bottom edge pulls in a shape the tweak can take over.
++ (void)setSystemEdgePullAvailable:(BOOL)available;
+// Called from the edge pull hook with SpringBoard's own recogniser. Returns YES
+// when the stage has taken the drag over and the switcher must not see it.
+- (BOOL)adoptSystemEdgePull:(UIPanGestureRecognizer *)gesture;
+
 @property (nonatomic, readonly) DSStageState state;
 @property (nonatomic, readonly, copy) NSString *stageBundleIdentifier;
 // True whenever the stage owns the bottom half of the display.

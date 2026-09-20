@@ -8,6 +8,7 @@
 #import "DSPreferences.h"
 #import "DSPrivate.h"
 #import "DSIntroViewController.h"
+#import "DSDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -112,8 +113,12 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     BOOL _activated;
 
     UIPanGestureRecognizer *_dragPan;
+    UIPanGestureRecognizer *_systemPull;
+    NSString *_lastRefusal;
     UIImpactFeedbackGenerator *_feedback;
 }
+
+static BOOL sSystemEdgePullAvailable;
 
 + (instancetype)sharedManager {
     static DSStageManager *shared;
@@ -147,9 +152,23 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
     [self buildWindow];
 
-    _gesture = [[DSGestureController alloc] init];
-    _gesture.delegate = self;
-    [_gesture install];
+    DSDiagnosticsRecordFormat(@"SpringBoard: stage ready, screen %@, corner %@, pull comes from %@",
+                              NSStringFromCGRect([self screenBounds]),
+                              NSStringFromCGRect([DSGestureController triggerRect]),
+                              sSystemEdgePullAvailable ? @"the system edge gesture" : @"a window in the corner");
+
+    // Only one of the two ever runs. When SpringBoard's own edge pull can be taken
+    // over, a second recogniser in the same corner would mean two things happening
+    // per drag; when it cannot, the corner window is all there is.
+    if (!sSystemEdgePullAvailable) {
+        _gesture = [[DSGestureController alloc] init];
+        _gesture.delegate = self;
+        [_gesture install];
+    }
+}
+
++ (void)setSystemEdgePullAvailable:(BOOL)available {
+    sSystemEdgePullAvailable = available;
 }
 
 - (void)buildWindow {
@@ -328,25 +347,40 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 #pragma mark - Activation rules
 
 - (BOOL)canActivateStage {
+    return [self reasonStageCannotActivate] == nil;
+}
+
+// Said in words rather than as a flag, because "nothing happens when I pull from
+// the corner" is the one report this tweak cannot investigate from the outside.
+// The reason ends up in the log the Settings page reads back.
+- (NSString *)reasonStageCannotActivate {
     DSPreferences *preferences = [DSPreferences sharedPreferences];
-    if (!preferences.enabled) return NO;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath]) return NO;
-    if ([DSIntroViewController isPresenting]) return NO;
+    if (!preferences.enabled) return @"the tweak is switched off in Settings";
+    if ([[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath]) {
+        return @"the kill switch file is in place";
+    }
+    if ([DSIntroViewController isPresenting]) return @"the walkthrough is still on screen";
 
     Class lockScreenClass = objc_getClass("SBLockScreenManager");
     if (lockScreenClass) {
         SBLockScreenManager *manager = [lockScreenClass sharedInstance];
-        if ([manager respondsToSelector:@selector(isUILocked)] && manager.isUILocked) return NO;
+        if ([manager respondsToSelector:@selector(isUILocked)] && manager.isUILocked) {
+            return @"the device is locked";
+        }
     }
 
     // Portrait only, matching the stock tweak's documented limitation.
-    if ([self activeOrientation] != UIInterfaceOrientationPortrait) return NO;
+    if ([self activeOrientation] != UIInterfaceOrientationPortrait) return @"the screen is not portrait";
 
     SBApplication *front = [self frontApplication];
-    if (!front && preferences.disableOnHomeScreen) return NO;
-    if (front && [preferences isApplicationDisabled:front.bundleIdentifier]) return NO;
+    if (!front && preferences.disableOnHomeScreen) {
+        return @"Disable on Home Screen is on and the home screen is showing";
+    }
+    if (front && [preferences isApplicationDisabled:front.bundleIdentifier]) {
+        return [NSString stringWithFormat:@"the stage is switched off for %@", front.bundleIdentifier];
+    }
 
-    return YES;
+    return nil;
 }
 
 - (UIInterfaceOrientation)activeOrientation {
@@ -364,18 +398,14 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 }
 
 - (BOOL)shouldSuppressSystemGestureAtPoint:(CGPoint)point {
-    // Only ever the tweak's own furniture: the corner the stage is pulled out of,
-    // and the card itself, where a swipe up belongs to the stage rather than to
-    // the home gesture. The app sharing the screen keeps its gestures, and a
-    // stage left open in some state it should not be in cannot take the home
-    // gesture away from the whole device - the card has to actually be on screen
-    // and the touch has to be inside it.
-    if (self.isStageVisible && _container.window &&
-        CGRectContainsPoint(_container.frame, point)) {
-        return YES;
-    }
-    if (![DSGestureController isPointInTriggerRect:point]) return NO;
-    return [self canActivateStage] || _state == DSStageStateMinimized;
+    // Only ever the card itself, where a swipe up belongs to the stage rather than
+    // to the home gesture. The corner is deliberately left alone: the pull that
+    // opens the stage is taken over from the system's own edge gesture, so that
+    // gesture has to be allowed to begin. The app sharing the screen keeps its
+    // gestures, and a stage left open in some state it should not be in cannot
+    // take the home gesture away from the whole device - the card has to actually
+    // be on screen and the touch has to be inside it.
+    return self.isStageVisible && _container.window && CGRectContainsPoint(_container.frame, point);
 }
 
 - (BOOL)shouldWindowCaptureTouchAtPoint:(CGPoint)point {
@@ -386,9 +416,92 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 #pragma mark - Corner pull
 
 - (BOOL)gestureControllerShouldBegin:(DSGestureController *)controller atPoint:(CGPoint)point {
+    if (_systemPull || _state == DSStageStateTracking) return NO;
     if (_state == DSStageStateOverlay || _state == DSStageStateSplit) return NO;
     if (_state == DSStageStateMinimized) return YES;
     return [self canActivateStage];
+}
+
+#pragma mark - The system's own edge pull
+
+// The pull that opens the stage starts at the very bottom of the screen, which is
+// not a place a tweak can put a gesture recogniser and expect to win: the home
+// and switcher gestures are recognised above every window on the display, so a
+// recogniser in a window of the tweak's own either loses the touch or fights the
+// system for it, and the report from the device is that dragging from the corner
+// does nothing at all. So the tweak lets SpringBoard recognise the pull, and takes
+// over the recogniser it is handed the moment SpringBoard says a pull off the
+// bottom edge has begun in the stage's corner. The switcher is never told about
+// that drag, so exactly one thing happens per pull.
+- (BOOL)adoptSystemEdgePull:(UIPanGestureRecognizer *)gesture {
+    if (!gesture || _systemPull) return NO;
+    if (_state != DSStageStateClosed && _state != DSStageStateMinimized) return NO;
+
+    // By the time the pull is reported as begun the finger has already left the
+    // bottom edge, so how far up it is says nothing. Which side of the screen it
+    // started on is what separates the stage's corner from a swipe home.
+    CGPoint start = [gesture locationInView:nil];
+    if (start.x < CGRectGetWidth([self screenBounds]) - kDSTriggerWidth) return NO;
+
+    if (_state != DSStageStateMinimized) {
+        NSString *refusal = [self reasonStageCannotActivate];
+        if (refusal) {
+            [self noteRefusedPull:refusal];
+            return NO;
+        }
+    }
+
+    _systemPull = gesture;
+    [gesture addTarget:self action:@selector(handleSystemPull:)];
+    _lastRefusal = nil;
+    DSDiagnosticsRecord(@"SpringBoard: corner pull picked up from the system gesture");
+    [self gestureControllerDidBegin:nil];
+    return YES;
+}
+
+- (void)noteRefusedPull:(NSString *)reason {
+    // A pull is refused every time the user swipes up to go home from that corner,
+    // so only a change of reason is worth writing down.
+    if ([reason isEqualToString:_lastRefusal]) return;
+    _lastRefusal = reason;
+    DSDiagnosticsRecordFormat(@"SpringBoard: corner pull refused because %@", reason);
+}
+
+- (void)handleSystemPull:(UIPanGestureRecognizer *)gesture {
+    if (gesture != _systemPull) return;
+
+    // UIKit calls this one directly, so it is on its own for containment.
+    @try {
+        CGPoint translation = [gesture translationInView:nil];
+        switch (gesture.state) {
+            case UIGestureRecognizerStateChanged:
+                [self gestureController:nil didUpdateTranslation:translation];
+                break;
+            case UIGestureRecognizerStateEnded:
+                [self releaseSystemPull];
+                [self gestureController:nil didEndWithTranslation:translation velocity:[gesture velocityInView:nil]];
+                break;
+            case UIGestureRecognizerStateCancelled:
+            case UIGestureRecognizerStateFailed:
+                [self releaseSystemPull];
+                [self gestureControllerDidCancel:nil];
+                break;
+            default:
+                break;
+        }
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: the pull threw %@ - %@", exception.name, exception.reason);
+        [self releaseSystemPull];
+        @try {
+            [self cancelTracking];
+        } @catch (NSException *ignored) {
+        }
+    }
+}
+
+- (void)releaseSystemPull {
+    [_systemPull removeTarget:self action:@selector(handleSystemPull:)];
+    _systemPull = nil;
 }
 
 - (void)gestureControllerDidBegin:(DSGestureController *)controller {
@@ -675,6 +788,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
 - (void)enterStateOverlayAnimated:(BOOL)animated {
     [self cancelAutoKill];
+    if (_state != DSStageStateOverlay) DSDiagnosticsRecord(@"SpringBoard: stage on screen");
     _state = DSStageStateOverlay;
     _window.hidden = NO;
     _openAppIcon.alpha = 0.0;
@@ -764,9 +878,22 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
 // The same place the pull lands, reachable without the pull.
 - (void)openStageAnimated:(BOOL)animated {
-    if (!_activated) return;
-    if (_state == DSStageStateOverlay || _state == DSStageStateSplit) return;
-    if (_state != DSStageStateMinimized && ![self canActivateStage]) return;
+    if (!_activated) {
+        DSDiagnosticsRecord(@"SpringBoard: asked to open the stage before it was ready");
+        return;
+    }
+    if (_state == DSStageStateOverlay || _state == DSStageStateSplit) {
+        DSDiagnosticsRecord(@"SpringBoard: asked to open the stage, it is already open");
+        return;
+    }
+    if (_state != DSStageStateMinimized) {
+        NSString *refusal = [self reasonStageCannotActivate];
+        if (refusal) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: asked to open the stage, refused because %@", refusal);
+            return;
+        }
+    }
+    DSDiagnosticsRecord(@"SpringBoard: opening the stage");
 
     if (!self.hasHostedApp) {
         [_picker resetScrollPosition];
@@ -1388,6 +1515,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
             [self showIntroIfNeeded];
             return;
         }
+        DSDiagnosticsRecord(@"SpringBoard: showing the walkthrough");
         [DSIntroViewController presentIntro];
     });
 }

@@ -4,6 +4,7 @@
 #import "DSGestureController.h"
 #import "DSPrivate.h"
 #import "DSConstants.h"
+#import "DSDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -190,13 +191,30 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
 
 %end
 
-#pragma mark - Home gesture
+#pragma mark - Corner pull
 
-// The stage owns the bottom-right corner. In the corner the system home gesture
-// has to stand down so the pull is picked up on its first frame; once the stage
-// is open the whole card belongs to it.
+// This is where the stage is opened from. SpringBoard recognises pulls off the
+// bottom edge itself, above every window on the display, and reports one here
+// before deciding what it means; a pull that started in the stage's corner is
+// taken over on the spot and the switcher is never told about it. Anything else
+// goes through untouched, so the home gesture keeps working everywhere including
+// the corner when the stage has nothing to show.
 %hook SBFluidSwitcherGestureManager
 
+- (void)grabberTongueBeganPulling:(id)tongue
+                     withDistance:(double)distance
+                      andVelocity:(double)velocity
+                       andGesture:(UIPanGestureRecognizer *)gesture {
+    if (DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager adoptSystemEdgePull:gesture];
+        })) {
+        return;
+    }
+    %orig;
+}
+
+// Once the stage is open the whole card belongs to it, so a swipe up inside the
+// card returns to the picker instead of going home.
 - (BOOL)shouldBeginGestureAtStartingPoint:(CGPoint)point velocity:(CGPoint)velocity bounds:(CGRect)bounds {
     if (DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldSuppressSystemGestureAtPoint:point];
@@ -395,13 +413,27 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
 }
 
 %ctor {
-    if (!DSTweakEnabled()) return;
+    if (!DSTweakEnabled()) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: hooks not installed (%@)",
+                                  [[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath]
+                                      ? @"kill switch file present"
+                                      : @"boot guard tripped, two launches did not finish");
+        return;
+    }
 
     @try {
 
     // Counted before a single hook is installed, and cleared again once
     // SpringBoard has been up long enough to call this launch a success.
     DSSetUncleanLaunchCount(DSUncleanLaunchCount() + 1);
+
+    // Asked before anything is hooked, so the answer is about SpringBoard rather
+    // than about this tweak's own additions to it.
+    Class fluidManager = objc_getClass("SBFluidSwitcherGestureManager");
+    BOOL systemPull = fluidManager != Nil &&
+        class_getInstanceMethod(fluidManager,
+                                @selector(grabberTongueBeganPulling:withDistance:andVelocity:andGesture:)) != NULL;
+    [DSStageManager setSystemEdgePullAvailable:systemPull];
 
     CFNotificationCenterRef center = CFNotificationCenterGetDarwinNotifyCenter();
     CFNotificationCenterAddObserver(center, NULL, DSPreferencesChanged,
@@ -424,6 +456,9 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
                                     CFNotificationSuspensionBehaviorCoalesce);
 
     %init(_ungrouped);
+
+    DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed, corner pull will come from %@",
+                              systemPull ? @"the system edge gesture" : @"a window in the corner");
 
     } @catch (NSException *exception) {
         // Half-installed hooks are still safer than a SpringBoard that will not

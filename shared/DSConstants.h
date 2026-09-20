@@ -61,6 +61,13 @@
 // app that cannot tell would install hooks it does not need.
 #define kDSStageStateActiveBit (1ULL << 32)
 
+// The height of the visible card, in whole points, carried in the next thirteen bits
+// of that same state. The staged app needs it to know where its keyboard belongs: the
+// band SpringBoard opens below the card starts exactly there, whether or not the
+// app's own window was successfully made tall enough to contain it.
+#define kDSStageStateCardHeightShift 33
+#define kDSStageStateCardHeightMask 0x1FFFULL
+
 // FNV-1a over the bundle identifier, which is what the low half of that state
 // carries. A collision would only mean an app is handed stage geometry it did
 // not ask for, and the file is consulted first wherever it can be read.

@@ -1,6 +1,7 @@
 #import "DSAppPickerViewController.h"
 #import "DSAppCellContentView.h"
 #import "DSSearchFieldView.h"
+#import "DSCrashReports.h"
 #import "DSPreferences.h"
 #import "DSConstants.h"
 #import <AudioToolbox/AudioToolbox.h>
@@ -28,6 +29,9 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     DSAppCellContentView *_heldCell;
     NSTimer *_holdTimer;
     UIImpactFeedbackGenerator *_feedback;
+
+    UILabel *_crashNotice;
+    NSString *_crashSummary;
 }
 
 - (void)viewDidLoad {
@@ -66,7 +70,34 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     _emptyLabel.hidden = YES;
     [_scrollView addSubview:_emptyLabel];
 
+    [self installCrashNotice];
     [self reloadContent];
+}
+
+// The settings page runs inside Settings, so when it fails there is nothing left on
+// screen to say why. This is the one place the tweak still has that the user is
+// looking at, so the last Settings crash is shown here, and tapping it puts the whole
+// line on the clipboard - a report that can be pasted rather than described.
+- (void)installCrashNotice {
+    _crashSummary = DSLastSettingsCrashSummary();
+    if (_crashSummary.length == 0) return;
+
+    _crashNotice = [[UILabel alloc] initWithFrame:CGRectZero];
+    _crashNotice.text = [_crashSummary stringByAppendingString:@"\nTap to copy"];
+    _crashNotice.font = [UIFont systemFontOfSize:11.0];
+    _crashNotice.textColor = [UIColor colorWithRed:0.85 green:0.25 blue:0.2 alpha:1.0];
+    _crashNotice.numberOfLines = 0;
+    _crashNotice.userInteractionEnabled = YES;
+    [_crashNotice addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                              action:@selector(copyCrashNotice)]];
+    [_scrollView addSubview:_crashNotice];
+}
+
+- (void)copyCrashNotice {
+    if (_crashSummary.length == 0) return;
+    UIPasteboard.generalPasteboard.string = _crashSummary;
+    _crashNotice.text = @"Copied - paste it wherever you are reporting this";
+    [_feedback impactOccurred];
 }
 
 - (UILabel *)sectionHeaderWithText:(NSString *)text {
@@ -178,6 +209,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     CGFloat width = CGRectGetWidth(self.view.bounds);
     CGFloat contentWidth = width - kDSContentInset * 2.0;
     CGFloat y = kDSSearchFieldTop;
+
+    if (_crashNotice) {
+        CGFloat height = [_crashNotice sizeThatFits:CGSizeMake(contentWidth, CGFLOAT_MAX)].height;
+        _crashNotice.frame = CGRectMake(kDSContentInset, y, contentWidth, height);
+        y += height + 8.0;
+    }
 
     _searchField.frame = CGRectMake(kDSContentInset, y, contentWidth, kDSSearchFieldHeight);
     y += kDSSearchFieldHeight;

@@ -14,6 +14,11 @@
     int _stateToken;
     int _keyboardToken;
     uint64_t _publishedKeyboardHeight;
+    // How tall the card is, as SpringBoard last said. The band below it starts there.
+    CGFloat _cardHeight;
+    // Set while a keyboard is on its way out, when it has to be left to animate down
+    // out of the band rather than being held in it.
+    BOOL _keyboardLeaving;
 }
 
 + (instancetype)sharedContext {
@@ -105,20 +110,46 @@
     }
 }
 
+// Where the keyboard goes: the band below the card. Everything this needs is known
+// in this process - how tall the card is comes from SpringBoard, how tall the
+// keyboard is this app raised itself - so it does not matter whether the window was
+// successfully grown to contain the band.
+- (CGRect)keyboardBand {
+    if (!_staged || _keyboardLeaving) return CGRectNull;
+    if (_cardHeight <= 0.0) return CGRectNull;
+    if (_publishedKeyboardHeight < (uint64_t)kDSKeyboardPresentHeight) return CGRectNull;
+
+    CGFloat width = CGRectGetWidth(self.stageBounds);
+    if (width <= 0.0) width = CGRectGetWidth(self.deviceBounds);
+    return CGRectMake(0.0, _cardHeight, width, (CGFloat)_publishedKeyboardHeight);
+}
+
 - (void)publishKeyboardHeightFrom:(NSNotification *)notification {
     if (_keyboardToken == NOTIFY_TOKEN_INVALID) return;
 
+    _keyboardLeaving = [notification.name isEqualToString:UIKeyboardWillHideNotification];
+
     CGFloat height = 0.0;
-    if (![notification.name isEqualToString:UIKeyboardWillHideNotification]) {
+    if (!_keyboardLeaving) {
         CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-        // The frame is in this app's own coordinates, so it is measured against this
-        // app's own window: only the part of the keyboard that is inside it counts. A
-        // keyboard on its way out is reported at full height sitting below the bottom.
         height = CGRectGetHeight(keyboard);
-        CGFloat windowHeight = [self ownWindowHeight];
-        if (windowHeight > 0.0) {
-            CGFloat visible = windowHeight - CGRectGetMinY(keyboard);
-            height = MAX(MIN(visible, height), 0.0);
+
+        // Before a band exists, the frame is measured against this app's window and
+        // only the part inside it counts: a keyboard still sliding in is reported at
+        // full height below the bottom edge, and taking that would open a band for a
+        // keyboard that is not there yet.
+        //
+        // Once a band exists the keyboard is in it, which is at or below the bottom of
+        // the window, so the same sum would read as nothing at all - and putting the
+        // band away is what would move the keyboard back into the card. So from then
+        // on the keyboard's own height is what counts, which also keeps up with a
+        // field that swaps a number pad in for a keyboard.
+        if (CGRectIsNull(self.keyboardBand)) {
+            CGFloat windowHeight = [self ownWindowHeight];
+            if (windowHeight > 0.0) {
+                CGFloat visible = windowHeight - CGRectGetMinY(keyboard);
+                height = MAX(MIN(visible, height), 0.0);
+            }
         }
     }
 
@@ -139,6 +170,20 @@
     uint64_t step = (published + kDSKeyboardHeightStep / 2) / kDSKeyboardHeightStep;
     if (step >= kDSKeyboardHeightSteps) step = kDSKeyboardHeightSteps - 1;
     notify_post([NSString stringWithFormat:@"%s%llu", kDSKeyboardHeightStepNotificationPrefix, step].UTF8String);
+
+    // UIKit lays the keyboard out over the next few frames and puts it back where it
+    // thinks it belongs, so it is moved into the band again after each of them. The
+    // hooks on the two windows catch the rest.
+    if (published == 0) return;
+    for (NSNumber *delay in @[ @0.0, @0.05, @0.2, @0.45 ]) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            @try {
+                [self redockKeyboard];
+            } @catch (NSException *exception) {
+            }
+        });
+    }
 }
 
 // The window the keyboard came up in. On the stage that is the card plus whatever
@@ -188,6 +233,7 @@
     if (state) {
         active = [state[@"active"] boolValue];
         isUs = identifier.length > 0 && [state[@"stage"] isEqualToString:identifier];
+        _cardHeight = [state[@"cardHeight"] doubleValue];
     } else {
         uint64_t published = 0;
         if (_stateToken != NOTIFY_TOKEN_INVALID &&
@@ -195,6 +241,7 @@
             uint32_t staged = (uint32_t)published;
             active = (published & kDSStageStateActiveBit) != 0;
             isUs = staged != 0 && staged == DSIdentifierHash(identifier);
+            _cardHeight = (CGFloat)((published >> kDSStageStateCardHeightShift) & kDSStageStateCardHeightMask);
         }
     }
 
@@ -280,33 +327,27 @@ static UIView *DSInputSetHostViewIn(UIView *view) {
     return nil;
 }
 
-// Asking politely is not always enough. A keyboard already up was placed against the
-// bottom of the window as it was then - the card - and a window that has since grown
-// leaves it sitting in the middle, which on screen is a keyboard inside the card. It
-// belongs on the bottom edge of the window, which is where a keyboard on a phone
-// always is, so it is put there. A keyboard on its way out is below the bottom
-// already and is left alone.
+// Asking politely is not always enough: a keyboard already up was placed against the
+// bottom of the window as it was then, which is the card. So the window it is drawn
+// in is moved onto the band itself, and the keyboard inside that window is made to
+// fill it. Nothing here waits on anything: it is this process's own window, put where
+// SpringBoard has made room for it.
 - (void)redockKeyboard {
-    if (!_staged) return;
+    CGRect band = self.keyboardBand;
+    if (CGRectIsNull(band)) return;
     Class effectsClass = objc_getClass("UITextEffectsWindow");
     if (!effectsClass) return;
-
-    CGFloat windowHeight = CGRectGetHeight(self.stageBounds);
-    if (windowHeight <= 0.0) return;
 
     for (UIWindow *window in UIApplication.sharedApplication.windows) {
         if (window.hidden || window.alpha < 0.01) continue;
         if (![window isKindOfClass:effectsClass]) continue;
 
+        if (!CGRectEqualToRect(window.frame, band)) window.frame = band;
+
         UIView *host = DSInputSetHostViewIn(window);
-        CGRect frame = host.frame;
-        if (!host || CGRectGetHeight(frame) < kDSKeyboardPresentHeight) continue;
-
-        CGFloat docked = windowHeight - CGRectGetHeight(frame);
-        if (CGRectGetMinY(frame) >= docked - 1.0) continue;
-
-        frame.origin.y = docked;
-        host.frame = frame;
+        if (!host) continue;
+        CGRect fill = CGRectMake(0.0, 0.0, CGRectGetWidth(band), CGRectGetHeight(band));
+        if (!CGRectEqualToRect(host.frame, fill)) host.frame = fill;
     }
 }
 

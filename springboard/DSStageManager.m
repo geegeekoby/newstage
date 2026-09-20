@@ -1242,11 +1242,17 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 // notification for anything already running.
 - (void)publishStageStateForBundleIdentifier:(NSString *)identifier frame:(CGRect)frame active:(BOOL)active {
     // The same file carries the recents list, so merge rather than overwrite.
+    // The card is the part of that frame the user can see; below it is the band the
+    // app's keyboard is meant to fall into, and the app has to be told where the one
+    // ends and the other begins.
+    CGFloat cardHeight = CGRectGetHeight(frame) - MAX(_container.keyboardSpill, 0.0);
+
     NSMutableDictionary *state = [([NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath] ?: @{}) mutableCopy];
     state[@"stage"] = identifier ?: @"";
     state[@"active"] = @(active);
     state[@"width"] = @(CGRectGetWidth(frame));
     state[@"height"] = @(CGRectGetHeight(frame));
+    state[@"cardHeight"] = @(cardHeight);
     [state writeToFile:kDSSharedStatePath atomically:YES];
 
     // Carried on the notification as well, so an app that the sandbox keeps away
@@ -1259,6 +1265,10 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     });
     if (token != NOTIFY_TOKEN_INVALID) {
         uint64_t published = active ? (DSIdentifierHash(identifier) | kDSStageStateActiveBit) : 0;
+        if (active && cardHeight > 0.0) {
+            uint64_t points = MIN((uint64_t)round(cardHeight), kDSStageStateCardHeightMask);
+            published |= points << kDSStageStateCardHeightShift;
+        }
         notify_set_state(token, published);
     }
 

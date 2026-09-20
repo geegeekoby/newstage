@@ -31,6 +31,10 @@ static CGRect DSStageBounds(void) {
     return [DSStageContext sharedContext].stageBounds;
 }
 
+static CGRect DSKeyboardBand(void) {
+    return [DSStageContext sharedContext].keyboardBand;
+}
+
 #pragma mark - Screen
 
 %hook UIScreen
@@ -178,29 +182,49 @@ static CGRect DSStageBounds(void) {
 // what SpringBoard did with the scene. The height has to come from the scene as it
 // is now: it grows the moment a keyboard goes up, and an answer from a layout ago is
 // the card's height.
+// The window the keyboard is drawn in. While there is a keyboard up, it is the band
+// below the card and nothing else - so wherever UIKit would have put the keyboard, it
+// comes out in the band. It cannot be in the card, because the window it is drawn in
+// is not in the card.
 %hook UITextEffectsWindow
 
 - (void)setFrame:(CGRect)frame {
     if (DSStaged()) {
-        CGRect stage = DSStageBounds();
-        if (!CGRectIsEmpty(stage)) frame = stage;
+        CGRect band = DSKeyboardBand();
+        if (!CGRectIsNull(band)) {
+            frame = band;
+        } else {
+            CGRect stage = DSStageBounds();
+            if (!CGRectIsEmpty(stage)) frame = stage;
+        }
     }
     %orig;
 }
 
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation {
-    if (DSStaged()) return DSStageBounds();
+    if (DSStaged()) {
+        CGRect band = DSKeyboardBand();
+        if (!CGRectIsNull(band)) return CGRectMake(0, 0, CGRectGetWidth(band), CGRectGetHeight(band));
+        return DSStageBounds();
+    }
     return %orig;
 }
 
 %end
 
+// The keyboard inside that window fills it, so it is the size of the band rather than
+// being placed against the bottom of a window that used to be the whole card.
 %hook UIInputSetHostView
 
 - (void)setFrame:(CGRect)frame {
     if (DSStaged()) {
-        frame.size.width = CGRectGetWidth(DSStageBounds());
-        frame.origin.x = 0;
+        CGRect band = DSKeyboardBand();
+        if (!CGRectIsNull(band)) {
+            frame = CGRectMake(0.0, 0.0, CGRectGetWidth(band), CGRectGetHeight(band));
+        } else {
+            frame.size.width = CGRectGetWidth(DSStageBounds());
+            frame.origin.x = 0;
+        }
     }
     %orig;
 }

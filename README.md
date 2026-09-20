@@ -297,11 +297,18 @@ SpringBoard has to know the app can report at all. The app posts once, when it n
 the stage, and that is written to the diagnostics page - an app whose dylib never loaded is
 otherwise indistinguishable from one that loaded and saw no keyboard.
 
-And the keyboard has to move once the window has grown. UIKit puts a keyboard at the bottom of
-the window as the window was when it went up, which is the card; the window grows a moment
-later. So on every scene resize the keyboard is asked to place itself again, and if it is still
-sitting where the card's bottom used to be it is put on the bottom edge of the window directly,
-which on a phone is where a keyboard always is.
+And none of it can be left to UIKit. Everything above asks for the keyboard to end up below the
+card; what actually decides where it is drawn is the frame of the window it is drawn in, and
+that window belongs to this process. So while a keyboard is up, that window *is* the band: its
+frame is set to start at the card's bottom edge and to be exactly as tall as the keyboard, and
+the keyboard inside it is made to fill it. The keyboard cannot be in the card, because the
+window it is drawn in is not in the card.
+
+Where the card ends is the one thing the app cannot work out for itself - its window may or may
+not have been made taller than the card by then - so SpringBoard sends the card's height along
+with the rest of the stage state, in thirteen bits of the notification's own state where the
+sandbox cannot get in the way. Both cases then land in the same place: if the window did grow,
+the band is the bottom of it; if it did not, the band is just below it.
 
 The band belongs to the app: touches in it are passed through to the app rather than taken as
 drags on the card, and the home gesture is left alone there, so leaving an app never means

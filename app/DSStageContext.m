@@ -205,6 +205,13 @@
     if (!wasStaged && self.stagedHandler) self.stagedHandler();
 }
 
+- (CGRect)liveStageBounds {
+    CGRect bounds = [self sceneBounds];
+    if (CGRectIsEmpty(bounds)) return _stageBounds;
+    _stageBounds = bounds;
+    return bounds;
+}
+
 // The scene's coordinate space follows the frame SpringBoard hands us and is not
 // something this dylib rewrites, so it stays trustworthy.
 - (CGRect)sceneBounds {

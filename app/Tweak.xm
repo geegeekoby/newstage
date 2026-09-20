@@ -8,8 +8,10 @@
 
 // Injected into every UIKit app. While this process is the one on the stage,
 // every route UIKit offers for "how big is the screen" answers with the stage
-// rectangle, the interface stays pinned to portrait, and the keyboard is kept
-// inside the card instead of floating over the app behind it.
+// rectangle, the interface stays pinned to portrait, and the keyboard is placed at
+// the bottom of this window - which SpringBoard makes taller than the card by the
+// height of the keyboard, so the keyboard lands below the card on the bottom edge of
+// the display rather than being squeezed into the card.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -27,6 +29,13 @@ static BOOL DSStaged(void) {
 
 static CGRect DSStageBounds(void) {
     return [DSStageContext sharedContext].stageBounds;
+}
+
+// For the handful of hooks where being a layout behind is the difference between a
+// keyboard at the bottom of the display and a keyboard inside the card. Read from
+// the scene itself, and only on paths that run when a keyboard moves.
+static CGRect DSLiveStageBounds(void) {
+    return [DSStageContext sharedContext].liveStageBounds;
 }
 
 #pragma mark - Screen
@@ -121,7 +130,11 @@ static CGRect DSStageBounds(void) {
     return %orig;
 }
 
+// Refreshed on the way in as well as on the way out: the layout UIKit does inside
+// this call asks the hooks above how big the scene is, and the answer they have is
+// the one from before the resize that caused it.
 - (void)_sceneBoundsDidChange {
+    if (DSStaged()) [[DSStageContext sharedContext] refresh];
     %orig;
     if (DSStaged()) [[DSStageContext sharedContext] refresh];
 }
@@ -165,22 +178,25 @@ static CGRect DSStageBounds(void) {
 
 #pragma mark - Keyboard
 
-// The text effects window is a sibling of the app's own windows and is sized from
-// the screen, so without this the keyboard draws outside the card.
+// The keyboard belongs at the bottom of this window, and the window is the card plus
+// the room SpringBoard makes below it for a keyboard, so it is the window in full
+// that these answer with. Earlier builds clamped all of this to the height of the
+// card, which is what put the keyboard inside the card and kept it there no matter
+// what SpringBoard did with the scene. The height has to come from the scene as it
+// is now: it grows the moment a keyboard goes up, and an answer from a layout ago is
+// the card's height.
 %hook UITextEffectsWindow
 
 - (void)setFrame:(CGRect)frame {
     if (DSStaged()) {
-        CGRect stage = DSStageBounds();
-        frame.origin = CGPointZero;
-        frame.size.width = CGRectGetWidth(stage);
-        if (CGRectGetHeight(frame) > CGRectGetHeight(stage)) frame.size.height = CGRectGetHeight(stage);
+        CGRect stage = DSLiveStageBounds();
+        if (!CGRectIsEmpty(stage)) frame = stage;
     }
     %orig;
 }
 
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation {
-    if (DSStaged()) return DSStageBounds();
+    if (DSStaged()) return DSLiveStageBounds();
     return %orig;
 }
 
@@ -190,7 +206,7 @@ static CGRect DSStageBounds(void) {
 
 - (void)setFrame:(CGRect)frame {
     if (DSStaged()) {
-        frame.size.width = CGRectGetWidth(DSStageBounds());
+        frame.size.width = CGRectGetWidth(DSLiveStageBounds());
         frame.origin.x = 0;
     }
     %orig;
@@ -198,10 +214,11 @@ static CGRect DSStageBounds(void) {
 
 %end
 
+// Where UIKit puts the keyboard: at the bottom of this rectangle.
 %hook UIInputResponderController
 
 - (CGRect)_sceneBounds {
-    if (DSStaged()) return DSStageBounds();
+    if (DSStaged()) return DSLiveStageBounds();
     return %orig;
 }
 

@@ -22,6 +22,11 @@
 @property (nonatomic, readonly) BOOL staged;
 // Stage rectangle in the app's own coordinates, origin always zero.
 @property (nonatomic, readonly) CGRect stageBounds;
+// The same rectangle, read from the scene rather than from the last time anything
+// was refreshed. SpringBoard makes this window taller than the card the moment a
+// keyboard goes up in it, and a hook that answers with the height from before that
+// puts the keyboard back inside the card.
+@property (nonatomic, readonly) CGRect liveStageBounds;
 // Report the iPad idiom so apps reflow into the short, wide stage instead of
 // showing a stretched phone layout.
 @property (nonatomic, readonly) BOOL padMode;

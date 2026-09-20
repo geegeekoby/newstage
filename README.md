@@ -267,6 +267,15 @@ between a field that never asked and a keyboard that never came.
 that moves it out of that window, and nothing about it leaves the app's process - so the only
 thing that can be changed is what the app's window is.
 
+The thing that kept the keyboard in the card for every build before 1.4.4 was in this
+repository, in the per-app dylib: the window UIKit draws the keyboard in, and the rectangle
+UIKit places the keyboard at the bottom of, were both clamped to the height of the card. That
+was deliberate once - the keyboard was meant to live in the card - and it meant nothing
+SpringBoard did with the scene could move the keyboard out of it. Those hooks now answer with
+the window as the scene has it, read from the scene each time a keyboard moves rather than from
+the last refresh, since the scene grows at exactly that moment and an answer one layout old is
+the card's height again.
+
 So the window is made taller than the card, by exactly the height of the keyboard the app has
 raised, and the card stops clipping over that last band. The keyboard lands below the card, on
 the bottom edge of the display, at the size and in the position it would have full screen; the

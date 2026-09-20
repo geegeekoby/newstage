@@ -457,6 +457,43 @@ static BOOL sSystemEdgePullAvailable;
         [self layoutStageForState:self->_state];
     }
                      completion:nil];
+
+    if (typing) [self confirmTheAppTookTheKeyboardRoomAfterDelay];
+}
+
+// Whether the app actually took the taller window. If it did not, the keyboard is
+// still inside the card and the band below it is empty, so the size is sent again and
+// what happened is written down: from the outside the two failures look identical.
+- (void)confirmTheAppTookTheKeyboardRoomAfterDelay {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        [strongSelf confirmTheAppTookTheKeyboardRoom];
+    });
+}
+
+- (void)confirmTheAppTookTheKeyboardRoom {
+    CGFloat spill = [self keyboardSpillForState:_state];
+    if (spill <= 0.0 || !_sceneHost.isHosting) return;
+
+    CGFloat wanted = CGRectGetHeight([self stageFrameForState:_state]) + spill;
+    CGRect window = CGRectNull;
+    @try {
+        window = [_sceneHost hostedScene].settings.frame;
+    } @catch (NSException *exception) {
+    }
+
+    if (!CGRectIsNull(window) && CGRectGetHeight(window) >= wanted - 2.0) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: the staged app's window is %@, so its keyboard is below the card",
+                                  NSStringFromCGRect(window));
+        return;
+    }
+
+    DSDiagnosticsRecordFormat(@"SpringBoard: the staged app's window is %@ and wanted to be %.0fpt tall, sending the size again",
+                              CGRectIsNull(window) ? @"not readable" : NSStringFromCGRect(window), wanted);
+    [self layoutStageForState:_state];
 }
 
 - (CGRect)hostFrameForSplit {

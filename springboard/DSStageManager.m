@@ -137,6 +137,12 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     if (_activated) return;
     _activated = YES;
 
+    // Nothing is on the stage when SpringBoard starts. Saying so explicitly clears
+    // whatever was published before it last went away: an app that read a stale
+    // "you are on the stage" would launch full screen pinned to portrait with no
+    // status bar and no way to find out otherwise.
+    [self publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
+
     [[DSPreferences sharedPreferences] startObserving];
     _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
     [self buildWindow];

@@ -15,7 +15,17 @@ import { fileURLToPath } from "node:url";
 import { readFile, stat } from "node:fs/promises";
 
 const require = createRequire(import.meta.url);
-const handler = require("../api/repo.js");
+
+// Hosting runs the handler fresh, so it reads whatever index it was deployed
+// with. This process outlives publishing a new build, so it has to forget the
+// handler and the index between requests; otherwise a repo that has just been
+// rebuilt keeps serving the version it started with.
+function freshHandler() {
+  for (const path of ["../api/repo.js", "../api/package-index.json"]) {
+    delete require.cache[require.resolve(path)];
+  }
+  return require("../api/repo.js");
+}
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = join(ROOT, "public");
@@ -61,7 +71,7 @@ const server = createServer(async (req, res) => {
   const file = REWRITES[pathname];
   if (file) {
     req.query = { file };
-    return handler(req, shim(res));
+    return freshHandler()(req, shim(res));
   }
 
   const path = join(PUBLIC, normalize(pathname).replace(/^(\.\.[/\\])+/, ""));

@@ -210,10 +210,12 @@ could do that are bounded deliberately:
   outright** (`shared/DSExclusions.m`). They are what you reach for when something else is
   broken, so they are left out of the picker, out of the per-app settings list, and never
   hooked.
-- **The tweak only claims touches it has a use for.** The hot corner falls through to the
-  app underneath whenever the stage would not open from it, the stage window claims a touch
-  only inside the card, and the system home gesture is suppressed only inside the card -
-  never across the display, so a stage stuck open cannot take the way home with it.
+- **The tweak only claims touches it has a use for.** It puts no gesture of its own at the
+  bottom of the screen: it waits for SpringBoard to report a pull off the bottom edge and
+  takes that drag over only when it started in the stage's corner and the stage has
+  something to show, so every other pull is SpringBoard's as usual. The stage window claims
+  a touch only inside the card, and the system home gesture is suppressed only inside the
+  card - never across the display, so a stage stuck open cannot take the way home with it.
 - **SpringBoard counts its own launches.** The count goes up before any hook is installed
   and is cleared once SpringBoard has been up for six seconds. Two launches that never got
   that far and the tweak sits the next one out, so a boot loop ends in a working device with
@@ -225,6 +227,17 @@ could do that are bounded deliberately:
   buttons ended up, and it leaves by itself after three minutes untouched.
 - **Every call out of a hook is contained**, so private API that moved or changed shape
   degrades into the stage not opening.
+- **The Settings page cannot take Settings down with it.** Settings loads this bundle into
+  its own process, so every entry point the system calls into runs inside a guard, and the
+  page marks itself while it is being built and clears the mark once it is on screen. A mark
+  still there on the next open means the last one did not survive, and the page is rebuilt
+  out of stock cells only - same settings, no header - with **Restore Full Page** to put it
+  back. Installing any build clears the mark.
+- **The tweak keeps its own account of what it did.** Which pull path it is using, why a pull
+  was refused, what threw in the Settings page: it is all in
+  Settings › Dynamic Stage › **What The Tweak Has Been Doing**, which also has a button that
+  opens the stage without the gesture. On a device that cannot hand over a crash log, that
+  page is the difference between a report and a guess.
 
 ## Recovery
 

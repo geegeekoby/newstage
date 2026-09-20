@@ -116,6 +116,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     UIPanGestureRecognizer *_systemPull;
     NSString *_lastRefusal;
     UIImpactFeedbackGenerator *_feedback;
+    __weak UIWindow *_windowBeforeStage;
 }
 
 static BOOL sSystemEdgePullAvailable;
@@ -151,6 +152,7 @@ static BOOL sSystemEdgePullAvailable;
     [[DSPreferences sharedPreferences] startObserving];
     _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
     [self buildWindow];
+    [self observeKeyboard];
 
     DSDiagnosticsRecordFormat(@"SpringBoard: stage ready, screen %@, corner %@, pull comes from %@",
                               NSStringFromCGRect([self screenBounds]),
@@ -217,6 +219,86 @@ static BOOL sSystemEdgePullAvailable;
         return;
     }
     if (_sceneHost.isHosting) [self layoutStageForState:_state];
+}
+
+#pragma mark - Typing
+
+// Text goes to the key window, and the stage's window was never made key: the
+// search field could be tapped but nothing could be typed into it, in the stage
+// or in an app hosted on it. SpringBoard gets its window back when the stage
+// leaves, so nothing else on the device notices.
+- (void)takeKeyWindow {
+    if (!_window || _window.hidden || _window.isKeyWindow) return;
+
+    if (!_windowBeforeStage) {
+        for (UIWindow *window in UIApplication.sharedApplication.windows) {
+            if (window != _window && window.isKeyWindow) {
+                _windowBeforeStage = window;
+                break;
+            }
+        }
+    }
+    @try {
+        [_window makeKeyWindow];
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: could not take the key window - %@", exception.reason ?: @"?");
+    }
+}
+
+- (void)giveBackKeyWindow {
+    UIWindow *previous = _windowBeforeStage;
+    _windowBeforeStage = nil;
+    if (!_window.isKeyWindow) return;
+    @try {
+        [previous makeKeyWindow];
+    } @catch (NSException *exception) {
+    }
+}
+
+// The card lives at the bottom of the screen, which is exactly where the keyboard
+// comes up, so it is held above it for as long as the keyboard is there.
+- (void)observeKeyboard {
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                          selector:@selector(keyboardFrameWillChange:)
+                                              name:UIKeyboardWillChangeFrameNotification
+                                            object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                          selector:@selector(keyboardWillHide:)
+                                              name:UIKeyboardWillHideNotification
+                                            object:nil];
+}
+
+- (void)keyboardFrameWillChange:(NSNotification *)notification {
+    if (!self.isStageVisible) return;
+
+    CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGRect screen = [self screenBounds];
+    if (CGRectIsEmpty(keyboard) || CGRectGetMinY(keyboard) >= CGRectGetMaxY(screen)) {
+        [self liftCardBy:0.0 notification:notification];
+        return;
+    }
+
+    CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+    CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard);
+    [self liftCardBy:MAX(overlap + 10.0, 0.0) notification:notification];
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification {
+    [self liftCardBy:0.0 notification:notification];
+}
+
+- (void)liftCardBy:(CGFloat)offset notification:(NSNotification *)notification {
+    if (fabs(offset - _container.liftOffset) < 0.5) return;
+
+    NSTimeInterval duration = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    void (^lift)(void) = ^{
+        [self->_container setLiftOffset:offset];
+    };
+    if (duration > 0.0) {
+        [UIView animateWithDuration:duration animations:lift];
+    } else {
+        lift();
+    }
 }
 
 - (void)applyAppearance {
@@ -791,6 +873,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     if (_state != DSStageStateOverlay) DSDiagnosticsRecord(@"SpringBoard: stage on screen");
     _state = DSStageStateOverlay;
     _window.hidden = NO;
+    [self takeKeyWindow];
     _openAppIcon.alpha = 0.0;
 
     [self restoreHostLayout];
@@ -821,6 +904,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [self cancelAutoKill];
     _state = DSStageStateSplit;
     _window.hidden = NO;
+    [self takeKeyWindow];
     _openAppIcon.alpha = 0.0;
 
     if (self.hasHostedApp) [_sceneHost setForeground:YES];
@@ -854,12 +938,16 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     }
 
     [self restoreHostLayout];
+    [_picker dismissKeyboard];
+    [_container setLiftOffset:0.0];
     void (^layout)(void) = ^{
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
         self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateMinimized;
+        [self giveBackKeyWindow];
+        [self releaseKeyboardFocusFromStage];
         // Backgrounded rather than occluded is what keeps push driven apps
         // delivering while the stage is tucked away.
         [self->_sceneHost setForeground:NO];
@@ -917,9 +1005,12 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     void (^finish)(void) = ^{
         self->_state = DSStageStateClosed;
         self->_container.alpha = 1.0;
+        [self->_container setLiftOffset:0.0];
         self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
         self->_openAppIcon.alpha = 0.0;
+        [self giveBackKeyWindow];
+        [self releaseKeyboardFocusFromStage];
         self->_window.hidden = YES;
         self->_stageQuarterTurns = 0;
         [self teardownStageApp];
@@ -1078,13 +1169,25 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     DSSceneHost *host = _sceneHost ?: [[DSSceneHost alloc] initWithBundleIdentifier:entry.bundleIdentifier];
     _sceneHost = host;
 
+    DSDiagnosticsRecordFormat(@"SpringBoard: putting %@ on the stage", entry.bundleIdentifier);
+
     __weak __typeof(self) weakSelf = self;
     [host prepareWithCompletion:^(BOOL ready) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
         if (!ready || strongSelf->_sceneHost != host) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ did not make it onto the stage, back to the picker",
+                                      host.bundleIdentifier);
             [strongSelf dismissLaunchPlaceholder];
-            if (strongSelf->_sceneHost == host) strongSelf->_sceneHost = nil;
+            if (strongSelf->_sceneHost == host) {
+                strongSelf->_sceneHost = nil;
+                // The app was told it was on the stage before it was asked for, so
+                // it has to be told otherwise now, and anything already done to its
+                // scene has to be undone. An app left believing it is staged runs
+                // portrait locked with no status bar wherever it is opened next.
+                [strongSelf publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
+                [host relinquishKeepingBackgrounded:NO];
+            }
             return;
         }
         [strongSelf attachHostedApp];
@@ -1125,9 +1228,11 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 - (void)attachHostedApp {
     UIView *hostView = _sceneHost.hostView;
     if (!hostView) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ was ready but handed over no view", _sceneHost.bundleIdentifier);
         [self dismissLaunchPlaceholder];
         return;
     }
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ is on the stage", _sceneHost.bundleIdentifier);
 
     _picker.view.hidden = YES;
     _picker.view.alpha = 1.0;
@@ -1360,6 +1465,17 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 // inside the stage work. The owning class moved around between iOS 14 and 16,
 // so every candidate is probed.
 - (void)requestKeyboardFocusForStage {
+    [self reevaluateKeyboardFocusStealing:YES];
+}
+
+// Whatever was asked for while the stage was up has to be given back when it
+// leaves, or the device is left with a keyboard pointed at a scene that is no
+// longer on screen - which reads as the keyboard having stopped working.
+- (void)releaseKeyboardFocusFromStage {
+    [self reevaluateKeyboardFocusStealing:NO];
+}
+
+- (void)reevaluateKeyboardFocusStealing:(BOOL)stealing {
     NSArray<NSString *> *classNames = @[ @"SBKeyboardFocusController", @"SBSceneKeyboardFocusController" ];
     SEL selector = @selector(reevaluateFocusedSceneIdentityForKeyboardFocusWithChangeInformation:stealingKeyboardOnSuccess:);
     for (NSString *name in classNames) {
@@ -1369,11 +1485,13 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         id instance = ((id (*)(id, SEL))objc_msgSend)(candidate, @selector(sharedInstance));
         if (![instance respondsToSelector:selector]) continue;
         @try {
-            ((void (*)(id, SEL, id, BOOL))objc_msgSend)(instance, selector, nil, YES);
+            ((void (*)(id, SEL, id, BOOL))objc_msgSend)(instance, selector, nil, stealing);
         } @catch (NSException *exception) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: asking %@ about the keyboard threw %@", name, exception.name ?: @"?");
         }
         return;
     }
+    DSDiagnosticsRecord(@"SpringBoard: no keyboard focus controller on this build");
 }
 
 #pragma mark - In-stage gestures
@@ -1392,6 +1510,12 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     switch (recognizer.state) {
         case UIGestureRecognizerStateBegan: {
+            // The card is about to be moved by hand, so it stops being held up out
+            // of the keyboard's way first: its own frame has to mean what it says
+            // for the rest of this drag.
+            [_picker dismissKeyboard];
+            [_container setLiftOffset:0.0];
+
             CGPoint start = CGPointMake(location.x - translation.x, location.y - translation.y);
             fromCorner = CGRectContainsPoint([self closeZoneRect], start);
             fromTop = !fromCorner && CGRectContainsPoint([_container dragAffordanceRect], start);
@@ -1465,17 +1589,14 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (CGRect)closeZoneRect {
-    CGRect bounds = _container.bounds;
-    return CGRectMake(CGRectGetWidth(bounds) - kDSTriggerWidth,
-                      CGRectGetHeight(bounds) - kDSTriggerHeight,
-                      kDSTriggerWidth,
-                      kDSTriggerHeight);
+    return [_container cornerGripRect];
 }
 
 #pragma mark - External events
 
 - (void)noteSceneDestroyedForBundleIdentifier:(NSString *)bundleIdentifier {
     if (!_sceneHost || ![_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return;
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ went away while it was on the stage", bundleIdentifier);
     _sceneHost = nil;
     [self showPickerImmediately];
     if (_state == DSStageStateMinimized) {

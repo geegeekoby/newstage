@@ -34,6 +34,12 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // stage geometry.
 + (BOOL)applyOverridesToSettings:(FBSMutableSceneSettings *)settings forScene:(FBScene *)scene;
 
+// Every scene that passes through the settings hooks is remembered, so an app's
+// scene can still be found on a build where none of the usual ways to ask for it
+// exist any more.
++ (void)noteLiveScene:(FBScene *)scene;
++ (FBScene *)liveSceneForBundleIdentifier:(NSString *)bundleIdentifier;
+
 // Geometry-only override, used for the app that keeps the top half in Split
 // View: SpringBoard still hosts and animates it, the stage only dictates size.
 + (void)registerGeometryOverrideForScene:(FBScene *)scene frame:(CGRect)frame insets:(UIEdgeInsets)insets;

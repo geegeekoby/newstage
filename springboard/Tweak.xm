@@ -126,6 +126,7 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
         return;
     }
     @try {
+        [DSSceneHost noteLiveScene:self];
         FBSMutableSceneSettings *mutableSettings = [settings mutableCopy];
         if ([DSSceneHost applyOverridesToSettings:mutableSettings forScene:self]) {
             %orig(mutableSettings, context, completion);
@@ -141,6 +142,11 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
         %orig;
         return;
     }
+    @try {
+        [DSSceneHost noteLiveScene:self];
+    } @catch (NSException *exception) {
+    }
+
     __weak __typeof(self) weakSelf = self;
     %orig(^(FBSMutableSceneSettings *settings) {
         block(settings);

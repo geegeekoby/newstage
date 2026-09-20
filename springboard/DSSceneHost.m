@@ -1,6 +1,7 @@
 #import "DSSceneHost.h"
 #import "DSConstants.h"
 #import "DSPreferences.h"
+#import "DSDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -13,6 +14,18 @@ static NSMutableDictionary<NSString *, NSDictionary *> *DSSceneOverrides(void) {
         overrides = [NSMutableDictionary dictionary];
     });
     return overrides;
+}
+
+// Every scene SpringBoard has told to update its settings, which in practice is
+// every scene there is. Weak values: this is a way of finding a scene, never a
+// reason for one to stay alive.
+static NSMapTable<NSString *, FBScene *> *DSLiveScenes(void) {
+    static NSMapTable *scenes;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        scenes = [NSMapTable strongToWeakObjectsMapTable];
+    });
+    return scenes;
 }
 
 static NSLock *DSSceneOverridesLock(void) {
@@ -78,6 +91,7 @@ static void DSApplyGeometry(FBSMutableSceneSettings *settings, CGRect frame, UIE
     UIEdgeInsets _safeAreaInsets;
     BOOL _foreground;
     BOOL _registeredOverride;
+    NSString *_sceneSource;
 }
 
 - (instancetype)initWithBundleIdentifier:(NSString *)bundleIdentifier {
@@ -101,19 +115,124 @@ static void DSApplyGeometry(FBSMutableSceneSettings *settings, CGRect frame, UIE
     return [[controllerClass sharedInstance] applicationWithBundleIdentifier:_bundleIdentifier];
 }
 
+// An app's scene has been reached several different ways over the years, and the
+// one this used - SBApplication's own mainScene - is the oldest of them. On a
+// build where it has gone, every launch ended the same way: the app started, no
+// scene was ever found, and the stage gave up and went back to the picker. So
+// each known shape is tried in turn, ending with asking FrontBoard for every
+// scene it has and picking out the one belonging to this app, which needs nothing
+// from SBApplication at all. Which one answered is written down once.
 - (FBScene *)resolveScene {
+    FBScene *scene = [self sceneFromBaseIdentifier];
+    if (scene) return scene;
+    scene = [self sceneFromApplication];
+    if (scene) return scene;
+    return [self sceneFromSceneManager];
+}
+
+// The replacement for mainScene since iOS 13: the application knows the identifier
+// of the scene it would use, and FrontBoard hands over the scene itself if one
+// exists under that name.
+- (FBScene *)sceneFromBaseIdentifier {
+    SBApplication *application = [self application];
+    SEL identifierSelector = NSSelectorFromString(@"_baseSceneIdentifier");
+    if (![application respondsToSelector:identifierSelector]) return nil;
+
+    NSString *identifier = ((NSString * (*)(id, SEL))objc_msgSend)(application, identifierSelector);
+    if (identifier.length == 0) return nil;
+
+    Class managerClass = objc_getClass("FBSceneManager");
+    if (![managerClass respondsToSelector:@selector(sharedInstance)]) return nil;
+    id manager = ((id (*)(id, SEL))objc_msgSend)(managerClass, @selector(sharedInstance));
+
+    SEL lookup = NSSelectorFromString(@"sceneWithIdentifier:");
+    if (![manager respondsToSelector:lookup]) return nil;
+
+    FBScene *scene = ((FBScene * (*)(id, SEL, id))objc_msgSend)(manager, lookup, identifier);
+    if (scene) [self noteSceneSource:@"the app's base scene identifier"];
+    return scene;
+}
+
+- (void)noteSceneSource:(NSString *)source {
+    if ([_sceneSource isEqualToString:source]) return;
+    _sceneSource = [source copy];
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@'s scene came from %@", _bundleIdentifier, source);
+}
+
+- (FBScene *)sceneFromApplication {
     SBApplication *application = [self application];
     if (!application) return nil;
 
+    // iOS 13 and later: the app keeps scene handles, and a handle holds the scene
+    // once one exists.
+    for (NSString *name in @[ @"sceneHandles", @"allSceneHandles" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![application respondsToSelector:selector]) continue;
+        NSArray *handles = ((NSArray * (*)(id, SEL))objc_msgSend)(application, selector);
+        for (id handle in handles) {
+            for (NSString *accessor in @[ @"sceneIfExists", @"scene" ]) {
+                SEL sceneSelector = NSSelectorFromString(accessor);
+                if (![handle respondsToSelector:sceneSelector]) continue;
+                FBScene *scene = ((FBScene * (*)(id, SEL))objc_msgSend)(handle, sceneSelector);
+                if (scene) {
+                    [self noteSceneSource:[NSString stringWithFormat:@"%@ + %@", name, accessor]];
+                    return scene;
+                }
+            }
+        }
+    }
+
     if ([application respondsToSelector:@selector(mainScene)]) {
         FBScene *scene = application.mainScene;
-        if (scene) return scene;
+        if (scene) {
+            [self noteSceneSource:@"mainScene"];
+            return scene;
+        }
     }
+
     for (NSString *name in @[ @"allScenes", @"scenes" ]) {
         SEL selector = NSSelectorFromString(name);
         if (![application respondsToSelector:selector]) continue;
         NSArray *scenes = ((NSArray * (*)(id, SEL))objc_msgSend)(application, selector);
-        if (scenes.count > 0) return scenes.firstObject;
+        if (scenes.count > 0) {
+            [self noteSceneSource:name];
+            return scenes.firstObject;
+        }
+    }
+    return nil;
+}
+
+- (FBScene *)sceneFromSceneManager {
+    Class managerClass = objc_getClass("FBSceneManager");
+    if ([managerClass respondsToSelector:@selector(sharedInstance)]) {
+        id manager = ((id (*)(id, SEL))objc_msgSend)(managerClass, @selector(sharedInstance));
+        for (NSString *name in @[ @"scenes", @"allScenes" ]) {
+            SEL selector = NSSelectorFromString(name);
+            if (![manager respondsToSelector:selector]) continue;
+            NSArray *scenes = ((NSArray * (*)(id, SEL))objc_msgSend)(manager, selector);
+            FBScene *match = [self sceneMatchingBundleIdentifierIn:scenes];
+            if (match) {
+                [self noteSceneSource:[NSString stringWithFormat:@"FBSceneManager %@", name]];
+                return match;
+            }
+        }
+    }
+
+    // Last resort, and the one that needs nothing from anybody: every scene in
+    // SpringBoard pushes settings through the hooks in Tweak.xm, so they are all
+    // known here by the time they matter.
+    FBScene *seen = [DSSceneHost liveSceneForBundleIdentifier:_bundleIdentifier];
+    if (seen) [self noteSceneSource:@"scenes seen going past the settings hook"];
+    return seen;
+}
+
+- (FBScene *)sceneMatchingBundleIdentifierIn:(NSArray *)scenes {
+    for (FBScene *scene in scenes) {
+        if (![scene respondsToSelector:@selector(identifier)]) continue;
+        // Scene identifiers carry the bundle identifier of whoever owns them, as
+        // in "sceneID:com.apple.Maps-default".
+        if ([scene.identifier rangeOfString:_bundleIdentifier].location == NSNotFound) continue;
+        return scene;
     }
     return nil;
 }
@@ -121,47 +240,80 @@ static void DSApplyGeometry(FBSMutableSceneSettings *settings, CGRect frame, UIE
 #pragma mark - Launching
 
 - (void)prepareWithCompletion:(DSSceneHostReadyBlock)completion {
+    if (![self application]) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: SpringBoard has no application called %@", _bundleIdentifier);
+        if (completion) completion(NO);
+        return;
+    }
+
     FBScene *scene = [self resolveScene];
     if (scene) {
         _scene = scene;
         [self beginHosting];
-        if (completion) completion(YES);
+        if (completion) completion(self.isHosting);
         return;
     }
 
-    [self launchSuspended];
-    [self waitForSceneWithAttemptsRemaining:50 completion:completion];
+    // Two ways of asking for the app, neither of which brings it to the front, and
+    // a wait long enough for a cold launch on a busy phone. Giving up early looks
+    // exactly like the app refusing to open.
+    [self launchThroughUIApplication];
+    [self waitForSceneWithAttemptsRemaining:40 thenTry:^{
+        [self launchThroughSystemService];
+    } completion:completion];
 }
 
-- (void)launchSuspended {
+- (void)launchThroughUIApplication {
     SpringBoard *springBoard = (SpringBoard *)UIApplication.sharedApplication;
-    if ([springBoard respondsToSelector:@selector(launchApplicationWithIdentifier:suspended:)]) {
-        // Suspended, so SpringBoard does not run a front-app transition; the
-        // scene is forced foreground once it exists.
-        [springBoard launchApplicationWithIdentifier:_bundleIdentifier suspended:YES];
+    if (![springBoard respondsToSelector:@selector(launchApplicationWithIdentifier:suspended:)]) {
+        DSDiagnosticsRecord(@"SpringBoard: this build has no launchApplicationWithIdentifier:suspended:");
         return;
     }
+    // Suspended, so SpringBoard does not run a front-app transition; the scene is
+    // forced foreground once it exists.
+    [springBoard launchApplicationWithIdentifier:_bundleIdentifier suspended:YES];
+}
 
+- (void)launchThroughSystemService {
     id service = DSSystemService();
-    if (![service respondsToSelector:@selector(openApplication:options:withResult:)]) return;
+    if (![service respondsToSelector:@selector(openApplication:options:withResult:)]) {
+        DSDiagnosticsRecord(@"SpringBoard: no second way to launch an app on this build");
+        return;
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ has no scene yet, asking FrontBoard directly", _bundleIdentifier);
     NSDictionary *options = @{ @"__ActivateSuspended" : @YES };
     ((void (*)(id, SEL, id, id, id))objc_msgSend)(service, @selector(openApplication:options:withResult:), _bundleIdentifier, options, nil);
 }
 
-- (void)waitForSceneWithAttemptsRemaining:(NSInteger)attempts completion:(DSSceneHostReadyBlock)completion {
+- (void)waitForSceneWithAttemptsRemaining:(NSInteger)attempts
+                                  thenTry:(void (^)(void))fallback
+                               completion:(DSSceneHostReadyBlock)completion {
     FBScene *scene = [self resolveScene];
     if (scene) {
         _scene = scene;
         [self beginHosting];
-        if (completion) completion(YES);
+        if (completion) completion(self.isHosting);
         return;
     }
+
     if (attempts <= 0) {
+        if (fallback) {
+            fallback();
+            [self waitForSceneWithAttemptsRemaining:60 thenTry:nil completion:completion];
+            return;
+        }
+        // Whether the app is running decides which half of this failed, so it is
+        // worth one line: a process that is alive but sceneless is a different
+        // problem from one that never started.
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ never produced a scene to put on the stage (process %@)",
+                                  _bundleIdentifier,
+                                  self.isProcessAlive ? @"is running" : @"is not running");
         if (completion) completion(NO);
         return;
     }
+
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self waitForSceneWithAttemptsRemaining:attempts - 1 completion:completion];
+        [self waitForSceneWithAttemptsRemaining:attempts - 1 thenTry:fallback completion:completion];
     });
 }
 
@@ -169,14 +321,23 @@ static void DSApplyGeometry(FBSMutableSceneSettings *settings, CGRect frame, UIE
 
 - (void)beginHosting {
     if (!_scene || _hostView) return;
-    if (![_scene respondsToSelector:@selector(hostManagerForRequester:)]) return;
+    if (![_scene respondsToSelector:@selector(hostManagerForRequester:)]) {
+        DSDiagnosticsRecord(@"SpringBoard: this build's scenes cannot be hosted by a requester");
+        return;
+    }
 
     @try {
         _hostManager = [_scene hostManagerForRequester:kDSRequester];
-        if (![_hostManager respondsToSelector:@selector(hostViewForRequester:enableAndOrderFront:)]) return;
+        if (![_hostManager respondsToSelector:@selector(hostViewForRequester:enableAndOrderFront:)]) {
+            DSDiagnosticsRecord(@"SpringBoard: the scene host manager has no host view to give");
+            return;
+        }
         _hostView = [_hostManager hostViewForRequester:kDSRequester enableAndOrderFront:YES];
         _hostView.clipsToBounds = YES;
+        if (!_hostView) DSDiagnosticsRecordFormat(@"SpringBoard: hosting %@ gave back no view", _bundleIdentifier);
     } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: hosting %@ threw %@ - %@",
+                                  _bundleIdentifier, exception.name ?: @"?", exception.reason ?: @"?");
         _hostManager = nil;
         _hostView = nil;
     }
@@ -385,6 +546,33 @@ static void DSApplyGeometry(FBSMutableSceneSettings *settings, CGRect frame, UIE
         return NO;
     }
     return YES;
+}
+
++ (void)noteLiveScene:(FBScene *)scene {
+    if (![scene respondsToSelector:@selector(identifier)]) return;
+    NSString *identifier = scene.identifier;
+    if (identifier.length == 0) return;
+
+    [DSSceneOverridesLock() lock];
+    [DSLiveScenes() setObject:scene forKey:identifier];
+    [DSSceneOverridesLock() unlock];
+}
+
++ (FBScene *)liveSceneForBundleIdentifier:(NSString *)bundleIdentifier {
+    if (bundleIdentifier.length == 0) return nil;
+
+    [DSSceneOverridesLock() lock];
+    FBScene *found = nil;
+    for (NSString *identifier in DSLiveScenes().keyEnumerator.allObjects) {
+        if ([identifier rangeOfString:bundleIdentifier].location == NSNotFound) continue;
+        FBScene *scene = [DSLiveScenes() objectForKey:identifier];
+        if (scene) {
+            found = scene;
+            break;
+        }
+    }
+    [DSSceneOverridesLock() unlock];
+    return found;
 }
 
 + (void)registerGeometryOverrideForScene:(FBScene *)scene frame:(CGRect)frame insets:(UIEdgeInsets)insets {

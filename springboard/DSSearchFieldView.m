@@ -23,13 +23,13 @@
         _magnifier.contentMode = UIViewContentModeScaleAspectFit;
         if (@available(iOS 13.0, *)) {
             _magnifier.image = [[UIImage systemImageNamed:@"magnifyingglass"]
-                imageWithConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:15.0
+                imageWithConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:17.0
                                                                                       weight:UIImageSymbolWeightRegular]];
         }
         [self addSubview:_magnifier];
 
         _field = [[UITextField alloc] initWithFrame:CGRectZero];
-        _field.font = [UIFont systemFontOfSize:16.0];
+        _field.font = [UIFont systemFontOfSize:kDSTitleFontSize];
         _field.delegate = self;
         _field.returnKeyType = UIReturnKeySearch;
         _field.autocorrectionType = UITextAutocorrectionTypeNo;
@@ -58,14 +58,15 @@
     CGRect bounds = self.bounds;
     _plate.frame = bounds;
 
-    CGFloat side = 18.0;
-    _magnifier.frame = CGRectMake(13.0, (CGRectGetHeight(bounds) - side) / 2.0, side, side);
-    _clearButton.frame = CGRectMake(CGRectGetWidth(bounds) - 13.0 - side,
+    CGFloat side = 20.0;
+    _magnifier.frame = CGRectMake(kDSSearchGlyphInset, (CGRectGetHeight(bounds) - side) / 2.0, side, side);
+    _clearButton.frame = CGRectMake(CGRectGetWidth(bounds) - kDSSearchGlyphInset - side,
                                     (CGRectGetHeight(bounds) - side) / 2.0,
                                     side, side);
 
-    CGFloat fieldX = CGRectGetMaxX(_magnifier.frame) + 7.0;
-    CGFloat fieldRight = _clearButton.hidden ? CGRectGetWidth(bounds) - 12.0 : CGRectGetMinX(_clearButton.frame) - 6.0;
+    CGFloat fieldX = CGRectGetMaxX(_magnifier.frame) + 10.0;
+    CGFloat fieldRight = _clearButton.hidden ? CGRectGetWidth(bounds) - kDSSearchGlyphInset
+                                             : CGRectGetMinX(_clearButton.frame) - 8.0;
     _field.frame = CGRectMake(fieldX, 0, MAX(fieldRight - fieldX, 0), CGRectGetHeight(bounds));
 }
 

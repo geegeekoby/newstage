@@ -4,6 +4,9 @@
 #import <notify.h>
 
 @implementation DSStageContext {
+    // Written by refresh and by the getter, which reads it from the scene. Declared
+    // here because the getter below replaces the one that would have synthesised it.
+    CGRect _stageBounds;
     CGRect _deviceBounds;
     BOOL _resolvedDeviceBounds;
     int _stateToken;
@@ -205,11 +208,18 @@
     if (!wasStaged && self.stagedHandler) self.stagedHandler();
 }
 
-- (CGRect)liveStageBounds {
-    CGRect bounds = [self sceneBounds];
-    if (CGRectIsEmpty(bounds)) return _stageBounds;
-    _stageBounds = bounds;
-    return bounds;
+// Read from the scene every time rather than from the last refresh. The scene grows
+// by the height of the keyboard the moment a keyboard goes up in it, and every hook
+// in this dylib that answers a question about size answers with this - so a value one
+// layout old is the card's height, which is how the keyboard ended up inside the card
+// in every build before 1.4.4. Off the main thread the last known value stands, since
+// asking UIKit for its scenes from another thread is not allowed.
+- (CGRect)stageBounds {
+    if (NSThread.isMainThread) {
+        CGRect bounds = [self sceneBounds];
+        if (!CGRectIsEmpty(bounds)) _stageBounds = bounds;
+    }
+    return CGRectIsEmpty(_stageBounds) ? self.deviceBounds : _stageBounds;
 }
 
 // The scene's coordinate space follows the frame SpringBoard hands us and is not

@@ -31,13 +31,6 @@ static CGRect DSStageBounds(void) {
     return [DSStageContext sharedContext].stageBounds;
 }
 
-// For the handful of hooks where being a layout behind is the difference between a
-// keyboard at the bottom of the display and a keyboard inside the card. Read from
-// the scene itself, and only on paths that run when a keyboard moves.
-static CGRect DSLiveStageBounds(void) {
-    return [DSStageContext sharedContext].liveStageBounds;
-}
-
 #pragma mark - Screen
 
 %hook UIScreen
@@ -189,14 +182,14 @@ static CGRect DSLiveStageBounds(void) {
 
 - (void)setFrame:(CGRect)frame {
     if (DSStaged()) {
-        CGRect stage = DSLiveStageBounds();
+        CGRect stage = DSStageBounds();
         if (!CGRectIsEmpty(stage)) frame = stage;
     }
     %orig;
 }
 
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation {
-    if (DSStaged()) return DSLiveStageBounds();
+    if (DSStaged()) return DSStageBounds();
     return %orig;
 }
 
@@ -206,20 +199,10 @@ static CGRect DSLiveStageBounds(void) {
 
 - (void)setFrame:(CGRect)frame {
     if (DSStaged()) {
-        frame.size.width = CGRectGetWidth(DSLiveStageBounds());
+        frame.size.width = CGRectGetWidth(DSStageBounds());
         frame.origin.x = 0;
     }
     %orig;
-}
-
-%end
-
-// Where UIKit puts the keyboard: at the bottom of this rectangle.
-%hook UIInputResponderController
-
-- (CGRect)_sceneBounds {
-    if (DSStaged()) return DSLiveStageBounds();
-    return %orig;
 }
 
 %end

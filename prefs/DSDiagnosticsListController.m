@@ -47,15 +47,6 @@
     [specifiers addObject:stageGroup];
     [specifiers addObject:[self buttonWithLabel:@"Open Stage Now" action:@selector(openStage)]];
 
-    PSSpecifier *pageGroup = [PSSpecifier emptyGroupSpecifier];
-    [pageGroup setProperty:@"This Page" forKey:@"label"];
-    [pageGroup setProperty:DSPrefsPlainMode()
-                             ? @"The settings page is currently being shown without its header, because an earlier open of it did not reach the screen."
-                             : @"The settings page is showing in full."
-                     forKey:@"footerText"];
-    [specifiers addObject:pageGroup];
-    [specifiers addObject:[self buttonWithLabel:@"Restore Full Page" action:@selector(restoreFullPage)]];
-
     return specifiers;
 }
 
@@ -137,12 +128,6 @@
     notify_post(kDSOpenStageNotification);
     [self showNote:@"Asked SpringBoard To Open The Stage"
            message:@"Leave Settings and look at the screen. If nothing appeared, come back and read the log."];
-}
-
-- (void)restoreFullPage {
-    DSPrefsResetPlainMode();
-    [self showNote:@"Restored"
-           message:@"The settings page will be shown in full the next time it is opened."];
 }
 
 - (void)showNote:(NSString *)title message:(NSString *)message {

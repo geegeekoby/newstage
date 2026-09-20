@@ -1,4 +1,4 @@
 #import "DSListController.h"
 
-@interface DSRootListController : DSListController <UIScrollViewDelegate>
+@interface DSRootListController : DSListController
 @end

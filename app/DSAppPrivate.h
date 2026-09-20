@@ -14,10 +14,6 @@
 @interface UIInputSetHostView : UIView
 @end
 
-@interface UIInputResponderController : UIViewController
-- (CGRect)_sceneBounds;
-@end
-
 @interface _UIFullscreenPresentationController : UIPresentationController
 @end
 

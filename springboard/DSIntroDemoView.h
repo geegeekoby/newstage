@@ -6,6 +6,7 @@ typedef NS_ENUM(NSInteger, DSIntroDemo) {
     DSIntroDemoPick,
     DSIntroDemoSplit,
     DSIntroDemoFullscreen,
+    DSIntroDemoPutAway,
 };
 
 // A looping miniature of the device that acts out whichever gesture the current

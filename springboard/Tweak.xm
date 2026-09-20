@@ -194,6 +194,42 @@ static BOOL DSTweakEnabled(void) {
 
 %end
 
+#pragma mark - iPad multitasking capability
+
+// SpringBoard keeps a per-application flag for whether an app may be handed a
+// scene that is not the whole display (the iPad multitasking path). An app the
+// user has set to iPad mode needs it on, otherwise the resized scene is snapped
+// straight back to full screen. It is only lifted for the app on the stage, so
+// nothing else in SpringBoard changes behaviour.
+static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
+    if (!DSTweakEnabled() || identifier.length == 0) return NO;
+    DSStageManager *manager = [DSStageManager sharedManager];
+    if (![identifier isEqualToString:manager.stageBundleIdentifier]) return NO;
+    return [[DSPreferences sharedPreferences] launchTypeForApplication:identifier] == DSLaunchTypePad;
+}
+
+%hook SBApplicationInfo
+
+- (BOOL)isMedusaCapable {
+    if (DSShouldForceMedusaForIdentifier([self respondsToSelector:@selector(bundleIdentifier)] ? [self bundleIdentifier] : nil)) {
+        return YES;
+    }
+    return %orig;
+}
+
+%end
+
+%hook FBApplicationInfo
+
+- (BOOL)isMedusaCapable {
+    if (DSShouldForceMedusaForIdentifier([self respondsToSelector:@selector(bundleIdentifier)] ? [self bundleIdentifier] : nil)) {
+        return YES;
+    }
+    return %orig;
+}
+
+%end
+
 #pragma mark - Orientation
 
 // The stage is portrait only. Letting SpringBoard rotate a hosted scene would

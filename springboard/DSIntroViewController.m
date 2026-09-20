@@ -115,9 +115,12 @@ static UIWindow *sIntroWindow;
         [DSIntroStep stepWithTitle:@"Float or split"
                               body:@"Let go early and the stage floats over your app. Keep pulling and the app behind resizes into a true split view."
                               demo:DSIntroDemoSplit],
-        [DSIntroStep stepWithTitle:@"Take it fullscreen"
-                              body:@"Hold the grabber to hand the stage app the whole screen. Swipe the stage down to tuck it away and keep it running."
+        [DSIntroStep stepWithTitle:@"Hold for fullscreen"
+                              body:@"Press and hold an app in the list instead of tapping it and it opens across the whole screen, no stage involved."
                               demo:DSIntroDemoFullscreen],
+        [DSIntroStep stepWithTitle:@"Put it away"
+                              body:@"Swipe up inside the stage to drop the app and get the list back. Drag the stage down and it leaves, still running in the background."
+                              demo:DSIntroDemoPutAway],
         [DSIntroStep stepWithTitle:@"You are all set"
                               body:@"Everything is tunable in Settings: appearance, pinned apps, per-app behaviour and when background apps get closed."
                               demo:DSIntroDemoNone],

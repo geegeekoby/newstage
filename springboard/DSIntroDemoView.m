@@ -149,6 +149,7 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
         case DSIntroDemoPick: return 1.0;
         case DSIntroDemoSplit: return 2.0;
         case DSIntroDemoFullscreen: return 1.0;
+        case DSIntroDemoPutAway: return 1.0;
         default: return 0.0;
     }
 }
@@ -259,6 +260,7 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
         case DSIntroDemoPick: [self runPickCycle]; break;
         case DSIntroDemoSplit: [self runSplitCycle]; break;
         case DSIntroDemoFullscreen: [self runFullscreenCycle]; break;
+        case DSIntroDemoPutAway: [self runPutAwayCycle]; break;
         default: break;
     }
 }
@@ -373,14 +375,15 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     } completion:nil];
 }
 
+// Holding a plate rather than tapping it hands the app the whole screen.
 - (void)runFullscreenCycle {
-    _stageApp.alpha = 1.0;
-    for (UIView *cell in _stageCells) cell.alpha = 0.0;
+    _stageApp.alpha = 0.0;
     [self layoutStageForProgress:1.0 instant:YES];
     _hostApp.alpha = 1.0;
+    for (UIView *cell in _stageCells) cell.alpha = 1.0;
 
-    CGPoint hold = [self convertPoint:CGPointMake(CGRectGetMidX(_stageGrabber.bounds), CGRectGetMidY(_stageGrabber.bounds))
-                             fromView:_stageGrabber];
+    UIView *target = _stageCells.firstObject;
+    CGPoint hold = [self convertPoint:CGPointMake(CGRectGetMidX(target.bounds), CGRectGetMidY(target.bounds)) fromView:target];
     _finger.center = hold;
     _finger.transform = CGAffineTransformMakeScale(0.7, 0.7);
 
@@ -389,15 +392,17 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
         self->_finger.transform = CGAffineTransformIdentity;
     } completion:nil];
 
-    // The ring filling up is the visual the real grabber uses for the hold.
-    [UIView animateWithDuration:0.55 delay:0.55 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        self->_stageGrabber.transform = CGAffineTransformMakeScale(2.4, 1.0);
-        self->_stageGrabber.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.85];
+    // The plate deepening under the finger is the hold's own feedback.
+    [UIView animateWithDuration:0.6 delay:0.55 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+        target.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.42];
+        self->_finger.transform = CGAffineTransformMakeScale(0.86, 0.86);
     } completion:nil];
 
-    [UIView animateWithDuration:0.6 delay:1.2 usingSpringWithDamping:0.9 initialSpringVelocity:0.0 options:0 animations:^{
+    [UIView animateWithDuration:0.65 delay:1.25 usingSpringWithDamping:0.9 initialSpringVelocity:0.0 options:0 animations:^{
         self->_finger.alpha = 0.0;
         self->_hostApp.alpha = 0.0;
+        for (UIView *cell in self->_stageCells) cell.alpha = 0.0;
+        self->_stageApp.alpha = 1.0;
         self->_stage.frame = self->_hostApp.frame;
         self->_stageApp.frame = self->_stage.bounds;
         self->_stageApp.layer.cornerRadius = self->_stage.layer.cornerRadius;
@@ -409,11 +414,56 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     } completion:nil];
 
     [UIView animateWithDuration:0.5 delay:3.5 options:0 animations:^{
-        self->_stageGrabber.transform = CGAffineTransformIdentity;
-        self->_stageGrabber.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.38];
         self->_stageGrabber.alpha = 1.0;
         self->_hostApp.alpha = 1.0;
+        self->_stageApp.alpha = 0.0;
+        target.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.16];
+        for (UIView *cell in self->_stageCells) cell.alpha = 1.0;
         [self layoutStageForProgress:1.0 instant:NO];
+    } completion:nil];
+}
+
+// Two ways out: swipe up inside the stage to drop the app and get the picker
+// back, then drag the stage itself down to put it away.
+- (void)runPutAwayCycle {
+    _stageApp.alpha = 1.0;
+    for (UIView *cell in _stageCells) cell.alpha = 0.0;
+    [self layoutStageForProgress:1.0 instant:YES];
+
+    CGRect stage = [self convertRect:_stage.bounds fromView:_stage];
+    CGPoint bottom = CGPointMake(CGRectGetMidX(stage), CGRectGetMaxY(stage) - 6.0);
+    _finger.center = bottom;
+    _finger.transform = CGAffineTransformMakeScale(0.7, 0.7);
+
+    [UIView animateWithDuration:0.2 delay:0.25 options:0 animations:^{
+        self->_finger.alpha = 1.0;
+        self->_finger.transform = CGAffineTransformIdentity;
+    } completion:nil];
+
+    // Swipe up: the app shrinks into its plate and the picker comes back.
+    [UIView animateWithDuration:0.55 delay:0.5 usingSpringWithDamping:0.88 initialSpringVelocity:0.0 options:0 animations:^{
+        self->_finger.center = CGPointMake(bottom.x, bottom.y - CGRectGetHeight(stage) * 0.3);
+        self->_stageApp.alpha = 0.0;
+        for (UIView *cell in self->_stageCells) cell.alpha = 1.0;
+    } completion:nil];
+
+    [UIView animateWithDuration:0.2 delay:1.15 options:0 animations:^{
+        self->_finger.alpha = 0.0;
+    } completion:nil];
+
+    // Drag down from the top of the stage: it leaves, the app behind stays.
+    [UIView animateWithDuration:0.2 delay:1.6 options:0 animations:^{
+        self->_finger.center = CGPointMake(CGRectGetMidX(stage), CGRectGetMinY(stage) + 8.0);
+        self->_finger.alpha = 1.0;
+    } completion:nil];
+
+    [UIView animateWithDuration:0.6 delay:1.9 usingSpringWithDamping:0.95 initialSpringVelocity:0.0 options:0 animations:^{
+        self->_finger.center = CGPointMake(CGRectGetMidX(stage), CGRectGetMaxY(stage) + 10.0);
+        [self layoutStageForProgress:0.0 instant:NO];
+    } completion:nil];
+
+    [UIView animateWithDuration:0.25 delay:2.6 options:0 animations:^{
+        self->_finger.alpha = 0.0;
     } completion:nil];
 }
 

@@ -149,10 +149,9 @@ typedef NS_ENUM(NSInteger, DSStageState) {
 //     being pulled, over black, then either springs back (overlay) or resizes
 //     into the top half (split).
 
-// How much of the app has to stay visible above its own keyboard. A keyboard on
-// this display is around 340pt, so the card reaching the top of the screen is the
-// worst case rather than the normal one.
-static const CGFloat kDSTypingContentHeight = 260.0;
+// Below this, whatever an app has put up at the bottom of its window is an
+// accessory bar or a keyboard on its way out rather than a keyboard.
+static const CGFloat kDSKeyboardPresentHeight = 60.0;
 
 static const CGFloat kDSSplitRatio = 0.5;
 static const CGFloat kDSStageInset = 10.0;

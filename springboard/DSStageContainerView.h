@@ -10,6 +10,10 @@
 @property (nonatomic, assign) CGFloat cornerRadius;
 // How far the card is being held up out of the keyboard's way.
 @property (nonatomic, readonly) CGFloat liftOffset;
+// How far the hosted app's window reaches below the card, which is where that app
+// draws its own keyboard. The card stops clipping over that band so the keyboard
+// comes out below the card, full size, at the bottom of the display.
+@property (nonatomic, readonly) CGFloat keyboardSpill;
 
 // Hidden while a live app is hosted, since the app paints its own background.
 - (void)setBackdropHidden:(BOOL)hidden;
@@ -22,5 +26,6 @@
 - (CGRect)cornerGripRect;
 
 - (void)setLiftOffset:(CGFloat)offset;
+- (void)setKeyboardSpill:(CGFloat)spill;
 
 @end

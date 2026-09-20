@@ -120,12 +120,25 @@
         } @catch (NSException *exception) {
         }
     }
-    static BOOL noted = NO;
-    if (!noted) {
-        noted = YES;
-        DSDiagnosticsRecordFormat(@"SpringBoard: search field asked for the keyboard, window is %@",
-                                  window.isKeyWindow ? @"key" : @"still not key");
-    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: search field asked for the keyboard, window is %@",
+                              window.isKeyWindow ? @"key" : @"still not key");
+
+    // Whether a keyboard then actually arrives is the whole question when typing in
+    // the picker does not work, and it is not something that can be seen from here
+    // any other way: written down a moment later, for the diagnostics page.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.9 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        CGRect keyboard = CGRectNull;
+        for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
+            if (candidate.hidden || candidate.alpha < 0.01) continue;
+            if ([NSStringFromClass(candidate.class) rangeOfString:@"Keyboard"].location == NSNotFound) continue;
+            keyboard = candidate.frame;
+            break;
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: a moment later the keyboard is %@",
+                                  CGRectIsNull(keyboard) ? @"nowhere on the display"
+                                                         : NSStringFromCGRect(keyboard));
+    });
     return YES;
 }
 

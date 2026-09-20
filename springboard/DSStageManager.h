@@ -36,9 +36,6 @@
 // Opens the stage as though the corner had been pulled all the way up.
 - (void)openStageAnimated:(BOOL)animated;
 
-// SpringBoard's own keyboard window, the one that spans the display, came or went.
-- (void)keyboardWindowOutsideStage:(UIWindow *)window hidden:(BOOL)hidden;
-
 // How tall a keyboard the app on the stage has raised inside its own window, as
 // reported by the app itself. Zero when it has put one away.
 - (void)stagedAppKeyboardHeightChanged:(CGFloat)height;

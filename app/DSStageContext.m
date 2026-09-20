@@ -80,9 +80,10 @@
 
 // This process is the only one that can see its own keyboard: it is drawn inside
 // this app's window, which on the stage is the card, and nothing about it leaves
-// the process. So the height is published, and SpringBoard gives the card the
-// room - full width, down to the bottom edge - so the keyboard ends up the size
-// and in the place it would be if the app were full screen.
+// the process. So the height is published, and SpringBoard makes the window that
+// much taller than the card and lets the bottom band of it through underneath -
+// the keyboard ends up below the card, on the bottom edge of the display, the size
+// it would be if this app were full screen.
 - (void)observeOwnKeyboard {
     _keyboardToken = NOTIFY_TOKEN_INVALID;
     notify_register_check(kDSKeyboardHeightNotification, &_keyboardToken);
@@ -105,11 +106,15 @@
     CGFloat height = 0.0;
     if (![notification.name isEqualToString:UIKeyboardWillHideNotification]) {
         CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-        CGRect scene = CGRectIsEmpty(_stageBounds) ? self.deviceBounds : _stageBounds;
-        // Only the part of it that is on screen counts; a keyboard on its way out is
-        // reported at its full height sitting below the bottom edge.
-        CGFloat visible = CGRectGetMaxY(scene) - CGRectGetMinY(keyboard);
-        height = MAX(MIN(visible, CGRectGetHeight(keyboard)), 0.0);
+        // The frame is in this app's own coordinates, so it is measured against this
+        // app's own window: only the part of the keyboard that is inside it counts. A
+        // keyboard on its way out is reported at full height sitting below the bottom.
+        height = CGRectGetHeight(keyboard);
+        CGFloat windowHeight = [self ownWindowHeight];
+        if (windowHeight > 0.0) {
+            CGFloat visible = windowHeight - CGRectGetMinY(keyboard);
+            height = MAX(MIN(visible, height), 0.0);
+        }
     }
 
     uint64_t published = _staged ? (uint64_t)round(height) : 0;
@@ -118,6 +123,22 @@
 
     notify_set_state(_keyboardToken, published);
     notify_post(kDSKeyboardHeightNotification);
+}
+
+// The window the keyboard came up in. On the stage that is the card plus whatever
+// room SpringBoard has already made below it for the keyboard, so it is read live
+// rather than taken from the published stage rectangle, which can be a layout behind.
+// Zero when there is nothing to read, in which case the keyboard's own height stands.
+- (CGFloat)ownWindowHeight {
+    UIWindow *window = UIApplication.sharedApplication.keyWindow;
+    if (!window) {
+        for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
+            if (candidate.hidden || CGRectIsEmpty(candidate.bounds)) continue;
+            window = candidate;
+            break;
+        }
+    }
+    return window ? CGRectGetHeight(window.bounds) : 0.0;
 }
 
 #pragma mark - Geometry

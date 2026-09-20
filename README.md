@@ -237,37 +237,47 @@ answered.
 
 ## The keyboard
 
-The keyboard is never squeezed into the card. There are two keyboards involved and they
-need different answers, because they are drawn by different processes.
+The keyboard is never squeezed into the card. Two keyboards are involved and they need
+different answers, because they are drawn by different processes.
 
 **The stage's own search field** uses SpringBoard's keyboard: the ordinary one, full width,
-at the bottom of the display, above the card. The card lifts above it while it is there. The
-signal for that is `UIKeyboardWillChangeFrameNotification`, which SpringBoard posts for its
-own keyboards, plus SpringBoard's hosted keyboard window where it has one. That window is
-one of SpringBoard's and so covers the whole display - its frame says nothing about where the
-keyboard is, and taking it for the keyboard lifted the card clean off the top of the screen
-in 1.4.1. The keyboard is the view hosted inside it, and the lift is clamped so that however
-wrong the number, the card cannot leave the screen.
+at the bottom of the display, above the card, which lifts out of its way while it is there.
+The signal is `UIKeyboardWillChangeFrameNotification`, which arrives in SpringBoard for
+SpringBoard's own keyboards.
 
-**A staged app's keyboard** is drawn by the app inside its own window, which on the stage is
-the card - a card half the screen tall, so a keyboard inside it leaves almost nothing of the
-app. Nothing about that keyboard leaves the app's process: SpringBoard cannot see it, and
-there is no setting that moves it out of the app's window.
+That keyboard is easy to lose, and two things in the stage were taking it away.
 
-What there is, is the tweak's own dylib already inside that app. It reports the height of the
-keyboard it has raised through a Darwin notification's state, and the card responds by taking
-the whole width and going down to the bottom edge, its top raised as far as it needs to be to
-keep a usable strip of the app above the keyboard - so the keyboard comes out the size and in
-the position it would have if the app were full screen, with the display's own corner radius
-rather than an inset card's. It goes back to the floating card when the keyboard does. The
-bottom strip stays the system's while this is happening, so leaving the app never requires
-putting the keyboard away first.
+1.4.0 asked SpringBoard's keyboard focus coordinator to point the keyboard at the staged app's
+scene, on the theory that a text field inside that app needed it. It did not - the app asks for
+its own keyboard, in its own process - and the request was never given back, so from the first
+app staged in a session the keyboard belonged to that app's scene and the picker's search field
+could not raise one again. Nothing asks for keyboard focus now.
 
-SpringBoard is also asked to host the keyboard itself, the way it does for iPad
-multitasking - the staged app is marked as able to live in a scene smaller than the display,
-which is the condition for it. Where that takes, the keyboard is SpringBoard's own window
-across the display and the card only has to move above it. The diagnostics page says which of
-the two happened.
+1.4.1 asked SpringBoard to place keyboards the way it does for iPad multitasking, by marking
+every staged app as able to live in a scene smaller than the display. SpringBoard took that to
+mean iPad multitasking was on screen and stopped putting the keyboard up for its own text
+fields at all. That flag is lifted again only for an app the user has explicitly set to iPad
+mode, which is what it was there for.
+
+What the diagnostics page records, when the search field is tapped, is whether the stage's
+window is key and whether a keyboard is anywhere on the display a moment later - the difference
+between a field that never asked and a keyboard that never came.
+
+**A staged app's keyboard** is drawn by the app inside its own window. There is no setting
+that moves it out of that window, and nothing about it leaves the app's process - so the only
+thing that can be changed is what the app's window is.
+
+So the window is made taller than the card, by exactly the height of the keyboard the app has
+raised, and the card stops clipping over that last band. The keyboard lands below the card, on
+the bottom edge of the display, at the size and in the position it would have full screen; the
+app lays its own content out above its own keyboard, and that content is exactly what the card
+shows. The card is held up by the height of the band so it all fits, and drops back to its
+resting place when the keyboard goes.
+
+The height comes from the tweak's own dylib inside that app, which publishes the keyboard's
+visible height as a Darwin notification's state. The band belongs to the app: touches in it
+are passed through to the app rather than taken as drags on the card, and the home gesture is
+left alone there, so leaving an app never means putting its keyboard away first.
 
 ## Staying out of the way
 

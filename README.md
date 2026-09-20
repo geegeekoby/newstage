@@ -23,9 +23,12 @@ script that draws the artwork.
 - Floating, the card is inset 10pt from the left, right and bottom edges, with corners
   concentric to the display's own. In Split View it goes edge to edge and takes the
   display's radius, keeping only the 10pt gap below the app above it.
-- Drag the top of the card up or down to move between Overlay and Split View after the fact.
-- Drag from the card's bottom-right corner, or flick the card down, to put it away. The app
-  on the stage keeps running.
+- Drag the grabber at the top of the card up or down to move between Overlay and Split View
+  after the fact. The grabber is a view of its own, above everything else on the card, so a
+  drag that starts on it belongs to the card rather than to whatever is underneath - the app
+  grid otherwise scrolls instead and the card never moves.
+- Drag the grabber down, drag from the card's bottom-right corner, or flick the card down, to
+  send it back to the corner. The app on the stage keeps running.
 - Swipe up from the bottom of the card to drop the app and get the picker back; the app
   shrinks into its own plate in the grid on the way out.
 - Hold a plate in the picker instead of tapping it and that app opens across the whole
@@ -37,7 +40,9 @@ script that draws the artwork.
 **The picker**
 
 - A search field, a grid of pinned and recently opened apps (two or three rows), and the
-  full app library underneath.
+  full app library underneath. Typing needs the stage's window to be the key window, so it
+  takes that while the stage is up and hands it straight back on the way out; the card is
+  held above the keyboard for as long as the keyboard is there.
 - The app that is playing audio shows a live waveform on its plate.
 - Light, dark, or follow-the-system appearance, over a blur that matches the system's.
 

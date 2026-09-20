@@ -166,10 +166,18 @@ Notes on the build:
 
 - `THEOS_PACKAGE_SCHEME=rootless` is set in the root `Makefile`, so everything installs
   under `/var/jb` and the package architecture is `iphoneos-arm64`.
-- `ARCHS` is `arm64` only. The Linux Theos toolchain emits arm64e slices with the
-  pre-iOS-14 pointer-authentication ABI, which dyld refuses to load; an arm64 slice loads
-  into arm64e processes such as SpringBoard without complaint. On macOS you can set
-  `ARCHS="arm64 arm64e"`.
+- `ARCHS` is `arm64 arm64e`, and both slices are needed. The processes this hooks on an
+  A12 or newer device are arm64e, and PreferenceLoader will not load an arm64 preference
+  bundle on such a device, while App Store apps the per-app dylib goes into are arm64.
+- The Linux toolchain compiles arm64e with the pre-iOS-14 pointer-authentication ABI,
+  which iOS 14.5 and later refuse to load, and the linker changes for the new ABI were
+  never open sourced. `tools/newabi.py` runs from the root `Makefile`'s `after-stage` hook
+  and closes that gap: it rewrites the Objective-C pointer signing the two ABIs disagree
+  on using [allemande](https://github.com/p0358/allemande), marks the slice as using the
+  versioned ptrauth ABI, and re-signs. It builds allemande on first use, so a host `g++`
+  with C++20 is needed once; set `ALLEMANDE=/path/to/allemande` to use your own. Building
+  on macOS with Xcode 12 or newer produces new-ABI arm64e directly and the hook then does
+  nothing.
 - Always run `make` from the repository root. The deployment target lives in the root
   `Makefile`, and building a subproject directly falls back to a much older iOS and fails on
   the modern UIKit the Settings bundle uses.

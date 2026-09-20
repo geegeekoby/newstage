@@ -1,6 +1,7 @@
 #import "DSBannerHeaderView.h"
 #import "DSPrefsPrivate.h"
 #import "DSConstants.h"
+#import "DSDiagnostics.h"
 
 static NSString *DSPackageVersion(void) {
     static NSString *version;
@@ -77,20 +78,19 @@ static NSString *DSPackageVersion(void) {
         [_wordmark addSubview:stage];
         [_wordmark addSubview:versionLabel];
 
-        NSDictionary *views = NSDictionaryOfVariableBindings(dynamic, stage, versionLabel);
-        [_wordmark addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[dynamic]-(-10)-[stage]-2-[versionLabel]|"
-                                                                         options:0
-                                                                         metrics:nil
-                                                                           views:views]];
-        for (UILabel *label in @[ dynamic, stage, versionLabel ]) {
-            [_wordmark addConstraint:[NSLayoutConstraint constraintWithItem:label
-                                                                 attribute:NSLayoutAttributeLeading
-                                                                 relatedBy:NSLayoutRelationEqual
-                                                                    toItem:_wordmark
-                                                                 attribute:NSLayoutAttributeLeading
-                                                                multiplier:1.0
-                                                                  constant:0.0]];
-        }
+        // Two lines of a wordmark have to sit tighter than their line boxes do, so
+        // the gap between them is negative. The visual format language cannot say
+        // that - it rejects a negative spacing and throws while the page is being
+        // built, taking Settings with it - so the stack is spelled out instead.
+        [NSLayoutConstraint activateConstraints:@[
+            [dynamic.topAnchor constraintEqualToAnchor:_wordmark.topAnchor],
+            [stage.topAnchor constraintEqualToAnchor:dynamic.bottomAnchor constant:-10.0],
+            [versionLabel.topAnchor constraintEqualToAnchor:stage.bottomAnchor constant:2.0],
+            [versionLabel.bottomAnchor constraintEqualToAnchor:_wordmark.bottomAnchor],
+            [dynamic.leadingAnchor constraintEqualToAnchor:_wordmark.leadingAnchor],
+            [stage.leadingAnchor constraintEqualToAnchor:_wordmark.leadingAnchor],
+            [versionLabel.leadingAnchor constraintEqualToAnchor:_wordmark.leadingAnchor],
+        ]];
 
         [self startDrifting];
     }
@@ -121,7 +121,17 @@ static NSString *DSPackageVersion(void) {
 
 - (void)layoutSubviews {
     [super layoutSubviews];
+    // Called by UIKit while Settings is building the page, so it answers for
+    // itself: a header that cannot lay itself out must not be able to take the
+    // Settings app down with it.
+    @try {
+        [self layoutBanner];
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"prefs: the page header could not lay out - %@", exception.reason ?: @"?");
+    }
+}
 
+- (void)layoutBanner {
     CGRect bounds = self.bounds;
     _parallax.frame = bounds;
 

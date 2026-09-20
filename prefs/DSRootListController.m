@@ -3,6 +3,8 @@
 #import "DSBannerHeaderView.h"
 #import "DSPrefsStore.h"
 #import "DSConstants.h"
+#import "DSDiagnostics.h"
+#import "DSSafety.h"
 
 static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
 
@@ -12,17 +14,50 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
     BOOL _restoreNavigationBar;
 }
 
+- (instancetype)init {
+    if ((self = [super init])) {
+        DSPrefsNotePageOpening();
+    }
+    return self;
+}
+
 - (NSMutableArray *)specifiers {
     if (!_specifiers) {
-        _specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self]
-                       ?: [NSMutableArray array];
+        DSPrefsNotePageOpening();
+        // The plain page carries the same settings with none of the custom cells,
+        // so a page that cannot be drawn can still be used.
+        NSString *name = DSPrefsPlainMode() ? @"RootSafe" : @"Root";
+        DSPrefsRun(@"loading the settings list", ^{
+            _specifiers = [self loadSpecifiersFromPlistName:name target:self];
+        });
+        if (!_specifiers) {
+            DSPrefsRun(@"loading the plain settings list", ^{
+                _specifiers = [self loadSpecifiersFromPlistName:@"RootSafe" target:self];
+            });
+        }
+        if (!_specifiers) _specifiers = [NSMutableArray array];
     }
     return _specifiers;
 }
 
 - (void)viewDidLoad {
+    DSPrefsNotePageOpening();
     [super viewDidLoad];
 
+    if (DSPrefsPlainMode()) {
+        self.title = @"Dynamic Stage";
+        return;
+    }
+
+    DSPrefsRun(@"building the page header", ^{
+        [self installBanner];
+    });
+    DSPrefsRun(@"building the navigation bar items", ^{
+        [self installNavigationItems];
+    });
+}
+
+- (void)installBanner {
     NSBundle *bundle = [NSBundle bundleForClass:self.class];
 
     _banner = [[DSBannerHeaderView alloc] initWithBundle:bundle];
@@ -30,10 +65,14 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
     _banner.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.table.tableHeaderView = _banner;
     self.table.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+}
+
+- (void)installNavigationItems {
+    NSBundle *bundle = [NSBundle bundleForClass:self.class];
 
     NSString *logoPath = [bundle pathForResource:@"logo@3x" ofType:@"png"];
     UIImage *logo = logoPath ? [UIImage imageWithContentsOfFile:logoPath] : nil;
-    if (logo) {
+    if (logo.CGImage) {
         UIImage *scaled = [UIImage imageWithCGImage:logo.CGImage scale:3.0 orientation:UIImageOrientationUp];
         UIImageView *titleView = [[UIImageView alloc] initWithImage:scaled];
         titleView.contentMode = UIViewContentModeScaleAspectFit;
@@ -55,16 +94,28 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [self setNavigationBarTransparent:YES];
+    if (DSPrefsPlainMode()) return;
+    DSPrefsRun(@"clearing the navigation bar background", ^{
+        [self setNavigationBarTransparent:YES];
+    });
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    DSPrefsNotePageShown();
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    [self setNavigationBarTransparent:NO];
+    if (DSPrefsPlainMode()) return;
+    DSPrefsRun(@"restoring the navigation bar background", ^{
+        [self setNavigationBarTransparent:NO];
+    });
 }
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
+    if (!_creditButton) return;
 
     CGRect bounds = self.view.bounds;
     UIEdgeInsets safeArea = self.view.safeAreaInsets;
@@ -129,6 +180,15 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
 - (void)openAbout {
     DSAboutListController *about = [[DSAboutListController alloc] init];
     [self.navigationController pushViewController:about animated:YES];
+}
+
+- (void)restoreFullPage {
+    DSPrefsResetPlainMode();
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Restored"
+                                                                  message:@"The page will be shown in full the next time it is opened."
+                                                           preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)openOriginalAuthor {

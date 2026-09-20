@@ -1,10 +1,14 @@
 #!/bin/sh
-# Installing a build is the user saying "try again", so the boot guard's count of
-# unfinished SpringBoard launches is cleared here. Without this, a build that had
-# tripped the guard would stay disabled even after being replaced by a fixed one.
+# Installing a build is the user saying "try again", so both guards are cleared
+# here: the boot guard's count of unfinished SpringBoard launches, and the mark
+# that keeps the Settings page stripped back after one of its opens did not reach
+# the screen. Without this, a build that had tripped either would stay degraded
+# even after being replaced by a fixed one.
 set -e
 
-rm -f /var/mobile/Library/Preferences/com.recreated.dynamicstage.launchguard
-rm -f /var/jb/var/mobile/Library/Preferences/com.recreated.dynamicstage.launchguard
+for guard in launchguard paneguard; do
+	rm -f "/var/mobile/Library/Preferences/com.recreated.dynamicstage.$guard"
+	rm -f "/var/jb/var/mobile/Library/Preferences/com.recreated.dynamicstage.$guard"
+done
 
 exit 0

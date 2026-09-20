@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>title</key>
-	<string></string>
+	<string>Dynamic Stage</string>
 	<key>items</key>
 	<array>
 		<dict>
@@ -11,6 +11,8 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>Tweak</string>
+			<key>footerText</key>
+			<string>This page is showing without its header because the full version of it did not finish loading last time. Every setting still works. Restore Full Page puts it back.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -98,7 +100,9 @@
 		</dict>
 		<dict>
 			<key>cell</key>
-			<string>PSSegmentCell</string>
+			<string>PSLinkListCell</string>
+			<key>label</key>
+			<string>Stage Appearance</string>
 			<key>key</key>
 			<string>appearance</string>
 			<key>default</key>
@@ -125,8 +129,16 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>Diagnostics</string>
-			<key>footerText</key>
-			<string>A short account of what the tweak has been doing on this device: which activation path the corner pull is using, why a pull was refused, and anything that went wrong in this page.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>About</string>
+			<key>detail</key>
+			<string>DSAboutListController</string>
+			<key>isController</key>
+			<true/>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -137,6 +149,14 @@
 			<string>DSDiagnosticsListController</string>
 			<key>isController</key>
 			<true/>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Restore Full Page</string>
+			<key>action</key>
+			<string>restoreFullPage</string>
 		</dict>
 	</array>
 </dict>

@@ -86,25 +86,23 @@ typedef NS_ENUM(NSInteger, DSStageState) {
 // captured on a 430x932pt device (iPhone 14 Pro Max, same as the target). Every
 // number below came out of a pixel trace of those frames:
 //
-//   * the stage card is full width and flush with the bottom of the display in
-//     every state, so only its top edge moves;
-//   * resting overlay top edge: 622/1218 video px -> 475.9pt, i.e. 0.5107 of the
-//     display height, a touch lower than the Split View divider;
-//   * Split View divider: a single black row at exactly half the display height,
-//     with the stage starting 1pt under it;
-//   * all four stage corners trace the same profile as the display mask (the
-//     traced outline matches the display's own bottom corner within a pixel), so
-//     the radius is _displayCornerRadius rather than a hand-picked number;
+//   * the stage always occupies the bottom half of the display, 466pt down;
+//   * floating over an app it is a card inset 10pt from the left, right and
+//     bottom edges, with a shadow line visible just outside each edge, so its
+//     top edge lands at 476pt;
+//   * in Split View the same card loses its side and bottom insets and goes
+//     edge to edge, keeping only the 10pt gap that separates it from the app
+//     above; the app above gets exactly the top half, with its bottom corners
+//     rounded to the display's own radius;
+//   * the floating card's corners are concentric with the display mask, i.e.
+//     the display radius less the inset; edge to edge they are the display's;
 //   * the app behind scales to 0.872 about the screen centre while the corner is
 //     being pulled, over black, then either springs back (overlay) or resizes
-//     into the top half (split);
-//   * picker content is inset 10pt from each side of the card.
+//     into the top half (split).
 
-static const CGFloat kDSOverlayTopRatio = 0.5107;
 static const CGFloat kDSSplitRatio = 0.5;
-static const CGFloat kDSSplitDividerGap = 1.0;
+static const CGFloat kDSStageInset = 10.0;
 static const CGFloat kDSFallbackDisplayCornerRadius = 55.0;
-static const CGFloat kDSContentInset = 10.0;
 static const CGFloat kDSHostShrinkScale = 0.872;
 
 // The hot corner that pulls the stage up, and the matching zone inside the
@@ -113,9 +111,10 @@ static const CGFloat kDSTriggerWidth = 112.0;
 static const CGFloat kDSTriggerHeight = 28.0;
 
 // Card that lifts out of the corner and follows the finger before the stage
-// takes its resting shape.
-static const CGFloat kDSPeekWidth = 200.0;
-static const CGFloat kDSPeekHeight = 150.0;
+// takes its resting shape. It tracks the drag at roughly a fifth of the stage's
+// size, growing as the finger travels.
+static const CGFloat kDSPeekWidth = 160.0;
+static const CGFloat kDSPeekHeight = 135.0;
 static const CGFloat kDSPeekCornerRadius = 26.0;
 
 // Spring used by every stage transition: ~0.42s response with a single small
@@ -123,12 +122,23 @@ static const CGFloat kDSPeekCornerRadius = 26.0;
 static const CGFloat kDSSpringDamping = 0.82;
 static const CGFloat kDSSpringResponse = 0.42;
 
-// Picker metrics.
-static const CGFloat kDSSearchFieldTop = 26.0;
-static const CGFloat kDSSearchFieldHeight = 38.0;
-static const CGFloat kDSSearchFieldRadius = 13.0;
-static const CGFloat kDSSectionHeaderHeight = 26.0;
-static const CGFloat kDSCellHeight = 38.0;
-static const CGFloat kDSCellRadius = 12.0;
-static const CGFloat kDSCellGap = 8.0;
-static const CGFloat kDSCellIconSide = 26.0;
+// Picker metrics, all traced off the same frames. Content sits 27pt inside the
+// card on both sides; the search field is 56pt tall with a 16pt radius, section
+// headers occupy a 52pt band with the text centred in it, and the plates are
+// 45pt tall with 10pt between them and the same 16pt radius as the field.
+static const CGFloat kDSContentInset = 27.0;
+static const CGFloat kDSSearchFieldTop = 28.0;
+static const CGFloat kDSSearchFieldHeight = 56.0;
+static const CGFloat kDSSearchFieldRadius = 16.0;
+static const CGFloat kDSSearchGlyphInset = 18.0;
+static const CGFloat kDSSectionHeaderHeight = 52.0;
+static const CGFloat kDSCellHeight = 45.0;
+static const CGFloat kDSCellRadius = 16.0;
+static const CGFloat kDSCellGap = 10.0;
+static const CGFloat kDSCellIconSide = 34.0;
+static const CGFloat kDSCellIconInset = 7.0;
+static const CGFloat kDSCellTitleGap = 7.0;
+
+// Type sizes, derived from the ink height of the same frames.
+static const CGFloat kDSTitleFontSize = 20.0;
+static const CGFloat kDSHeaderFontSize = 15.0;

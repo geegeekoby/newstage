@@ -156,7 +156,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     UIView *root = _window.rootViewController.view;
 
     _container = [[DSStageContainerView alloc] initWithFrame:[self stageFrameForState:DSStageStateClosed]];
-    _container.cornerRadius = [self displayCornerRadius];
+    _container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
     [root addSubview:_container];
 
     _picker = [[DSAppPickerViewController alloc] init];
@@ -229,24 +229,34 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     return floor(CGRectGetHeight([self screenBounds]) * kDSSplitRatio);
 }
 
+// The stage owns the bottom half of the display in both states. Floating over an
+// app it is a card inset on three sides; sharing the screen it goes edge to edge
+// and only the gap above it survives.
 - (CGRect)stageFrameForState:(DSStageState)state {
     CGRect bounds = [self screenBounds];
     CGFloat screenHeight = CGRectGetHeight(bounds);
-
-    // Overlay rests a few points lower than the Split View divider, which is
-    // what gives the floating card its sliver of app above it.
-    CGFloat overlayTop = round(screenHeight * kDSOverlayTopRatio);
-    CGFloat splitTop = [self splitLine] + kDSSplitDividerGap;
+    CGFloat screenWidth = CGRectGetWidth(bounds);
+    CGFloat top = [self splitLine] + kDSStageInset;
 
     switch (state) {
         case DSStageStateSplit:
-            return CGRectMake(0, splitTop, CGRectGetWidth(bounds), screenHeight - splitTop);
+            return CGRectMake(0, top, screenWidth, screenHeight - top);
         case DSStageStateOverlay:
-            return CGRectMake(0, overlayTop, CGRectGetWidth(bounds), screenHeight - overlayTop);
+            return CGRectMake(kDSStageInset, top,
+                              screenWidth - kDSStageInset * 2.0,
+                              screenHeight - top - kDSStageInset);
         default:
-            // Parked just below the bottom edge.
-            return CGRectMake(0, screenHeight, CGRectGetWidth(bounds), screenHeight - overlayTop);
+            // Parked just below the bottom edge, at the size it will come up as.
+            return CGRectMake(kDSStageInset, screenHeight,
+                              screenWidth - kDSStageInset * 2.0,
+                              screenHeight - top - kDSStageInset);
     }
+}
+
+- (CGFloat)cornerRadiusForState:(DSStageState)state {
+    CGFloat display = [self displayCornerRadius];
+    // Inset on both sides, the card's corners stay concentric with the display's.
+    return state == DSStageStateSplit ? display : display - kDSStageInset;
 }
 
 - (CGRect)hostFrameForSplit {
@@ -427,7 +437,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     [self animateSpring:^{
         [self animateHostSnapshotToFullScreen];
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
-        self->_container.cornerRadius = [self displayCornerRadius];
+        self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
     } completion:^{
         [self discardHostSnapshotAnimated:YES];
         self->_state = previous == DSStageStateMinimized ? DSStageStateMinimized : DSStageStateClosed;
@@ -449,8 +459,10 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     CGFloat phase = MIN(progress / kDSSplitProgress, 1.0);
     CGFloat eased = 1.0 - pow(1.0 - phase, 2.4);
 
-    CGFloat width = kDSPeekWidth * (0.42 + 0.58 * eased);
-    CGFloat height = kDSPeekHeight * (0.42 + 0.58 * eased);
+    // Traced from the recordings: about 110x105 as it clears the corner, growing
+    // to roughly 155x130 by the time the finger is halfway up.
+    CGFloat width = kDSPeekWidth * (0.69 + 0.31 * eased);
+    CGFloat height = kDSPeekHeight * (0.69 + 0.31 * eased);
     CGFloat travel = CGRectGetHeight(bounds) * kDSPullTravelRatio;
 
     CGFloat cornerCenterX = CGRectGetWidth(bounds) - kDSTriggerWidth / 2.0;
@@ -469,7 +481,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 }
 
 - (void)updateCornerRadiusForProgress:(CGFloat)progress {
-    CGFloat resting = [self displayCornerRadius];
+    CGFloat resting = [self cornerRadiusForState:progress >= kDSSplitProgress ? DSStageStateSplit : DSStageStateOverlay];
     CGFloat phase = MIN(progress / kDSSplitProgress, 1.0);
     _container.cornerRadius = kDSPeekCornerRadius + (resting - kDSPeekCornerRadius) * phase;
 }
@@ -616,7 +628,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
         // full screen before it is thrown away.
         [self animateHostSnapshotToFullScreen];
         self->_container.frame = [self stageFrameForState:DSStageStateOverlay];
-        self->_container.cornerRadius = [self displayCornerRadius];
+        self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
     };
     void (^finish)(void) = ^{
         [self discardHostSnapshotAnimated:YES];
@@ -645,7 +657,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     void (^layout)(void) = ^{
         [self animateHostSnapshotIntoSplit];
         self->_container.frame = [self stageFrameForState:DSStageStateSplit];
-        self->_container.cornerRadius = [self displayCornerRadius];
+        self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateSplit];
     };
     void (^finish)(void) = ^{
         [self layoutStageForState:DSStageStateSplit];
@@ -671,6 +683,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     [self restoreHostLayout];
     void (^layout)(void) = ^{
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
+        self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateMinimized;
@@ -699,13 +712,13 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     // full size rather than collapsing back into the corner.
     void (^layout)(void) = ^{
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
-        self->_container.cornerRadius = [self displayCornerRadius];
+        self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
         self->_container.alpha = 1.0;
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateClosed;
         self->_container.alpha = 1.0;
-        self->_container.cornerRadius = [self displayCornerRadius];
+        self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
         self->_openAppIcon.alpha = 0.0;
         self->_window.hidden = YES;

@@ -53,8 +53,8 @@ script that draws the artwork.
 
 - Background stage apps can be closed on dismissal, after five minutes, after ten, or never.
 - A first-launch walkthrough covers all six gestures with animated demonstrations.
-- A safe-mode flag (`/var/mobile/Library/Preferences/com.recreated.dynamicstage.disabled`)
-  keeps every hook out of SpringBoard on the next respring without uninstalling anything.
+- A safe-mode flag (`/var/mobile/.dynamicstage-disabled`) keeps every hook out of SpringBoard
+  on the next respring without uninstalling anything.
 
 ## Layout
 
@@ -112,7 +112,7 @@ Notes on the build:
 If a build ever leaves SpringBoard unhappy, create the safe-mode flag over SSH and respring:
 
 ```bash
-ssh mobile@<device> "touch /var/mobile/Library/Preferences/com.recreated.dynamicstage.disabled && sbreload"
+ssh mobile@<device> "touch /var/mobile/.dynamicstage-disabled && sbreload"
 ```
 
 Every hook checks that file before doing anything, so SpringBoard comes back stock with the

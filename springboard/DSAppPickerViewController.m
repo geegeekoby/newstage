@@ -71,7 +71,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 - (UILabel *)sectionHeaderWithText:(NSString *)text {
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
-    label.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightRegular];
+    label.font = [UIFont systemFontOfSize:kDSHeaderFontSize weight:UIFontWeightRegular];
     label.text = text;
     return label;
 }
@@ -180,10 +180,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     CGFloat y = kDSSearchFieldTop;
 
     _searchField.frame = CGRectMake(kDSContentInset, y, contentWidth, kDSSearchFieldHeight);
-    y += kDSSearchFieldHeight + 10.0;
+    y += kDSSearchFieldHeight;
 
     if (!_recentsHeader.hidden) {
-        _recentsHeader.frame = CGRectMake(kDSContentInset + 2.0, y, contentWidth, kDSSectionHeaderHeight);
+        // The header text is centred in its own band rather than sitting on top
+        // of the section, which is what puts equal air above and below it.
+        _recentsHeader.frame = CGRectMake(kDSContentInset, y, contentWidth, kDSSectionHeaderHeight);
         y += kDSSectionHeaderHeight;
 
         CGFloat columnWidth = (contentWidth - kDSCellGap) / 2.0;
@@ -196,11 +198,11 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
                                     kDSCellHeight);
         }];
         NSUInteger rows = (_recents.count + 1) / 2;
-        y += rows * (kDSCellHeight + kDSCellGap) + 6.0;
+        if (rows > 0) y += rows * kDSCellHeight + (rows - 1) * kDSCellGap;
     }
 
     if (!_libraryHeader.hidden) {
-        _libraryHeader.frame = CGRectMake(kDSContentInset + 2.0, y, contentWidth, kDSSectionHeaderHeight);
+        _libraryHeader.frame = CGRectMake(kDSContentInset, y, contentWidth, kDSSectionHeaderHeight);
         y += kDSSectionHeaderHeight;
         [_libraryCells enumerateObjectsUsingBlock:^(DSAppCellContentView *cell, NSUInteger index, BOOL *stop) {
             cell.frame = CGRectMake(kDSContentInset,
@@ -208,7 +210,9 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
                                     contentWidth,
                                     kDSCellHeight);
         }];
-        y += _libraryCells.count * (kDSCellHeight + kDSCellGap);
+        if (_libraryCells.count > 0) {
+            y += _libraryCells.count * kDSCellHeight + (_libraryCells.count - 1) * kDSCellGap;
+        }
     }
 
     if (!_emptyLabel.hidden) {

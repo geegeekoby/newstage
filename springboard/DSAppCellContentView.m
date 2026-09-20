@@ -1,8 +1,6 @@
 #import "DSAppCellContentView.h"
 #import "DSConstants.h"
 
-static const CGFloat kDSCellIconInset = 6.0;
-static const CGFloat kDSCellTitleGap = 9.0;
 
 #pragma mark - Now playing waveform
 
@@ -112,7 +110,7 @@ static const CGFloat kDSCellTitleGap = 9.0;
         [self addSubview:_icon];
 
         _title = [[UILabel alloc] initWithFrame:CGRectZero];
-        _title.font = [UIFont systemFontOfSize:15.0 weight:UIFontWeightRegular];
+        _title.font = [UIFont systemFontOfSize:kDSTitleFontSize weight:UIFontWeightRegular];
         _title.lineBreakMode = NSLineBreakByTruncatingTail;
         [self addSubview:_title];
 

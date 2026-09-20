@@ -154,15 +154,20 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     }
 }
 
+// Overlay is a card inset on three sides; Split View goes edge to edge. Same
+// rule as the real stage, scaled down to the mock device.
 - (CGRect)stageFrameForProgress:(CGFloat)progress {
     CGRect host = _hostApp.frame;
-    CGFloat overlayHeight = CGRectGetHeight(host) * 0.52;
-    CGFloat splitHeight = CGRectGetHeight(host) * 0.5;
-    CGFloat height = progress <= 1.0 ? overlayHeight
-                                     : overlayHeight + (splitHeight - overlayHeight) * (progress - 1.0);
+    CGFloat inset = CGRectGetWidth(host) * 0.023;
+    CGFloat split = MIN(MAX(progress - 1.0, 0.0), 1.0);
+    CGFloat sideInset = inset * (1.0 - split);
+    CGFloat height = CGRectGetHeight(host) * 0.5 - inset + inset * split;
     CGFloat visible = MIN(progress, 1.0);
-    CGFloat top = CGRectGetMaxY(host) - height * visible;
-    return CGRectMake(CGRectGetMinX(host), top, CGRectGetWidth(host), height);
+    CGFloat top = CGRectGetMaxY(host) - sideInset - height * visible;
+    return CGRectMake(CGRectGetMinX(host) + sideInset,
+                      top,
+                      CGRectGetWidth(host) - sideInset * 2.0,
+                      height);
 }
 
 - (void)layoutStageForProgress:(CGFloat)progress instant:(BOOL)instant {

@@ -3,15 +3,15 @@
 #import "DSConstants.h"
 
 static NSArray<NSString *> *DSAutoKillTitles(void) {
-    return @[ @"On Close", @"5 minutes", @"10 minutes", @"Never" ];
+    return @[ @"On Close", @"5 minutes", @"10 minutes" ];
 }
 
 @implementation DSAutoKillListController
 
 + (NSString *)currentSelectionTitle {
-    NSInteger selection = [[DSPrefsStore sharedStore] integerForKey:kDSPrefAutoKill fallback:DSAutoKillNever];
+    NSInteger selection = [[DSPrefsStore sharedStore] integerForKey:kDSPrefAutoKill fallback:DSAutoKillOnClose];
     NSArray *titles = DSAutoKillTitles();
-    if (selection < 0 || selection >= (NSInteger)titles.count) selection = DSAutoKillNever;
+    if (selection < 0 || selection >= (NSInteger)titles.count) selection = DSAutoKillOnClose;
     return titles[selection];
 }
 
@@ -24,7 +24,7 @@ static NSArray<NSString *> *DSAutoKillTitles(void) {
 }
 
 - (void)refreshCheckmarks {
-    NSInteger selection = [[DSPrefsStore sharedStore] integerForKey:kDSPrefAutoKill fallback:DSAutoKillNever];
+    NSInteger selection = [[DSPrefsStore sharedStore] integerForKey:kDSPrefAutoKill fallback:DSAutoKillOnClose];
     NSArray<NSString *> *titles = DSAutoKillTitles();
 
     for (PSSpecifier *specifier in _specifiers) {

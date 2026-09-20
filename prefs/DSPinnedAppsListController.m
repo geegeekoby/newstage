@@ -42,7 +42,7 @@ static const CGFloat kDSRowsCellHeight = 226.0;
     [specifiers addObject:rows];
 
     PSSpecifier *pinnedGroup = [PSSpecifier groupSpecifierWithName:@"Pinned Apps"];
-    [pinnedGroup setProperty:@"Drag to reorder. Tap an app below to pin it, tap a pinned app to remove it." forKey:@"footerText"];
+    [pinnedGroup setProperty:@"You can drag and drop the apps here to pin them in the Stage." forKey:@"footerText"];
     [pinnedGroup setProperty:@"pinnedGroup" forKey:@"id"];
     [specifiers addObject:pinnedGroup];
 

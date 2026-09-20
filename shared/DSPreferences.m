@@ -114,7 +114,7 @@ static const NSInteger kDSMaxRecents = 12;
 }
 
 - (DSAutoKill)autoKill {
-    return (DSAutoKill)[[self valueForKey:kDSPrefAutoKill fallback:@(DSAutoKillNever)] integerValue];
+    return (DSAutoKill)[[self valueForKey:kDSPrefAutoKill fallback:@(DSAutoKillOnClose)] integerValue];
 }
 
 - (BOOL)introShown {

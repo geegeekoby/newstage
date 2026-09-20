@@ -11,8 +11,6 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>Auto Kill</string>
-			<key>footerText</key>
-			<string>An app kept alive reopens on the stage instantly. Killing it on close gives the memory straight back to whatever you are using full screen.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -45,18 +43,6 @@
 			<string>10 minutes</string>
 			<key>value</key>
 			<string>10 minutes</string>
-			<key>accessoryType</key>
-			<string>UITableViewCellAccessoryCheckmark</string>
-			<key>action</key>
-			<string>selectAutoKillOption:</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSLinkCell</string>
-			<key>label</key>
-			<string>Never</string>
-			<key>value</key>
-			<string>Never</string>
 			<key>accessoryType</key>
 			<string>UITableViewCellAccessoryCheckmark</string>
 			<key>action</key>

@@ -102,7 +102,7 @@ What it serves:
 | Route | What it is |
 | --- | --- |
 | `/` | Landing page, with the repo URL and the `sileo://` and `zbra://` add links |
-| `/Release` | Flat-repo release record, `iphoneos-arm64` |
+| `/Release` | Flat-repo release record, carrying the digests of the index being served |
 | `/Packages`, `/Packages.gz` | Package index, generated per request so it can name its own host |
 | `/depiction.json` | Sileo native depiction: description, features, changelog |
 | `/sileo-featured.json` | Featured banner for the repo page |
@@ -110,9 +110,16 @@ What it serves:
 | `/debs/*.deb` | The package itself |
 
 A package's icon and depiction have to be absolute URLs, and the domain is not known when
-the index is written, so `api/repo.js` composes those three files from
-`api/package-index.json` using the host it is answering on. That means the same output works
-on any domain with nothing to edit after deploying.
+the index is written, so `api/repo.js` composes those files from `api/package-index.json`
+using the host it is answering on. That means the same output works on any domain with
+nothing to edit after deploying.
+
+`Release` is composed there too, in the same request, because it has to carry the hash of
+the exact index bytes the client is about to fetch. A package manager that finds no hash for
+`Packages` is entitled to ignore the index it just downloaded, and on the device that looks
+identical to the repo having nothing new in it. The index is also served `no-store`: one
+package, and an index that costs nothing to rebuild, so a stale cache is never worth the
+version that goes missing because of it.
 
 After building a new `.deb`, refresh the repo and redeploy:
 
@@ -181,8 +188,43 @@ Notes on the build:
 - Always run `make` from the repository root. The deployment target lives in the root
   `Makefile`, and building a subproject directly falls back to a much older iOS and fails on
   the modern UIKit the Settings bundle uses.
+- `tools/verify_package.py` runs from the `after-package` hook and checks the finished
+  `.deb` rather than trusting it: both slices present, the arm64e one marked as the new
+  ptrauth ABI in the fat header and the Mach-O header, its Objective-C and CFString
+  pointers signed, every slice code signed. A package this device would refuse to load
+  otherwise fails silently - the tweak just never appears.
 - `tools/make_resources.py` regenerates `prefs/Resources/*.png`; it needs `pillow` and
   `numpy` and is only required if you change the artwork.
+
+## Staying out of the way
+
+A tweak in SpringBoard can leave a device that only works in safe mode, so the parts that
+could do that are bounded deliberately:
+
+- **The per-app dylib installs nothing until the app is on the stage.** Its filter is
+  UIKit, so it loads into everything with a screen, but a process that is never staged
+  ends up with zero patched methods - it holds one notification observer and nothing else.
+  Whether a process is staged is published both to disk and as the notification's own
+  state, so an app the sandbox keeps away from the file can still tell.
+- **Package managers, file managers, terminals and the jailbreak apps are excluded
+  outright** (`shared/DSExclusions.m`). They are what you reach for when something else is
+  broken, so they are left out of the picker, out of the per-app settings list, and never
+  hooked.
+- **The tweak only claims touches it has a use for.** The hot corner falls through to the
+  app underneath whenever the stage would not open from it, the stage window claims a touch
+  only inside the card, and the system home gesture is suppressed only inside the card -
+  never across the display, so a stage stuck open cannot take the way home with it.
+- **SpringBoard counts its own launches.** The count goes up before any hook is installed
+  and is cleared once SpringBoard has been up for six seconds. Two launches that never got
+  that far and the tweak sits the next one out, so a boot loop ends in a working device with
+  the tweak off rather than one that only works in safe mode. Installing any build clears
+  the count, and About shows it.
+- **The first-run walkthrough cannot get stuck up.** It covers the screen at alert level,
+  so it marks itself as seen when it appears rather than when it finishes (a restart gets
+  rid of it instead of bringing it back), a two-finger double tap dismisses it wherever the
+  buttons ended up, and it leaves by itself after three minutes untouched.
+- **Every call out of a hook is contained**, so private API that moved or changed shape
+  degrades into the stage not opening.
 
 ## Recovery
 
@@ -193,7 +235,13 @@ ssh mobile@<device> "touch /var/mobile/.dynamicstage-disabled && sbreload"
 ```
 
 Every hook checks that file before doing anything, so SpringBoard comes back stock with the
-package still installed. The same flag can be toggled from the About page in Settings.
+package still installed. The same flag can be toggled from the About page in Settings, and
+the file can be dropped with any file manager if SSH is not set up.
+
+With no computer to hand: force restart the device (hold the side button and volume up
+until it powers off, then power on). The jailbreak is gone until it is re-run, which means
+no tweaks are loaded at all, and the package can be removed from Sileo before jailbreaking
+again.
 
 ## Credit
 

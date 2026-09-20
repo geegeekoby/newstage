@@ -17,15 +17,20 @@
 @end
 
 @interface DSTriggerWindow : UIWindow
+@property (nonatomic, copy) BOOL (^touchTest)(CGPoint point);
 @end
 
 @implementation DSTriggerWindow
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     // Only the hot corner belongs to us; everything else falls through to the
-    // app and to SpringBoard's own gestures.
+    // app and to SpringBoard's own gestures. The corner itself falls through too
+    // whenever the stage would not open from it - on an app the user has turned
+    // the stage off for, for instance - so the tweak is not quietly holding on to
+    // a strip of the screen it has no use for.
     CGPoint screenPoint = [self convertPoint:point toWindow:nil];
     if (![DSGestureController isPointInTriggerRect:screenPoint]) return nil;
+    if (self.touchTest && !self.touchTest(screenPoint)) return nil;
     return [super hitTest:point withEvent:event];
 }
 
@@ -70,6 +75,13 @@
     _window.windowLevel = UIWindowLevelStatusBar - 2.0;
     _window.rootViewController = [[UIViewController alloc] init];
     _window.rootViewController.view.backgroundColor = UIColor.clearColor;
+
+    __weak __typeof(self) weakSelf = self;
+    _window.touchTest = ^BOOL(CGPoint point) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return NO;
+        return [strongSelf.delegate gestureControllerShouldBegin:strongSelf atPoint:point];
+    };
 
     _pan = [[DSPullGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
     _pan.maximumNumberOfTouches = 1;

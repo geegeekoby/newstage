@@ -425,17 +425,27 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         FBSMutableSceneParameters *parameters = (FBSMutableSceneParameters *)
             [objc_getClass("FBSMutableSceneParameters") parametersForSpecification:definition.specification];
 
+        // Guarded one at a time rather than in a block: a setter that moved should
+        // cost the stage that one setting, not the only way it has of opening the
+        // app at all.
         CGRect frame = CGRectIsEmpty(_stageFrame) ? UIScreen.mainScreen.bounds : [self logicalFrame];
         FBSMutableSceneSettings *settings = [[objc_getClass("UIMutableApplicationSceneSettings") alloc] init];
-        settings.canShowAlerts = YES;
-        settings.foreground = YES;
         settings.frame = CGRectMake(0, 0, CGRectGetWidth(frame), CGRectGetHeight(frame));
-        settings.interfaceOrientation = UIInterfaceOrientationPortrait;
-        settings.deviceOrientation = UIDeviceOrientationPortrait;
-        settings.level = 1;
-        settings.statusBarDisabled = YES;
-        settings.safeAreaInsetsPortrait = _safeAreaInsets;
-        if ([settings respondsToSelector:@selector(setDisplayConfiguration:)]) {
+        settings.foreground = YES;
+        if ([settings respondsToSelector:@selector(setCanShowAlerts:)]) settings.canShowAlerts = YES;
+        if ([settings respondsToSelector:@selector(setInterfaceOrientation:)]) {
+            settings.interfaceOrientation = UIInterfaceOrientationPortrait;
+        }
+        if ([settings respondsToSelector:@selector(setDeviceOrientation:)]) {
+            settings.deviceOrientation = UIDeviceOrientationPortrait;
+        }
+        if ([settings respondsToSelector:@selector(setLevel:)]) settings.level = 1;
+        if ([settings respondsToSelector:@selector(setStatusBarDisabled:)]) settings.statusBarDisabled = YES;
+        if ([settings respondsToSelector:@selector(setSafeAreaInsetsPortrait:)]) {
+            settings.safeAreaInsetsPortrait = _safeAreaInsets;
+        }
+        if ([settings respondsToSelector:@selector(setDisplayConfiguration:)] &&
+            [UIScreen.mainScreen respondsToSelector:@selector(displayConfiguration)]) {
             [settings setDisplayConfiguration:[UIScreen.mainScreen displayConfiguration]];
         }
         if ([settings respondsToSelector:@selector(setPersistenceIdentifier:)]) {
@@ -446,7 +456,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 
         FBSMutableSceneClientSettings *clientSettings =
             [[objc_getClass("UIMutableApplicationSceneClientSettings") alloc] init];
-        clientSettings.interfaceOrientation = UIInterfaceOrientationPortrait;
+        if ([clientSettings respondsToSelector:@selector(setInterfaceOrientation:)]) {
+            clientSettings.interfaceOrientation = UIInterfaceOrientationPortrait;
+        }
         parameters.clientSettings = clientSettings;
 
         FBSceneManager *manager = (FBSceneManager *)[objc_getClass("FBSceneManager") sharedInstance];
@@ -696,6 +708,7 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     if (_ownSceneIdentifier) {
         NSString *identifier = _ownSceneIdentifier;
         UIScenePresenter *presenter = _presenter;
+        FBScene *scene = _scene;
         [_hostView removeFromSuperview];
         _ownSceneIdentifier = nil;
         _presenter = nil;
@@ -710,6 +723,14 @@ typedef BOOL (^DSSceneHostAttempt)(void);
             FBSceneManager *manager = (FBSceneManager *)[objc_getClass("FBSceneManager") sharedInstance];
             if ([manager respondsToSelector:@selector(destroyScene:withTransitionContext:)]) {
                 [manager destroyScene:identifier withTransitionContext:nil];
+                // FrontBoard takes either the name of the scene or the scene itself
+                // depending on the build, and takes the wrong one in silence, so the
+                // result is checked: a scene left behind is a window the app keeps
+                // for nothing.
+                if ([manager respondsToSelector:@selector(sceneWithIdentifier:)] &&
+                    [manager sceneWithIdentifier:identifier]) {
+                    [manager destroyScene:(id)scene withTransitionContext:nil];
+                }
             }
         } @catch (NSException *exception) {
             DSDiagnosticsRecordFormat(@"SpringBoard: taking down %@'s stage window threw %@",

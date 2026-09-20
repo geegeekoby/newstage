@@ -239,11 +239,9 @@ def main():
     os.makedirs(os.path.join(PUBLIC, "assets"), exist_ok=True)
     os.makedirs(API, exist_ok=True)
 
-    # Only ever one build in the repo: Sileo offers the newest anyway, and a
-    # directory of stale debs is just weight in git.
-    for stale in glob.glob(os.path.join(PUBLIC, "debs", "*.deb")):
-        os.remove(stale)
-
+    # Sileo is only ever offered the newest build, but the older ones stay in the
+    # directory and stay downloadable by name: rolling back to a build that worked
+    # is otherwise a rebuild, and the version wanted is the one that is gone.
     deb_name = os.path.basename(deb)
     shutil.copy2(deb, os.path.join(PUBLIC, "debs", deb_name))
 

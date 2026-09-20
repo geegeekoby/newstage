@@ -2,7 +2,7 @@ include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = DynamicStagePrefs
 
-DynamicStagePrefs_FILES = $(wildcard *.m) ../shared/DSExclusions.m
+DynamicStagePrefs_FILES = $(wildcard *.m) ../shared/DSExclusions.m ../shared/DSDiagnostics.m
 DynamicStagePrefs_INSTALL_PATH = /Library/PreferenceBundles
 DynamicStagePrefs_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -I../shared
 DynamicStagePrefs_FRAMEWORKS = UIKit CoreGraphics QuartzCore

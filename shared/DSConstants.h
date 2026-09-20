@@ -62,6 +62,16 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 // the README as the escape hatch if the tweak ever misbehaves on a new build.
 #define kDSKillSwitchPath @"/var/mobile/.dynamicstage-disabled"
 
+// SpringBoard writes what it did here and the Settings pane reads it back, which
+// is the only way to see inside the tweak on a device that cannot hand over a
+// crash log. Both processes run as mobile, so both can reach this.
+#define kDSDiagnosticsPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.log"
+
+// The Settings pane marks itself as opening here and clears the mark once the
+// page is on screen. A mark still present on the next open means the last one
+// did not survive, and the pane rebuilds itself without any of its decoration.
+#define kDSPrefsOpenGuardPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.paneguard"
+
 // Preference keys ------------------------------------------------------------
 
 #define kDSPrefEnabled @"enabled"

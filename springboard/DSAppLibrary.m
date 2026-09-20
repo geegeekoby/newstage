@@ -1,29 +1,11 @@
 #import "DSAppLibrary.h"
 #import "DSPrivate.h"
 #import "DSPreferences.h"
+#import "DSExclusions.h"
 #import <objc/runtime.h>
 
 @implementation DSAppEntry
 @end
-
-// System apps that cannot work inside the stage at all. "Web" is a hidden
-// system stub that the stock tweak also removes from the list.
-static NSSet *DSExcludedIdentifiers(void) {
-    static NSSet *excluded;
-    static dispatch_once_t token;
-    dispatch_once(&token, ^{
-        excluded = [NSSet setWithArray:@[
-            @"com.apple.webapp",
-            @"com.apple.Web",
-            @"com.apple.springboard",
-            @"com.apple.InCallService",
-            @"com.apple.PassbookUIService",
-            @"com.apple.SafariViewService",
-            @"com.apple.SharedWebCredentialViewService",
-        ]];
-    });
-    return excluded;
-}
 
 @implementation DSAppLibrary {
     NSArray<DSAppEntry *> *_applications;
@@ -63,8 +45,7 @@ static NSSet *DSExcludedIdentifiers(void) {
     for (LSApplicationProxy *proxy in [self installedProxies]) {
         NSString *identifier = proxy.applicationIdentifier;
         if (identifier.length == 0) continue;
-        if ([DSExcludedIdentifiers() containsObject:identifier]) continue;
-        if ([identifier hasPrefix:@"com.recreated.dynamicstage"]) continue;
+        if (DSIdentifierIsExcludedFromStage(identifier)) continue;
         if ([self isProxyHidden:proxy]) continue;
 
         DSAppEntry *entry = [[DSAppEntry alloc] init];

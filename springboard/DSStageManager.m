@@ -358,7 +358,16 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 }
 
 - (BOOL)shouldSuppressSystemGestureAtPoint:(CGPoint)point {
-    if (self.isStageVisible) return YES;
+    // Only ever the tweak's own furniture: the corner the stage is pulled out of,
+    // and the card itself, where a swipe up belongs to the stage rather than to
+    // the home gesture. The app sharing the screen keeps its gestures, and a
+    // stage left open in some state it should not be in cannot take the home
+    // gesture away from the whole device - the card has to actually be on screen
+    // and the touch has to be inside it.
+    if (self.isStageVisible && _container.window &&
+        CGRectContainsPoint(_container.frame, point)) {
+        return YES;
+    }
     if (![DSGestureController isPointInTriggerRect:point]) return NO;
     return [self canActivateStage] || _state == DSStageStateMinimized;
 }
@@ -850,6 +859,20 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     state[@"width"] = @(CGRectGetWidth(frame));
     state[@"height"] = @(CGRectGetHeight(frame));
     [state writeToFile:kDSSharedStatePath atomically:YES];
+
+    // Carried on the notification as well, so an app that the sandbox keeps away
+    // from the file above can still recognise itself and hook nothing when it is
+    // not the one being hosted.
+    static int token = NOTIFY_TOKEN_INVALID;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        notify_register_check(kDSStageGeometryNotification, &token);
+    });
+    if (token != NOTIFY_TOKEN_INVALID) {
+        uint64_t published = active ? (DSIdentifierHash(identifier) | kDSStageStateActiveBit) : 0;
+        notify_set_state(token, published);
+    }
+
     notify_post(kDSStageGeometryNotification);
 }
 

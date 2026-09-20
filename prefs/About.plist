@@ -42,6 +42,26 @@
 			<key>action</key>
 			<string>toggleKillSwitch</string>
 		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Boot Protection</string>
+			<key>footerText</key>
+			<string>If SpringBoard ever fails to finish starting twice in a row, the tweak stays out of the next boot by itself, so the device comes back without needing safe mode. Installing an update clears this, or clear it here once you have a build you want to try again.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Boot Protection</string>
+			<key>id</key>
+			<string>launchGuard</string>
+			<key>hidesDisclosureIndicator</key>
+			<true/>
+			<key>action</key>
+			<string>clearLaunchGuard</string>
+		</dict>
 	</array>
 </dict>
 </plist>

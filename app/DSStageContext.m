@@ -6,6 +6,7 @@
 @implementation DSStageContext {
     CGRect _deviceBounds;
     BOOL _resolvedDeviceBounds;
+    int _stateToken;
 }
 
 + (instancetype)sharedContext {
@@ -17,7 +18,31 @@
     return shared;
 }
 
++ (BOOL)processIsStagedNow {
+    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+    if (identifier.length == 0) return NO;
+
+    NSDictionary *state = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
+    if (state) {
+        return [state[@"active"] boolValue] && [state[@"stage"] isEqualToString:identifier];
+    }
+
+    int token = NOTIFY_TOKEN_INVALID;
+    if (notify_register_check(kDSStageGeometryNotification, &token) != NOTIFY_STATUS_OK) return NO;
+    uint64_t published = 0;
+    BOOL staged = notify_get_state(token, &published) == NOTIFY_STATUS_OK &&
+                  (published & kDSStageStateActiveBit) != 0 &&
+                  (uint32_t)published == DSIdentifierHash(identifier);
+    notify_cancel(token);
+    return staged;
+}
+
 - (void)startObserving {
+    // Registered as a check so the notification's state can be read even where
+    // the sandbox will not let this process near the state file.
+    _stateToken = NOTIFY_TOKEN_INVALID;
+    notify_register_check(kDSStageGeometryNotification, &_stateToken);
+
     [self refresh];
 
     int token = 0;
@@ -69,11 +94,24 @@
 - (void)refresh {
     DSPreferences *preferences = [DSPreferences sharedPreferences];
     NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+    BOOL wasStaged = _staged;
+
+    BOOL active = NO;
+    BOOL isUs = NO;
 
     NSDictionary *state = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
-    NSString *hosted = state[@"stage"];
-    BOOL active = [state[@"active"] boolValue];
-    BOOL isUs = identifier.length > 0 && [hosted isEqualToString:identifier];
+    if (state) {
+        active = [state[@"active"] boolValue];
+        isUs = identifier.length > 0 && [state[@"stage"] isEqualToString:identifier];
+    } else {
+        uint64_t published = 0;
+        if (_stateToken != NOTIFY_TOKEN_INVALID &&
+            notify_get_state(_stateToken, &published) == NOTIFY_STATUS_OK) {
+            uint32_t staged = (uint32_t)published;
+            active = (published & kDSStageStateActiveBit) != 0;
+            isUs = staged != 0 && staged == DSIdentifierHash(identifier);
+        }
+    }
 
     _staged = active && isUs && preferences.enabled;
 
@@ -87,6 +125,8 @@
     }
     _padMode = [preferences launchTypeForApplication:identifier] == DSLaunchTypePad &&
                ![preferences landscapeDisabledForApplication:identifier];
+
+    if (!wasStaged && self.stagedHandler) self.stagedHandler();
 }
 
 // The scene's coordinate space follows the frame SpringBoard hands us and is not

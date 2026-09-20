@@ -1,27 +1,10 @@
 #import "DSPrefsAppList.h"
 #import "DSPrefsPrivate.h"
+#import "DSExclusions.h"
 #import <objc/runtime.h>
 
 @implementation DSPrefsApp
 @end
-
-// Service stubs and the tweak's own bundle have no business in either picker.
-static NSSet *DSHiddenIdentifiers(void) {
-    static NSSet *hidden;
-    static dispatch_once_t token;
-    dispatch_once(&token, ^{
-        hidden = [NSSet setWithArray:@[
-            @"com.apple.webapp",
-            @"com.apple.Web",
-            @"com.apple.springboard",
-            @"com.apple.InCallService",
-            @"com.apple.PassbookUIService",
-            @"com.apple.SafariViewService",
-            @"com.apple.SharedWebCredentialViewService",
-        ]];
-    });
-    return hidden;
-}
 
 @implementation DSPrefsAppList {
     NSArray<DSPrefsApp *> *_applications;
@@ -62,9 +45,7 @@ static NSSet *DSHiddenIdentifiers(void) {
 
     for (LSApplicationProxy *proxy in proxies) {
         NSString *identifier = proxy.applicationIdentifier;
-        if (identifier.length == 0) continue;
-        if ([DSHiddenIdentifiers() containsObject:identifier]) continue;
-        if ([identifier hasPrefix:@"com.recreated.dynamicstage"]) continue;
+        if (DSIdentifierIsExcludedFromStage(identifier)) continue;
 
         NSString *type = proxy.applicationType;
         if (type.length && !([type isEqualToString:@"User"] || [type isEqualToString:@"System"])) continue;

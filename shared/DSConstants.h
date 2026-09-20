@@ -26,6 +26,33 @@
 // application which geometry the stage wants it to use before its first frame.
 #define kDSSharedStatePath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.state.plist"
 
+// The same answer is also published as the notification's own 64-bit state, so an
+// application can tell whether it is the one on the stage using nothing but the
+// notify API. Reading the file above depends on the sandbox allowing it, and an
+// app that cannot tell would install hooks it does not need.
+#define kDSStageStateActiveBit (1ULL << 32)
+
+// FNV-1a over the bundle identifier, which is what the low half of that state
+// carries. A collision would only mean an app is handed stage geometry it did
+// not ask for, and the file is consulted first wherever it can be read.
+static inline uint32_t DSIdentifierHash(NSString *identifier) {
+    if (identifier.length == 0) return 0;
+    uint32_t hash = 2166136261u;
+    const char *bytes = identifier.UTF8String;
+    for (; bytes && *bytes; bytes++) {
+        hash ^= (uint32_t)(unsigned char)*bytes;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+// SpringBoard counts its own launches here while the tweak is starting up and
+// clears the count once it is safely up. Two launches that never got that far
+// mean the tweak is implicated in a boot loop, and it stays out of the next one
+// rather than leaving the device only usable in safe mode.
+#define kDSLaunchGuardPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.launchguard"
+#define kDSMaxUncleanLaunches 2
+
 // Dropping this file disables every hook on the next respring. Documented in
 // the README as the escape hatch if the tweak ever misbehaves on a new build.
 #define kDSKillSwitchPath @"/var/mobile/.dynamicstage-disabled"

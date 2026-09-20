@@ -10,6 +10,7 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
     if (!_specifiers) {
         _specifiers = [self loadSpecifiersFromPlistName:@"About" target:self];
         [self refreshKillSwitchRow];
+        [self refreshLaunchGuardRow];
     }
     return _specifiers;
 }
@@ -22,6 +23,7 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self refreshKillSwitchRow];
+    [self refreshLaunchGuardRow];
     [self reloadSpecifiers];
 }
 
@@ -38,6 +40,32 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
     BOOL present = [self killSwitchPresent];
     specifier.name = present ? @"Remove Safe Mode Flag" : @"Create Safe Mode Flag";
     [specifier setProperty:present ? @"Hooks disabled" : @"Hooks active" forKey:@"value"];
+}
+
+// How many SpringBoard launches in a row never reached the point where the tweak
+// considers itself safely up. At the limit it takes itself out of the next boot.
+- (NSInteger)uncleanLaunchCount {
+    for (NSString *path in @[ kDSLaunchGuardPath, [@"/var/jb" stringByAppendingString:kDSLaunchGuardPath] ]) {
+        NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+        if (contents.length > 0) return contents.integerValue;
+    }
+    return 0;
+}
+
+- (void)refreshLaunchGuardRow {
+    PSSpecifier *specifier = [self specifierForID:@"launchGuard"];
+    if (!specifier) return;
+
+    NSInteger count = [self uncleanLaunchCount];
+    NSString *value = @"Clear";
+    if (count >= kDSMaxUncleanLaunches) {
+        value = @"Tripped, hooks off";
+    } else if (count > 0) {
+        value = [NSString stringWithFormat:@"%ld unfinished launch%@", (long)count, count == 1 ? @"" : @"es"];
+    } else {
+        value = @"Clear";
+    }
+    [specifier setProperty:value forKey:@"value"];
 }
 
 #pragma mark - Actions
@@ -71,6 +99,16 @@ static NSString *const kDSOriginalAuthorURL = @"https://twitter.com/tomt000";
         [[DSPrefsStore sharedStore] respring];
     }]];
     [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)clearLaunchGuard {
+    NSFileManager *manager = [NSFileManager defaultManager];
+    for (NSString *path in @[ kDSLaunchGuardPath, [@"/var/jb" stringByAppendingString:kDSLaunchGuardPath] ]) {
+        [manager removeItemAtPath:path error:nil];
+    }
+
+    [self refreshLaunchGuardRow];
+    [self reloadSpecifiers];
 }
 
 @end

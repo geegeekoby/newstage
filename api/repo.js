@@ -136,7 +136,10 @@ module.exports = (req, res) => {
   const file = (req.query && req.query.file) || "packages";
 
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60");
+  // Never cached: a package manager that was handed a stale index will not offer
+  // a version it does not know exists, and this repo ships one package whose
+  // index costs nothing to rebuild.
+  res.setHeader("Cache-Control", "no-store, max-age=0");
 
   switch (file) {
     case "packages":

@@ -12,13 +12,77 @@
 // open", never into a SpringBoard crash, so each one bails out early rather
 // than assuming its surroundings.
 
+#pragma mark - Boot guard
+
+// The worst thing this tweak could do is crash SpringBoard on the way up, which
+// leaves a device respringing and only usable in safe mode. So each launch is
+// counted before any hook does anything and the count is cleared once SpringBoard
+// has been up for a few seconds. Two launches that never got that far and the
+// tweak sits the next one out, which turns a boot loop into a device that comes
+// back working with the tweak switched off. Updating or reinstalling the package
+// clears the count, and so does the switch on the About page.
+
+static NSInteger DSUncleanLaunchCount(void) {
+    NSString *contents = [NSString stringWithContentsOfFile:kDSLaunchGuardPath
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:NULL];
+    return contents.integerValue;
+}
+
+static void DSSetUncleanLaunchCount(NSInteger count) {
+    if (count <= 0) {
+        [[NSFileManager defaultManager] removeItemAtPath:kDSLaunchGuardPath error:NULL];
+        return;
+    }
+    [[NSString stringWithFormat:@"%ld", (long)count] writeToFile:kDSLaunchGuardPath
+                                                     atomically:YES
+                                                       encoding:NSUTF8StringEncoding
+                                                          error:NULL];
+}
+
 static BOOL DSTweakEnabled(void) {
-    static BOOL killed;
+    static BOOL enabled;
     static dispatch_once_t token;
     dispatch_once(&token, ^{
-        killed = [[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath]) return;
+        if (DSUncleanLaunchCount() >= kDSMaxUncleanLaunches) return;
+        enabled = YES;
     });
-    return !killed;
+    return enabled;
+}
+
+// Called once SpringBoard is demonstrably past the point where this tweak could
+// have broken the launch.
+static void DSNoteLaunchSucceeded(void) {
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(6.0 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            DSSetUncleanLaunchCount(0);
+        });
+    });
+}
+
+#pragma mark - Calling out of a hook
+
+// Private API that moved or changed shape must degrade into "the stage does not
+// open", never into a SpringBoard crash, so every call out of a hook and into the
+// tweak goes through one of these.
+static BOOL DSAsk(BOOL (^question)(DSStageManager *manager)) {
+    if (!DSTweakEnabled()) return NO;
+    @try {
+        return question([DSStageManager sharedManager]);
+    } @catch (NSException *exception) {
+        return NO;
+    }
+}
+
+static void DSTell(void (^action)(DSStageManager *manager)) {
+    if (!DSTweakEnabled()) return;
+    @try {
+        action([DSStageManager sharedManager]);
+    } @catch (NSException *exception) {
+    }
 }
 
 #pragma mark - Boot
@@ -29,8 +93,11 @@ static BOOL DSTweakEnabled(void) {
     %orig;
     if (!DSTweakEnabled()) return;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[DSStageManager sharedManager] activate];
-        [[DSStageManager sharedManager] showIntroIfNeeded];
+        DSTell(^(DSStageManager *manager) {
+            [manager activate];
+            [manager showIntroIfNeeded];
+        });
+        DSNoteLaunchSucceeded();
     });
 }
 
@@ -38,8 +105,9 @@ static BOOL DSTweakEnabled(void) {
 // opened over.
 - (void)frontDisplayDidChange:(id)display {
     %orig;
-    if (!DSTweakEnabled()) return;
-    [[DSStageManager sharedManager] noteFrontApplicationWillChange];
+    DSTell(^(DSStageManager *manager) {
+        [manager noteFrontApplicationWillChange];
+    });
 }
 
 %end
@@ -89,18 +157,20 @@ static BOOL DSTweakEnabled(void) {
 %hook FBSceneManager
 
 - (void)destroyScene:(NSString *)identifier withTransitionContext:(id)context {
-    if (DSTweakEnabled() && identifier.length > 0) {
-        // Scene identifiers are of the form sceneID:<bundle id>-<n>.
-        NSString *bundleIdentifier = identifier;
-        NSRange colon = [identifier rangeOfString:@":"];
-        if (colon.location != NSNotFound) {
-            bundleIdentifier = [identifier substringFromIndex:NSMaxRange(colon)];
-        }
-        NSRange dash = [bundleIdentifier rangeOfString:@"-" options:NSBackwardsSearch];
-        if (dash.location != NSNotFound) {
-            bundleIdentifier = [bundleIdentifier substringToIndex:dash.location];
-        }
-        [[DSStageManager sharedManager] noteSceneDestroyedForBundleIdentifier:bundleIdentifier];
+    if (identifier.length > 0) {
+        DSTell(^(DSStageManager *manager) {
+            // Scene identifiers are of the form sceneID:<bundle id>-<n>.
+            NSString *bundleIdentifier = identifier;
+            NSRange colon = [identifier rangeOfString:@":"];
+            if (colon.location != NSNotFound) {
+                bundleIdentifier = [identifier substringFromIndex:NSMaxRange(colon)];
+            }
+            NSRange dash = [bundleIdentifier rangeOfString:@"-" options:NSBackwardsSearch];
+            if (dash.location != NSNotFound) {
+                bundleIdentifier = [bundleIdentifier substringToIndex:dash.location];
+            }
+            [manager noteSceneDestroyedForBundleIdentifier:bundleIdentifier];
+        });
     }
     %orig;
 }
@@ -111,10 +181,11 @@ static BOOL DSTweakEnabled(void) {
 
 - (void)applicationProcessDidExit:(id)process withContext:(id)context {
     %orig;
-    if (!DSTweakEnabled()) return;
     NSString *identifier = self.bundleIdentifier;
     if (identifier.length == 0) return;
-    [[DSStageManager sharedManager] noteSceneDestroyedForBundleIdentifier:identifier];
+    DSTell(^(DSStageManager *manager) {
+        [manager noteSceneDestroyedForBundleIdentifier:identifier];
+    });
 }
 
 %end
@@ -127,16 +198,19 @@ static BOOL DSTweakEnabled(void) {
 %hook SBFluidSwitcherGestureManager
 
 - (BOOL)shouldBeginGestureAtStartingPoint:(CGPoint)point velocity:(CGPoint)velocity bounds:(CGRect)bounds {
-    if (DSTweakEnabled() && [[DSStageManager sharedManager] shouldSuppressSystemGestureAtPoint:point]) {
+    if (DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager shouldSuppressSystemGestureAtPoint:point];
+        })) {
         return NO;
     }
     return %orig;
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)recognizer shouldReceiveTouch:(UITouch *)touch {
-    if (DSTweakEnabled()) {
-        CGPoint point = [touch locationInView:nil];
-        if ([[DSStageManager sharedManager] shouldSuppressSystemGestureAtPoint:point]) return NO;
+    if (DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager shouldSuppressSystemGestureAtPoint:[touch locationInView:nil]];
+        })) {
+        return NO;
     }
     return %orig;
 }
@@ -147,7 +221,9 @@ static BOOL DSTweakEnabled(void) {
 %hook SBSystemGestureManager
 
 - (BOOL)shouldBeginGestureAtStartingPoint:(CGPoint)point velocity:(CGPoint)velocity bounds:(CGRect)bounds {
-    if (DSTweakEnabled() && [[DSStageManager sharedManager] shouldSuppressSystemGestureAtPoint:point]) {
+    if (DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager shouldSuppressSystemGestureAtPoint:point];
+        })) {
         return NO;
     }
     return %orig;
@@ -162,7 +238,9 @@ static BOOL DSTweakEnabled(void) {
 %hook SBHomeGrabberView
 
 - (void)setAlpha:(CGFloat)alpha {
-    if (DSTweakEnabled() && [[DSStageManager sharedManager] shouldHideSystemHomeAffordance]) {
+    if (DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager shouldHideSystemHomeAffordance];
+        })) {
         %orig(0.0);
         return;
     }
@@ -171,7 +249,9 @@ static BOOL DSTweakEnabled(void) {
 
 - (void)didMoveToWindow {
     %orig;
-    if (DSTweakEnabled() && [[DSStageManager sharedManager] shouldHideSystemHomeAffordance]) {
+    if (DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager shouldHideSystemHomeAffordance];
+        })) {
         self.alpha = 0.0;
     }
 }
@@ -185,9 +265,11 @@ static BOOL DSTweakEnabled(void) {
 %hook SBMainDisplaySceneManager
 
 - (void)_applyStatusBarHidden:(BOOL)hidden withAnimation:(NSInteger)animation toSceneWithIdentifier:(NSString *)identifier {
-    if (DSTweakEnabled()) {
-        NSString *stage = [DSStageManager sharedManager].stageBundleIdentifier;
-        if (stage.length > 0 && [identifier containsString:stage]) return;
+    if (DSAsk(^BOOL(DSStageManager *manager) {
+            NSString *stage = manager.stageBundleIdentifier;
+            return stage.length > 0 && [identifier containsString:stage];
+        })) {
+        return;
     }
     %orig;
 }
@@ -202,10 +284,11 @@ static BOOL DSTweakEnabled(void) {
 // straight back to full screen. It is only lifted for the app on the stage, so
 // nothing else in SpringBoard changes behaviour.
 static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
-    if (!DSTweakEnabled() || identifier.length == 0) return NO;
-    DSStageManager *manager = [DSStageManager sharedManager];
-    if (![identifier isEqualToString:manager.stageBundleIdentifier]) return NO;
-    return [[DSPreferences sharedPreferences] launchTypeForApplication:identifier] == DSLaunchTypePad;
+    if (identifier.length == 0) return NO;
+    return DSAsk(^BOOL(DSStageManager *manager) {
+        if (![identifier isEqualToString:manager.stageBundleIdentifier]) return NO;
+        return [[DSPreferences sharedPreferences] launchTypeForApplication:identifier] == DSLaunchTypePad;
+    });
 }
 
 %hook SBApplicationInfo
@@ -237,7 +320,7 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 %hook SBWindowScene
 
 - (BOOL)_shouldAutorotate {
-    if (DSTweakEnabled() && [DSStageManager sharedManager].isStageVisible) return NO;
+    if (DSAsk(^BOOL(DSStageManager *manager) { return manager.isStageVisible; })) return NO;
     return %orig;
 }
 
@@ -250,7 +333,7 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 %hook SBLockScreenManager
 
 - (BOOL)_shouldAutoLock {
-    if (DSTweakEnabled() && [DSStageManager sharedManager].isStageVisible) return NO;
+    if (DSAsk(^BOOL(DSStageManager *manager) { return manager.isStageVisible; })) return NO;
     return %orig;
 }
 
@@ -260,10 +343,10 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 - (void)_setBacklightFactorForCurrentState {
     %orig;
-    if (!DSTweakEnabled()) return;
-    if ([self respondsToSelector:@selector(screenIsOn)] && ![self screenIsOn]) {
-        [[DSStageManager sharedManager] noteDisplayDidTurnOff];
-    }
+    if (![self respondsToSelector:@selector(screenIsOn)] || [self screenIsOn]) return;
+    DSTell(^(DSStageManager *manager) {
+        [manager noteDisplayDidTurnOff];
+    });
 }
 
 %end
@@ -274,7 +357,9 @@ static void DSPreferencesChanged(CFNotificationCenterRef center, void *observer,
                                  const void *object, CFDictionaryRef userInfo) {
     [[DSPreferences sharedPreferences] reload];
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[DSStageManager sharedManager] preferencesChanged];
+        DSTell(^(DSStageManager *manager) {
+            [manager preferencesChanged];
+        });
     });
 }
 
@@ -285,19 +370,29 @@ static void DSRotateStage(CFNotificationCenterRef center, void *observer, CFStri
     if ([notification hasSuffix:@".left"]) turns = -1;
     else if ([notification hasSuffix:@".right"]) turns = 1;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[DSStageManager sharedManager] rotateStageBy:turns];
+        DSTell(^(DSStageManager *manager) {
+            [manager rotateStageBy:turns];
+        });
     });
 }
 
 static void DSCloseStage(CFNotificationCenterRef center, void *observer, CFStringRef name,
                          const void *object, CFDictionaryRef userInfo) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[DSStageManager sharedManager] closeStageAnimated:YES];
+        DSTell(^(DSStageManager *manager) {
+            [manager closeStageAnimated:YES];
+        });
     });
 }
 
 %ctor {
     if (!DSTweakEnabled()) return;
+
+    @try {
+
+    // Counted before a single hook is installed, and cleared again once
+    // SpringBoard has been up long enough to call this launch a success.
+    DSSetUncleanLaunchCount(DSUncleanLaunchCount() + 1);
 
     CFNotificationCenterRef center = CFNotificationCenterGetDarwinNotifyCenter();
     CFNotificationCenterAddObserver(center, NULL, DSPreferencesChanged,
@@ -317,4 +412,9 @@ static void DSCloseStage(CFNotificationCenterRef center, void *observer, CFStrin
                                     CFNotificationSuspensionBehaviorCoalesce);
 
     %init(_ungrouped);
+
+    } @catch (NSException *exception) {
+        // Half-installed hooks are still safer than a SpringBoard that will not
+        // start: every one of them bails out on its own if the manager is unwell.
+    }
 }

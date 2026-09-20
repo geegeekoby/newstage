@@ -47,8 +47,13 @@
     return window;
 }
 
+// This window covers the display whenever the stage is on screen, so anything it
+// does not deliberately claim has to fall through to whatever is behind it. With
+// no test installed it claims nothing at all: a window that swallowed touches it
+// had no owner for would leave the device looking frozen, and the stage simply
+// not receiving a touch is the far cheaper failure.
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    if (self.touchTest && !self.touchTest(point)) return nil;
+    if (!self.touchTest || !self.touchTest(point)) return nil;
     return [super hitTest:point withEvent:event];
 }
 

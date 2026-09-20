@@ -2,6 +2,7 @@
 #import "DSAppPrivate.h"
 #import "DSPreferences.h"
 #import "DSConstants.h"
+#import "DSExclusions.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -12,6 +13,13 @@
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
+//
+// Nothing below is hooked until the app is actually put on the stage. The filter
+// is UIKit, so this dylib loads into everything with a screen - including the
+// package manager the tweak is installed from - and an app that is never staged
+// has no use for any of it. Installing the hooks lazily means such a process
+// carries one notification observer and no patched methods at all, so a mistake
+// in here cannot reach an app that is not using the feature.
 
 static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
@@ -288,20 +296,51 @@ static CGRect DSStageBounds(void) {
 
 #pragma mark - Entry point
 
+// Called once, the first time this process is put on the stage.
+static void DSInstallHooks(void) {
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        %init(_ungrouped);
+    });
+}
+
+static void DSStartObserving(void) {
+    DSStageContext *context = [DSStageContext sharedContext];
+    context.stagedHandler = ^{
+        DSInstallHooks();
+    };
+    [context startObserving];
+}
+
 %ctor {
     @autoreleasepool {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath]) return;
+        @try {
+            if ([[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath]) return;
 
-        NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
-        if (identifier.length == 0) return;
-        // SpringBoard hosts the stage rather than living on it, and PaperBoard
-        // owns the wallpaper, so neither should ever see these hooks.
-        NSArray<NSString *> *excluded = @[ @"com.apple.springboard", @"com.apple.PaperBoard" ];
-        if ([excluded containsObject:identifier]) return;
-        if (![DSPreferences sharedPreferences].enabled) return;
+            NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+            if (DSIdentifierIsExcludedFromStage(identifier)) return;
+            if (![DSPreferences sharedPreferences].enabled) return;
 
-        [[DSStageContext sharedContext] startObserving];
+            if ([DSStageContext processIsStagedNow]) {
+                // Launched onto the stage: the hooks have to be in place before
+                // this app lays anything out, so its first frame is the right
+                // size rather than a full screen one that snaps.
+                DSStartObserving();
+                DSInstallHooks();
+                return;
+            }
 
-        %init(_ungrouped);
+            // Every other app - which is nearly all of them, nearly all of the
+            // time - gets left alone until the run loop is going. A constructor
+            // runs while the app is still assembling itself, and none of this is
+            // needed that early.
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @try {
+                    DSStartObserving();
+                } @catch (NSException *exception) {
+                }
+            });
+        } @catch (NSException *exception) {
+        }
     }
 }

@@ -115,6 +115,21 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     [self.view layoutIfNeeded];
 }
 
+- (CGRect)plateFrameForBundleIdentifier:(NSString *)bundleIdentifier inView:(UIView *)view {
+    if (bundleIdentifier.length == 0) return CGRectNull;
+    for (NSArray<DSAppCellContentView *> *group in @[ _recentCells, _libraryCells ]) {
+        for (DSAppCellContentView *cell in group) {
+            if (cell.hidden) continue;
+            if (![cell.entry.bundleIdentifier isEqualToString:bundleIdentifier]) continue;
+            CGRect frame = [cell convertRect:cell.bounds toView:view];
+            // Plates scrolled out of the stage are no use as a zoom target.
+            if (!CGRectIntersectsRect(frame, view.bounds)) return CGRectNull;
+            return frame;
+        }
+    }
+    return CGRectNull;
+}
+
 - (void)rebuildCells {
     [self reconcileCells:_recentCells toCount:_recents.count];
     [self reconcileCells:_libraryCells toCount:_library.count];

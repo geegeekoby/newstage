@@ -23,4 +23,8 @@
 - (void)dismissKeyboard;
 - (BOOL)isSearching;
 
+// Where an app's plate currently sits, so the stage can zoom an app back into
+// it when it is dismissed. CGRectNull when the app has no visible plate.
+- (CGRect)plateFrameForBundleIdentifier:(NSString *)bundleIdentifier inView:(UIView *)view;
+
 @end

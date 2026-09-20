@@ -10,8 +10,8 @@
 @property (nonatomic, assign) BOOL darkMode;
 @property (nonatomic, assign) BOOL showsNowPlaying;
 
-// 0 ... 1 fill drawn from the leading edge while the plate is held down; at 1
-// the hold has committed and the app opens fullscreen instead of on the stage.
+// 0 ... 1 emphasis the plate takes on while it is held down; at 1 the hold has
+// committed and the app opens fullscreen instead of on the stage.
 @property (nonatomic, assign) CGFloat holdProgress;
 
 - (void)setHoldProgress:(CGFloat)holdProgress animated:(BOOL)animated duration:(NSTimeInterval)duration;

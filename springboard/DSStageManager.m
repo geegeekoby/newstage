@@ -695,15 +695,12 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     [self restoreHostLayout];
     [_picker dismissKeyboard];
 
-    // Shrinks back into the corner it was pulled out of.
-    CGRect bounds = [self screenBounds];
+    // The recordings show the card leaving straight down off the bottom edge at
+    // full size rather than collapsing back into the corner.
     void (^layout)(void) = ^{
-        self->_container.frame = CGRectMake(CGRectGetWidth(bounds) - kDSTriggerWidth,
-                                           CGRectGetHeight(bounds) - 8.0,
-                                           kDSTriggerWidth,
-                                           kDSPeekHeight * 0.4);
-        self->_container.cornerRadius = kDSPeekCornerRadius;
-        self->_container.alpha = 0.0;
+        self->_container.frame = [self stageFrameForState:DSStageStateClosed];
+        self->_container.cornerRadius = [self displayCornerRadius];
+        self->_container.alpha = 1.0;
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateClosed;
@@ -938,14 +935,36 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     _picker.view.alpha = 0.0;
     [_container setBackdropHidden:NO];
     [_picker reloadContent];
+    [_picker.view layoutIfNeeded];
+
+    // The app shrinks back into its own plate in the grid, the way iOS zooms an
+    // app into its icon on the way home. Without a visible plate it just shrinks
+    // where it is.
+    CGRect plate = [_picker plateFrameForBundleIdentifier:host.bundleIdentifier inView:_container.contentView];
+    CGAffineTransform baseTransform = hostView.transform;
+    CGRect hostFrame = hostView.frame;
+    CGPoint hostCenter = CGPointMake(CGRectGetMidX(hostFrame), CGRectGetMidY(hostFrame));
+    CGFloat zoom = CGRectIsNull(plate) ? 0.86 : CGRectGetWidth(plate) / MAX(CGRectGetWidth(hostFrame), 1.0);
+    CGPoint destination = CGRectIsNull(plate)
+        ? hostCenter
+        : CGPointMake(CGRectGetMidX(plate), CGRectGetMidY(plate));
+
+    hostView.layer.cornerCurve = kCACornerCurveContinuous;
+    hostView.layer.masksToBounds = YES;
 
     void (^layout)(void) = ^{
-        hostView.transform = CGAffineTransformMakeScale(0.86, 0.86);
+        hostView.transform = CGAffineTransformConcat(baseTransform, CGAffineTransformMakeScale(zoom, zoom));
+        hostView.center = destination;
         hostView.alpha = 0.0;
+        // The layer's own radius is scaled down with it, so it is pre-divided to
+        // land on the plate's radius.
+        hostView.layer.cornerRadius = kDSCellRadius / MAX(zoom, 0.01);
         self->_picker.view.alpha = 1.0;
     };
     void (^finish)(void) = ^{
         hostView.transform = CGAffineTransformIdentity;
+        hostView.layer.cornerRadius = 0.0;
+        hostView.layer.masksToBounds = NO;
         [self publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
         [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
         [self showPickerImmediately];

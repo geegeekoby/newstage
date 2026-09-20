@@ -100,6 +100,8 @@ static const CGFloat kDSCellTitleGap = 9.0;
         [self addSubview:_plate];
 
         _holdFill = [[UIView alloc] initWithFrame:CGRectZero];
+        _holdFill.alpha = 0.0;
+        _holdFill.userInteractionEnabled = NO;
         [_plate addSubview:_holdFill];
 
         _icon = [[UIImageView alloc] initWithFrame:CGRectZero];
@@ -128,7 +130,7 @@ static const CGFloat kDSCellTitleGap = 9.0;
 
     CGRect bounds = self.bounds;
     _plate.frame = bounds;
-    _holdFill.frame = CGRectMake(0, 0, CGRectGetWidth(bounds) * self.holdProgress, CGRectGetHeight(bounds));
+    _holdFill.frame = bounds;
 
     CGFloat iconY = (CGRectGetHeight(bounds) - kDSCellIconSide) / 2.0;
     _icon.frame = CGRectMake(kDSCellIconInset, iconY, kDSCellIconSide, kDSCellIconSide);
@@ -163,8 +165,7 @@ static const CGFloat kDSCellTitleGap = 9.0;
     _darkMode = darkMode;
     _plate.backgroundColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.1]
                                       : [UIColor colorWithWhite:0.0 alpha:0.07];
-    _holdFill.backgroundColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.14]
-                                        : [UIColor colorWithWhite:0.0 alpha:0.1];
+    _holdFill.backgroundColor = darkMode ? UIColor.whiteColor : UIColor.blackColor;
     _title.textColor = darkMode ? UIColor.whiteColor : UIColor.blackColor;
     _waveform.barColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.55]
                                   : [UIColor colorWithWhite:0.0 alpha:0.4];
@@ -184,12 +185,13 @@ static const CGFloat kDSCellTitleGap = 9.0;
     [self setHoldProgress:holdProgress animated:NO duration:0.0];
 }
 
+// A pixel trace of the stock hold shows the plate deepening evenly, with its
+// edges never moving, rather than filling from one side.
 - (void)setHoldProgress:(CGFloat)holdProgress animated:(BOOL)animated duration:(NSTimeInterval)duration {
     _holdProgress = MIN(MAX(holdProgress, 0.0), 1.0);
     void (^apply)(void) = ^{
-        self->_holdFill.frame = CGRectMake(0, 0,
-                                           CGRectGetWidth(self.bounds) * self->_holdProgress,
-                                           CGRectGetHeight(self.bounds));
+        self->_holdFill.frame = self.bounds;
+        self->_holdFill.alpha = self->_holdProgress * 0.14;
     };
     if (!animated) {
         [_holdFill.layer removeAllAnimations];

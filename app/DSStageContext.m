@@ -1,7 +1,9 @@
 #import "DSStageContext.h"
+#import "DSAppPrivate.h"
 #import "DSPreferences.h"
 #import "DSConstants.h"
 #import <notify.h>
+#import <objc/runtime.h>
 
 @implementation DSStageContext {
     // Written by refresh and by the getter, which reads it from the scene. Declared
@@ -120,12 +122,23 @@
         }
     }
 
-    uint64_t published = _staged ? (uint64_t)round(height) : 0;
+    [self publishKeyboardHeight:_staged ? (uint64_t)round(height) : 0];
+}
+
+- (void)publishKeyboardHeight:(uint64_t)published {
     if (published == _publishedKeyboardHeight) return;
     _publishedKeyboardHeight = published;
 
-    notify_set_state(_keyboardToken, published);
+    if (_keyboardToken != NOTIFY_TOKEN_INVALID) notify_set_state(_keyboardToken, published);
     notify_post(kDSKeyboardHeightNotification);
+
+    // Said again by name, because the shared state above is written by a sandboxed
+    // process into a notification SpringBoard created, and being refused that is
+    // indistinguishable from never having raised a keyboard. Posting is allowed to
+    // anyone, so the height also arrives as which name was posted.
+    uint64_t step = (published + kDSKeyboardHeightStep / 2) / kDSKeyboardHeightStep;
+    if (step >= kDSKeyboardHeightSteps) step = kDSKeyboardHeightSteps - 1;
+    notify_post([NSString stringWithFormat:@"%s%llu", kDSKeyboardHeightStepNotificationPrefix, step].UTF8String);
 }
 
 // The window the keyboard came up in. On the stage that is the card plus whatever
@@ -195,17 +208,19 @@
         _padMode = NO;
         // Off the stage, whatever was said about a keyboard no longer applies, and a
         // stale height would leave the card shaped for one.
-        if (_publishedKeyboardHeight != 0 && _keyboardToken != NOTIFY_TOKEN_INVALID) {
-            _publishedKeyboardHeight = 0;
-            notify_set_state(_keyboardToken, 0);
-            notify_post(kDSKeyboardHeightNotification);
-        }
+        [self publishKeyboardHeight:0];
         return;
     }
     _padMode = [preferences launchTypeForApplication:identifier] == DSLaunchTypePad &&
                ![preferences landscapeDisabledForApplication:identifier];
 
-    if (!wasStaged && self.stagedHandler) self.stagedHandler();
+    if (!wasStaged) {
+        // So SpringBoard can write down that this app has the tweak's own code inside
+        // it. Without that, an app whose dylib never loaded looks exactly like one
+        // that loaded and never saw a keyboard: both are silent.
+        notify_post(kDSStagedAppCheckedInNotification);
+        if (self.stagedHandler) self.stagedHandler();
+    }
 }
 
 // Read from the scene every time rather than from the last refresh. The scene grows
@@ -235,8 +250,75 @@
     return CGRectZero;
 }
 
+// A keyboard is placed at the bottom of the window as the window was when it went
+// up. SpringBoard makes the window taller straight afterwards - that is the whole
+// point, it is making room below the card for the keyboard to sit in - so the
+// keyboard is asked to place itself again against the window it is in now.
+- (void)nudgeKeyboardPlacement {
+    @try {
+        Class controllerClass = objc_getClass("UIInputResponderController");
+        if ([controllerClass respondsToSelector:@selector(activeInputResponderController)]) {
+            UIInputResponderController *controller = [controllerClass activeInputResponderController];
+            if ([controller respondsToSelector:@selector(reloadPlacement)]) [controller reloadPlacement];
+        }
+    } @catch (NSException *exception) {
+    }
+    @try {
+        [self redockKeyboard];
+    } @catch (NSException *exception) {
+    }
+}
+
+static UIView *DSInputSetHostViewIn(UIView *view) {
+    Class hostClass = objc_getClass("UIInputSetHostView");
+    if (!hostClass) return nil;
+    if ([view isKindOfClass:hostClass]) return view;
+    for (UIView *subview in view.subviews) {
+        UIView *found = DSInputSetHostViewIn(subview);
+        if (found) return found;
+    }
+    return nil;
+}
+
+// Asking politely is not always enough. A keyboard already up was placed against the
+// bottom of the window as it was then - the card - and a window that has since grown
+// leaves it sitting in the middle, which on screen is a keyboard inside the card. It
+// belongs on the bottom edge of the window, which is where a keyboard on a phone
+// always is, so it is put there. A keyboard on its way out is below the bottom
+// already and is left alone.
+- (void)redockKeyboard {
+    if (!_staged) return;
+    Class effectsClass = objc_getClass("UITextEffectsWindow");
+    if (!effectsClass) return;
+
+    CGFloat windowHeight = CGRectGetHeight(self.stageBounds);
+    if (windowHeight <= 0.0) return;
+
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        if (window.hidden || window.alpha < 0.01) continue;
+        if (![window isKindOfClass:effectsClass]) continue;
+
+        UIView *host = DSInputSetHostViewIn(window);
+        CGRect frame = host.frame;
+        if (!host || CGRectGetHeight(frame) < kDSKeyboardPresentHeight) continue;
+
+        CGFloat docked = windowHeight - CGRectGetHeight(frame);
+        if (CGRectGetMinY(frame) >= docked - 1.0) continue;
+
+        frame.origin.y = docked;
+        host.frame = frame;
+    }
+}
+
 - (void)applyGeometryChange {
     dispatch_async(dispatch_get_main_queue(), ^{
+        // Twice: once now, and once after UIKit has taken the new window size, since
+        // the first can arrive before the window it is measuring against has grown.
+        [self nudgeKeyboardPlacement];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [self nudgeKeyboardPlacement];
+        });
         for (UIWindow *window in UIApplication.sharedApplication.windows) {
             [window setNeedsLayout];
             [window.rootViewController.view setNeedsLayout];

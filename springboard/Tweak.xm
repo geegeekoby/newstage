@@ -449,6 +449,23 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
 // keyboard that another process drew inside its own window.
 static int sKeyboardHeightToken = NOTIFY_TOKEN_INVALID;
 
+static void DSDeliverKeyboardHeight(CGFloat height) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSTell(^(DSStageManager *manager) {
+            [manager stagedAppKeyboardHeightChanged:height];
+        });
+    });
+}
+
+static void DSStagedAppCheckedIn(CFNotificationCenterRef center, void *observer, CFStringRef name,
+                                 const void *object, CFDictionaryRef userInfo) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSTell(^(DSStageManager *manager) {
+            [manager noteStagedAppCheckedIn];
+        });
+    });
+}
+
 static void DSStagedAppKeyboardChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
                                        const void *object, CFDictionaryRef userInfo) {
     uint64_t height = 0;
@@ -456,11 +473,27 @@ static void DSStagedAppKeyboardChanged(CFNotificationCenterRef center, void *obs
         notify_get_state(sKeyboardHeightToken, &height) != NOTIFY_STATUS_OK) {
         return;
     }
-    dispatch_async(dispatch_get_main_queue(), ^{
-        DSTell(^(DSStageManager *manager) {
-            [manager stagedAppKeyboardHeightChanged:(CGFloat)height];
-        });
-    });
+    DSDeliverKeyboardHeight((CGFloat)height);
+}
+
+// The same height carried by which name was posted, for the case where the app was
+// not allowed to write the shared state above. Ten points per step, and the exact
+// figure is still preferred where the state can be read.
+static void DSStagedAppKeyboardStepped(CFNotificationCenterRef center, void *observer, CFStringRef name,
+                                       const void *object, CFDictionaryRef userInfo) {
+    NSString *posted = (__bridge NSString *)name;
+    NSString *prefix = @(kDSKeyboardHeightStepNotificationPrefix);
+    if (![posted hasPrefix:prefix]) return;
+
+    CGFloat stepped = [posted substringFromIndex:prefix.length].integerValue * kDSKeyboardHeightStep;
+
+    uint64_t exact = 0;
+    if (sKeyboardHeightToken != NOTIFY_TOKEN_INVALID &&
+        notify_get_state(sKeyboardHeightToken, &exact) == NOTIFY_STATUS_OK &&
+        fabs((CGFloat)exact - stepped) <= kDSKeyboardHeightStep) {
+        stepped = (CGFloat)exact;
+    }
+    DSDeliverKeyboardHeight(stepped);
 }
 
 %ctor {
@@ -521,10 +554,19 @@ static void DSStagedAppKeyboardChanged(CFNotificationCenterRef center, void *obs
     CFNotificationCenterAddObserver(center, NULL, DSOpenStage,
                                     CFSTR(kDSOpenStageNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
+    CFNotificationCenterAddObserver(center, NULL, DSStagedAppCheckedIn,
+                                    CFSTR(kDSStagedAppCheckedInNotification), NULL,
+                                    CFNotificationSuspensionBehaviorCoalesce);
     notify_register_check(kDSKeyboardHeightNotification, &sKeyboardHeightToken);
     CFNotificationCenterAddObserver(center, NULL, DSStagedAppKeyboardChanged,
                                     CFSTR(kDSKeyboardHeightNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
+    for (int step = 0; step < kDSKeyboardHeightSteps; step++) {
+        NSString *name = [NSString stringWithFormat:@"%s%d", kDSKeyboardHeightStepNotificationPrefix, step];
+        CFNotificationCenterAddObserver(center, NULL, DSStagedAppKeyboardStepped,
+                                        (__bridge CFStringRef)name, NULL,
+                                        CFNotificationSuspensionBehaviorCoalesce);
+    }
 
     %init(_ungrouped);
 

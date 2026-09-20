@@ -14,6 +14,13 @@
 @interface UIInputSetHostView : UIView
 @end
 
+// Whoever is holding the keyboard up. Asking it to place itself again is how the
+// keyboard is moved after the window it sits at the bottom of has grown.
+@interface UIInputResponderController : UIResponder
++ (id)activeInputResponderController;
+- (void)reloadPlacement;
+@end
+
 @interface _UIFullscreenPresentationController : UIPresentationController
 @end
 

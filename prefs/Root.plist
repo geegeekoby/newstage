@@ -7,8 +7,6 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
-			<key>footerText</key>
-			<string>This page is showing without its header because the full version of it did not finish loading last time. Every setting still works. Restore Full Page puts it back.</string>
 			<key>label</key>
 			<string>Tweak</string>
 		</dict>

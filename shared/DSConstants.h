@@ -26,6 +26,23 @@
 // half the screen tall with a keyboard inside it leaves nothing of the app.
 #define kDSKeyboardHeightNotification "com.recreated.dynamicstage.keyboard"
 
+// The same number, said a second way, because the first way can fail silently. An
+// application is sandboxed and SpringBoard is not: whether a sandboxed process may
+// write the shared state of a notification another process created is not something
+// that can be relied on, and a refusal looks exactly like a keyboard that was never
+// raised. Posting a notification, on the other hand, any process may do - so the
+// height is also carried by which of these names is posted, one per ten points.
+// SpringBoard listens to all of them and prefers the exact figure from the state
+// where it can read one.
+// Posted by the staged application the moment it notices it is on the stage. It is
+// the only evidence SpringBoard can have that the tweak's own code is loaded in
+// there at all - and an app without it can never report a keyboard.
+#define kDSStagedAppCheckedInNotification "com.recreated.dynamicstage.app.checkedin"
+
+#define kDSKeyboardHeightStepNotificationPrefix "com.recreated.dynamicstage.keyboard."
+#define kDSKeyboardHeightStep 10
+#define kDSKeyboardHeightSteps 61
+
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"

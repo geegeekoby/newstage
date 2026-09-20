@@ -106,6 +106,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_splitHostBundleIdentifier;
     NSString *_bundleIdentifierToRestoreInFront;
     BOOL _notedKeyboardOnce;
+    BOOL _stagedAppCheckedIn;
     CGFloat _stagedAppKeyboardHeight;
     NSTimer *_autoKillTimer;
     NSInteger _stageQuarterTurns;
@@ -418,10 +419,21 @@ static BOOL sSystemEdgePullAvailable;
 
 // Whatever keyboard the app on the stage had went away with the app.
 - (void)forgetStagedAppKeyboard {
+    _stagedAppCheckedIn = NO;
     if (_stagedAppKeyboardHeight <= 0.0 && _container.keyboardSpill <= 0.0) return;
     _stagedAppKeyboardHeight = 0.0;
     [_container setKeyboardSpill:0.0];
     [_container setLiftOffset:0.0];
+}
+
+// The app on the stage has the tweak's own code in it and knows it is staged, so it
+// is in a position to report a keyboard. An app that never says this cannot, and no
+// amount of room made below the card will help it.
+- (void)noteStagedAppCheckedIn {
+    if (_stagedAppCheckedIn) return;
+    _stagedAppCheckedIn = YES;
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ checked in from the stage, so it can report its keyboard",
+                              _sceneHost.bundleIdentifier ?: @"the staged app");
 }
 
 - (CGFloat)liftForKeyboardSpillInState:(DSStageState)state {
@@ -446,7 +458,6 @@ static BOOL sSystemEdgePullAvailable;
         DSDiagnosticsRecordFormat(@"SpringBoard: the staged app %@ a keyboard %.0fpt tall",
                                   typing ? @"raised" : @"put away", height);
     }
-    if (typing == wasTyping) return;
     if (!_sceneHost.isHosting) return;
     if (_state != DSStageStateOverlay && _state != DSStageStateSplit) return;
 

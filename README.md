@@ -283,10 +283,29 @@ app lays its own content out above its own keyboard, and that content is exactly
 shows. The card is held up by the height of the band so it all fits, and drops back to its
 resting place when the keyboard goes.
 
-The height comes from the tweak's own dylib inside that app, which publishes the keyboard's
-visible height as a Darwin notification's state. The band belongs to the app: touches in it
-are passed through to the app rather than taken as drags on the card, and the home gesture is
-left alone there, so leaving an app never means putting its keyboard away first.
+The height comes from the tweak's own dylib inside that app, and there are three things that
+each, on their own, kept the keyboard in the card even once all of the above was in place.
+
+The height has to arrive. It was sent as the shared state of a Darwin notification, which the
+app writes and SpringBoard reads - and an application is sandboxed where SpringBoard is not, so
+being refused that write is possible, and looks from SpringBoard exactly like an app that never
+raised a keyboard. The height is now also said by *which* notification was posted, one name per
+ten points, because posting is something any process may do. SpringBoard listens to all of them
+and still prefers the exact figure where it can read one.
+
+SpringBoard has to know the app can report at all. The app posts once, when it notices it is on
+the stage, and that is written to the diagnostics page - an app whose dylib never loaded is
+otherwise indistinguishable from one that loaded and saw no keyboard.
+
+And the keyboard has to move once the window has grown. UIKit puts a keyboard at the bottom of
+the window as the window was when it went up, which is the card; the window grows a moment
+later. So on every scene resize the keyboard is asked to place itself again, and if it is still
+sitting where the card's bottom used to be it is put on the bottom edge of the window directly,
+which on a phone is where a keyboard always is.
+
+The band belongs to the app: touches in it are passed through to the app rather than taken as
+drags on the card, and the home gesture is left alone there, so leaving an app never means
+putting its keyboard away first.
 
 ## Staying out of the way
 

@@ -237,26 +237,37 @@ answered.
 
 ## The keyboard
 
-The keyboard is never inside the card. That takes two different things, because there are
-two different keyboards involved.
+The keyboard is never squeezed into the card. There are two keyboards involved and they
+need different answers, because they are drawn by different processes.
 
-The stage's own search field is SpringBoard's text field, so its keyboard is SpringBoard's:
-the ordinary one, full width, at the bottom of the display, above the card. The card is
-raised above it for as long as it is there and put back when it goes.
+**The stage's own search field** uses SpringBoard's keyboard: the ordinary one, full width,
+at the bottom of the display, above the card. The card lifts above it while it is there. The
+signal for that is `UIKeyboardWillChangeFrameNotification`, which SpringBoard posts for its
+own keyboards, plus SpringBoard's hosted keyboard window where it has one. That window is
+one of SpringBoard's and so covers the whole display - its frame says nothing about where the
+keyboard is, and taking it for the keyboard lifted the card clean off the top of the screen
+in 1.4.1. The keyboard is the view hosted inside it, and the lift is clamped so that however
+wrong the number, the card cannot leave the screen.
 
-A staged app's keyboard is harder, because an app draws its keyboard inside its own window -
-and on the stage that window is the card. Left alone, an app would put a squeezed keyboard
-inside a card a third of the screen tall. SpringBoard already has the alternative, because
-iPad multitasking needs it: `SBMedusaHostedKeyboardWindow`, a window of SpringBoard's own
-that spans the display and sits above every app. The stage asks for it - the app on the
-stage is marked as able to live in a scene smaller than the display, which is the condition
-for it, and SpringBoard is asked to reconsider keyboard placement as soon as the app is on
-the card.
+**A staged app's keyboard** is drawn by the app inside its own window, which on the stage is
+the card - a card half the screen tall, so a keyboard inside it leaves almost nothing of the
+app. Nothing about that keyboard leaves the app's process: SpringBoard cannot see it, and
+there is no setting that moves it out of the app's window.
 
-That window is also the only keyboard signal the stage can see. A staged app raises its
-keyboard in its own process and posts nothing in SpringBoard, so the window appearing is
-what tells the stage a keyboard exists and how tall it is. Where SpringBoard has no such
-window, the diagnostics page says so rather than the card silently sitting under a keyboard.
+What there is, is the tweak's own dylib already inside that app. It reports the height of the
+keyboard it has raised through a Darwin notification's state, and the card responds by taking
+the whole width and going down to the bottom edge, its top raised as far as it needs to be to
+keep a usable strip of the app above the keyboard - so the keyboard comes out the size and in
+the position it would have if the app were full screen, with the display's own corner radius
+rather than an inset card's. It goes back to the floating card when the keyboard does. The
+bottom strip stays the system's while this is happening, so leaving the app never requires
+putting the keyboard away first.
+
+SpringBoard is also asked to host the keyboard itself, the way it does for iPad
+multitasking - the staged app is marked as able to live in a scene smaller than the display,
+which is the condition for it. Where that takes, the keyboard is SpringBoard's own window
+across the display and the card only has to move above it. The diagnostics page says which of
+the two happened.
 
 ## Staying out of the way
 

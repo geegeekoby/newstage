@@ -19,6 +19,13 @@
 // being picked up" without needing a log.
 #define kDSOpenStageNotification "com.recreated.dynamicstage.stage.open"
 
+// Written by the staged application, read by SpringBoard: how tall the keyboard it
+// has just raised is, in points, carried as the notification's own state. An app
+// draws its keyboard inside its own window and posts nothing outside its process,
+// so without this SpringBoard has no way of knowing a keyboard exists - and a card
+// half the screen tall with a keyboard inside it leaves nothing of the app.
+#define kDSKeyboardHeightNotification "com.recreated.dynamicstage.keyboard"
+
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"
@@ -141,6 +148,11 @@ typedef NS_ENUM(NSInteger, DSStageState) {
 //   * the app behind scales to 0.872 about the screen centre while the corner is
 //     being pulled, over black, then either springs back (overlay) or resizes
 //     into the top half (split).
+
+// How much of the app has to stay visible above its own keyboard. A keyboard on
+// this display is around 340pt, so the card reaching the top of the screen is the
+// worst case rather than the normal one.
+static const CGFloat kDSTypingContentHeight = 260.0;
 
 static const CGFloat kDSSplitRatio = 0.5;
 static const CGFloat kDSStageInset = 10.0;

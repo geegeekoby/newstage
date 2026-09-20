@@ -7,6 +7,7 @@
 #import "DSDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
+#import <notify.h>
 
 // Every hook below is a thin shim over DSStageManager. The rule throughout is
 // that a missing or renamed private API must degrade into "the stage does not
@@ -465,6 +466,24 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
     });
 }
 
+// The staged app says how tall its keyboard is, since SpringBoard cannot see a
+// keyboard that another process drew inside its own window.
+static int sKeyboardHeightToken = NOTIFY_TOKEN_INVALID;
+
+static void DSStagedAppKeyboardChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
+                                       const void *object, CFDictionaryRef userInfo) {
+    uint64_t height = 0;
+    if (sKeyboardHeightToken == NOTIFY_TOKEN_INVALID ||
+        notify_get_state(sKeyboardHeightToken, &height) != NOTIFY_STATUS_OK) {
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSTell(^(DSStageManager *manager) {
+            [manager stagedAppKeyboardHeightChanged:(CGFloat)height];
+        });
+    });
+}
+
 %ctor {
     if (!DSTweakEnabled()) {
         DSDiagnosticsRecordFormat(@"SpringBoard: hooks not installed (%@)",
@@ -522,6 +541,10 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
                                     CFNotificationSuspensionBehaviorCoalesce);
     CFNotificationCenterAddObserver(center, NULL, DSOpenStage,
                                     CFSTR(kDSOpenStageNotification), NULL,
+                                    CFNotificationSuspensionBehaviorCoalesce);
+    notify_register_check(kDSKeyboardHeightNotification, &sKeyboardHeightToken);
+    CFNotificationCenterAddObserver(center, NULL, DSStagedAppKeyboardChanged,
+                                    CFSTR(kDSKeyboardHeightNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
 
     %init(_ungrouped);

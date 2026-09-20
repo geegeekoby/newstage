@@ -7,6 +7,8 @@
     CGRect _deviceBounds;
     BOOL _resolvedDeviceBounds;
     int _stateToken;
+    int _keyboardToken;
+    uint64_t _publishedKeyboardHeight;
 }
 
 + (instancetype)sharedContext {
@@ -55,6 +57,8 @@
         [self refresh];
     });
 
+    [self observeOwnKeyboard];
+
     NSArray<NSString *> *suffixes = @[ @".left", @".right", @".reset" ];
     for (NSString *suffix in suffixes) {
         NSString *name = [kDSRotateNotificationPrefix stringByAppendingString:suffix];
@@ -70,6 +74,50 @@
             [self applyGeometryChange];
         });
     }
+}
+
+#pragma mark - Telling the stage about the keyboard
+
+// This process is the only one that can see its own keyboard: it is drawn inside
+// this app's window, which on the stage is the card, and nothing about it leaves
+// the process. So the height is published, and SpringBoard gives the card the
+// room - full width, down to the bottom edge - so the keyboard ends up the size
+// and in the place it would be if the app were full screen.
+- (void)observeOwnKeyboard {
+    _keyboardToken = NOTIFY_TOKEN_INVALID;
+    notify_register_check(kDSKeyboardHeightNotification, &_keyboardToken);
+
+    for (NSString *name in @[ UIKeyboardWillChangeFrameNotification,
+                              UIKeyboardWillShowNotification,
+                              UIKeyboardWillHideNotification ]) {
+        [NSNotificationCenter.defaultCenter addObserverForName:name
+                                                       object:nil
+                                                        queue:NSOperationQueue.mainQueue
+                                                   usingBlock:^(NSNotification *notification) {
+            [self publishKeyboardHeightFrom:notification];
+        }];
+    }
+}
+
+- (void)publishKeyboardHeightFrom:(NSNotification *)notification {
+    if (_keyboardToken == NOTIFY_TOKEN_INVALID) return;
+
+    CGFloat height = 0.0;
+    if (![notification.name isEqualToString:UIKeyboardWillHideNotification]) {
+        CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+        CGRect scene = CGRectIsEmpty(_stageBounds) ? self.deviceBounds : _stageBounds;
+        // Only the part of it that is on screen counts; a keyboard on its way out is
+        // reported at its full height sitting below the bottom edge.
+        CGFloat visible = CGRectGetMaxY(scene) - CGRectGetMinY(keyboard);
+        height = MAX(MIN(visible, CGRectGetHeight(keyboard)), 0.0);
+    }
+
+    uint64_t published = _staged ? (uint64_t)round(height) : 0;
+    if (published == _publishedKeyboardHeight) return;
+    _publishedKeyboardHeight = published;
+
+    notify_set_state(_keyboardToken, published);
+    notify_post(kDSKeyboardHeightNotification);
 }
 
 #pragma mark - Geometry
@@ -121,6 +169,13 @@
     if (!_staged) {
         _quarterTurns = 0;
         _padMode = NO;
+        // Off the stage, whatever was said about a keyboard no longer applies, and a
+        // stale height would leave the card shaped for one.
+        if (_publishedKeyboardHeight != 0 && _keyboardToken != NOTIFY_TOKEN_INVALID) {
+            _publishedKeyboardHeight = 0;
+            notify_set_state(_keyboardToken, 0);
+            notify_post(kDSKeyboardHeightNotification);
+        }
         return;
     }
     _padMode = [preferences launchTypeForApplication:identifier] == DSLaunchTypePad &&

@@ -106,6 +106,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_splitHostBundleIdentifier;
     NSString *_bundleIdentifierToRestoreInFront;
     BOOL _notedKeyboardOnce;
+    CGFloat _stagedAppKeyboardHeight;
     NSTimer *_autoKillTimer;
     NSInteger _stageQuarterTurns;
 
@@ -344,7 +345,13 @@ static BOOL sSystemEdgePullAvailable;
         return;
     }
 
-    CGRect keyboard = window.frame;
+    // The window is the whole display - it is one of SpringBoard's, and every one of
+    // those covers the screen. What it says about where the keyboard is: nothing. The
+    // keyboard is the view hosted inside it, and if that cannot be found the stage
+    // leaves the card where it is rather than moving it by a number it made up.
+    CGRect keyboard = [self keyboardRectInWindow:window];
+    if (CGRectIsNull(keyboard)) return;
+
     CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard);
     [self liftCardBy:MAX(overlap + 10.0, 0.0) duration:0.25];
@@ -356,12 +363,50 @@ static BOOL sSystemEdgePullAvailable;
     }
 }
 
+- (CGRect)keyboardRectInWindow:(UIWindow *)window {
+    CGFloat windowHeight = CGRectGetHeight(window.bounds);
+    if (windowHeight <= 0.0) return CGRectNull;
+
+    @try {
+        // The scene the window was built around, which is the keyboard itself.
+        Ivar ivar = class_getInstanceVariable([window class], "_remoteHostedKeyboardScenePresenter");
+        id presenter = ivar ? object_getIvar(window, ivar) : nil;
+        UIView *view = [presenter respondsToSelector:@selector(presentationView)]
+            ? ((UIView * (*)(id, SEL))objc_msgSend)(presenter, @selector(presentationView))
+            : nil;
+        if (view.superview) {
+            CGRect frame = [view.superview convertRect:view.frame toView:nil];
+            if (!CGRectIsEmpty(frame) && CGRectGetHeight(frame) < windowHeight * 0.9) return frame;
+        }
+    } @catch (NSException *exception) {
+    }
+
+    // Failing that, the keyboard is whatever sits across the bottom of the window
+    // without filling it.
+    CGRect best = CGRectNull;
+    for (UIView *subview in window.subviews) {
+        CGRect frame = subview.frame;
+        if (subview.hidden || subview.alpha < 0.01 || CGRectIsEmpty(frame)) continue;
+        if (CGRectGetHeight(frame) >= windowHeight * 0.9) continue;
+        if (CGRectGetMaxY(frame) < windowHeight - 40.0) continue;
+        if (CGRectIsNull(best) || CGRectGetMinY(frame) < CGRectGetMinY(best)) best = frame;
+    }
+    return best;
+}
+
 - (void)liftCardBy:(CGFloat)offset notification:(NSNotification *)notification {
     [self liftCardBy:offset
             duration:[notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
 }
 
 - (void)liftCardBy:(CGFloat)offset duration:(NSTimeInterval)duration {
+    // However wrong the number that got here, the card stays on the screen. A card
+    // lifted off the top takes the search field, the app and every way of closing the
+    // stage with it, and reads as the stage having broken.
+    CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+    CGFloat headroom = MAX(CGRectGetMinY(resting) - 20.0, 0.0);
+    offset = MIN(MAX(offset, 0.0), headroom);
+
     if (fabs(offset - _container.liftOffset) < 0.5) return;
 
     void (^lift)(void) = ^{
@@ -412,7 +457,25 @@ static BOOL sSystemEdgePullAvailable;
 // The stage owns the bottom half of the display in both states. Floating over an
 // app it is a card inset on three sides; sharing the screen it goes edge to edge
 // and only the gap above it survives.
+// While the app on the stage has a keyboard up, the card takes the whole width and
+// goes down to the bottom edge. The keyboard is drawn inside the app's own window,
+// which is this card, so this is what decides whether it ends up the size and in the
+// place a keyboard belongs, or squeezed into an inset card with rounded corners. The
+// top is raised as far as it has to be for the app to keep a usable strip above it.
 - (CGRect)stageFrameForState:(DSStageState)state {
+    CGRect resting = [self restingStageFrameForState:state];
+    if (_stagedAppKeyboardHeight < 40.0) return resting;
+    if (state != DSStageStateOverlay && state != DSStageStateSplit) return resting;
+
+    CGRect bounds = [self screenBounds];
+    CGFloat screenHeight = CGRectGetHeight(bounds);
+    CGFloat top = CGRectGetMinY(resting);
+    CGFloat wanted = screenHeight - _stagedAppKeyboardHeight - kDSTypingContentHeight;
+    top = MAX(MIN(top, wanted), [self screenSafeAreaInsets].top);
+    return CGRectMake(0, top, CGRectGetWidth(bounds), screenHeight - top);
+}
+
+- (CGRect)restingStageFrameForState:(DSStageState)state {
     CGRect bounds = [self screenBounds];
     CGFloat screenHeight = CGRectGetHeight(bounds);
     CGFloat screenWidth = CGRectGetWidth(bounds);
@@ -435,8 +498,35 @@ static BOOL sSystemEdgePullAvailable;
 
 - (CGFloat)cornerRadiusForState:(DSStageState)state {
     CGFloat display = [self displayCornerRadius];
-    // Inset on both sides, the card's corners stay concentric with the display's.
-    return state == DSStageStateSplit ? display : display - kDSStageInset;
+    // Edge to edge - which is also what typing looks like - the card's corners are
+    // the display's own. Inset on both sides they stay concentric with it.
+    if (state == DSStageStateSplit) return display;
+    if (_stagedAppKeyboardHeight >= 40.0 && state == DSStageStateOverlay) return display;
+    return display - kDSStageInset;
+}
+
+// The staged app has raised or dismissed its own keyboard - the app is the only
+// place that can see it, so this is where SpringBoard finds out.
+- (void)stagedAppKeyboardHeightChanged:(CGFloat)height {
+    if (fabs(height - _stagedAppKeyboardHeight) < 1.0) return;
+
+    BOOL wasTyping = _stagedAppKeyboardHeight >= 40.0;
+    _stagedAppKeyboardHeight = height;
+    if ((height >= 40.0) == wasTyping) return;
+    if (!_sceneHost.isHosting) return;
+    if (_state != DSStageStateOverlay && _state != DSStageStateSplit) return;
+
+    DSDiagnosticsRecordFormat(@"SpringBoard: the staged app %@ a keyboard %.0fpt tall",
+                              height >= 40.0 ? @"raised" : @"put away", height);
+
+    [self liftCardBy:0.0 duration:0.0];
+    [UIView animateWithDuration:0.25
+                          delay:0.0
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+        [self layoutStageForState:self->_state];
+    }
+                     completion:nil];
 }
 
 - (CGRect)hostFrameForSplit {
@@ -560,7 +650,17 @@ static BOOL sSystemEdgePullAvailable;
     // gestures, and a stage left open in some state it should not be in cannot
     // take the home gesture away from the whole device - the card has to actually
     // be on screen and the touch has to be inside it.
-    return self.isStageVisible && _container.window && CGRectContainsPoint(_container.frame, point);
+    if (!self.isStageVisible || !_container.window) return NO;
+    if (!CGRectContainsPoint(_container.frame, point)) return NO;
+
+    // Typing takes the card down to the bottom edge, which is where the home gesture
+    // lives. Nobody should have to put a keyboard away to leave an app, so the last
+    // strip of it stays the system's.
+    if (_stagedAppKeyboardHeight >= 40.0 &&
+        point.y > CGRectGetMaxY([self screenBounds]) - 24.0) {
+        return NO;
+    }
+    return YES;
 }
 
 - (BOOL)shouldWindowCaptureTouchAtPoint:(CGPoint)point {

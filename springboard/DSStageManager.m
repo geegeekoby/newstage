@@ -108,6 +108,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     BOOL _notedKeyboardOnce;
     BOOL _stagedAppCheckedIn;
     CGFloat _stagedAppKeyboardHeight;
+    // Where the top of that keyboard is, in the app's own scene coordinates. The card
+    // is cut off there, so wherever UIKit put the keyboard, it is below the card.
+    CGFloat _stagedAppKeyboardTop;
     NSTimer *_autoKillTimer;
     NSInteger _stageQuarterTurns;
 
@@ -410,11 +413,25 @@ static BOOL sSystemEdgePullAvailable;
     if (_stagedAppKeyboardHeight < kDSKeyboardPresentHeight) return 0.0;
     if (state != DSStageStateOverlay && state != DSStageStateSplit) return 0.0;
 
+    // The band can be as tall as the keyboard, as long as some card is left above it.
     CGFloat screenHeight = CGRectGetHeight([self screenBounds]);
-    CGRect card = [self stageFrameForState:state];
-    // The band has to fit between the card and the bottom edge, and the card is held
-    // up by that much for as long as the keyboard is there.
-    return MIN(_stagedAppKeyboardHeight, MAX(screenHeight - CGRectGetHeight(card) - 20.0, 0.0));
+    return MIN(_stagedAppKeyboardHeight, MAX(screenHeight - kDSStageKeyboardMinimumCard, 0.0));
+}
+
+// How much of the app the card shows while its keyboard is up: everything above the
+// keyboard and not a point more. This is what makes the keyboard's position stop
+// mattering - the card is cut at the line the app reported, so the keyboard is on the
+// far side of the cut whether or not the app's window was ever made tall enough to
+// hold the band below the card.
+//
+// With no line to go by - a height that arrived by name because the app could not
+// write the shared state - the card keeps its own height, which is what it wants
+// whenever the window did grow.
+- (CGFloat)cardHeightForState:(DSStageState)state {
+    CGFloat resting = CGRectGetHeight([self stageFrameForState:state]);
+    if ([self keyboardSpillForState:state] <= 0.0) return resting;
+    if (_stagedAppKeyboardTop < kDSStageKeyboardMinimumCard) return resting;
+    return MIN(_stagedAppKeyboardTop, resting);
 }
 
 // Whatever keyboard the app on the stage had went away with the app.
@@ -422,6 +439,7 @@ static BOOL sSystemEdgePullAvailable;
     _stagedAppCheckedIn = NO;
     if (_stagedAppKeyboardHeight <= 0.0 && _container.keyboardSpill <= 0.0) return;
     _stagedAppKeyboardHeight = 0.0;
+    _stagedAppKeyboardTop = 0.0;
     [_container setKeyboardSpill:0.0];
     [_container setLiftOffset:0.0];
 }
@@ -436,27 +454,21 @@ static BOOL sSystemEdgePullAvailable;
                               _sceneHost.bundleIdentifier ?: @"the staged app");
 }
 
-- (CGFloat)liftForKeyboardSpillInState:(DSStageState)state {
-    CGFloat spill = [self keyboardSpillForState:state];
-    if (spill <= 0.0) return 0.0;
-    CGRect card = [self stageFrameForState:state];
-    CGFloat below = CGRectGetHeight([self screenBounds]) - CGRectGetMaxY(card);
-    return MAX(spill - below, 0.0);
-}
-
-// The staged app has raised or dismissed its own keyboard - the app is the only
-// place that can see it, so this is where SpringBoard finds out.
-- (void)stagedAppKeyboardHeightChanged:(CGFloat)height {
-    if (fabs(height - _stagedAppKeyboardHeight) < 1.0) return;
+// The staged app has raised, moved or dismissed its own keyboard - the app is the only
+// place that can see it, so this is where SpringBoard finds out, and what it is told is
+// where the keyboard is rather than only that there is one.
+- (void)stagedAppKeyboardChangedTop:(CGFloat)top height:(CGFloat)height {
+    if (fabs(height - _stagedAppKeyboardHeight) < 1.0 && fabs(top - _stagedAppKeyboardTop) < 1.0) return;
 
     BOOL wasTyping = _stagedAppKeyboardHeight >= kDSKeyboardPresentHeight;
     _stagedAppKeyboardHeight = height;
+    _stagedAppKeyboardTop = top;
     BOOL typing = height >= kDSKeyboardPresentHeight;
 
     if (!_notedKeyboardOnce || typing != wasTyping) {
         _notedKeyboardOnce = YES;
-        DSDiagnosticsRecordFormat(@"SpringBoard: the staged app %@ a keyboard %.0fpt tall",
-                                  typing ? @"raised" : @"put away", height);
+        DSDiagnosticsRecordFormat(@"SpringBoard: the staged app %@ a keyboard %.0fpt tall, %.0fpt down its window",
+                                  typing ? @"raised" : @"put away", height, top);
     }
     if (!_sceneHost.isHosting) return;
     if (_state != DSStageStateOverlay && _state != DSStageStateSplit) return;
@@ -468,43 +480,6 @@ static BOOL sSystemEdgePullAvailable;
         [self layoutStageForState:self->_state];
     }
                      completion:nil];
-
-    if (typing) [self confirmTheAppTookTheKeyboardRoomAfterDelay];
-}
-
-// Whether the app actually took the taller window. If it did not, the keyboard is
-// still inside the card and the band below it is empty, so the size is sent again and
-// what happened is written down: from the outside the two failures look identical.
-- (void)confirmTheAppTookTheKeyboardRoomAfterDelay {
-    __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        [strongSelf confirmTheAppTookTheKeyboardRoom];
-    });
-}
-
-- (void)confirmTheAppTookTheKeyboardRoom {
-    CGFloat spill = [self keyboardSpillForState:_state];
-    if (spill <= 0.0 || !_sceneHost.isHosting) return;
-
-    CGFloat wanted = CGRectGetHeight([self stageFrameForState:_state]) + spill;
-    CGRect window = CGRectNull;
-    @try {
-        window = [_sceneHost hostedScene].settings.frame;
-    } @catch (NSException *exception) {
-    }
-
-    if (!CGRectIsNull(window) && CGRectGetHeight(window) >= wanted - 2.0) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: the staged app's window is %@, so its keyboard is below the card",
-                                  NSStringFromCGRect(window));
-        return;
-    }
-
-    DSDiagnosticsRecordFormat(@"SpringBoard: the staged app's window is %@ and wanted to be %.0fpt tall, sending the size again",
-                              CGRectIsNull(window) ? @"not readable" : NSStringFromCGRect(window), wanted);
-    [self layoutStageForState:_state];
 }
 
 - (CGRect)hostFrameForSplit {
@@ -1279,20 +1254,29 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
 - (void)layoutStageForState:(DSStageState)state {
     CGRect frame = [self stageFrameForState:state];
-    _container.frame = frame;
     if (!_sceneHost.isHosting) {
+        _container.frame = frame;
         [_container setKeyboardSpill:0.0];
         return;
     }
 
-    // The app's window is the card plus however much keyboard is under it, and the
-    // card is held up by the same amount so that band lands on the bottom edge.
     CGFloat spill = [self keyboardSpillForState:state];
+    if (spill > 0.0) {
+        // The card stops where the app's keyboard starts, and the two of them together
+        // are put against the bottom edge of the display: the app's content in the
+        // card, its keyboard in the band below it, sitting on the bottom of the screen
+        // where a keyboard belongs.
+        CGFloat screenHeight = CGRectGetHeight([self screenBounds]);
+        CGFloat card = MIN([self cardHeightForState:state], MAX(screenHeight - spill, 0.0));
+        frame.size.height = card;
+        frame.origin.y = MAX(screenHeight - (card + spill), 0.0);
+        [_container setLiftOffset:0.0];
+    }
+    _container.frame = frame;
     [_container setKeyboardSpill:spill];
-    [self liftCardBy:[self liftForKeyboardSpillInState:state] duration:0.0];
 
-    // Where the app's window actually is on the display: the card wherever the
-    // keyboard has pushed it to, reaching down to the bottom edge.
+    // Where the app's window is on the display: the card wherever it has been put, and
+    // the band underneath it.
     CGRect window = CGRectOffset(frame, 0.0, -_container.liftOffset);
     window.size.height += spill;
     [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];

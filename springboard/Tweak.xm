@@ -449,14 +449,6 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
 // keyboard that another process drew inside its own window.
 static int sKeyboardHeightToken = NOTIFY_TOKEN_INVALID;
 
-static void DSDeliverKeyboardHeight(CGFloat height) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        DSTell(^(DSStageManager *manager) {
-            [manager stagedAppKeyboardHeightChanged:height];
-        });
-    });
-}
-
 static void DSStagedAppCheckedIn(CFNotificationCenterRef center, void *observer, CFStringRef name,
                                  const void *object, CFDictionaryRef userInfo) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -466,19 +458,36 @@ static void DSStagedAppCheckedIn(CFNotificationCenterRef center, void *observer,
     });
 }
 
-static void DSStagedAppKeyboardChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
-                                       const void *object, CFDictionaryRef userInfo) {
-    uint64_t height = 0;
-    if (sKeyboardHeightToken == NOTIFY_TOKEN_INVALID ||
-        notify_get_state(sKeyboardHeightToken, &height) != NOTIFY_STATUS_OK) {
-        return;
-    }
-    DSDeliverKeyboardHeight((CGFloat)height);
+static void DSDeliverKeyboard(CGFloat top, CGFloat height) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSTell(^(DSStageManager *manager) {
+            [manager stagedAppKeyboardChangedTop:top height:height];
+        });
+    });
 }
 
-// The same height carried by which name was posted, for the case where the app was
-// not allowed to write the shared state above. Ten points per step, and the exact
-// figure is still preferred where the state can be read.
+static BOOL DSReadKeyboardState(CGFloat *top, CGFloat *height) {
+    uint64_t state = 0;
+    if (sKeyboardHeightToken == NOTIFY_TOKEN_INVALID ||
+        notify_get_state(sKeyboardHeightToken, &state) != NOTIFY_STATUS_OK) {
+        return NO;
+    }
+    if (top) *top = (CGFloat)((state >> kDSKeyboardStateTopShift) & kDSKeyboardStateHeightMask);
+    if (height) *height = (CGFloat)(state & kDSKeyboardStateHeightMask);
+    return YES;
+}
+
+static void DSStagedAppKeyboardChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
+                                       const void *object, CFDictionaryRef userInfo) {
+    CGFloat top = 0.0;
+    CGFloat height = 0.0;
+    if (!DSReadKeyboardState(&top, &height)) return;
+    DSDeliverKeyboard(top, height);
+}
+
+// The height carried by which name was posted, for the case where the app was not
+// allowed to write the shared state above. Ten points per step, and no line to cut the
+// card at: the card keeps the height it has.
 static void DSStagedAppKeyboardStepped(CFNotificationCenterRef center, void *observer, CFStringRef name,
                                        const void *object, CFDictionaryRef userInfo) {
     NSString *posted = (__bridge NSString *)name;
@@ -487,13 +496,13 @@ static void DSStagedAppKeyboardStepped(CFNotificationCenterRef center, void *obs
 
     CGFloat stepped = [posted substringFromIndex:prefix.length].integerValue * kDSKeyboardHeightStep;
 
-    uint64_t exact = 0;
-    if (sKeyboardHeightToken != NOTIFY_TOKEN_INVALID &&
-        notify_get_state(sKeyboardHeightToken, &exact) == NOTIFY_STATUS_OK &&
-        fabs((CGFloat)exact - stepped) <= kDSKeyboardHeightStep) {
-        stepped = (CGFloat)exact;
+    CGFloat top = 0.0;
+    CGFloat exact = 0.0;
+    if (DSReadKeyboardState(&top, &exact) && fabs(exact - stepped) <= kDSKeyboardHeightStep) {
+        DSDeliverKeyboard(top, exact);
+        return;
     }
-    DSDeliverKeyboardHeight(stepped);
+    DSDeliverKeyboard(0.0, stepped);
 }
 
 %ctor {

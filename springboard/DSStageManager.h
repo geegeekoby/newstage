@@ -38,7 +38,7 @@
 
 // How tall a keyboard the app on the stage has raised inside its own window, as
 // reported by the app itself. Zero when it has put one away.
-- (void)stagedAppKeyboardHeightChanged:(CGFloat)height;
+- (void)stagedAppKeyboardChangedTop:(CGFloat)top height:(CGFloat)height;
 - (void)noteStagedAppCheckedIn;
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;

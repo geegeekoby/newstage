@@ -110,80 +110,92 @@
     }
 }
 
-// Where the keyboard goes: the band below the card. Everything this needs is known
-// in this process - how tall the card is comes from SpringBoard, how tall the
-// keyboard is this app raised itself - so it does not matter whether the window was
-// successfully grown to contain the band.
-- (CGRect)keyboardBand {
-    if (!_staged || _keyboardLeaving) return CGRectNull;
-    if (_cardHeight <= 0.0) return CGRectNull;
-    if (_publishedKeyboardHeight < (uint64_t)kDSKeyboardPresentHeight) return CGRectNull;
-
-    CGFloat width = CGRectGetWidth(self.stageBounds);
-    if (width <= 0.0) width = CGRectGetWidth(self.deviceBounds);
-    return CGRectMake(0.0, _cardHeight, width, (CGFloat)_publishedKeyboardHeight);
-}
-
 - (void)publishKeyboardHeightFrom:(NSNotification *)notification {
-    if (_keyboardToken == NOTIFY_TOKEN_INVALID) return;
-
     _keyboardLeaving = [notification.name isEqualToString:UIKeyboardWillHideNotification];
 
-    CGFloat height = 0.0;
-    if (!_keyboardLeaving) {
-        CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-        height = CGRectGetHeight(keyboard);
-
-        // Before a band exists, the frame is measured against this app's window and
-        // only the part inside it counts: a keyboard still sliding in is reported at
-        // full height below the bottom edge, and taking that would open a band for a
-        // keyboard that is not there yet.
-        //
-        // Once a band exists the keyboard is in it, which is at or below the bottom of
-        // the window, so the same sum would read as nothing at all - and putting the
-        // band away is what would move the keyboard back into the card. So from then
-        // on the keyboard's own height is what counts, which also keeps up with a
-        // field that swaps a number pad in for a keyboard.
-        if (CGRectIsNull(self.keyboardBand)) {
-            CGFloat windowHeight = [self ownWindowHeight];
-            if (windowHeight > 0.0) {
-                CGFloat visible = windowHeight - CGRectGetMinY(keyboard);
-                height = MAX(MIN(visible, height), 0.0);
-            }
-        }
+    if (_keyboardLeaving) {
+        [self publishKeyboardTop:0.0 height:0.0];
+        return;
     }
 
-    [self publishKeyboardHeight:_staged ? (uint64_t)round(height) : 0];
+    // What UIKit says it is about to do, which is the best that is known this early:
+    // the frame is in this scene's own coordinates, which is what SpringBoard wants.
+    CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    [self publishKeyboardTop:CGRectGetMinY(keyboard) height:CGRectGetHeight(keyboard)];
+
+    // Then what it actually did, once it has done it. A keyboard is laid out over
+    // several frames and moves again whenever the scene is resized underneath it, and
+    // the card is cut to fit wherever it ends up - so the measurement is repeated and
+    // republished until it settles.
+    for (NSNumber *delay in @[ @0.05, @0.2, @0.45, @0.9 ]) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            @try {
+                [self republishMeasuredKeyboard];
+            } @catch (NSException *exception) {
+            }
+        });
+    }
 }
 
-- (void)publishKeyboardHeight:(uint64_t)published {
+// The keyboard as it is on screen right now, in this scene's coordinates, read from
+// the window it is drawn in. This is the number that matters: everything else is a
+// request, and a request that was not honoured is exactly how the keyboard ended up
+// inside the card in every build before this one.
+- (BOOL)measuredKeyboardTop:(CGFloat *)outTop height:(CGFloat *)outHeight {
+    Class effectsClass = objc_getClass("UITextEffectsWindow");
+    if (!effectsClass) return NO;
+
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        if (window.hidden || window.alpha < 0.01) continue;
+        if (![window isKindOfClass:effectsClass]) continue;
+
+        UIView *host = DSInputSetHostViewIn(window);
+        if (!host || CGRectGetHeight(host.bounds) < kDSKeyboardPresentHeight) continue;
+
+        CGRect inWindow = [host convertRect:host.bounds toView:nil];
+        if (outTop) *outTop = CGRectGetMinY(inWindow) + CGRectGetMinY(window.frame);
+        if (outHeight) *outHeight = CGRectGetHeight(inWindow);
+        return YES;
+    }
+    return NO;
+}
+
+- (void)republishMeasuredKeyboard {
+    if (_keyboardLeaving) return;
+    CGFloat top = 0.0;
+    CGFloat height = 0.0;
+    if (![self measuredKeyboardTop:&top height:&height]) return;
+    [self publishKeyboardTop:top height:height];
+}
+
+- (void)publishKeyboardTop:(CGFloat)top height:(CGFloat)height {
+    if (_keyboardToken == NOTIFY_TOKEN_INVALID) return;
+
+    if (!_staged || height < kDSKeyboardPresentHeight) {
+        top = 0.0;
+        height = 0.0;
+    }
+
+    uint64_t published = MIN((uint64_t)MAX(round(height), 0.0), kDSKeyboardStateHeightMask);
+    if (published > 0) {
+        uint64_t line = MIN((uint64_t)MAX(round(top), 0.0), kDSKeyboardStateHeightMask);
+        published |= line << kDSKeyboardStateTopShift;
+    }
     if (published == _publishedKeyboardHeight) return;
     _publishedKeyboardHeight = published;
 
-    if (_keyboardToken != NOTIFY_TOKEN_INVALID) notify_set_state(_keyboardToken, published);
+    notify_set_state(_keyboardToken, published);
     notify_post(kDSKeyboardHeightNotification);
 
     // Said again by name, because the shared state above is written by a sandboxed
     // process into a notification SpringBoard created, and being refused that is
     // indistinguishable from never having raised a keyboard. Posting is allowed to
-    // anyone, so the height also arrives as which name was posted.
-    uint64_t step = (published + kDSKeyboardHeightStep / 2) / kDSKeyboardHeightStep;
+    // anyone, so the height also arrives as which name was posted - and where the
+    // state cannot be read, the card's own height stands in for the line.
+    uint64_t step = ((uint64_t)round(height) + kDSKeyboardHeightStep / 2) / kDSKeyboardHeightStep;
     if (step >= kDSKeyboardHeightSteps) step = kDSKeyboardHeightSteps - 1;
     notify_post([NSString stringWithFormat:@"%s%llu", kDSKeyboardHeightStepNotificationPrefix, step].UTF8String);
-
-    // UIKit lays the keyboard out over the next few frames and puts it back where it
-    // thinks it belongs, so it is moved into the band again after each of them. The
-    // hooks on the two windows catch the rest.
-    if (published == 0) return;
-    for (NSNumber *delay in @[ @0.0, @0.05, @0.2, @0.45 ]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            @try {
-                [self redockKeyboard];
-            } @catch (NSException *exception) {
-            }
-        });
-    }
 }
 
 // The window the keyboard came up in. On the stage that is the card plus whatever
@@ -255,7 +267,7 @@
         _padMode = NO;
         // Off the stage, whatever was said about a keyboard no longer applies, and a
         // stale height would leave the card shaped for one.
-        [self publishKeyboardHeight:0];
+        [self publishKeyboardTop:0.0 height:0.0];
         return;
     }
     _padMode = [preferences launchTypeForApplication:identifier] == DSLaunchTypePad &&
@@ -297,25 +309,6 @@
     return CGRectZero;
 }
 
-// A keyboard is placed at the bottom of the window as the window was when it went
-// up. SpringBoard makes the window taller straight afterwards - that is the whole
-// point, it is making room below the card for the keyboard to sit in - so the
-// keyboard is asked to place itself again against the window it is in now.
-- (void)nudgeKeyboardPlacement {
-    @try {
-        Class controllerClass = objc_getClass("UIInputResponderController");
-        if ([controllerClass respondsToSelector:@selector(activeInputResponderController)]) {
-            UIInputResponderController *controller = [controllerClass activeInputResponderController];
-            if ([controller respondsToSelector:@selector(reloadPlacement)]) [controller reloadPlacement];
-        }
-    } @catch (NSException *exception) {
-    }
-    @try {
-        [self redockKeyboard];
-    } @catch (NSException *exception) {
-    }
-}
-
 static UIView *DSInputSetHostViewIn(UIView *view) {
     Class hostClass = objc_getClass("UIInputSetHostView");
     if (!hostClass) return nil;
@@ -327,27 +320,22 @@ static UIView *DSInputSetHostViewIn(UIView *view) {
     return nil;
 }
 
-// Asking politely is not always enough: a keyboard already up was placed against the
-// bottom of the window as it was then, which is the card. So the window it is drawn
-// in is moved onto the band itself, and the keyboard inside that window is made to
-// fill it. Nothing here waits on anything: it is this process's own window, put where
-// SpringBoard has made room for it.
-- (void)redockKeyboard {
-    CGRect band = self.keyboardBand;
-    if (CGRectIsNull(band)) return;
-    Class effectsClass = objc_getClass("UITextEffectsWindow");
-    if (!effectsClass) return;
-
-    for (UIWindow *window in UIApplication.sharedApplication.windows) {
-        if (window.hidden || window.alpha < 0.01) continue;
-        if (![window isKindOfClass:effectsClass]) continue;
-
-        if (!CGRectEqualToRect(window.frame, band)) window.frame = band;
-
-        UIView *host = DSInputSetHostViewIn(window);
-        if (!host) continue;
-        CGRect fill = CGRectMake(0.0, 0.0, CGRectGetWidth(band), CGRectGetHeight(band));
-        if (!CGRectEqualToRect(host.frame, fill)) host.frame = fill;
+// The scene has been resized under a keyboard that is already up, so UIKit is asked
+// to place it again - it is placed against the bottom of the window, and the window
+// is not the size it was. Where it lands is then measured and published, because that
+// is what the card is cut to.
+- (void)nudgeKeyboardPlacement {
+    @try {
+        Class controllerClass = objc_getClass("UIInputResponderController");
+        if ([controllerClass respondsToSelector:@selector(activeInputResponderController)]) {
+            UIInputResponderController *controller = [controllerClass activeInputResponderController];
+            if ([controller respondsToSelector:@selector(reloadPlacement)]) [controller reloadPlacement];
+        }
+    } @catch (NSException *exception) {
+    }
+    @try {
+        [self republishMeasuredKeyboard];
+    } @catch (NSException *exception) {
     }
 }
 

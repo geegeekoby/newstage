@@ -19,12 +19,21 @@
 // being picked up" without needing a log.
 #define kDSOpenStageNotification "com.recreated.dynamicstage.stage.open"
 
-// Written by the staged application, read by SpringBoard: how tall the keyboard it
-// has just raised is, in points, carried as the notification's own state. An app
-// draws its keyboard inside its own window and posts nothing outside its process,
-// so without this SpringBoard has no way of knowing a keyboard exists - and a card
-// half the screen tall with a keyboard inside it leaves nothing of the app.
+// Written by the staged application, read by SpringBoard: where the keyboard it has
+// raised actually is. An app draws its keyboard inside its own window and posts
+// nothing outside its process, so without this SpringBoard has no way of knowing a
+// keyboard exists - and a card half the screen tall with a keyboard inside it leaves
+// nothing of the app.
+//
+// The state carries two numbers, both in the app's own scene coordinates and both
+// measured from the keyboard as it ended up rather than as it was asked to be: its
+// height in the low sixteen bits, and the distance from the top of the scene to the
+// top of the keyboard in the next sixteen. SpringBoard shows everything above that
+// line as the card and everything below it as the band under the card, so wherever
+// the keyboard turns out to be, it is not in the card.
 #define kDSKeyboardHeightNotification "com.recreated.dynamicstage.keyboard"
+#define kDSKeyboardStateHeightMask 0xFFFFULL
+#define kDSKeyboardStateTopShift 16
 
 // The same number, said a second way, because the first way can fail silently. An
 // application is sandboxed and SpringBoard is not: whether a sandboxed process may
@@ -176,6 +185,10 @@ typedef NS_ENUM(NSInteger, DSStageState) {
 // Below this, whatever an app has put up at the bottom of its window is an
 // accessory bar or a keyboard on its way out rather than a keyboard.
 static const CGFloat kDSKeyboardPresentHeight = 60.0;
+
+// The least card worth showing. Where a keyboard is so tall that the card would be
+// thinner than this, the band gives way rather than the keyboard leaving the screen.
+static const CGFloat kDSStageKeyboardMinimumCard = 80.0;
 
 static const CGFloat kDSSplitRatio = 0.5;
 static const CGFloat kDSStageInset = 10.0;

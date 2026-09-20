@@ -83,10 +83,13 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     if (_crashSummary.length == 0) return;
 
     _crashNotice = [[UILabel alloc] initWithFrame:CGRectZero];
-    _crashNotice.text = [_crashSummary stringByAppendingString:@"\nTap to copy"];
+    _crashNotice.text = [@"Tap to copy this Settings crash report\n" stringByAppendingString:_crashSummary];
     _crashNotice.font = [UIFont systemFontOfSize:11.0];
     _crashNotice.textColor = [UIColor colorWithRed:0.85 green:0.25 blue:0.2 alpha:1.0];
-    _crashNotice.numberOfLines = 0;
+    // The whole report goes on the clipboard; what is shown is as much of it as can be
+    // spared from a card that is mostly meant to be a list of apps.
+    _crashNotice.numberOfLines = 4;
+    _crashNotice.lineBreakMode = NSLineBreakByTruncatingTail;
     _crashNotice.userInteractionEnabled = YES;
     [_crashNotice addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
                                                                               action:@selector(copyCrashNotice)]];

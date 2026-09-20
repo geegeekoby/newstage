@@ -3,18 +3,19 @@
 
 static NSString *const kDSCrashReportDirectory = @"/var/mobile/Library/Logs/CrashReporter";
 
-// Reports older than this are not worth showing: they are about a build that has
-// probably been replaced twice over.
+// Reports older than this are about a build that has probably been replaced twice
+// over, and showing one would send the reader after a fault that is already gone.
 static const NSTimeInterval kDSCrashReportMaxAge = 2 * 24 * 60 * 60;
 
+// How far down the crashing thread is worth reading. The fault is in the first few
+// frames; past that it is the run loop, which is the same in every report.
+static const NSUInteger kDSCrashReportFrameCount = 7;
+
 static NSString *DSFirstMatch(NSString *text, NSString *pattern) {
-    NSError *error = nil;
     NSRegularExpression *expression =
         [NSRegularExpression regularExpressionWithPattern:pattern
                                                  options:NSRegularExpressionCaseInsensitive
-                                                   error:&error];
-    if (!expression) return nil;
-
+                                                   error:NULL];
     NSTextCheckingResult *match = [expression firstMatchInString:text
                                                         options:0
                                                           range:NSMakeRange(0, text.length)];
@@ -61,6 +62,102 @@ static NSString *DSNewestSettingsReportPath(NSDate **when) {
     return newest;
 }
 
+// An .ips report is a line of JSON naming the process, then the report itself as
+// JSON. Everything worth having is in the second half.
+static NSDictionary *DSReportPayload(NSString *text) {
+    NSRange newline = [text rangeOfString:@"\n"];
+    if (newline.location == NSNotFound) return nil;
+
+    NSData *body = [[text substringFromIndex:NSMaxRange(newline)] dataUsingEncoding:NSUTF8StringEncoding];
+    id payload = [NSJSONSerialization JSONObjectWithData:body options:0 error:NULL];
+    return [payload isKindOfClass:NSDictionary.class] ? payload : nil;
+}
+
+static NSDictionary *DSFaultingThread(NSDictionary *payload) {
+    NSArray *threads = payload[@"threads"];
+    if (![threads isKindOfClass:NSArray.class] || threads.count == 0) return nil;
+
+    NSNumber *index = payload[@"faultingThread"];
+    if ([index isKindOfClass:NSNumber.class] && index.unsignedIntegerValue < threads.count) {
+        NSDictionary *thread = threads[index.unsignedIntegerValue];
+        if ([thread isKindOfClass:NSDictionary.class]) return thread;
+    }
+    for (NSDictionary *thread in threads) {
+        if ([thread isKindOfClass:NSDictionary.class] && [thread[@"triggered"] boolValue]) return thread;
+    }
+    return nil;
+}
+
+// "DynamicStagePrefs+0x3f1c", or the symbol where the report happens to carry one.
+// The offset is enough: it can be turned back into a line of source against the
+// build the report came from.
+static NSString *DSFrameDescription(NSDictionary *frame, NSArray *images) {
+    NSString *name = nil;
+    NSNumber *imageIndex = frame[@"imageIndex"];
+    if ([imageIndex isKindOfClass:NSNumber.class] && imageIndex.unsignedIntegerValue < images.count) {
+        NSDictionary *image = images[imageIndex.unsignedIntegerValue];
+        if ([image isKindOfClass:NSDictionary.class]) {
+            name = image[@"name"];
+            if (name.length == 0) name = [image[@"path"] lastPathComponent];
+        }
+    }
+    if (name.length == 0) name = @"?";
+
+    NSString *symbol = frame[@"symbol"];
+    if ([symbol isKindOfClass:NSString.class] && symbol.length > 0) {
+        return [NSString stringWithFormat:@"%@ %@", name, symbol];
+    }
+
+    NSNumber *offset = frame[@"imageOffset"];
+    if ([offset isKindOfClass:NSNumber.class]) {
+        return [NSString stringWithFormat:@"%@+0x%llx", name, offset.unsignedLongLongValue];
+    }
+    return name;
+}
+
+static NSString *DSSummaryFromPayload(NSDictionary *payload) {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+
+    NSDictionary *exception = payload[@"exception"];
+    if ([exception isKindOfClass:NSDictionary.class]) {
+        NSMutableArray<NSString *> *what = [NSMutableArray array];
+        for (NSString *key in @[ @"type", @"signal", @"subtype" ]) {
+            NSString *value = exception[key];
+            if ([value isKindOfClass:NSString.class] && value.length > 0) [what addObject:value];
+        }
+        if (what.count > 0) [parts addObject:[what componentsJoinedByString:@" "]];
+    }
+
+    // An uncaught Objective-C exception says in words what went wrong, which is worth
+    // more than any number of addresses.
+    NSDictionary *information = payload[@"asi"];
+    if ([information isKindOfClass:NSDictionary.class]) {
+        for (NSArray *lines in information.allValues) {
+            if (![lines isKindOfClass:NSArray.class]) continue;
+            for (NSString *line in lines) {
+                if (![line isKindOfClass:NSString.class]) continue;
+                if ([line rangeOfString:@"exception"].location == NSNotFound) continue;
+                [parts addObject:line.length > 200 ? [line substringToIndex:200] : line];
+                break;
+            }
+        }
+    }
+
+    NSArray *images = [payload[@"usedImages"] isKindOfClass:NSArray.class] ? payload[@"usedImages"] : @[];
+    NSArray *frames = DSFaultingThread(payload)[@"frames"];
+    if ([frames isKindOfClass:NSArray.class]) {
+        NSMutableArray<NSString *> *described = [NSMutableArray array];
+        for (NSDictionary *frame in frames) {
+            if (described.count >= kDSCrashReportFrameCount) break;
+            if (![frame isKindOfClass:NSDictionary.class]) continue;
+            [described addObject:DSFrameDescription(frame, images)];
+        }
+        if (described.count > 0) [parts addObject:[described componentsJoinedByString:@" < "]];
+    }
+
+    return parts.count > 0 ? [parts componentsJoinedByString:@" - "] : nil;
+}
+
 NSString *DSLastSettingsCrashSummary(void) {
     @try {
         NSDate *when = nil;
@@ -69,31 +166,23 @@ NSString *DSLastSettingsCrashSummary(void) {
 
         NSData *data = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:NULL];
         if (data.length == 0) return nil;
-        if (data.length > 512 * 1024) data = [data subdataWithRange:NSMakeRange(0, 512 * 1024)];
 
         NSString *text = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         if (text.length == 0) return nil;
 
-        // An uncaught Objective-C exception says exactly what went wrong, so it is
-        // worth more than anything else in the file. Failing that, what killed the
-        // process is at least the difference between a bad pointer and an assertion.
-        NSString *what = DSFirstMatch(text, @"uncaught exception of type ([A-Za-z]+)[^']*'([^']{0,180})'");
-        if (!what) what = DSFirstMatch(text, @"Terminating app due to uncaught exception '([^']+)', reason: '([^']{0,180})'");
-        if (!what) what = DSFirstMatch(text, @"\"(EXC_[A-Z_]+)\"");
-        if (!what) what = DSFirstMatch(text, @"Exception Type:\\s+(\\S+)");
-        if (!what) what = @"no reason recorded";
-
-        // Whether the tweak's own code is in the report at all. A crash that never
-        // touches it is somebody else's, and saying so is as useful as the reason.
-        NSString *ours = [text rangeOfString:@"DynamicStage"].location != NSNotFound
-            ? @"the tweak's bundle is in it"
-            : @"the tweak's bundle is not in it";
+        NSString *what = DSSummaryFromPayload(DSReportPayload(text));
+        if (what.length == 0) {
+            // An older, plain-text report.
+            what = DSFirstMatch(text, @"Terminating app due to uncaught exception '([^']+)', reason: '([^']{0,160})'");
+            if (!what) what = DSFirstMatch(text, @"Exception Type:\\s+(\\S+)");
+        }
+        if (what.length == 0) what = @"nothing in the report could be read";
 
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         formatter.dateFormat = @"HH:mm";
-        NSString *summary = [NSString stringWithFormat:@"Settings crashed at %@ - %@ (%@)",
-                                                       [formatter stringFromDate:when], what, ours];
-        if (summary.length > 240) summary = [[summary substringToIndex:237] stringByAppendingString:@"..."];
+        NSString *summary = [NSString stringWithFormat:@"Settings crashed at %@ - %@",
+                                                      [formatter stringFromDate:when], what];
+        if (summary.length > 700) summary = [[summary substringToIndex:697] stringByAppendingString:@"..."];
         return summary;
     } @catch (NSException *exception) {
         return nil;

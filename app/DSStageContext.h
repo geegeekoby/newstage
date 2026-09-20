@@ -25,16 +25,6 @@
 // than the card the moment a keyboard goes up in it, and an answer from before that
 // puts the keyboard back inside the card.
 @property (nonatomic, readonly) CGRect stageBounds;
-// Where this app's keyboard belongs, in the app's own window coordinates: the band
-// SpringBoard opens below the card, starting at the card's bottom edge and as tall as
-// the keyboard this app has raised. Null when there is no keyboard up, or when
-// SpringBoard has not said how tall the card is.
-//
-// Nothing about this depends on the window having been made tall enough to hold the
-// band. That is asked for, and it is better when it happens, but the keyboard is put
-// here either way - which is the only way it can be certain never to be in the card.
-@property (nonatomic, readonly) CGRect keyboardBand;
-
 // Report the iPad idiom so apps reflow into the short, wide stage instead of
 // showing a stretched phone layout.
 @property (nonatomic, readonly) BOOL padMode;

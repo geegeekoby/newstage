@@ -297,18 +297,24 @@ SpringBoard has to know the app can report at all. The app posts once, when it n
 the stage, and that is written to the diagnostics page - an app whose dylib never loaded is
 otherwise indistinguishable from one that loaded and saw no keyboard.
 
-And none of it can be left to UIKit. Everything above asks for the keyboard to end up below the
-card; what actually decides where it is drawn is the frame of the window it is drawn in, and
-that window belongs to this process. So while a keyboard is up, that window *is* the band: its
-frame is set to start at the card's bottom edge and to be exactly as tall as the keyboard, and
-the keyboard inside it is made to fill it. The keyboard cannot be in the card, because the
-window it is drawn in is not in the card.
+And none of it can be an instruction to UIKit. Every version up to 1.4.7 told the keyboard where
+to be - by growing the window under it, by asking it to place itself again, by setting the frame
+of the window it is drawn in - and every one of them could be quietly ignored, which is what
+kept the keyboard in the card. What cannot be ignored is a measurement.
 
-Where the card ends is the one thing the app cannot work out for itself - its window may or may
-not have been made taller than the card by then - so SpringBoard sends the card's height along
-with the rest of the stage state, in thirteen bits of the notification's own state where the
-sandbox cannot get in the way. Both cases then land in the same place: if the window did grow,
-the band is the bottom of it; if it did not, the band is just below it.
+So the app reports where its keyboard *is*: read from the window it is drawn in, after it has
+been laid out, in the scene's own coordinates - a line down the window, and a height. The
+report is repeated until it stops changing, and again whenever the scene is resized, because
+both move the keyboard.
+
+**SpringBoard then cuts the card off at that line.** The card shows the app down to the top of
+its keyboard and no further; the band below the card is the rest, and the two together are put
+against the bottom edge of the display. That is what makes the keyboard's position stop
+mattering: wherever UIKit decided to put the keyboard, the card ends above it, so the keyboard
+is on the other side of the cut. If the window did grow, the cut falls at the card's usual
+height and nothing looks different from a keyboard below a floating card. If it did not, the
+card is shorter for as long as the keyboard is up - and the app, which thinks its keyboard is
+covering its own content, has already scrolled what is being typed into what is left.
 
 The band belongs to the app: touches in it are passed through to the app rather than taken as
 drags on the card, and the home gesture is left alone there, so leaving an app never means
@@ -379,3 +385,21 @@ again.
 The original Dynamic Stage is by [@tomt000](https://twitter.com/tomt000). This repository is
 an independent reimplementation of its behaviour for personal use on a rootless jailbreak; if
 you want the real thing, buy it from his repo.
+
+## Reading a Settings crash
+
+The settings page runs inside Settings, so when it fails it takes Settings with it and there is
+nothing left on screen to say why. The stage's app list shows the last Settings crash report for
+that reason - exception type, what it was doing, and the top of the crashing thread as image
+names and offsets - and tapping it copies the whole line, so it can be pasted rather than
+described.
+
+An offset in the tweak's own bundle can be turned back into a line of source, which is what
+`debug-symbols/` is for: it holds the debug symbols of the released build, so
+
+```bash
+llvm-symbolizer --obj=debug-symbols/1.4.8/DynamicStagePrefs.dSYM/Contents/Resources/DWARF/DynamicStagePrefs 0xf7ec
+```
+
+answers with the function and the line it is on. Keep a directory per release; the offsets only
+mean anything against the build the report came from.

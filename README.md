@@ -267,11 +267,11 @@ answered.
 
 tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full width, outside the card. That is the layout this rebuild keeps. How it gets there on **iOS 16.5.1 / iPhone** is not the iPad path.
 
-On a phone this firmware reports the keyboard in arbiter mode 0: the keys are drawn in the app's own scene. There is no presentable `KeyboardManagement.hosted` scene to steal, `FBSceneHostManager` does not exist, and refusing `_canShowKeyboardLayer` leaves the keys nowhere. Builds 1.5–1.8 tried those iPad tricks and broke typing. 3.0.0 does not.
+On a phone this firmware reports the keyboard in arbiter mode 0: the keys are drawn in the app's own scene. There is no presentable hosted keyboard scene to steal, and refusing the keyboard layer leaves the keys nowhere.
 
-**Picker search.** The field is SpringBoard's. The stage window becomes key, UIKit raises a normal keyboard, and the card lifts above it (floor 301pt). The window is handed back when the stage closes.
+**Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up. The card lifts above the keyboard (301pt floor).
 
-**Staged app.** The card stays at overlay or Split size. The hosted view is placed on the display behind it, full width from the card's top to the bottom of the screen, and masked to a rounded card plus a square keyboard band. The keys sit on the display at their real size. Touches on the grabber and corner/edge grips still belong to the card; touches on the keys go through to the app.
+**Staged app (4.0).** The card **expands** to full display width and sits on the bottom edge while you type, so the app's keyboard lands where it would full screen. When the keyboard dismisses, the card returns to overlay or split size. The hosted view stays inside the card — no display-level masks or pass-through hacks.
 
 **What is never done.** No layer reparenting, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards).
 

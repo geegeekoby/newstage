@@ -10,6 +10,7 @@
 #import "DSPrivate.h"
 #import "DSIntroViewController.h"
 #import "DSDiagnostics.h"
+#import "DSKeyboardVisibility.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -279,13 +280,23 @@ static BOOL sSystemEdgePullAvailable;
 // again so SpringBoard's search field can raise UIKit's keyboard.
 - (void)preparePickerForSearchKeyboard {
     if (_sceneHost.isHosting) return;
-    _notedKeyboardOnce = NO;
     _notedStrayKeyboard = NO;
+    [self takeKeyWindow];
+
+    // Called when the overlay finishes opening and when the search field asks for focus.
+    // If a keyboard is already on screen, resetting lift here is what left the card on
+    // the keys the first time someone typed after opening the stage.
+    CGRect keys = DSVisibleKeyboardFrameOnScreen();
+    if (!CGRectIsNull(keys)) {
+        [self noteKeyboardFrame:keys source:@"SpringBoard" duration:0.25];
+        return;
+    }
+
+    _notedKeyboardOnce = NO;
     _keyboardFrame = CGRectZero;
     if (CGRectIsEmpty(_typingFrame)) {
         [_container setLiftOffset:0.0];
     }
-    [self takeKeyWindow];
 }
 
 // The card lives at the bottom of the screen, which is exactly where every keyboard on
@@ -415,8 +426,19 @@ static BOOL sSystemEdgePullAvailable;
         keyboard = [self keyboardFrameForPickerSearch:keyboard];
     }
 
-    if (CGRectEqualToRect(keyboard, _keyboardFrame)) return;
-    _keyboardFrame = keyboard;
+    BOOL unchanged = CGRectEqualToRect(keyboard, _keyboardFrame);
+    if (unchanged) {
+        // The frame did not move but something else cleared the lift underneath it -
+        // the overlay open path calling preparePickerForSearchKeyboard after the first
+        // keyboardWillShow is the usual case.
+        if (CGRectIsEmpty(keyboard) || ![self isShowingAppPicker]) return;
+        CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit
+                                                                               : DSStageStateOverlay];
+        CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
+        if (_container.liftOffset >= MAX(overlap, 0.0) - 0.5) return;
+    } else {
+        _keyboardFrame = keyboard;
+    }
     [[DSKeyboardHost sharedHost] setKeyboardFrame:self.isStageVisible ? keyboard : CGRectZero
                                            source:source];
 
@@ -1236,14 +1258,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         [self discardHostSnapshotAnimated:YES];
         [self layoutStageForState:DSStageStateOverlay];
         [self updateHomeAffordance];
-        if (!self.hasHostedApp) {
-            [self preparePickerForSearchKeyboard];
-            __weak __typeof(self) weakSelf = self;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
-                           dispatch_get_main_queue(), ^{
-                [weakSelf preparePickerForSearchKeyboard];
-            });
-        }
+        if (!self.hasHostedApp) [self preparePickerForSearchKeyboard];
     };
 
     if (animated) {

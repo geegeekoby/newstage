@@ -69,6 +69,74 @@ static id DSIvarValue(id object, NSString *name) {
 
 #pragma mark - The keyboard's own scene
 
+// Every scene FrontBoard is holding, by name, written down once. This is the part of the
+// keyboard that cannot be worked out from here: whether a hosted keyboard on this
+// firmware is a scene of its own, and if so what it is called. The names in the log
+// answer that, and the one that looks like a keyboard is used when the arbiter will not
+// hand one over.
+static FBScene *DSKeyboardSceneFromSceneManager(void) {
+    Class managerClass = objc_getClass("FBSceneManager");
+    if (![managerClass respondsToSelector:@selector(sharedInstance)]) return nil;
+    id manager = ((id (*)(id, SEL))objc_msgSend)(managerClass, @selector(sharedInstance));
+
+    NSArray *scenes = nil;
+    for (NSString *name in @[ @"scenes", @"allScenes" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![manager respondsToSelector:selector]) continue;
+        @try {
+            scenes = ((NSArray * (*)(id, SEL))objc_msgSend)(manager, selector);
+        } @catch (NSException *exception) {
+            scenes = nil;
+        }
+        if (scenes.count > 0) break;
+    }
+    if (scenes.count == 0) return nil;
+
+    FBScene *keyboard = nil;
+    NSMutableArray<NSString *> *names = [NSMutableArray array];
+    for (FBScene *scene in scenes) {
+        NSString *identifier = [scene respondsToSelector:@selector(identifier)] ? scene.identifier : nil;
+        if (identifier.length == 0) continue;
+        [names addObject:identifier];
+        if (!keyboard && [identifier rangeOfString:@"keyboard"
+                                           options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            keyboard = scene;
+        }
+    }
+
+    static BOOL noted = NO;
+    if (!noted) {
+        noted = YES;
+        NSString *list = [names componentsJoinedByString:@" "];
+        if (list.length > 500) list = [list substringToIndex:500];
+        DSDiagnosticsRecordFormat(@"SpringBoard: the scenes here are %@", list);
+    }
+    return keyboard;
+}
+
+// A scene's layer reaches a host view as a layer host pointing at a context in the
+// process that drew it. No context anywhere in the view means there is nothing on the
+// other end: the view is in the right place and the right size and will draw nothing,
+// which on screen is a keyboard that never appears - worse than a keyboard in the card.
+static BOOL DSHostViewIsShowingSomething(UIView *view) {
+    if (!view) return NO;
+
+    NSMutableArray<CALayer *> *layers = [NSMutableArray arrayWithObject:view.layer];
+    for (NSUInteger index = 0; index < layers.count && index < 64; index++) {
+        CALayer *layer = layers[index];
+        @try {
+            if ([layer respondsToSelector:@selector(contextId)]) {
+                uint32_t contextId = ((uint32_t (*)(id, SEL))objc_msgSend)(layer, @selector(contextId));
+                if (contextId != 0) return YES;
+            }
+        } @catch (NSException *exception) {
+        }
+        if (layer.contents) return YES;
+        if (layer.sublayers.count > 0) [layers addObjectsFromArray:layer.sublayers];
+    }
+    return NO;
+}
+
 // The arbiter creates one scene for the keyboard and keeps it for the life of the
 // device. Its name is asked for rather than assumed, and the ivar is the fallback,
 // because a scene that cannot be found here means the keyboard cannot be moved and
@@ -91,9 +159,10 @@ static id DSIvarValue(id object, NSString *name) {
         if (scene) break;
     }
     if (!scene) scene = DSIvarValue(arbiter, @"_scene");
+    if (![scene respondsToSelector:@selector(hostManagerForRequester:)]) scene = DSKeyboardSceneFromSceneManager();
 
     if (![scene respondsToSelector:@selector(hostManagerForRequester:)]) {
-        DSDiagnosticsRecord(@"SpringBoard: the keyboard arbiter here has no scene the stage can host");
+        DSDiagnosticsRecord(@"SpringBoard: nothing here owns a keyboard scene the stage could host");
         return nil;
     }
 
@@ -332,6 +401,27 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     }
     window.liveFrame = _keyboardFrame;
     window.hidden = NO;
+    [self checkTheKeyboardActuallyArrived];
+}
+
+// Every step above can succeed and still leave nothing on screen: the scene hands out a
+// host view whether or not it has a layer to put in it, and a keyboard that has been
+// taken out of the card and not drawn anywhere is the one outcome worse than the problem
+// this is here to fix - the card lifts out of the way of a keyboard that is not there,
+// and there is no way to type.
+//
+// So it is checked, once the layer has had a beat to arrive, and if there is nothing on
+// the other end the takeover is abandoned and the card gets its keyboard back.
+- (void)checkTheKeyboardActuallyArrived {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.45 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) host = weakSelf;
+        if (!host || host->_hostingFailed || !host->_armed) return;
+        if (CGRectIsEmpty(host->_keyboardFrame) || !host->_hostView) return;
+        if (DSHostViewIsShowingSomething(host->_hostView)) return;
+        [host giveUpHosting:@"the keyboard's scene had nothing to draw"];
+    });
 }
 
 // A scene's host view is that scene's own rectangle, and the keyboard's scene is laid
@@ -378,6 +468,12 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     if (_hostingFailed) return;
     _hostingFailed = YES;
     [self tearDownHosting];
+    // The card was told it could not draw the keyboard while that answer still stood.
+    // It does not stand any more, so the card is asked to lay out again and the keyboard
+    // comes back for the one that is up rather than for the next one - the difference
+    // between a field that cannot be typed into and one that can.
+    [_stageWindow setNeedsLayout];
+    [_stageWindow layoutIfNeeded];
     DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard is back in the card - %@", reason);
 }
 

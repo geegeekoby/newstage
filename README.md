@@ -30,7 +30,13 @@ script that draws the artwork.
 - Drag the grabber down, drag from the card's bottom-right corner, or flick the card down, to
   send it back to the corner. The app on the stage keeps running.
 - Swipe up from the bottom of the card to drop the app and get the picker back; the app
-  shrinks into its own plate in the grid on the way out.
+  shrinks into its own plate in the grid on the way out. While an app is on the stage the
+  card grows its own home indicator there, and that strip and the bottom-right corner take
+  the touches that land on them rather than passing them to the app - for the same reason
+  the grabber above is a view. A touch a hosted app receives goes to that app's process,
+  and nothing on SpringBoard's side of the fence is ever asked about it, so up to 1.5.2
+  these two were rectangles a gesture recogniser tested against and an app on the stage
+  could not be left at all.
 - Hold a plate in the picker instead of tapping it and that app opens across the whole
   screen rather than on the stage.
 - Rotate the stage a quarter turn at a time, for apps that only make sense in landscape.
@@ -280,6 +286,17 @@ keyboard's scene here while the card was still drawing it would be two claims on
 the refusal and the hosting are switched on together. If hosting fails - no keyboard scene on this
 build, no host view to be had - the takeover is abandoned rather than retried, the card starts
 drawing its own keyboard again, and the reason is written down.
+
+Failing outright is not the only way to end up with no keyboard, though, and 1.5.1 found the other
+one: every step can succeed and still leave nothing on screen, because a scene hands out a host
+view whether or not it has a layer to put in it. On the phone that looked like the card lifting
+out of the way of a keyboard that was not there, with no way to type. So the host view is checked
+a beat after it goes up - a hosted layer with no context on the other end is drawing nothing - and
+if there is nothing there the takeover is abandoned and the card is laid out again, which brings
+the keyboard back for the keyboard that is up rather than for the next one. Which of the scenes
+FrontBoard is holding could be the keyboard's is also no longer a guess: the arbiter is asked
+first, and if it will not say, the scenes are searched by name and all of their names are written
+down.
 
 **Only the staged app's keyboard is moved.** The arbiter is told about every keyboard on the
 device, and the stage's own search field is one of them: that keyboard is SpringBoard's, drawn in

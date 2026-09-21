@@ -1549,6 +1549,10 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 #pragma mark - Home affordance
 
 - (void)updateHomeAffordance {
+    // The card's own home indicator and the corner grip only exist while there is an
+    // app to leave and a card the app is in the way of.
+    _container.hostingApp = self.hasHostedApp;
+
     // Toggling the system home grabber is handled by the SpringBoard hook; this
     // just pokes it to re-evaluate.
     Class grabberClass = objc_getClass("SBHomeGrabberView");

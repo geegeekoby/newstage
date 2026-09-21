@@ -14,6 +14,13 @@
 // Hidden while a live app is hosted, since the app paints its own background.
 - (void)setBackdropHidden:(BOOL)hidden;
 
+// An app is on the stage rather than the app grid. The card grows its own home
+// indicator, and the two strips below take the touches that land on them instead of
+// letting them through to the app: a touch the app receives is one no gesture on this
+// side of the fence ever hears about, which is what left an app on the stage with no
+// way out of it.
+@property (nonatomic, assign) BOOL hostingApp;
+
 // Top strip that drags the whole card, and the bottom strip that stands in for
 // the home bar the tweak hides while an app is on the stage.
 - (CGRect)dragAffordanceRect;

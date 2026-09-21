@@ -8,12 +8,19 @@ static const CGFloat kDSGrabberWidth = 124.0;
 static const CGFloat kDSGrabberPillWidth = 40.0;
 static const CGFloat kDSGrabberPillHeight = 5.0;
 
+// The card's own home indicator, which is the phone's in miniature: swiping it up
+// leaves the app the way swiping the real one up leaves an app.
+static const CGFloat kDSHomePillWidth = 96.0;
+
 @implementation DSStageContainerView {
     UIView *_shadowView;
     UIVisualEffectView *_backdrop;
     UIView *_contentView;
     UIView *_grabber;
     UIView *_grabberPill;
+    UIView *_homeAffordance;
+    UIView *_homePill;
+    UIView *_cornerGrip;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -53,6 +60,35 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _grabberPill.userInteractionEnabled = NO;
         [_grabber addSubview:_grabberPill];
 
+        // The two affordances at the bottom of the card, for the same reason the
+        // grabber above is a view: a touch that lands on a hosted app is delivered to
+        // that app's own process, and a gesture recogniser on this side never sees it.
+        // While the card holds the app grid these were rectangles the recogniser tested
+        // the start of a drag against, which worked - the grid is SpringBoard's own
+        // view. The moment the card held an app instead, swiping up to leave it and
+        // dragging it back into the corner both stopped happening at all, because the
+        // app had the touch before anything here was asked about it.
+        //
+        // So they take the touch themselves, and only while an app is on the stage:
+        // there is no reason to hold back a strip of the app grid the grid could be
+        // using.
+        _homeAffordance = [[UIView alloc] initWithFrame:CGRectZero];
+        _homeAffordance.backgroundColor = UIColor.clearColor;
+        _homeAffordance.userInteractionEnabled = NO;
+        [self addSubview:_homeAffordance];
+
+        _homePill = [[UIView alloc] initWithFrame:CGRectZero];
+        _homePill.layer.cornerRadius = kDSGrabberPillHeight / 2.0;
+        _homePill.layer.cornerCurve = kCACornerCurveContinuous;
+        _homePill.userInteractionEnabled = NO;
+        _homePill.hidden = YES;
+        [_homeAffordance addSubview:_homePill];
+
+        _cornerGrip = [[UIView alloc] initWithFrame:CGRectZero];
+        _cornerGrip.backgroundColor = UIColor.clearColor;
+        _cornerGrip.userInteractionEnabled = NO;
+        [self addSubview:_cornerGrip];
+
         self.clipsToBounds = YES;
         self.layer.cornerCurve = kCACornerCurveContinuous;
         self.layer.cornerRadius = _cornerRadius;
@@ -85,6 +121,22 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                                     (kDSDragAffordanceHeight - kDSGrabberPillHeight) / 2.0 + 2.0,
                                     kDSGrabberPillWidth,
                                     kDSGrabberPillHeight);
+
+    _homeAffordance.frame = [self homeAffordanceRect];
+    _homePill.frame = CGRectMake((CGRectGetWidth(_homeAffordance.bounds) - kDSHomePillWidth) / 2.0,
+                                 kDSHomeAffordanceHeight - kDSGrabberPillHeight - 7.0,
+                                 kDSHomePillWidth,
+                                 kDSGrabberPillHeight);
+    // Narrower than the zone the pan recogniser will accept a drag from, because while
+    // an app is on the stage this is a piece of that app being held back: a thumb's
+    // worth is enough to take hold of the corner, and the rest stays the app's.
+    CGRect grip = [self cornerGripRect];
+    CGFloat gripWidth = MIN(72.0, CGRectGetWidth(grip));
+    _cornerGrip.frame = CGRectMake(CGRectGetMaxX(grip) - gripWidth,
+                                   CGRectGetMinY(grip),
+                                   gripWidth,
+                                   CGRectGetHeight(grip));
+
     [self updateShadow];
 }
 
@@ -133,6 +185,13 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     _backdrop.effect = [UIBlurEffect effectWithStyle:style];
     _grabberPill.backgroundColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.34]
                                             : [UIColor colorWithWhite:0.0 alpha:0.26];
+    // Over an app rather than over the card's own backdrop, so it has to read against
+    // whatever the app happens to be showing there.
+    _homePill.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.5];
+    _homePill.layer.shadowColor = UIColor.blackColor.CGColor;
+    _homePill.layer.shadowOpacity = 0.35;
+    _homePill.layer.shadowRadius = 2.0;
+    _homePill.layer.shadowOffset = CGSizeZero;
     if (@available(iOS 13.0, *)) {
         self.overrideUserInterfaceStyle = darkMode ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
     }
@@ -165,6 +224,13 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     self.transform = lift;
     _shadowView.transform = lift;
     _liftOffset = offset;
+}
+
+- (void)setHostingApp:(BOOL)hostingApp {
+    _hostingApp = hostingApp;
+    _homeAffordance.userInteractionEnabled = hostingApp;
+    _cornerGrip.userInteractionEnabled = hostingApp;
+    _homePill.hidden = !hostingApp;
 }
 
 - (CGRect)homeAffordanceRect {

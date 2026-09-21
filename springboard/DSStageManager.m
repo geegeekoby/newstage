@@ -405,15 +405,17 @@ static BOOL sSystemEdgePullAvailable;
     CGRect screen = [self screenBounds];
     CGRect wanted = CGRectZero;
     if (_typingKeys > 0.0) {
-        // The card sits above the keys. The app's window still reaches the bottom of
-        // the display - that is where the app draws the keyboard - and the card is
-        // only the part of that window that is not the keyboard. Covering the keys
-        // with the card is what looked like the stage not lifting.
-        CGFloat top = MAX(CGRectGetHeight(screen) - _typingKeys - kDSStageTypingHeadroom,
-                          [self splitLine] * 0.5);
-        CGFloat height = CGRectGetHeight(screen) - _typingKeys - top;
-        height = MAX(height, 180.0);
-        wanted = CGRectMake(0, top, CGRectGetWidth(screen), height);
+        DSStageState state = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+        CGRect resting = [self restingStageFrameForState:state];
+        CGFloat keyboardTop = CGRectGetHeight(screen) - _typingKeys;
+        CGFloat lift = CGRectGetMaxY(resting) - keyboardTop;
+        if (lift < 0.0) lift = 0.0;
+        wanted = CGRectOffset(resting, 0.0, -lift);
+        CGFloat minY = kDSStageKeyboardHeadroom;
+        if (CGRectGetMinY(wanted) < minY) {
+            wanted.origin.y = minY;
+            wanted.size.height = MAX(keyboardTop - minY, 180.0);
+        }
     }
     if (CGRectEqualToRect(wanted, _typingFrame)) return;
 
@@ -508,18 +510,19 @@ static BOOL sSystemEdgePullAvailable;
 // app it is a card inset on three sides; sharing the screen it goes edge to edge
 // and only the gap above it survives.
 - (CGRect)stageFrameForState:(DSStageState)state {
+    if (!CGRectIsEmpty(_typingFrame) && state != DSStageStateClosed && state != DSStageStateMinimized) {
+        return _typingFrame;
+    }
+    return [self restingStageFrameForState:state];
+}
+
+// The card's usual size, ignoring any keyboard. Overlay is the inset half-screen
+// card; split is edge to edge below the split line.
+- (CGRect)restingStageFrameForState:(DSStageState)state {
     CGRect bounds = [self screenBounds];
     CGFloat screenHeight = CGRectGetHeight(bounds);
     CGFloat screenWidth = CGRectGetWidth(bounds);
     CGFloat top = [self splitLine] + kDSStageInset;
-
-    // A staged app typing: the card sits above the keys. The app's window is laid out
-    // taller, reaching the bottom of the display, so the keyboard the app draws at the
-    // bottom of that window lands on the bottom edge at full size. The card itself
-    // stops where the keys start, which is what "lifted above the keyboard" looks like.
-    if (!CGRectIsEmpty(_typingFrame) && state != DSStageStateClosed && state != DSStageStateMinimized) {
-        return _typingFrame;
-    }
 
     switch (state) {
         case DSStageStateSplit:
@@ -529,7 +532,6 @@ static BOOL sSystemEdgePullAvailable;
                               screenWidth - kDSStageInset * 2.0,
                               screenHeight - top - kDSStageInset);
         default:
-            // Parked just below the bottom edge, at the size it will come up as.
             return CGRectMake(kDSStageInset, screenHeight,
                               screenWidth - kDSStageInset * 2.0,
                               screenHeight - top - kDSStageInset);
@@ -1565,41 +1567,33 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     _stageQuarterTurns = 0;
 
     UIView *hostView = host.hostView;
-    // The card has to be the picker's size before the picker is shown, or the grid
-    // lays out in the typing rectangle and the first frame is a black slab.
     [self forgetStagedAppKeyboard];
     [_container setClipsContents:YES];
     [_container setBackdropHidden:NO];
     _container.hostingApp = NO;
 
-    _picker.view.hidden = NO;
-    _picker.view.alpha = 0.0;
+    // The picker is on screen before the hosted view starts to leave. A black frame
+    // was the picker still hidden while the app view had already gone, or the
+    // window itself having been closed by a put-away that was meant to be this.
+    [self showPickerImmediately];
     [_container.contentView bringSubviewToFront:_picker.view];
-    [_picker reloadContent];
     [_picker.view layoutIfNeeded];
 
-    // The app shrinks back into its own plate in the grid, the way iOS zooms an
-    // app into its icon on the way home. Without a visible plate it just shrinks
-    // where it is.
-    CGRect plate = [_picker plateFrameForBundleIdentifier:host.bundleIdentifier inView:_container.contentView];
-    CGAffineTransform baseTransform = hostView.transform;
-    CGRect hostFrame = hostView.frame;
-    CGPoint hostCenter = CGPointMake(CGRectGetMidX(hostFrame), CGRectGetMidY(hostFrame));
-    CGFloat zoom = CGRectIsNull(plate) ? 0.86 : CGRectGetWidth(plate) / MAX(CGRectGetWidth(hostFrame), 1.0);
-    CGPoint destination = CGRectIsNull(plate)
-        ? hostCenter
-        : CGPointMake(CGRectGetMidX(plate), CGRectGetMidY(plate));
+    if (!hostView.superview) {
+        [self publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
+        [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
+        [self scheduleAutoKillForHost:host];
+        [self updateHomeAffordance];
+        return;
+    }
 
+    [_container.contentView bringSubviewToFront:hostView];
     hostView.layer.cornerCurve = kCACornerCurveContinuous;
     hostView.layer.masksToBounds = YES;
 
     void (^layout)(void) = ^{
-        hostView.transform = CGAffineTransformConcat(baseTransform, CGAffineTransformMakeScale(zoom, zoom));
-        hostView.center = destination;
+        hostView.transform = CGAffineTransformMakeScale(0.92, 0.92);
         hostView.alpha = 0.0;
-        // The layer's own radius is scaled down with it, so it is pre-divided to
-        // land on the plate's radius.
-        hostView.layer.cornerRadius = kDSCellRadius / MAX(zoom, 0.01);
         self->_picker.view.alpha = 1.0;
     };
     void (^finish)(void) = ^{
@@ -1616,11 +1610,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     };
 
     if (animated) {
-        [UIView animateWithDuration:0.32
-                              delay:0.0
-             usingSpringWithDamping:0.9
-              initialSpringVelocity:0.0
-                            options:0
+        [UIView animateWithDuration:0.22
                          animations:layout
                          completion:^(BOOL finished) { finish(); }];
     } else {
@@ -1853,14 +1843,13 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             if (fromCorner) {
                 if (cornerIntent == DSCornerIntentUndecided &&
                     hypot(translation.x, translation.y) > kDSCornerIntentTravel) {
-                    // Down puts the card away. Anything else - left, up, or both - leaves
-                    // the app. An upward swipe from the corner used to close the stage
-                    // instead, which hid the window and left a black screen; the second
-                    // pull then opened the picker. Going back to the picker is the
-                    // gesture people actually make from that corner.
-                    BOOL downward = translation.y > 12.0 && translation.y >= fabs(translation.x);
-                    cornerIntent = (self.hasHostedApp && !downward) ? DSCornerIntentLeaveApp
-                                                                   : DSCornerIntentPutAway;
+                    // While an app is on the stage the corner only leaves the app. Putting
+                    // the card away from that grip closed the window and left a black
+                    // screen - the log caught a downward drag of 71 points from the
+                    // corner being read as put-away, then the stage having to be opened
+                    // again. The grabber at the top is still how the card is put away.
+                    cornerIntent = self.hasHostedApp ? DSCornerIntentLeaveApp
+                                                     : DSCornerIntentPutAway;
                 }
 
                 if (cornerIntent == DSCornerIntentLeaveApp) {
@@ -1888,7 +1877,8 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             }
 
             if (fromCorner && cornerIntent == DSCornerIntentLeaveApp) {
-                if (DSInwardTravel(translation) > 36.0 || DSInwardTravel(velocity) > 450.0) {
+                if (DSInwardTravel(translation) > 24.0 || hypot(translation.x, translation.y) > 40.0 ||
+                    DSInwardTravel(velocity) > 400.0) {
                     [self exitToPickerAnimated:YES];
                 } else {
                     [UIView animateWithDuration:0.25 animations:^{

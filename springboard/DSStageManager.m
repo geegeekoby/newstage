@@ -356,6 +356,20 @@ static BOOL sSystemEdgePullAvailable;
     return keyboard;
 }
 
+// SpringBoard's search keyboard often arrives as a short frame first (243pt) before the
+// suggestion bar settles (301pt). Lifting for the first report leaves the card on the keys.
+- (CGRect)keyboardFrameForPickerSearch:(CGRect)keyboard {
+    if (CGRectIsEmpty(keyboard)) return keyboard;
+    CGRect screen = [self screenBounds];
+    CGFloat keys = CGRectGetHeight(keyboard);
+    if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6) {
+        keys = 301.0;
+    } else {
+        keys = MAX(keys, 301.0);
+    }
+    return CGRectMake(0.0, CGRectGetMaxY(screen) - keys, CGRectGetWidth(screen), keys);
+}
+
 // One place for both, and the card's only answer to a keyboard: move up out of its way.
 - (void)noteKeyboardFrame:(CGRect)keyboard source:(NSString *)source duration:(NSTimeInterval)duration {
     CGRect screen = [self screenBounds];
@@ -373,6 +387,10 @@ static BOOL sSystemEdgePullAvailable;
                                       _sceneHost.bundleIdentifier);
         }
         return;
+    }
+
+    if ([self isShowingAppPicker] && !CGRectIsEmpty(keyboard)) {
+        keyboard = [self keyboardFrameForPickerSearch:keyboard];
     }
 
     if (CGRectEqualToRect(keyboard, _keyboardFrame)) return;

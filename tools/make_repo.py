@@ -188,7 +188,7 @@ def packages_stanza(fields: dict, deb_name: str, digests: dict, base_url: str | 
     return "\n".join(lines) + "\n"
 
 
-def write_release(stanza: str):
+def write_release(stanza: str, gzipped: bytes):
     """Release for the static, fixed-URL form of the repo.
 
     A package manager that finds no hash for the index it just downloaded may
@@ -197,9 +197,10 @@ def write_release(stanza: str):
     Packages bytes written alongside it. The dynamic form has no file here at all:
     api/repo.js composes Release and the index together per request, because the
     index names its own host and only the deployment knows what that is.
+
+    ``gzipped`` must be the exact bytes written to Packages.gz.
     """
     index_bytes = stanza.encode()
-    gzipped = gzip.compress(index_bytes, mtime=0)
 
     def entries(algorithm):
         return "\n".join(
@@ -280,11 +281,13 @@ def main():
 
     if args.url:
         stanza = packages_stanza(fields, deb_name, digests, args.url)
+        index_bytes = stanza.encode()
+        gzipped = gzip.compress(index_bytes)
         with open(os.path.join(PUBLIC, "Packages"), "w") as handle:
             handle.write(stanza)
-        with gzip.open(os.path.join(PUBLIC, "Packages.gz"), "wb", mtime=0) as handle:
-            handle.write(stanza.encode())
-        write_release(stanza)
+        with open(os.path.join(PUBLIC, "Packages.gz"), "wb") as handle:
+            handle.write(gzipped)
+        write_release(stanza, gzipped)
         print("wrote static Packages for", args.url)
     else:
         # Left to api/repo.js. A file here would win over the rewrite that routes

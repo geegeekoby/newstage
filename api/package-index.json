@@ -1,11 +1,11 @@
 {
-  "stanza": "Package: com.recreated.dynamicstage\nName: Dynamic Stage\nVersion: 2.0.0\nArchitecture: iphoneos-arm64\nDescription: Stage Manager Reimagined for iPhone\nDepends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader\nConflicts: me.tomt000.stageduo\nSection: Tweaks\nTag: compatible::ios16\nAuthor: Dynamic Stage Recreation\nMaintainer: Dynamic Stage Recreation\nInstalled-Size: 1016\nFilename: debs/com.recreated.dynamicstage_2.0.0_iphoneos-arm64.deb\nSize: 185208\nMD5sum: e9c5ab44bb93c6a2e99fd44718d9caa2\nSHA1: cd21265bb5e0f363d5965c0278f978e472029d36\nSHA256: 6b1e9940a190f359bbac34940879dd5ec37813be00042bf4126c0be899f56355\n",
+  "stanza": "Package: com.recreated.dynamicstage\nName: Dynamic Stage\nVersion: 3.0.0\nArchitecture: iphoneos-arm64\nDescription: Stage Manager Reimagined for iPhone\nDepends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader\nConflicts: me.tomt000.stageduo\nSection: Tweaks\nTag: compatible::ios16\nAuthor: Dynamic Stage Recreation\nMaintainer: Dynamic Stage Recreation\nInstalled-Size: 920\nFilename: debs/com.recreated.dynamicstage_3.0.0_iphoneos-arm64.deb\nSize: 168604\nMD5sum: 7418b8c553d0395121344def8f512aac\nSHA1: 9d5ce3bc703ec3a33564f3e7d8ab69a18c032df9\nSHA256: e8cf6f92040aa95a8c6aba000ec14e1f272de57d97cb6c2c93811b85dc3cb02d\n",
   "package": "com.recreated.dynamicstage",
   "name": "Dynamic Stage",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Stage Manager Reimagined for iPhone",
   "author": "Dynamic Stage Recreation",
-  "size": 185208,
-  "deb": "com.recreated.dynamicstage_2.0.0_iphoneos-arm64.deb",
-  "changelog": "**2.0.0**\n- Boot-safe load after a device reboot and re-jailbreak: SpringBoard hooks wait until the home screen exists\n- App dylib no longer injects into SpringBoard, KeyboardArbiter, Settings or daemons\n- Launch guard only counts a real full install crash, then leaves the phone bootable\n- Picker search keyboard lift and retry fixes from 1.6.10 / 1.6.11\n- Same overlay, Split View, picker and swipe-to-picker behaviour"
+  "size": 168604,
+  "deb": "com.recreated.dynamicstage_3.0.0_iphoneos-arm64.deb",
+  "changelog": "**3.0.0**\n- Fresh rebuild of the SpringBoard engine for iOS 16.5.1 / NathanLR: hooks wait until the home screen exists\n- Keyboard done the way this firmware actually works: never steal layers, never refuse the keyboard, never open KeyboardArbiter\n- Picker search uses SpringBoard's own keyboard and lifts the card; a staged app keeps the card still and shows keys on the display below it\n- Stage window is only key while the picker is up, so typing in Messenger (and search after an app) both work\n- App dylib no longer lies about hosted keyboards; keyboard windows still see the real display size\n- Same overlay, Split View, picker, grabber and inward-swipe-to-picker behaviour"
 }

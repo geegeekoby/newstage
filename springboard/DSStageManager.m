@@ -885,6 +885,7 @@ static BOOL sSystemEdgePullAvailable;
 // bottom edge has begun in the stage's corner. The switcher is never told about
 // that drag, so exactly one thing happens per pull.
 - (BOOL)adoptSystemEdgePull:(UIPanGestureRecognizer *)gesture {
+    if (!_activated) return NO;
     if (!gesture || _systemPull) return NO;
     if (CFAbsoluteTimeGetCurrent() < _ignoreSystemPullUntil) return NO;
     if (_state != DSStageStateClosed && _state != DSStageStateMinimized) return NO;
@@ -2221,16 +2222,17 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 - (void)showIntroIfNeeded {
     DSPreferences *preferences = [DSPreferences sharedPreferences];
     if (preferences.introShown) return;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    if (!_activated) return;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         Class lockScreenClass = objc_getClass("SBLockScreenManager");
         id manager = lockScreenClass ? [lockScreenClass sharedInstance] : nil;
         if ([manager respondsToSelector:@selector(isUILocked)] && [manager isUILocked]) {
-            // Try again after the device is unlocked.
-            [self showIntroIfNeeded];
             return;
         }
-        DSDiagnosticsRecord(@"SpringBoard: showing the walkthrough");
-        [DSIntroViewController presentIntro];
+        if (!self.isStageVisible) {
+            DSDiagnosticsRecord(@"SpringBoard: showing the walkthrough");
+            [DSIntroViewController presentIntro];
+        }
     });
 }
 

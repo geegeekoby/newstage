@@ -1256,6 +1256,10 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     if (identifier.length == 0) return;
 
     [DSSceneOverridesLock() lock];
+    if (DSSceneOverrides().count == 0) {
+        [DSSceneOverridesLock() unlock];
+        return;
+    }
     [DSLiveScenes() setObject:scene forKey:identifier];
     [DSSceneOverridesLock() unlock];
 }

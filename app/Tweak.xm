@@ -3,6 +3,7 @@
 #import "DSPreferences.h"
 #import "DSConstants.h"
 #import "DSExclusions.h"
+#import "DSBootstrap.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -320,7 +321,6 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 
 #pragma mark - Entry point
 
-// Called once, the first time this process is put on the stage.
 static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
@@ -339,27 +339,19 @@ static void DSStartObserving(void) {
 %ctor {
     @autoreleasepool {
         @try {
-            if ([[NSFileManager defaultManager] fileExistsAtPath:kDSKillSwitchPath]) return;
-
-            NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
-            if (DSIdentifierIsExcludedFromStage(identifier)) return;
+            if (DSKillSwitchPresent()) return;
+            if (!DSBundleLooksLikeUserApplication()) return;
             if (![DSPreferences sharedPreferences].enabled) return;
 
             if ([DSStageContext processIsStagedNow]) {
-                // Launched onto the stage: the hooks have to be in place before
-                // this app lays anything out, so its first frame is the right
-                // size rather than a full screen one that snaps.
                 DSStartObserving();
                 DSInstallHooks();
                 return;
             }
 
-            // Every other app - which is nearly all of them, nearly all of the
-            // time - gets left alone until the run loop is going. A constructor
-            // runs while the app is still assembling itself, and none of this is
-            // needed that early.
             dispatch_async(dispatch_get_main_queue(), ^{
                 @try {
+                    if (!DSBundleLooksLikeUserApplication()) return;
                     DSStartObserving();
                 } @catch (NSException *exception) {
                 }

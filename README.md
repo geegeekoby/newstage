@@ -79,6 +79,12 @@ script that draws the artwork.
 - A first-launch walkthrough covers all six gestures with animated demonstrations.
 - A safe-mode flag (`/var/mobile/.dynamicstage-disabled`) keeps every hook out of SpringBoard
   on the next respring without uninstalling anything.
+- After a device reboot you jailbreak again: SpringBoard is coming up from nothing, not
+  respringing. This tweak installs **one** hook at load (`applicationDidFinishLaunching`)
+  and waits until the home screen exists before any scene, gesture or keyboard hooks.
+  The app dylib never installs into SpringBoard, KeyboardArbiter, Settings or daemons.
+  If a full install still crashes SpringBoard, the next start leaves the stage off so
+  the phone boots; reinstalling the package clears that guard.
 
 ## Layout
 

@@ -7,6 +7,7 @@ set -e
 for stale in launchguard paneguard; do
 	rm -f "/var/mobile/Library/Preferences/com.recreated.dynamicstage.$stale"
 	rm -f "/var/jb/var/mobile/Library/Preferences/com.recreated.dynamicstage.$stale"
+	rm -f "/var/tmp/com.recreated.dynamicstage.$stale"
 done
 
 # The settings page was a preference bundle up to 1.4.8, and loading it crashed

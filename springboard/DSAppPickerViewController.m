@@ -72,8 +72,15 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     _emptyLabel.hidden = YES;
     [_scrollView addSubview:_emptyLabel];
 
-    [self installCrashNotice];
-    [self installLogNotice];
+        [self installLogNotice];
+        // CrashReporter is walked on a delay: listing every .ips at SpringBoard
+        // launch after a jailbreak is how a picker that is not even on screen
+        // takes the device down.
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(25.0 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [self installCrashNotice];
+            [self.view setNeedsLayout];
+        });
     [self reloadContent];
 }
 

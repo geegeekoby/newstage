@@ -67,7 +67,12 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 // mean the tweak is implicated in a boot loop, and it stays out of the next one
 // rather than leaving the device only usable in safe mode.
 #define kDSLaunchGuardPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.launchguard"
-#define kDSMaxUncleanLaunches 2
+#define kDSLaunchGuardTmpPath @"/var/tmp/com.recreated.dynamicstage.launchguard"
+// One failed full install disables the tweak on the next SpringBoard start.
+// The count is only incremented when Stage hooks are about to be installed,
+// never in %ctor, so a jailbreak that restarts SpringBoard twice while the
+// UI is still coming up does not trip it.
+#define kDSMaxUncleanLaunches 1
 
 // Dropping this file disables every hook on the next respring. Documented in
 // the README as the escape hatch if the tweak ever misbehaves on a new build.

@@ -26,7 +26,6 @@
     if ((self = [super init])) {
         _entriesByIdentifier = [NSMutableDictionary dictionary];
         _iconCache = [NSMutableDictionary dictionary];
-        [self reload];
     }
     return self;
 }

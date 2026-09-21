@@ -350,7 +350,10 @@ static BOOL sSystemEdgePullAvailable;
         return NO;
     }
 
-    if (CGRectIsEmpty(keyboard)) return NO;
+    if (CGRectIsEmpty(keyboard)) {
+        return staged.length > 0 && [source isEqualToString:staged];
+    }
+    if (source.length == 0) return YES;
     return NO;
 }
 
@@ -387,6 +390,24 @@ static BOOL sSystemEdgePullAvailable;
     return CGRectMake(0.0, CGRectGetMaxY(screen) - keys, CGRectGetWidth(screen), keys);
 }
 
+// The arbiter reports the staged app's keyboard in stages; the on-screen UIKeyboard view
+// is sometimes ahead of it. Prefer whichever frame needs more lift so the card clears
+// the keys before the user types into the bottom of the app.
+- (CGRect)keyboardFrameForHostedApp:(CGRect)reported {
+    CGRect merged = reported;
+    CGRect visible = DSVisibleKeyboardFrameOnScreen();
+    if (CGRectIsNull(visible) || CGRectIsEmpty(visible)) return merged;
+
+    visible = [self keyboardFrameOnDisplay:visible];
+    if (CGRectGetHeight(visible) < kDSKeyboardPresentHeight) return merged;
+    visible = [self keyboardFrameForLift:visible];
+
+    if (CGRectIsEmpty(merged)) return visible;
+    if (CGRectGetMinY(visible) < CGRectGetMinY(merged) - 0.5) return visible;
+    if (CGRectGetHeight(visible) > CGRectGetHeight(merged) + 0.5) return visible;
+    return merged;
+}
+
 // One place for both, and the card's only answer to a keyboard: move up out of its way.
 - (void)noteKeyboardFrame:(CGRect)keyboard source:(NSString *)source duration:(NSTimeInterval)duration {
     CGRect screen = [self screenBounds];
@@ -394,6 +415,10 @@ static BOOL sSystemEdgePullAvailable;
     if (CGRectGetHeight(keyboard) < kDSKeyboardPresentHeight ||
         CGRectGetMinY(keyboard) >= CGRectGetMaxY(screen)) {
         keyboard = CGRectZero;
+    }
+
+    if (_sceneHost.isHosting && !CGRectIsEmpty(keyboard)) {
+        keyboard = [self keyboardFrameForHostedApp:keyboard];
     }
 
     if (![self keyboardSourceAffectsLayout:source keyboard:keyboard]) {
@@ -456,14 +481,24 @@ static BOOL sSystemEdgePullAvailable;
     CGFloat headroom = MAX(CGRectGetMinY(resting) - kDSStageKeyboardHeadroom, 0.0);
     offset = MIN(MAX(offset, 0.0), headroom);
 
-    if (fabs(offset - _container.liftOffset) < 0.5) return;
+    BOOL hosting = _sceneHost.isHosting;
+    if (fabs(offset - _container.liftOffset) < 0.5) {
+        if (hosting) {
+            [self pushLiftedGeometryToApp];
+            [self layoutStageForState:layoutState];
+        }
+        return;
+    }
 
     void (^lift)(void) = ^{
         [self->_container setLiftOffset:offset];
-        // The app is told where its window has moved to, so anything UIKit places
-        // against the display - an input accessory view above the keyboard, most of
-        // all - is placed against the card where it is now.
-        if (self->_sceneHost.isHosting) [self pushLiftedGeometryToApp];
+        if (!self->_sceneHost.isHosting) return;
+        [self pushLiftedGeometryToApp];
+        [self layoutStageForState:layoutState];
+        if (offset > 0.5) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: card lifted %.0f pt for %@ (keyboard, staged app)",
+                                      offset, self->_sceneHost.bundleIdentifier);
+        }
     };
     if (duration > 0.0) {
         [UIView animateWithDuration:duration animations:lift];
@@ -570,7 +605,17 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (UIEdgeInsets)stageSafeAreaInsets {
-    return UIEdgeInsetsZero;
+    if (!_sceneHost.isHosting || CGRectIsEmpty(_keyboardFrame)) return UIEdgeInsetsZero;
+
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    CGRect card = CGRectOffset([self restingStageFrameForState:layoutState], 0.0, -_container.liftOffset);
+    CGFloat keyboardTop = CGRectGetMinY(_keyboardFrame);
+    CGFloat overlap = CGRectGetMaxY(card) - keyboardTop;
+    if (overlap <= 1.0) return UIEdgeInsetsZero;
+
+    UIEdgeInsets insets = UIEdgeInsetsZero;
+    insets.bottom = overlap + [self screenSafeAreaInsets].bottom;
+    return insets;
 }
 
 - (UIEdgeInsets)screenSafeAreaInsets {

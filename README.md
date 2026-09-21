@@ -11,8 +11,9 @@ geometry and animation timings were derived from the tweak's own walkthrough rec
 screenshots, and everything here is written from scratch in Objective-C, Logos and a Python
 script that draws the artwork.
 
-**4.0.1** fixes the keyboard: the card **keeps its overlay/split size** and **lifts**
-above the keys for both picker search and staged apps (4.0 wrongly expanded the card).
+**4.0.2** tightens **staged-app** keyboard lift (arbiter + on-screen keyboard merge,
+geometry sync, safe-area inset while keys overlap the card). **4.0.1** fixed the card
+**keeping overlay/split size** and **lifting** instead of expanding (4.0 was wrong).
 **4.0.0** was the ground-up engine pass: one launch hook, home-screen wait,
 `SBAppViewController`-only hosting. Overlay, Split View, the picker and corner gestures
 match the original layout.

@@ -1,3 +1,8 @@
+**4.0.2**
+- Staged app keyboard: merge arbiter frame with on-screen UIKeyboard; sync lift + scene geometry every time
+- Bottom safe-area inset while the keyboard still overlaps the lifted card (Messenger-style layouts)
+- Log when the card lifts for a hosted app keyboard
+
 **4.0.1**
 - Keyboard: card keeps overlay/split size and lifts above keys (picker and staged apps)
 - Removed 4.0 card expansion that resized the stage and caused black gaps

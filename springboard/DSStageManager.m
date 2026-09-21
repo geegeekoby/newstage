@@ -111,6 +111,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     // Where the card sits while the app on it is being typed into. Empty the rest of the
     // time, and the rest of the time the card's frame comes from its state as usual.
     CGRect _typingFrame;
+    CGFloat _typingKeys;
+    NSTimeInterval _typingResizeDuration;
+    BOOL _typingResizeQueued;
     // The keyboard as the arbiter last described it, in display points, or zero when
     // there is none on screen. Whose keyboard it is does not matter: it is on the
     // display, the card is on the display, and the card gives way.
@@ -352,6 +355,12 @@ static BOOL sSystemEdgePullAvailable;
                                   source, _sceneHost.bundleIdentifier);
     }
 
+    // While the card is the shape of the staged app's keyboard, a keyboard belonging to
+    // anything else is none of the card's business. Spotlight reports one from behind the
+    // stage, and lifting the card for it would take the app's own keys back off the bottom
+    // of the display - which is the keyboard appearing and then leaving again.
+    if (!CGRectIsEmpty(_typingFrame)) return;
+
     CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     CGFloat overlap = CGRectIsEmpty(keyboard) ? 0.0
                                              : CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
@@ -362,20 +371,49 @@ static BOOL sSystemEdgePullAvailable;
 // on the display's bottom edge, and tall enough that the app keeps a usable amount of
 // itself above the keys. Put back the moment the keyboard goes.
 - (void)makeRoomForTheStagedAppsKeyboard:(CGRect)keyboard duration:(NSTimeInterval)duration {
+    CGFloat keys = 0.0;
+    if (!CGRectIsEmpty(keyboard)) {
+        CGRect screen = [self screenBounds];
+        keys = CGRectGetHeight(keyboard);
+        if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6) keys = 301.0;
+        // The picker's own keyboard is 301 points tall, and that is the size that
+        // already lands correctly. An app reports its keyboard in stages - 243, then
+        // 288 with a suggestion bar - and following each of those is the card
+        // visibly jumping. Never smaller than the picker, never smaller than a
+        // keyboard already on screen.
+        keys = MAX(keys, 301.0);
+        keys = MAX(keys, _typingKeys);
+    }
+    if (fabs(keys - _typingKeys) < 0.5) return;
+    _typingKeys = keys;
+
+    // And the reports come in a burst, so they are let finish before anything moves.
+    _typingResizeDuration = duration;
+    if (_typingResizeQueued) return;
+    _typingResizeQueued = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.12 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf applyTypingLayout];
+    });
+}
+
+- (void)applyTypingLayout {
+    _typingResizeQueued = NO;
+    if (!self.isStageVisible) return;
+
     CGRect screen = [self screenBounds];
     CGRect wanted = CGRectZero;
-
-    if (!CGRectIsEmpty(keyboard)) {
-        CGFloat keys = CGRectGetHeight(keyboard);
-        if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6) keys = 330.0;
-        CGFloat top = CGRectGetHeight(screen) - keys - kDSStageTypingHeadroom;
-        top = MAX(top, [self splitLine] * 0.5);
+    if (_typingKeys > 0.0) {
+        CGFloat top = MAX(CGRectGetHeight(screen) - _typingKeys - kDSStageTypingHeadroom,
+                          [self splitLine] * 0.5);
         wanted = CGRectMake(0, top, CGRectGetWidth(screen), CGRectGetHeight(screen) - top);
     }
     if (CGRectEqualToRect(wanted, _typingFrame)) return;
 
+    BOOL wasTyping = !CGRectIsEmpty(_typingFrame);
     _typingFrame = wanted;
-    if (!CGRectIsEmpty(wanted)) {
+    if (!wasTyping && !CGRectIsEmpty(wanted)) {
         DSDiagnosticsRecordFormat(@"SpringBoard: the card is %@ while the app types, so its keyboard "
                                    "lands on the bottom of the display",
                                   NSStringFromCGRect(wanted));
@@ -388,8 +426,8 @@ static BOOL sSystemEdgePullAvailable;
         [self layoutStageForState:state];
         self->_container.cornerRadius = [self cornerRadiusForState:state];
     };
-    if (duration > 0.0) {
-        [UIView animateWithDuration:duration animations:resize];
+    if (_typingResizeDuration > 0.0) {
+        [UIView animateWithDuration:_typingResizeDuration animations:resize];
     } else {
         resize();
     }
@@ -509,6 +547,8 @@ static BOOL sSystemEdgePullAvailable;
     [[DSKeyboardHost sharedHost] standDown];
     [_container setLiftOffset:0.0];
     // The card was the shape of a keyboard belonging to an app that is no longer on it.
+    _typingKeys = 0.0;
+    _notedStrayKeyboard = NO;
     if (!CGRectIsEmpty(_typingFrame)) {
         _typingFrame = CGRectZero;
         if (self.isStageVisible) {
@@ -649,8 +689,18 @@ static BOOL sSystemEdgePullAvailable;
     // be on screen and the touch has to be inside it.
     if (!self.isStageVisible || !_container.window) return NO;
     CGRect card = CGRectOffset(_container.frame, 0.0, -_container.liftOffset);
-    if (!CGRectContainsPoint(card, point)) return NO;
-    return YES;
+    if (CGRectContainsPoint(card, point)) return YES;
+
+    // The home gesture starts on the display's bottom edge. When the card is inset
+    // that edge is a few points below the card, so a drag that began on the corner
+    // and left it downwards is otherwise taken as going home - which is the
+    // "taken away before it finished" line, followed by the stage opening again.
+    CGRect screen = [self screenBounds];
+    CGRect belowCorner = CGRectMake(CGRectGetMaxX(card) - 130.0,
+                                    CGRectGetMaxY(card) - 4.0,
+                                    130.0,
+                                    MAX(CGRectGetMaxY(screen) - CGRectGetMaxY(card), 0.0) + 12.0);
+    return CGRectContainsPoint(belowCorner, point);
 }
 
 - (BOOL)shouldWindowCaptureTouchAtPoint:(CGPoint)point {
@@ -1768,18 +1818,20 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             // else - and they are indistinguishable from the outside.
             DSDiagnosticsRecordFormat(@"SpringBoard: a drag began in the card at %@ - %@",
                                       NSStringFromCGPoint(start),
-                                      fromCorner ? @"the corner" : (fromTop ? @"the grabber" : @"neither grip"));
+                                      fromCorner ? @"the grip" : (fromTop ? @"the grabber" : @"neither grip"));
             break;
         }
         case UIGestureRecognizerStateChanged: {
             if (fromCorner) {
                 if (cornerIntent == DSCornerIntentUndecided &&
                     hypot(translation.x, translation.y) > kDSCornerIntentTravel) {
-                    // Away from the corner, in any direction, leaves the app; towards it
-                    // puts the card away. Asking for leftwards specifically was asking
-                    // for a movement nobody makes: a thumb on the bottom right corner
-                    // pulling into the card goes up and left together, and up won.
-                    BOOL inward = translation.x < 0.0 || translation.y < 0.0;
+                    // Inward is left. Up from the bottom-right corner is also the home
+                    // gesture's movement, and treating any direction away from the
+                    // corner as leaving the app is what made those drags get taken
+                    // away mid-gesture - or, when they weren't, get read as putting
+                    // the card away.
+                    BOOL inward = translation.x < -8.0 &&
+                                  fabs(translation.x) >= fabs(translation.y) * 0.55;
                     cornerIntent = (self.hasHostedApp && inward) ? DSCornerIntentLeaveApp
                                                                 : DSCornerIntentPutAway;
                 }
@@ -1867,7 +1919,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 }
 
 - (CGRect)closeZoneRect {
-    return [_container cornerGripRect];
+    return CGRectUnion([_container cornerGripRect], [_container edgeGripRect]);
 }
 
 #pragma mark - External events

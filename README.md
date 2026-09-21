@@ -304,6 +304,14 @@ where the display ends - so those keys come up at their proper size in the same 
 stage's own search field raises. The app is handed the display's bottom safe-area inset while this is
 true, so the keys clear the home indicator. It all goes back the moment the keyboard does.
 
+The card only takes that shape once per keyboard. An app reports its keyboard in stages - 243
+points, then 288 with a suggestion bar - and following each of those is the card jumping. The
+picker's keyboard is 301 points, so that is the floor, reports in a burst are collapsed, and a
+keyboard belonging to Spotlight (or anything else behind the stage) is ignored while the app is
+typing. A strip up the right-hand edge of the card, clear of the home indicator, starts the same
+inward swipe as the corner, because the corner sits in the home gesture's territory and the phone
+was taking those drags away mid-gesture.
+
 The hosting code below is kept rather than deleted: it is correct on a firmware that will host a
 keyboard scene, it is dormant behind one constant on this one, and the survey it prints is what
 established which kind of firmware this is.

@@ -14,6 +14,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIView *_grabber;
     UIView *_grabberPill;
     UIView *_cornerGrip;
+    UIView *_edgeGrip;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -67,6 +68,16 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _cornerGrip.userInteractionEnabled = NO;
         [self addSubview:_cornerGrip];
 
+        // The same thing, up the right-hand edge and well clear of the bottom of the
+        // display. The corner is a few points from the home gesture's own territory, and
+        // the phone hands those drags to the home gesture often enough to be worth a
+        // second place to start the same one - the log on the device caught the system
+        // taking a corner drag away mid-gesture and going home with it.
+        _edgeGrip = [[UIView alloc] initWithFrame:CGRectZero];
+        _edgeGrip.backgroundColor = UIColor.clearColor;
+        _edgeGrip.userInteractionEnabled = NO;
+        [self addSubview:_edgeGrip];
+
         self.clipsToBounds = YES;
         self.layer.cornerCurve = kCACornerCurveContinuous;
         self.layer.cornerRadius = _cornerRadius;
@@ -110,6 +121,8 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                                    CGRectGetMaxY(grip) - gripHeight,
                                    gripWidth,
                                    gripHeight);
+
+    _edgeGrip.frame = [self edgeGripRect];
 
     [self updateShadow];
 }
@@ -187,6 +200,19 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                       height);
 }
 
+// A thumb's worth up the right-hand edge, starting above the home indicator and ending
+// short of the grabber so a drag of the card itself is still a drag of the card.
+- (CGRect)edgeGripRect {
+    CGRect bounds = self.bounds;
+    CGFloat width = MIN(28.0, CGRectGetWidth(bounds));
+    CGFloat top = kDSDragAffordanceHeight + 8.0;
+    CGRect corner = [self cornerGripRect];
+    CGFloat bottom = MAX(top + 80.0, CGRectGetMinY(corner) - 8.0);
+    CGFloat height = MAX(80.0, bottom - top);
+    if (top + height > CGRectGetHeight(bounds)) height = CGRectGetHeight(bounds) - top;
+    return CGRectMake(CGRectGetWidth(bounds) - width, top, width, height);
+}
+
 - (void)setLiftOffset:(CGFloat)offset {
     // A transform rather than a new frame: the card's resting frame belongs to
     // whichever state it is in, and the keyboard is only borrowing the space.
@@ -199,6 +225,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 - (void)setHostingApp:(BOOL)hostingApp {
     _hostingApp = hostingApp;
     _cornerGrip.userInteractionEnabled = hostingApp;
+    _edgeGrip.userInteractionEnabled = hostingApp;
 }
 
 @end

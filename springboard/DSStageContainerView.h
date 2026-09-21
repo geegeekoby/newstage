@@ -14,17 +14,20 @@
 // Hidden while a live app is hosted, since the app paints its own background.
 - (void)setBackdropHidden:(BOOL)hidden;
 
-// An app is on the stage rather than the app grid, so the corner takes the touches that
-// land on it instead of letting them through to the app: a touch the app receives is one
-// no gesture on this side of the fence ever hears about, which is what left an app on
-// the stage with no way out of it.
+// An app is on the stage rather than the app grid, so the grips take the touches that
+// land on them instead of letting them through to the app: a touch the app receives is
+// one no gesture on this side of the fence ever hears about, which is what left an app
+// on the stage with no way out of it.
 @property (nonatomic, assign) BOOL hostingApp;
 
 // Top strip that drags the whole card.
 - (CGRect)dragAffordanceRect;
-// The corner the card is taken hold of by: dragged down it goes away, dragged inward it
-// drops the app it is holding.
+// The bottom-right corner, and a strip up the right-hand edge well clear of the home
+// gesture. Either one starts the same drag: inward leaves the app, down puts the card
+// away. The edge exists because the corner sits in the home gesture's own territory
+// and the phone takes those drags away mid-gesture.
 - (CGRect)cornerGripRect;
+- (CGRect)edgeGripRect;
 
 - (void)setLiftOffset:(CGFloat)offset;
 

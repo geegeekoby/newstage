@@ -1348,6 +1348,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     [self applyStageRotation];
+    [[DSKeyboardHost sharedHost] noteStagedAppScene:_sceneHost.hostedScene];
     [self updateHomeAffordance];
     [self returnFrontToWhereItWas];
 

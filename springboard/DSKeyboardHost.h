@@ -49,6 +49,10 @@
 // the display rather than to the card.
 - (void)takeOverKeyboardForApplication:(NSString *)bundleIdentifier stageWindow:(UIWindow *)window;
 
+// The scene of the app on the stage, once there is one. Its presentation is where the
+// keyboard's proxy layer lives, which is one of the ways the keyboard can be reached.
+- (void)noteStagedAppScene:(id)scene;
+
 // The stage closed, or the app on it went away.
 - (void)standDown;
 

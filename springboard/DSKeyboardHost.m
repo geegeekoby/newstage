@@ -26,9 +26,15 @@
 @implementation DSKeyboardHost {
     __weak id _arbiter;
     FBScene *_keyboardScene;
+    __weak id _stagedAppScene;
     FBSceneHostManager *_hostManager;
     UIScenePresenter *_presenter;
     UIView *_hostView;
+    CALayer *_proxyLayer;
+    NSString *_whyNot;
+    BOOL _askedForHostedKeyboard;
+    BOOL _waitingOnTheArbiter;
+    long long _presentationModeBefore;
     DSKeyboardHostWindow *_window;
     __weak UIWindow *_stageWindow;
     // Armed from the moment an app goes on the stage, not from the moment a keyboard
@@ -134,6 +140,68 @@ static id DSSceneHeldBy(id object, NSInteger depth, NSMutableSet *visited, NSMut
         free(ivars);
     }
     return fallback;
+}
+
+// An object one of these is holding, chosen by the name of its class. Used to reach the
+// things whose accessors have no name this can count on but whose classes say plainly
+// what they are - a keyboard proxy layer manager among them.
+static id DSHeldObjectNamedLike(id object, NSArray<NSString *> *words) {
+    for (Class candidate = object_getClass(object); candidate && candidate != NSObject.class;
+         candidate = class_getSuperclass(candidate)) {
+        unsigned int count = 0;
+        Ivar *ivars = class_copyIvarList(candidate, &count);
+        if (!ivars) continue;
+        for (unsigned int i = 0; i < count; i++) {
+            const char *encoding = ivar_getTypeEncoding(ivars[i]);
+            if (!encoding || encoding[0] != '@') continue;
+
+            id value = nil;
+            @try {
+                value = object_getIvar(object, ivars[i]);
+            } @catch (NSException *exception) {
+                continue;
+            }
+            if (!value) continue;
+
+            NSString *name = NSStringFromClass([value class]);
+            for (NSString *word in words) {
+                if ([name rangeOfString:word options:NSCaseInsensitiveSearch].location == NSNotFound) continue;
+                free(ivars);
+                return value;
+            }
+        }
+        free(ivars);
+    }
+    return nil;
+}
+
+// The methods of an object that take nothing, give something back, and are named after
+// one of these words. Tried in turn when the name of the one that matters is unknown.
+static NSArray<NSString *> *DSSelectorsNamedLike(id object, NSArray<NSString *> *words) {
+    NSMutableArray<NSString *> *found = [NSMutableArray array];
+    for (Class candidate = object_getClass(object); candidate && candidate != NSObject.class;
+         candidate = class_getSuperclass(candidate)) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(candidate, &count);
+        if (!methods) continue;
+        for (unsigned int i = 0; i < count; i++) {
+            if (method_getNumberOfArguments(methods[i]) != 2) continue;
+            char type[16] = {0};
+            method_getReturnType(methods[i], type, sizeof(type));
+            if (type[0] != '@') continue;
+
+            NSString *name = NSStringFromSelector(method_getName(methods[i]));
+            if ([name hasPrefix:@"set"] || [name hasPrefix:@"remove"] ||
+                [name hasPrefix:@"invalidate"] || [name hasPrefix:@"dealloc"]) continue;
+            for (NSString *word in words) {
+                if ([name rangeOfString:word options:NSCaseInsensitiveSearch].location == NSNotFound) continue;
+                [found addObject:name];
+                break;
+            }
+        }
+        free(methods);
+    }
+    return found;
 }
 
 // Every scene FrontBoard is holding, by name, written down once. This is the part of the
@@ -274,13 +342,19 @@ static BOOL DSHostViewIsShowingSomething(UIView *view) {
                               bundleIdentifier);
 }
 
+- (void)noteStagedAppScene:(id)scene {
+    _stagedAppScene = scene;
+}
+
 - (void)standDown {
     _stageWindow = nil;
     _bundleIdentifier = nil;
+    _stagedAppScene = nil;
     if (!_armed) return;
     _armed = NO;
     _hostingFailed = NO;
     _keyboardFrame = CGRectZero;
+    [self putTheKeyboardModeBack];
     [self tearDownHosting];
 }
 
@@ -486,21 +560,23 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 }
 
 - (void)showKeyboardInOwnWindow {
-    FBScene *scene = [self keyboardScene];
-    if (!scene) {
-        [self giveUpHosting:@"there is no keyboard scene on this build"];
-        return;
-    }
-
     if (!_hostView) {
-        _hostView = [self viewShowingScene:scene];
-        if (!_hostView) return;
+        _whyNot = nil;
+        UIView *view = [self viewShowingTheKeyboard];
+        if (!view) {
+            if (_waitingOnTheArbiter) return;
+            [self giveUpHosting:_whyNot ?: @"the keyboard could not be put on the display"];
+            return;
+        }
+        _hostView = view;
         DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard is now drawn on the display at %@",
                                   NSStringFromCGRect(_keyboardFrame));
     }
 
     DSKeyboardHostWindow *window = [self window];
-    _hostView.frame = [self hostViewFrameForScene:scene inWindow:window];
+    _hostView.frame = [self hostViewFrameForScene:_keyboardScene inWindow:window];
+    _proxyLayer.frame = CGRectOffset(_keyboardFrame, -CGRectGetMinX(_hostView.frame),
+                                     -CGRectGetMinY(_hostView.frame));
     if (_hostView.superview != window.rootViewController.view) {
         [window.rootViewController.view addSubview:_hostView];
     }
@@ -533,6 +609,26 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     });
 }
 
+// The keyboard, on the display, by whichever route this firmware has. Each one records
+// why it could not be the one, and the card only gets the keyboard back when they have
+// all been tried.
+- (UIView *)viewShowingTheKeyboard {
+    FBScene *scene = [self keyboardScene];
+    if (scene) {
+        UIView *view = [self viewShowingScene:scene];
+        if (view) return view;
+    } else {
+        _whyNot = @"there is no keyboard scene on this build";
+    }
+
+    // The keyboard's scene has no presentation manager because nothing is presenting it:
+    // the arbiter says the keyboard is in mode 0, the app draws its own, and the hosted
+    // scene is a shell waiting to be asked for. So it is asked for.
+    if (scene && [self askTheArbiterToHostTheKeyboard]) return nil;
+
+    return [self viewShowingTheKeyboardProxyLayer];
+}
+
 // A view showing someone else's scene. There are two ways to ask for one and which of
 // them exists depends on the firmware: iOS 16 presents a scene, and every version before
 // it hosted one. The old way was all this had, which is why the keyboard went nowhere on
@@ -542,28 +638,170 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         if ([scene respondsToSelector:@selector(uiPresentationManager)]) {
             UIScenePresentationManager *presentation = scene.uiPresentationManager;
             if (!presentation) {
-                [self giveUpHosting:@"the keyboard's scene has no presentation manager"];
-                return nil;
+                _whyNot = @"the keyboard's scene has no presentation manager";
+            } else {
+                UIView *view = [self viewFromPresentationManager:presentation];
+                if (view) return view;
             }
-            UIView *view = [self viewFromPresentationManager:presentation];
-            if (view) return view;
-            if (![scene respondsToSelector:@selector(hostManagerForRequester:)]) return nil;
         }
 
         if ([scene respondsToSelector:@selector(hostManagerForRequester:)]) {
             _hostManager = [scene hostManagerForRequester:kDSKeyboardRequester];
             if (![_hostManager respondsToSelector:@selector(hostViewForRequester:enableAndOrderFront:)]) {
-                [self giveUpHosting:@"the keyboard scene will not give out a host view here"];
+                _whyNot = @"the keyboard scene will not give out a host view here";
                 return nil;
             }
             return [_hostManager hostViewForRequester:kDSKeyboardRequester enableAndOrderFront:YES];
         }
     } @catch (NSException *exception) {
-        [self giveUpHosting:[NSString stringWithFormat:@"showing the keyboard threw %@", exception.name ?: @"?"]];
+        _whyNot = [NSString stringWithFormat:@"showing the keyboard threw %@", exception.name ?: @"?"];
+    }
+    return nil;
+}
+
+// Mode 0 is the keyboard as an iPhone has always drawn it: by the app, in the app's own
+// scene, with a proxy layer where the card can see it. The arbiter can be told to present
+// the keyboard's scene instead, which is what an iPad does when two apps share the
+// display, and that is the state the stage needs. What the number for it is cannot be
+// known from here, so each one is tried and the phone is asked afterwards whether the
+// scene became presentable; whatever it was set to is put back if none of them do.
+- (BOOL)askTheArbiterToHostTheKeyboard {
+    id arbiter = _arbiter;
+    SEL read = NSSelectorFromString(@"keyboardScenePresentationMode");
+    SEL write = NSSelectorFromString(@"setKeyboardScenePresentationMode:");
+    if (![arbiter respondsToSelector:read] || ![arbiter respondsToSelector:write]) {
+        _whyNot = @"the arbiter will not say how the keyboard is presented";
+        return NO;
+    }
+    if (_askedForHostedKeyboard) return NO;
+
+    long long current = 0;
+    @try {
+        current = ((long long (*)(id, SEL))objc_msgSend)(arbiter, read);
+    } @catch (NSException *exception) {
+        return NO;
+    }
+    _presentationModeBefore = current;
+    _askedForHostedKeyboard = YES;
+
+    for (long long mode = 1; mode <= 3; mode++) {
+        if (mode == current) continue;
+        @try {
+            ((void (*)(id, SEL, long long))objc_msgSend)(arbiter, write, mode);
+        } @catch (NSException *exception) {
+            continue;
+        }
+        id presentation = nil;
+        @try {
+            presentation = [_keyboardScene respondsToSelector:@selector(uiPresentationManager)]
+                ? _keyboardScene.uiPresentationManager
+                : nil;
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: asked for the keyboard in mode %lld and its scene %@",
+                                  mode, presentation ? @"now has a presentation manager"
+                                                     : @"still has none");
+        if (presentation) {
+            _waitingOnTheArbiter = NO;
+            return NO;  // The caller tries again immediately; the scene is ready now.
+        }
+    }
+
+    // Asking is not answering: a scene starts being presented across processes, which
+    // takes longer than the call. One more look in a moment, and if it is still nothing
+    // the phone goes back to the keyboard it had.
+    _waitingOnTheArbiter = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) host = weakSelf;
+        if (!host) return;
+        host->_waitingOnTheArbiter = NO;
+        if (!host->_armed || host->_hostingFailed || CGRectIsEmpty(host->_keyboardFrame)) {
+            [host putTheKeyboardModeBack];
+            return;
+        }
+        [host showKeyboardInOwnWindow];
+        if (!host->_hostView) [host putTheKeyboardModeBack];
+    });
+    return YES;
+}
+
+- (void)putTheKeyboardModeBack {
+    if (!_askedForHostedKeyboard) return;
+    _askedForHostedKeyboard = NO;
+    id arbiter = _arbiter;
+    SEL write = NSSelectorFromString(@"setKeyboardScenePresentationMode:");
+    if (![arbiter respondsToSelector:write]) return;
+    @try {
+        ((void (*)(id, SEL, long long))objc_msgSend)(arbiter, write, _presentationModeBefore);
+    } @catch (NSException *exception) {
+    }
+}
+
+// The keyboard as the card sees it. The app's scene carries a proxy layer standing in for
+// the keyboard - that is what the card was told not to draw - and the presentation of that
+// scene is built with a keyboard proxy layer manager, by the name of its own initialiser.
+// If the layer can be had from there it can be put on the display directly, which needs no
+// scene of the keyboard's own and no arbiter's permission.
+- (UIView *)viewShowingTheKeyboardProxyLayer {
+    id scene = _stagedAppScene;
+    if (![scene respondsToSelector:@selector(uiPresentationManager)]) {
+        if (!_whyNot) _whyNot = @"the staged app's scene cannot be asked about its keyboard";
         return nil;
     }
 
-    [self giveUpHosting:@"the keyboard's scene can neither be presented nor hosted"];
+    id presentation = nil;
+    @try {
+        presentation = ((id (*)(id, SEL))objc_msgSend)(scene, @selector(uiPresentationManager));
+    } @catch (NSException *exception) {
+    }
+    if (!presentation) {
+        if (!_whyNot) _whyNot = @"the staged app's scene is not presented here either";
+        return nil;
+    }
+
+    id proxy = DSHeldObjectNamedLike(presentation, @[ @"keyboard", @"proxy" ]);
+    if (!proxy) {
+        [self recordWhatIsHeldBy:presentation];
+        if (!_whyNot) _whyNot = @"nothing here holds the keyboard's proxy layer";
+        return nil;
+    }
+
+    static BOOL noted = NO;
+    if (!noted) {
+        noted = YES;
+        [self recordEverything:proxy under:[NSString stringWithFormat:@"the %@ has",
+                                                                     NSStringFromClass([proxy class])]];
+    }
+
+    // Anything it will hand over that is a layer or a view is the keyboard: the names are
+    // not known, so the ones that mention a keyboard, a proxy or a layer are tried.
+    for (NSString *name in DSSelectorsNamedLike(proxy, @[ @"keyboard", @"proxy", @"layer", @"view" ])) {
+        id result = nil;
+        @try {
+            result = ((id (*)(id, SEL))objc_msgSend)(proxy, NSSelectorFromString(name));
+        } @catch (NSException *exception) {
+            continue;
+        }
+        if ([result isKindOfClass:UIView.class]) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard came from %@ as a %@",
+                                      name, NSStringFromClass([result class]));
+            return result;
+        }
+        if ([result isKindOfClass:CALayer.class]) {
+            // The carrier covers the display, like a hosted scene's view does, and the
+            // layer sits in it wherever the arbiter says the keyboard is.
+            UIView *carrier = [[UIView alloc] initWithFrame:_keyboardFrame];
+            _proxyLayer = result;
+            [carrier.layer addSublayer:result];
+            DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard came from %@ as a %@ layer",
+                                      name, NSStringFromClass([result class]));
+            return carrier;
+        }
+    }
+
+    if (!_whyNot) _whyNot = @"the keyboard's proxy layer manager would not give out a layer";
     return nil;
 }
 
@@ -670,9 +908,11 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 // What an object is holding, and what those things can do. Only worth the log when the
 // named routes have all failed, which is where it is called from.
 - (void)recordWhatIsHeldBy:(id)object {
-    static BOOL noted = NO;
-    if (noted) return;
-    noted = YES;
+    static NSMutableSet<NSString *> *already = nil;
+    if (!already) already = [NSMutableSet set];
+    NSString *owner = NSStringFromClass([object class]);
+    if ([already containsObject:owner]) return;
+    [already addObject:owner];
 
     for (Class candidate = object_getClass(object); candidate && candidate != NSObject.class;
          candidate = class_getSuperclass(candidate)) {
@@ -710,6 +950,23 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         }
         free(ivars);
     }
+}
+
+// Everything an object can be asked, for the log. The last resort of a keyboard that will
+// not appear: the name of the method that would have worked is in here somewhere.
+- (void)recordEverything:(id)object under:(NSString *)heading {
+    NSMutableArray<NSString *> *selectors = [NSMutableArray array];
+    for (Class candidate = object_getClass(object); candidate && candidate != NSObject.class;
+         candidate = class_getSuperclass(candidate)) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(candidate, &count);
+        if (!methods) continue;
+        for (unsigned int i = 0; i < count; i++) {
+            [selectors addObject:NSStringFromSelector(method_getName(methods[i]))];
+        }
+        free(methods);
+    }
+    [self recordNames:selectors under:heading];
 }
 
 // A list of names, in pieces, because one line of the log is clipped and these run long.
@@ -784,6 +1041,10 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 
 - (void)tearDownHosting {
     [self hideWindow];
+    // A proxy layer belongs to the app's scene, not to the stage: it goes back by being
+    // let go of, so whoever owns it can put it where it was.
+    [_proxyLayer removeFromSuperlayer];
+    _proxyLayer = nil;
     @try {
         if ([_presenter respondsToSelector:@selector(deactivate)]) [_presenter deactivate];
         if ([_presenter respondsToSelector:@selector(invalidate)]) [_presenter invalidate];

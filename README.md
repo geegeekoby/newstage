@@ -284,6 +284,21 @@ the home screen behind it.
 Three things are worth knowing about how carefully this is switched on, because a keyboard that
 has been taken out of the card and then not put anywhere is worse than a keyboard in the card:
 
+**Mode 0 is why there was nothing to present.** With the scene found and the presenter looked for
+rather than named, the answer came back one step earlier again: the keyboard's scene has no
+presentation manager at all, because nothing is presenting it. The arbiter reports the keyboard in
+mode 0, which is the keyboard an iPhone has always had - drawn by the app, in the app's own scene,
+with a proxy layer where whoever hosts that scene can see it. `com.apple.UIKit.KeyboardManagement.hosted`
+is a shell sitting there waiting to be asked for, and an iPad sharing its display between two apps is
+what asks. So the stage asks: `setKeyboardScenePresentationMode:` is tried at each value until the
+scene becomes presentable, half a second is allowed for a scene to start being presented across
+processes, and whatever the mode was is put back if none of it helps.
+
+If that is refused there is one more route, and it needs no permission: the proxy layer itself. The
+card was told not to draw it, and the presentation of the app's scene is built with a keyboard proxy
+layer manager - by the name of its own initialiser, `_initWithScene:keyboardProxyLayerManager:` - so
+the layer can be taken from there and put on the display directly. It goes back by being let go of.
+
 **The presenter is found, not named, for the same reason.** 1.5.5 moved to the iOS 16 way of putting
 a scene on screen and still failed, because `createPresenterWithIdentifier:` is not on this
 firmware's presentation manager and `UIScenePresenter` is not a class here at all - it is a protocol,

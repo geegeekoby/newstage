@@ -34,6 +34,15 @@ const PORT = Number(process.argv[2] || process.env.PORT || 43117);
 // enough to add the repo in Sileo without hosting it anywhere.
 const HOST = process.env.HOST || "127.0.0.1";
 
+// The handler names its own host from the request, which is right on hosting and wrong
+// behind a tunnel: a tunnel that terminates TLS for you forwards the connection as plain
+// HTTP and says nothing about it, so every absolute URL in the index comes out http://
+// under an https:// source. Set PUBLIC_URL to the address the device will use and the
+// forwarded headers hosting would have sent are added here.
+//
+//     PUBLIC_URL=https://example.lhr.life node tools/serve_repo.mjs
+const PUBLIC_URL = process.env.PUBLIC_URL ? new URL(process.env.PUBLIC_URL) : null;
+
 const REWRITES = {
   "/Release": "release",
   "/Packages": "packages",
@@ -70,6 +79,10 @@ const server = createServer(async (req, res) => {
 
   const file = REWRITES[pathname];
   if (file) {
+    if (PUBLIC_URL) {
+      req.headers["x-forwarded-proto"] = PUBLIC_URL.protocol.replace(":", "");
+      req.headers["x-forwarded-host"] = PUBLIC_URL.host;
+    }
     req.query = { file };
     return freshHandler()(req, shim(res));
   }

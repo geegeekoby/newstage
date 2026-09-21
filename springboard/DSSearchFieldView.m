@@ -166,6 +166,10 @@ static CGRect DSKeyboardViewFrameIn(UIView *view) {
                 [name rangeOfString:@"TextEffects"].location == NSNotFound) continue;
             CGRect keys = DSKeyboardViewFrameIn(candidate);
             if (CGRectIsNull(keys)) continue;
+            // UIKit parks a dismissed keyboard at y == screen height; that is not typing.
+            CGRect screen = UIScreen.mainScreen.bounds;
+            if (CGRectGetMinY(keys) >= CGRectGetMaxY(screen) - 1.0) continue;
+            if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) continue;
             keyboard = keys;
             break;
         }

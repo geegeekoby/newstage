@@ -405,11 +405,16 @@ static BOOL DSHostViewIsShowingSomething(UIView *view) {
     _armed = YES;
     _hostingFailed = NO;
     _notedGiveUp = NO;
-    // Whatever SpringBoard has opened since it started is scanned again here: the class
-    // that draws a hosted app is not necessarily loaded when a phone finishes booting.
-    if (!_keyboardLayerCanBeRefused) [DSKeyboardHost refuseTheKeyboardLayerWhereverItIsOffered];
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@'s keyboard now belongs to the display, not to the card",
-                              bundleIdentifier);
+    if (kDSKeyboardCanLiveOnTheDisplay) {
+        // Whatever SpringBoard has opened since it started is scanned again here: the class
+        // that draws a hosted app is not necessarily loaded when a phone finishes booting.
+        if (!_keyboardLayerCanBeRefused) [DSKeyboardHost refuseTheKeyboardLayerWhereverItIsOffered];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@'s keyboard now belongs to the display, not to the card",
+                                  bundleIdentifier);
+    } else {
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ on the stage — the keyboard stays in the app's scene; the card shapes around it",
+                                  bundleIdentifier);
+    }
 }
 
 - (void)noteStagedAppScene:(id)scene {
@@ -466,6 +471,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 }
 
 + (void)refuseTheKeyboardLayerWhereverItIsOffered {
+    if (!kDSKeyboardCanLiveOnTheDisplay) return;
     SEL selector = @selector(_canShowKeyboardLayer);
     unsigned int count = 0;
     Class *classes = objc_copyClassList(&count);

@@ -337,9 +337,29 @@ static BOOL sSystemEdgePullAvailable;
     return YES;
 }
 
+// The arbiter sometimes reports a keyboard anchored at the top of the display ({0,0})
+// even though UIKit draws it on the bottom edge. Treat keyboard-sized frames that start
+// in the upper half as bottom-anchored before any layout runs.
+- (CGRect)keyboardFrameOnDisplay:(CGRect)keyboard {
+    CGRect screen = [self screenBounds];
+    CGFloat height = CGRectGetHeight(keyboard);
+    if (height < kDSKeyboardPresentHeight) return keyboard;
+
+    if (CGRectGetMinY(keyboard) >= CGRectGetMaxY(screen)) return keyboard;
+
+    if (CGRectGetMinY(keyboard) < CGRectGetHeight(screen) * 0.55 &&
+        height <= CGRectGetHeight(screen) * 0.65) {
+        keyboard.origin.y = CGRectGetHeight(screen) - height;
+        keyboard.origin.x = 0.0;
+        keyboard.size.width = CGRectGetWidth(screen);
+    }
+    return keyboard;
+}
+
 // One place for both, and the card's only answer to a keyboard: move up out of its way.
 - (void)noteKeyboardFrame:(CGRect)keyboard source:(NSString *)source duration:(NSTimeInterval)duration {
     CGRect screen = [self screenBounds];
+    keyboard = [self keyboardFrameOnDisplay:keyboard];
     if (CGRectGetHeight(keyboard) < kDSKeyboardPresentHeight ||
         CGRectGetMinY(keyboard) >= CGRectGetMaxY(screen)) {
         keyboard = CGRectZero;

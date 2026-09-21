@@ -1,12 +1,12 @@
 #import "DSStageManager.h"
 #import "DSSceneHost.h"
-#import "DSKeyboardHost.h"
 #import "DSPreferences.h"
 #import "DSGestureController.h"
 #import "DSPrivate.h"
 #import "DSConstants.h"
 #import "DSDiagnostics.h"
 #import "DSBootstrap.h"
+#import "DSHomeReady.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -15,14 +15,20 @@
 //
 //   1. %ctor installs one SpringBoard hook (applicationDidFinishLaunching) and
 //      nothing else. No scene hooks, no keyboard arbiter, no windows.
-//   2. When SpringBoard has actually launched, Stage + Arbiter groups are
-//      initialised. That is the first moment a crash here could respring the
-//      phone, and it is after the home screen exists.
+//   2. When the home screen exists, Stage + Arbiter groups are initialised.
+//      That is the first moment a crash here could respring the phone, and it
+//      is after icons and windows are up.
 //   3. activate() builds the stage UI. If it returns, the launch guard is
 //      cleared immediately.
 //
 // A crash between (2) and (3) completing trips the guard; the next SpringBoard
 // start loads only the Boot group so the device comes back.
+//
+// Keyboard policy for iOS 16.5.1 on an iPhone: never steal a layer, never
+// refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
+// KeyboardArbiter. The picker uses SpringBoard's own keyboard and the card
+// lifts. A staged app draws its keyboard in its own scene; the card stays put
+// and the host view is masked so the keys sit on the display below it.
 
 #pragma mark - Calling out of a hook
 
@@ -54,10 +60,7 @@ static void DSInstallRemainingHooks(void);
 static void DSScheduleFullInstall(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
-        // Home screen first. Jailbreak userspace reboot is not a respring: classes
-        // and the icon controller are still coming up when ADFLaunching returns.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.8 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
+        DSWhenHomeScreenIsReady(^{
             DSInstallRemainingHooks();
         });
     });
@@ -101,7 +104,6 @@ static void DSScheduleFullInstall(void) {
         return;
     }
     @try {
-        [DSSceneHost noteLiveScene:self];
         FBSMutableSceneSettings *mutableSettings = [settings mutableCopy];
         if ([DSSceneHost applyOverridesToSettings:mutableSettings forScene:self]) {
             %orig(mutableSettings, context, completion);
@@ -116,10 +118,6 @@ static void DSScheduleFullInstall(void) {
     if (!DSStageReady() || !block) {
         %orig;
         return;
-    }
-    @try {
-        [DSSceneHost noteLiveScene:self];
-    } @catch (NSException *exception) {
     }
 
     __weak __typeof(self) weakSelf = self;
@@ -458,7 +456,7 @@ static void DSInstallRemainingHooks(void) {
             [[DSStageManager sharedManager] activate];
             DSBootstrapMarkLaunchSucceeded();
 
-            DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed after launch, corner pull will come from %@",
+            DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed after home screen, corner pull will come from %@",
                                       systemPull ? @"the system edge gesture" : @"a window in the corner");
 
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
@@ -478,8 +476,6 @@ static void DSInstallRemainingHooks(void) {
         if (DSKillSwitchPresent()) return;
         if (DSLaunchGuardTripped()) {
             DSDiagnosticsRecord(@"SpringBoard: boot guard tripped, only the launch hook is installed");
-            // Still install Boot so a later respring after deleting the guard file
-            // is not required to get a working device; Stage stays off.
             return;
         }
 
@@ -487,7 +483,7 @@ static void DSInstallRemainingHooks(void) {
             %init(Boot);
             // If applicationDidFinishLaunching already ran (late inject) or never
             // reaches us, still come up.
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(12.0 * NSEC_PER_SEC)),
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(14.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{
                 DSScheduleFullInstall();
             });

@@ -11,13 +11,11 @@
 // every route UIKit offers for "how big is the screen" answers with the stage
 // rectangle and the interface stays pinned to portrait.
 //
-// The keyboard is deliberately not one of those routes. A keyboard is drawn into the
-// keyboard scene SpringBoard owns - the same one every app on the device shares - and
-// SpringBoard puts it on the bottom edge of the display, outside every app window,
-// which is where the stock tweak's keyboard comes up too. It gets there by itself as
-// long as nothing lies to it, so the windows a keyboard lives in are left out of every
-// hook below and asked nothing but the truth. Builds up to 1.5.0 clamped those windows
-// to the card, which is the whole reason the keyboard was ever inside it.
+// The keyboard is deliberately not one of those routes. Keyboard windows are
+// left out of every size hook and asked nothing but the truth, so the keys lay
+// out against the display rather than the card. Builds up to 1.5.0 clamped
+// those windows to the card, which is the whole reason the keyboard was ever
+// inside it.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -196,37 +194,16 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 
 #pragma mark - Keyboard
 
-// The keyboard is the display's, never the card's. Two things have to hold for that,
-// and both of them are about telling the truth rather than about placing anything:
-//
-//   * the keyboard is laid out against the whole display, so it comes out the width
-//     and height it has in any other app rather than shrunk to the card;
-//   * UIKit hands it to the keyboard scene rather than drawing it into a window of
-//     this process - the same route an iPad app in Slide Over takes, and the one that
-//     lets SpringBoard put the keyboard on the bottom edge of the display instead of
-//     inside the card. SpringBoard's side of that is springboard/DSKeyboardHost.m.
-//
-// The second is UIKit's own decision, and it makes it by comparing this app's scene
-// with the display. On the stage the two genuinely differ, so the answer should already
-// be the right one; it is stated here because the hooks above make so much of this
-// process answer with the card, and a keyboard that believes it is full screen is one
-// that stays in the card.
-//
-// If the keyboard comes up hosted but in the wrong place, the next levers are this
-// class's hostedSceneSize, hostedWindowOffset and hostedSafeInsets: they are how UIKit
-// is told the shape of the scene the keyboard is hosted into and where this app's own
-// window sits inside it. They are left alone for now because a wrong offset moves the
-// keyboard rather than failing, and the diagnostics line naming the keyboard scene's
-// frame is what says whether they are needed.
+// On iOS 16.5.1 an iPhone keyboard is drawn in this app's own scene. Earlier
+// builds forced UIKit to host it in SpringBoard's keyboard scene; that path
+// does not exist for a phone on this firmware, and lying about it left the
+// keys nowhere. Keyboard windows are asked nothing but the display size so
+// the keys come out full width. SpringBoard then masks the hosted view so
+// those keys sit on the bottom edge of the display, outside the card chrome.
 %hook UITextEffectsWindow
 
 - (CGSize)keyboardScreenReferenceSize {
     if (DSStaged()) return DSDeviceBounds().size;
-    return %orig;
-}
-
-- (BOOL)_shouldTextEffectsWindowBeHostedForView:(UIView *)view {
-    if (DSStaged()) return YES;
     return %orig;
 }
 

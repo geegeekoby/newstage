@@ -26,6 +26,9 @@ BOOL DSIdentifierIsExcludedFromStage(NSString *identifier) {
             @"com.apple.SharedWebCredentialViewService",
             @"com.apple.AuthKitUIService",
             @"com.apple.ScreenshotServicesService",
+            @"com.apple.UIKitSystem",
+            @"com.apple.WebSheet",
+            @"com.apple.PreBoard",
 
             @"org.coolstar.SileoStore",
             @"org.coolstar.Cydia",

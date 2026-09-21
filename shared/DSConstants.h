@@ -6,9 +6,6 @@
 #define kDSPackageIdentifier @"com.recreated.dynamicstage"
 #define kDSPreferenceDomain @"com.recreated.dynamicstage.prefs"
 #define kDSRequester @"DynamicStage"
-// Hosting the keyboard's scene is a separate claim from hosting the app's, and
-// FrontBoard tracks a claim by the name of whoever made it.
-#define kDSKeyboardRequester @"DynamicStageKeyboard"
 
 // Darwin notifications shared between the preference bundle, SpringBoard and
 // the per-application dylib.
@@ -22,13 +19,10 @@
 // being picked up" without needing a log.
 #define kDSOpenStageNotification "com.recreated.dynamicstage.stage.open"
 
-// Nothing here for the keyboard, by design. A keyboard belongs to a scene of its own
-// that the keyboard arbiter in SpringBoard owns, and the stage hosts that scene in a
-// window the size of the display while refusing it inside the card - so the keyboard
-// comes up on the bottom edge of the phone at its ordinary size and the card moves up
-// out of its way. All of that happens inside SpringBoard, where the arbiter already
-// is, so there is nothing for the app on the stage to report and nothing for the card
-// to make room inside itself for. See the keyboard section of the README.
+// Nothing here for the keyboard, by design. On iOS 16.5.1 an iPhone keyboard
+// lives in the app's own scene. The stage never steals it and never refuses it.
+// The picker lifts the card; a staged app keeps the card still and shows the
+// keys on the display below it. See the keyboard section of the README.
 
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.

@@ -72,16 +72,21 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     _emptyLabel.hidden = YES;
     [_scrollView addSubview:_emptyLabel];
 
-        [self installLogNotice];
-        // CrashReporter is walked on a delay: listing every .ips at SpringBoard
-        // launch after a jailbreak is how a picker that is not even on screen
-        // takes the device down.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(25.0 * NSEC_PER_SEC)),
+    [self installLogNotice];
+    [self reloadContent];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.0 * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
+            if (self.view.hidden) return;
             [self installCrashNotice];
             [self.view setNeedsLayout];
         });
-    [self reloadContent];
+    });
 }
 
 // The settings page runs inside Settings, so when it fails there is nothing left on

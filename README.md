@@ -11,6 +11,11 @@ geometry and animation timings were derived from the tweak's own walkthrough rec
 screenshots, and everything here is written from scratch in Objective-C, Logos and a Python
 script that draws the artwork.
 
+**3.0.0** is the engine done the way iOS 16.5.1 on an iPhone actually works: one launch hook,
+wait for the home screen, `SBAppViewController` for live apps, and a keyboard that is never
+stolen or refused. Overlay, Split View, the picker and the corner gestures are the same
+layout as the original.
+
 ## What it does
 
 **The stage**
@@ -260,176 +265,17 @@ answered.
 
 ## The keyboard
 
-A keyboard is never drawn inside the card, and nothing about where it goes is left to the app.
+tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full width, outside the card. That is the layout this rebuild keeps. How it gets there on **iOS 16.5.1 / iPhone** is not the iPad path.
 
-No app draws its own keyboard. UIKit draws it into a scene of the keyboard's own - one scene for
-the whole device, owned by the keyboard arbiter that runs inside SpringBoard - and the app's
-scene is handed a stand-in layer that says "the keyboard goes here". Whoever hosts the app's
-scene hosts that stand-in too, which is why a keyboard normally lands on the bottom edge of the
-display: the app is full screen, so "inside the app" and "on the bottom edge of the display" are
-the same rectangle.
+On a phone this firmware reports the keyboard in arbiter mode 0: the keys are drawn in the app's own scene. There is no presentable `KeyboardManagement.hosted` scene to steal, `FBSceneHostManager` does not exist, and refusing `_canShowKeyboardLayer` leaves the keys nowhere. Builds 1.5–1.8 tried those iPad tricks and broke typing. 3.0.0 does not.
 
-On the stage they are nothing like the same rectangle. The card is a small panel in the corner,
-so hosting the stand-in inside it draws the keyboard inside the card, shrunk to a third of its
-size and clipped by the card's own corners. Every build up to 1.5.0 was arguing with that from
-the app's side - growing the app's window under the keyboard, cutting a band out of the bottom of
-the card, telling UIKit to lay the keyboard out against the display - and all of it could be, and
-was, ignored. The keyboard stayed in the card because the card was hosting it.
+**Picker search.** The field is SpringBoard's. The stage window becomes key, UIKit raises a normal keyboard, and the card lifts above it (floor 301pt). The window is handed back when the stage closes.
 
-So 1.5.1 stops hosting it. The decision is SpringBoard's own and it is asked as a question -
-"may this view draw the keyboard layer" - which is the same question iPad multitasking answers no
-to. For the stage's card, and for nothing else on the display, the answer is now no.
+**Staged app.** The card stays at overlay or Split size. The hosted view is placed on the display behind it, full width from the card's top to the bottom of the screen, and masked to a rounded card plus a square keyboard band. The keys sit on the display at their real size. Touches on the grabber and corner/edge grips still belong to the card; touches on the keys go through to the app.
 
-That makes room, and then the keyboard has to be put somewhere. The arbiter's own scene is shown
-by the stage in a window the size of the display, sitting above the card, so the keyboard comes
-up where every other keyboard on the phone comes up: full width, ordinary size, on the bottom
-edge. The card moves up out of its way and drops back when it goes. Only the part of that window
-the keyboard is actually occupying takes a touch; everything else falls through to the card and
-the home screen behind it.
+**What is never done.** No layer reparenting, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards).
 
-Three things are worth knowing about how carefully this is switched on, because a keyboard that
-has been taken out of the card and then not put anywhere is worse than a keyboard in the card:
-
-**And then the card is shaped around it, because there was never anything to move.** The log that
-settled it printed what the card actually holds: three layer hosts the size of the card and nothing
-else. No keyboard layer, anywhere. The keyboard is inside the app's own render tree, in the app's own
-process, because the card *is* that app's whole window - so there is no layer in SpringBoard to take,
-no scene to present, and no mode to set. Every one of those was tried and the phone said no four
-different ways.
-
-Worse, refusing the layer while none of it worked was the thing making the keyboard invisible. The
-card stopped drawing the keyboard, nothing else drew one, and the card lifted out of the way of a
-keyboard that did not exist. Typing became impossible rather than merely cramped, which is a bad
-trade whichever way the rest of it goes.
-
-So the keyboard stays where the app draws it and the card is made the right shape for it: while a
-staged app is being typed into, the card takes the display's full width and its bottom edge sits on
-the display's bottom edge, tall enough to leave the app a usable amount of itself above the keys. The
-app draws its keyboard at the bottom of its own window, its window is the card, and the card now ends
-where the display ends - so those keys come up at their proper size in the same place as the ones the
-stage's own search field raises. The app is handed the display's bottom safe-area inset while this is
-true, so the keys clear the home indicator. It all goes back the moment the keyboard does.
-
-The card only takes that shape once per keyboard. An app reports its keyboard in stages - 243
-points, then 288 with a suggestion bar - and following each of those is the card jumping. The
-picker's keyboard is 301 points, so that is the floor, reports in a burst are collapsed, and a
-keyboard belonging to Spotlight (or anything else behind the stage) is ignored while the app is
-typing. A strip up the right-hand edge of the card, clear of the home indicator, starts the same
-inward swipe as the corner, because the corner sits in the home gesture's territory and the phone
-was taking those drags away mid-gesture.
-
-The hosting code below is kept rather than deleted: it is correct on a firmware that will host a
-keyboard scene, it is dormant behind one constant on this one, and the survey it prints is what
-established which kind of firmware this is.
-
-**So the layer is taken, not asked for.** Modes 1, 2 and 3 were all tried on the phone and the
-keyboard's scene stayed unpresentable, which settles it: this firmware has no interest in hosting a
-keyboard for a phone that is not an iPad, and nothing will present that scene no matter how it is
-asked. But the keyboard is already drawn - in the card, shrunk, which is the whole complaint - and a
-layer that is being drawn can be moved.
-
-So the card is allowed its keyboard layer, and the layer is then taken out of it and put in the
-stage's own window over the display. It is found by its size: the arbiter says how big the keyboard
-is in display points, in the scene's own tree it is exactly that size whatever the card is doing to
-it, and nothing else in a card is the full width of the display and three hundred points tall. It is
-put back exactly where it was found the moment the keyboard goes away, because a borrowed keyboard
-that is never returned is an app that never draws one again, and if the app draws a fresh layer while
-the stage is holding one - a language switch, an accessory view - the new one is taken and the old
-one goes home, so there is never a keyboard in both places.
-
-This also makes failure harmless in a way none of the earlier attempts were. Refusing the layer first
-and then failing to host it left the keyboard nowhere; allowing it and then failing to move it leaves
-the keyboard in the card, badly placed but usable, which is where it was before any of this. Giving up
-is per keyboard rather than for the rest of the session, and says so once.
-
-**Mode 0 is why there was nothing to present.** With the scene found and the presenter looked for
-rather than named, the answer came back one step earlier again: the keyboard's scene has no
-presentation manager at all, because nothing is presenting it. The arbiter reports the keyboard in
-mode 0, which is the keyboard an iPhone has always had - drawn by the app, in the app's own scene,
-with a proxy layer where whoever hosts that scene can see it. `com.apple.UIKit.KeyboardManagement.hosted`
-is a shell sitting there waiting to be asked for, and an iPad sharing its display between two apps is
-what asks. So the stage asks: `setKeyboardScenePresentationMode:` is tried at each value until the
-scene becomes presentable, half a second is allowed for a scene to start being presented across
-processes, and whatever the mode was is put back if none of it helps.
-
-If that is refused there is one more route, and it needs no permission: the proxy layer itself. The
-card was told not to draw it, and the presentation of the app's scene is built with a keyboard proxy
-layer manager - by the name of its own initialiser, `_initWithScene:keyboardProxyLayerManager:` - so
-the layer can be taken from there and put on the display directly. It goes back by being let go of.
-
-**The presenter is found, not named, for the same reason.** 1.5.5 moved to the iOS 16 way of putting
-a scene on screen and still failed, because `createPresenterWithIdentifier:` is not on this
-firmware's presentation manager and `UIScenePresenter` is not a class here at all - it is a protocol,
-reached through a factory whose name has moved. So the manager is asked what it can do: every method
-of it that makes something with "presenter" in the name is tried, factories first, and whichever
-hands back an object owning a view is the one. The scene itself was found on the first try once it
-was looked for rather than named - `com.apple.UIKit.KeyboardManagement.hosted`, sitting in the
-arbiter exactly as expected - which is what made the naming the whole of the remaining problem.
-
-It took until 1.5.5 to be shown somewhere, though, and the reason is worth keeping. A scene used to
-be put on screen by asking it for a host manager and that manager for a host view, and that is what
-this did. `FBSceneHostManager` does not exist on iOS 16 - not a renamed class, not a moved one, not
-a class at all - so every attempt ended at "there is no keyboard scene on this build", the keyboard
-was refused in the card and then shown nowhere, and the card lifted out of the way of a keyboard
-that was not there. iOS 16 presents a scene instead: `uiPresentationManager`, a presenter, and that
-presenter's view, which is how the stage already had the *app* on screen a few files away. Nothing
-about the design was wrong; it was calling a class that had been deleted, and the survey the log
-prints now is there so the next one of those is a line in a log rather than three versions.
-
-The same goes for finding the scene. The keyboard's scene was looked up by trying the names it used
-to answer to - `keyboardScene`, `scene`, an ivar called `_scene` - and on this firmware it answers
-to none of them, while the arbiter plainly has one: it has `updateKeyboardSceneSettings` and a
-keyboard scene presentation mode. So it is looked for rather than named, by walking what the
-arbiter is holding two levels deep and taking whichever object turns out to be a scene, preferring
-one whose name mentions a keyboard. Every name found goes in the log whether it is used or not.
-
-**The class that asks the question is found, not named.** It has moved between iOS versions and
-there has never been only one of them, so every class in SpringBoard and FrontBoard that answers
-it is located at startup and again the first time an app is staged, in case SpringBoard opened
-the framework it lives in later. If none are found, the stage does not touch the keyboard at all,
-and the diagnostics page says so.
-
-**The keyboard is only taken off the card when it can be put on the display.** Hosting the
-keyboard's scene here while the card was still drawing it would be two claims on one keyboard, so
-the refusal and the hosting are switched on together. If hosting fails - no keyboard scene on this
-build, no host view to be had - the takeover is abandoned rather than retried, the card starts
-drawing its own keyboard again, and the reason is written down.
-
-Failing outright is not the only way to end up with no keyboard, though, and 1.5.1 found the other
-one: every step can succeed and still leave nothing on screen, because a scene hands out a host
-view whether or not it has a layer to put in it. On the phone that looked like the card lifting
-out of the way of a keyboard that was not there, with no way to type. So the host view is checked
-a beat after it goes up - a hosted layer with no context on the other end is drawing nothing - and
-if there is nothing there the takeover is abandoned and the card is laid out again, which brings
-the keyboard back for the keyboard that is up rather than for the next one. Which of the scenes
-FrontBoard is holding could be the keyboard's is also no longer a guess: the arbiter is asked
-first, and if it will not say, the scenes are searched by name and all of their names are written
-down.
-
-**Only the staged app's keyboard is moved.** The arbiter is told about every keyboard on the
-device, and the stage's own search field is one of them: that keyboard is SpringBoard's, drawn in
-this process, already in the right place, and left alone. Which app raised a keyboard comes from
-the arbiter along with its frame, and anything that is not the app in the card is only ever used
-to decide how far to lift the card.
-
-The card is lifted for any keyboard anywhere on the display, whoever owns it, and never so far
-that it leaves the top of the screen - a card lifted off the top takes the search field, the app
-and every way of closing the stage with it.
-
-Two older mistakes are worth recording, because both of them took SpringBoard's own keyboard away
-rather than moving the app's.
-
-1.4.0 asked SpringBoard's keyboard focus coordinator to point the keyboard at the staged app's
-scene, on the theory that a text field inside that app needed it. It did not - the app asks for
-its own keyboard, in its own process - and the request was never given back, so from the first app
-staged in a session the picker's search field could not raise a keyboard again. Nothing asks for
-keyboard focus now.
-
-1.4.1 asked SpringBoard to place keyboards the way it does for iPad multitasking, by marking every
-staged app as able to live in a scene smaller than the display. SpringBoard took that to mean iPad
-multitasking was on screen and stopped putting the keyboard up for its own text fields at all.
-That flag is now lifted only for an app the user has explicitly set to iPad mode, which is what it
-was there for.
+The arbiter is hooked only if `_UIKeyboardArbiter` is already loaded, and only to learn the frame of a keyboard that is already up.
 
 ## Settings
 
@@ -465,7 +311,7 @@ What this costs, and what it does not:
   and still honoured; there is no longer a screen in Settings that writes them.
 - The diagnostics the About and diagnostics pages showed are still written to
   `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`, which is where to look for
-  which class the keyboard was refused in and whether the keyboard's own scene could be hosted.
+  why a pull was refused and whether an app made it onto the stage.
   Nothing in Settings can read a file any more, so the line at the top of the stage's app list
   copies that log to the clipboard.
 - Settings writes through `CFPreferences`, which holds values for a while before the file on
@@ -492,11 +338,10 @@ could do that are bounded deliberately:
   something to show, so every other pull is SpringBoard's as usual. The stage window claims
   a touch only inside the card, and the system home gesture is suppressed only inside the
   card - never across the display, so a stage stuck open cannot take the way home with it.
-- **SpringBoard counts its own launches.** The count goes up before any hook is installed
-  and is cleared once SpringBoard has been up for six seconds. Two launches that never got
-  that far and the tweak sits the next one out, so a boot loop ends in a working device with
-  the tweak off rather than one that only works in safe mode. Installing any build clears
-  the count, and About shows it.
+- **SpringBoard counts its own launches.** The count goes up only when full Stage
+  hooks are about to be installed — never in `%ctor` — and is cleared once
+  `activate()` returns. One full install that crashes leaves the tweak off on
+  the next start so the phone boots. Installing any build clears the count.
 - **The first-run walkthrough cannot get stuck up.** It covers the screen at alert level,
   so it marks itself as seen when it appears rather than when it finishes (a restart gets
   rid of it instead of bringing it back), a two-finger double tap dismisses it wherever the

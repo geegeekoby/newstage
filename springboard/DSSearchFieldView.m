@@ -212,7 +212,7 @@
         _retryScheduled = NO;
         return;
     }
-    if (_keyboardAttempts >= 2) {
+    if (_keyboardAttempts >= 1) {
         _retryScheduled = NO;
         return;
     }

@@ -8,13 +8,10 @@
 #import <UIKit/UIKit.h>
 
 // The window a keyboard is drawn in. keyboardScreenReferenceSize is the size the
-// keyboard lays itself out against, and _shouldTextEffectsWindowBeHostedForView: is
-// where UIKit decides whether the keyboard belongs to this app's window or to the
-// keyboard scene SpringBoard hosts on the display.
+// keyboard lays itself out against. On this firmware that is the display, not the card.
 @interface UITextEffectsWindow : UIWindow
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation;
 @property (nonatomic, readonly) CGSize keyboardScreenReferenceSize;
-- (BOOL)_shouldTextEffectsWindowBeHostedForView:(UIView *)view;
 @end
 
 @interface _UIFullscreenPresentationController : UIPresentationController

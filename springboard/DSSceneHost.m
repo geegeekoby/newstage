@@ -944,6 +944,10 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 
 #pragma mark - Geometry
 
+- (CGRect)stageFrame {
+    return _stageFrame;
+}
+
 - (void)setStageFrame:(CGRect)frame safeAreaInsets:(UIEdgeInsets)insets {
     _contentScale = [DSPreferences sharedPreferences].scale;
     _stageFrame = frame;

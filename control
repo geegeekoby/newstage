@@ -1,6 +1,6 @@
 Package: com.recreated.dynamicstage
 Name: Dynamic Stage
-Version: 1.4.8
+Version: 1.5.1
 Architecture: iphoneos-arm64
 Description: Stage Manager Reimagined for iPhone
 Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
@@ -9,4 +9,4 @@ Maintainer: Dynamic Stage Recreation
 Author: Dynamic Stage Recreation
 Section: Tweaks
 Tag: compatible::ios16
-Icon: file:///var/jb/Library/PreferenceBundles/DynamicStagePrefs.bundle/icon@3x.png
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png

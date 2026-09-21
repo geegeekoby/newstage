@@ -115,6 +115,26 @@ static NSString *DSFrameDescription(NSDictionary *frame, NSArray *images) {
     return name;
 }
 
+// Whether this tweak's code was loaded in the process that crashed. Since 1.5.0 the
+// settings page is a plist and no code of the tweak's runs in Settings except the
+// per-app dylib, so a Settings crash naming neither is somebody else's - and showing
+// it would send the reader after a fault that is not here to be fixed.
+static BOOL DSReportNamesTheTweak(NSDictionary *payload, NSString *text) {
+    NSArray *images = payload[@"usedImages"];
+    if ([images isKindOfClass:NSArray.class]) {
+        for (NSDictionary *image in images) {
+            if (![image isKindOfClass:NSDictionary.class]) continue;
+            NSString *path = image[@"path"] ?: image[@"name"];
+            if ([path isKindOfClass:NSString.class] &&
+                [path rangeOfString:@"DynamicStage" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                return YES;
+            }
+        }
+        return NO;
+    }
+    return [text rangeOfString:@"DynamicStage" options:NSCaseInsensitiveSearch].location != NSNotFound;
+}
+
 static NSString *DSSummaryFromPayload(NSDictionary *payload) {
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
 
@@ -170,7 +190,10 @@ NSString *DSLastSettingsCrashSummary(void) {
         NSString *text = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         if (text.length == 0) return nil;
 
-        NSString *what = DSSummaryFromPayload(DSReportPayload(text));
+        NSDictionary *payload = DSReportPayload(text);
+        if (!DSReportNamesTheTweak(payload, text)) return nil;
+
+        NSString *what = DSSummaryFromPayload(payload);
         if (what.length == 0) {
             // An older, plain-text report.
             what = DSFirstMatch(text, @"Terminating app due to uncaught exception '([^']+)', reason: '([^']{0,160})'");

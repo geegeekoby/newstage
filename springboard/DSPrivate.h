@@ -46,6 +46,22 @@
 - (void)setActions:(NSSet *)actions;
 @end
 
+// KeyboardArbiter -----------------------------------------------------------
+
+// The keyboard of every process on the device is arbitrated in SpringBoard, and this
+// is what it is told each time one goes up, moves or comes down. The position is in
+// display points, because the keyboard belongs to the display rather than to whichever
+// app raised it.
+@interface _UIKeyboardChangedInformation : NSObject
+@property (nonatomic, readonly) CGRect keyboardPosition;
+@property (nonatomic, readonly) BOOL keyboardOnScreen;
+@property (nonatomic, copy) NSString *sourceBundleIdentifier;
+@end
+
+@interface _UIKeyboardArbiter : NSObject
+- (void)updateKeyboardStatus:(_UIKeyboardChangedInformation *)information fromHandler:(id)handler;
+@end
+
 // FrontBoard ----------------------------------------------------------------
 
 @interface FBSceneHostManager : NSObject

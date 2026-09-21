@@ -21,9 +21,8 @@
 // YES while this process is the app on the stage.
 @property (nonatomic, readonly) BOOL staged;
 // Stage rectangle in the app's own coordinates, origin always zero. Read from the
-// scene as it is now, not from the last refresh: SpringBoard makes this window taller
-// than the card the moment a keyboard goes up in it, and an answer from before that
-// puts the keyboard back inside the card.
+// scene as it is now rather than from the last refresh, so an app resized on the stage
+// is never laid out to the size it had a moment ago.
 @property (nonatomic, readonly) CGRect stageBounds;
 // Report the iPad idiom so apps reflow into the short, wide stage instead of
 // showing a stretched phone layout.

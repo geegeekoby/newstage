@@ -7,18 +7,14 @@
 
 #import <UIKit/UIKit.h>
 
+// The window a keyboard is drawn in. keyboardScreenReferenceSize is the size the
+// keyboard lays itself out against, and _shouldTextEffectsWindowBeHostedForView: is
+// where UIKit decides whether the keyboard belongs to this app's window or to the
+// keyboard scene SpringBoard hosts on the display.
 @interface UITextEffectsWindow : UIWindow
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation;
-@end
-
-@interface UIInputSetHostView : UIView
-@end
-
-// Whoever is holding the keyboard up. Asking it to place itself again is how the
-// keyboard is moved after the window it sits at the bottom of has grown.
-@interface UIInputResponderController : UIResponder
-+ (id)activeInputResponderController;
-- (void)reloadPlacement;
+@property (nonatomic, readonly) CGSize keyboardScreenReferenceSize;
+- (BOOL)_shouldTextEffectsWindowBeHostedForView:(UIView *)view;
 @end
 
 @interface _UIFullscreenPresentationController : UIPresentationController
@@ -49,6 +45,8 @@
 @end
 
 @interface UIWindow (DSAppPrivate)
+- (BOOL)_isTextEffectsWindow;
+- (BOOL)_isRemoteKeyboardWindow;
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation;
 - (CGRect)_referenceBounds;
 - (CGRect)_sceneBounds;

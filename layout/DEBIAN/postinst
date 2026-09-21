@@ -1,14 +1,21 @@
 #!/bin/sh
-# Installing a build is the user saying "try again", so both guards are cleared
-# here: the boot guard's count of unfinished SpringBoard launches, and the mark
-# that keeps the Settings page stripped back after one of its opens did not reach
-# the screen. Without this, a build that had tripped either would stay degraded
-# even after being replaced by a fixed one.
+# Installing a build is the user saying "try again", so the boot guard's count of
+# unfinished SpringBoard launches is cleared here. Without this, a build that had
+# tripped it would stay switched off even after being replaced by a fixed one.
 set -e
 
-for guard in launchguard paneguard; do
-	rm -f "/var/mobile/Library/Preferences/com.recreated.dynamicstage.$guard"
-	rm -f "/var/jb/var/mobile/Library/Preferences/com.recreated.dynamicstage.$guard"
+for stale in launchguard paneguard; do
+	rm -f "/var/mobile/Library/Preferences/com.recreated.dynamicstage.$stale"
+	rm -f "/var/jb/var/mobile/Library/Preferences/com.recreated.dynamicstage.$stale"
 done
+
+# The settings page was a preference bundle up to 1.4.8, and loading it crashed
+# Settings on this device: the arm64e slice the Linux toolchain produces is not
+# fixed up properly by the loader, and the objc runtime falls over reading the
+# classes out of it. Since 1.5.0 the page is a plist and there is no bundle at
+# all. Upgrading removes it, but it is removed by name as well, because a copy
+# left behind is a copy Settings will still try to load.
+rm -rf /var/jb/Library/PreferenceBundles/DynamicStagePrefs.bundle
+rm -f /var/jb/Library/PreferenceLoader/Preferences/DynamicStagePrefs.plist
 
 exit 0

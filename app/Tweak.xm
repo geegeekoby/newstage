@@ -8,10 +8,15 @@
 
 // Injected into every UIKit app. While this process is the one on the stage,
 // every route UIKit offers for "how big is the screen" answers with the stage
-// rectangle, the interface stays pinned to portrait, and the keyboard is placed at
-// the bottom of this window - which SpringBoard makes taller than the card by the
-// height of the keyboard, so the keyboard lands below the card on the bottom edge of
-// the display rather than being squeezed into the card.
+// rectangle and the interface stays pinned to portrait.
+//
+// The keyboard is deliberately not one of those routes. A keyboard is drawn into the
+// keyboard scene SpringBoard owns - the same one every app on the device shares - and
+// SpringBoard puts it on the bottom edge of the display, outside every app window,
+// which is where the stock tweak's keyboard comes up too. It gets there by itself as
+// long as nothing lies to it, so the windows a keyboard lives in are left out of every
+// hook below and asked nothing but the truth. Builds up to 1.5.0 clamped those windows
+// to the card, which is the whole reason the keyboard was ever inside it.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -29,6 +34,25 @@ static BOOL DSStaged(void) {
 
 static CGRect DSStageBounds(void) {
     return [DSStageContext sharedContext].stageBounds;
+}
+
+// The real display, which is what the keyboard is laid out against however small the
+// window this app was given.
+static CGRect DSDeviceBounds(void) {
+    return [DSStageContext sharedContext].deviceBounds;
+}
+
+// A window a keyboard is drawn in - the text effects window and the remote keyboard
+// window that inherits from it. Neither belongs to the card: the first is full screen
+// over this app's own scene, the second is hosted by SpringBoard and lives on the
+// display rather than in this process at all. Told how big the card is, both draw the
+// keyboard inside the card, so neither is ever told.
+static BOOL DSIsKeyboardWindow(UIWindow *window) {
+    if (!window) return NO;
+    if ([window respondsToSelector:@selector(_isTextEffectsWindow)] && [window _isTextEffectsWindow]) return YES;
+    if ([window respondsToSelector:@selector(_isRemoteKeyboardWindow)] && [window _isRemoteKeyboardWindow]) return YES;
+    Class effects = objc_getClass("UITextEffectsWindow");
+    return effects != Nil && [window isKindOfClass:effects];
 }
 
 #pragma mark - Screen
@@ -87,27 +111,27 @@ static CGRect DSStageBounds(void) {
 %hook UIWindow
 
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation {
-    if (DSStaged()) return DSStageBounds();
+    if (DSStaged() && !DSIsKeyboardWindow(self)) return DSStageBounds();
     return %orig;
 }
 
 - (CGRect)_referenceBounds {
-    if (DSStaged()) return DSStageBounds();
+    if (DSStaged() && !DSIsKeyboardWindow(self)) return DSStageBounds();
     return %orig;
 }
 
 - (CGRect)_sceneBounds {
-    if (DSStaged()) return DSStageBounds();
+    if (DSStaged() && !DSIsKeyboardWindow(self)) return DSStageBounds();
     return %orig;
 }
 
 - (BOOL)_shouldResizeWithScene {
-    if (DSStaged()) return YES;
+    if (DSStaged() && !DSIsKeyboardWindow(self)) return YES;
     return %orig;
 }
 
 - (BOOL)_shouldAdjustSizeClassesAndResizeWindow {
-    if (DSStaged()) return YES;
+    if (DSStaged() && !DSIsKeyboardWindow(self)) return YES;
     return %orig;
 }
 
@@ -171,44 +195,30 @@ static CGRect DSStageBounds(void) {
 
 #pragma mark - Keyboard
 
-// The keyboard belongs at the bottom of this window, and the window is the card plus
-// the room SpringBoard makes below it for a keyboard, so it is the window in full
-// that these answer with. Earlier builds clamped all of this to the height of the
-// card, which is what put the keyboard inside the card and kept it there no matter
-// what SpringBoard did with the scene. The height has to come from the scene as it
-// is now: it grows the moment a keyboard goes up, and an answer from a layout ago is
-// the card's height.
-// The window the keyboard is drawn in is the whole of this app's scene, so UIKit
-// places the keyboard against the bottom of the scene rather than the bottom of the
-// card. Where it ends up is measured and reported, and SpringBoard cuts the card off
-// above it - so the keyboard is outside the card wherever UIKit decided to put it.
+// The keyboard is the display's, never the card's. Two things have to hold for that,
+// and both of them are about telling the truth rather than about placing anything:
+//
+//   * the keyboard is laid out against the whole display, so it comes out the width
+//     and height it has in any other app rather than shrunk to the card;
+//   * UIKit hands it to the keyboard scene SpringBoard hosts, which draws it on the
+//     bottom edge of the display outside this app's window - the same route an iPad
+//     app in Slide Over takes, and the reason its keyboard is full width too.
+//
+// The second is UIKit's own decision and it makes it by comparing this app's scene
+// with the display. On the stage the two genuinely differ, so the answer is already
+// the right one; it is only stated here because the hooks above make so much of this
+// process answer with the card, and a keyboard that believes it is full screen is one
+// that stays in the card.
 %hook UITextEffectsWindow
 
-- (void)setFrame:(CGRect)frame {
-    if (DSStaged()) {
-        CGRect stage = DSStageBounds();
-        if (!CGRectIsEmpty(stage)) frame = stage;
-    }
-    %orig;
-}
-
-- (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation {
-    if (DSStaged()) return DSStageBounds();
+- (CGSize)keyboardScreenReferenceSize {
+    if (DSStaged()) return DSDeviceBounds().size;
     return %orig;
 }
 
-%end
-
-// The keyboard fills the width of the scene, as it would fill the width of the
-// display if this app were full screen.
-%hook UIInputSetHostView
-
-- (void)setFrame:(CGRect)frame {
-    if (DSStaged()) {
-        frame.size.width = CGRectGetWidth(DSStageBounds());
-        frame.origin.x = 0;
-    }
-    %orig;
+- (BOOL)_shouldTextEffectsWindowBeHostedForView:(UIView *)view {
+    if (DSStaged()) return YES;
+    return %orig;
 }
 
 %end

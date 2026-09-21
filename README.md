@@ -48,12 +48,15 @@ script that draws the artwork.
 
 **Per-app behaviour**
 
-- Each app can be set to launch as iPhone or as iPad. iPad mode hands the app an iPad-sized
-  canvas so it lays out for the wider card, with the multitasking capability flag lifted for
-  just that app while it is staged.
-- Apps can be excluded from the stage entirely, kept out of landscape, or allowed to keep
+- An app can launch as iPhone or as iPad. iPad mode hands it an iPad-sized canvas so it lays
+  out for the wider card, with the multitasking capability flag lifted for just that app
+  while it is staged.
+- An app can be excluded from the stage entirely, kept out of landscape, or allowed to keep
   running in the background after the stage is dismissed.
 - A shipped compatibility table covers the apps that need a specific mode out of the box.
+  Since 1.5.0 that table is the only thing that sets these, because the settings page that
+  edited them was a preference bundle and a preference bundle is what crashed Settings -
+  see [Settings](#settings).
 
 **Housekeeping**
 
@@ -68,17 +71,17 @@ script that draws the artwork.
 | --- | --- |
 | `springboard/` | The SpringBoard tweak: stage window, scene hosting, gestures, picker UI, walkthrough |
 | `app/` | A dylib injected into every UIKit app so a staged app believes in its smaller canvas |
-| `prefs/` | The Settings bundle |
-| `shared/` | Preference reading and layout constants used by all three |
-| `layout/` | Files copied to the device as-is, including the per-app compatibility table |
-| `tools/make_resources.py` | Draws the icons, wordmark and Settings artwork; no binary assets are hand-made |
+| `shared/` | Preference reading and layout constants used by both |
+| `layout/` | Files copied to the device as-is: the settings page, its icon, the per-app compatibility table |
+| `tools/make_resources.py` | Draws the Settings row icon; no binary assets are hand-made |
 | `public/` | The hosted Sileo repo: `Release`, the `.deb`, the repo icon and the landing page |
 | `api/repo.js` | Serves the package index and depiction, filling in the deployment's own host |
 | `tools/make_repo.py` | Rebuilds `public/` from the newest `.deb` in `packages/` |
 | `tools/serve_repo.mjs` | Serves the repo locally with the hosted routing, for testing it |
 
-The two tweaks and the Settings bundle are separate Theos subprojects that ship in one
-package, because SpringBoard and the apps need different hooks and different filters.
+The two tweaks are separate Theos subprojects that ship in one package, because SpringBoard
+and the apps need different hooks and different filters. The settings page is not code at
+all - see [Settings](#settings).
 
 ## Installing
 
@@ -178,9 +181,8 @@ Notes on the build:
 
 - `THEOS_PACKAGE_SCHEME=rootless` is set in the root `Makefile`, so everything installs
   under `/var/jb` and the package architecture is `iphoneos-arm64`.
-- `ARCHS` is `arm64 arm64e`, and both slices are needed. The processes this hooks on an
-  A12 or newer device are arm64e, and PreferenceLoader will not load an arm64 preference
-  bundle on such a device, while App Store apps the per-app dylib goes into are arm64.
+- `ARCHS` is `arm64 arm64e`, and both slices are needed. SpringBoard on an A12 or newer
+  device is arm64e, while App Store apps the per-app dylib goes into are arm64.
 - The Linux toolchain compiles arm64e with the pre-iOS-14 pointer-authentication ABI,
   which iOS 14.5 and later refuse to load, and the linker changes for the new ABI were
   never open sourced. `tools/newabi.py` runs from the root `Makefile`'s `after-stage` hook
@@ -192,14 +194,14 @@ Notes on the build:
   nothing.
 - Always run `make` from the repository root. The deployment target lives in the root
   `Makefile`, and building a subproject directly falls back to a much older iOS and fails on
-  the modern UIKit the Settings bundle uses.
+  the modern UIKit the stage uses.
 - `tools/verify_package.py` runs from the `after-package` hook and checks the finished
   `.deb` rather than trusting it: both slices present, the arm64e one marked as the new
   ptrauth ABI in the fat header and the Mach-O header, its Objective-C and CFString
   pointers signed, every slice code signed. A package this device would refuse to load
   otherwise fails silently - the tweak just never appears.
-- `tools/make_resources.py` regenerates `prefs/Resources/*.png`; it needs `pillow` and
-  `numpy` and is only required if you change the artwork.
+- `tools/make_resources.py` regenerates the Settings row icon; it needs `pillow` and is only
+  required if you change the artwork.
 
 ## Getting an app onto the stage
 
@@ -237,88 +239,111 @@ answered.
 
 ## The keyboard
 
-The keyboard is never squeezed into the card. Two keyboards are involved and they need
-different answers, because they are drawn by different processes.
+A keyboard is never drawn inside the card, and nothing about where it goes is left to the app.
 
-**The stage's own search field** uses SpringBoard's keyboard: the ordinary one, full width,
-at the bottom of the display, above the card, which lifts out of its way while it is there.
-The signal is `UIKeyboardWillChangeFrameNotification`, which arrives in SpringBoard for
-SpringBoard's own keyboards.
+No app draws its own keyboard. UIKit draws it into a scene of the keyboard's own - one scene for
+the whole device, owned by the keyboard arbiter that runs inside SpringBoard - and the app's
+scene is handed a stand-in layer that says "the keyboard goes here". Whoever hosts the app's
+scene hosts that stand-in too, which is why a keyboard normally lands on the bottom edge of the
+display: the app is full screen, so "inside the app" and "on the bottom edge of the display" are
+the same rectangle.
 
-That keyboard is easy to lose, and two things in the stage were taking it away.
+On the stage they are nothing like the same rectangle. The card is a small panel in the corner,
+so hosting the stand-in inside it draws the keyboard inside the card, shrunk to a third of its
+size and clipped by the card's own corners. Every build up to 1.5.0 was arguing with that from
+the app's side - growing the app's window under the keyboard, cutting a band out of the bottom of
+the card, telling UIKit to lay the keyboard out against the display - and all of it could be, and
+was, ignored. The keyboard stayed in the card because the card was hosting it.
+
+So 1.5.1 stops hosting it. The decision is SpringBoard's own and it is asked as a question -
+"may this view draw the keyboard layer" - which is the same question iPad multitasking answers no
+to. For the stage's card, and for nothing else on the display, the answer is now no.
+
+That makes room, and then the keyboard has to be put somewhere. The arbiter's own scene is hosted
+by the stage in a window the size of the display, sitting above the card, so the keyboard comes
+up where every other keyboard on the phone comes up: full width, ordinary size, on the bottom
+edge. The card moves up out of its way and drops back when it goes. Only the part of that window
+the keyboard is actually occupying takes a touch; everything else falls through to the card and
+the home screen behind it.
+
+Three things are worth knowing about how carefully this is switched on, because a keyboard that
+has been taken out of the card and then not put anywhere is worse than a keyboard in the card:
+
+**The class that asks the question is found, not named.** It has moved between iOS versions and
+there has never been only one of them, so every class in SpringBoard and FrontBoard that answers
+it is located at startup and again the first time an app is staged, in case SpringBoard opened
+the framework it lives in later. If none are found, the stage does not touch the keyboard at all,
+and the diagnostics page says so.
+
+**The keyboard is only taken off the card when it can be put on the display.** Hosting the
+keyboard's scene here while the card was still drawing it would be two claims on one keyboard, so
+the refusal and the hosting are switched on together. If hosting fails - no keyboard scene on this
+build, no host view to be had - the takeover is abandoned rather than retried, the card starts
+drawing its own keyboard again, and the reason is written down.
+
+**Only the staged app's keyboard is moved.** The arbiter is told about every keyboard on the
+device, and the stage's own search field is one of them: that keyboard is SpringBoard's, drawn in
+this process, already in the right place, and left alone. Which app raised a keyboard comes from
+the arbiter along with its frame, and anything that is not the app in the card is only ever used
+to decide how far to lift the card.
+
+The card is lifted for any keyboard anywhere on the display, whoever owns it, and never so far
+that it leaves the top of the screen - a card lifted off the top takes the search field, the app
+and every way of closing the stage with it.
+
+Two older mistakes are worth recording, because both of them took SpringBoard's own keyboard away
+rather than moving the app's.
 
 1.4.0 asked SpringBoard's keyboard focus coordinator to point the keyboard at the staged app's
 scene, on the theory that a text field inside that app needed it. It did not - the app asks for
-its own keyboard, in its own process - and the request was never given back, so from the first
-app staged in a session the keyboard belonged to that app's scene and the picker's search field
-could not raise one again. Nothing asks for keyboard focus now.
+its own keyboard, in its own process - and the request was never given back, so from the first app
+staged in a session the picker's search field could not raise a keyboard again. Nothing asks for
+keyboard focus now.
 
-1.4.1 asked SpringBoard to place keyboards the way it does for iPad multitasking, by marking
-every staged app as able to live in a scene smaller than the display. SpringBoard took that to
-mean iPad multitasking was on screen and stopped putting the keyboard up for its own text
-fields at all. That flag is lifted again only for an app the user has explicitly set to iPad
-mode, which is what it was there for.
+1.4.1 asked SpringBoard to place keyboards the way it does for iPad multitasking, by marking every
+staged app as able to live in a scene smaller than the display. SpringBoard took that to mean iPad
+multitasking was on screen and stopped putting the keyboard up for its own text fields at all.
+That flag is now lifted only for an app the user has explicitly set to iPad mode, which is what it
+was there for.
 
-What the diagnostics page records, when the search field is tapped, is whether the stage's
-window is key and whether a keyboard is anywhere on the display a moment later - the difference
-between a field that never asked and a keyboard that never came.
+## Settings
 
-**A staged app's keyboard** is drawn by the app inside its own window. There is no setting
-that moves it out of that window, and nothing about it leaves the app's process - so the only
-thing that can be changed is what the app's window is.
+Settings › **Dynamic Stage** is a plist. There is no preference bundle, and no code of this
+tweak's runs inside Settings.
 
-The thing that kept the keyboard in the card for every build before 1.4.4 was in this
-repository, in the per-app dylib: the window UIKit draws the keyboard in, and the rectangle
-UIKit places the keyboard at the bottom of, were both clamped to the height of the card. That
-was deliberate once - the keyboard was meant to live in the card - and it meant nothing
-SpringBoard did with the scene could move the keyboard out of it. Those hooks now answer with
-the window as the scene has it, read from the scene each time a keyboard moves rather than from
-the last refresh, since the scene grows at exactly that moment and an answer one layout old is
-the card's height again.
+That is not a simplification for its own sake. A preference bundle is a Mach-O that Settings
+loads with `dlopen`, and the arm64e slice this toolchain produces is not fixed up correctly by
+the loader on an A12 or newer device: the pointers to each class's metadata are left holding
+their link-time values, and the first thing the Objective-C runtime does with a newly loaded
+image is read one of them. The crash report says it plainly once you know what to look for -
+`EXC_BAD_ACCESS` at an address the size of a file offset, in `readClass`, under `map_images`,
+under `dlopen`, with nothing of ours on the stack because nothing of ours had run yet. Every
+build up to 1.4.8 took Settings down that way the moment the row was tapped, and every fix
+before this one was aimed at the page's own code, which was never what was wrong.
+`tools/newabi.py` gets the two injected dylibs across - they load, and they work - but it does
+not get this image across, and the difference is not something this repository can see from
+here.
 
-So the window is made taller than the card, by exactly the height of the keyboard the app has
-raised, and the card stops clipping over that last band. The keyboard lands below the card, on
-the bottom edge of the display, at the size and in the position it would have full screen; the
-app lays its own content out above its own keyboard, and that content is exactly what the card
-shows. The card is held up by the height of the band so it all fits, and drops back to its
-resting place when the keyboard goes.
+So the page is built by Settings out of specifiers in
+`layout/Library/PreferenceLoader/Preferences/DynamicStage/DynamicStage.plist`. PreferenceLoader
+turns an entry with no `bundle` key into a page owned by a controller inside PreferenceLoader
+itself, whose rows are that file's `items`; each row reads and writes the tweak's own
+preference domain directly and posts the notification SpringBoard reloads on. Nothing of ours
+is loaded, so there is nothing of ours to crash.
 
-The height comes from the tweak's own dylib inside that app, and there are three things that
-each, on their own, kept the keyboard in the card even once all of the above was in place.
+What this costs, and what it does not:
 
-The height has to arrive. It was sent as the shared state of a Darwin notification, which the
-app writes and SpringBoard reads - and an application is sandboxed where SpringBoard is not, so
-being refused that write is possible, and looks from SpringBoard exactly like an app that never
-raised a keyboard. The height is now also said by *which* notification was posted, one name per
-ten points, because posting is something any process may do. SpringBoard listens to all of them
-and still prefers the exact figure where it can read one.
-
-SpringBoard has to know the app can report at all. The app posts once, when it notices it is on
-the stage, and that is written to the diagnostics page - an app whose dylib never loaded is
-otherwise indistinguishable from one that loaded and saw no keyboard.
-
-And none of it can be an instruction to UIKit. Every version up to 1.4.7 told the keyboard where
-to be - by growing the window under it, by asking it to place itself again, by setting the frame
-of the window it is drawn in - and every one of them could be quietly ignored, which is what
-kept the keyboard in the card. What cannot be ignored is a measurement.
-
-So the app reports where its keyboard *is*: read from the window it is drawn in, after it has
-been laid out, in the scene's own coordinates - a line down the window, and a height. The
-report is repeated until it stops changing, and again whenever the scene is resized, because
-both move the keyboard.
-
-**SpringBoard then cuts the card off at that line.** The card shows the app down to the top of
-its keyboard and no further; the band below the card is the rest, and the two together are put
-against the bottom edge of the display. That is what makes the keyboard's position stop
-mattering: wherever UIKit decided to put the keyboard, the card ends above it, so the keyboard
-is on the other side of the cut. If the window did grow, the cut falls at the card's usual
-height and nothing looks different from a keyboard below a floating card. If it did not, the
-card is shorter for as long as the keyboard is up - and the app, which thinks its keyboard is
-covering its own content, has already scrolled what is being typed into what is left.
-
-The band belongs to the app: touches in it are passed through to the app rather than taken as
-drags on the card, and the home gesture is left alone there, so leaving an app never means
-putting its keyboard away first.
+- Every global setting is still there: the switch, the gesture, appearance, app size, pinned
+  rows, and when a stage app gets closed.
+- The pages that needed code are gone with it - the per-app behaviour list, the pinned app
+  picker, the diagnostics page and About. Per-app settings are still read from the same file
+  and still honoured; there is no longer a screen in Settings that writes them.
+- The diagnostics the About and diagnostics pages showed are still written to
+  `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`, which is where to look for
+  which class the keyboard was refused in and whether the keyboard's own scene could be hosted.
+- Settings writes through `CFPreferences`, which holds values for a while before the file on
+  disk catches up, so the tweak asks `CFPreferences` first and falls back to the file. A
+  setting changed in Settings takes effect on the next pull, not on the next respring.
 
 ## Staying out of the way
 
@@ -351,17 +376,15 @@ could do that are bounded deliberately:
   buttons ended up, and it leaves by itself after three minutes untouched.
 - **Every call out of a hook is contained**, so private API that moved or changed shape
   degrades into the stage not opening.
-- **The Settings page cannot take Settings down with it.** Settings loads this bundle into
-  its own process, so every entry point the system calls into runs inside a guard, and the
-  page marks itself while it is being built and clears the mark once it is on screen. A mark
-  still there on the next open means the last one did not survive, and the page is rebuilt
-  out of stock cells only - same settings, no header - with **Restore Full Page** to put it
-  back. Installing any build clears the mark.
+- **The Settings page cannot take Settings down with it, because it is not code.** It is a
+  plist Settings renders itself; see [Settings](#settings) for why that is the only version
+  of it that works here.
 - **The tweak keeps its own account of what it did.** Which pull path it is using, why a pull
-  was refused, what threw in the Settings page: it is all in
-  Settings › Dynamic Stage › **What The Tweak Has Been Doing**, which also has a button that
-  opens the stage without the gesture. On a device that cannot hand over a crash log, that
-  page is the difference between a report and a guess.
+  was refused, whether the app on the stage answered from inside itself: it is written to
+  `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`, and the part that decides
+  whether the keyboard can work at all is shown at the foot of the stage's app list. On a
+  device that cannot hand over a crash log, that is the difference between a report and a
+  guess.
 
 ## Recovery
 
@@ -372,8 +395,8 @@ ssh mobile@<device> "touch /var/mobile/.dynamicstage-disabled && sbreload"
 ```
 
 Every hook checks that file before doing anything, so SpringBoard comes back stock with the
-package still installed. The same flag can be toggled from the About page in Settings, and
-the file can be dropped with any file manager if SSH is not set up.
+package still installed. The file can be dropped with any file manager if SSH is not set up,
+and switching the tweak off in Settings has the same effect from the next respring.
 
 With no computer to hand: force restart the device (hold the side button and volume up
 until it powers off, then power on). The jailbreak is gone until it is re-run, which means
@@ -388,18 +411,22 @@ you want the real thing, buy it from his repo.
 
 ## Reading a Settings crash
 
-The settings page runs inside Settings, so when it fails it takes Settings with it and there is
-nothing left on screen to say why. The stage's app list shows the last Settings crash report for
-that reason - exception type, what it was doing, and the top of the crashing thread as image
-names and offsets - and tapping it copies the whole line, so it can be pasted rather than
-described.
+A crash inside Settings leaves nothing on screen to say why, so the stage's app list shows the
+last one - exception type, what it was doing, and the top of the crashing thread as image names
+and offsets - and tapping it copies the whole line, so it can be pasted rather than described.
 
-An offset in the tweak's own bundle can be turned back into a line of source, which is what
-`debug-symbols/` is for: it holds the debug symbols of the released build, so
+It only appears when one of this tweak's own images is named in the report. Since 1.5.0 the only
+one that can be is the per-app dylib, which is injected into Settings like any other app; the
+settings page itself is a plist and cannot crash anything. A Settings crash with nothing of ours
+in it belongs to another tweak, and showing it would send the reader after a fault that is not
+here to be fixed.
+
+An offset in one of the dylibs can be turned back into a line of source with the debug build of
+the same version:
 
 ```bash
-llvm-symbolizer --obj=debug-symbols/1.4.8/DynamicStagePrefs.dSYM/Contents/Resources/DWARF/DynamicStagePrefs 0xf7ec
+llvm-symbolizer --obj=.theos/obj/debug/arm64e/DynamicStageApp.dylib 0x132ac
 ```
 
-answers with the function and the line it is on. Keep a directory per release; the offsets only
-mean anything against the build the report came from.
+The offsets only mean anything against the build the report came from, so keep the debug output
+of a release before shipping the next one.

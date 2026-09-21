@@ -6,6 +6,9 @@
 #define kDSPackageIdentifier @"com.recreated.dynamicstage"
 #define kDSPreferenceDomain @"com.recreated.dynamicstage.prefs"
 #define kDSRequester @"DynamicStage"
+// Hosting the keyboard's scene is a separate claim from hosting the app's, and
+// FrontBoard tracks a claim by the name of whoever made it.
+#define kDSKeyboardRequester @"DynamicStageKeyboard"
 
 // Darwin notifications shared between the preference bundle, SpringBoard and
 // the per-application dylib.
@@ -19,38 +22,13 @@
 // being picked up" without needing a log.
 #define kDSOpenStageNotification "com.recreated.dynamicstage.stage.open"
 
-// Written by the staged application, read by SpringBoard: where the keyboard it has
-// raised actually is. An app draws its keyboard inside its own window and posts
-// nothing outside its process, so without this SpringBoard has no way of knowing a
-// keyboard exists - and a card half the screen tall with a keyboard inside it leaves
-// nothing of the app.
-//
-// The state carries two numbers, both in the app's own scene coordinates and both
-// measured from the keyboard as it ended up rather than as it was asked to be: its
-// height in the low sixteen bits, and the distance from the top of the scene to the
-// top of the keyboard in the next sixteen. SpringBoard shows everything above that
-// line as the card and everything below it as the band under the card, so wherever
-// the keyboard turns out to be, it is not in the card.
-#define kDSKeyboardHeightNotification "com.recreated.dynamicstage.keyboard"
-#define kDSKeyboardStateHeightMask 0xFFFFULL
-#define kDSKeyboardStateTopShift 16
-
-// The same number, said a second way, because the first way can fail silently. An
-// application is sandboxed and SpringBoard is not: whether a sandboxed process may
-// write the shared state of a notification another process created is not something
-// that can be relied on, and a refusal looks exactly like a keyboard that was never
-// raised. Posting a notification, on the other hand, any process may do - so the
-// height is also carried by which of these names is posted, one per ten points.
-// SpringBoard listens to all of them and prefers the exact figure from the state
-// where it can read one.
-// Posted by the staged application the moment it notices it is on the stage. It is
-// the only evidence SpringBoard can have that the tweak's own code is loaded in
-// there at all - and an app without it can never report a keyboard.
-#define kDSStagedAppCheckedInNotification "com.recreated.dynamicstage.app.checkedin"
-
-#define kDSKeyboardHeightStepNotificationPrefix "com.recreated.dynamicstage.keyboard."
-#define kDSKeyboardHeightStep 10
-#define kDSKeyboardHeightSteps 61
+// Nothing here for the keyboard, by design. A keyboard belongs to a scene of its own
+// that the keyboard arbiter in SpringBoard owns, and the stage hosts that scene in a
+// window the size of the display while refusing it inside the card - so the keyboard
+// comes up on the bottom edge of the phone at its ordinary size and the card moves up
+// out of its way. All of that happens inside SpringBoard, where the arbiter already
+// is, so there is nothing for the app on the stage to report and nothing for the card
+// to make room inside itself for. See the keyboard section of the README.
 
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
@@ -69,13 +47,6 @@
 // notify API. Reading the file above depends on the sandbox allowing it, and an
 // app that cannot tell would install hooks it does not need.
 #define kDSStageStateActiveBit (1ULL << 32)
-
-// The height of the visible card, in whole points, carried in the next thirteen bits
-// of that same state. The staged app needs it to know where its keyboard belongs: the
-// band SpringBoard opens below the card starts exactly there, whether or not the
-// app's own window was successfully made tall enough to contain it.
-#define kDSStageStateCardHeightShift 33
-#define kDSStageStateCardHeightMask 0x1FFFULL
 
 // FNV-1a over the bundle identifier, which is what the low half of that state
 // carries. A collision would only mean an app is handed stage geometry it did
@@ -106,11 +77,6 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 // is the only way to see inside the tweak on a device that cannot hand over a
 // crash log. Both processes run as mobile, so both can reach this.
 #define kDSDiagnosticsPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.log"
-
-// The Settings pane marks itself as opening here and clears the mark once the
-// page is on screen. A mark still present on the next open means the last one
-// did not survive, and the pane rebuilds itself without any of its decoration.
-#define kDSPrefsOpenGuardPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.paneguard"
 
 // Preference keys ------------------------------------------------------------
 
@@ -182,13 +148,13 @@ typedef NS_ENUM(NSInteger, DSStageState) {
 //     being pulled, over black, then either springs back (overlay) or resizes
 //     into the top half (split).
 
-// Below this, whatever an app has put up at the bottom of its window is an
-// accessory bar or a keyboard on its way out rather than a keyboard.
+// Below this, what is on the bottom edge of the display is an accessory bar or a
+// keyboard on its way out rather than a keyboard the card has to stay clear of.
 static const CGFloat kDSKeyboardPresentHeight = 60.0;
 
-// The least card worth showing. Where a keyboard is so tall that the card would be
-// thinner than this, the band gives way rather than the keyboard leaving the screen.
-static const CGFloat kDSStageKeyboardMinimumCard = 80.0;
+// The card is never pushed closer than this to the top of the display, however tall
+// the keyboard under it turns out to be.
+static const CGFloat kDSStageKeyboardHeadroom = 20.0;
 
 static const CGFloat kDSSplitRatio = 0.5;
 static const CGFloat kDSStageInset = 10.0;

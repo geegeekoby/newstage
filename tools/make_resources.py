@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Generates the PNGs the preference bundle ships with.
+"""Generates the Settings row icon the package ships.
 
-Everything the bundle draws is either rendered at runtime with Core Graphics or
-produced here, so the repository carries no binary artwork it cannot rebuild.
+The stage draws everything else it shows with Core Graphics at runtime, so this
+is the only artwork in the repository, and it can be rebuilt rather than trusted.
 
     python3 tools/make_resources.py
 
-Writes prefs/Resources/{icon,icon@2x,icon@3x,logo@3x,bg,double,tripple}.png.
+Writes Library/PreferenceLoader/Preferences/DynamicStage/icon{,@2x,@3x}.png.
 """
 
 from __future__ import annotations
@@ -14,11 +14,11 @@ from __future__ import annotations
 import math
 import os
 
-import numpy
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(os.path.dirname(HERE), "prefs", "Resources")
+OUT = os.path.join(os.path.dirname(HERE), "layout", "Library", "PreferenceLoader",
+                   "Preferences", "DynamicStage")
 
 SUPERSAMPLE = 8
 
@@ -77,23 +77,6 @@ def render(size, draw_calls):
     return canvas.resize((size, size), Image.LANCZOS)
 
 
-def write_logo(size=72):
-    """White squircle with the arrow punched straight through it."""
-
-    def calls(draw, side):
-        draw.polygon(superellipse((0, 0, side, side)), fill=(255, 255, 255, 255))
-
-    image = render(size, calls)
-
-    hole = render(size, lambda draw, side: draw.polygon(arrow_path(side), fill=(0, 0, 0, 255)))
-    mask = hole.split()[3].point(lambda value: 255 - value)
-    alpha = Image.new("L", image.size, 0)
-    alpha.paste(image.split()[3], mask=mask)
-    image.putalpha(alpha)
-
-    image.save(os.path.join(OUT, "logo@3x.png"))
-
-
 def write_icon(size, name):
     """Settings row icon: black app tile, white squircle, black arrow."""
     inset_ratio = 0.115
@@ -111,90 +94,11 @@ def write_icon(size, name):
     render(size, calls).save(os.path.join(OUT, name))
 
 
-def wallpaper(size):
-    """Soft colour field standing in for the clip the stock banner loops."""
-    width, height = size
-    xs = numpy.linspace(0.0, 1.0, width)[None, :]
-    ys = numpy.linspace(0.0, 1.0, height)[:, None]
-
-    field = numpy.zeros((height, width, 3), dtype=numpy.float64)
-    weight = numpy.full((height, width), 1e-6)
-
-    blobs = [
-        ((0.16, 0.04), 0.40, (238, 140, 32)),
-        ((0.80, 0.00), 0.34, (198, 58, 44)),
-        ((0.50, 0.42), 0.52, (34, 56, 146)),
-        ((0.06, 0.60), 0.40, (84, 46, 140)),
-        ((0.90, 0.70), 0.42, (214, 104, 132)),
-        ((0.40, 1.00), 0.46, (232, 160, 150)),
-    ]
-    aspect = height / float(width)
-    for (cx, cy), radius, colour in blobs:
-        distance = numpy.sqrt((xs - cx) ** 2 + ((ys - cy) * aspect) ** 2)
-        falloff = numpy.exp(-(distance / radius) ** 2)
-        weight += falloff
-        for channel in range(3):
-            field[:, :, channel] += falloff * colour[channel]
-
-    field /= weight[:, :, None]
-    image = Image.fromarray(numpy.clip(field, 0, 255).astype(numpy.uint8), "RGB")
-    return image.filter(ImageFilter.GaussianBlur(radius=width * 0.03))
-
-
-def write_background(size=(430, 460)):
-    wallpaper(size).save(os.path.join(OUT, "bg.png"))
-
-
-def write_rows_preview(rows, name, size=(168, 246)):
-    """Stage mock used by the Double / Tripple picker on the pinned apps page."""
-    width, height = size
-    scale = 3
-    canvas = wallpaper((width * scale, height * scale)).convert("RGBA")
-    draw = ImageDraw.Draw(canvas, "RGBA")
-
-    card_inset = 14 * scale
-    card_top = int(height * scale * 0.34)
-    card = (card_inset, card_top, width * scale - card_inset, height * scale - card_inset)
-    radius = 18 * scale
-
-    plate = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    ImageDraw.Draw(plate).rounded_rectangle(card, radius=radius, fill=(255, 255, 255, 92))
-    canvas = Image.alpha_composite(canvas, plate)
-    draw = ImageDraw.Draw(canvas, "RGBA")
-
-    inner = 10 * scale
-    left = card[0] + inner
-    right = card[2] - inner
-    y = card[1] + inner
-    pill_height = 13 * scale
-    draw.rounded_rectangle((left, y, right, y + pill_height), radius=pill_height / 2.0, fill=(255, 255, 255, 120))
-
-    y += pill_height + 7 * scale
-    gap = 5 * scale
-    column = (right - left - gap) / 2.0
-    for row in range(rows):
-        for column_index in range(2):
-            x0 = left + column_index * (column + gap)
-            shade = 150 - row * 26
-            draw.rounded_rectangle(
-                (x0, y, x0 + column, y + pill_height),
-                radius=pill_height / 2.0,
-                fill=(shade + 60, shade + 60, shade + 70, 150),
-            )
-        y += pill_height + gap
-
-    canvas.convert("RGB").resize(size, Image.LANCZOS).save(os.path.join(OUT, name))
-
-
 def main():
     os.makedirs(OUT, exist_ok=True)
-    write_logo()
     write_icon(29, "icon.png")
     write_icon(58, "icon@2x.png")
     write_icon(87, "icon@3x.png")
-    write_background()
-    write_rows_preview(2, "double.png")
-    write_rows_preview(3, "tripple.png")
     print("wrote", OUT)
 
 

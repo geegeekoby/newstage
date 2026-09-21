@@ -41,8 +41,28 @@ static const NSInteger kDSMaxRecents = 12;
     return path;
 }
 
+// Settings writes through CFPreferences, which keeps values of its own for a while
+// before the file on disk catches up - so a reload prompted by the notification
+// Settings posts as it writes can easily read the file as it was before. Ask
+// CFPreferences first, where the answer is current; the file is what remains
+// readable in a process the sandbox keeps away from another app's domain.
+- (NSDictionary *)storedSettings {
+    CFArrayRef keys = CFPreferencesCopyKeyList((CFStringRef)kDSPreferenceDomain,
+                                               kCFPreferencesCurrentUser,
+                                               kCFPreferencesAnyHost);
+    if (keys) {
+        NSDictionary *live = CFBridgingRelease(CFPreferencesCopyMultiple(keys,
+                                                                        (CFStringRef)kDSPreferenceDomain,
+                                                                        kCFPreferencesCurrentUser,
+                                                                        kCFPreferencesAnyHost));
+        CFRelease(keys);
+        if (live.count > 0) return live;
+    }
+    return [NSDictionary dictionaryWithContentsOfFile:kDSPreferencePath];
+}
+
 - (void)reload {
-    NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:kDSPreferencePath] ?: @{};
+    NSDictionary *settings = [self storedSettings] ?: @{};
     NSDictionary *defaults = [NSDictionary dictionaryWithContentsOfFile:[self resolvedPath:kDSAppDefaultsPath]] ?: @{};
     NSDictionary *state = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath] ?: @{};
     dispatch_sync(_queue, ^{
@@ -124,10 +144,15 @@ static const NSInteger kDSMaxRecents = 12;
     return [[self valueForKey:kDSPrefIntroShown fallback:@NO] boolValue];
 }
 
+// Through CFPreferences, the same way Settings writes, because that is where the
+// values are read from: a key written straight to the file would be invisible for
+// as long as CFPreferences has anything of its own to say about this domain, and
+// the walkthrough would come back every time the stage is opened.
 - (void)setIntroShown:(BOOL)shown {
-    NSMutableDictionary *settings = [([NSDictionary dictionaryWithContentsOfFile:kDSPreferencePath] ?: @{}) mutableCopy];
-    settings[kDSPrefIntroShown] = @(shown);
-    [settings writeToFile:kDSPreferencePath atomically:YES];
+    CFPreferencesSetAppValue((CFStringRef)kDSPrefIntroShown,
+                             (__bridge CFNumberRef)@(shown),
+                             (CFStringRef)kDSPreferenceDomain);
+    CFPreferencesAppSynchronize((CFStringRef)kDSPreferenceDomain);
     [self reload];
 }
 

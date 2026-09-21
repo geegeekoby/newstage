@@ -1,5 +1,6 @@
 #import "DSStageManager.h"
 #import "DSSceneHost.h"
+#import "DSKeyboardHost.h"
 #import "DSPreferences.h"
 #import "DSGestureController.h"
 #import "DSPrivate.h"
@@ -8,6 +9,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <dlfcn.h>
 
 // Every hook below is a thin shim over DSStageManager. The rule throughout is
 // that a missing or renamed private API must degrade into "the stage does not
@@ -402,6 +404,47 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 %end
 
+#pragma mark - The keyboard
+
+// Every keyboard on the device passes through the arbiter running in this process, so
+// this is where the stage learns that one has gone up, where it is on the display, and
+// - through the arbiter itself - which scene it is drawn into. Whose keyboard it is
+// does not matter: the card's only answer to a keyboard anywhere on the display is to
+// stay above it.
+%group Arbiter
+
+%hook _UIKeyboardArbiter
+
+- (void)updateKeyboardStatus:(_UIKeyboardChangedInformation *)information fromHandler:(id)handler {
+    %orig;
+    if (!DSTweakEnabled() || !information) return;
+    @try {
+        if (![information respondsToSelector:@selector(keyboardPosition)]) return;
+        CGRect frame = information.keyboardPosition;
+        BOOL onScreen = ![information respondsToSelector:@selector(keyboardOnScreen)] ||
+                        information.keyboardOnScreen;
+        NSString *source = [information respondsToSelector:@selector(sourceBundleIdentifier)]
+            ? information.sourceBundleIdentifier
+            : nil;
+        __strong id arbiter = self;
+
+        // The arbiter runs on its own queue, and everything below this line is the
+        // stage's own layout.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[DSKeyboardHost sharedHost] noteArbiter:arbiter];
+            DSTell(^(DSStageManager *manager) {
+                [manager keyboardOnScreen:onScreen frame:frame source:source];
+            });
+        });
+    } @catch (NSException *exception) {
+    }
+}
+
+%end
+
+%end
+
+
 #pragma mark - Notifications
 
 static void DSPreferencesChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
@@ -443,66 +486,6 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
             [manager openStageAnimated:YES];
         });
     });
-}
-
-// The staged app says how tall its keyboard is, since SpringBoard cannot see a
-// keyboard that another process drew inside its own window.
-static int sKeyboardHeightToken = NOTIFY_TOKEN_INVALID;
-
-static void DSStagedAppCheckedIn(CFNotificationCenterRef center, void *observer, CFStringRef name,
-                                 const void *object, CFDictionaryRef userInfo) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        DSTell(^(DSStageManager *manager) {
-            [manager noteStagedAppCheckedIn];
-        });
-    });
-}
-
-static void DSDeliverKeyboard(CGFloat top, CGFloat height) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        DSTell(^(DSStageManager *manager) {
-            [manager stagedAppKeyboardChangedTop:top height:height];
-        });
-    });
-}
-
-static BOOL DSReadKeyboardState(CGFloat *top, CGFloat *height) {
-    uint64_t state = 0;
-    if (sKeyboardHeightToken == NOTIFY_TOKEN_INVALID ||
-        notify_get_state(sKeyboardHeightToken, &state) != NOTIFY_STATUS_OK) {
-        return NO;
-    }
-    if (top) *top = (CGFloat)((state >> kDSKeyboardStateTopShift) & kDSKeyboardStateHeightMask);
-    if (height) *height = (CGFloat)(state & kDSKeyboardStateHeightMask);
-    return YES;
-}
-
-static void DSStagedAppKeyboardChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
-                                       const void *object, CFDictionaryRef userInfo) {
-    CGFloat top = 0.0;
-    CGFloat height = 0.0;
-    if (!DSReadKeyboardState(&top, &height)) return;
-    DSDeliverKeyboard(top, height);
-}
-
-// The height carried by which name was posted, for the case where the app was not
-// allowed to write the shared state above. Ten points per step, and no line to cut the
-// card at: the card keeps the height it has.
-static void DSStagedAppKeyboardStepped(CFNotificationCenterRef center, void *observer, CFStringRef name,
-                                       const void *object, CFDictionaryRef userInfo) {
-    NSString *posted = (__bridge NSString *)name;
-    NSString *prefix = @(kDSKeyboardHeightStepNotificationPrefix);
-    if (![posted hasPrefix:prefix]) return;
-
-    CGFloat stepped = [posted substringFromIndex:prefix.length].integerValue * kDSKeyboardHeightStep;
-
-    CGFloat top = 0.0;
-    CGFloat exact = 0.0;
-    if (DSReadKeyboardState(&top, &exact) && fabs(exact - stepped) <= kDSKeyboardHeightStep) {
-        DSDeliverKeyboard(top, exact);
-        return;
-    }
-    DSDeliverKeyboard(0.0, stepped);
 }
 
 %ctor {
@@ -563,21 +546,23 @@ static void DSStagedAppKeyboardStepped(CFNotificationCenterRef center, void *obs
     CFNotificationCenterAddObserver(center, NULL, DSOpenStage,
                                     CFSTR(kDSOpenStageNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
-    CFNotificationCenterAddObserver(center, NULL, DSStagedAppCheckedIn,
-                                    CFSTR(kDSStagedAppCheckedInNotification), NULL,
-                                    CFNotificationSuspensionBehaviorCoalesce);
-    notify_register_check(kDSKeyboardHeightNotification, &sKeyboardHeightToken);
-    CFNotificationCenterAddObserver(center, NULL, DSStagedAppKeyboardChanged,
-                                    CFSTR(kDSKeyboardHeightNotification), NULL,
-                                    CFNotificationSuspensionBehaviorCoalesce);
-    for (int step = 0; step < kDSKeyboardHeightSteps; step++) {
-        NSString *name = [NSString stringWithFormat:@"%s%d", kDSKeyboardHeightStepNotificationPrefix, step];
-        CFNotificationCenterAddObserver(center, NULL, DSStagedAppKeyboardStepped,
-                                        (__bridge CFStringRef)name, NULL,
-                                        CFNotificationSuspensionBehaviorCoalesce);
-    }
 
     %init(_ungrouped);
+
+    // Every keyboard on the device is arbitrated here, in SpringBoard, so this is
+    // where the stage finds out about one without asking the app anything.
+    Class arbiter = objc_getClass("_UIKeyboardArbiter");
+    if (!arbiter) {
+        void *handle = dlopen("/System/Library/PrivateFrameworks/KeyboardArbiter.framework/KeyboardArbiter", RTLD_LAZY);
+        if (handle) arbiter = objc_getClass("_UIKeyboardArbiter");
+    }
+    if (arbiter && class_getInstanceMethod(arbiter, @selector(updateKeyboardStatus:fromHandler:))) {
+        %init(Arbiter, _UIKeyboardArbiter = arbiter);
+    } else {
+        DSDiagnosticsRecord(@"SpringBoard: no keyboard arbiter on this build, the card will only move for SpringBoard's own keyboard");
+    }
+
+    [DSKeyboardHost refuseTheKeyboardLayerWhereverItIsOffered];
 
     DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed, corner pull will come from %@",
                               systemPull ? @"the system edge gesture" : @"a window in the corner");

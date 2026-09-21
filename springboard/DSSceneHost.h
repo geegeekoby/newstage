@@ -29,6 +29,7 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 - (void)prepareWithCompletion:(DSSceneHostReadyBlock)completion;
 
 // Frame in screen coordinates that the app should believe it occupies.
+@property (nonatomic, readonly) CGRect stageFrame;
 - (void)setStageFrame:(CGRect)frame safeAreaInsets:(UIEdgeInsets)insets;
 - (void)setForeground:(BOOL)foreground;
 

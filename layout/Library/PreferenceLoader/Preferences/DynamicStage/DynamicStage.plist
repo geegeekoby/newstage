@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	The whole of this tweak's settings page, and no code of its own.
+
+	A preference bundle is a Mach-O that Settings loads with dlopen, and this tweak
+	is built on a Linux toolchain whose arm64e output the loader on an A12 or newer
+	device does not fix up properly. Nothing about that is visible until the objc
+	runtime walks the classes in the newly loaded image, reads a pointer that was
+	never rebased, and takes Settings down with it - which is what every build up to
+	1.4.8 did the moment this row was tapped.
+
+	Settings can build a page out of a plist on its own, so it does. "entry" is the
+	row that appears in the Settings list; an entry with no bundle behind it is one
+	PreferenceLoader owns, and the page it pushes is the "items" below, read by a
+	controller inside PreferenceLoader itself. Every value is read and written
+	straight into the tweak's own preference domain and posts the notification
+	SpringBoard reloads on, so there is nothing left for a bundle to do here - and
+	nothing of this tweak's inside Settings that could crash it.
+-->
+<plist version="1.0">
+<dict>
+	<key>entry</key>
+	<dict>
+		<key>cell</key>
+		<string>PSLinkCell</string>
+		<key>icon</key>
+		<string>icon.png</string>
+		<key>label</key>
+		<string>Dynamic Stage</string>
+	</dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Stage</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>enabled</string>
+			<key>label</key>
+			<string>Enabled</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>showOpenAppIcon</string>
+			<key>label</key>
+			<string>Show Open App Icon</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>disableOnHomeScreen</string>
+			<key>label</key>
+			<string>Disable on Home Screen</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Pull up from the bottom right corner of the display to bring the stage out.</string>
+			<key>label</key>
+			<string>Opening</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<integer>1</integer>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>useModernGesture</string>
+			<key>label</key>
+			<string>Gesture</string>
+			<key>validTitles</key>
+			<array>
+				<string>Corner Pull</string>
+				<string>Home Gesture</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Appearance</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<integer>2</integer>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>appearance</string>
+			<key>label</key>
+			<string>Stage Appearance</string>
+			<key>validTitles</key>
+			<array>
+				<string>Light</string>
+				<string>Dark</string>
+				<string>Automatic</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>scale</string>
+			<key>label</key>
+			<string>App Size</string>
+			<key>validTitles</key>
+			<array>
+				<string>Normal</string>
+				<string>Slightly Smaller</string>
+				<string>Smaller</string>
+				<string>Smallest</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>1.0</real>
+				<real>1.15</real>
+				<real>1.3</real>
+				<real>1.5</real>
+			</array>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<integer>2</integer>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>pinCount</string>
+			<key>label</key>
+			<string>Pinned Rows</string>
+			<key>validTitles</key>
+			<array>
+				<string>None</string>
+				<string>One Row</string>
+				<string>Two Rows</string>
+				<string>Three Rows</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>An app stays loaded while the stage is closed so it is still where you left it when you come back.</string>
+			<key>label</key>
+			<string>Apps on the Stage</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.recreated.dynamicstage.prefs.reload</string>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<integer>3</integer>
+			<key>defaults</key>
+			<string>com.recreated.dynamicstage.prefs</string>
+			<key>key</key>
+			<string>autoKill</string>
+			<key>label</key>
+			<string>Close App After</string>
+			<key>validTitles</key>
+			<array>
+				<string>Closing the Stage</string>
+				<string>Five Minutes</string>
+				<string>Ten Minutes</string>
+				<string>Never</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Dynamic Stage Recreation. Recreated from the original tweak by tomt000.</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Dynamic Stage</string>
+</dict>
+</plist>

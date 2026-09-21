@@ -36,10 +36,12 @@
 // Opens the stage as though the corner had been pulled all the way up.
 - (void)openStageAnimated:(BOOL)animated;
 
-// How tall a keyboard the app on the stage has raised inside its own window, as
-// reported by the app itself. Zero when it has put one away.
-- (void)stagedAppKeyboardChangedTop:(CGFloat)top height:(CGFloat)height;
-- (void)noteStagedAppCheckedIn;
+// A keyboard has gone up, moved or come down anywhere on the device, as reported by
+// the keyboard arbiter running in this process. The frame is in display points and
+// `source` is the bundle identifier of whoever raised it, which may be the app on the
+// stage, the app sharing the screen with it or SpringBoard itself. The stage does one
+// thing with it: keeps the card off it.
+- (void)keyboardOnScreen:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source;
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;
 

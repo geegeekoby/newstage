@@ -103,6 +103,20 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
         });
         DSNoteLaunchSucceeded();
     });
+
+    // Finding every class that decides whether a view may draw the keyboard means
+    // walking all of them, which is not something to do on the way up: a phone that
+    // takes longer to boot because of this tweak is a cost paid by every launch, for a
+    // question that is not asked until an app is on the stage. So it is done once the
+    // home screen is there, and again on the first launch onto the stage if that got in
+    // first.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.0 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        @try {
+            [DSKeyboardHost refuseTheKeyboardLayerWhereverItIsOffered];
+        } @catch (NSException *exception) {
+        }
+    });
 }
 
 // A new front app invalidates Split View, which is bound to the app it was
@@ -561,8 +575,6 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
     } else {
         DSDiagnosticsRecord(@"SpringBoard: no keyboard arbiter on this build, the card will only move for SpringBoard's own keyboard");
     }
-
-    [DSKeyboardHost refuseTheKeyboardLayerWhereverItIsOffered];
 
     DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed, corner pull will come from %@",
                               systemPull ? @"the system edge gesture" : @"a window in the corner");

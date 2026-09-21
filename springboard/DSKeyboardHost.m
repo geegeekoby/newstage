@@ -1,5 +1,5 @@
 #import "DSKeyboardHost.h"
-#import "DSSceneHost.h"
+#import "DSStageWindow.h"
 #import "DSPrivate.h"
 #import "DSConstants.h"
 #import "DSDiagnostics.h"
@@ -47,9 +47,9 @@ static id DSIvarValue(id object, NSString *name) {
     // to put the keyboard in the card for the rest of its life.
     BOOL _armed;
     BOOL _hostingFailed;
+    BOOL _notedSceneFrame;
     NSString *_bundleIdentifier;
     CGRect _keyboardFrame;
-    CGRect _restoredSceneFrame;
 }
 
 + (instancetype)sharedHost {
@@ -176,10 +176,11 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         Class candidate = classes[i];
         const char *rawName = class_getName(candidate);
         if (!rawName) continue;
-        // SpringBoard's own scene views and FrontBoard's hosting views, and nothing
-        // else. This runs over every class in the process, and a selector name on its
-        // own is not reason enough to rewrite a method in somebody else's code.
-        if (strncmp(rawName, "SB", 2) != 0 && strncmp(rawName, "FBScene", 7) != 0) continue;
+        // Cheap test first, because this walks every class in SpringBoard: a class that
+        // does not answer the question at all, by itself or by inheritance, is skipped
+        // without allocating anything. The handful left are checked properly, since the
+        // answer has to be replaced in the class that declares it and nowhere else.
+        if (!class_getInstanceMethod(candidate, selector)) continue;
         if ([DSKeyboardLayerOriginals() objectForKey:candidate]) continue;
 
         unsigned int methodCount = 0;
@@ -227,19 +228,30 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 #pragma mark - Hosting
 
 - (void)setKeyboardFrame:(CGRect)frame source:(NSString *)source {
-    // SpringBoard's own keyboard is drawn by SpringBoard, in this process, on top of
-    // everything - there is nothing to move and nothing to host. Only the keyboard of
-    // the app in the card is the stage's business.
     if (!_armed || !_keyboardLayerCanBeRefused || _hostingFailed) return;
+
+    // A keyboard going away is taken at its word whoever reports it. The arbiter does
+    // not always name the process a keyboard is leaving on behalf of, and a keyboard
+    // window left up over a keyboard that has gone is a slab of dead keys on the
+    // display - much worse than putting one away a moment early.
+    if (CGRectIsEmpty(frame)) {
+        [self keyboardIsNoLongerOnScreen];
+        return;
+    }
+
+    // Anything else, though, has to be the keyboard of the app in the card. The
+    // keyboard SpringBoard raises for its own text fields - the stage's search field,
+    // Spotlight - is drawn by SpringBoard in this process, already at the bottom of the
+    // display and already above the card. There is nothing to move.
     if (_bundleIdentifier.length == 0 || ![source isEqualToString:_bundleIdentifier]) return;
     if (CGRectEqualToRect(frame, _keyboardFrame)) return;
     _keyboardFrame = frame;
-
-    if (CGRectIsEmpty(frame)) {
-        [self hideWindow];
-        return;
-    }
     [self showKeyboardInOwnWindow];
+}
+
+- (void)keyboardIsNoLongerOnScreen {
+    _keyboardFrame = CGRectZero;
+    [self hideWindow];
 }
 
 - (void)showKeyboardInOwnWindow {
@@ -248,8 +260,6 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         [self giveUpHosting:@"there is no keyboard scene on this build"];
         return;
     }
-
-    [self makeKeyboardSceneSpanTheDisplay:scene];
 
     if (!_hostView) {
         @try {
@@ -272,7 +282,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     }
 
     DSKeyboardHostWindow *window = [self window];
-    _hostView.frame = window.bounds;
+    _hostView.frame = [self hostViewFrameForScene:scene inWindow:window];
     if (_hostView.superview != window.rootViewController.view) {
         [window.rootViewController.view addSubview:_hostView];
     }
@@ -280,29 +290,35 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     window.hidden = NO;
 }
 
-// The arbiter sizes the keyboard's scene from the scene that has keyboard focus, and on
-// the stage that is the card - a rectangle a third of the display. A keyboard laid out
-// against it is a third-sized keyboard, so the scene is put back to the whole display.
-// Checked rather than assumed: on a build where the keyboard scene is already the
-// display, there is nothing to correct and nothing worth risking.
-- (void)makeKeyboardSceneSpanTheDisplay:(FBScene *)scene {
-    CGRect display = UIScreen.mainScreen.bounds;
-    CGRect current = CGRectZero;
+// A scene's host view is that scene's own rectangle, and the keyboard's scene is laid
+// out against the whole display: the keyboard sits at the bottom of it with nothing
+// above. So the host view is given the display, and the keyboard lands where it would
+// in any other app.
+//
+// Measured rather than assumed, though, because the whole point of hosting the keyboard
+// here is that its size stops depending on the card. A scene that turns out to be the
+// keyboard and no more is placed at the keyboard's own frame instead, and either way
+// what the scene said is written down once - it is the one number that would explain a
+// keyboard coming up the wrong size.
+- (CGRect)hostViewFrameForScene:(FBScene *)scene inWindow:(UIWindow *)window {
+    CGRect display = window.bounds;
+    CGRect sceneFrame = CGRectZero;
     @try {
-        current = scene.settings.frame;
+        sceneFrame = scene.settings.frame;
     } @catch (NSException *exception) {
-        return;
-    }
-    if (!CGRectIsEmpty(_restoredSceneFrame)) return;
-    if (CGRectGetWidth(current) >= CGRectGetWidth(display) - 1.0 &&
-        CGRectGetHeight(current) >= CGRectGetHeight(display) - 1.0) {
-        return;
+        return display;
     }
 
-    DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard's scene was %@, widening it to the display %@",
-                              NSStringFromCGRect(current), NSStringFromCGRect(display));
-    _restoredSceneFrame = current;
-    [DSSceneHost registerGeometryOverrideForScene:scene frame:display insets:UIEdgeInsetsZero];
+    if (!_notedSceneFrame) {
+        _notedSceneFrame = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard's scene is %@ against a display of %@",
+                                  NSStringFromCGRect(sceneFrame), NSStringFromCGRect(display));
+    }
+
+    if (CGRectIsEmpty(sceneFrame)) return display;
+    if (CGRectGetHeight(sceneFrame) >= CGRectGetHeight(display) - 1.0) return display;
+    return CGRectMake(CGRectGetMinX(_keyboardFrame), CGRectGetMinY(_keyboardFrame),
+                      CGRectGetWidth(sceneFrame), CGRectGetHeight(sceneFrame));
 }
 
 - (void)hideWindow {
@@ -323,12 +339,6 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 
 - (void)tearDownHosting {
     [self hideWindow];
-    if (!CGRectIsEmpty(_restoredSceneFrame) && _keyboardScene) {
-        [DSSceneHost removeGeometryOverrideForScene:_keyboardScene
-                                    restoringFrame:_restoredSceneFrame
-                                            insets:UIEdgeInsetsZero];
-    }
-    _restoredSceneFrame = CGRectZero;
     @try {
         if ([_hostManager respondsToSelector:@selector(disableHostingForRequester:)]) {
             [_hostManager disableHostingForRequester:kDSKeyboardRequester];
@@ -358,7 +368,9 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         ? [[DSKeyboardHostWindow alloc] initWithWindowScene:windowScene]
         : [[DSKeyboardHostWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
     window.frame = UIScreen.mainScreen.bounds;
-    window.rootViewController = [[UIViewController alloc] init];
+    // The same portrait-locked, status-bar-free root the card has: a keyboard that
+    // rotated with the device while the card could not would be rotating on its own.
+    window.rootViewController = [[DSStageRootViewController alloc] init];
     window.backgroundColor = UIColor.clearColor;
     window.opaque = NO;
     // Above the card, so a keyboard is never behind the app that asked for it, and

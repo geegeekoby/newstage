@@ -50,6 +50,11 @@
 // place and is left alone.
 - (void)setKeyboardFrame:(CGRect)frame source:(NSString *)source;
 
+// The card has gone off screen - put away or tucked into the corner - so whatever was
+// hosted on the display goes with it. The takeover stays armed: the app is still on the
+// stage and its keyboard still belongs out here when the card comes back.
+- (void)keyboardIsNoLongerOnScreen;
+
 // Answered by the hook on SpringBoard's scene views. YES means "this view is the
 // stage's card, and the keyboard is not to be drawn in it".
 + (BOOL)shouldRefuseKeyboardLayerInView:(UIView *)view;

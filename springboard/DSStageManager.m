@@ -1019,6 +1019,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     [self restoreHostLayout];
     [_picker dismissKeyboard];
+    [[DSKeyboardHost sharedHost] keyboardIsNoLongerOnScreen];
     [_container setLiftOffset:0.0];
     void (^layout)(void) = ^{
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
@@ -1073,6 +1074,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [self cancelAutoKill];
     [self restoreHostLayout];
     [_picker dismissKeyboard];
+    [[DSKeyboardHost sharedHost] keyboardIsNoLongerOnScreen];
 
     // The recordings show the card leaving straight down off the bottom edge at
     // full size rather than collapsing back into the corner.

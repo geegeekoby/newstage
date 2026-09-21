@@ -156,6 +156,10 @@ static const CGFloat kDSKeyboardPresentHeight = 60.0;
 // the keyboard under it turns out to be.
 static const CGFloat kDSStageKeyboardHeadroom = 20.0;
 
+// How much of a staged app stays visible above its own keyboard. The app draws that
+// keyboard inside the card, so the card has to be this much taller than the keys.
+static const CGFloat kDSStageTypingHeadroom = 250.0;
+
 static const CGFloat kDSSplitRatio = 0.5;
 static const CGFloat kDSStageInset = 10.0;
 static const CGFloat kDSFallbackDisplayCornerRadius = 55.0;

@@ -107,6 +107,10 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_splitHostBundleIdentifier;
     NSString *_bundleIdentifierToRestoreInFront;
     BOOL _notedKeyboardOnce;
+    BOOL _notedStrayKeyboard;
+    // Where the card sits while the app on it is being typed into. Empty the rest of the
+    // time, and the rest of the time the card's frame comes from its state as usual.
+    CGRect _typingFrame;
     // The keyboard as the arbiter last described it, in display points, or zero when
     // there is none on screen. Whose keyboard it is does not matter: it is on the
     // display, the card is on the display, and the card gives way.
@@ -327,10 +331,68 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     if (!self.isStageVisible) return;
+
+    // The staged app's own keyboard is drawn inside the card, because the card is that
+    // app's whole window - there is no separate keyboard layer in SpringBoard to move and
+    // this firmware will not host a keyboard scene for a phone. So the card is made the
+    // right shape for it instead. Lifting the card would be lifting the keyboard with it.
+    if (_sceneHost.isHosting && source.length > 0 &&
+        [source isEqualToString:_sceneHost.bundleIdentifier]) {
+        [self makeRoomForTheStagedAppsKeyboard:keyboard duration:duration];
+        return;
+    }
+
+    // A keyboard belonging to neither SpringBoard nor the app on the stage, while there is
+    // an app on the stage: written down once, because it would mean the card is being
+    // shaped around the wrong keyboard, or around none.
+    if (_sceneHost.isHosting && !_notedStrayKeyboard && !CGRectIsEmpty(keyboard) &&
+        ![source isEqualToString:@"SpringBoard"]) {
+        _notedStrayKeyboard = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: a keyboard came up for %@ while %@ is on the stage",
+                                  source, _sceneHost.bundleIdentifier);
+    }
+
     CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     CGFloat overlap = CGRectIsEmpty(keyboard) ? 0.0
                                              : CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
     [self liftCardBy:MAX(overlap, 0.0) duration:duration];
+}
+
+// The card, shaped around a keyboard that is drawn inside it: full display width, ending
+// on the display's bottom edge, and tall enough that the app keeps a usable amount of
+// itself above the keys. Put back the moment the keyboard goes.
+- (void)makeRoomForTheStagedAppsKeyboard:(CGRect)keyboard duration:(NSTimeInterval)duration {
+    CGRect screen = [self screenBounds];
+    CGRect wanted = CGRectZero;
+
+    if (!CGRectIsEmpty(keyboard)) {
+        CGFloat keys = CGRectGetHeight(keyboard);
+        if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6) keys = 330.0;
+        CGFloat top = CGRectGetHeight(screen) - keys - kDSStageTypingHeadroom;
+        top = MAX(top, [self splitLine] * 0.5);
+        wanted = CGRectMake(0, top, CGRectGetWidth(screen), CGRectGetHeight(screen) - top);
+    }
+    if (CGRectEqualToRect(wanted, _typingFrame)) return;
+
+    _typingFrame = wanted;
+    if (!CGRectIsEmpty(wanted)) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: the card is %@ while the app types, so its keyboard "
+                                   "lands on the bottom of the display",
+                                  NSStringFromCGRect(wanted));
+    }
+
+    // The card was held up out of the way of keyboards it does not have any more.
+    [_container setLiftOffset:0.0];
+    DSStageState state = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    void (^resize)(void) = ^{
+        [self layoutStageForState:state];
+        self->_container.cornerRadius = [self cornerRadiusForState:state];
+    };
+    if (duration > 0.0) {
+        [UIView animateWithDuration:duration animations:resize];
+    } else {
+        resize();
+    }
 }
 
 - (void)liftCardBy:(CGFloat)offset duration:(NSTimeInterval)duration {
@@ -408,6 +470,16 @@ static BOOL sSystemEdgePullAvailable;
     CGFloat screenWidth = CGRectGetWidth(bounds);
     CGFloat top = [self splitLine] + kDSStageInset;
 
+    // A staged app typing gets the card's bottom edge on the display's bottom edge and
+    // the display's full width, because that is where and how wide the app's keyboard
+    // will be drawn: the app draws its keyboard at the bottom of its own window, and its
+    // window is the card. Making the card end where the display ends is what puts those
+    // keys in the same place, at the same size, as the keys the stage's own search field
+    // raises. Nothing hosts, moves or refuses a keyboard to do this.
+    if (!CGRectIsEmpty(_typingFrame) && state != DSStageStateClosed && state != DSStageStateMinimized) {
+        return _typingFrame;
+    }
+
     switch (state) {
         case DSStageStateSplit:
             return CGRectMake(0, top, screenWidth, screenHeight - top);
@@ -436,6 +508,13 @@ static BOOL sSystemEdgePullAvailable;
     _keyboardFrame = CGRectZero;
     [[DSKeyboardHost sharedHost] standDown];
     [_container setLiftOffset:0.0];
+    // The card was the shape of a keyboard belonging to an app that is no longer on it.
+    if (!CGRectIsEmpty(_typingFrame)) {
+        _typingFrame = CGRectZero;
+        if (self.isStageVisible) {
+            [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+        }
+    }
 }
 
 - (CGRect)hostFrameForSplit {
@@ -444,6 +523,15 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (UIEdgeInsets)stageSafeAreaInsets {
+    // While the app is being typed into the card reaches the bottom of the display, so
+    // the app is given the display's own bottom inset: its keyboard sits above the home
+    // indicator rather than under it, exactly as it would full screen.
+    if (!CGRectIsEmpty(_typingFrame)) {
+        UIEdgeInsets insets = UIEdgeInsetsZero;
+        insets.bottom = [self screenSafeAreaInsets].bottom;
+        return insets;
+    }
+
     // The stock tweak hands the app a zero inset rectangle and lets the rounded
     // bottom corners clip it, which is what the recordings show.
     return UIEdgeInsetsZero;

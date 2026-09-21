@@ -284,6 +284,30 @@ the home screen behind it.
 Three things are worth knowing about how carefully this is switched on, because a keyboard that
 has been taken out of the card and then not put anywhere is worse than a keyboard in the card:
 
+**And then the card is shaped around it, because there was never anything to move.** The log that
+settled it printed what the card actually holds: three layer hosts the size of the card and nothing
+else. No keyboard layer, anywhere. The keyboard is inside the app's own render tree, in the app's own
+process, because the card *is* that app's whole window - so there is no layer in SpringBoard to take,
+no scene to present, and no mode to set. Every one of those was tried and the phone said no four
+different ways.
+
+Worse, refusing the layer while none of it worked was the thing making the keyboard invisible. The
+card stopped drawing the keyboard, nothing else drew one, and the card lifted out of the way of a
+keyboard that did not exist. Typing became impossible rather than merely cramped, which is a bad
+trade whichever way the rest of it goes.
+
+So the keyboard stays where the app draws it and the card is made the right shape for it: while a
+staged app is being typed into, the card takes the display's full width and its bottom edge sits on
+the display's bottom edge, tall enough to leave the app a usable amount of itself above the keys. The
+app draws its keyboard at the bottom of its own window, its window is the card, and the card now ends
+where the display ends - so those keys come up at their proper size in the same place as the ones the
+stage's own search field raises. The app is handed the display's bottom safe-area inset while this is
+true, so the keys clear the home indicator. It all goes back the moment the keyboard does.
+
+The hosting code below is kept rather than deleted: it is correct on a firmware that will host a
+keyboard scene, it is dormant behind one constant on this one, and the survey it prints is what
+established which kind of firmware this is.
+
 **So the layer is taken, not asked for.** Modes 1, 2 and 3 were all tried on the phone and the
 keyboard's scene stayed unpresentable, which settles it: this firmware has no interest in hosting a
 keyboard for a phone that is not an iPad, and nothing will present that scene no matter how it is

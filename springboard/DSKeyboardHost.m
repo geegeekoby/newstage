@@ -6,6 +6,28 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
+// Whether a staged app's keyboard can be taken off the card and put on the display.
+//
+// On iOS 16.5.1 it cannot, and the phone said so four different ways. There is no
+// FBSceneHostManager to host a scene with. The keyboard's own scene exists,
+// com.apple.UIKit.KeyboardManagement.hosted, but nothing presents it: its presentation
+// manager is nil, and the arbiter reports the keyboard in mode 0 - drawn by the app,
+// in the app's own window - at every value setKeyboardScenePresentationMode: was given.
+// And the card holds nothing but the app: three layer hosts the size of the card and no
+// keyboard layer anywhere in them, because the keyboard is inside the app's own render
+// tree in the app's own process. There is nothing here to move.
+//
+// Refusing the layer while none of that worked was the worst of it: the card stopped
+// drawing the keyboard, nothing else drew it, and typing became impossible rather than
+// merely cramped. So everything below is dormant, and the card is shaped around the
+// keyboard instead - see makeRoomForTheStagedAppsKeyboard: in DSStageManager, which puts
+// the app's own keys on the bottom edge of the display at their proper size by making the
+// card end where the display ends.
+//
+// Kept rather than deleted because it is correct on a firmware that will host a keyboard
+// scene, and because the survey it prints is what established that this one will not.
+static const BOOL kDSKeyboardCanLiveOnTheDisplay = NO;
+
 // The window the keyboard is hosted in covers the whole display, because the keyboard
 // scene is laid out against the whole display. Only the part of it the keyboard is
 // actually occupying may take a touch; everything else has to fall through to the card
@@ -564,6 +586,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 }
 
 - (BOOL)refusesKeyboardLayerInView:(UIView *)view {
+    if (!kDSKeyboardCanLiveOnTheDisplay) return NO;
     if (!_armed || _hostingFailed || !_keyboardLayerCanBeRefused) return NO;
     UIWindow *stage = _stageWindow;
     if (!stage || !view) return NO;
@@ -653,6 +676,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     if (_bundleIdentifier.length == 0 || ![source isEqualToString:_bundleIdentifier]) return;
     if (CGRectEqualToRect(frame, _keyboardFrame)) return;
     _keyboardFrame = frame;
+    if (!kDSKeyboardCanLiveOnTheDisplay) return;
     [self showKeyboardInOwnWindow];
 }
 

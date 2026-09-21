@@ -1,3 +1,7 @@
+**4.3.0**
+- Stack stages: + control on the top-right of the card (overlay mode) opens a second stage above the first
+- Each slot can host its own app; split view collapses back to one slot
+
 **4.0.2**
 - Staged app keyboard: merge arbiter frame with on-screen UIKeyboard; sync lift + scene geometry every time
 - Bottom safe-area inset while the keyboard still overlaps the lifted card (Messenger-style layouts)

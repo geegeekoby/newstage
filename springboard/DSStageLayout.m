@@ -54,3 +54,18 @@ CGFloat DSStagePickerLiftForKeyboard(CGRect keyboardFrame, CGRect restingCardFra
     CGFloat overlap = CGRectGetMaxY(restingCardFrame) - CGRectGetMinY(keyboardFrame) + inset;
     return MAX(overlap, 0.0);
 }
+
+CGRect DSStageStackSlotFrame(CGRect combinedCardFrame, NSInteger slot, NSInteger count, CGFloat gap) {
+    if (count <= 1) return combinedCardFrame;
+    CGFloat height = (CGRectGetHeight(combinedCardFrame) - gap) / 2.0;
+    if (slot == 1) {
+        return CGRectMake(combinedCardFrame.origin.x,
+                          combinedCardFrame.origin.y,
+                          combinedCardFrame.size.width,
+                          height);
+    }
+    return CGRectMake(combinedCardFrame.origin.x,
+                      combinedCardFrame.origin.y + height + gap,
+                      combinedCardFrame.size.width,
+                      height);
+}

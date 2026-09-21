@@ -15,6 +15,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIView *_grabberPill;
     UIView *_cornerGrip;
     UIView *_edgeGrip;
+    UIButton *_stackAddButton;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -78,6 +79,19 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _edgeGrip.userInteractionEnabled = NO;
         [self addSubview:_edgeGrip];
 
+        _stackAddButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        if (@available(iOS 13.0, *)) {
+            UIImage *plus = [UIImage systemImageNamed:@"plus.circle.fill"];
+            [_stackAddButton setImage:plus forState:UIControlStateNormal];
+        } else {
+            [_stackAddButton setTitle:@"+" forState:UIControlStateNormal];
+        }
+        _stackAddButton.tintColor = [UIColor colorWithWhite:1.0 alpha:0.85];
+        _stackAddButton.hidden = YES;
+        _stackAddButton.accessibilityLabel = @"Add stage";
+        [_stackAddButton addTarget:self action:@selector(stackAddTapped) forControlEvents:UIControlEventTouchUpInside];
+        [self addSubview:_stackAddButton];
+
         self.clipsToBounds = YES;
         self.layer.cornerCurve = kCACornerCurveContinuous;
         self.layer.cornerRadius = _cornerRadius;
@@ -124,7 +138,27 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
     _edgeGrip.frame = [self edgeGripRect];
 
+    CGFloat addSide = 36.0;
+    _stackAddButton.frame = CGRectMake(CGRectGetWidth(bounds) - addSide - 8.0,
+                                       4.0,
+                                       addSide,
+                                       addSide);
+    _stackAddButton.hidden = !_showsStackAddButton;
+
     [self updateShadow];
+}
+
+- (void)stackAddTapped {
+    if (_stackAddHandler) _stackAddHandler();
+}
+
+- (void)setShowsStackAddButton:(BOOL)showsStackAddButton {
+    _showsStackAddButton = showsStackAddButton;
+    _stackAddButton.hidden = !showsStackAddButton;
+}
+
+- (CGRect)stackAddButtonRect {
+    return _stackAddButton.frame;
 }
 
 - (void)setFrame:(CGRect)frame {
@@ -188,6 +222,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     if (!hit) return nil;
     if (hit == _grabber || [hit isDescendantOfView:_grabber]) return hit;
     if (hit == _cornerGrip || hit == _edgeGrip) return hit;
+    if (hit == _stackAddButton || [hit isDescendantOfView:_stackAddButton]) return hit;
     return nil;
 }
 

@@ -10,6 +10,7 @@
 #import "DSIntroViewController.h"
 #import "DSDiagnostics.h"
 #import "DSKeyboardVisibility.h"
+#import "DSStageLayout.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -94,15 +95,22 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 @implementation DSStageManager {
     DSStageWindow *_window;
     DSStageContainerView *_container;
+    DSStageContainerView *_topContainer;
     DSAppPickerViewController *_picker;
+    DSAppPickerViewController *_topPicker;
     DSGestureController *_gesture;
     DSSceneHost *_sceneHost;
+    DSSceneHost *_topSceneHost;
+
+    NSInteger _stackSlotCount;
+    UIPanGestureRecognizer *_topDragPan;
 
     UIView *_hostSnapshot;
     UIView *_hostBackdrop;
     UIView *_splitCornerMask;
     UIImageView *_openAppIcon;
     DSLaunchPlaceholderView *_launchPlaceholder;
+    DSLaunchPlaceholderView *_topLaunchPlaceholder;
 
     NSString *_splitHostBundleIdentifier;
     NSString *_bundleIdentifierToRestoreInFront;
@@ -216,6 +224,11 @@ static BOOL sSystemEdgePullAvailable;
     _dragPan.cancelsTouchesInView = NO;
     _dragPan.delaysTouchesBegan = NO;
     [_container addGestureRecognizer:_dragPan];
+
+    _stackSlotCount = 1;
+    _container.stackAddHandler = ^{
+        [weakSelf addStackSlotAnimated];
+    };
 
     [self applyAppearance];
 }
@@ -344,6 +357,8 @@ static BOOL sSystemEdgePullAvailable;
 
     NSString *staged = _sceneHost.bundleIdentifier;
     if (staged.length > 0 && [source isEqualToString:staged]) return YES;
+    NSString *topStaged = _topSceneHost.bundleIdentifier;
+    if (topStaged.length > 0 && [source isEqualToString:topStaged]) return YES;
 
     if ([source isEqualToString:@"SpringBoard"]) {
         if ([self isShowingAppPicker]) return YES;
@@ -492,7 +507,10 @@ static BOOL sSystemEdgePullAvailable;
 
     void (^lift)(void) = ^{
         [self->_container setLiftOffset:offset];
-        if (!self->_sceneHost.isHosting) return;
+        if (self->_stackSlotCount >= kDSMaxStackSlots && self->_topContainer) {
+            [self->_topContainer setLiftOffset:offset];
+        }
+        if (!self->_sceneHost.isHosting && !self->_topSceneHost.isHosting) return;
         [self pushLiftedGeometryToApp];
         [self layoutStageForState:layoutState];
         if (offset > 0.5) {
@@ -509,10 +527,10 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)pushLiftedGeometryToApp {
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-    CGRect window = CGRectOffset([self restingStageFrameForState:layoutState],
-                                 0.0, -_container.liftOffset);
-    [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];
-    [self publishStageStateForBundleIdentifier:_sceneHost.bundleIdentifier frame:window active:YES];
+    [self layoutHostedAppInSlot:0 state:layoutState];
+    if (_stackSlotCount >= kDSMaxStackSlots) {
+        [self layoutHostedAppInSlot:1 state:layoutState];
+    }
 }
 
 - (void)applyAppearance {
@@ -529,6 +547,8 @@ static BOOL sSystemEdgePullAvailable;
     }
     _container.darkMode = dark;
     _picker.darkMode = dark;
+    if (_topContainer) _topContainer.darkMode = dark;
+    if (_topPicker) _topPicker.darkMode = dark;
 }
 
 #pragma mark - Geometry
@@ -591,6 +611,7 @@ static BOOL sSystemEdgePullAvailable;
 - (void)forgetStagedAppKeyboard {
     _keyboardFrame = CGRectZero;
     [_container setLiftOffset:0.0];
+    if (_topContainer) [_topContainer setLiftOffset:0.0];
     _notedStrayKeyboard = NO;
     _container.passThroughToHost = NO;
     [_container setClipsContents:YES];
@@ -627,7 +648,150 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (BOOL)hasHostedApp {
-    return _sceneHost != nil;
+    return _sceneHost != nil || _topSceneHost != nil;
+}
+
+#pragma mark - Stack slots
+
+- (void)ensureTopStackInfrastructure {
+    if (_topContainer) return;
+
+    UIView *root = _window.rootViewController.view;
+    _topContainer = [[DSStageContainerView alloc] initWithFrame:CGRectZero];
+    _topContainer.hidden = YES;
+    _topContainer.cornerRadius = _container.cornerRadius;
+    [root insertSubview:_topContainer belowSubview:_container];
+
+    _topPicker = [[DSAppPickerViewController alloc] init];
+    _topPicker.delegate = self;
+    [_window.rootViewController addChildViewController:_topPicker];
+    _topPicker.view.frame = _topContainer.contentView.bounds;
+    _topPicker.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [_topContainer.contentView addSubview:_topPicker.view];
+    [_topPicker didMoveToParentViewController:_window.rootViewController];
+
+    _topDragPan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleStagePan:)];
+    _topDragPan.cancelsTouchesInView = NO;
+    _topDragPan.delaysTouchesBegan = NO;
+    [_topContainer addGestureRecognizer:_topDragPan];
+}
+
+- (CGRect)frameForStackSlot:(NSInteger)slot state:(DSStageState)state {
+    CGRect combined = [self stageFrameForState:state];
+    return DSStageStackSlotFrame(combined, slot, _stackSlotCount, kDSStackSlotGap);
+}
+
+- (DSStageContainerView *)containerForSlot:(NSInteger)slot {
+    return slot == 0 ? _container : _topContainer;
+}
+
+- (DSSceneHost *)sceneHostForSlot:(NSInteger)slot {
+    return slot == 0 ? _sceneHost : _topSceneHost;
+}
+
+- (NSInteger)slotForPicker:(DSAppPickerViewController *)picker {
+    return picker == _topPicker ? 1 : 0;
+}
+
+- (void)updateStackChrome {
+    BOOL canStack = (_state == DSStageStateOverlay) && _stackSlotCount < kDSMaxStackSlots && self.isStageVisible;
+    _container.showsStackAddButton = canStack;
+    if (_topContainer) _topContainer.showsStackAddButton = NO;
+    _container.hostingApp = _sceneHost.isHosting;
+    if (_topContainer) _topContainer.hostingApp = _topSceneHost.isHosting;
+}
+
+- (void)layoutHostedAppInSlot:(NSInteger)slot state:(DSStageState)state {
+    DSSceneHost *host = [self sceneHostForSlot:slot];
+    DSStageContainerView *card = [self containerForSlot:slot];
+    if (!host.isHosting || !card) return;
+
+    CGRect frame = [self frameForStackSlot:slot state:state];
+    UIEdgeInsets insets = (slot == 0) ? [self stageSafeAreaInsets] : UIEdgeInsetsZero;
+    CGRect window = CGRectOffset(frame, 0.0, -card.liftOffset);
+    [host setStageFrame:window safeAreaInsets:insets];
+
+    UIView *hostView = host.hostView;
+    if (hostView) {
+        hostView.layer.mask = nil;
+        if (hostView.superview != card.contentView) {
+            [card.contentView insertSubview:hostView atIndex:0];
+        }
+        hostView.frame = card.contentView.bounds;
+        hostView.clipsToBounds = YES;
+    }
+    [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:window active:YES];
+}
+
+- (void)layoutAllStackSlotsForState:(DSStageState)state {
+    if (_stackSlotCount <= 1) {
+        CGRect frame = [self stageFrameForState:state];
+        _container.frame = frame;
+        if (_topContainer) _topContainer.hidden = YES;
+    } else {
+        _container.frame = [self frameForStackSlot:0 state:state];
+        _topContainer.hidden = NO;
+        _topContainer.frame = [self frameForStackSlot:1 state:state];
+        _topContainer.cornerRadius = [self cornerRadiusForState:state];
+        _topPicker.view.frame = _topContainer.contentView.bounds;
+    }
+
+    [_container setClipsContents:YES];
+    _container.passThroughToHost = NO;
+    if (_topContainer) {
+        [_topContainer setClipsContents:YES];
+        _topContainer.passThroughToHost = NO;
+    }
+
+    [self updateStackChrome];
+    [self layoutHostedAppInSlot:0 state:state];
+    [self layoutHostedAppInSlot:1 state:state];
+}
+
+- (void)addStackSlotAnimated {
+    if (_stackSlotCount >= kDSMaxStackSlots || _state != DSStageStateOverlay) return;
+    [self ensureTopStackInfrastructure];
+    _topContainer.darkMode = _container.darkMode;
+    _stackSlotCount = 2;
+    _topContainer.backdropHidden = NO;
+    [_topContainer setBackdropHidden:NO];
+    _topPicker.view.hidden = NO;
+    _topPicker.view.alpha = 1.0;
+    [_topPicker reloadContent];
+    [_topPicker resetScrollPosition];
+
+    [UIView animateWithDuration:0.28
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                         [self layoutAllStackSlotsForState:self->_state];
+                     }
+                     completion:nil];
+    DSDiagnosticsRecord(@"SpringBoard: opened a second stage above the first");
+}
+
+- (void)collapseStackKeepingBottomApp:(BOOL)animated {
+    if (_stackSlotCount <= 1) return;
+
+    if (_topSceneHost) {
+        DSSceneHost *host = _topSceneHost;
+        _topSceneHost = nil;
+        [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:CGRectZero active:NO];
+        [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
+    }
+    [_topLaunchPlaceholder removeFromSuperview];
+    _topLaunchPlaceholder = nil;
+    _stackSlotCount = 1;
+    _topContainer.hidden = YES;
+
+    void (^layout)(void) = ^{
+        [self layoutAllStackSlotsForState:self->_state];
+    };
+    if (animated) {
+        [UIView animateWithDuration:0.22 animations:layout];
+    } else {
+        layout();
+    }
 }
 
 - (BOOL)isShowingAppPicker {
@@ -735,6 +899,10 @@ static BOOL sSystemEdgePullAvailable;
     if (!self.isStageVisible || !_container.window) return NO;
     CGRect card = CGRectOffset(_container.frame, 0.0, -_container.liftOffset);
     if (CGRectContainsPoint(card, point)) return YES;
+    if (_stackSlotCount >= kDSMaxStackSlots && _topContainer && !_topContainer.hidden) {
+        CGRect top = CGRectOffset(_topContainer.frame, 0.0, -_topContainer.liftOffset);
+        if (CGRectContainsPoint(top, point)) return YES;
+    }
 
     // The home gesture starts on the display's bottom edge. When the card is inset
     // that edge is a few points below the card, so a drag that began on the corner
@@ -753,6 +921,10 @@ static BOOL sSystemEdgePullAvailable;
 
     CGRect card = CGRectOffset(_container.frame, 0.0, -_container.liftOffset);
     if (CGRectContainsPoint(card, point)) return YES;
+    if (_stackSlotCount >= kDSMaxStackSlots && _topContainer && !_topContainer.hidden) {
+        CGRect top = CGRectOffset(_topContainer.frame, 0.0, -_topContainer.liftOffset);
+        if (CGRectContainsPoint(top, point)) return YES;
+    }
 
     return NO;
 }
@@ -1152,7 +1324,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         // The app behind is untouched in overlay, so the still springs back to
         // full screen before it is thrown away.
         [self animateHostSnapshotToFullScreen];
-        self->_container.frame = [self stageFrameForState:DSStageStateOverlay];
+        [self layoutAllStackSlotsForState:DSStageStateOverlay];
         self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
     };
     void (^finish)(void) = ^{
@@ -1172,6 +1344,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (void)enterStateSplitAnimated:(BOOL)animated {
+    [self collapseStackKeepingBottomApp:NO];
     [self cancelAutoKill];
     _state = DSStageStateSplit;
     _window.hidden = NO;
@@ -1188,7 +1361,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     void (^layout)(void) = ^{
         [self animateHostSnapshotIntoSplit];
-        self->_container.frame = [self stageFrameForState:DSStageStateSplit];
+        [self layoutAllStackSlotsForState:DSStageStateSplit];
         self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateSplit];
     };
     void (^finish)(void) = ^{
@@ -1301,6 +1474,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (void)teardownStageApp {
+    [self collapseStackKeepingBottomApp:NO];
     if (!_sceneHost) {
         [self showPickerImmediately];
         return;
@@ -1391,25 +1565,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 #pragma mark - Stage content
 
 - (void)layoutStageForState:(DSStageState)state {
-    CGRect frame = [self stageFrameForState:state];
-    _container.frame = frame;
-    [_container setClipsContents:YES];
-    _container.passThroughToHost = NO;
-    if (!_sceneHost.isHosting) return;
-
-    CGRect window = CGRectOffset(frame, 0.0, -_container.liftOffset);
-    [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];
-
-    UIView *hostView = _sceneHost.hostView;
-    if (hostView) {
-        hostView.layer.mask = nil;
-        if (hostView.superview != _container.contentView) {
-            [_container.contentView insertSubview:hostView atIndex:0];
-        }
-        hostView.frame = _container.contentView.bounds;
-        hostView.clipsToBounds = YES;
-    }
-    [self publishStageStateForBundleIdentifier:_sceneHost.bundleIdentifier frame:window active:YES];
+    [self layoutAllStackSlotsForState:state];
 }
 
 - (void)showPickerImmediately {
@@ -1438,7 +1594,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
 - (void)appPicker:(DSAppPickerViewController *)picker didSelectEntry:(DSAppEntry *)entry fromView:(UIView *)view {
     [picker dismissKeyboard];
-    [self launchEntry:entry];
+    [self launchEntry:entry slot:[self slotForPicker:picker]];
 }
 
 - (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view {
@@ -1447,11 +1603,21 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (void)launchEntry:(DSAppEntry *)entry {
+    [self launchEntry:entry slot:0];
+}
+
+- (void)launchEntry:(DSAppEntry *)entry slot:(NSInteger)slot {
     if (entry.bundleIdentifier.length == 0) {
         DSDiagnosticsRecord(@"SpringBoard: a plate was tapped with no app behind it");
         return;
     }
-    [_picker dismissKeyboard];
+    if (slot >= kDSMaxStackSlots) return;
+    if (slot == 1) [self ensureTopStackInfrastructure];
+
+    DSAppPickerViewController *picker = slot == 0 ? _picker : _topPicker;
+    DSStageContainerView *card = [self containerForSlot:slot];
+    [picker dismissKeyboard];
+
     DSPreferences *preferences = [DSPreferences sharedPreferences];
     if ([preferences isApplicationDisabled:entry.bundleIdentifier]) {
         DSDiagnosticsRecordFormat(@"SpringBoard: %@ is switched off in its own settings, so it was not opened",
@@ -1459,128 +1625,163 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         return;
     }
 
-    // Swap out whatever was already on the stage.
-    if (_sceneHost && ![_sceneHost.bundleIdentifier isEqualToString:entry.bundleIdentifier]) {
-        DSSceneHost *previous = _sceneHost;
-        _sceneHost = nil;
-        [self forgetStagedAppKeyboard];
-        [previous relinquishKeepingBackgrounded:[preferences backgroundsOnMinimize:previous.bundleIdentifier]];
+    DSSceneHost *existingHost = [self sceneHostForSlot:slot];
+    if (existingHost && ![existingHost.bundleIdentifier isEqualToString:entry.bundleIdentifier]) {
+        if (slot == 0) {
+            _sceneHost = nil;
+            [self forgetStagedAppKeyboard];
+        } else {
+            _topSceneHost = nil;
+        }
+        [existingHost relinquishKeepingBackgrounded:[preferences backgroundsOnMinimize:existingHost.bundleIdentifier]];
     }
 
-    // Remembered before anything is launched: if the app turns out to need opening
-    // for real, this is who has to be put back in front afterwards.
     SBApplication *wasInFront = [self frontApplication];
     _bundleIdentifierToRestoreInFront =
         [wasInFront.bundleIdentifier isEqualToString:entry.bundleIdentifier] ? nil : wasInFront.bundleIdentifier;
 
     [preferences noteApplicationOpened:entry.bundleIdentifier];
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     [self publishStageStateForBundleIdentifier:entry.bundleIdentifier
-                                        frame:[self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay]
+                                        frame:[self frameForStackSlot:slot state:layoutState]
                                        active:YES];
-    [self presentLaunchPlaceholderForEntry:entry];
+    [self presentLaunchPlaceholderForEntry:entry slot:slot];
 
-    DSSceneHost *host = _sceneHost ?: [[DSSceneHost alloc] initWithBundleIdentifier:entry.bundleIdentifier];
-    _sceneHost = host;
-    // SpringBoard's app view has to belong to a view controller to know which way up
-    // the app should be, and the stage window's own is the one it will live in.
+    DSSceneHost *host = [self sceneHostForSlot:slot];
+    if (!host) {
+        host = [[DSSceneHost alloc] initWithBundleIdentifier:entry.bundleIdentifier];
+        if (slot == 0) {
+            _sceneHost = host;
+        } else {
+            _topSceneHost = host;
+        }
+    }
     host.parentViewController = _window.rootViewController;
 
-    DSDiagnosticsRecordFormat(@"SpringBoard: putting %@ on the stage", entry.bundleIdentifier);
+    DSDiagnosticsRecordFormat(@"SpringBoard: putting %@ on stack slot %ld", entry.bundleIdentifier, (long)slot);
 
     __weak __typeof(self) weakSelf = self;
     [host prepareWithCompletion:^(BOOL ready) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        if (!ready || strongSelf->_sceneHost != host) {
+        if (!ready || [strongSelf sceneHostForSlot:slot] != host) {
             DSDiagnosticsRecordFormat(@"SpringBoard: %@ did not make it onto the stage, back to the picker",
                                       host.bundleIdentifier);
             strongSelf->_bundleIdentifierToRestoreInFront = nil;
-            [strongSelf dismissLaunchPlaceholder];
-            if (strongSelf->_sceneHost == host) {
-                strongSelf->_sceneHost = nil;
-                // The app was told it was on the stage before it was asked for, so
-                // it has to be told otherwise now, and anything already done to its
-                // scene has to be undone. An app left believing it is staged runs
-                // portrait locked with no status bar wherever it is opened next.
+            [strongSelf dismissLaunchPlaceholderForSlot:slot];
+            if ([strongSelf sceneHostForSlot:slot] == host) {
+                if (slot == 0) {
+                    strongSelf->_sceneHost = nil;
+                } else {
+                    strongSelf->_topSceneHost = nil;
+                }
                 [strongSelf publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
                 [host relinquishKeepingBackgrounded:NO];
             }
             return;
         }
-        [strongSelf attachHostedApp];
+        [strongSelf attachHostedAppForSlot:slot];
     }];
 }
 
-// The tapped plate grows into the stage while the app boots.
-- (void)presentLaunchPlaceholderForEntry:(DSAppEntry *)entry {
-    [_launchPlaceholder removeFromSuperview];
+- (void)presentLaunchPlaceholderForEntry:(DSAppEntry *)entry slot:(NSInteger)slot {
+    DSStageContainerView *card = [self containerForSlot:slot];
+    DSAppPickerViewController *picker = slot == 0 ? _picker : _topPicker;
+    if (slot == 0) {
+        [_launchPlaceholder removeFromSuperview];
+    } else {
+        [_topLaunchPlaceholder removeFromSuperview];
+    }
 
     DSLaunchPlaceholderView *placeholder =
         [[DSLaunchPlaceholderView alloc] initWithBundleIdentifier:entry.bundleIdentifier
                                                             icon:[[DSAppLibrary sharedLibrary] iconForBundleIdentifier:entry.bundleIdentifier]
-                                                            dark:_container.darkMode];
-    placeholder.frame = _container.contentView.bounds;
+                                                            dark:card.darkMode];
+    placeholder.frame = card.contentView.bounds;
     placeholder.alpha = 0.0;
-    [_container.contentView addSubview:placeholder];
-    _launchPlaceholder = placeholder;
+    [card.contentView addSubview:placeholder];
+    if (slot == 0) {
+        _launchPlaceholder = placeholder;
+    } else {
+        _topLaunchPlaceholder = placeholder;
+    }
 
     [UIView animateWithDuration:0.22 animations:^{
         placeholder.alpha = 1.0;
-        self->_picker.view.alpha = 0.0;
+        picker.view.alpha = 0.0;
     }];
 }
 
-- (void)dismissLaunchPlaceholder {
-    UIView *placeholder = _launchPlaceholder;
-    _launchPlaceholder = nil;
-    _picker.view.hidden = NO;
+- (void)dismissLaunchPlaceholderForSlot:(NSInteger)slot {
+    DSAppPickerViewController *picker = slot == 0 ? _picker : _topPicker;
+    UIView *placeholder = slot == 0 ? _launchPlaceholder : _topLaunchPlaceholder;
+    if (slot == 0) {
+        _launchPlaceholder = nil;
+    } else {
+        _topLaunchPlaceholder = nil;
+    }
+    picker.view.hidden = NO;
     [UIView animateWithDuration:0.2 animations:^{
         placeholder.alpha = 0.0;
-        self->_picker.view.alpha = 1.0;
+        picker.view.alpha = 1.0;
     } completion:^(BOOL finished) {
         [placeholder removeFromSuperview];
     }];
 }
 
 - (void)attachHostedApp {
-    UIView *hostView = _sceneHost.hostView;
+    [self attachHostedAppForSlot:0];
+}
+
+- (void)attachHostedAppForSlot:(NSInteger)slot {
+    DSSceneHost *host = [self sceneHostForSlot:slot];
+    DSStageContainerView *card = [self containerForSlot:slot];
+    DSAppPickerViewController *picker = slot == 0 ? _picker : _topPicker;
+
+    UIView *hostView = host.hostView;
     if (!hostView) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ was ready but handed over no view", _sceneHost.bundleIdentifier);
-        _bundleIdentifierToRestoreInFront = nil;
-        [self dismissLaunchPlaceholder];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ was ready but handed over no view", host.bundleIdentifier);
+        if (slot == 0) _bundleIdentifierToRestoreInFront = nil;
+        [self dismissLaunchPlaceholderForSlot:slot];
         return;
     }
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ is on the stage", _sceneHost.bundleIdentifier);
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ is on stack slot %ld", host.bundleIdentifier, (long)slot);
 
-    _picker.view.hidden = YES;
-    _picker.view.alpha = 1.0;
-    hostView.frame = _container.contentView.bounds;
-    [_container.contentView insertSubview:hostView atIndex:0];
-    [_sceneHost noteHostViewAttached];
+    picker.view.hidden = YES;
+    picker.view.alpha = 1.0;
+    hostView.frame = card.contentView.bounds;
+    [card.contentView insertSubview:hostView atIndex:0];
+    [host noteHostViewAttached];
 
-    [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
-    [self applyStageRotation];
-    if (!CGRectIsEmpty(_keyboardFrame)) {
-        [self noteKeyboardFrame:_keyboardFrame
-                         source:_sceneHost.bundleIdentifier
-                       duration:0.25];
-    } else {
-        CGRect keys = DSVisibleKeyboardFrameOnScreen();
-        if (!CGRectIsEmpty(keys)) {
-            [self noteKeyboardFrame:keys source:_sceneHost.bundleIdentifier duration:0.25];
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    [self layoutStageForState:layoutState];
+    if (slot == 0) [self applyStageRotation];
+    if (slot == 0) {
+        if (!CGRectIsEmpty(_keyboardFrame)) {
+            [self noteKeyboardFrame:_keyboardFrame source:host.bundleIdentifier duration:0.25];
+        } else {
+            CGRect keys = DSVisibleKeyboardFrameOnScreen();
+            if (!CGRectIsEmpty(keys)) {
+                [self noteKeyboardFrame:keys source:host.bundleIdentifier duration:0.25];
+            }
         }
+        [self giveBackKeyWindow];
+        [self returnFrontToWhereItWas];
     }
-    [self giveBackKeyWindow];
-    [self updateHomeAffordance];
-    [self returnFrontToWhereItWas];
 
-    UIView *placeholder = _launchPlaceholder;
-    _launchPlaceholder = nil;
+    [self updateHomeAffordance];
+
+    UIView *placeholder = slot == 0 ? _launchPlaceholder : _topLaunchPlaceholder;
+    if (slot == 0) {
+        _launchPlaceholder = nil;
+    } else {
+        _topLaunchPlaceholder = nil;
+    }
     [UIView animateWithDuration:0.3 animations:^{
         placeholder.alpha = 0.0;
     } completion:^(BOOL finished) {
         [placeholder removeFromSuperview];
-        [self->_container setBackdropHidden:YES];
+        [card setBackdropHidden:YES];
     }];
 }
 
@@ -1622,38 +1823,50 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     });
 }
 
-// Back to the picker, app stays alive.
 - (void)exitToPickerAnimated:(BOOL)animated {
-    if (!self.hasHostedApp) return;
-    DSSceneHost *host = _sceneHost;
-    _sceneHost = nil;
-    _stageQuarterTurns = 0;
+    if (_sceneHost.isHosting) {
+        [self exitToPickerAnimated:animated slot:0];
+    } else if (_topSceneHost.isHosting) {
+        [self exitToPickerAnimated:animated slot:1];
+    }
+}
+
+// Back to the picker, app stays alive.
+- (void)exitToPickerAnimated:(BOOL)animated slot:(NSInteger)slot {
+    DSSceneHost *host = [self sceneHostForSlot:slot];
+    if (!host.isHosting) return;
+
+    DSStageContainerView *card = [self containerForSlot:slot];
+    DSAppPickerViewController *picker = slot == 0 ? _picker : _topPicker;
+    if (slot == 0) {
+        _sceneHost = nil;
+        _stageQuarterTurns = 0;
+        [self forgetStagedAppKeyboard];
+    } else {
+        _topSceneHost = nil;
+    }
     _ignoreSystemPullUntil = CFAbsoluteTimeGetCurrent() + 0.6;
 
     UIView *hostView = host.hostView;
-    [self forgetStagedAppKeyboard];
-    [_container setClipsContents:YES];
-    [_container setBackdropHidden:NO];
-    _container.hostingApp = NO;
+    [card setClipsContents:YES];
+    [card setBackdropHidden:NO];
+    card.hostingApp = NO;
 
-    // The picker is on screen before the hosted view starts to leave. A black frame
-    // was the picker still hidden while the app view had already gone, or the
-    // window itself having been closed by a put-away that was meant to be this.
-    [self showPickerImmediately];
-    [_container.contentView bringSubviewToFront:_picker.view];
-    [_picker.view layoutIfNeeded];
+    picker.view.hidden = NO;
+    picker.view.alpha = 0.0;
+    [picker reloadContent];
+    [card.contentView bringSubviewToFront:picker.view];
+    [picker.view layoutIfNeeded];
 
     if (!hostView.superview) {
-        [self publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
+        [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:CGRectZero active:NO];
         [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
         [self scheduleAutoKillForHost:host];
         [self updateHomeAffordance];
+        [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
         return;
     }
 
-    // The picker stays on top for the whole crossfade. Pulling the hosted view in
-    // front of it was a black card: the app layer covered the recents list until it
-    // had already faded out.
     hostView.layer.mask = nil;
     hostView.clipsToBounds = NO;
     hostView.transform = CGAffineTransformIdentity;
@@ -1663,7 +1876,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     void (^layout)(void) = ^{
         hostView.transform = CGAffineTransformMakeScale(0.92, 0.92);
         hostView.alpha = 0.0;
-        self->_picker.view.alpha = 1.0;
+        picker.view.alpha = 1.0;
     };
     void (^finish)(void) = ^{
         hostView.transform = CGAffineTransformIdentity;
@@ -1671,17 +1884,15 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         hostView.layer.cornerRadius = 0.0;
         hostView.layer.masksToBounds = NO;
         [hostView removeFromSuperview];
-        [self publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
+        [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:CGRectZero active:NO];
         [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
-        [self showPickerImmediately];
         [self scheduleAutoKillForHost:host];
         [self updateHomeAffordance];
+        [self layoutStageForState:self->_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     };
 
     if (animated) {
-        [UIView animateWithDuration:0.22
-                         animations:layout
-                         completion:^(BOOL finished) { finish(); }];
+        [UIView animateWithDuration:0.22 animations:layout completion:^(BOOL finished) { finish(); }];
     } else {
         layout();
         finish();
@@ -1845,10 +2056,20 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 
 // One recogniser drives all three in-stage gestures; which one it is depends on
 // where the drag started.
+- (void)offsetVisibleStackByY:(CGFloat)dy state:(DSStageState)state {
+    if (_stackSlotCount <= 1) {
+        _container.frame = CGRectOffset([self stageFrameForState:state], 0.0, dy);
+        return;
+    }
+    _container.frame = CGRectOffset([self frameForStackSlot:0 state:state], 0.0, dy);
+    _topContainer.frame = CGRectOffset([self frameForStackSlot:1 state:state], 0.0, dy);
+}
+
 - (void)handleStagePan:(UIPanGestureRecognizer *)recognizer {
     static BOOL fromTop = NO;
     static BOOL fromCorner = NO;
     static BOOL fromEdge = NO;
+    static NSInteger dragSlot = 0;
     // A drag from the corner is two gestures until it has gone far enough to say which.
     // Down and away puts the card back in the corner it came from; inward, across the
     // card, drops the app and brings the list back.
@@ -1861,10 +2082,17 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
     // corner is nothing else's gesture.
     static NSInteger cornerIntent = DSCornerIntentUndecided;
 
-    CGPoint location = [recognizer locationInView:_container];
+    DSStageContainerView *card = [recognizer.view isKindOfClass:DSStageContainerView.class]
+        ? (DSStageContainerView *)recognizer.view
+        : _container;
+    dragSlot = (card == _topContainer) ? 1 : 0;
+    DSSceneHost *dragHost = [self sceneHostForSlot:dragSlot];
+
+    CGPoint location = [recognizer locationInView:card];
     CGPoint translation = [recognizer translationInView:_window];
     CGPoint velocity = [recognizer velocityInView:_window];
-    CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    CGRect resting = [self stageFrameForState:layoutState];
 
     switch (recognizer.state) {
         case UIGestureRecognizerStateBegan: {
@@ -1874,12 +2102,15 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             // of the keyboard's way first: its own frame has to mean what it says
             // for the rest of this drag.
             [_picker dismissKeyboard];
+            if (_topPicker) [_topPicker dismissKeyboard];
             [_container setLiftOffset:0.0];
+            if (_topContainer) [_topContainer setLiftOffset:0.0];
 
-            fromCorner = self.hasHostedApp && CGRectContainsPoint([_container cornerGripRect], start);
-            fromEdge = self.hasHostedApp && CGRectContainsPoint([_container edgeGripRect], start) && !fromCorner;
+            BOOL hostingCard = dragHost.isHosting;
+            fromCorner = hostingCard && CGRectContainsPoint([card cornerGripRect], start);
+            fromEdge = hostingCard && CGRectContainsPoint([card edgeGripRect], start) && !fromCorner;
             cornerIntent = DSCornerIntentUndecided;
-            fromTop = !fromCorner && !fromEdge && CGRectContainsPoint([_container dragAffordanceRect], start);
+            fromTop = !fromCorner && !fromEdge && CGRectContainsPoint([card dragAffordanceRect], start);
             // Whether a drag inside the card was picked up at all, and what it was taken
             // for. "It will not let me go back" has two completely different causes -
             // the gesture never starting, and it starting and being read as something
@@ -1909,15 +2140,16 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                     // out, so the drag says what letting go will do.
                     CGFloat travel = fromEdge ? MAX(-translation.x, 0.0) : DSInwardTravel(translation);
                     travel = MIN(travel, 160.0);
-                    _sceneHost.hostView.transform = CGAffineTransformMakeScale(1.0 - travel / 900.0,
-                                                                              1.0 - travel / 900.0);
+                    dragHost.hostView.transform = CGAffineTransformMakeScale(1.0 - travel / 900.0,
+                                                                             1.0 - travel / 900.0);
                 } else {
                     CGFloat offset = MAX(translation.y, 0.0);
-                    _container.frame = CGRectOffset(resting, 0, offset);
+                    [self offsetVisibleStackByY:offset state:layoutState];
                     _container.alpha = 1.0 - MIN(offset / (CGRectGetHeight(resting) * 0.6), 0.75);
+                    if (_topContainer) _topContainer.alpha = _container.alpha;
                 }
             } else if (fromTop) {
-                _container.frame = CGRectOffset(resting, 0, MAX(translation.y, -70.0));
+                [self offsetVisibleStackByY:MAX(translation.y, -70.0) state:layoutState];
             }
             break;
         }
@@ -1940,27 +2172,27 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                             (DSInwardTravel(translation) > 32.0 && DSInwardTravel(velocity) > 500.0);
                 }
                 if (leave) {
-                    [self exitToPickerAnimated:YES];
+                    [self exitToPickerAnimated:YES slot:dragSlot];
                 } else {
                     [UIView animateWithDuration:0.25 animations:^{
-                        self->_sceneHost.hostView.transform = CGAffineTransformIdentity;
+                        dragHost.hostView.transform = CGAffineTransformIdentity;
                     }];
                 }
             } else if (fromCorner || fromEdge) {
                 if (translation.y > CGRectGetHeight(resting) * 0.2 || velocity.y > 700.0) {
                     [self closeStageAnimated:YES];
                 } else {
-                    [self snapBackTo:resting];
+                    [self snapBackToLayoutForState:layoutState];
                 }
             } else if (fromTop) {
                 if (translation.y > CGRectGetHeight(resting) * 0.38 || velocity.y > 950.0) {
                     [self minimizeAnimated:YES];
-                } else if (translation.y < -40.0 && _state == DSStageStateOverlay) {
+                } else if (translation.y < -40.0 && _state == DSStageStateOverlay && _stackSlotCount <= 1) {
                     [self enterStateSplitAnimated:YES];
                 } else if (translation.y > 40.0 && _state == DSStageStateSplit) {
                     [self enterStateOverlayAnimated:YES];
                 } else {
-                    [self snapBackTo:resting];
+                    [self snapBackToLayoutForState:layoutState];
                 }
             }
             fromTop = fromCorner = fromEdge = NO;
@@ -1976,9 +2208,9 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                 DSDiagnosticsRecord(@"SpringBoard: a drag inside the card was taken away before it finished");
             }
             if (cornerIntent == DSCornerIntentLeaveApp) {
-                _sceneHost.hostView.transform = CGAffineTransformIdentity;
+                dragHost.hostView.transform = CGAffineTransformIdentity;
             } else if (fromTop || fromCorner || fromEdge) {
-                [self snapBackTo:resting];
+                [self snapBackToLayoutForState:layoutState];
             }
             fromTop = fromCorner = fromEdge = NO;
             cornerIntent = DSCornerIntentUndecided;
@@ -1989,10 +2221,11 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
     }
 }
 
-- (void)snapBackTo:(CGRect)resting {
+- (void)snapBackToLayoutForState:(DSStageState)state {
     [self animateSpring:^{
-        self->_container.frame = resting;
+        [self layoutAllStackSlotsForState:state];
         self->_container.alpha = 1.0;
+        if (self->_topContainer) self->_topContainer.alpha = 1.0;
     } completion:nil];
 }
 

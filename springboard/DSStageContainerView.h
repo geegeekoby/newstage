@@ -40,4 +40,9 @@
 
 - (void)setLiftOffset:(CGFloat)offset;
 
+// Top-right control to add another stage card above this one (overlay mode only).
+@property (nonatomic, assign) BOOL showsStackAddButton;
+@property (nonatomic, copy) void (^stackAddHandler)(void);
+- (CGRect)stackAddButtonRect;
+
 @end

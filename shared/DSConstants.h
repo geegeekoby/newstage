@@ -161,6 +161,8 @@ static const CGFloat kDSStageTypingHeadroom = 250.0;
 
 static const CGFloat kDSSplitRatio = 0.5;
 static const CGFloat kDSStageInset = 10.0;
+static const CGFloat kDSStackSlotGap = 10.0;
+static const NSInteger kDSMaxStackSlots = 2;
 static const CGFloat kDSFallbackDisplayCornerRadius = 55.0;
 static const CGFloat kDSHostShrinkScale = 0.872;
 

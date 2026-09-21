@@ -20,6 +20,10 @@
 // on the stage with no way out of it.
 @property (nonatomic, assign) BOOL hostingApp;
 
+// The hosted app is sitting behind the card rather than in it, so everything
+// except the grabber and the exit grips has to fall through.
+@property (nonatomic, assign) BOOL passThroughToHost;
+
 // Whether the content is clipped to the card. Off while an app is typing, so the
 // keyboard that is drawn at the bottom of the app's window can sit on the display
 // below the card rather than being clipped inside it.

@@ -114,6 +114,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     CGFloat _typingKeys;
     NSTimeInterval _typingResizeDuration;
     BOOL _typingResizeQueued;
+    NSTimeInterval _ignoreSystemPullUntil;
     // The keyboard as the arbiter last described it, in display points, or zero when
     // there is none on screen. Whose keyboard it is does not matter: it is on the
     // display, the card is on the display, and the card gives way.
@@ -427,7 +428,7 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     [_container setLiftOffset:0.0];
-    [_container setClipsContents:CGRectIsEmpty(wanted)];
+    [_container setClipsContents:YES];
     DSStageState state = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     void (^resize)(void) = ^{
         [self layoutStageForState:state];
@@ -551,12 +552,12 @@ static BOOL sSystemEdgePullAvailable;
     _keyboardFrame = CGRectZero;
     [[DSKeyboardHost sharedHost] standDown];
     [_container setLiftOffset:0.0];
-    // The card was the shape of a keyboard belonging to an app that is no longer on it.
     _typingKeys = 0.0;
     _notedStrayKeyboard = NO;
+    _container.passThroughToHost = NO;
+    [_container setClipsContents:YES];
     if (!CGRectIsEmpty(_typingFrame)) {
         _typingFrame = CGRectZero;
-        [_container setClipsContents:YES];
         if (self.isStageVisible) {
             [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
         }
@@ -750,6 +751,7 @@ static BOOL sSystemEdgePullAvailable;
 // that drag, so exactly one thing happens per pull.
 - (BOOL)adoptSystemEdgePull:(UIPanGestureRecognizer *)gesture {
     if (!gesture || _systemPull) return NO;
+    if (CFAbsoluteTimeGetCurrent() < _ignoreSystemPullUntil) return NO;
     if (_state != DSStageStateClosed && _state != DSStageStateMinimized) return NO;
 
     // By the time the pull is reported as begun the finger has already left the
@@ -1170,6 +1172,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         return;
     }
 
+    _ignoreSystemPullUntil = CFAbsoluteTimeGetCurrent() + 0.6;
     [self restoreHostLayout];
     [_picker dismissKeyboard];
     [[DSKeyboardHost sharedHost] keyboardIsNoLongerOnScreen];
@@ -1224,6 +1227,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (void)closeStageAnimated:(BOOL)animated {
+    _ignoreSystemPullUntil = CFAbsoluteTimeGetCurrent() + 0.6;
     [self cancelAutoKill];
     [self restoreHostLayout];
     [_picker dismissKeyboard];
@@ -1351,20 +1355,72 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 - (void)layoutStageForState:(DSStageState)state {
     CGRect frame = [self stageFrameForState:state];
     _container.frame = frame;
-    [_container setClipsContents:CGRectIsEmpty(_typingFrame)];
+    // The card itself stays its usual size. The app's view is allowed to continue
+    // below it only as a masked keyboard band, never as a taller stage.
+    [_container setClipsContents:YES];
     if (!_sceneHost.isHosting) return;
 
-    // The app's window is the card plus, while typing, the keyboard band below it.
-    // The app draws its keyboard at the bottom of its own window; keeping that
-    // window as tall as the display from the card's origin down is what puts the
-    // keys on the bottom edge, while the card itself stops where the keys start.
     CGRect window = CGRectOffset(frame, 0.0, -_container.liftOffset);
     if (_typingKeys > 0.0) {
         CGRect screen = [self screenBounds];
         window.size.height = MAX(CGRectGetMaxY(screen) - CGRectGetMinY(window), CGRectGetHeight(window));
     }
     [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];
+    [self placeHostViewInCardOrOnDisplay];
     [self publishStageStateForBundleIdentifier:_sceneHost.bundleIdentifier frame:window active:YES];
+}
+
+// While typing the hosted app has to live on the display, not inside the card:
+// the card is only as tall as the overlay, and the keyboard is drawn in the
+// extra height below it. Masked to a rounded card plus a square keyboard so it
+// cannot read as one stretched stage.
+- (void)placeHostViewInCardOrOnDisplay {
+    UIView *hostView = _sceneHost.hostView;
+    if (!hostView) return;
+
+    UIView *root = _window.rootViewController.view;
+    CGRect card = _container.frame;
+    BOOL typing = _typingKeys > 0.0 && self.isStageVisible;
+
+    if (typing) {
+        CGRect app = card;
+        app.size.height = MAX(CGRectGetMaxY([self screenBounds]) - CGRectGetMinY(card), CGRectGetHeight(card));
+        if (hostView.superview != root) {
+            [root insertSubview:hostView belowSubview:_container];
+        }
+        hostView.transform = CGAffineTransformIdentity;
+        hostView.frame = app;
+        [self maskHostView:hostView toCardHeight:CGRectGetHeight(card) radius:_container.cornerRadius];
+        _container.passThroughToHost = YES;
+    } else {
+        hostView.layer.mask = nil;
+        _container.passThroughToHost = NO;
+        if (hostView.superview != _container.contentView) {
+            [_container.contentView insertSubview:hostView atIndex:0];
+        }
+        hostView.frame = _container.contentView.bounds;
+    }
+}
+
+- (void)maskHostView:(UIView *)hostView toCardHeight:(CGFloat)cardHeight radius:(CGFloat)radius {
+    CGRect bounds = hostView.bounds;
+    if (CGRectIsEmpty(bounds) || cardHeight < 1.0) {
+        hostView.layer.mask = nil;
+        return;
+    }
+    CGFloat width = CGRectGetWidth(bounds);
+    CGFloat height = CGRectGetHeight(bounds);
+    UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, width, MIN(cardHeight, height))
+                                               byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight |
+                                                                  UIRectCornerBottomLeft | UIRectCornerBottomRight)
+                                                     cornerRadii:CGSizeMake(radius, radius)];
+    if (height > cardHeight + 1.0) {
+        [path appendPath:[UIBezierPath bezierPathWithRect:CGRectMake(0, cardHeight, width, height - cardHeight)]];
+    }
+    CAShapeLayer *mask = [CAShapeLayer layer];
+    mask.frame = bounds;
+    mask.path = path.CGPath;
+    hostView.layer.mask = mask;
 }
 
 - (void)showPickerImmediately {
@@ -1565,6 +1621,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     DSSceneHost *host = _sceneHost;
     _sceneHost = nil;
     _stageQuarterTurns = 0;
+    _ignoreSystemPullUntil = CFAbsoluteTimeGetCurrent() + 0.6;
 
     UIView *hostView = host.hostView;
     [self forgetStagedAppKeyboard];
@@ -1827,7 +1884,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             [_picker dismissKeyboard];
             [_container setLiftOffset:0.0];
 
-            fromCorner = CGRectContainsPoint([self closeZoneRect], start);
+            fromCorner = self.hasHostedApp && CGRectContainsPoint([self closeZoneRect], start);
             cornerIntent = DSCornerIntentUndecided;
             fromTop = !fromCorner && CGRectContainsPoint([_container dragAffordanceRect], start);
             // Whether a drag inside the card was picked up at all, and what it was taken
@@ -1892,7 +1949,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                     [self snapBackTo:resting];
                 }
             } else if (fromTop) {
-                if (translation.y > CGRectGetHeight(resting) * 0.22 || velocity.y > 850.0) {
+                if (translation.y > CGRectGetHeight(resting) * 0.38 || velocity.y > 950.0) {
                     [self minimizeAnimated:YES];
                 } else if (translation.y < -40.0 && _state == DSStageStateOverlay) {
                     [self enterStateSplitAnimated:YES];

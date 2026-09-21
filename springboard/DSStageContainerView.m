@@ -182,6 +182,15 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     _contentView.clipsToBounds = clips;
 }
 
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *hit = [super hitTest:point withEvent:event];
+    if (!_passThroughToHost) return hit;
+    if (!hit) return nil;
+    if (hit == _grabber || [hit isDescendantOfView:_grabber]) return hit;
+    if (hit == _cornerGrip || hit == _edgeGrip) return hit;
+    return nil;
+}
+
 - (void)setBackdropHidden:(BOOL)hidden {
     _backdrop.hidden = hidden;
 }

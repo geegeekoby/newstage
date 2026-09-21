@@ -181,7 +181,7 @@ static UIWindow *sIntroWindow;
                               body:@"Press and hold an app in the list instead of tapping it and it opens across the whole screen, no stage involved."
                               demo:DSIntroDemoFullscreen],
         [DSIntroStep stepWithTitle:@"Put it away"
-                              body:@"Swipe up inside the stage to drop the app and get the list back. Drag the stage down and it leaves, still running in the background."
+                              body:@"Swipe inward from the stage's bottom-right corner to drop the app and get the list back. Drag that corner down instead and the stage leaves, app still running."
                               demo:DSIntroDemoPutAway],
         [DSIntroStep stepWithTitle:@"You are all set"
                               body:@"Everything is tunable in Settings: appearance, pinned apps, per-app behaviour and when background apps get closed."

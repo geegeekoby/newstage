@@ -27,16 +27,23 @@ script that draws the artwork.
   after the fact. The grabber is a view of its own, above everything else on the card, so a
   drag that starts on it belongs to the card rather than to whatever is underneath - the app
   grid otherwise scrolls instead and the card never moves.
-- Drag the grabber down, drag from the card's bottom-right corner, or flick the card down, to
+- Drag the grabber down, drag the card's bottom-right corner down, or flick the card down, to
   send it back to the corner. The app on the stage keeps running.
-- Swipe up from the bottom of the card to drop the app and get the picker back; the app
-  shrinks into its own plate in the grid on the way out. While an app is on the stage the
-  card grows its own home indicator there, and that strip and the bottom-right corner take
-  the touches that land on them rather than passing them to the app - for the same reason
-  the grabber above is a view. A touch a hosted app receives goes to that app's process,
-  and nothing on SpringBoard's side of the fence is ever asked about it, so up to 1.5.2
-  these two were rectangles a gesture recogniser tested against and an app on the stage
-  could not be left at all.
+- Swipe inward from the card's bottom-right corner to drop the app and get the picker back;
+  the app shrinks into its own plate in the grid on the way out. Dragging the same corner
+  down puts the whole card away instead - one grip, and the direction of the first
+  fourteen points decides which it is.
+
+  That corner is a view of its own while an app is on the stage, for the same reason the
+  grabber is: a touch a hosted app receives is delivered to that app's process, and nothing
+  on SpringBoard's side is ever asked about it, so a rectangle a gesture recogniser tests
+  the start of a drag against works over the app grid and does nothing at all over an app.
+
+  Leaving an app was a swipe up from the bottom of the card until 1.5.4, and it is not any
+  more because that is the home gesture's movement in the home gesture's place. The card
+  can refuse the system gesture inside itself but not ten points below itself, which is
+  where a thumb going up from the bottom edge of an inset card starts about half the time,
+  and the phone went home instead. Sideways out of a corner is nobody else's gesture.
 - Hold a plate in the picker instead of tapping it and that app opens across the whole
   screen rather than on the stage.
 - Rotate the stage a quarter turn at a time, for apps that only make sense in landscape.
@@ -454,6 +461,13 @@ thread that crashed, or when a load-time crash finds a leftover `DynamicStagePre
 on disk from 1.4.8 - which the install script deletes, so one being there means an upgrade did
 not run, and the line says where it is. Anything else is printed in grey and says whose it is.
 SpringBoard's own reports are read the same way but only shown when this tweak is named in them.
+
+Every line in that log is clipped to 400 characters, and a line is one line. That is not tidiness:
+a caught UIKit exception's reason can carry a recursive dump of an entire view hierarchy inside
+it, one arrived with the whole app grid in it, and since the log is a 12 KB rolling window it
+pushed every other line out. What came back was thousands of cell frames and two lines of
+account - the one question it exists to answer, gone, because of a message that had nothing to
+say.
 
 The stage's log - which gesture opened it, whether the keyboard could be taken out of the card,
 why an app did not appear, and what this firmware's scene-hosting classes can be told about

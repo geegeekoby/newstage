@@ -3,6 +3,15 @@
 
 static const NSUInteger kDSDiagnosticsMaxBytes = 12288;
 
+// No single line may take more than a small share of that window. One of the things
+// written here is the reason of a caught exception, and a UIKit exception's reason can
+// have a recursive dump of a whole view hierarchy inside it - thousands of lines about
+// the app grid. One of those arrived and pushed everything else out, so the log read
+// back as a wall of cell frames and two lines of account, which is the opposite of what
+// it is for. The first part of a line says which exception and where; the rest of it has
+// never been worth another line's place.
+static const NSUInteger kDSDiagnosticsMaxLineLength = 400;
+
 static NSString *DSDiagnosticsPath(void) {
     return kDSDiagnosticsPath;
 }
@@ -29,6 +38,16 @@ static NSString *DSDiagnosticsStamp(void) {
 
 void DSDiagnosticsRecord(NSString *message) {
     if (message.length == 0) return;
+    // One entry is one line, including when what is being recorded is not: the log is
+    // trimmed by finding a newline and cutting there, so a message carrying its own
+    // would be cut in the middle of itself.
+    if ([message rangeOfString:@"\n"].location != NSNotFound) {
+        message = [[message componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet]
+            componentsJoinedByString:@" "];
+    }
+    if (message.length > kDSDiagnosticsMaxLineLength) {
+        message = [[message substringToIndex:kDSDiagnosticsMaxLineLength - 3] stringByAppendingString:@"..."];
+    }
 
     NSString *line = [NSString stringWithFormat:@"%@ %@: %@\n",
                       DSDiagnosticsStamp(),

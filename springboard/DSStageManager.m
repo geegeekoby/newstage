@@ -1622,12 +1622,31 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
 #pragma mark - In-stage gestures
 
+// Far enough for the direction of a drag from the corner to mean anything.
+static const CGFloat kDSCornerIntentTravel = 14.0;
+
+typedef NS_ENUM(NSInteger, DSCornerIntent) {
+    DSCornerIntentUndecided = 0,
+    DSCornerIntentPutAway,
+    DSCornerIntentLeaveApp,
+};
+
 // One recogniser drives all three in-stage gestures; which one it is depends on
 // where the drag started.
 - (void)handleStagePan:(UIPanGestureRecognizer *)recognizer {
     static BOOL fromTop = NO;
-    static BOOL fromBottom = NO;
     static BOOL fromCorner = NO;
+    // A drag from the corner is two gestures until it has gone far enough to say which.
+    // Down and away puts the card back in the corner it came from; inward, across the
+    // card, drops the app and brings the list back.
+    //
+    // Leaving an app used to be a swipe up from the bottom of the card, which is the
+    // same movement in the same place as the home gesture, ten points below. The card
+    // could refuse the home gesture inside itself but not below itself, and a thumb
+    // going up from the bottom of a card inset from the bottom of the display starts
+    // below it about as often as not: the phone went home instead. Sideways from the
+    // corner is nothing else's gesture.
+    static NSInteger cornerIntent = DSCornerIntentUndecided;
 
     CGPoint location = [recognizer locationInView:_container];
     CGPoint translation = [recognizer translationInView:_window];
@@ -1645,27 +1664,46 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
             [_container setLiftOffset:0.0];
 
             fromCorner = CGRectContainsPoint([self closeZoneRect], start);
+            cornerIntent = DSCornerIntentUndecided;
             fromTop = !fromCorner && CGRectContainsPoint([_container dragAffordanceRect], start);
-            fromBottom = !fromCorner && !fromTop && self.hasHostedApp &&
-                         CGRectContainsPoint([_container homeAffordanceRect], start);
             break;
         }
         case UIGestureRecognizerStateChanged: {
             if (fromCorner) {
-                CGFloat offset = MAX(translation.y, 0.0);
-                _container.frame = CGRectOffset(resting, 0, offset);
-                _container.alpha = 1.0 - MIN(offset / (CGRectGetHeight(resting) * 0.6), 0.75);
+                if (cornerIntent == DSCornerIntentUndecided &&
+                    hypot(translation.x, translation.y) > kDSCornerIntentTravel) {
+                    cornerIntent = (self.hasHostedApp && translation.x < 0.0 &&
+                                    fabs(translation.x) > fabs(translation.y))
+                        ? DSCornerIntentLeaveApp
+                        : DSCornerIntentPutAway;
+                }
+
+                if (cornerIntent == DSCornerIntentLeaveApp) {
+                    // The app shrinks under the finger, the way it shrinks on the way
+                    // out, so the drag says what letting go will do.
+                    CGFloat travel = MIN(MAX(-translation.x, 0.0), 160.0);
+                    _sceneHost.hostView.transform = CGAffineTransformMakeScale(1.0 - travel / 900.0,
+                                                                              1.0 - travel / 900.0);
+                } else {
+                    CGFloat offset = MAX(translation.y, 0.0);
+                    _container.frame = CGRectOffset(resting, 0, offset);
+                    _container.alpha = 1.0 - MIN(offset / (CGRectGetHeight(resting) * 0.6), 0.75);
+                }
             } else if (fromTop) {
                 _container.frame = CGRectOffset(resting, 0, MAX(translation.y, -70.0));
-            } else if (fromBottom) {
-                CGFloat lift = MIN(MAX(-translation.y, 0.0), 120.0);
-                CGFloat scale = 1.0 - lift / 900.0;
-                _sceneHost.hostView.transform = CGAffineTransformMakeScale(scale, scale);
             }
             break;
         }
         case UIGestureRecognizerStateEnded: {
-            if (fromCorner) {
+            if (fromCorner && cornerIntent == DSCornerIntentLeaveApp) {
+                if (translation.x < -60.0 || velocity.x < -650.0) {
+                    [self exitToPickerAnimated:YES];
+                } else {
+                    [UIView animateWithDuration:0.25 animations:^{
+                        self->_sceneHost.hostView.transform = CGAffineTransformIdentity;
+                    }];
+                }
+            } else if (fromCorner) {
                 if (translation.y > CGRectGetHeight(resting) * 0.2 || velocity.y > 700.0) {
                     [self closeStageAnimated:YES];
                 } else {
@@ -1681,26 +1719,20 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
                 } else {
                     [self snapBackTo:resting];
                 }
-            } else if (fromBottom) {
-                if (translation.y < -55.0 || velocity.y < -600.0) {
-                    [self exitToPickerAnimated:YES];
-                } else {
-                    [UIView animateWithDuration:0.25 animations:^{
-                        self->_sceneHost.hostView.transform = CGAffineTransformIdentity;
-                    }];
-                }
             }
-            fromTop = fromBottom = fromCorner = NO;
+            fromTop = fromCorner = NO;
+            cornerIntent = DSCornerIntentUndecided;
             break;
         }
         case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateFailed: {
-            if (fromBottom) {
+            if (cornerIntent == DSCornerIntentLeaveApp) {
                 _sceneHost.hostView.transform = CGAffineTransformIdentity;
             } else if (fromTop || fromCorner) {
                 [self snapBackTo:resting];
             }
-            fromTop = fromBottom = fromCorner = NO;
+            fromTop = fromCorner = NO;
+            cornerIntent = DSCornerIntentUndecided;
             break;
         }
         default:

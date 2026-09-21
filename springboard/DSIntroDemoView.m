@@ -428,16 +428,16 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     } completion:nil];
 }
 
-// Two ways out: swipe up inside the stage to drop the app and get the picker
-// back, then drag the stage itself down to put it away.
+// Two ways out, both from the same corner: inward drops the app and brings the
+// picker back, down puts the whole stage away.
 - (void)runPutAwayCycle {
     _stageApp.alpha = 1.0;
     for (UIView *cell in _stageCells) cell.alpha = 0.0;
     [self layoutStageForProgress:1.0 instant:YES];
 
     CGRect stage = [self convertRect:_stage.bounds fromView:_stage];
-    CGPoint bottom = CGPointMake(CGRectGetMidX(stage), CGRectGetMaxY(stage) - 6.0);
-    _finger.center = bottom;
+    CGPoint corner = CGPointMake(CGRectGetMaxX(stage) - 10.0, CGRectGetMaxY(stage) - 10.0);
+    _finger.center = corner;
     _finger.transform = CGAffineTransformMakeScale(0.7, 0.7);
 
     [UIView animateWithDuration:0.2 delay:0.25 options:0 animations:^{
@@ -445,9 +445,9 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
         self->_finger.transform = CGAffineTransformIdentity;
     } completion:nil];
 
-    // Swipe up: the app shrinks into its plate and the picker comes back.
+    // Inward: the app shrinks into its plate and the picker comes back.
     [UIView animateWithDuration:0.55 delay:0.5 usingSpringWithDamping:0.88 initialSpringVelocity:0.0 options:0 animations:^{
-        self->_finger.center = CGPointMake(bottom.x, bottom.y - CGRectGetHeight(stage) * 0.3);
+        self->_finger.center = CGPointMake(corner.x - CGRectGetWidth(stage) * 0.45, corner.y);
         self->_stageApp.alpha = 0.0;
         for (UIView *cell in self->_stageCells) cell.alpha = 1.0;
     } completion:nil];

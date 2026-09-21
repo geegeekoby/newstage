@@ -10,6 +10,8 @@
     UITextField *_field;
     UIImageView *_magnifier;
     UIButton *_clearButton;
+    NSUInteger _keyboardAttempts;
+    BOOL _askingAgain;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -120,12 +122,14 @@
         } @catch (NSException *exception) {
         }
     }
+    if (!_askingAgain) _keyboardAttempts = 0;
     DSDiagnosticsRecordFormat(@"SpringBoard: search field asked for the keyboard, window is %@",
                               window.isKeyWindow ? @"key" : @"still not key");
 
     // Whether a keyboard then actually arrives is the whole question when typing in
     // the picker does not work, and it is not something that can be seen from here
     // any other way: written down a moment later, for the diagnostics page.
+    __weak __typeof(self) weakSelf = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.9 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         CGRect keyboard = CGRectNull;
@@ -138,8 +142,29 @@
         DSDiagnosticsRecordFormat(@"SpringBoard: a moment later the keyboard is %@",
                                   CGRectIsNull(keyboard) ? @"nowhere on the display"
                                                          : NSStringFromCGRect(keyboard));
+        if (CGRectIsNull(keyboard)) [weakSelf askForTheKeyboardAgain];
     });
     return YES;
+}
+
+// The field is first responder and no keyboard came up. That happens to this field and
+// not to a field in an ordinary app because the window it is in only became the key
+// window a moment ago, and whatever SpringBoard was doing with the keyboard before that
+// - a keyboard of the staged app's going away, a focus that has not settled - can land
+// between the two. Asking a second time costs a frame and fixes it; asking forever would
+// be a field that cannot be left alone, so it is asked exactly once.
+- (void)askForTheKeyboardAgain {
+    if (_keyboardAttempts > 0 || !_field.isFirstResponder) return;
+    _keyboardAttempts++;
+
+    _askingAgain = YES;
+    @try {
+        [_field resignFirstResponder];
+        [_field becomeFirstResponder];
+    } @catch (NSException *exception) {
+    }
+    _askingAgain = NO;
+    DSDiagnosticsRecord(@"SpringBoard: no keyboard came up for the search field, so it asked again");
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {

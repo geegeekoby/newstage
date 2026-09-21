@@ -541,19 +541,13 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     @try {
         if ([scene respondsToSelector:@selector(uiPresentationManager)]) {
             UIScenePresentationManager *presentation = scene.uiPresentationManager;
-            if (![presentation respondsToSelector:@selector(createPresenterWithIdentifier:)]) {
-                [self giveUpHosting:@"the keyboard's scene will not make a presenter here"];
+            if (!presentation) {
+                [self giveUpHosting:@"the keyboard's scene has no presentation manager"];
                 return nil;
             }
-            _presenter = [presentation createPresenterWithIdentifier:kDSKeyboardRequester];
-            UIView *view = _presenter.presentationView;
-            if (!view) {
-                [self giveUpHosting:@"presenting the keyboard gave back no view"];
-                return nil;
-            }
-            // Activated after the view is in a window, not here: an activated presenter
-            // with nowhere to draw is the keyboard going missing all over again.
-            return view;
+            UIView *view = [self viewFromPresentationManager:presentation];
+            if (view) return view;
+            if (![scene respondsToSelector:@selector(hostManagerForRequester:)]) return nil;
         }
 
         if ([scene respondsToSelector:@selector(hostManagerForRequester:)]) {
@@ -571,6 +565,168 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 
     [self giveUpHosting:@"the keyboard's scene can neither be presented nor hosted"];
     return nil;
+}
+
+// The presentation manager makes the presenter, and what that is called is the one thing
+// left that this cannot know from here: the name it had - createPresenterWithIdentifier: -
+// is not on this firmware, and neither is the UIScenePresenter class, which means the
+// presenter is only ever reached through a protocol and a factory whose name moved. So it
+// is looked for: every method of the manager that makes something with "presenter" in its
+// name is tried, in the order most likely to be a factory, and whichever hands back an
+// object that owns a view wins. Every method it has is written to the log the first time
+// through, so a build where none of them work still says why.
+- (UIView *)viewFromPresentationManager:(id)presentation {
+    NSMutableArray<NSString *> *factories = [NSMutableArray array];
+    NSMutableArray<NSString *> *everything = [NSMutableArray array];
+    NSMutableDictionary<NSString *, NSNumber *> *takesAnObject = [NSMutableDictionary dictionary];
+
+    for (Class candidate = object_getClass(presentation); candidate && candidate != NSObject.class;
+         candidate = class_getSuperclass(candidate)) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(candidate, &count);
+        if (!methods) continue;
+        for (unsigned int i = 0; i < count; i++) {
+            NSString *name = NSStringFromSelector(method_getName(methods[i]));
+            [everything addObject:name];
+
+            if ([name rangeOfString:@"resenter" options:NSCaseInsensitiveSearch].location == NSNotFound) continue;
+            if ([name hasPrefix:@"set"] || [name hasPrefix:@"remove"] || [name hasPrefix:@"invalidate"]) continue;
+
+            unsigned int arguments = method_getNumberOfArguments(methods[i]);
+            if (arguments > 3) continue;
+            if (arguments == 3) {
+                // Only an object argument is safe to guess at, and the guess is the
+                // requester's name, which is what every one of these has ever wanted.
+                char type[16] = {0};
+                method_getArgumentType(methods[i], 2, type, sizeof(type));
+                if (type[0] != '@') continue;
+                takesAnObject[name] = @YES;
+            }
+            [factories addObject:name];
+        }
+        free(methods);
+    }
+
+    static BOOL noted = NO;
+    if (!noted) {
+        noted = YES;
+        [self recordNames:everything under:[NSString stringWithFormat:@"%@ has", NSStringFromClass([presentation class])]];
+    }
+
+    // A name that says it makes something comes first; a plain accessor is a last resort.
+    [factories sortUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
+        NSInteger (^rank)(NSString *) = ^NSInteger(NSString *name) {
+            if ([name rangeOfString:@"create" options:NSCaseInsensitiveSearch].location != NSNotFound) return 0;
+            if ([name hasPrefix:@"new"] || [name hasPrefix:@"_new"]) return 1;
+            if ([name rangeOfString:@"make" options:NSCaseInsensitiveSearch].location != NSNotFound) return 2;
+            return 3;
+        };
+        NSInteger left = rank(a), right = rank(b);
+        if (left != right) return left < right ? NSOrderedAscending : NSOrderedDescending;
+        return [a compare:b];
+    }];
+
+    for (NSString *name in factories) {
+        SEL selector = NSSelectorFromString(name);
+        id presenter = nil;
+        @try {
+            if (takesAnObject[name]) {
+                presenter = ((id (*)(id, SEL, id))objc_msgSend)(presentation, selector, kDSKeyboardRequester);
+            } else {
+                presenter = ((id (*)(id, SEL))objc_msgSend)(presentation, selector);
+            }
+        } @catch (NSException *exception) {
+            continue;
+        }
+        if (![presenter respondsToSelector:@selector(presentationView)]) continue;
+
+        UIView *view = nil;
+        @try {
+            view = ((UIView * (*)(id, SEL))objc_msgSend)(presenter, @selector(presentationView));
+        } @catch (NSException *exception) {
+            continue;
+        }
+        if (![view isKindOfClass:UIView.class]) continue;
+
+        _presenter = presenter;
+        DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard is presented through %@, which gave back a %@",
+                                  name, NSStringFromClass([view class]));
+        // Activated once it is in a window, not here: an activated presenter with
+        // nowhere to draw is the keyboard going missing all over again.
+        return view;
+    }
+
+    // The manager is initialised with a keyboard proxy layer manager, by the name of its
+    // own initialiser, and a proxy for the keyboard's layer is exactly what is wanted
+    // here. If no presenter can be had, whatever it is holding is written down instead.
+    [self recordWhatIsHeldBy:presentation];
+
+    [self giveUpHosting:factories.count > 0
+        ? @"none of the keyboard scene's presenters would give out a view"
+        : @"the keyboard's presentation manager has no way to make a presenter"];
+    return nil;
+}
+
+// What an object is holding, and what those things can do. Only worth the log when the
+// named routes have all failed, which is where it is called from.
+- (void)recordWhatIsHeldBy:(id)object {
+    static BOOL noted = NO;
+    if (noted) return;
+    noted = YES;
+
+    for (Class candidate = object_getClass(object); candidate && candidate != NSObject.class;
+         candidate = class_getSuperclass(candidate)) {
+        unsigned int count = 0;
+        Ivar *ivars = class_copyIvarList(candidate, &count);
+        if (!ivars) continue;
+        for (unsigned int i = 0; i < count; i++) {
+            const char *encoding = ivar_getTypeEncoding(ivars[i]);
+            if (!encoding || encoding[0] != '@') continue;
+
+            id value = nil;
+            @try {
+                value = object_getIvar(object, ivars[i]);
+            } @catch (NSException *exception) {
+                continue;
+            }
+            if (!value) continue;
+
+            NSString *name = NSStringFromClass([value class]);
+            if ([name rangeOfString:@"keyboard" options:NSCaseInsensitiveSearch].location == NSNotFound &&
+                [name rangeOfString:@"proxy" options:NSCaseInsensitiveSearch].location == NSNotFound &&
+                [name rangeOfString:@"layer" options:NSCaseInsensitiveSearch].location == NSNotFound) continue;
+
+            NSMutableArray<NSString *> *selectors = [NSMutableArray array];
+            for (Class inner = [value class]; inner && inner != NSObject.class; inner = class_getSuperclass(inner)) {
+                unsigned int methodCount = 0;
+                Method *methods = class_copyMethodList(inner, &methodCount);
+                if (!methods) continue;
+                for (unsigned int j = 0; j < methodCount; j++) {
+                    [selectors addObject:NSStringFromSelector(method_getName(methods[j]))];
+                }
+                free(methods);
+            }
+            [self recordNames:selectors under:[NSString stringWithFormat:@"its %@ has", name]];
+        }
+        free(ivars);
+    }
+}
+
+// A list of names, in pieces, because one line of the log is clipped and these run long.
+- (void)recordNames:(NSArray<NSString *> *)names under:(NSString *)heading {
+    NSMutableString *line = [NSMutableString string];
+    NSUInteger part = 1;
+    for (NSString *name in names) {
+        if (line.length + name.length + 1 > 280) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ (%lu) %@", heading, (unsigned long)part++, line);
+            line = [NSMutableString string];
+        }
+        if (line.length > 0) [line appendString:@" "];
+        [line appendString:name];
+    }
+    if (line.length > 0) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ (%lu) %@", heading, (unsigned long)part, line);
+    }
 }
 
 // A scene's host view is that scene's own rectangle, and the keyboard's scene is laid

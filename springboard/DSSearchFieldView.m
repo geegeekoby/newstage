@@ -111,6 +111,24 @@
 
 #pragma mark - UITextFieldDelegate
 
+// The keys inside a window, wherever they are in it. A keyboard window on its own says
+// nothing: it is the size of the display and it stays around after the keyboard has gone.
+static CGRect DSKeyboardViewFrameIn(UIView *view) {
+    NSString *name = NSStringFromClass(view.class);
+    BOOL isKeyboard = [name rangeOfString:@"UIKeyboard"].location == 0 ||
+                      [name rangeOfString:@"InputSetHostView"].location != NSNotFound;
+    if (isKeyboard && !view.hidden && view.alpha > 0.01 && !CGRectIsEmpty(view.bounds)) {
+        UIWindow *window = view.window;
+        return window ? [view convertRect:view.bounds toView:nil] : view.frame;
+    }
+    if (view.hidden || view.alpha < 0.01) return CGRectNull;
+    for (UIView *child in view.subviews) {
+        CGRect found = DSKeyboardViewFrameIn(child);
+        if (!CGRectIsNull(found)) return found;
+    }
+    return CGRectNull;
+}
+
 // Typing goes to the key window, and this field's window is SpringBoard's only when
 // the stage put it there. Asked for again here because this is the moment it
 // actually matters, whatever happened when the stage opened.
@@ -137,14 +155,18 @@
         // name, and looking for that alone reported every keyboard the stage raises for
         // itself as missing - which is the opposite of the truth and was making the
         // retry below fire at a keyboard that was already on its way up.
+        // The window is the size of the display whether a keyboard is in it or not, so
+        // the keys themselves are what gets measured: the view inside it that is the
+        // keyboard, in display coordinates.
         CGRect keyboard = CGRectNull;
         for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
             if (candidate.hidden || candidate.alpha < 0.01) continue;
             NSString *name = NSStringFromClass(candidate.class);
             if ([name rangeOfString:@"Keyboard"].location == NSNotFound &&
                 [name rangeOfString:@"TextEffects"].location == NSNotFound) continue;
-            if (CGRectIsEmpty(candidate.frame)) continue;
-            keyboard = candidate.frame;
+            CGRect keys = DSKeyboardViewFrameIn(candidate);
+            if (CGRectIsNull(keys)) continue;
+            keyboard = keys;
             break;
         }
         DSDiagnosticsRecordFormat(@"SpringBoard: a moment later the keyboard is %@",

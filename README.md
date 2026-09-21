@@ -32,7 +32,9 @@ script that draws the artwork.
 - Swipe inward from the card's bottom-right corner to drop the app and get the picker back;
   the app shrinks into its own plate in the grid on the way out. Dragging the same corner
   down puts the whole card away instead - one grip, and the direction of the first
-  fourteen points decides which it is.
+  fourteen points decides which it is. Inward means up, left, or both at once: a thumb on
+  that corner pulling into the card rolls up and left together, and asking for left alone
+  meant the phone read most of those drags as putting the card away and did nothing.
 
   That corner is a view of its own while an app is on the stage, for the same reason the
   grabber is: a touch a hosted app receives is delivered to that app's process, and nothing
@@ -281,6 +283,15 @@ the home screen behind it.
 
 Three things are worth knowing about how carefully this is switched on, because a keyboard that
 has been taken out of the card and then not put anywhere is worse than a keyboard in the card:
+
+**The presenter is found, not named, for the same reason.** 1.5.5 moved to the iOS 16 way of putting
+a scene on screen and still failed, because `createPresenterWithIdentifier:` is not on this
+firmware's presentation manager and `UIScenePresenter` is not a class here at all - it is a protocol,
+reached through a factory whose name has moved. So the manager is asked what it can do: every method
+of it that makes something with "presenter" in the name is tried, factories first, and whichever
+hands back an object owning a view is the one. The scene itself was found on the first try once it
+was looked for rather than named - `com.apple.UIKit.KeyboardManagement.hosted`, sitting in the
+arbiter exactly as expected - which is what made the naming the whole of the remaining problem.
 
 It took until 1.5.5 to be shown somewhere, though, and the reason is worth keeping. A scene used to
 be put on screen by asking it for a host manager and that manager for a host view, and that is what

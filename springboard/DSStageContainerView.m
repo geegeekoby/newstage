@@ -105,10 +105,11 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     // worth is enough to take hold of the corner, and the rest stays the app's.
     CGRect grip = [self cornerGripRect];
     CGFloat gripWidth = MIN(88.0, CGRectGetWidth(grip));
+    CGFloat gripHeight = MIN(56.0, CGRectGetHeight(grip));
     _cornerGrip.frame = CGRectMake(CGRectGetMaxX(grip) - gripWidth,
-                                   CGRectGetMinY(grip),
+                                   CGRectGetMaxY(grip) - gripHeight,
                                    gripWidth,
-                                   CGRectGetHeight(grip));
+                                   gripHeight);
 
     [self updateShadow];
 }
@@ -176,7 +177,10 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 - (CGRect)cornerGripRect {
     CGRect bounds = self.bounds;
     CGFloat width = MIN(kDSTriggerWidth + 28.0, CGRectGetWidth(bounds));
-    CGFloat height = MIN(46.0, CGRectGetHeight(bounds));
+    // Deep, because a thumb reaching the bottom right corner of the card lands above it
+    // as often as on it: on the phone the drags that missed were starting twenty and
+    // thirty points high.
+    CGFloat height = MIN(72.0, CGRectGetHeight(bounds));
     return CGRectMake(CGRectGetWidth(bounds) - width,
                       CGRectGetHeight(bounds) - height,
                       width,

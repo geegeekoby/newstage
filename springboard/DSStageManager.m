@@ -1625,6 +1625,13 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 // Far enough for the direction of a drag from the corner to mean anything.
 static const CGFloat kDSCornerIntentTravel = 14.0;
 
+// How far a drag from the bottom right corner has gone into the card. Left and up both
+// count, and together, because that is the shape of the movement a thumb on that corner
+// makes: the finger rolls inward and upward at once.
+static CGFloat DSInwardTravel(CGPoint translation) {
+    return MAX(-translation.x, 0.0) + MAX(-translation.y, 0.0);
+}
+
 typedef NS_ENUM(NSInteger, DSCornerIntent) {
     DSCornerIntentUndecided = 0,
     DSCornerIntentPutAway,
@@ -1679,16 +1686,19 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             if (fromCorner) {
                 if (cornerIntent == DSCornerIntentUndecided &&
                     hypot(translation.x, translation.y) > kDSCornerIntentTravel) {
-                    cornerIntent = (self.hasHostedApp && translation.x < 0.0 &&
-                                    fabs(translation.x) > fabs(translation.y))
-                        ? DSCornerIntentLeaveApp
-                        : DSCornerIntentPutAway;
+                    // Away from the corner, in any direction, leaves the app; towards it
+                    // puts the card away. Asking for leftwards specifically was asking
+                    // for a movement nobody makes: a thumb on the bottom right corner
+                    // pulling into the card goes up and left together, and up won.
+                    BOOL inward = translation.x < 0.0 || translation.y < 0.0;
+                    cornerIntent = (self.hasHostedApp && inward) ? DSCornerIntentLeaveApp
+                                                                : DSCornerIntentPutAway;
                 }
 
                 if (cornerIntent == DSCornerIntentLeaveApp) {
                     // The app shrinks under the finger, the way it shrinks on the way
                     // out, so the drag says what letting go will do.
-                    CGFloat travel = MIN(MAX(-translation.x, 0.0), 160.0);
+                    CGFloat travel = MIN(DSInwardTravel(translation), 160.0);
                     _sceneHost.hostView.transform = CGAffineTransformMakeScale(1.0 - travel / 900.0,
                                                                               1.0 - travel / 900.0);
                 } else {
@@ -1710,7 +1720,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             }
 
             if (fromCorner && cornerIntent == DSCornerIntentLeaveApp) {
-                if (translation.x < -60.0 || velocity.x < -650.0) {
+                if (DSInwardTravel(translation) > 60.0 || DSInwardTravel(velocity) > 650.0) {
                     [self exitToPickerAnimated:YES];
                 } else {
                     [UIView animateWithDuration:0.25 animations:^{

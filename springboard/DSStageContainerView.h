@@ -20,6 +20,11 @@
 // on the stage with no way out of it.
 @property (nonatomic, assign) BOOL hostingApp;
 
+// Whether the content is clipped to the card. Off while an app is typing, so the
+// keyboard that is drawn at the bottom of the app's window can sit on the display
+// below the card rather than being clipped inside it.
+- (void)setClipsContents:(BOOL)clips;
+
 // Top strip that drags the whole card.
 - (CGRect)dragAffordanceRect;
 // The bottom-right corner, and a strip up the right-hand edge well clear of the home

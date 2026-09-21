@@ -1,7 +1,7 @@
 #import "DSStageContainerView.h"
 #import "DSConstants.h"
 
-static const CGFloat kDSDragAffordanceHeight = 24.0;
+static const CGFloat kDSDragAffordanceHeight = 36.0;
 
 static const CGFloat kDSGrabberWidth = 124.0;
 static const CGFloat kDSGrabberPillWidth = 40.0;
@@ -175,6 +175,11 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     if (@available(iOS 13.0, *)) {
         self.overrideUserInterfaceStyle = darkMode ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
     }
+}
+
+- (void)setClipsContents:(BOOL)clips {
+    self.clipsToBounds = clips;
+    _contentView.clipsToBounds = clips;
 }
 
 - (void)setBackdropHidden:(BOOL)hidden {

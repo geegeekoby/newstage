@@ -405,22 +405,27 @@ static BOOL sSystemEdgePullAvailable;
     CGRect screen = [self screenBounds];
     CGRect wanted = CGRectZero;
     if (_typingKeys > 0.0) {
+        // The card sits above the keys. The app's window still reaches the bottom of
+        // the display - that is where the app draws the keyboard - and the card is
+        // only the part of that window that is not the keyboard. Covering the keys
+        // with the card is what looked like the stage not lifting.
         CGFloat top = MAX(CGRectGetHeight(screen) - _typingKeys - kDSStageTypingHeadroom,
                           [self splitLine] * 0.5);
-        wanted = CGRectMake(0, top, CGRectGetWidth(screen), CGRectGetHeight(screen) - top);
+        CGFloat height = CGRectGetHeight(screen) - _typingKeys - top;
+        height = MAX(height, 180.0);
+        wanted = CGRectMake(0, top, CGRectGetWidth(screen), height);
     }
     if (CGRectEqualToRect(wanted, _typingFrame)) return;
 
     BOOL wasTyping = !CGRectIsEmpty(_typingFrame);
     _typingFrame = wanted;
     if (!wasTyping && !CGRectIsEmpty(wanted)) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: the card is %@ while the app types, so its keyboard "
-                                   "lands on the bottom of the display",
-                                  NSStringFromCGRect(wanted));
+        DSDiagnosticsRecordFormat(@"SpringBoard: the card sits at %@ above a %gpt keyboard",
+                                  NSStringFromCGRect(wanted), _typingKeys);
     }
 
-    // The card was held up out of the way of keyboards it does not have any more.
     [_container setLiftOffset:0.0];
+    [_container setClipsContents:CGRectIsEmpty(wanted)];
     DSStageState state = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     void (^resize)(void) = ^{
         [self layoutStageForState:state];
@@ -508,12 +513,10 @@ static BOOL sSystemEdgePullAvailable;
     CGFloat screenWidth = CGRectGetWidth(bounds);
     CGFloat top = [self splitLine] + kDSStageInset;
 
-    // A staged app typing gets the card's bottom edge on the display's bottom edge and
-    // the display's full width, because that is where and how wide the app's keyboard
-    // will be drawn: the app draws its keyboard at the bottom of its own window, and its
-    // window is the card. Making the card end where the display ends is what puts those
-    // keys in the same place, at the same size, as the keys the stage's own search field
-    // raises. Nothing hosts, moves or refuses a keyboard to do this.
+    // A staged app typing: the card sits above the keys. The app's window is laid out
+    // taller, reaching the bottom of the display, so the keyboard the app draws at the
+    // bottom of that window lands on the bottom edge at full size. The card itself
+    // stops where the keys start, which is what "lifted above the keyboard" looks like.
     if (!CGRectIsEmpty(_typingFrame) && state != DSStageStateClosed && state != DSStageStateMinimized) {
         return _typingFrame;
     }
@@ -551,6 +554,7 @@ static BOOL sSystemEdgePullAvailable;
     _notedStrayKeyboard = NO;
     if (!CGRectIsEmpty(_typingFrame)) {
         _typingFrame = CGRectZero;
+        [_container setClipsContents:YES];
         if (self.isStageVisible) {
             [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
         }
@@ -706,11 +710,20 @@ static BOOL sSystemEdgePullAvailable;
 - (BOOL)shouldWindowCaptureTouchAtPoint:(CGPoint)point {
     if (_state == DSStageStateClosed || _state == DSStageStateMinimized) return NO;
 
-    // The card and nothing else, wherever the keyboard has pushed it to. The keyboard
-    // itself is not the stage's to claim: it belongs to the display, is drawn under
-    // this window by SpringBoard, and every touch that lands on it has to fall through.
     CGRect card = CGRectOffset(_container.frame, 0.0, -_container.liftOffset);
-    return CGRectContainsPoint(card, point);
+    if (CGRectContainsPoint(card, point)) return YES;
+
+    // While typing, the app's keyboard is drawn in the host view below the card.
+    // Those touches have to land on this window or they never reach the keys.
+    if (_typingKeys > 0.0 && self.hasHostedApp) {
+        CGRect screen = [self screenBounds];
+        CGRect keys = CGRectMake(CGRectGetMinX(card),
+                                 CGRectGetMaxY(card),
+                                 CGRectGetWidth(card),
+                                 MAX(CGRectGetMaxY(screen) - CGRectGetMaxY(card), _typingKeys));
+        return CGRectContainsPoint(keys, point);
+    }
+    return NO;
 }
 
 #pragma mark - Corner pull
@@ -1336,11 +1349,18 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 - (void)layoutStageForState:(DSStageState)state {
     CGRect frame = [self stageFrameForState:state];
     _container.frame = frame;
+    [_container setClipsContents:CGRectIsEmpty(_typingFrame)];
     if (!_sceneHost.isHosting) return;
 
-    // The app's window is the card, wherever the card currently is - which is up out of
-    // the keyboard's way whenever there is one on the display.
+    // The app's window is the card plus, while typing, the keyboard band below it.
+    // The app draws its keyboard at the bottom of its own window; keeping that
+    // window as tall as the display from the card's origin down is what puts the
+    // keys on the bottom edge, while the card itself stops where the keys start.
     CGRect window = CGRectOffset(frame, 0.0, -_container.liftOffset);
+    if (_typingKeys > 0.0) {
+        CGRect screen = [self screenBounds];
+        window.size.height = MAX(CGRectGetMaxY(screen) - CGRectGetMinY(window), CGRectGetHeight(window));
+    }
     [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];
     [self publishStageStateForBundleIdentifier:_sceneHost.bundleIdentifier frame:window active:YES];
 }
@@ -1543,12 +1563,18 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     DSSceneHost *host = _sceneHost;
     _sceneHost = nil;
     _stageQuarterTurns = 0;
-    [self forgetStagedAppKeyboard];
 
     UIView *hostView = host.hostView;
+    // The card has to be the picker's size before the picker is shown, or the grid
+    // lays out in the typing rectangle and the first frame is a black slab.
+    [self forgetStagedAppKeyboard];
+    [_container setClipsContents:YES];
+    [_container setBackdropHidden:NO];
+    _container.hostingApp = NO;
+
     _picker.view.hidden = NO;
     _picker.view.alpha = 0.0;
-    [_container setBackdropHidden:NO];
+    [_container.contentView bringSubviewToFront:_picker.view];
     [_picker reloadContent];
     [_picker.view layoutIfNeeded];
 
@@ -1578,8 +1604,10 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     };
     void (^finish)(void) = ^{
         hostView.transform = CGAffineTransformIdentity;
+        hostView.alpha = 1.0;
         hostView.layer.cornerRadius = 0.0;
         hostView.layer.masksToBounds = NO;
+        [hostView removeFromSuperview];
         [self publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
         [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
         [self showPickerImmediately];
@@ -1825,15 +1853,14 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             if (fromCorner) {
                 if (cornerIntent == DSCornerIntentUndecided &&
                     hypot(translation.x, translation.y) > kDSCornerIntentTravel) {
-                    // Inward is left. Up from the bottom-right corner is also the home
-                    // gesture's movement, and treating any direction away from the
-                    // corner as leaving the app is what made those drags get taken
-                    // away mid-gesture - or, when they weren't, get read as putting
-                    // the card away.
-                    BOOL inward = translation.x < -8.0 &&
-                                  fabs(translation.x) >= fabs(translation.y) * 0.55;
-                    cornerIntent = (self.hasHostedApp && inward) ? DSCornerIntentLeaveApp
-                                                                : DSCornerIntentPutAway;
+                    // Down puts the card away. Anything else - left, up, or both - leaves
+                    // the app. An upward swipe from the corner used to close the stage
+                    // instead, which hid the window and left a black screen; the second
+                    // pull then opened the picker. Going back to the picker is the
+                    // gesture people actually make from that corner.
+                    BOOL downward = translation.y > 12.0 && translation.y >= fabs(translation.x);
+                    cornerIntent = (self.hasHostedApp && !downward) ? DSCornerIntentLeaveApp
+                                                                   : DSCornerIntentPutAway;
                 }
 
                 if (cornerIntent == DSCornerIntentLeaveApp) {
@@ -1861,7 +1888,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             }
 
             if (fromCorner && cornerIntent == DSCornerIntentLeaveApp) {
-                if (DSInwardTravel(translation) > 60.0 || DSInwardTravel(velocity) > 650.0) {
+                if (DSInwardTravel(translation) > 36.0 || DSInwardTravel(velocity) > 450.0) {
                     [self exitToPickerAnimated:YES];
                 } else {
                     [UIView animateWithDuration:0.25 animations:^{

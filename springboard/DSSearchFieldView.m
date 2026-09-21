@@ -12,7 +12,9 @@
     UIImageView *_magnifier;
     UIButton *_clearButton;
     NSUInteger _keyboardAttempts;
+    NSUInteger _keyboardCheckGeneration;
     BOOL _askingAgain;
+    BOOL _retryScheduled;
     id _keyboardShowObserver;
 }
 
@@ -133,7 +135,20 @@
 }
 
 - (void)noteKeyboardIsShowing {
+    _keyboardCheckGeneration++;
     _keyboardAttempts = 0;
+    _retryScheduled = NO;
+}
+
+- (void)scheduleKeyboardCheckAfter:(NSTimeInterval)delay {
+    NSUInteger generation = ++_keyboardCheckGeneration;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) field = weakSelf;
+        if (!field || generation != field->_keyboardCheckGeneration) return;
+        [field checkWhetherKeyboardArrived];
+    });
 }
 
 #pragma mark - UITextFieldDelegate
@@ -145,11 +160,28 @@
     DSDiagnosticsRecordFormat(@"SpringBoard: a moment later the keyboard is %@",
                               CGRectIsNull(keyboard) ? @"nowhere on the display"
                                                      : NSStringFromCGRect(keyboard));
-    if (!CGRectIsNull(keyboard)) return;
+    if (!CGRectIsNull(keyboard)) {
+        _retryScheduled = NO;
+        return;
+    }
+    if (_retryScheduled) return;
+    _retryScheduled = YES;
     [self askForTheKeyboardAgain];
 }
 
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
+    if ([self.delegate respondsToSelector:@selector(searchFieldShouldWaitBeforeEditing:)] &&
+        [self.delegate searchFieldShouldWaitBeforeEditing:self]) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.12 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) field = weakSelf;
+            if (!field) return;
+            [field->_field becomeFirstResponder];
+        });
+        return NO;
+    }
+
     [self requestKeyWindowFromDelegate];
 
     UIWindow *window = self.window;
@@ -159,40 +191,49 @@
         } @catch (NSException *exception) {
         }
     }
-    if (!_askingAgain) _keyboardAttempts = 0;
+
+    if (!_askingAgain) {
+        _keyboardAttempts = 0;
+        _keyboardCheckGeneration++;
+        _retryScheduled = NO;
+    }
+
     DSDiagnosticsRecordFormat(@"SpringBoard: search field asked for the keyboard, window is %@",
                               window.isKeyWindow ? @"key" : @"still not key");
 
-    __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.55 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        [weakSelf checkWhetherKeyboardArrived];
-    });
+    if (!_askingAgain) {
+        [self scheduleKeyboardCheckAfter:0.75];
+    }
     return YES;
 }
 
 - (void)askForTheKeyboardAgain {
-    if (!_field.isFirstResponder) return;
-    if (_keyboardAttempts >= 3) return;
+    if (!_field.isFirstResponder) {
+        _retryScheduled = NO;
+        return;
+    }
+    if (_keyboardAttempts >= 2) {
+        _retryScheduled = NO;
+        return;
+    }
     _keyboardAttempts++;
 
     [self requestKeyWindowFromDelegate];
 
     _askingAgain = YES;
     @try {
-        [_field resignFirstResponder];
-        [_field becomeFirstResponder];
-        [_field reloadInputViews];
+        if (_keyboardAttempts == 1) {
+            [_field reloadInputViews];
+        } else {
+            [_field resignFirstResponder];
+            [_field becomeFirstResponder];
+        }
     } @catch (NSException *exception) {
     }
     _askingAgain = NO;
     DSDiagnosticsRecord(@"SpringBoard: no keyboard came up for the search field, so it asked again");
 
-    __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        [weakSelf checkWhetherKeyboardArrived];
-    });
+    [self scheduleKeyboardCheckAfter:0.85];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {

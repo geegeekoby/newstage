@@ -133,6 +133,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_lastRefusal;
     UIImpactFeedbackGenerator *_feedback;
     __weak UIWindow *_windowBeforeStage;
+    BOOL _overlaySettling;
 }
 
 static BOOL sSystemEdgePullAvailable;
@@ -336,6 +337,7 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
+    if ([self isShowingAppPicker]) _notedKeyboardOnce = NO;
     [self noteKeyboardFrame:CGRectZero
                     source:@"SpringBoard"
                   duration:[notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
@@ -1240,6 +1242,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [self cancelAutoKill];
     if (_state != DSStageStateOverlay) DSDiagnosticsRecord(@"SpringBoard: stage on screen");
     _state = DSStageStateOverlay;
+    _overlaySettling = animated;
     _window.hidden = NO;
     [self takeKeyWindow];
     _openAppIcon.alpha = 0.0;
@@ -1255,6 +1258,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
     };
     void (^finish)(void) = ^{
+        self->_overlaySettling = NO;
         [self discardHostSnapshotAnimated:YES];
         [self layoutStageForState:DSStageStateOverlay];
         [self updateHomeAffordance];
@@ -1592,7 +1596,11 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker {
-    [self preparePickerForSearchKeyboard];
+    [self takeKeyWindow];
+}
+
+- (BOOL)appPickerShouldWaitBeforeSearchEditing:(DSAppPickerViewController *)picker {
+    return _overlaySettling;
 }
 
 #pragma mark - Launching onto the stage

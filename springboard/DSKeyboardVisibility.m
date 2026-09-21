@@ -52,6 +52,13 @@ static void DSVisitApplicationWindows(void (^visitor)(UIWindow *window)) {
     }
 }
 
+static BOOL DSKeyboardFrameIsOnScreen(CGRect keys, CGRect screen) {
+    if (CGRectIsNull(keys)) return NO;
+    if (CGRectGetMinY(keys) >= CGRectGetMaxY(screen) - 1.0) return NO;
+    if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) return NO;
+    return YES;
+}
+
 CGRect DSVisibleKeyboardFrameOnScreen(void) {
     __block CGRect keyboard = CGRectNull;
     CGRect screen = UIScreen.mainScreen.bounds;
@@ -60,9 +67,18 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
         if (candidate.hidden || candidate.alpha < 0.01) return;
         if (!DSWindowMightContainKeyboard(candidate)) return;
         CGRect keys = DSKeyboardViewFrameInView(candidate);
-        if (CGRectIsNull(keys)) return;
-        if (CGRectGetMinY(keys) >= CGRectGetMaxY(screen) - 1.0) return;
-        if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) return;
+        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
+        keyboard = keys;
+    });
+    if (!CGRectIsNull(keyboard)) return keyboard;
+
+    // SpringBoard sometimes hosts the keys in a window whose class name does not mention
+    // keyboard at all; fall back to hunting the UIKeyboard view in every window.
+    DSVisitApplicationWindows(^(UIWindow *candidate) {
+        if (!CGRectIsNull(keyboard)) return;
+        if (candidate.hidden || candidate.alpha < 0.01) return;
+        CGRect keys = DSKeyboardViewFrameInView(candidate);
+        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
         keyboard = keys;
     });
     return keyboard;

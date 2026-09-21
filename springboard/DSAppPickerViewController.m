@@ -349,6 +349,11 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     }
 }
 
+- (BOOL)searchFieldShouldWaitBeforeEditing:(DSSearchFieldView *)field {
+    if (![self.delegate respondsToSelector:@selector(appPickerShouldWaitBeforeSearchEditing:)]) return NO;
+    return [self.delegate appPickerShouldWaitBeforeSearchEditing:self];
+}
+
 #pragma mark - Selection and hold
 
 - (void)cellTouchDown:(DSAppCellContentView *)cell {

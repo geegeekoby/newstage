@@ -10,6 +10,7 @@
 - (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view;
 @optional
 - (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker;
+- (BOOL)appPickerShouldWaitBeforeSearchEditing:(DSAppPickerViewController *)picker;
 @end
 
 // What the stage shows when no app is loaded: a search field, a two column

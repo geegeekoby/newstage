@@ -7,6 +7,8 @@
 - (void)searchFieldDidCancel:(DSSearchFieldView *)field;
 @optional
 - (void)searchFieldNeedsKeyWindow:(DSSearchFieldView *)field;
+// YES while the stage card is still opening; editing is deferred one frame.
+- (BOOL)searchFieldShouldWaitBeforeEditing:(DSSearchFieldView *)field;
 @end
 
 // The stage's search field: translucent plate, leading magnifier, trailing clear

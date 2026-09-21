@@ -11,10 +11,10 @@ geometry and animation timings were derived from the tweak's own walkthrough rec
 screenshots, and everything here is written from scratch in Objective-C, Logos and a Python
 script that draws the artwork.
 
-**3.0.0** is the engine done the way iOS 16.5.1 on an iPhone actually works: one launch hook,
-wait for the home screen, `SBAppViewController` for live apps, and a keyboard that is never
-stolen or refused. Overlay, Split View, the picker and the corner gestures are the same
-layout as the original.
+**4.0.0** is a ground-up engine pass: one launch hook, wait for the home screen,
+`SBAppViewController` as the only app hosting path, and a keyboard model that matches
+iPhone 16.5.1 (card expands for staged apps; picker lifts for search). Overlay, Split View,
+the picker and the corner gestures match the original layout.
 
 ## What it does
 

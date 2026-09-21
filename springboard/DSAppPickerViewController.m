@@ -1,7 +1,6 @@
 #import "DSAppPickerViewController.h"
 #import "DSAppCellContentView.h"
 #import "DSSearchFieldView.h"
-#import "DSCrashReports.h"
 #import "DSDiagnostics.h"
 #import "DSPreferences.h"
 #import "DSConstants.h"
@@ -31,8 +30,6 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     NSTimer *_holdTimer;
     UIImpactFeedbackGenerator *_feedback;
 
-    UILabel *_crashNotice;
-    NSString *_crashSummary;
     UILabel *_logNotice;
 }
 
@@ -74,54 +71,6 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
     [self installLogNotice];
     [self reloadContent];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    static dispatch_once_t token;
-    dispatch_once(&token, ^{
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.0 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            if (self.view.hidden) return;
-            [self installCrashNotice];
-            [self.view setNeedsLayout];
-        });
-    });
-}
-
-// The settings page runs inside Settings, so when it fails there is nothing left on
-// screen to say why. This is the one place the tweak still has that the user is
-// looking at, so the last crash is shown here, and tapping it puts the whole line on
-// the clipboard - a report that can be pasted rather than described.
-//
-// Red only when the fault is in this tweak's own code. A crash another tweak caused is
-// still worth knowing about, since the reader is sitting in front of the thing that
-// crashed, but printing it in the colour of a fault here is how a bystander gets blamed.
-- (void)installCrashNotice {
-    BOOL ours = NO;
-    _crashSummary = DSLastCrashSummary(&ours);
-    if (_crashSummary.length == 0) return;
-
-    _crashNotice = [[UILabel alloc] initWithFrame:CGRectZero];
-    _crashNotice.text = [@"Tap to copy this crash report\n" stringByAppendingString:_crashSummary];
-    _crashNotice.font = [UIFont systemFontOfSize:11.0];
-    _crashNotice.textColor = ours ? [UIColor colorWithRed:0.85 green:0.25 blue:0.2 alpha:1.0]
-                                  : [UIColor colorWithWhite:1.0 alpha:0.45];
-    // The whole report goes on the clipboard; what is shown is as much of it as can be
-    // spared from a card that is mostly meant to be a list of apps.
-    _crashNotice.numberOfLines = 4;
-    _crashNotice.lineBreakMode = NSLineBreakByTruncatingTail;
-    _crashNotice.userInteractionEnabled = YES;
-    [_crashNotice addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
-                                                                              action:@selector(copyCrashNotice)]];
-    [_scrollView addSubview:_crashNotice];
-}
-
-- (void)copyCrashNotice {
-    if (_crashSummary.length == 0) return;
-    UIPasteboard.generalPasteboard.string = _crashSummary;
-    _crashNotice.text = @"Copied - paste it wherever you are reporting this";
-    [_feedback impactOccurred];
 }
 
 // The stage writes down what it did - which gesture opened it, whether the keyboard
@@ -257,12 +206,6 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     CGFloat width = CGRectGetWidth(self.view.bounds);
     CGFloat contentWidth = width - kDSContentInset * 2.0;
     CGFloat y = kDSSearchFieldTop;
-
-    if (_crashNotice) {
-        CGFloat height = [_crashNotice sizeThatFits:CGSizeMake(contentWidth, CGFLOAT_MAX)].height;
-        _crashNotice.frame = CGRectMake(kDSContentInset, y, contentWidth, height);
-        y += height + 8.0;
-    }
 
     if (_logNotice) {
         CGFloat height = [_logNotice sizeThatFits:CGSizeMake(contentWidth, CGFLOAT_MAX)].height;

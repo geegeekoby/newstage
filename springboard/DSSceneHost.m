@@ -605,31 +605,37 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         return;
     }
 
-    // SpringBoard's own app view first: it is the only route that does not depend on
-    // the app already having a scene, and the one the system itself uses.
+    // 4.0: one path only — SpringBoard's SBAppViewController, the same mechanism
+    // the app switcher uses. Raw FBScene hosting and "make your own scene" paths
+    // were removed: they fought keyboard focus, duplicated lifecycle, and failed
+    // on cold launches in different ways every time.
     if ([self hostThroughAppViewController]) {
         if (completion) completion(YES);
         return;
     }
 
-    FBScene *scene = [self resolveScene];
-    if (scene) {
-        _scene = scene;
-        [self beginHosting];
-        if (completion) completion(self.isHosting);
+    [self launchThroughUIApplication];
+    [self waitForAppViewWithAttemptsRemaining:50 completion:completion];
+}
+
+- (void)waitForAppViewWithAttemptsRemaining:(NSInteger)attempts
+                                 completion:(DSSceneHostReadyBlock)completion {
+    if ([self hostThroughAppViewController]) {
+        if (completion) completion(YES);
         return;
     }
-
-    // Three ways of asking for the app, tried in order of how little they disturb
-    // the screen, each given long enough for a cold launch on a busy phone. Giving
-    // up early looks exactly like the app refusing to open.
+    if (attempts <= 0) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ never got an app view (process %@)",
+                                  _bundleIdentifier,
+                                  self.isProcessAlive ? @"running" : @"not running");
+        if (completion) completion(NO);
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
-    NSMutableArray<DSSceneHostAttempt> *attempts = [NSMutableArray array];
-    [attempts addObject:^BOOL { [weakSelf launchThroughUIApplication]; return NO; }];
-    [attempts addObject:^BOOL { [weakSelf launchThroughSystemService]; return NO; }];
-    [attempts addObject:^BOOL { return [weakSelf presentSceneOfOwnMaking]; }];
-    [attempts addObject:^BOOL { [weakSelf launchInForeground]; return NO; }];
-    [self runLaunchAttempts:attempts completion:completion];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf waitForAppViewWithAttemptsRemaining:attempts - 1 completion:completion];
+    });
 }
 
 // Each attempt either finishes the job on the spot or gives the app another two

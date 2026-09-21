@@ -5,6 +5,7 @@
 #import "DSAppLibrary.h"
 #import "DSGestureController.h"
 #import "DSSceneHost.h"
+#import "DSStageLayout.h"
 #import "DSPreferences.h"
 #import "DSPrivate.h"
 #import "DSIntroViewController.h"
@@ -108,9 +109,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_bundleIdentifierToRestoreInFront;
     BOOL _notedKeyboardOnce;
     BOOL _notedStrayKeyboard;
-    // Height of the staged app's own keyboard. The card stays at its overlay or
-    // split size; the host view is placed on the display and masked so the keys
-    // sit on the bottom edge at their real size, the way the original tweak looks.
+    // While a staged app is typing, the card grows full width to the display bottom
+    // so the app's keyboard (drawn in its scene) sits on the real bottom edge.
+    CGRect _typingFrame;
     CGFloat _typingKeys;
     NSTimeInterval _typingResizeDuration;
     BOOL _typingResizeQueued;
@@ -475,6 +476,14 @@ static BOOL sSystemEdgePullAvailable;
 // on the display's bottom edge, and tall enough that the app keeps a usable amount of
 // itself above the keys. Put back the moment the keyboard goes.
 - (void)makeRoomForTheStagedAppsKeyboard:(CGRect)keyboard duration:(NSTimeInterval)duration {
+    if (CGRectIsEmpty(keyboard)) {
+        if (_typingKeys < 0.5 && CGRectIsEmpty(_typingFrame)) return;
+        _typingKeys = 0.0;
+        _typingFrame = CGRectZero;
+        _typingResizeDuration = MIN(duration, 0.22);
+        [self applyTypingLayout];
+        return;
+    }
     CGFloat keys = 0.0;
     if (!CGRectIsEmpty(keyboard)) {
         CGRect screen = [self screenBounds];
@@ -495,34 +504,55 @@ static BOOL sSystemEdgePullAvailable;
     if (fabs(keys - _typingKeys) < 0.5) return;
     CGFloat previous = _typingKeys;
     _typingKeys = keys;
-    if (previous < 1.0 && keys > 1.0) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: staged app keyboard is %gpt; card stays put, keys sit on the display",
-                                  keys);
-    }
-
     _typingResizeDuration = MIN(MAX(duration, 0.18), 0.28);
     if (_typingResizeQueued) return;
     _typingResizeQueued = YES;
     __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.12 * NSEC_PER_SEC)),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         [weakSelf applyTypingLayout];
     });
+}
+
+- (struct DSStageLayoutContext)layoutContext {
+    return DSStageLayoutContextMake([self screenBounds], [self displayCornerRadius]);
+}
+
+- (DSStageLayoutMode)layoutModeForState:(DSStageState)state {
+    if (state == DSStageStateSplit) return DSStageLayoutModeSplit;
+    if (state == DSStageStateOverlay || state == DSStageStateTracking) return DSStageLayoutModeOverlay;
+    return DSStageLayoutModeClosed;
 }
 
 - (void)applyTypingLayout {
     _typingResizeQueued = NO;
     if (!self.isStageVisible) return;
 
+    struct DSStageLayoutContext ctx = [self layoutContext];
+    DSStageLayoutMode mode = [self layoutModeForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+    CGRect wanted = CGRectZero;
+    if (_typingKeys > 0.0) {
+        wanted = DSStageTypingFrame(ctx, mode, _typingKeys, kDSStageKeyboardHeadroom);
+    }
+    if (CGRectEqualToRect(wanted, _typingFrame)) return;
+
+    BOOL beganTyping = CGRectIsEmpty(_typingFrame) && !CGRectIsEmpty(wanted);
+    _typingFrame = wanted;
+    if (beganTyping) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: card expanded to %@ for a %gpt keyboard",
+                                  NSStringFromCGRect(wanted), _typingKeys);
+    }
+
     [_container setLiftOffset:0.0];
     [_container setClipsContents:YES];
+    _container.passThroughToHost = NO;
     DSStageState state = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     void (^resize)(void) = ^{
         [self layoutStageForState:state];
         self->_container.cornerRadius = [self cornerRadiusForState:state];
     };
     if (_typingResizeDuration > 0.0) {
-        [UIView animateWithDuration:MAX(_typingResizeDuration, 0.18) animations:resize];
+        [UIView animateWithDuration:_typingResizeDuration animations:resize];
     } else {
         resize();
     }
@@ -594,19 +624,13 @@ static BOOL sSystemEdgePullAvailable;
     return floor(CGRectGetHeight([self screenBounds]) * kDSSplitRatio);
 }
 
-// While typing, the app draws its keyboard at the full width of the display. The
-// card stays inset, but the hosted view and the scene both need the display width
-// or the keys are clipped on the sides and odd strips show under the card.
-- (CGRect)fullWidthHostFrameForCard:(CGRect)card {
-    CGRect screen = [self screenBounds];
-    CGFloat y = CGRectGetMinY(card);
-    return CGRectMake(0.0, y, CGRectGetWidth(screen), CGRectGetMaxY(screen) - y);
-}
-
 // The stage owns the bottom half of the display in both states. Floating over an
 // app it is a card inset on three sides; sharing the screen it goes edge to edge
 // and only the gap above it survives.
 - (CGRect)stageFrameForState:(DSStageState)state {
+    if (!CGRectIsEmpty(_typingFrame) && state != DSStageStateClosed && state != DSStageStateMinimized) {
+        return _typingFrame;
+    }
     return [self restingStageFrameForState:state];
 }
 
@@ -645,6 +669,7 @@ static BOOL sSystemEdgePullAvailable;
     _keyboardFrame = CGRectZero;
     [_container setLiftOffset:0.0];
     _typingKeys = 0.0;
+    _typingFrame = CGRectZero;
     _notedStrayKeyboard = NO;
     _container.passThroughToHost = NO;
     [_container setClipsContents:YES];
@@ -807,16 +832,6 @@ static BOOL sSystemEdgePullAvailable;
     CGRect card = CGRectOffset(_container.frame, 0.0, -_container.liftOffset);
     if (CGRectContainsPoint(card, point)) return YES;
 
-    // While typing, the app's keyboard is drawn in the host view below the card.
-    // Those touches have to land on this window or they never reach the keys.
-    if (_typingKeys > 0.0 && self.hasHostedApp) {
-        CGRect screen = [self screenBounds];
-        CGRect keys = CGRectMake(0.0,
-                                 CGRectGetMaxY(card),
-                                 CGRectGetWidth(screen),
-                                 MAX(CGRectGetMaxY(screen) - CGRectGetMaxY(card), _typingKeys));
-        return CGRectContainsPoint(keys, point);
-    }
     return NO;
 }
 
@@ -1456,91 +1471,23 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 - (void)layoutStageForState:(DSStageState)state {
     CGRect frame = [self stageFrameForState:state];
     _container.frame = frame;
-    // The card itself stays its usual size. The app's view is allowed to continue
-    // below it only as a masked keyboard band, never as a taller stage.
     [_container setClipsContents:YES];
+    _container.passThroughToHost = NO;
     if (!_sceneHost.isHosting) return;
 
     CGRect window = CGRectOffset(frame, 0.0, -_container.liftOffset);
-    if (_typingKeys > 0.0) {
-        window = [self fullWidthHostFrameForCard:window];
-    }
     [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];
-    [self placeHostViewInCardOrOnDisplay];
-    [self publishStageStateForBundleIdentifier:_sceneHost.bundleIdentifier frame:window active:YES];
-}
 
-// While typing the hosted app has to live on the display, not inside the card:
-// the card is only as tall as the overlay, and the keyboard is drawn in the
-// extra height below it. Masked to a rounded card plus a square keyboard so it
-// cannot read as one stretched stage.
-- (void)placeHostViewInCardOrOnDisplay {
     UIView *hostView = _sceneHost.hostView;
-    if (!hostView) return;
-
-    UIView *root = _window.rootViewController.view;
-    CGRect card = _container.frame;
-    BOOL typing = _typingKeys > 0.0 && self.isStageVisible;
-
-    if (typing) {
-        CGRect app = [self fullWidthHostFrameForCard:card];
-        if (hostView.superview != root) {
-            [root insertSubview:hostView belowSubview:_container];
-        }
-        hostView.clipsToBounds = NO;
-        hostView.transform = CGAffineTransformIdentity;
-        hostView.frame = app;
-        CGRect cardInHost = CGRectMake(MAX(CGRectGetMinX(card), 0.0),
-                                       0.0,
-                                       CGRectGetWidth(card),
-                                       CGRectGetHeight(card));
-        [self maskHostView:hostView
-                cardInHost:cardInHost
-                    radius:_container.cornerRadius
-            keyboardHeight:_typingKeys];
-        _container.passThroughToHost = YES;
-    } else {
+    if (hostView) {
         hostView.layer.mask = nil;
-        hostView.clipsToBounds = YES;
-        _container.passThroughToHost = NO;
         if (hostView.superview != _container.contentView) {
             [_container.contentView insertSubview:hostView atIndex:0];
         }
         hostView.frame = _container.contentView.bounds;
+        hostView.clipsToBounds = YES;
     }
-}
-
-- (void)maskHostView:(UIView *)hostView
-          cardInHost:(CGRect)cardInHost
-              radius:(CGFloat)radius
-      keyboardHeight:(CGFloat)keyboardHeight {
-    CGRect bounds = hostView.bounds;
-    if (CGRectIsEmpty(bounds) || CGRectGetHeight(cardInHost) < 1.0) {
-        hostView.layer.mask = nil;
-        return;
-    }
-    CGFloat hostWidth = CGRectGetWidth(bounds);
-    CGFloat height = CGRectGetHeight(bounds);
-    CGFloat cardHeight = CGRectGetHeight(cardInHost);
-    CGFloat keys = MAX(keyboardHeight, 0.0);
-    CGFloat keyboardTop = keys > 1.0 ? height - keys : height;
-
-    UIBezierPath *path = [UIBezierPath bezierPath];
-    CGRect cardVisible = CGRectMake(CGRectGetMinX(cardInHost),
-                                    0.0,
-                                    CGRectGetWidth(cardInHost),
-                                    MAX(MIN(cardHeight, keyboardTop), 1.0));
-    [path appendPath:[UIBezierPath bezierPathWithRoundedRect:cardVisible
-                                           byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight |
-                                                              UIRectCornerBottomLeft | UIRectCornerBottomRight)
-                                                 cornerRadii:CGSizeMake(radius, radius)]];
-    if (keys > 1.0 && keyboardTop >= 0.0 && keyboardTop < height) {
-        [path appendPath:[UIBezierPath bezierPathWithRect:CGRectMake(0.0, keyboardTop, hostWidth, keys)]];
-    }
-    CAShapeLayer *mask = [CAShapeLayer layer];
-    mask.frame = bounds;
-    mask.path = path.CGPath;
-    hostView.layer.mask = mask;
+    [self publishStageStateForBundleIdentifier:_sceneHost.bundleIdentifier frame:window active:YES];
 }
 
 - (void)showPickerImmediately {

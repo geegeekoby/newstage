@@ -1,7 +1,10 @@
+**4.0.0**
+- Ground-up engine pass: one app hosting path (SpringBoard SBAppViewController only)
+- Staged-app keyboard: card expands full width to the display bottom (no layer steal, no display mask)
+- Picker search: simple key-window handoff, no retry storm
+- Pure layout module (DSStageLayout) for overlay, split and typing geometry
+- Boot path unchanged: home screen wait, launch guard, no KeyboardArbiter dlopen
+- Crash log scanning removed from the picker (less work at SpringBoard launch)
+
 **3.0.0**
-- Fresh rebuild of the SpringBoard engine for iOS 16.5.1 / NathanLR: hooks wait until the home screen exists
-- Keyboard done the way this firmware actually works: never steal layers, never refuse the keyboard, never open KeyboardArbiter
-- Picker search uses SpringBoard's own keyboard and lifts the card; a staged app keeps the card still and shows keys on the display below it
-- Stage window is only key while the picker is up, so typing in Messenger (and search after an app) both work
-- App dylib no longer lies about hosted keyboards; keyboard windows still see the real display size
-- Same overlay, Split View, picker, grabber and inward-swipe-to-picker behaviour
+- Removed DSKeyboardHost; boot-safe delayed hooks; picker vs app key-window split

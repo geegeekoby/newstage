@@ -35,6 +35,9 @@
 // the card looks the same whether the refusal above failed or was never possible.
 + (void)surveyTheKeyboardLevers;
 
+// Which way the arbiter is currently putting the keyboard's scene on screen.
+- (void)noteHowTheKeyboardIsPresented;
+
 @property (nonatomic, assign) BOOL keyboardLayerCanBeRefused;
 
 // The arbiter, handed over from the hook on it. It owns the keyboard's scene, and

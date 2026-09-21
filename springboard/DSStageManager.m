@@ -1666,6 +1666,13 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             fromCorner = CGRectContainsPoint([self closeZoneRect], start);
             cornerIntent = DSCornerIntentUndecided;
             fromTop = !fromCorner && CGRectContainsPoint([_container dragAffordanceRect], start);
+            // Whether a drag inside the card was picked up at all, and what it was taken
+            // for. "It will not let me go back" has two completely different causes -
+            // the gesture never starting, and it starting and being read as something
+            // else - and they are indistinguishable from the outside.
+            DSDiagnosticsRecordFormat(@"SpringBoard: a drag began in the card at %@ - %@",
+                                      NSStringFromCGPoint(start),
+                                      fromCorner ? @"the corner" : (fromTop ? @"the grabber" : @"neither grip"));
             break;
         }
         case UIGestureRecognizerStateChanged: {
@@ -1695,6 +1702,13 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             break;
         }
         case UIGestureRecognizerStateEnded: {
+            if (fromCorner) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: the drag from the corner went %@ and was read as %@",
+                                          NSStringFromCGPoint(translation),
+                                          cornerIntent == DSCornerIntentLeaveApp ? @"leaving the app"
+                                                                                : @"putting the card away");
+            }
+
             if (fromCorner && cornerIntent == DSCornerIntentLeaveApp) {
                 if (translation.x < -60.0 || velocity.x < -650.0) {
                     [self exitToPickerAnimated:YES];
@@ -1726,6 +1740,12 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
         }
         case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateFailed: {
+            // Something else took the touch: the system's own gestures are refused
+            // inside the card, so if this keeps happening it is a gesture that is not
+            // going through the manager the stage hooks.
+            if (fromCorner || fromTop) {
+                DSDiagnosticsRecord(@"SpringBoard: a drag inside the card was taken away before it finished");
+            }
             if (cornerIntent == DSCornerIntentLeaveApp) {
                 _sceneHost.hostView.transform = CGAffineTransformIdentity;
             } else if (fromTop || fromCorner) {

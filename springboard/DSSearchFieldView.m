@@ -132,10 +132,18 @@
     __weak __typeof(self) weakSelf = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.9 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
+        // A keyboard in this process is in a text effects window; one drawn by another
+        // process is in a remote keyboard window. Only the second has "Keyboard" in its
+        // name, and looking for that alone reported every keyboard the stage raises for
+        // itself as missing - which is the opposite of the truth and was making the
+        // retry below fire at a keyboard that was already on its way up.
         CGRect keyboard = CGRectNull;
         for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
             if (candidate.hidden || candidate.alpha < 0.01) continue;
-            if ([NSStringFromClass(candidate.class) rangeOfString:@"Keyboard"].location == NSNotFound) continue;
+            NSString *name = NSStringFromClass(candidate.class);
+            if ([name rangeOfString:@"Keyboard"].location == NSNotFound &&
+                [name rangeOfString:@"TextEffects"].location == NSNotFound) continue;
+            if (CGRectIsEmpty(candidate.frame)) continue;
             keyboard = candidate.frame;
             break;
         }

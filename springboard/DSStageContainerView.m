@@ -104,7 +104,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     // an app is on the stage this is a piece of that app being held back: a thumb's
     // worth is enough to take hold of the corner, and the rest stays the app's.
     CGRect grip = [self cornerGripRect];
-    CGFloat gripWidth = MIN(72.0, CGRectGetWidth(grip));
+    CGFloat gripWidth = MIN(88.0, CGRectGetWidth(grip));
     _cornerGrip.frame = CGRectMake(CGRectGetMaxX(grip) - gripWidth,
                                    CGRectGetMinY(grip),
                                    gripWidth,

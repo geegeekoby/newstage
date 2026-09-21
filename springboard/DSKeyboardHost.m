@@ -6,17 +6,6 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-static id DSIvarValue(id object, NSString *name) {
-    if (!object || name.length == 0) return nil;
-    Ivar ivar = class_getInstanceVariable([object class], name.UTF8String);
-    if (!ivar) return nil;
-    @try {
-        return object_getIvar(object, ivar);
-    } @catch (NSException *exception) {
-        return nil;
-    }
-}
-
 // The window the keyboard is hosted in covers the whole display, because the keyboard
 // scene is laid out against the whole display. Only the part of it the keyboard is
 // actually occupying may take a touch; everything else has to fall through to the card
@@ -38,6 +27,7 @@ static id DSIvarValue(id object, NSString *name) {
     __weak id _arbiter;
     FBScene *_keyboardScene;
     FBSceneHostManager *_hostManager;
+    UIScenePresenter *_presenter;
     UIView *_hostView;
     DSKeyboardHostWindow *_window;
     __weak UIWindow *_stageWindow;
@@ -69,6 +59,83 @@ static id DSIvarValue(id object, NSString *name) {
 
 #pragma mark - The keyboard's own scene
 
+// A scene, whatever it is called here. On this firmware the only thing every scene has
+// in common is that it can be asked to present itself; the class that used to host one -
+// FBSceneHostManager - does not exist on iOS 16 at all, which is what the log on the
+// phone said and what left the keyboard nowhere.
+static BOOL DSLooksLikeAScene(id object) {
+    if (!object) return NO;
+    if (![object respondsToSelector:@selector(identifier)]) return NO;
+    return [object respondsToSelector:@selector(uiPresentationManager)] ||
+           [object respondsToSelector:@selector(hostManagerForRequester:)];
+}
+
+static NSString *DSSceneName(id scene) {
+    if (![scene respondsToSelector:@selector(identifier)]) return @"unnamed";
+    @try {
+        NSString *identifier = ((NSString * (*)(id, SEL))objc_msgSend)(scene, @selector(identifier));
+        return identifier.length > 0 ? identifier : @"unnamed";
+    } @catch (NSException *exception) {
+        return @"unnamed";
+    }
+}
+
+// The keyboard's scene, found by looking rather than by knowing the name of the thing
+// that holds it. The arbiter is asked for its ivars, and any of them that turn out to be
+// a scene, or to hold one, are candidates; the one whose name mentions a keyboard wins,
+// and every name found is written down either way. Selector names move between releases
+// and the guesses that were in here were all wrong on this build - what an object is
+// actually holding does not move.
+static id DSSceneHeldBy(id object, NSInteger depth, NSMutableSet *visited, NSMutableArray<NSString *> *names) {
+    if (!object || depth < 0) return nil;
+    NSValue *box = [NSValue valueWithNonretainedObject:object];
+    if ([visited containsObject:box]) return nil;
+    [visited addObject:box];
+
+    id fallback = nil;
+    for (Class candidate = object_getClass(object); candidate; candidate = class_getSuperclass(candidate)) {
+        unsigned int count = 0;
+        Ivar *ivars = class_copyIvarList(candidate, &count);
+        if (!ivars) continue;
+
+        for (unsigned int i = 0; i < count; i++) {
+            const char *encoding = ivar_getTypeEncoding(ivars[i]);
+            if (!encoding || encoding[0] != '@') continue;
+
+            id value = nil;
+            @try {
+                value = object_getIvar(object, ivars[i]);
+            } @catch (NSException *exception) {
+                continue;
+            }
+            if (!value) continue;
+
+            if (DSLooksLikeAScene(value)) {
+                NSString *name = DSSceneName(value);
+                [names addObject:name];
+                if ([name rangeOfString:@"keyboard" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                    free(ivars);
+                    return value;
+                }
+                if (!fallback) fallback = value;
+                continue;
+            }
+
+            // One level in: a keyboard scene is as likely to be held by something the
+            // arbiter owns as by the arbiter itself.
+            if (depth > 0) {
+                id found = DSSceneHeldBy(value, depth - 1, visited, names);
+                if (found) {
+                    free(ivars);
+                    return found;
+                }
+            }
+        }
+        free(ivars);
+    }
+    return fallback;
+}
+
 // Every scene FrontBoard is holding, by name, written down once. This is the part of the
 // keyboard that cannot be worked out from here: whether a hosted keyboard on this
 // firmware is a scene of its own, and if so what it is called. The names in the log
@@ -90,13 +157,12 @@ static FBScene *DSKeyboardSceneFromSceneManager(void) {
         }
         if (scenes.count > 0) break;
     }
-    if (scenes.count == 0) return nil;
 
     FBScene *keyboard = nil;
     NSMutableArray<NSString *> *names = [NSMutableArray array];
     for (FBScene *scene in scenes) {
-        NSString *identifier = [scene respondsToSelector:@selector(identifier)] ? scene.identifier : nil;
-        if (identifier.length == 0) continue;
+        if (!DSLooksLikeAScene(scene)) continue;
+        NSString *identifier = DSSceneName(scene);
         [names addObject:identifier];
         if (!keyboard && [identifier rangeOfString:@"keyboard"
                                            options:NSCaseInsensitiveSearch].location != NSNotFound) {
@@ -104,11 +170,17 @@ static FBScene *DSKeyboardSceneFromSceneManager(void) {
         }
     }
 
+    // Neither accessor exists on every build, so the scenes the manager is holding are
+    // looked for in what it owns as well.
+    if (names.count == 0) {
+        keyboard = DSSceneHeldBy(manager, 2, [NSMutableSet set], names);
+    }
+
     static BOOL noted = NO;
     if (!noted) {
         noted = YES;
-        NSString *list = [names componentsJoinedByString:@" "];
-        if (list.length > 500) list = [list substringToIndex:500];
+        NSString *list = names.count > 0 ? [names componentsJoinedByString:@" "]
+                                        : @"nothing FrontBoard will admit to";
         DSDiagnosticsRecordFormat(@"SpringBoard: the scenes here are %@", list);
     }
     return keyboard;
@@ -156,19 +228,34 @@ static BOOL DSHostViewIsShowingSomething(UIView *view) {
         } @catch (NSException *exception) {
             scene = nil;
         }
-        if (scene) break;
+        if (DSLooksLikeAScene(scene)) break;
+        scene = nil;
     }
-    if (!scene) scene = DSIvarValue(arbiter, @"_scene");
-    if (![scene respondsToSelector:@selector(hostManagerForRequester:)]) scene = DSKeyboardSceneFromSceneManager();
 
-    if (![scene respondsToSelector:@selector(hostManagerForRequester:)]) {
-        DSDiagnosticsRecord(@"SpringBoard: nothing here owns a keyboard scene the stage could host");
+    // What the arbiter is holding, whatever it calls it. This is the route that matters
+    // on iOS 16: the arbiter has updateKeyboardSceneSettings and a keyboard scene
+    // presentation mode, so a keyboard scene is in there somewhere, but none of the
+    // names it used to be reachable by are.
+    if (!scene) {
+        NSMutableArray<NSString *> *names = [NSMutableArray array];
+        scene = DSSceneHeldBy(arbiter, 2, [NSMutableSet set], names);
+        if (names.count > 0) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard arbiter is holding %@",
+                                      [names componentsJoinedByString:@" "]);
+        } else {
+            DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard arbiter (%@) is holding no scene at all",
+                                      NSStringFromClass([arbiter class]));
+        }
+    }
+    if (!scene) scene = DSKeyboardSceneFromSceneManager();
+
+    if (!DSLooksLikeAScene(scene)) {
+        DSDiagnosticsRecord(@"SpringBoard: nothing here owns a keyboard scene the stage could present");
         return nil;
     }
 
     _keyboardScene = scene;
-    DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard's own scene is %@",
-                              [scene respondsToSelector:@selector(identifier)] ? scene.identifier : @"unnamed");
+    DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard's own scene is %@", DSSceneName(scene));
     return _keyboardScene;
 }
 
@@ -286,9 +373,10 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 // scene are asked what they can be told about keyboards, once, and the answer is
 // written down. The names on their own are enough to say which of them could stand in.
 + (void)surveyTheKeyboardLevers {
-    NSArray<NSString *> *names = @[ @"FBSceneHostManager", @"FBSceneHostView", @"FBSceneHostWrapperView",
-                                    @"SBSceneView", @"SBDeviceApplicationSceneView",
-                                    @"SBDeviceApplicationSceneViewController", @"SBAppViewController",
+    NSArray<NSString *> *names = @[ @"FBSceneManager", @"FBSceneHostManager", @"FBSceneHostView",
+                                    @"UIScenePresentationManager", @"UIScenePresenter",
+                                    @"_UISceneLayerHostContainerView", @"SBSceneView",
+                                    @"SBDeviceApplicationSceneView", @"SBAppViewController",
                                     @"_UIKeyboardArbiter" ];
     NSMutableArray<NSString *> *missing = [NSMutableArray array];
 
@@ -312,14 +400,44 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         }
         if (found.count == 0) continue;
 
-        NSString *list = [found componentsJoinedByString:@" "];
-        if (list.length > 400) list = [list substringToIndex:400];
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ knows %@", name, list);
+        // In pieces, because a line of the log is clipped and the name of the one
+        // selector that turns out to matter is as likely to be at the end of this list
+        // as at the front. The list for the keyboard arbiter alone runs past the clip.
+        NSMutableString *line = [NSMutableString string];
+        NSUInteger part = 1;
+        for (NSString *selector in found) {
+            if (line.length + selector.length + 1 > 280) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: %@ knows (%lu) %@", name, (unsigned long)part++, line);
+                line = [NSMutableString string];
+            }
+            if (line.length > 0) [line appendString:@" "];
+            [line appendString:selector];
+        }
+        if (line.length > 0) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ knows (%lu) %@", name, (unsigned long)part, line);
+        }
     }
 
     if (missing.count > 0) {
         DSDiagnosticsRecordFormat(@"SpringBoard: not on this firmware - %@",
                                   [missing componentsJoinedByString:@", "]);
+    }
+    [[DSKeyboardHost sharedHost] noteHowTheKeyboardIsPresented];
+}
+
+// The arbiter decides how the keyboard's scene is put on screen, and it can be asked
+// which way that currently is. The number on its own says nothing; the same number seen
+// with a keyboard in an app and again with one in the stage is the difference between a
+// keyboard this can move and a keyboard it cannot.
+- (void)noteHowTheKeyboardIsPresented {
+    id arbiter = _arbiter;
+    if (!arbiter) return;
+    SEL mode = NSSelectorFromString(@"keyboardScenePresentationMode");
+    if (![arbiter respondsToSelector:mode]) return;
+    @try {
+        long long value = ((long long (*)(id, SEL))objc_msgSend)(arbiter, mode);
+        DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard's scene is presented in mode %lld", value);
+    } @catch (NSException *exception) {
     }
 }
 
@@ -375,21 +493,8 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     }
 
     if (!_hostView) {
-        @try {
-            _hostManager = [scene hostManagerForRequester:kDSKeyboardRequester];
-            if (![_hostManager respondsToSelector:@selector(hostViewForRequester:enableAndOrderFront:)]) {
-                [self giveUpHosting:@"the keyboard scene will not give out a host view here"];
-                return;
-            }
-            _hostView = [_hostManager hostViewForRequester:kDSKeyboardRequester enableAndOrderFront:YES];
-        } @catch (NSException *exception) {
-            [self giveUpHosting:[NSString stringWithFormat:@"hosting the keyboard threw %@", exception.name ?: @"?"]];
-            return;
-        }
-        if (!_hostView) {
-            [self giveUpHosting:@"hosting the keyboard gave back no view"];
-            return;
-        }
+        _hostView = [self viewShowingScene:scene];
+        if (!_hostView) return;
         DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard is now drawn on the display at %@",
                                   NSStringFromCGRect(_keyboardFrame));
     }
@@ -401,6 +506,10 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     }
     window.liveFrame = _keyboardFrame;
     window.hidden = NO;
+    @try {
+        if ([_presenter respondsToSelector:@selector(activate)]) [_presenter activate];
+    } @catch (NSException *exception) {
+    }
     [self checkTheKeyboardActuallyArrived];
 }
 
@@ -422,6 +531,46 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         if (DSHostViewIsShowingSomething(host->_hostView)) return;
         [host giveUpHosting:@"the keyboard's scene had nothing to draw"];
     });
+}
+
+// A view showing someone else's scene. There are two ways to ask for one and which of
+// them exists depends on the firmware: iOS 16 presents a scene, and every version before
+// it hosted one. The old way was all this had, which is why the keyboard went nowhere on
+// a phone where FBSceneHostManager is not a class at all.
+- (UIView *)viewShowingScene:(FBScene *)scene {
+    @try {
+        if ([scene respondsToSelector:@selector(uiPresentationManager)]) {
+            UIScenePresentationManager *presentation = scene.uiPresentationManager;
+            if (![presentation respondsToSelector:@selector(createPresenterWithIdentifier:)]) {
+                [self giveUpHosting:@"the keyboard's scene will not make a presenter here"];
+                return nil;
+            }
+            _presenter = [presentation createPresenterWithIdentifier:kDSKeyboardRequester];
+            UIView *view = _presenter.presentationView;
+            if (!view) {
+                [self giveUpHosting:@"presenting the keyboard gave back no view"];
+                return nil;
+            }
+            // Activated after the view is in a window, not here: an activated presenter
+            // with nowhere to draw is the keyboard going missing all over again.
+            return view;
+        }
+
+        if ([scene respondsToSelector:@selector(hostManagerForRequester:)]) {
+            _hostManager = [scene hostManagerForRequester:kDSKeyboardRequester];
+            if (![_hostManager respondsToSelector:@selector(hostViewForRequester:enableAndOrderFront:)]) {
+                [self giveUpHosting:@"the keyboard scene will not give out a host view here"];
+                return nil;
+            }
+            return [_hostManager hostViewForRequester:kDSKeyboardRequester enableAndOrderFront:YES];
+        }
+    } @catch (NSException *exception) {
+        [self giveUpHosting:[NSString stringWithFormat:@"showing the keyboard threw %@", exception.name ?: @"?"]];
+        return nil;
+    }
+
+    [self giveUpHosting:@"the keyboard's scene can neither be presented nor hosted"];
+    return nil;
 }
 
 // A scene's host view is that scene's own rectangle, and the keyboard's scene is laid
@@ -479,6 +628,12 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 
 - (void)tearDownHosting {
     [self hideWindow];
+    @try {
+        if ([_presenter respondsToSelector:@selector(deactivate)]) [_presenter deactivate];
+        if ([_presenter respondsToSelector:@selector(invalidate)]) [_presenter invalidate];
+    } @catch (NSException *exception) {
+    }
+    _presenter = nil;
     @try {
         if ([_hostManager respondsToSelector:@selector(disableHostingForRequester:)]) {
             [_hostManager disableHostingForRequester:kDSKeyboardRequester];

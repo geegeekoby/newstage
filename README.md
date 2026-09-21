@@ -272,7 +272,7 @@ So 1.5.1 stops hosting it. The decision is SpringBoard's own and it is asked as 
 "may this view draw the keyboard layer" - which is the same question iPad multitasking answers no
 to. For the stage's card, and for nothing else on the display, the answer is now no.
 
-That makes room, and then the keyboard has to be put somewhere. The arbiter's own scene is hosted
+That makes room, and then the keyboard has to be put somewhere. The arbiter's own scene is shown
 by the stage in a window the size of the display, sitting above the card, so the keyboard comes
 up where every other keyboard on the phone comes up: full width, ordinary size, on the bottom
 edge. The card moves up out of its way and drops back when it goes. Only the part of that window
@@ -281,6 +281,23 @@ the home screen behind it.
 
 Three things are worth knowing about how carefully this is switched on, because a keyboard that
 has been taken out of the card and then not put anywhere is worse than a keyboard in the card:
+
+It took until 1.5.5 to be shown somewhere, though, and the reason is worth keeping. A scene used to
+be put on screen by asking it for a host manager and that manager for a host view, and that is what
+this did. `FBSceneHostManager` does not exist on iOS 16 - not a renamed class, not a moved one, not
+a class at all - so every attempt ended at "there is no keyboard scene on this build", the keyboard
+was refused in the card and then shown nowhere, and the card lifted out of the way of a keyboard
+that was not there. iOS 16 presents a scene instead: `uiPresentationManager`, a presenter, and that
+presenter's view, which is how the stage already had the *app* on screen a few files away. Nothing
+about the design was wrong; it was calling a class that had been deleted, and the survey the log
+prints now is there so the next one of those is a line in a log rather than three versions.
+
+The same goes for finding the scene. The keyboard's scene was looked up by trying the names it used
+to answer to - `keyboardScene`, `scene`, an ivar called `_scene` - and on this firmware it answers
+to none of them, while the arbiter plainly has one: it has `updateKeyboardSceneSettings` and a
+keyboard scene presentation mode. So it is looked for rather than named, by walking what the
+arbiter is holding two levels deep and taking whichever object turns out to be a scene, preferring
+one whose name mentions a keyboard. Every name found goes in the log whether it is used or not.
 
 **The class that asks the question is found, not named.** It has moved between iOS versions and
 there has never been only one of them, so every class in SpringBoard and FrontBoard that answers

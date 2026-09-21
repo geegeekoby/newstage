@@ -11,10 +11,11 @@ geometry and animation timings were derived from the tweak's own walkthrough rec
 screenshots, and everything here is written from scratch in Objective-C, Logos and a Python
 script that draws the artwork.
 
-**4.0.0** is a ground-up engine pass: one launch hook, wait for the home screen,
-`SBAppViewController` as the only app hosting path, and a keyboard model that matches
-iPhone 16.5.1 (card expands for staged apps; picker lifts for search). Overlay, Split View,
-the picker and the corner gestures match the original layout.
+**4.0.1** fixes the keyboard: the card **keeps its overlay/split size** and **lifts**
+above the keys for both picker search and staged apps (4.0 wrongly expanded the card).
+**4.0.0** was the ground-up engine pass: one launch hook, home-screen wait,
+`SBAppViewController`-only hosting. Overlay, Split View, the picker and corner gestures
+match the original layout.
 
 ## What it does
 
@@ -271,7 +272,7 @@ On a phone this firmware reports the keyboard in arbiter mode 0: the keys are dr
 
 **Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up. The card lifts above the keyboard (301pt floor).
 
-**Staged app (4.0).** The card **expands** to full display width and sits on the bottom edge while you type, so the app's keyboard lands where it would full screen. When the keyboard dismisses, the card returns to overlay or split size. The hosted view stays inside the card — no display-level masks or pass-through hacks.
+**Staged app (4.0.1).** Same as picker search: the card **does not resize**. It **lifts** so the field you are typing in stays above the keyboard (301pt floor for partial arbiter frames). Geometry is pushed into the hosted app so accessories track the lifted card. No display-level masks or pass-through hacks.
 
 **What is never done.** No layer reparenting, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards).
 

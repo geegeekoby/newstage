@@ -1,3 +1,8 @@
+**4.0.1**
+- Keyboard: card keeps overlay/split size and lifts above keys (picker and staged apps)
+- Removed 4.0 card expansion that resized the stage and caused black gaps
+- Staged app attach keeps blur until launch placeholder fades; re-applies lift if keys are up
+
 **4.0.0**
 - Ground-up engine pass: one app hosting path (SpringBoard SBAppViewController only)
 - Staged-app keyboard: card expands full width to the display bottom (no layer steal, no display mask)

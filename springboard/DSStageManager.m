@@ -5,7 +5,6 @@
 #import "DSAppLibrary.h"
 #import "DSGestureController.h"
 #import "DSSceneHost.h"
-#import "DSStageLayout.h"
 #import "DSPreferences.h"
 #import "DSPrivate.h"
 #import "DSIntroViewController.h"
@@ -109,12 +108,6 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_bundleIdentifierToRestoreInFront;
     BOOL _notedKeyboardOnce;
     BOOL _notedStrayKeyboard;
-    // While a staged app is typing, the card grows full width to the display bottom
-    // so the app's keyboard (drawn in its scene) sits on the real bottom edge.
-    CGRect _typingFrame;
-    CGFloat _typingKeys;
-    NSTimeInterval _typingResizeDuration;
-    BOOL _typingResizeQueued;
     NSTimeInterval _ignoreSystemPullUntil;
     // The keyboard as the arbiter last described it, in display points, or zero when
     // there is none on screen. Whose keyboard it is does not matter: it is on the
@@ -297,15 +290,12 @@ static BOOL sSystemEdgePullAvailable;
 
     _notedKeyboardOnce = NO;
     _keyboardFrame = CGRectZero;
-    if (_typingKeys < 1.0) {
-        [_container setLiftOffset:0.0];
-    }
+    [_container setLiftOffset:0.0];
 }
 
 // Two sources, one layout: UIKit notifications for SpringBoard's own keyboard
-// (the search field) and the arbiter for every other process. On this firmware a
-// staged app draws its keyboard inside its own scene, so the card is not moved
-// for that keyboard - the host view is shaped around it instead.
+// (the search field) and the arbiter for staged apps. The card keeps its size and
+// only lifts above the keys — picker and hosted app use the same policy.
 - (void)observeKeyboard {
     [NSNotificationCenter.defaultCenter addObserver:self
                                           selector:@selector(keyboardFrameWillChange:)
@@ -347,9 +337,8 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 // While an app is on the stage, the arbiter still hears keyboards from Spotlight and
-// from other processes behind the card. Treating those as the staged app's keyboard
-// going away was the keys vanishing mid-sentence; ignoring them keeps _typingKeys
-// authoritative until the staged app itself reports a hide.
+// from other processes behind the card. Only the staged app (or the picker on SpringBoard)
+// may move the card.
 - (BOOL)keyboardSourceAffectsLayout:(NSString *)source keyboard:(CGRect)keyboard {
     if (!_sceneHost.isHosting) return YES;
 
@@ -358,15 +347,11 @@ static BOOL sSystemEdgePullAvailable;
 
     if ([source isEqualToString:@"SpringBoard"]) {
         if ([self isShowingAppPicker]) return YES;
-        return !_sceneHost.isHosting;
-    }
-
-    if (_typingKeys > 0.0) {
-        if (CGRectIsEmpty(keyboard)) return NO;
-        if ([source isEqualToString:@"com.apple.Spotlight"]) return NO;
         return NO;
     }
-    return YES;
+
+    if (CGRectIsEmpty(keyboard)) return NO;
+    return NO;
 }
 
 // The arbiter sometimes reports a keyboard anchored at the top of the display ({0,0})
@@ -388,9 +373,9 @@ static BOOL sSystemEdgePullAvailable;
     return keyboard;
 }
 
-// SpringBoard's search keyboard often arrives as a short frame first (243pt) before the
-// suggestion bar settles (301pt). Lifting for the first report leaves the card on the keys.
-- (CGRect)keyboardFrameForPickerSearch:(CGRect)keyboard {
+// Keyboards often arrive as a short frame first (243pt) before the suggestion bar
+// settles (301pt). Lifting for the first report leaves the card sitting on the keys.
+- (CGRect)keyboardFrameForLift:(CGRect)keyboard {
     if (CGRectIsEmpty(keyboard)) return keyboard;
     CGRect screen = [self screenBounds];
     CGFloat keys = CGRectGetHeight(keyboard);
@@ -412,7 +397,7 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     if (![self keyboardSourceAffectsLayout:source keyboard:keyboard]) {
-        if (!_notedStrayKeyboard && (!CGRectIsEmpty(keyboard) || _typingKeys > 0.0)) {
+        if (!_notedStrayKeyboard && !CGRectIsEmpty(keyboard)) {
             _notedStrayKeyboard = YES;
             DSDiagnosticsRecordFormat(@"SpringBoard: ignored a keyboard from %@ while %@ is on the stage",
                                       source.length > 0 ? source : @"?",
@@ -421,8 +406,8 @@ static BOOL sSystemEdgePullAvailable;
         return;
     }
 
-    if ([self isShowingAppPicker] && !CGRectIsEmpty(keyboard)) {
-        keyboard = [self keyboardFrameForPickerSearch:keyboard];
+    if (!CGRectIsEmpty(keyboard)) {
+        keyboard = [self keyboardFrameForLift:keyboard];
     }
 
     BOOL unchanged = CGRectEqualToRect(keyboard, _keyboardFrame);
@@ -430,9 +415,9 @@ static BOOL sSystemEdgePullAvailable;
         // The frame did not move but something else cleared the lift underneath it -
         // the overlay open path calling preparePickerForSearchKeyboard after the first
         // keyboardWillShow is the usual case.
-        if (CGRectIsEmpty(keyboard) || ![self isShowingAppPicker]) return;
-        CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit
-                                                                               : DSStageStateOverlay];
+        if (CGRectIsEmpty(keyboard)) return;
+        DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+        CGRect resting = [self restingStageFrameForState:layoutState];
         CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
         if (_container.liftOffset >= MAX(overlap, 0.0) - 0.5) return;
     } else {
@@ -447,122 +432,27 @@ static BOOL sSystemEdgePullAvailable;
 
     if (!self.isStageVisible) return;
 
-    // Staged app: keyboard is drawn in the app's own scene. Keep the card where it
-    // is and mask the host so the keys sit on the display below it.
-    if (_sceneHost.isHosting && source.length > 0 &&
-        [source isEqualToString:_sceneHost.bundleIdentifier]) {
-        [self makeRoomForTheStagedAppsKeyboard:keyboard duration:duration];
-        return;
-    }
-
     if (_sceneHost.isHosting && !_notedStrayKeyboard && !CGRectIsEmpty(keyboard) &&
-        ![source isEqualToString:@"SpringBoard"]) {
+        ![source isEqualToString:@"SpringBoard"] &&
+        ![source isEqualToString:_sceneHost.bundleIdentifier]) {
         _notedStrayKeyboard = YES;
         DSDiagnosticsRecordFormat(@"SpringBoard: a keyboard came up for %@ while %@ is on the stage",
                                   source, _sceneHost.bundleIdentifier);
     }
 
-    // While the staged app is typing, Spotlight's keyboard behind the stage is
-    // none of the card's business.
-    if (_typingKeys > 0.0 && _sceneHost.isHosting) return;
-
-    CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    CGRect resting = [self restingStageFrameForState:layoutState];
     CGFloat overlap = CGRectIsEmpty(keyboard) ? 0.0
                                              : CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
     [self liftCardBy:MAX(overlap, 0.0) duration:duration];
-}
-
-// The card, shaped around a keyboard that is drawn inside it: full display width, ending
-// on the display's bottom edge, and tall enough that the app keeps a usable amount of
-// itself above the keys. Put back the moment the keyboard goes.
-- (void)makeRoomForTheStagedAppsKeyboard:(CGRect)keyboard duration:(NSTimeInterval)duration {
-    if (CGRectIsEmpty(keyboard)) {
-        if (_typingKeys < 0.5 && CGRectIsEmpty(_typingFrame)) return;
-        _typingKeys = 0.0;
-        _typingFrame = CGRectZero;
-        _typingResizeDuration = MIN(duration, 0.22);
-        [self applyTypingLayout];
-        return;
-    }
-    CGFloat keys = 0.0;
-    if (!CGRectIsEmpty(keyboard)) {
-        CGRect screen = [self screenBounds];
-        // The arbiter often reports a transient frame at the top of the display before
-        // the real keyboard settles on the bottom edge; following those is the card
-        // jumping and strips of the app showing under the stage.
-        if (CGRectGetMinY(keyboard) < CGRectGetHeight(screen) * 0.55) return;
-        keys = CGRectGetHeight(keyboard);
-        if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6) keys = 301.0;
-        // The picker's own keyboard is 301 points tall, and that is the size that
-        // already lands correctly. An app reports its keyboard in stages - 243, then
-        // 288 with a suggestion bar - and following each of those is the card
-        // visibly jumping. Never smaller than the picker, never smaller than a
-        // keyboard already on screen.
-        keys = MAX(keys, 301.0);
-        keys = MAX(keys, _typingKeys);
-    }
-    if (fabs(keys - _typingKeys) < 0.5) return;
-    CGFloat previous = _typingKeys;
-    _typingKeys = keys;
-    _typingResizeDuration = MIN(MAX(duration, 0.18), 0.28);
-    if (_typingResizeQueued) return;
-    _typingResizeQueued = YES;
-    __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        [weakSelf applyTypingLayout];
-    });
-}
-
-- (struct DSStageLayoutContext)layoutContext {
-    return DSStageLayoutContextMake([self screenBounds], [self displayCornerRadius]);
-}
-
-- (DSStageLayoutMode)layoutModeForState:(DSStageState)state {
-    if (state == DSStageStateSplit) return DSStageLayoutModeSplit;
-    if (state == DSStageStateOverlay || state == DSStageStateTracking) return DSStageLayoutModeOverlay;
-    return DSStageLayoutModeClosed;
-}
-
-- (void)applyTypingLayout {
-    _typingResizeQueued = NO;
-    if (!self.isStageVisible) return;
-
-    struct DSStageLayoutContext ctx = [self layoutContext];
-    DSStageLayoutMode mode = [self layoutModeForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
-    CGRect wanted = CGRectZero;
-    if (_typingKeys > 0.0) {
-        wanted = DSStageTypingFrame(ctx, mode, _typingKeys, kDSStageKeyboardHeadroom);
-    }
-    if (CGRectEqualToRect(wanted, _typingFrame)) return;
-
-    BOOL beganTyping = CGRectIsEmpty(_typingFrame) && !CGRectIsEmpty(wanted);
-    _typingFrame = wanted;
-    if (beganTyping) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: card expanded to %@ for a %gpt keyboard",
-                                  NSStringFromCGRect(wanted), _typingKeys);
-    }
-
-    [_container setLiftOffset:0.0];
-    [_container setClipsContents:YES];
-    _container.passThroughToHost = NO;
-    DSStageState state = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-    void (^resize)(void) = ^{
-        [self layoutStageForState:state];
-        self->_container.cornerRadius = [self cornerRadiusForState:state];
-    };
-    if (_typingResizeDuration > 0.0) {
-        [UIView animateWithDuration:_typingResizeDuration animations:resize];
-    } else {
-        resize();
-    }
 }
 
 - (void)liftCardBy:(CGFloat)offset duration:(NSTimeInterval)duration {
     // However wrong the number that got here, the card stays on the screen. A card
     // lifted off the top takes the search field, the app and every way of closing the
     // stage with it, and reads as the stage having broken.
-    CGRect resting = [self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    CGRect resting = [self restingStageFrameForState:layoutState];
     CGFloat headroom = MAX(CGRectGetMinY(resting) - kDSStageKeyboardHeadroom, 0.0);
     offset = MIN(MAX(offset, 0.0), headroom);
 
@@ -583,7 +473,8 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)pushLiftedGeometryToApp {
-    CGRect window = CGRectOffset([self stageFrameForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay],
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    CGRect window = CGRectOffset([self restingStageFrameForState:layoutState],
                                  0.0, -_container.liftOffset);
     [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];
     [self publishStageStateForBundleIdentifier:_sceneHost.bundleIdentifier frame:window active:YES];
@@ -628,9 +519,6 @@ static BOOL sSystemEdgePullAvailable;
 // app it is a card inset on three sides; sharing the screen it goes edge to edge
 // and only the gap above it survives.
 - (CGRect)stageFrameForState:(DSStageState)state {
-    if (!CGRectIsEmpty(_typingFrame) && state != DSStageStateClosed && state != DSStageStateMinimized) {
-        return _typingFrame;
-    }
     return [self restingStageFrameForState:state];
 }
 
@@ -668,8 +556,6 @@ static BOOL sSystemEdgePullAvailable;
 - (void)forgetStagedAppKeyboard {
     _keyboardFrame = CGRectZero;
     [_container setLiftOffset:0.0];
-    _typingKeys = 0.0;
-    _typingFrame = CGRectZero;
     _notedStrayKeyboard = NO;
     _container.passThroughToHost = NO;
     [_container setClipsContents:YES];
@@ -684,15 +570,6 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (UIEdgeInsets)stageSafeAreaInsets {
-    // While the app is being typed into the host view reaches the bottom of the
-    // display, so the app is given the display's own bottom inset: its keyboard
-    // sits above the home indicator rather than under it.
-    if (_typingKeys > 0.0) {
-        UIEdgeInsets insets = UIEdgeInsetsZero;
-        insets.bottom = [self screenSafeAreaInsets].bottom;
-        return insets;
-    }
-
     return UIEdgeInsetsZero;
 }
 
@@ -1632,13 +1509,22 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     _picker.view.hidden = YES;
     _picker.view.alpha = 1.0;
-    [_container setBackdropHidden:YES];
     hostView.frame = _container.contentView.bounds;
     [_container.contentView insertSubview:hostView atIndex:0];
     [_sceneHost noteHostViewAttached];
 
     [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
     [self applyStageRotation];
+    if (!CGRectIsEmpty(_keyboardFrame)) {
+        [self noteKeyboardFrame:_keyboardFrame
+                         source:_sceneHost.bundleIdentifier
+                       duration:0.25];
+    } else {
+        CGRect keys = DSVisibleKeyboardFrameOnScreen();
+        if (!CGRectIsEmpty(keys)) {
+            [self noteKeyboardFrame:keys source:_sceneHost.bundleIdentifier duration:0.25];
+        }
+    }
     [self giveBackKeyWindow];
     [self updateHomeAffordance];
     [self returnFrontToWhereItWas];
@@ -1649,6 +1535,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         placeholder.alpha = 0.0;
     } completion:^(BOOL finished) {
         [placeholder removeFromSuperview];
+        [self->_container setBackdropHidden:YES];
     }];
 }
 

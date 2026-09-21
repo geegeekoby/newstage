@@ -324,7 +324,10 @@ static BOOL sSystemEdgePullAvailable;
     NSString *staged = _sceneHost.bundleIdentifier;
     if (staged.length > 0 && [source isEqualToString:staged]) return YES;
 
-    if ([source isEqualToString:@"SpringBoard"]) return !_sceneHost.isHosting;
+    if ([source isEqualToString:@"SpringBoard"]) {
+        if ([self isShowingAppPicker]) return YES;
+        return !_sceneHost.isHosting;
+    }
 
     if (_typingKeys > 0.0 || !CGRectIsEmpty(_typingFrame)) {
         if (CGRectIsEmpty(keyboard)) return NO;
@@ -406,6 +409,10 @@ static BOOL sSystemEdgePullAvailable;
     CGFloat keys = 0.0;
     if (!CGRectIsEmpty(keyboard)) {
         CGRect screen = [self screenBounds];
+        // The arbiter often reports a transient frame at the top of the display before
+        // the real keyboard settles on the bottom edge; following those is the card
+        // jumping and strips of the app showing under the stage.
+        if (CGRectGetMinY(keyboard) < CGRectGetHeight(screen) * 0.55) return;
         keys = CGRectGetHeight(keyboard);
         if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6) keys = 301.0;
         // The picker's own keyboard is 301 points tall, and that is the size that
@@ -420,7 +427,7 @@ static BOOL sSystemEdgePullAvailable;
     _typingKeys = keys;
 
     // And the reports come in a burst, so they are let finish before anything moves.
-    _typingResizeDuration = duration;
+    _typingResizeDuration = MIN(duration, 0.08);
     if (_typingResizeQueued) return;
     _typingResizeQueued = YES;
     __weak __typeof(self) weakSelf = self;
@@ -634,6 +641,10 @@ static BOOL sSystemEdgePullAvailable;
 
 - (BOOL)hasHostedApp {
     return _sceneHost != nil;
+}
+
+- (BOOL)isShowingAppPicker {
+    return self.isStageVisible && !_picker.view.hidden && !_sceneHost.isHosting;
 }
 
 - (NSString *)stageBundleIdentifier {
@@ -1433,7 +1444,10 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
                                        0.0,
                                        CGRectGetWidth(card),
                                        CGRectGetHeight(card));
-        [self maskHostView:hostView cardInHost:cardInHost radius:_container.cornerRadius];
+        [self maskHostView:hostView
+                cardInHost:cardInHost
+                    radius:_container.cornerRadius
+            keyboardHeight:_typingKeys];
         _container.passThroughToHost = YES;
     } else {
         hostView.layer.mask = nil;
@@ -1446,7 +1460,10 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     }
 }
 
-- (void)maskHostView:(UIView *)hostView cardInHost:(CGRect)cardInHost radius:(CGFloat)radius {
+- (void)maskHostView:(UIView *)hostView
+          cardInHost:(CGRect)cardInHost
+              radius:(CGFloat)radius
+      keyboardHeight:(CGFloat)keyboardHeight {
     CGRect bounds = hostView.bounds;
     if (CGRectIsEmpty(bounds) || CGRectGetHeight(cardInHost) < 1.0) {
         hostView.layer.mask = nil;
@@ -1455,6 +1472,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     CGFloat hostWidth = CGRectGetWidth(bounds);
     CGFloat height = CGRectGetHeight(bounds);
     CGFloat cardHeight = CGRectGetHeight(cardInHost);
+    CGFloat keys = MAX(keyboardHeight, 0.0);
+    CGFloat keyboardTop = keys > 1.0 ? height - keys : height;
+
     UIBezierPath *path = [UIBezierPath bezierPath];
     CGRect cardVisible = CGRectMake(CGRectGetMinX(cardInHost),
                                     CGRectGetMinY(cardInHost),
@@ -1464,8 +1484,8 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
                                            byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight |
                                                               UIRectCornerBottomLeft | UIRectCornerBottomRight)
                                                  cornerRadii:CGSizeMake(radius, radius)]];
-    if (height > cardHeight + 1.0) {
-        [path appendPath:[UIBezierPath bezierPathWithRect:CGRectMake(0.0, cardHeight, hostWidth, height - cardHeight)]];
+    if (keys > 1.0 && keyboardTop >= 0.0 && keyboardTop < height) {
+        [path appendPath:[UIBezierPath bezierPathWithRect:CGRectMake(0.0, keyboardTop, hostWidth, keys)]];
     }
     CAShapeLayer *mask = [CAShapeLayer layer];
     mask.frame = bounds;
@@ -1482,6 +1502,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [_picker resetScrollPosition];
     [_launchPlaceholder removeFromSuperview];
     _launchPlaceholder = nil;
+    if (!_sceneHost.isHosting) {
+        [[DSKeyboardHost sharedHost] standDown];
+    }
 }
 
 #pragma mark - Launching onto the stage
@@ -1698,6 +1721,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     // The picker stays on top for the whole crossfade. Pulling the hosted view in
     // front of it was a black card: the app layer covered the recents list until it
     // had already faded out.
+    hostView.layer.mask = nil;
+    hostView.clipsToBounds = NO;
+    hostView.transform = CGAffineTransformIdentity;
     hostView.layer.cornerCurve = kCACornerCurveContinuous;
     hostView.layer.masksToBounds = YES;
 
@@ -1910,6 +1936,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 - (void)handleStagePan:(UIPanGestureRecognizer *)recognizer {
     static BOOL fromTop = NO;
     static BOOL fromCorner = NO;
+    static BOOL fromEdge = NO;
     // A drag from the corner is two gestures until it has gone far enough to say which.
     // Down and away puts the card back in the corner it came from; inward, across the
     // card, drops the app and brings the list back.
@@ -1937,20 +1964,23 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             [_picker dismissKeyboard];
             [_container setLiftOffset:0.0];
 
-            fromCorner = self.hasHostedApp && CGRectContainsPoint([self closeZoneRect], start);
+            fromCorner = self.hasHostedApp && CGRectContainsPoint([_container cornerGripRect], start);
+            fromEdge = self.hasHostedApp && CGRectContainsPoint([_container edgeGripRect], start) && !fromCorner;
             cornerIntent = DSCornerIntentUndecided;
-            fromTop = !fromCorner && CGRectContainsPoint([_container dragAffordanceRect], start);
+            fromTop = !fromCorner && !fromEdge && CGRectContainsPoint([_container dragAffordanceRect], start);
             // Whether a drag inside the card was picked up at all, and what it was taken
             // for. "It will not let me go back" has two completely different causes -
             // the gesture never starting, and it starting and being read as something
             // else - and they are indistinguishable from the outside.
             DSDiagnosticsRecordFormat(@"SpringBoard: a drag began in the card at %@ - %@",
                                       NSStringFromCGPoint(start),
-                                      fromCorner ? @"the grip" : (fromTop ? @"the grabber" : @"neither grip"));
+                                      fromEdge ? @"the edge grip"
+                                               : (fromCorner ? @"the grip"
+                                                             : (fromTop ? @"the grabber" : @"neither grip")));
             break;
         }
         case UIGestureRecognizerStateChanged: {
-            if (fromCorner) {
+            if (fromCorner || fromEdge) {
                 if (cornerIntent == DSCornerIntentUndecided &&
                     hypot(translation.x, translation.y) > kDSCornerIntentTravel) {
                     // While an app is on the stage the corner only leaves the app. Putting
@@ -1965,7 +1995,8 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                 if (cornerIntent == DSCornerIntentLeaveApp) {
                     // The app shrinks under the finger, the way it shrinks on the way
                     // out, so the drag says what letting go will do.
-                    CGFloat travel = MIN(DSInwardTravel(translation), 160.0);
+                    CGFloat travel = fromEdge ? MAX(-translation.x, 0.0) : DSInwardTravel(translation);
+                    travel = MIN(travel, 160.0);
                     _sceneHost.hostView.transform = CGAffineTransformMakeScale(1.0 - travel / 900.0,
                                                                               1.0 - travel / 900.0);
                 } else {
@@ -1979,23 +2010,31 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             break;
         }
         case UIGestureRecognizerStateEnded: {
-            if (fromCorner) {
-                DSDiagnosticsRecordFormat(@"SpringBoard: the drag from the corner went %@ and was read as %@",
+            if (fromCorner || fromEdge) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: the drag from the %@ went %@ and was read as %@",
+                                          fromEdge ? @"edge" : @"corner",
                                           NSStringFromCGPoint(translation),
                                           cornerIntent == DSCornerIntentLeaveApp ? @"leaving the app"
                                                                                 : @"putting the card away");
             }
 
-            if (fromCorner && cornerIntent == DSCornerIntentLeaveApp) {
-                if (DSInwardTravel(translation) > 24.0 || hypot(translation.x, translation.y) > 40.0 ||
-                    DSInwardTravel(velocity) > 400.0) {
+            if ((fromCorner || fromEdge) && cornerIntent == DSCornerIntentLeaveApp) {
+                BOOL leave = NO;
+                if (fromEdge) {
+                    leave = (-translation.x > 55.0 && -translation.x > fabs(translation.y) * 1.1) ||
+                            (-velocity.x > 650.0 && -velocity.x > fabs(velocity.y));
+                } else {
+                    leave = DSInwardTravel(translation) > 48.0 ||
+                            (DSInwardTravel(translation) > 32.0 && DSInwardTravel(velocity) > 500.0);
+                }
+                if (leave) {
                     [self exitToPickerAnimated:YES];
                 } else {
                     [UIView animateWithDuration:0.25 animations:^{
                         self->_sceneHost.hostView.transform = CGAffineTransformIdentity;
                     }];
                 }
-            } else if (fromCorner) {
+            } else if (fromCorner || fromEdge) {
                 if (translation.y > CGRectGetHeight(resting) * 0.2 || velocity.y > 700.0) {
                     [self closeStageAnimated:YES];
                 } else {
@@ -2012,7 +2051,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                     [self snapBackTo:resting];
                 }
             }
-            fromTop = fromCorner = NO;
+            fromTop = fromCorner = fromEdge = NO;
             cornerIntent = DSCornerIntentUndecided;
             break;
         }
@@ -2021,15 +2060,15 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             // Something else took the touch: the system's own gestures are refused
             // inside the card, so if this keeps happening it is a gesture that is not
             // going through the manager the stage hooks.
-            if (fromCorner || fromTop) {
+            if (fromCorner || fromEdge || fromTop) {
                 DSDiagnosticsRecord(@"SpringBoard: a drag inside the card was taken away before it finished");
             }
             if (cornerIntent == DSCornerIntentLeaveApp) {
                 _sceneHost.hostView.transform = CGAffineTransformIdentity;
-            } else if (fromTop || fromCorner) {
+            } else if (fromTop || fromCorner || fromEdge) {
                 [self snapBackTo:resting];
             }
-            fromTop = fromCorner = NO;
+            fromTop = fromCorner = fromEdge = NO;
             cornerIntent = DSCornerIntentUndecided;
             break;
         }

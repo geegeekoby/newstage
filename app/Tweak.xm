@@ -200,15 +200,23 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 //
 //   * the keyboard is laid out against the whole display, so it comes out the width
 //     and height it has in any other app rather than shrunk to the card;
-//   * UIKit hands it to the keyboard scene SpringBoard hosts, which draws it on the
-//     bottom edge of the display outside this app's window - the same route an iPad
-//     app in Slide Over takes, and the reason its keyboard is full width too.
+//   * UIKit hands it to the keyboard scene rather than drawing it into a window of
+//     this process - the same route an iPad app in Slide Over takes, and the one that
+//     lets SpringBoard put the keyboard on the bottom edge of the display instead of
+//     inside the card. SpringBoard's side of that is springboard/DSKeyboardHost.m.
 //
-// The second is UIKit's own decision and it makes it by comparing this app's scene
-// with the display. On the stage the two genuinely differ, so the answer is already
-// the right one; it is only stated here because the hooks above make so much of this
+// The second is UIKit's own decision, and it makes it by comparing this app's scene
+// with the display. On the stage the two genuinely differ, so the answer should already
+// be the right one; it is stated here because the hooks above make so much of this
 // process answer with the card, and a keyboard that believes it is full screen is one
 // that stays in the card.
+//
+// If the keyboard comes up hosted but in the wrong place, the next levers are this
+// class's hostedSceneSize, hostedWindowOffset and hostedSafeInsets: they are how UIKit
+// is told the shape of the scene the keyboard is hosted into and where this app's own
+// window sits inside it. They are left alone for now because a wrong offset moves the
+// keyboard rather than failing, and the diagnostics line naming the keyboard scene's
+// frame is what says whether they are needed.
 %hook UITextEffectsWindow
 
 - (CGSize)keyboardScreenReferenceSize {

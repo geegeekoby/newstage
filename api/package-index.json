@@ -6,5 +6,6 @@
   "description": "Stage Manager Reimagined for iPhone",
   "author": "Dynamic Stage Recreation",
   "size": 185208,
-  "deb": "com.recreated.dynamicstage_2.0.0_iphoneos-arm64.deb"
+  "deb": "com.recreated.dynamicstage_2.0.0_iphoneos-arm64.deb",
+  "changelog": "**2.0.0**\n- Boot-safe load after a device reboot and re-jailbreak: SpringBoard hooks wait until the home screen exists\n- App dylib no longer injects into SpringBoard, KeyboardArbiter, Settings or daemons\n- Launch guard only counts a real full install crash, then leaves the phone bootable\n- Picker search keyboard lift and retry fixes from 1.6.10 / 1.6.11\n- Same overlay, Split View, picker and swipe-to-picker behaviour"
 }

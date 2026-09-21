@@ -257,6 +257,11 @@ def main():
     write_repo_icon()
     write_banner()
 
+    changelog_path = os.path.join(ROOT, "changelog.md")
+    changelog = ""
+    if os.path.isfile(changelog_path):
+        changelog = open(changelog_path, encoding="utf-8").read().strip()
+
     # What the handler needs to compose a stanza with the host filled in.
     index = {
         "stanza": packages_stanza(fields, deb_name, digests, None),
@@ -267,6 +272,7 @@ def main():
         "author": fields.get("Author", ""),
         "size": digests["size"],
         "deb": deb_name,
+        "changelog": changelog,
     }
     with open(os.path.join(API, "package-index.json"), "w") as handle:
         json.dump(index, handle, indent=2)

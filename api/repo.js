@@ -134,10 +134,11 @@ function depiction(base) {
           {
             class: "DepictionMarkdownView",
             markdown:
+              index.changelog ||
               "- Rootless build for iOS 14 – 16, arm64\n" +
-              "- Stage geometry, gestures and animations matched to the original\n" +
-              "- iPad multitasking path for apps set to iPad launch mode\n" +
-              "- Settings pane with per-app behaviour and pinned apps",
+                "- Stage geometry, gestures and animations matched to the original\n" +
+                "- iPad multitasking path for apps set to iPad launch mode\n" +
+                "- Settings pane with per-app behaviour and pinned apps",
             useRawFormat: false,
           },
         ],

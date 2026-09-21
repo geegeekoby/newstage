@@ -31,6 +31,11 @@
     UIScenePresenter *_presenter;
     UIView *_hostView;
     CALayer *_proxyLayer;
+    CALayer *_proxyLayerHome;
+    CGRect _proxyLayerHomeFrame;
+    BOOL _layerHuntQueued;
+    BOOL _notedLayerHunt;
+    BOOL _notedGiveUp;
     NSString *_whyNot;
     BOOL _askedForHostedKeyboard;
     BOOL _waitingOnTheArbiter;
@@ -140,6 +145,48 @@ static id DSSceneHeldBy(id object, NSInteger depth, NSMutableSet *visited, NSMut
         free(ivars);
     }
     return fallback;
+}
+
+// The layer in a tree that is the size of the keyboard, and the ones that were passed over
+// on the way to it. A keyboard is the full width of the display and a good part of its
+// height, and nothing else in a card is that shape, so the size is enough to know it by -
+// which matters, because the class it arrives as is not something to count on.
+static CALayer *DSLayerTheSizeOfTheKeyboard(CALayer *root, CGSize wanted, NSMutableArray<NSString *> *seen) {
+    if (wanted.height < 80.0 || wanted.width < 80.0) return nil;
+
+    CALayer *best = nil;
+    CGFloat bestScore = CGFLOAT_MAX;
+    NSMutableArray<CALayer *> *queue = [NSMutableArray arrayWithObject:root];
+
+    while (queue.count > 0) {
+        CALayer *layer = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+        if (layer.sublayers.count > 0) [queue addObjectsFromArray:layer.sublayers];
+
+        CGSize size = layer.bounds.size;
+        if (size.height < 80.0 || size.width < 80.0) continue;
+
+        // Something that draws content of its own. The layers of an ordinary view
+        // hierarchy - the card's own backdrop, its grabber - draw nothing and are not
+        // candidates however close their size.
+        BOOL drawsSomething = layer.contents != nil || [layer isKindOfClass:objc_getClass("CALayerHost")];
+        if (!drawsSomething) continue;
+
+        if (seen.count < 24) {
+            [seen addObject:[NSString stringWithFormat:@"%@ %.0fx%.0f", NSStringFromClass([layer class]),
+                                                      size.width, size.height]];
+        }
+
+        CGFloat score = fabs(size.width - wanted.width) + fabs(size.height - wanted.height);
+        if (score < bestScore) {
+            bestScore = score;
+            best = layer;
+        }
+    }
+
+    // Close enough to be the keyboard and not something else: a card is 430 points wide
+    // at most and a keyboard is 300 tall, so the next thing down in size is nowhere near.
+    return bestScore <= 140.0 ? best : nil;
 }
 
 // An object one of these is holding, chosen by the name of its class. Used to reach the
@@ -335,6 +382,7 @@ static BOOL DSHostViewIsShowingSomething(UIView *view) {
     _bundleIdentifier = [bundleIdentifier copy];
     _armed = YES;
     _hostingFailed = NO;
+    _notedGiveUp = NO;
     // Whatever SpringBoard has opened since it started is scanned again here: the class
     // that draws a hosted app is not necessarily loaded when a phone finishes booting.
     if (!_keyboardLayerCanBeRefused) [DSKeyboardHost refuseTheKeyboardLayerWhereverItIsOffered];
@@ -524,10 +572,64 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     // cards, the app behind the stage, anything a future build puts on screen -
     // keeps its keyboard, because taking one away from a view the stage does not own
     // is a keyboard nobody can get back.
+    BOOL isTheCard = NO;
     for (UIView *candidate = view; candidate; candidate = candidate.superview) {
-        if (candidate == stage) return YES;
+        if (candidate == stage) {
+            isTheCard = YES;
+            break;
+        }
     }
+    if (!isTheCard) return NO;
+
+    // A keyboard already on the display is refused here, because two claims on one
+    // keyboard is a keyboard in both places or in neither.
+    if (_hostView && !_proxyLayer) return YES;
+
+    // Otherwise the card is allowed its keyboard layer and the layer is taken off it
+    // afterwards. Refusing first is what kept the keyboard off the screen entirely on
+    // this firmware: nothing here will draw a keyboard nobody has asked to host, so
+    // refusing it in the one place that was drawing it left it nowhere. Being asked this
+    // question is also the signal that a keyboard layer is about to exist, which is the
+    // moment to go looking for one.
+    [self takeTheKeyboardLayerSoon];
     return NO;
+}
+
+// Once, on the next turn of the runloop: the layer does not exist yet while the question
+// is being asked, and the question is asked several times per keyboard.
+- (void)takeTheKeyboardLayerSoon {
+    if (_layerHuntQueued) return;
+    _layerHuntQueued = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) host = weakSelf;
+        if (!host) return;
+        host->_layerHuntQueued = NO;
+        if (!host->_armed || host->_hostingFailed) return;
+        if (CGRectIsEmpty(host->_keyboardFrame)) return;
+        [host takeAFreshKeyboardLayerIfTheCardHasOne];
+        [host showKeyboardInOwnWindow];
+    });
+}
+
+// The card was allowed its keyboard layer, so when the keyboard changes - a different
+// keyboard, an accessory view appearing, a language switch - the app may draw a new layer
+// in the card rather than reusing the one the stage borrowed. Left alone that is a
+// keyboard on the display and another in the card at once, so the new one is taken and
+// the old one goes back where it came from.
+- (void)takeAFreshKeyboardLayerIfTheCardHasOne {
+    UIWindow *stage = _stageWindow;
+    if (!stage || !_hostView || !_proxyLayer) return;
+
+    NSMutableArray<NSString *> *seen = [NSMutableArray array];
+    CALayer *fresh = DSLayerTheSizeOfTheKeyboard(stage.layer, _keyboardFrame.size, seen);
+    if (!fresh || fresh == _proxyLayer) return;
+
+    [self giveBackTheKeyboardLayer];
+    _proxyLayer = fresh;
+    _proxyLayerHome = fresh.superlayer;
+    _proxyLayerHomeFrame = fresh.frame;
+    [_hostView.layer addSublayer:fresh];
 }
 
 #pragma mark - Hosting
@@ -557,6 +659,36 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 - (void)keyboardIsNoLongerOnScreen {
     _keyboardFrame = CGRectZero;
     [self hideWindow];
+    // The next keyboard is a new attempt: what could not be found for this one is not a
+    // reason to leave every keyboard after it in the card.
+    _hostingFailed = NO;
+
+    // A borrowed layer is given back as soon as the keyboard it was drawing has gone, so
+    // the next keyboard is the app's to draw and the stage starts again from nothing. A
+    // hosted scene is left alone: that one is the keyboard's own and it costs a round trip
+    // through another process to set up again.
+    if (_proxyLayer) {
+        [self giveBackTheKeyboardLayer];
+        [_hostView removeFromSuperview];
+        _hostView = nil;
+    }
+}
+
+// A borrowed layer belongs to the app's scene, not to the stage, and it goes back exactly
+// where it was found: a keyboard borrowed and not returned is an app that never draws one
+// again.
+- (void)giveBackTheKeyboardLayer {
+    CALayer *borrowed = _proxyLayer;
+    CALayer *home = _proxyLayerHome;
+    CGRect homeFrame = _proxyLayerHomeFrame;
+    _proxyLayer = nil;
+    _proxyLayerHome = nil;
+    if (!borrowed) return;
+
+    [borrowed removeFromSuperlayer];
+    if (!home) return;
+    borrowed.frame = homeFrame;
+    [home addSublayer:borrowed];
 }
 
 - (void)showKeyboardInOwnWindow {
@@ -609,16 +741,31 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     });
 }
 
+// Why a route could not be the one. Every route is written down rather than only the
+// first, because the first is the one that has already been explained three times and
+// the last is the one that has not.
+- (void)note:(NSString *)reason {
+    if (reason.length == 0) return;
+    _whyNot = _whyNot.length > 0 ? [NSString stringWithFormat:@"%@, then %@", _whyNot, reason] : reason;
+}
+
 // The keyboard, on the display, by whichever route this firmware has. Each one records
 // why it could not be the one, and the card only gets the keyboard back when they have
 // all been tried.
 - (UIView *)viewShowingTheKeyboard {
+    // The layer in the card comes first, because it is the only one of these that does
+    // not depend on the phone agreeing to host a keyboard it has no reason to host. The
+    // keyboard is already drawn, in the card, at the wrong size: this takes that layer
+    // and puts it on the display at the right one.
+    UIView *view = [self viewShowingTheStolenKeyboardLayer];
+    if (view) return view;
+
     FBScene *scene = [self keyboardScene];
     if (scene) {
-        UIView *view = [self viewShowingScene:scene];
+        view = [self viewShowingScene:scene];
         if (view) return view;
     } else {
-        _whyNot = @"there is no keyboard scene on this build";
+        [self note:@"there is no keyboard scene on this build"];
     }
 
     // The keyboard's scene has no presentation manager because nothing is presenting it:
@@ -627,6 +774,48 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     if (scene && [self askTheArbiterToHostTheKeyboard]) return nil;
 
     return [self viewShowingTheKeyboardProxyLayer];
+}
+
+// The keyboard's layer, taken out of the card.
+//
+// The app draws its keyboard into its own scene, as a layer of its own, and the card
+// hosts that scene. Which is why the keyboard appears in the card, shrunk: it is a layer
+// in a tree the card is scaling. It is also why it can simply be moved. The layer is
+// found by its size - the arbiter says how big the keyboard is, in display points, and in
+// the scene's own tree it is that size exactly, whatever the card is doing to it - and
+// once it is in the stage's own window it is at the size the phone intended.
+- (UIView *)viewShowingTheStolenKeyboardLayer {
+    UIWindow *stage = _stageWindow;
+    if (!stage || CGRectIsEmpty(_keyboardFrame)) {
+        [self note:@"there is no card to take a keyboard layer from"];
+        return nil;
+    }
+
+    NSMutableArray<NSString *> *seen = [NSMutableArray array];
+    CALayer *keyboard = DSLayerTheSizeOfTheKeyboard(stage.layer, _keyboardFrame.size, seen);
+    if (!keyboard) {
+        // Only when there is nothing, and only once per keyboard: what the card is
+        // holding is the answer to why the keyboard cannot be found in it.
+        if (!_notedLayerHunt) {
+            _notedLayerHunt = YES;
+            [self recordNames:seen under:[NSString stringWithFormat:@"looking for a %@ keyboard the card holds",
+                                                                   NSStringFromCGSize(_keyboardFrame.size)]];
+        }
+        [self note:@"the card has no layer the size of the keyboard"];
+        return nil;
+    }
+
+    UIView *carrier = [[UIView alloc] initWithFrame:_keyboardFrame];
+    carrier.userInteractionEnabled = NO;
+    _proxyLayer = keyboard;
+    // Kept, so the layer can be given back exactly where it was found: a keyboard that
+    // has been borrowed and not returned is an app that never draws one again.
+    _proxyLayerHome = keyboard.superlayer;
+    _proxyLayerHomeFrame = keyboard.frame;
+    [carrier.layer addSublayer:keyboard];
+    DSDiagnosticsRecordFormat(@"SpringBoard: the keyboard's own layer (%@, %@) came out of the card",
+                              NSStringFromClass([keyboard class]), NSStringFromCGRect(_proxyLayerHomeFrame));
+    return carrier;
 }
 
 // A view showing someone else's scene. There are two ways to ask for one and which of
@@ -638,7 +827,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         if ([scene respondsToSelector:@selector(uiPresentationManager)]) {
             UIScenePresentationManager *presentation = scene.uiPresentationManager;
             if (!presentation) {
-                _whyNot = @"the keyboard's scene has no presentation manager";
+                [self note:@"the keyboard's scene has no presentation manager"];
             } else {
                 UIView *view = [self viewFromPresentationManager:presentation];
                 if (view) return view;
@@ -648,13 +837,13 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         if ([scene respondsToSelector:@selector(hostManagerForRequester:)]) {
             _hostManager = [scene hostManagerForRequester:kDSKeyboardRequester];
             if (![_hostManager respondsToSelector:@selector(hostViewForRequester:enableAndOrderFront:)]) {
-                _whyNot = @"the keyboard scene will not give out a host view here";
+                [self note:@"the keyboard scene will not give out a host view here"];
                 return nil;
             }
             return [_hostManager hostViewForRequester:kDSKeyboardRequester enableAndOrderFront:YES];
         }
     } @catch (NSException *exception) {
-        _whyNot = [NSString stringWithFormat:@"showing the keyboard threw %@", exception.name ?: @"?"];
+        [self note:[NSString stringWithFormat:@"showing the keyboard threw %@", exception.name ?: @"?"]];
     }
     return nil;
 }
@@ -670,7 +859,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     SEL read = NSSelectorFromString(@"keyboardScenePresentationMode");
     SEL write = NSSelectorFromString(@"setKeyboardScenePresentationMode:");
     if (![arbiter respondsToSelector:read] || ![arbiter respondsToSelector:write]) {
-        _whyNot = @"the arbiter will not say how the keyboard is presented";
+        [self note:@"the arbiter will not say how the keyboard is presented"];
         return NO;
     }
     if (_askedForHostedKeyboard) return NO;
@@ -747,7 +936,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 - (UIView *)viewShowingTheKeyboardProxyLayer {
     id scene = _stagedAppScene;
     if (![scene respondsToSelector:@selector(uiPresentationManager)]) {
-        if (!_whyNot) _whyNot = @"the staged app's scene cannot be asked about its keyboard";
+        [self note:@"the staged app's scene cannot be asked about its keyboard"];
         return nil;
     }
 
@@ -757,14 +946,14 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
     } @catch (NSException *exception) {
     }
     if (!presentation) {
-        if (!_whyNot) _whyNot = @"the staged app's scene is not presented here either";
+        [self note:@"the staged app's scene is not presented here either"];
         return nil;
     }
 
     id proxy = DSHeldObjectNamedLike(presentation, @[ @"keyboard", @"proxy" ]);
     if (!proxy) {
         [self recordWhatIsHeldBy:presentation];
-        if (!_whyNot) _whyNot = @"nothing here holds the keyboard's proxy layer";
+        [self note:@"nothing here holds the keyboard's proxy layer"];
         return nil;
     }
 
@@ -801,7 +990,7 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
         }
     }
 
-    if (!_whyNot) _whyNot = @"the keyboard's proxy layer manager would not give out a layer";
+    [self note:@"the keyboard's proxy layer manager would not give out a layer"];
     return nil;
 }
 
@@ -1029,6 +1218,16 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 - (void)giveUpHosting:(NSString *)reason {
     if (_hostingFailed) return;
     _hostingFailed = YES;
+    // Said once. Giving up is now per keyboard rather than for the rest of the session -
+    // a keyboard the stage could not find one moment may be there the next - and a line
+    // in the log for every one of them would push everything else out of it.
+    if (_notedGiveUp) {
+        [self tearDownHosting];
+        [_stageWindow setNeedsLayout];
+        [_stageWindow layoutIfNeeded];
+        return;
+    }
+    _notedGiveUp = YES;
     [self tearDownHosting];
     // The card was told it could not draw the keyboard while that answer still stood.
     // It does not stand any more, so the card is asked to lay out again and the keyboard
@@ -1041,10 +1240,8 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
 
 - (void)tearDownHosting {
     [self hideWindow];
-    // A proxy layer belongs to the app's scene, not to the stage: it goes back by being
-    // let go of, so whoever owns it can put it where it was.
-    [_proxyLayer removeFromSuperlayer];
-    _proxyLayer = nil;
+    [self giveBackTheKeyboardLayer];
+    _notedLayerHunt = NO;
     @try {
         if ([_presenter respondsToSelector:@selector(deactivate)]) [_presenter deactivate];
         if ([_presenter respondsToSelector:@selector(invalidate)]) [_presenter invalidate];

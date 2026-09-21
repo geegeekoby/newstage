@@ -284,6 +284,26 @@ the home screen behind it.
 Three things are worth knowing about how carefully this is switched on, because a keyboard that
 has been taken out of the card and then not put anywhere is worse than a keyboard in the card:
 
+**So the layer is taken, not asked for.** Modes 1, 2 and 3 were all tried on the phone and the
+keyboard's scene stayed unpresentable, which settles it: this firmware has no interest in hosting a
+keyboard for a phone that is not an iPad, and nothing will present that scene no matter how it is
+asked. But the keyboard is already drawn - in the card, shrunk, which is the whole complaint - and a
+layer that is being drawn can be moved.
+
+So the card is allowed its keyboard layer, and the layer is then taken out of it and put in the
+stage's own window over the display. It is found by its size: the arbiter says how big the keyboard
+is in display points, in the scene's own tree it is exactly that size whatever the card is doing to
+it, and nothing else in a card is the full width of the display and three hundred points tall. It is
+put back exactly where it was found the moment the keyboard goes away, because a borrowed keyboard
+that is never returned is an app that never draws one again, and if the app draws a fresh layer while
+the stage is holding one - a language switch, an accessory view - the new one is taken and the old
+one goes home, so there is never a keyboard in both places.
+
+This also makes failure harmless in a way none of the earlier attempts were. Refusing the layer first
+and then failing to host it left the keyboard nowhere; allowing it and then failing to move it leaves
+the keyboard in the card, badly placed but usable, which is where it was before any of this. Giving up
+is per keyboard rather than for the rest of the session, and says so once.
+
 **Mode 0 is why there was nothing to present.** With the scene found and the presenter looked for
 rather than named, the answer came back one step earlier again: the keyboard's scene has no
 presentation manager at all, because nothing is presenting it. The arbiter reports the keyboard in

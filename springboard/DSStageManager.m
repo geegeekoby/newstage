@@ -324,7 +324,7 @@ static BOOL sSystemEdgePullAvailable;
     NSString *staged = _sceneHost.bundleIdentifier;
     if (staged.length > 0 && [source isEqualToString:staged]) return YES;
 
-    if ([source isEqualToString:@"SpringBoard"]) return CGRectIsEmpty(_typingFrame);
+    if ([source isEqualToString:@"SpringBoard"]) return !_sceneHost.isHosting;
 
     if (_typingKeys > 0.0 || !CGRectIsEmpty(_typingFrame)) {
         if (CGRectIsEmpty(keyboard)) return NO;
@@ -536,6 +536,15 @@ static BOOL sSystemEdgePullAvailable;
 
 - (CGFloat)splitLine {
     return floor(CGRectGetHeight([self screenBounds]) * kDSSplitRatio);
+}
+
+// While typing, the app draws its keyboard at the full width of the display. The
+// card stays inset, but the hosted view and the scene both need the display width
+// or the keys are clipped on the sides and odd strips show under the card.
+- (CGRect)fullWidthHostFrameForCard:(CGRect)card {
+    CGRect screen = [self screenBounds];
+    CGFloat y = CGRectGetMinY(card);
+    return CGRectMake(0.0, y, CGRectGetWidth(screen), CGRectGetMaxY(screen) - y);
 }
 
 // The stage owns the bottom half of the display in both states. Floating over an
@@ -751,9 +760,9 @@ static BOOL sSystemEdgePullAvailable;
     // Those touches have to land on this window or they never reach the keys.
     if (_typingKeys > 0.0 && self.hasHostedApp) {
         CGRect screen = [self screenBounds];
-        CGRect keys = CGRectMake(CGRectGetMinX(card),
+        CGRect keys = CGRectMake(0.0,
                                  CGRectGetMaxY(card),
-                                 CGRectGetWidth(card),
+                                 CGRectGetWidth(screen),
                                  MAX(CGRectGetMaxY(screen) - CGRectGetMaxY(card), _typingKeys));
         return CGRectContainsPoint(keys, point);
     }
@@ -1393,8 +1402,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     CGRect window = CGRectOffset(frame, 0.0, -_container.liftOffset);
     if (_typingKeys > 0.0) {
-        CGRect screen = [self screenBounds];
-        window.size.height = MAX(CGRectGetMaxY(screen) - CGRectGetMinY(window), CGRectGetHeight(window));
+        window = [self fullWidthHostFrameForCard:window];
     }
     [_sceneHost setStageFrame:window safeAreaInsets:[self stageSafeAreaInsets]];
     [self placeHostViewInCardOrOnDisplay];
@@ -1414,17 +1422,22 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     BOOL typing = _typingKeys > 0.0 && self.isStageVisible;
 
     if (typing) {
-        CGRect app = card;
-        app.size.height = MAX(CGRectGetMaxY([self screenBounds]) - CGRectGetMinY(card), CGRectGetHeight(card));
+        CGRect app = [self fullWidthHostFrameForCard:card];
         if (hostView.superview != root) {
             [root insertSubview:hostView belowSubview:_container];
         }
+        hostView.clipsToBounds = NO;
         hostView.transform = CGAffineTransformIdentity;
         hostView.frame = app;
-        [self maskHostView:hostView toCardHeight:CGRectGetHeight(card) radius:_container.cornerRadius];
+        CGRect cardInHost = CGRectMake(CGRectGetMinX(card),
+                                       0.0,
+                                       CGRectGetWidth(card),
+                                       CGRectGetHeight(card));
+        [self maskHostView:hostView cardInHost:cardInHost radius:_container.cornerRadius];
         _container.passThroughToHost = YES;
     } else {
         hostView.layer.mask = nil;
+        hostView.clipsToBounds = YES;
         _container.passThroughToHost = NO;
         if (hostView.superview != _container.contentView) {
             [_container.contentView insertSubview:hostView atIndex:0];
@@ -1433,20 +1446,26 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     }
 }
 
-- (void)maskHostView:(UIView *)hostView toCardHeight:(CGFloat)cardHeight radius:(CGFloat)radius {
+- (void)maskHostView:(UIView *)hostView cardInHost:(CGRect)cardInHost radius:(CGFloat)radius {
     CGRect bounds = hostView.bounds;
-    if (CGRectIsEmpty(bounds) || cardHeight < 1.0) {
+    if (CGRectIsEmpty(bounds) || CGRectGetHeight(cardInHost) < 1.0) {
         hostView.layer.mask = nil;
         return;
     }
-    CGFloat width = CGRectGetWidth(bounds);
+    CGFloat hostWidth = CGRectGetWidth(bounds);
     CGFloat height = CGRectGetHeight(bounds);
-    UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, width, MIN(cardHeight, height))
-                                               byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight |
-                                                                  UIRectCornerBottomLeft | UIRectCornerBottomRight)
-                                                     cornerRadii:CGSizeMake(radius, radius)];
+    CGFloat cardHeight = CGRectGetHeight(cardInHost);
+    UIBezierPath *path = [UIBezierPath bezierPath];
+    CGRect cardVisible = CGRectMake(CGRectGetMinX(cardInHost),
+                                    CGRectGetMinY(cardInHost),
+                                    CGRectGetWidth(cardInHost),
+                                    MIN(cardHeight, height));
+    [path appendPath:[UIBezierPath bezierPathWithRoundedRect:cardVisible
+                                           byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight |
+                                                              UIRectCornerBottomLeft | UIRectCornerBottomRight)
+                                                 cornerRadii:CGSizeMake(radius, radius)]];
     if (height > cardHeight + 1.0) {
-        [path appendPath:[UIBezierPath bezierPathWithRect:CGRectMake(0, cardHeight, width, height - cardHeight)]];
+        [path appendPath:[UIBezierPath bezierPathWithRect:CGRectMake(0.0, cardHeight, hostWidth, height - cardHeight)]];
     }
     CAShapeLayer *mask = [CAShapeLayer layer];
     mask.frame = bounds;
@@ -1482,6 +1501,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         DSDiagnosticsRecord(@"SpringBoard: a plate was tapped with no app behind it");
         return;
     }
+    [_picker dismissKeyboard];
     DSPreferences *preferences = [DSPreferences sharedPreferences];
     if ([preferences isApplicationDisabled:entry.bundleIdentifier]) {
         DSDiagnosticsRecordFormat(@"SpringBoard: %@ is switched off in its own settings, so it was not opened",

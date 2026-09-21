@@ -275,6 +275,19 @@ static BOOL sSystemEdgePullAvailable;
     }
 }
 
+// Clears stale keyboard bookkeeping from a staged app and makes the stage window key
+// again so SpringBoard's search field can raise UIKit's keyboard.
+- (void)preparePickerForSearchKeyboard {
+    if (_sceneHost.isHosting) return;
+    _notedKeyboardOnce = NO;
+    _notedStrayKeyboard = NO;
+    _keyboardFrame = CGRectZero;
+    if (CGRectIsEmpty(_typingFrame)) {
+        [_container setLiftOffset:0.0];
+    }
+    [self takeKeyWindow];
+}
+
 // The card lives at the bottom of the screen, which is exactly where every keyboard on
 // the device comes up, so it is held above whichever one is there.
 //
@@ -290,9 +303,18 @@ static BOOL sSystemEdgePullAvailable;
                                               name:UIKeyboardWillChangeFrameNotification
                                             object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self
+                                          selector:@selector(keyboardWillShow:)
+                                              name:UIKeyboardWillShowNotification
+                                            object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self
                                           selector:@selector(keyboardWillHide:)
                                               name:UIKeyboardWillHideNotification
                                             object:nil];
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification {
+    if (![self isShowingAppPicker]) return;
+    [self keyboardFrameWillChange:notification];
 }
 
 - (void)keyboardFrameWillChange:(NSNotification *)notification {
@@ -1214,6 +1236,14 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         [self discardHostSnapshotAnimated:YES];
         [self layoutStageForState:DSStageStateOverlay];
         [self updateHomeAffordance];
+        if (!self.hasHostedApp) {
+            [self preparePickerForSearchKeyboard];
+            __weak __typeof(self) weakSelf = self;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                [weakSelf preparePickerForSearchKeyboard];
+            });
+        }
     };
 
     if (animated) {
@@ -1542,7 +1572,12 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     _launchPlaceholder = nil;
     if (!_sceneHost.isHosting) {
         [[DSKeyboardHost sharedHost] standDown];
+        [self preparePickerForSearchKeyboard];
     }
+}
+
+- (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker {
+    [self preparePickerForSearchKeyboard];
 }
 
 #pragma mark - Launching onto the stage

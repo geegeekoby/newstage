@@ -5,6 +5,8 @@
 @protocol DSSearchFieldDelegate <NSObject>
 - (void)searchField:(DSSearchFieldView *)field didChangeText:(NSString *)text;
 - (void)searchFieldDidCancel:(DSSearchFieldView *)field;
+@optional
+- (void)searchFieldNeedsKeyWindow:(DSSearchFieldView *)field;
 @end
 
 // The stage's search field: translucent plate, leading magnifier, trailing clear

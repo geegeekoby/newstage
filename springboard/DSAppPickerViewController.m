@@ -343,6 +343,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     [self reloadContent];
 }
 
+- (void)searchFieldNeedsKeyWindow:(DSSearchFieldView *)field {
+    if ([self.delegate respondsToSelector:@selector(appPickerNeedsKeyWindowForSearch:)]) {
+        [self.delegate appPickerNeedsKeyWindowForSearch:self];
+    }
+}
+
 #pragma mark - Selection and hold
 
 - (void)cellTouchDown:(DSAppCellContentView *)cell {

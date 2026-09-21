@@ -1,6 +1,7 @@
 #import "DSSearchFieldView.h"
 #import "DSConstants.h"
 #import "DSDiagnostics.h"
+#import "DSKeyboardVisibility.h"
 
 @interface DSSearchFieldView () <UITextFieldDelegate>
 @end
@@ -12,6 +13,7 @@
     UIButton *_clearButton;
     NSUInteger _keyboardAttempts;
     BOOL _askingAgain;
+    id _keyboardShowObserver;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -50,9 +52,24 @@
         [_clearButton addTarget:self action:@selector(clearText) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_clearButton];
 
+        __weak __typeof(self) weakSelf = self;
+        _keyboardShowObserver =
+            [NSNotificationCenter.defaultCenter addObserverForName:UIKeyboardWillShowNotification
+                                                            object:nil
+                                                             queue:NSOperationQueue.mainQueue
+                                                        usingBlock:^(__unused NSNotification *note) {
+                                                            [weakSelf noteKeyboardIsShowing];
+                                                        }];
+
         self.darkMode = YES;
     }
     return self;
+}
+
+- (void)dealloc {
+    if (_keyboardShowObserver) {
+        [NSNotificationCenter.defaultCenter removeObserver:_keyboardShowObserver];
+    }
 }
 
 - (void)layoutSubviews {
@@ -109,30 +126,32 @@
     [self setNeedsLayout];
 }
 
-#pragma mark - UITextFieldDelegate
-
-// The keys inside a window, wherever they are in it. A keyboard window on its own says
-// nothing: it is the size of the display and it stays around after the keyboard has gone.
-static CGRect DSKeyboardViewFrameIn(UIView *view) {
-    NSString *name = NSStringFromClass(view.class);
-    BOOL isKeyboard = [name rangeOfString:@"UIKeyboard"].location == 0 ||
-                      [name rangeOfString:@"InputSetHostView"].location != NSNotFound;
-    if (isKeyboard && !view.hidden && view.alpha > 0.01 && !CGRectIsEmpty(view.bounds)) {
-        UIWindow *window = view.window;
-        return window ? [view convertRect:view.bounds toView:nil] : view.frame;
+- (void)requestKeyWindowFromDelegate {
+    if ([self.delegate respondsToSelector:@selector(searchFieldNeedsKeyWindow:)]) {
+        [self.delegate searchFieldNeedsKeyWindow:self];
     }
-    if (view.hidden || view.alpha < 0.01) return CGRectNull;
-    for (UIView *child in view.subviews) {
-        CGRect found = DSKeyboardViewFrameIn(child);
-        if (!CGRectIsNull(found)) return found;
-    }
-    return CGRectNull;
 }
 
-// Typing goes to the key window, and this field's window is SpringBoard's only when
-// the stage put it there. Asked for again here because this is the moment it
-// actually matters, whatever happened when the stage opened.
+- (void)noteKeyboardIsShowing {
+    _keyboardAttempts = 0;
+}
+
+#pragma mark - UITextFieldDelegate
+
+- (void)checkWhetherKeyboardArrived {
+    if (!_field.isFirstResponder) return;
+
+    CGRect keyboard = DSVisibleKeyboardFrameOnScreen();
+    DSDiagnosticsRecordFormat(@"SpringBoard: a moment later the keyboard is %@",
+                              CGRectIsNull(keyboard) ? @"nowhere on the display"
+                                                     : NSStringFromCGRect(keyboard));
+    if (!CGRectIsNull(keyboard)) return;
+    [self askForTheKeyboardAgain];
+}
+
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
+    [self requestKeyWindowFromDelegate];
+
     UIWindow *window = self.window;
     if (window && !window.isKeyWindow) {
         @try {
@@ -144,61 +163,36 @@ static CGRect DSKeyboardViewFrameIn(UIView *view) {
     DSDiagnosticsRecordFormat(@"SpringBoard: search field asked for the keyboard, window is %@",
                               window.isKeyWindow ? @"key" : @"still not key");
 
-    // Whether a keyboard then actually arrives is the whole question when typing in
-    // the picker does not work, and it is not something that can be seen from here
-    // any other way: written down a moment later, for the diagnostics page.
     __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.9 * NSEC_PER_SEC)),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.55 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
-        // A keyboard in this process is in a text effects window; one drawn by another
-        // process is in a remote keyboard window. Only the second has "Keyboard" in its
-        // name, and looking for that alone reported every keyboard the stage raises for
-        // itself as missing - which is the opposite of the truth and was making the
-        // retry below fire at a keyboard that was already on its way up.
-        // The window is the size of the display whether a keyboard is in it or not, so
-        // the keys themselves are what gets measured: the view inside it that is the
-        // keyboard, in display coordinates.
-        CGRect keyboard = CGRectNull;
-        for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
-            if (candidate.hidden || candidate.alpha < 0.01) continue;
-            NSString *name = NSStringFromClass(candidate.class);
-            if ([name rangeOfString:@"Keyboard"].location == NSNotFound &&
-                [name rangeOfString:@"TextEffects"].location == NSNotFound) continue;
-            CGRect keys = DSKeyboardViewFrameIn(candidate);
-            if (CGRectIsNull(keys)) continue;
-            // UIKit parks a dismissed keyboard at y == screen height; that is not typing.
-            CGRect screen = UIScreen.mainScreen.bounds;
-            if (CGRectGetMinY(keys) >= CGRectGetMaxY(screen) - 1.0) continue;
-            if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) continue;
-            keyboard = keys;
-            break;
-        }
-        DSDiagnosticsRecordFormat(@"SpringBoard: a moment later the keyboard is %@",
-                                  CGRectIsNull(keyboard) ? @"nowhere on the display"
-                                                         : NSStringFromCGRect(keyboard));
-        if (CGRectIsNull(keyboard)) [weakSelf askForTheKeyboardAgain];
+        [weakSelf checkWhetherKeyboardArrived];
     });
     return YES;
 }
 
-// The field is first responder and no keyboard came up. That happens to this field and
-// not to a field in an ordinary app because the window it is in only became the key
-// window a moment ago, and whatever SpringBoard was doing with the keyboard before that
-// - a keyboard of the staged app's going away, a focus that has not settled - can land
-// between the two. Asking a second time costs a frame and fixes it; asking forever would
-// be a field that cannot be left alone, so it is asked exactly once.
 - (void)askForTheKeyboardAgain {
-    if (_keyboardAttempts > 0 || !_field.isFirstResponder) return;
+    if (!_field.isFirstResponder) return;
+    if (_keyboardAttempts >= 3) return;
     _keyboardAttempts++;
+
+    [self requestKeyWindowFromDelegate];
 
     _askingAgain = YES;
     @try {
         [_field resignFirstResponder];
         [_field becomeFirstResponder];
+        [_field reloadInputViews];
     } @catch (NSException *exception) {
     }
     _askingAgain = NO;
     DSDiagnosticsRecord(@"SpringBoard: no keyboard came up for the search field, so it asked again");
+
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf checkWhetherKeyboardArrived];
+    });
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {

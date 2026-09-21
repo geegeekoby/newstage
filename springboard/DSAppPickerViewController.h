@@ -8,6 +8,8 @@
 - (void)appPicker:(DSAppPickerViewController *)picker didSelectEntry:(DSAppEntry *)entry fromView:(UIView *)view;
 // Held down long enough for the fill to complete: hand the app the whole screen.
 - (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view;
+@optional
+- (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker;
 @end
 
 // What the stage shows when no app is loaded: a search field, a two column

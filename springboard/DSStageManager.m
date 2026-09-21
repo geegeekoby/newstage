@@ -314,6 +314,26 @@ static BOOL sSystemEdgePullAvailable;
                   duration:0.25];
 }
 
+// While an app is on the stage, the arbiter still hears keyboards from Spotlight and
+// from other processes behind the card. Treating those as the staged app's keyboard
+// going away was the keys vanishing mid-sentence; ignoring them keeps _typingKeys
+// authoritative until the staged app itself reports a hide.
+- (BOOL)keyboardSourceAffectsLayout:(NSString *)source keyboard:(CGRect)keyboard {
+    if (!_sceneHost.isHosting) return YES;
+
+    NSString *staged = _sceneHost.bundleIdentifier;
+    if (staged.length > 0 && [source isEqualToString:staged]) return YES;
+
+    if ([source isEqualToString:@"SpringBoard"]) return CGRectIsEmpty(_typingFrame);
+
+    if (_typingKeys > 0.0 || !CGRectIsEmpty(_typingFrame)) {
+        if (CGRectIsEmpty(keyboard)) return NO;
+        if ([source isEqualToString:@"com.apple.Spotlight"]) return NO;
+        return NO;
+    }
+    return YES;
+}
+
 // One place for both, and the card's only answer to a keyboard: move up out of its way.
 - (void)noteKeyboardFrame:(CGRect)keyboard source:(NSString *)source duration:(NSTimeInterval)duration {
     CGRect screen = [self screenBounds];
@@ -321,6 +341,17 @@ static BOOL sSystemEdgePullAvailable;
         CGRectGetMinY(keyboard) >= CGRectGetMaxY(screen)) {
         keyboard = CGRectZero;
     }
+
+    if (![self keyboardSourceAffectsLayout:source keyboard:keyboard]) {
+        if (!_notedStrayKeyboard && (!CGRectIsEmpty(keyboard) || _typingKeys > 0.0)) {
+            _notedStrayKeyboard = YES;
+            DSDiagnosticsRecordFormat(@"SpringBoard: ignored a keyboard from %@ while %@ is on the stage",
+                                      source.length > 0 ? source : @"?",
+                                      _sceneHost.bundleIdentifier);
+        }
+        return;
+    }
+
     if (CGRectEqualToRect(keyboard, _keyboardFrame)) return;
     _keyboardFrame = keyboard;
     [[DSKeyboardHost sharedHost] setKeyboardFrame:self.isStageVisible ? keyboard : CGRectZero
@@ -1644,7 +1675,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         return;
     }
 
-    [_container.contentView bringSubviewToFront:hostView];
+    // The picker stays on top for the whole crossfade. Pulling the hosted view in
+    // front of it was a black card: the app layer covered the recents list until it
+    // had already faded out.
     hostView.layer.cornerCurve = kCACornerCurveContinuous;
     hostView.layer.masksToBounds = YES;
 

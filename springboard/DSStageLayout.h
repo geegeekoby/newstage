@@ -27,3 +27,6 @@ CGFloat DSStagePickerLiftForKeyboard(CGRect keyboardFrame, CGRect restingCardFra
 
 // Stack slot 0 = bottom card, slot 1 = top card (above slot 0). `count` is 1 or 2.
 CGRect DSStageStackSlotFrame(CGRect combinedCardFrame, NSInteger slot, NSInteger count, CGFloat gap);
+
+// Two stages: equal top and bottom halves of the display (slot 1 = top, slot 0 = bottom).
+CGRect DSStageStackHalfScreenFrame(CGRect screen, NSInteger slot, CGFloat gap);

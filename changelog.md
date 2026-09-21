@@ -1,3 +1,7 @@
+**4.3.1**
+- Two stages: equal top/bottom halves of the display (not two small cards in the bottom half)
+- Top slot shows the app picker until an app is loaded; + control stays above the grabber
+
 **4.3.0**
 - Stack stages: + control on the top-right of the card (overlay mode) opens a second stage above the first
 - Each slot can host its own app; split view collapses back to one slot

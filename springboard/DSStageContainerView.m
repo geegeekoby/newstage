@@ -37,6 +37,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         [self addSubview:_backdrop];
 
         _contentView = [[UIView alloc] initWithFrame:CGRectZero];
+        _contentView.backgroundColor = UIColor.clearColor;
         _contentView.clipsToBounds = YES;
         [self addSubview:_contentView];
 
@@ -144,6 +145,8 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                                        addSide,
                                        addSide);
     _stackAddButton.hidden = !_showsStackAddButton;
+    [self bringSubviewToFront:_stackAddButton];
+    [self bringSubviewToFront:_grabber];
 
     [self updateShadow];
 }

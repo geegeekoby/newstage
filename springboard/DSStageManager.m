@@ -629,7 +629,10 @@ static BOOL sSystemEdgePullAvailable;
     if (!_sceneHost.isHosting || CGRectIsEmpty(_keyboardFrame)) return UIEdgeInsetsZero;
 
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-    CGRect card = CGRectOffset([self restingStageFrameForState:layoutState], 0.0, -_container.liftOffset);
+    CGRect resting = (_stackSlotCount >= kDSMaxStackSlots && layoutState == DSStageStateOverlay)
+        ? [self frameForStackSlot:0 state:layoutState]
+        : [self restingStageFrameForState:layoutState];
+    CGRect card = CGRectOffset(resting, 0.0, -_container.liftOffset);
     CGFloat keyboardTop = CGRectGetMinY(_keyboardFrame);
     CGFloat overlap = CGRectGetMaxY(card) - keyboardTop;
     if (overlap <= 1.0) return UIEdgeInsetsZero;
@@ -660,7 +663,7 @@ static BOOL sSystemEdgePullAvailable;
     _topContainer = [[DSStageContainerView alloc] initWithFrame:CGRectZero];
     _topContainer.hidden = YES;
     _topContainer.cornerRadius = _container.cornerRadius;
-    [root insertSubview:_topContainer belowSubview:_container];
+    [root insertSubview:_topContainer aboveSubview:_container];
 
     _topPicker = [[DSAppPickerViewController alloc] init];
     _topPicker.delegate = self;
@@ -677,6 +680,12 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (CGRect)frameForStackSlot:(NSInteger)slot state:(DSStageState)state {
+    if (_stackSlotCount <= 1) {
+        return [self stageFrameForState:state];
+    }
+    if (state == DSStageStateOverlay) {
+        return DSStageStackHalfScreenFrame([self screenBounds], slot, kDSStackSlotGap);
+    }
     CGRect combined = [self stageFrameForState:state];
     return DSStageStackSlotFrame(combined, slot, _stackSlotCount, kDSStackSlotGap);
 }
@@ -693,9 +702,17 @@ static BOOL sSystemEdgePullAvailable;
     return picker == _topPicker ? 1 : 0;
 }
 
+- (void)refreshTopSlotEmptyState {
+    if (_stackSlotCount < kDSMaxStackSlots || !_topContainer || _topSceneHost.isHosting) return;
+    [_topContainer setBackdropHidden:NO];
+    _topPicker.view.hidden = NO;
+    _topPicker.view.alpha = 1.0;
+    [_topContainer.contentView bringSubviewToFront:_topPicker.view];
+}
+
 - (void)updateStackChrome {
     BOOL canStack = (_state == DSStageStateOverlay) && _stackSlotCount < kDSMaxStackSlots && self.isStageVisible;
-    _container.showsStackAddButton = canStack;
+    _container.showsStackAddButton = canStack && !_topSceneHost.isHosting;
     if (_topContainer) _topContainer.showsStackAddButton = NO;
     _container.hostingApp = _sceneHost.isHosting;
     if (_topContainer) _topContainer.hostingApp = _topSceneHost.isHosting;
@@ -729,11 +746,14 @@ static BOOL sSystemEdgePullAvailable;
         _container.frame = frame;
         if (_topContainer) _topContainer.hidden = YES;
     } else {
+        CGFloat radius = [self displayCornerRadius];
         _container.frame = [self frameForStackSlot:0 state:state];
+        _container.cornerRadius = radius;
         _topContainer.hidden = NO;
         _topContainer.frame = [self frameForStackSlot:1 state:state];
-        _topContainer.cornerRadius = [self cornerRadiusForState:state];
+        _topContainer.cornerRadius = radius;
         _topPicker.view.frame = _topContainer.contentView.bounds;
+        [self refreshTopSlotEmptyState];
     }
 
     [_container setClipsContents:YES];
@@ -759,6 +779,8 @@ static BOOL sSystemEdgePullAvailable;
     _topPicker.view.alpha = 1.0;
     [_topPicker reloadContent];
     [_topPicker resetScrollPosition];
+    [_topContainer.contentView bringSubviewToFront:_topPicker.view];
+    [self refreshTopSlotEmptyState];
 
     [UIView animateWithDuration:0.28
                           delay:0

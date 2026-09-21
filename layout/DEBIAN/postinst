@@ -17,5 +17,16 @@ done
 # left behind is a copy Settings will still try to load.
 rm -rf /var/jb/Library/PreferenceBundles/DynamicStagePrefs.bundle
 rm -f /var/jb/Library/PreferenceLoader/Preferences/DynamicStagePrefs.plist
+rm -rf /Library/PreferenceBundles/DynamicStagePrefs.bundle
+
+# The date on this file is the moment this build arrived, and the stage uses it to
+# decide whether a crash report on disk is worth showing. Reports from before it are
+# about code that has been replaced - including the crashes the bundle above caused,
+# which otherwise keep being reported for two days after the build that fixed them.
+for dir in /var/mobile/Library/Preferences /var/jb/var/mobile/Library/Preferences; do
+	if [ -d "$dir" ]; then
+		: > "$dir/com.recreated.dynamicstage.installed" || true
+	fi
+done
 
 exit 0

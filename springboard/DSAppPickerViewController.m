@@ -2,6 +2,7 @@
 #import "DSAppCellContentView.h"
 #import "DSSearchFieldView.h"
 #import "DSCrashReports.h"
+#import "DSDiagnostics.h"
 #import "DSPreferences.h"
 #import "DSConstants.h"
 #import <AudioToolbox/AudioToolbox.h>
@@ -32,6 +33,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
     UILabel *_crashNotice;
     NSString *_crashSummary;
+    UILabel *_logNotice;
 }
 
 - (void)viewDidLoad {
@@ -71,21 +73,28 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     [_scrollView addSubview:_emptyLabel];
 
     [self installCrashNotice];
+    [self installLogNotice];
     [self reloadContent];
 }
 
 // The settings page runs inside Settings, so when it fails there is nothing left on
 // screen to say why. This is the one place the tweak still has that the user is
-// looking at, so the last Settings crash is shown here, and tapping it puts the whole
-// line on the clipboard - a report that can be pasted rather than described.
+// looking at, so the last crash is shown here, and tapping it puts the whole line on
+// the clipboard - a report that can be pasted rather than described.
+//
+// Red only when the fault is in this tweak's own code. A crash another tweak caused is
+// still worth knowing about, since the reader is sitting in front of the thing that
+// crashed, but printing it in the colour of a fault here is how a bystander gets blamed.
 - (void)installCrashNotice {
-    _crashSummary = DSLastSettingsCrashSummary();
+    BOOL ours = NO;
+    _crashSummary = DSLastCrashSummary(&ours);
     if (_crashSummary.length == 0) return;
 
     _crashNotice = [[UILabel alloc] initWithFrame:CGRectZero];
-    _crashNotice.text = [@"Tap to copy this Settings crash report\n" stringByAppendingString:_crashSummary];
+    _crashNotice.text = [@"Tap to copy this crash report\n" stringByAppendingString:_crashSummary];
     _crashNotice.font = [UIFont systemFontOfSize:11.0];
-    _crashNotice.textColor = [UIColor colorWithRed:0.85 green:0.25 blue:0.2 alpha:1.0];
+    _crashNotice.textColor = ours ? [UIColor colorWithRed:0.85 green:0.25 blue:0.2 alpha:1.0]
+                                  : [UIColor colorWithWhite:1.0 alpha:0.45];
     // The whole report goes on the clipboard; what is shown is as much of it as can be
     // spared from a card that is mostly meant to be a list of apps.
     _crashNotice.numberOfLines = 4;
@@ -100,6 +109,30 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     if (_crashSummary.length == 0) return;
     UIPasteboard.generalPasteboard.string = _crashSummary;
     _crashNotice.text = @"Copied - paste it wherever you are reporting this";
+    [_feedback impactOccurred];
+}
+
+// The stage writes down what it did - which gesture opened it, whether the keyboard
+// could be taken out of the card, why an app did not appear - and until 1.5.0 that was
+// read back on a page inside Settings. The page is a plist now, with no code of its own
+// to read a file with, so the log is offered here instead: one line at the top of the
+// card, and a tap puts the whole thing on the clipboard.
+- (void)installLogNotice {
+    _logNotice = [[UILabel alloc] initWithFrame:CGRectZero];
+    _logNotice.text = @"Tap to copy the stage's log";
+    _logNotice.font = [UIFont systemFontOfSize:11.0];
+    _logNotice.textColor = [UIColor colorWithWhite:1.0 alpha:0.4];
+    _logNotice.userInteractionEnabled = YES;
+    [_logNotice addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                            action:@selector(copyLog)]];
+    [_scrollView addSubview:_logNotice];
+}
+
+- (void)copyLog {
+    NSString *log = DSDiagnosticsRead();
+    UIPasteboard.generalPasteboard.string = log.length > 0 ? log : @"the stage has not written anything down yet";
+    _logNotice.text = log.length > 0 ? @"Copied - paste it wherever you are reporting this"
+                                     : @"Nothing has been written down yet";
     [_feedback impactOccurred];
 }
 
@@ -216,6 +249,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     if (_crashNotice) {
         CGFloat height = [_crashNotice sizeThatFits:CGSizeMake(contentWidth, CGFLOAT_MAX)].height;
         _crashNotice.frame = CGRectMake(kDSContentInset, y, contentWidth, height);
+        y += height + 8.0;
+    }
+
+    if (_logNotice) {
+        CGFloat height = [_logNotice sizeThatFits:CGSizeMake(contentWidth, CGFLOAT_MAX)].height;
+        _logNotice.frame = CGRectMake(kDSContentInset, y, contentWidth, height);
         y += height + 8.0;
     }
 

@@ -30,6 +30,11 @@
 // finds nothing, the stage leaves the keyboard exactly where it found it.
 + (void)refuseTheKeyboardLayerWhereverItIsOffered;
 
+// Writes down what this firmware's scene-hosting classes can be told about keyboards.
+// Nothing here reads it: it is for the person holding the phone, because a keyboard in
+// the card looks the same whether the refusal above failed or was never possible.
++ (void)surveyTheKeyboardLevers;
+
 @property (nonatomic, assign) BOOL keyboardLayerCanBeRefused;
 
 // The arbiter, handed over from the hook on it. It owns the keyboard's scene, and

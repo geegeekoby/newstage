@@ -341,6 +341,8 @@ What this costs, and what it does not:
 - The diagnostics the About and diagnostics pages showed are still written to
   `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`, which is where to look for
   which class the keyboard was refused in and whether the keyboard's own scene could be hosted.
+  Nothing in Settings can read a file any more, so the line at the top of the stage's app list
+  copies that log to the clipboard.
 - Settings writes through `CFPreferences`, which holds values for a while before the file on
   disk catches up, so the tweak asks `CFPreferences` first and falls back to the file. A
   setting changed in Settings takes effect on the next pull, not on the next respring.
@@ -409,17 +411,38 @@ The original Dynamic Stage is by [@tomt000](https://twitter.com/tomt000). This r
 an independent reimplementation of its behaviour for personal use on a rootless jailbreak; if
 you want the real thing, buy it from his repo.
 
-## Reading a Settings crash
+## Reading a crash
 
 A crash inside Settings leaves nothing on screen to say why, so the stage's app list shows the
-last one - exception type, what it was doing, and the top of the crashing thread as image names
+last one - what it was doing, the exception, and the top of the crashing thread as image names
 and offsets - and tapping it copies the whole line, so it can be pasted rather than described.
+`springboard/DSCrashReports.m` decides what is worth showing, and it decides three things that
+the reader would otherwise have to work out for themselves.
 
-It only appears when one of this tweak's own images is named in the report. Since 1.5.0 the only
-one that can be is the per-app dylib, which is injected into Settings like any other app; the
-settings page itself is a plist and cannot crash anything. A Settings crash with nothing of ours
-in it belongs to another tweak, and showing it would send the reader after a fault that is not
-here to be fixed.
+**Whether it is about the build that is installed.** The install script touches
+`/var/mobile/Library/Preferences/com.recreated.dynamicstage.installed`, and a report older than
+that file is not shown. This matters more than it sounds: the settings page took Settings down
+on every build up to 1.4.8, those reports sit in `/var/mobile/Library/Logs/CrashReporter` for
+days afterwards, and up to 1.5.1 the stage went on showing one for two days after the build that
+fixed it - so the fix looked like it had changed nothing.
+
+**Which image the fault is in.** A crash inside `dlopen`, `map_images` or `readClass` is not a
+fault in any of the code on the stack. It is a fault in the file being opened, and the tweak
+whose hook happens to be partway through the load - a phone with tweaks on it has one hooking
+`dlopen` - is a bystander. So a load-time crash is reported as what it is, with the third-party
+bundles the report lists named, rather than blamed on whichever image was nearest.
+
+**Whether it is ours at all.** Red only when this tweak's own code is in the frames of the
+thread that crashed, or when a load-time crash finds a leftover `DynamicStagePrefs.bundle` still
+on disk from 1.4.8 - which the install script deletes, so one being there means an upgrade did
+not run, and the line says where it is. Anything else is printed in grey and says whose it is.
+SpringBoard's own reports are read the same way but only shown when this tweak is named in them.
+
+The stage's log - which gesture opened it, whether the keyboard could be taken out of the card,
+why an app did not appear, and what this firmware's scene-hosting classes can be told about
+keyboards - is written to `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`. Since
+the settings page became a plist there is nothing in Settings that can read a file, so the top of
+the app list has a line that copies it to the clipboard.
 
 An offset in one of the dylibs can be turned back into a line of source with the debug build of
 the same version:

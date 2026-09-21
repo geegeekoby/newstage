@@ -114,6 +114,7 @@ static void DSTell(void (^action)(DSStageManager *manager)) {
                    dispatch_get_main_queue(), ^{
         @try {
             [DSKeyboardHost refuseTheKeyboardLayerWhereverItIsOffered];
+            [DSKeyboardHost surveyTheKeyboardLevers];
         } @catch (NSException *exception) {
         }
     });

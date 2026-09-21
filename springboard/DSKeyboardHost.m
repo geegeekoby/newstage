@@ -210,6 +210,50 @@ static BOOL DSCanShowKeyboardLayer(id self, SEL _cmd) {
                               [patched componentsJoinedByString:@", "]);
 }
 
+// What this firmware actually offers. All of the above rests on one private method
+// existing, and from outside the phone the two possible failures look identical: a
+// keyboard in the card because the refusal did not work, and a keyboard in the card
+// because there was never anything here to refuse it with. So the classes that host a
+// scene are asked what they can be told about keyboards, once, and the answer is
+// written down. The names on their own are enough to say which of them could stand in.
++ (void)surveyTheKeyboardLevers {
+    NSArray<NSString *> *names = @[ @"FBSceneHostManager", @"FBSceneHostView", @"FBSceneHostWrapperView",
+                                    @"SBSceneView", @"SBDeviceApplicationSceneView",
+                                    @"SBDeviceApplicationSceneViewController", @"SBAppViewController",
+                                    @"_UIKeyboardArbiter" ];
+    NSMutableArray<NSString *> *missing = [NSMutableArray array];
+
+    for (NSString *name in names) {
+        Class candidate = objc_getClass(name.UTF8String);
+        if (!candidate) {
+            [missing addObject:name];
+            continue;
+        }
+
+        NSMutableArray<NSString *> *found = [NSMutableArray array];
+        unsigned int methodCount = 0;
+        Method *methods = class_copyMethodList(candidate, &methodCount);
+        if (methods) {
+            for (unsigned int i = 0; i < methodCount; i++) {
+                NSString *selector = NSStringFromSelector(method_getName(methods[i]));
+                if ([selector rangeOfString:@"eyboard"].location == NSNotFound) continue;
+                [found addObject:selector];
+            }
+            free(methods);
+        }
+        if (found.count == 0) continue;
+
+        NSString *list = [found componentsJoinedByString:@" "];
+        if (list.length > 400) list = [list substringToIndex:400];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ knows %@", name, list);
+    }
+
+    if (missing.count > 0) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: not on this firmware - %@",
+                                  [missing componentsJoinedByString:@", "]);
+    }
+}
+
 - (BOOL)refusesKeyboardLayerInView:(UIView *)view {
     if (!_armed || _hostingFailed || !_keyboardLayerCanBeRefused) return NO;
     UIWindow *stage = _stageWindow;

@@ -1,3 +1,6 @@
+**4.5.52**
+- 4.5.51 is reverted. The keyboard is back to the 4.5.50 behavior that was drawing it in the right place: every keyboard window on the stage scene at level 6000, the card lifting only after the app says the keyboard is remote, and the top card staying on screen
+
 **4.5.51**
 - The bottom card lifts as soon as SpringBoard is drawing the keys, including when the app's remote-keyboard signal shows up late. That was the lift that sometimes never ran. While the bottom card is up, the top card leaves the screen, and both come back the moment the field resigns. Leaving a field no longer waits out the one-second hold. The old scene-clipping band and the SpringBoard proxy field that took the key are gone
 

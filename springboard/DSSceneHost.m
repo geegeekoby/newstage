@@ -122,6 +122,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     UIScenePresenter *_presenter;
     NSString *_ownSceneIdentifier;
     BOOL _nudgedThisLaunch;
+    BOOL _deliveredOnce;
+    CGFloat _deliveredWidth;
+    CGFloat _deliveredHeight;
     CGRect _stageFrame;
     UIEdgeInsets _safeAreaInsets;
     BOOL _foreground;
@@ -375,15 +378,14 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         [DSOwnedAppViewControllers() addObject:controller];
 
         [parent addChildViewController:controller];
+        // Occlusion and appearance must not suspend the app. Minimizing slides the
+        // card off screen; if the app view treated that as "gone", Safari and others
+        // tore their scene down and the card came back empty or see-through.
         if ([controller respondsToSelector:@selector(setIgnoresOcclusions:)]) {
-            [controller setIgnoresOcclusions:NO];
+            [controller setIgnoresOcclusions:YES];
         }
-        // The app view runs the app's lifecycle from its own view's appearance, which
-        // is what the stage wants: the app is awake while the card is on screen and
-        // suspends when it is put away, decided by SpringBoard rather than dictated to
-        // it from outside.
         if ([controller respondsToSelector:@selector(setAutomatesLifecycle:)]) {
-            ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setAutomatesLifecycle:), YES);
+            ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setAutomatesLifecycle:), NO);
         }
         // Mode 2 is the live one. Anything else and the view shows a snapshot.
         if ([controller respondsToSelector:@selector(_setCurrentMode:)]) [controller _setCurrentMode:2];
@@ -421,7 +423,14 @@ typedef BOOL (^DSSceneHostAttempt)(void);
             [self tearDownAppViewController];
             return NO;
         }
-        view.backgroundColor = UIColor.clearColor;
+        // Clear lets the wallpaper show through until the app paints, and some
+        // apps (Safari) never paint an opaque root view of their own.
+        view.opaque = YES;
+        if (@available(iOS 13.0, *)) {
+            view.backgroundColor = UIColor.systemBackgroundColor;
+        } else {
+            view.backgroundColor = UIColor.whiteColor;
+        }
         view.clipsToBounds = YES;
         _hostView = view;
 
@@ -509,8 +518,33 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 // A cold-launching app is not ready to be told for the first second or two either,
 // which is why this is repeated: without it the card stays black until something
 // else happens to resize it.
+- (BOOL)appViewIsShowingContent {
+    SBAppViewController *controller = _appViewController;
+    if (!controller) return NO;
+    SEL hosting = NSSelectorFromString(@"isHostingAnApp");
+    if ([controller respondsToSelector:hosting]) {
+        @try {
+            return ((BOOL (*)(id, SEL))objc_msgSend)(controller, hosting);
+        } @catch (NSException *exception) {
+        }
+    }
+    return [self appViewScene] != nil;
+}
+
+// Repeating this after the app is already on screen is what flickers the card:
+// each transaction re-pins the scene and the view goes blank until it draws again.
 - (void)deliverStageSizeToApp {
     if (!_appViewController) return;
+    CGSize size = [self logicalFrame].size;
+    if (CGSizeEqualToSize(size, CGSizeZero)) return;
+    BOOL sameSize = _deliveredOnce &&
+                    fabs(size.width - _deliveredWidth) < 0.5 &&
+                    fabs(size.height - _deliveredHeight) < 0.5;
+    if (sameSize && [self appViewIsShowingContent]) return;
+
+    _deliveredOnce = YES;
+    _deliveredWidth = size.width;
+    _deliveredHeight = size.height;
     [self setContentReferenceSizeOnAppView];
     [self beginSceneTransactionDeliveringActions:NO];
     [self forceSceneGeometry];
@@ -581,6 +615,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     SBAppViewController *controller = _appViewController;
     _appViewController = nil;
     _entity = nil;
+    _deliveredOnce = NO;
+    _deliveredWidth = 0;
+    _deliveredHeight = 0;
     if (!controller) return;
 
     [DSOwnedAppViewControllers() removeObject:controller];
@@ -918,6 +955,12 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         }
         _hostView = [_hostManager hostViewForRequester:kDSRequester enableAndOrderFront:YES];
         _hostView.clipsToBounds = YES;
+        _hostView.opaque = YES;
+        if (@available(iOS 13.0, *)) {
+            _hostView.backgroundColor = UIColor.systemBackgroundColor;
+        } else {
+            _hostView.backgroundColor = UIColor.whiteColor;
+        }
         if (!_hostView) DSDiagnosticsRecordFormat(@"SpringBoard: hosting %@ gave back no view", _bundleIdentifier);
     } @catch (NSException *exception) {
         DSDiagnosticsRecordFormat(@"SpringBoard: hosting %@ threw %@ - %@",
@@ -970,25 +1013,23 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     [self pushSettings];
 }
 
-// An app that is still launching is not listening yet, and one told its size too
-// early draws nothing: the card stays black until something else resizes it. So the
-// size is re-sent over the first few seconds of its life. Each one is a no-op once
-// the app is up.
+// One follow-up, and only while the app has not drawn yet. A stream of scene
+// transactions after that is the flicker on the way in.
 - (void)nudgeStageSizeWhileAppStarts {
     if (_nudgedThisLaunch) return;
     _nudgedThisLaunch = YES;
 
     __weak __typeof(self) weakSelf = self;
-    for (NSNumber *delay in @[ @0.4, @0.9, @1.6, @2.6, @4.0, @6.0 ]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            __strong __typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf || !strongSelf->_appViewController) return;
-            [strongSelf.hostView setNeedsLayout];
-            [strongSelf.hostView layoutIfNeeded];
-            [strongSelf deliverStageSizeToApp];
-        });
-    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.7 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || !strongSelf->_appViewController) return;
+        if ([strongSelf appViewIsShowingContent]) return;
+        [strongSelf.hostView setNeedsLayout];
+        [strongSelf.hostView layoutIfNeeded];
+        strongSelf->_deliveredOnce = NO;
+        [strongSelf deliverStageSizeToApp];
+    });
 }
 
 - (CGRect)logicalFrame {

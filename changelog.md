@@ -1,3 +1,8 @@
+**4.5.2**
+- Minimize slides a card away and leaves its app running. It no longer tears the app down
+- Staged apps keep an opaque card, including Safari, instead of showing the wallpaper through the stage
+- A stage is told its size once, so the bottom card does not flicker through a string of scene updates while it loads
+
 **4.5.1**
 - The right-edge notch shows two squares, top and bottom. An empty square starts a stage on that half, and a staged app fills its square
 

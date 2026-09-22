@@ -109,6 +109,10 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     // 0 = bottom, 1 = top. The hosted app stays inside its own card.
     NSInteger _primaryHalf;
     NSInteger _secondHalf;
+    // Parked cards are off the bottom of the screen with their app still hosted.
+    // Minimize never tears an app down.
+    BOOL _primaryParked;
+    BOOL _secondParked;
     UIEdgeInsets _lockedScreenInsets;
     BOOL _lockedScreenInsetsReady;
     UIPanGestureRecognizer *_topDragPan;
@@ -459,9 +463,11 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     NSInteger bottomSlot = [self slotOnBottomHalf];
-    // A stage sitting on the top half only does not lift. Lifting it would use the
-    // bottom card's numbers and shove it off the screen.
-    if (_stackSlotCount < kDSMaxStackSlots && _primaryHalf != 0) {
+    DSStageContainerView *bottomCardForKeys = [self containerOnHalf:0];
+    // A stage sitting on the top half only, or a bottom card that is minimized,
+    // does not lift. Lifting it would use the wrong card and shove it on screen.
+    if (!bottomCardForKeys || [self cardIsParked:bottomCardForKeys] ||
+        (_stackSlotCount < kDSMaxStackSlots && _primaryHalf != 0)) {
         keyboard = CGRectZero;
         bottomSlot = 0;
     }
@@ -784,6 +790,40 @@ static BOOL sSystemEdgePullAvailable;
     };
 }
 
+- (BOOL)cardIsParked:(DSStageContainerView *)card {
+    if (card == _topContainer) return _secondParked;
+    return _primaryParked;
+}
+
+- (void)setParked:(BOOL)parked forCard:(DSStageContainerView *)card {
+    if (card == _topContainer) _secondParked = parked;
+    else _primaryParked = parked;
+}
+
+- (CGRect)offscreenCardFrame {
+    CGRect off = [self fixedHalfFrame:0];
+    off.origin.y = CGRectGetHeight([self screenBounds]);
+    return off;
+}
+
+// Where a card sits. Parked, closed and minimized cards are the same size, just
+// below the screen, so coming back is a move and not a resize.
+- (CGRect)placedFrameForCard:(DSStageContainerView *)card state:(DSStageState)state {
+    if ([self cardIsParked:card] || state == DSStageStateClosed || state == DSStageStateMinimized) {
+        return [self offscreenCardFrame];
+    }
+    if (_stackSlotCount <= 1) {
+        if (state == DSStageStateSplit || state == DSStageStateOverlay) {
+            NSInteger half = (state == DSStageStateSplit) ? 0 : _primaryHalf;
+            return [self fixedHalfFrame:half];
+        }
+        return [self stageFrameForState:state];
+    }
+    NSInteger half = [self halfForContainer:card];
+    if (state == DSStageStateSplit && half != 0) return [self offscreenCardFrame];
+    return [self fixedHalfFrame:half];
+}
+
 - (CGRect)frameForHalf:(NSInteger)half state:(DSStageState)state {
     (void)state;
     return [self fixedHalfFrame:half];
@@ -931,24 +971,16 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)layoutAllStackSlotsForState:(DSStageState)state {
     if (_stackSlotCount <= 1) {
-        CGRect frame;
-        if (state == DSStageStateOverlay) {
-            frame = [self fixedHalfFrame:_primaryHalf];
-        } else if (state == DSStageStateSplit) {
-            _primaryHalf = 0;
-            frame = [self fixedHalfFrame:0];
-        } else {
-            frame = [self stageFrameForState:state];
-        }
-        _container.frame = frame;
+        if (state == DSStageStateSplit) _primaryHalf = 0;
+        _container.frame = [self placedFrameForCard:_container state:state];
         _container.cornerRadius = [self stageCardCornerRadius];
         if (_topContainer) _topContainer.hidden = YES;
     } else {
         CGFloat radius = [self stageCardCornerRadius];
-        _container.frame = [self frameForHalf:_primaryHalf state:state];
+        _container.frame = [self placedFrameForCard:_container state:state];
         _container.cornerRadius = radius;
         _topContainer.hidden = NO;
-        _topContainer.frame = [self frameForHalf:_secondHalf state:state];
+        _topContainer.frame = [self placedFrameForCard:_topContainer state:state];
         _topContainer.cornerRadius = radius;
         _picker.view.frame = _container.contentView.bounds;
         _topPicker.view.frame = _topContainer.contentView.bounds;
@@ -981,7 +1013,10 @@ static BOOL sSystemEdgePullAvailable;
     picker.darkMode = card.darkMode;
     UIView *pickerView = picker.view;
     for (UIView *subview in [card.contentView.subviews copy]) {
-        if (subview != pickerView) [subview removeFromSuperview];
+        if (subview == pickerView) continue;
+        // Never pull a live app out of its card. That is what blanks it.
+        if (subview == _sceneHost.hostView || subview == _topSceneHost.hostView) continue;
+        [subview removeFromSuperview];
     }
     card.backgroundColor = [UIColor colorWithWhite:0.11 alpha:1.0];
     [card setBackdropHidden:NO];
@@ -1024,50 +1059,93 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)minimizeIndividualCard:(DSStageContainerView *)card {
     if (!card) return;
-    if (_stackSlotCount < kDSMaxStackSlots) {
-        [self minimizeAnimated:YES];
+    DSSceneHost *host = (card == _topContainer) ? _topSceneHost : _sceneHost;
+    if (!host.isHosting) {
+        if (_stackSlotCount >= kDSMaxStackSlots && card == _topContainer) {
+            [self dropEmptySecondCard];
+            return;
+        }
+        if (_stackSlotCount >= kDSMaxStackSlots && card == _container && _topSceneHost.isHosting) {
+            [self promoteSecondCardToPrimary];
+            return;
+        }
+        [self closeStageAnimated:YES];
         return;
     }
+    [self parkCard:card animated:YES];
+}
 
-    if (card == _topContainer) {
-        DSSceneHost *host = _topSceneHost;
-        _topSceneHost = nil;
-        [self relinquishStackHost:host];
-        _stackSlotCount = 1;
-        _primaryHalf = 0;
-        _topContainer.hidden = YES;
-        _container.backgroundColor = UIColor.clearColor;
-        [UIView animateWithDuration:0.28 animations:^{
-            [self layoutAllStackSlotsForState:self->_state];
-        }];
-        DSDiagnosticsRecord(@"SpringBoard: minimized the second stage");
+// Slide one card away and leave its app hosted. The other card, if it is up, stays
+// exactly where it is.
+- (void)parkCard:(DSStageContainerView *)card animated:(BOOL)animated {
+    if (!card) return;
+    [self setParked:YES forCard:card];
+    [card setLiftOffset:0.0];
+    BOOL otherStillUp = (_stackSlotCount >= kDSMaxStackSlots) &&
+                        ((card == _container && !_secondParked && !_topContainer.hidden) ||
+                         (card == _topContainer && !_primaryParked));
+    DSStageState layoutState = otherStillUp ? DSStageStateOverlay : DSStageStateMinimized;
+    void (^layout)(void) = ^{
+        [self layoutAllStackSlotsForState:layoutState];
+        card.alpha = 1.0;
+    };
+    void (^finish)(void) = ^{
+        if (!otherStillUp) {
+            self->_primaryParked = YES;
+            self->_secondParked = YES;
+            self->_state = DSStageStateMinimized;
+            [self giveBackKeyWindow];
+            [self updateOpenAppIcon];
+            [self scheduleAutoKill];
+        }
+        [self updateHomeAffordance];
+        [self updateStackChrome];
         [self refreshShelf];
-        return;
+        [self bringShelfToFront];
+        DSDiagnosticsRecord(@"SpringBoard: minimized a stage without closing its app");
+    };
+    if (animated) {
+        [self animateSpring:layout completion:finish];
+    } else {
+        layout();
+        finish();
     }
+}
 
-    DSSceneHost *dropped = _sceneHost;
-    _sceneHost = _topSceneHost;
-    _topSceneHost = nil;
-    [self relinquishStackHost:dropped];
-
-    DSStageContainerView *kept = _topContainer;
-    DSAppPickerViewController *keptPicker = _topPicker;
-    UIPanGestureRecognizer *keptPan = _topDragPan;
-    _topContainer = _container;
-    _topPicker = _picker;
-    _topDragPan = _dragPan;
-    _container = kept;
-    _picker = keptPicker;
-    _dragPan = keptPan;
+- (void)dropEmptySecondCard {
     _stackSlotCount = 1;
-    _primaryHalf = 0;
+    _secondParked = NO;
     _topContainer.hidden = YES;
-    _container.hidden = NO;
-    _container.backgroundColor = _sceneHost.isHosting ? UIColor.clearColor : [UIColor colorWithWhite:0.11 alpha:1.0];
     [UIView animateWithDuration:0.28 animations:^{
         [self layoutAllStackSlotsForState:self->_state];
     }];
-    DSDiagnosticsRecord(@"SpringBoard: minimized the first stage");
+    [self refreshShelf];
+}
+
+// The empty card was the primary one. The card that still has an app becomes
+// primary. The host view stays inside the card it already has.
+- (void)promoteSecondCardToPrimary {
+    DSStageContainerView *empty = _container;
+    DSAppPickerViewController *emptyPicker = _picker;
+    UIPanGestureRecognizer *emptyPan = _dragPan;
+    _container = _topContainer;
+    _picker = _topPicker;
+    _dragPan = _topDragPan;
+    _topContainer = empty;
+    _topPicker = emptyPicker;
+    _topDragPan = emptyPan;
+    _sceneHost = _topSceneHost;
+    _topSceneHost = nil;
+    _primaryHalf = _secondHalf;
+    _secondHalf = 1;
+    _primaryParked = _secondParked;
+    _secondParked = NO;
+    _stackSlotCount = 1;
+    _topContainer.hidden = YES;
+    _container.hidden = NO;
+    [UIView animateWithDuration:0.28 animations:^{
+        [self layoutAllStackSlotsForState:self->_state];
+    }];
     [self refreshShelf];
 }
 
@@ -1101,9 +1179,9 @@ static BOOL sSystemEdgePullAvailable;
                          [self layoutAllStackSlotsForState:self->_state];
                      }
                      completion:^(BOOL finished) {
-                         [self presentPickerOnCard:self->_topContainer picker:self->_topPicker];
                          self->_topContainer.alpha = 1.0;
                          [self updateStackChrome];
+                         [self bringShelfToFront];
                      }];
     DSDiagnosticsRecordFormat(@"SpringBoard: moved %@ to the top half and opened a new stage below",
                               _sceneHost.bundleIdentifier);
@@ -1112,26 +1190,12 @@ static BOOL sSystemEdgePullAvailable;
 - (void)collapseStackKeepingBottomApp:(BOOL)animated {
     if (_stackSlotCount <= 1) return;
 
-    if (_sceneHost && _sceneHost.isHosting) {
-        DSSceneHost *bottom = _sceneHost;
-        _sceneHost = nil;
-        [self publishStageStateForBundleIdentifier:bottom.bundleIdentifier frame:CGRectZero active:NO];
-        [bottom relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:bottom.bundleIdentifier]];
-    }
-
-    if (_topSceneHost.isHosting) {
-        _sceneHost = _topSceneHost;
+    // Closing. Both apps leave. Do not move a host view from one card to the
+    // other; that blanks it on the way out.
+    if (_topSceneHost) {
+        DSSceneHost *top = _topSceneHost;
         _topSceneHost = nil;
-        UIView *hostView = _sceneHost.hostView;
-        if (hostView) {
-            [_container.contentView insertSubview:hostView atIndex:0];
-            hostView.frame = _container.contentView.bounds;
-        }
-        _container.hostingApp = YES;
-        [_container setBackdropHidden:YES];
-        _picker.view.hidden = YES;
-    } else if (_topSceneHost) {
-        _topSceneHost = nil;
+        [self relinquishStackHost:top];
     }
 
     [_topLaunchPlaceholder removeFromSuperview];
@@ -1139,6 +1203,8 @@ static BOOL sSystemEdgePullAvailable;
     _stackSlotCount = 1;
     _primaryHalf = 0;
     _secondHalf = 1;
+    _primaryParked = NO;
+    _secondParked = NO;
     _topContainer.hidden = YES;
 
     void (^layout)(void) = ^{
@@ -1665,6 +1731,8 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 #pragma mark - States
 
 - (void)enterStateOverlayAnimated:(BOOL)animated {
+    _primaryParked = NO;
+    _secondParked = NO;
     [self cancelAutoKill];
     if (_state != DSStageStateOverlay) DSDiagnosticsRecord(@"SpringBoard: stage on screen");
     _state = DSStageStateOverlay;
@@ -1704,7 +1772,15 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 }
 
 - (void)enterStateSplitAnimated:(BOOL)animated {
-    [self collapseStackKeepingBottomApp:NO];
+    // Split keeps every app alive. The card on the top half steps off screen;
+    // the one on the bottom stays. Nothing is reparented and nothing is quit.
+    if (_stackSlotCount >= kDSMaxStackSlots) {
+        _primaryParked = (_primaryHalf == 1);
+        _secondParked = (_secondHalf == 1);
+    } else {
+        _primaryParked = NO;
+        _primaryHalf = 0;
+    }
     [self cancelAutoKill];
     _state = DSStageStateSplit;
     _window.hidden = NO;
@@ -1749,16 +1825,18 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [self restoreHostLayout];
     [_picker dismissKeyboard];
     [_container setLiftOffset:0.0];
+    if (_topContainer) [_topContainer setLiftOffset:0.0];
+    _primaryParked = YES;
+    _secondParked = YES;
     void (^layout)(void) = ^{
-        self->_container.frame = [self stageFrameForState:DSStageStateClosed];
-        self->_container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
+        [self layoutAllStackSlotsForState:DSStageStateMinimized];
+        self->_container.alpha = 1.0;
+        if (self->_topContainer) self->_topContainer.alpha = 1.0;
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateMinimized;
         [self giveBackKeyWindow];
-        // Backgrounded rather than occluded is what keeps push driven apps
-        // delivering while the stage is tucked away.
-        [self->_sceneHost setForeground:NO];
+        // The app stays hosted. Putting the card away is not closing it.
         [self updateOpenAppIcon];
         [self updateHomeAffordance];
         [self scheduleAutoKill];
@@ -2116,8 +2194,17 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     picker.view.hidden = YES;
     picker.view.alpha = 1.0;
+    hostView.opaque = YES;
+    if (@available(iOS 13.0, *)) {
+        hostView.backgroundColor = UIColor.systemBackgroundColor;
+        card.contentView.backgroundColor = UIColor.systemBackgroundColor;
+    } else {
+        hostView.backgroundColor = UIColor.whiteColor;
+        card.contentView.backgroundColor = UIColor.whiteColor;
+    }
     hostView.frame = card.contentView.bounds;
     [card.contentView insertSubview:hostView atIndex:0];
+    [card setBackdropHidden:YES];
     [host noteHostViewAttached];
 
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
@@ -2149,7 +2236,6 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         placeholder.alpha = 0.0;
     } completion:^(BOOL finished) {
         [placeholder removeFromSuperview];
-        [card setBackdropHidden:YES];
     }];
 }
 
@@ -2565,12 +2651,12 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                     if (swapUp || swapDown) {
                         [self swapStackHalvesAnimated:YES];
                     } else if (onBottom && (translation.y > CGRectGetHeight(resting) * 0.38 || velocity.y > 950.0)) {
-                        [self minimizeAnimated:YES];
+                        [self parkCard:card animated:YES];
                     } else {
                         [self snapBackToLayoutForState:layoutState];
                     }
                 } else if (translation.y > CGRectGetHeight(resting) * 0.38 || velocity.y > 950.0) {
-                    [self minimizeAnimated:YES];
+                    [self parkCard:card animated:YES];
                 } else if (translation.y < -40.0 && _state == DSStageStateOverlay && _stackSlotCount <= 1) {
                     [self enterStateSplitAnimated:YES];
                 } else if (translation.y > 40.0 && _state == DSStageStateSplit) {
@@ -2680,12 +2766,40 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                          self->_topContainer.alpha = 1.0;
                      }
                      completion:^(BOOL finished) {
-                         [self presentPickerOnCard:self->_topContainer picker:self->_topPicker];
                          [self updateStackChrome];
                          [self bringShelfToFront];
                          [self refreshShelf];
                      }];
     DSDiagnosticsRecordFormat(@"SpringBoard: opened a stage on the %@ half", half == 1 ? @"top" : @"bottom");
+}
+
+- (void)revealHalf:(NSInteger)half animated:(BOOL)animated {
+    DSStageContainerView *card = [self containerOnHalf:half];
+    if (!card) card = _container;
+    [self setParked:NO forCard:card];
+    if (_state != DSStageStateOverlay && _state != DSStageStateSplit) {
+        _state = DSStageStateOverlay;
+        _window.hidden = NO;
+        [self cancelAutoKill];
+        [self giveBackKeyWindow];
+    }
+    DSSceneHost *host = (card == _topContainer) ? _topSceneHost : _sceneHost;
+    [host setForeground:YES];
+    void (^layout)(void) = ^{
+        [self layoutAllStackSlotsForState:DSStageStateOverlay];
+    };
+    void (^finish)(void) = ^{
+        [self updateHomeAffordance];
+        [self updateStackChrome];
+        [self refreshShelf];
+        [self bringShelfToFront];
+    };
+    if (animated) {
+        [self animateSpring:layout completion:finish];
+    } else {
+        layout();
+        finish();
+    }
 }
 
 - (void)beginStageOnHalf:(NSInteger)half {
@@ -2696,10 +2810,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
     BOOL otherHalfHasApp = [self bundleIdentifierOnHalf:half == 0 ? 1 : 0].length > 0;
 
     if (thisHalfHasApp) {
-        if (_state == DSStageStateClosed || _state == DSStageStateMinimized) {
-            [self openStageAnimated:YES];
-        }
-        [self refreshShelf];
+        [self revealHalf:half animated:YES];
         return;
     }
 
@@ -2714,8 +2825,18 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
         if (!otherHalfHasApp) {
             _primaryHalf = half;
             _stackSlotCount = 1;
+            _primaryParked = NO;
+            _secondParked = NO;
         }
-        [self openStageAnimated:NO];
+        if (otherHalfHasApp && _state == DSStageStateMinimized) {
+            // The app already staged stays tucked away. This square only opens
+            // the empty half.
+            _state = DSStageStateOverlay;
+            _window.hidden = NO;
+            [self cancelAutoKill];
+        } else {
+            [self openStageAnimated:NO];
+        }
         if (_state != DSStageStateOverlay && _state != DSStageStateSplit) return;
     } else if (_state == DSStageStateSplit) {
         [self enterStateOverlayAnimated:NO];

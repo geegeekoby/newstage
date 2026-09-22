@@ -269,7 +269,7 @@ answered.
 
 tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full width, outside the card.
 
-**Picker search.** The field is SpringBoard's, on every picker. The stage window becomes key only while a search field is editing. If an app is still staged when that edit ends, the window is handed back. The card that owns the field lifts above the keyboard (301pt floor). Opening a picker does not lift it. After a respring the window is kept on the foreground scene, and the same keyboard request is repeated if the keys do not appear.
+**Picker search.** The field is SpringBoard's, on every picker. The stage window becomes key only while a search field is editing. If an app is still staged when that edit ends, the window is handed back. The card that owns the field lifts above the keyboard (301pt floor). Opening a picker does not lift it. After a respring the window is kept on the foreground scene, and the same keyboard request is repeated if the keys do not appear. `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log` is replaced on every SpringBoard start. Each search attempt is written there and on the line at the top of the stage: window key, scene, first responder, and keyboard frame.
 
 **Staged app.** Top and bottom both use the picker search keyboard. The app's own keys are forced out of the card. Tapping a text field makes the stage window key and UIKit shows that keyboard. The card the keys cover slides up. The other card stays on its half. Neither card changes size. The line at the top reports the app and `lift slot0` / `lift slot1`. The same lines are appended to `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`.
 
@@ -311,7 +311,8 @@ What this costs, and what it does not:
   and still honoured; there is no longer a screen in Settings that writes them.
 - The diagnostics the About and diagnostics pages showed are still written to
   `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`, which is where to look for
-  why a pull was refused and whether an app made it onto the stage.
+  why a pull was refused and whether an app made it onto the stage. SpringBoard replaces that
+  file on every start, so the copy after a respring is only the current boot.
   Nothing in Settings can read a file any more, so the line at the top of the stage's app list
   copies that log to the clipboard.
 - Settings writes through `CFPreferences`, which holds values for a while before the file on

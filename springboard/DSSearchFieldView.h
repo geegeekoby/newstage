@@ -23,5 +23,7 @@
 - (void)clearText;
 // Asks the text field to edit again. Used when the keyboard did not appear.
 - (void)reassertEditing;
+// Read-only. fr/win/key/att for the diagnostics log.
+- (NSString *)editingDebugSummary;
 
 @end

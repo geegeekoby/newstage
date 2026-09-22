@@ -16,6 +16,16 @@ static NSString *DSDiagnosticsPath(void) {
     return kDSDiagnosticsPath;
 }
 
+static NSString *DSDiagnosticsSessionPath(void) {
+    return kDSDiagnosticsSessionPath;
+}
+
+static NSString *DSDiagnosticsSessionID(void) {
+    return [NSString stringWithContentsOfFile:DSDiagnosticsSessionPath()
+                                     encoding:NSUTF8StringEncoding
+                                        error:nil] ?: @"";
+}
+
 static dispatch_queue_t DSDiagnosticsQueue(void) {
     static dispatch_queue_t queue;
     static dispatch_once_t token;
@@ -57,7 +67,13 @@ void DSDiagnosticsRecord(NSString *message) {
     dispatch_async(DSDiagnosticsQueue(), ^{
         @try {
             NSString *path = DSDiagnosticsPath();
+            NSString *session = DSDiagnosticsSessionID();
             NSString *existing = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil] ?: @"";
+            // A write that started before this respring can put the old boot back
+            // on disk. Drop it the next time anything is recorded.
+            if (session.length > 0 && [existing rangeOfString:session].location == NSNotFound) {
+                existing = @"";
+            }
             NSString *combined = [existing stringByAppendingString:line];
 
             // The log is a rolling window, not a record: it exists to be read on a
@@ -88,7 +104,16 @@ void DSDiagnosticsRecordFormat(NSString *format, ...) {
 
 NSString *DSDiagnosticsRead(void) {
     @try {
-        return [NSString stringWithContentsOfFile:DSDiagnosticsPath() encoding:NSUTF8StringEncoding error:nil] ?: @"";
+        NSString *text = [NSString stringWithContentsOfFile:DSDiagnosticsPath() encoding:NSUTF8StringEncoding error:nil] ?: @"";
+        NSString *session = DSDiagnosticsSessionID();
+        if (session.length == 0 || text.length == 0) return text;
+        NSRange marker = [text rangeOfString:session];
+        if (marker.location == NSNotFound) return text;
+        NSRange lineBreak = [text rangeOfString:@"\n"
+                                        options:NSBackwardsSearch
+                                          range:NSMakeRange(0, marker.location)];
+        if (lineBreak.location == NSNotFound) return text;
+        return [text substringFromIndex:NSMaxRange(lineBreak)];
     } @catch (NSException *exception) {
         return @"";
     }
@@ -98,6 +123,24 @@ void DSDiagnosticsClear(void) {
     dispatch_async(DSDiagnosticsQueue(), ^{
         @try {
             [[NSFileManager defaultManager] removeItemAtPath:DSDiagnosticsPath() error:nil];
+        } @catch (NSException *exception) {
+        }
+    });
+}
+
+void DSDiagnosticsBeginSession(NSString *message) {
+    if (message.length == 0) message = @"log refreshed";
+    NSString *session = NSUUID.UUID.UUIDString;
+    NSString *line = [NSString stringWithFormat:@"%@ %@: %@ session=%@\n",
+                      DSDiagnosticsStamp(),
+                      NSProcessInfo.processInfo.processName ?: @"?",
+                      message,
+                      session];
+    dispatch_async(DSDiagnosticsQueue(), ^{
+        @try {
+            [session writeToFile:DSDiagnosticsSessionPath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
+            [[NSFileManager defaultManager] removeItemAtPath:DSDiagnosticsPath() error:nil];
+            [line writeToFile:DSDiagnosticsPath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
         } @catch (NSException *exception) {
         }
     });

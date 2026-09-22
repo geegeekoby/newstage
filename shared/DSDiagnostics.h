@@ -19,6 +19,10 @@ void DSDiagnosticsRecordFormat(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 NSString *DSDiagnosticsRead(void);
 void DSDiagnosticsClear(void);
 
+// Replaces the log with one line. Call this once when SpringBoard starts so the
+// file the next report is copied from is only this boot.
+void DSDiagnosticsBeginSession(NSString *message);
+
 #ifdef __cplusplus
 }
 #endif

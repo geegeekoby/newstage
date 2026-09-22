@@ -88,6 +88,10 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 // is the only way to see inside the tweak on a device that cannot hand over a
 // crash log. Both processes run as mobile, so both can reach this.
 #define kDSDiagnosticsPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.log"
+// Written at every SpringBoard start. Later lines from either process are kept
+// only when the log still contains this id, so a respring does not keep the
+// previous boot's keyboard notes.
+#define kDSDiagnosticsSessionPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.session"
 
 // Preference keys ------------------------------------------------------------
 

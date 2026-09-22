@@ -1,3 +1,6 @@
+**4.5.17**
+- The diagnostics log is replaced every time SpringBoard starts, so a report after a respring is only that boot. Each picker search attempt records whether the stage window is key, which scene it is on, whether the search field is editing, and the keyboard frame. The same line is on the stage
+
 **4.5.16**
 - After a respring the stage window was sometimes left on a scene that was not on screen, so the picker search field took the tap and the keyboard never appeared. The window is moved to the foreground scene, and the same search keyboard is requested again until it is on screen
 

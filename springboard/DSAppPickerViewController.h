@@ -26,6 +26,7 @@
 - (void)resetScrollPosition;
 - (void)dismissKeyboard;
 - (void)reassertSearchEditing;
+- (NSString *)searchEditingDebugSummary;
 - (BOOL)isSearching;
 
 // Where an app's plate currently sits, so the stage can zoom an app back into

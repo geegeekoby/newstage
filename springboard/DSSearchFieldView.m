@@ -114,6 +114,19 @@
     }
 }
 
+- (NSString *)editingDebugSummary {
+    UIWindow *window = self.window;
+    return [NSString stringWithFormat:@"fr=%d win=%d key=%d att=%ld",
+            _field.isFirstResponder,
+            window != nil,
+            window.isKeyWindow,
+            (long)_keyWindowAttempts];
+}
+
+- (void)logEditingDecision:(NSString *)decision {
+    DSDiagnosticsRecordFormat(@"search field %@: %@", decision, [self editingDebugSummary]);
+}
+
 #pragma mark - UITextFieldDelegate
 
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
@@ -126,6 +139,7 @@
             if (!field) return;
             [field->_field becomeFirstResponder];
         });
+        [self logEditingDecision:@"wait settling"];
         return NO;
     }
 
@@ -143,17 +157,21 @@
             if (!field) return;
             [field->_field becomeFirstResponder];
         });
+        [self logEditingDecision:@"wait for key window"];
         return NO;
     }
     _keyWindowAttempts = 0;
+    [self logEditingDecision:@"begin editing"];
     return YES;
 }
 
 - (void)reassertEditing {
     if (_field.isFirstResponder) {
+        [self logEditingDecision:@"reload input"];
         [_field reloadInputViews];
         return;
     }
+    [self logEditingDecision:@"become first responder"];
     [_field becomeFirstResponder];
 }
 

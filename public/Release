@@ -6,10 +6,10 @@ Codename: ios
 Architectures: iphoneos-arm64
 Components: main
 Description: Stage Manager Reimagined for iPhone, rebuilt for rootless jailbreaks
-Date: Tue, 22 Sep 2026 05:27:13 GMT
+Date: Tue, 22 Sep 2026 05:34:24 GMT
 MD5Sum:
- 96cdba8cce27d471b83f2405972e8bfa 877 Packages
- 0b9f8852d6e89dfcfb1052b3f140f20c 501 Packages.gz
+ 697d833dffeaf6255fc02414ca074fb1 877 Packages
+ 650ca1233a860fc8616a74f4de6f3616 501 Packages.gz
 SHA256:
- 22fc0eeb9554cbe2bec56e7521c8d54287d944a8dc3af6b6be9bda19478686b8 877 Packages
- 0bfec00a443583ce9d5dd0bab2c6e5218fca97d26cba95aaf6563520f07d8189 501 Packages.gz
+ 2f83f13e5b09e579f440d6544fe083a6d7ca327a123fffa29d23573cb61a1db8 877 Packages
+ b0e4986d2be136c4301b0d297ee3b5a08ded5a74800c5d60d4605156a7065303 501 Packages.gz

@@ -185,6 +185,7 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     UILabel *_keyboardDebugLabel;
     NSString *_keyboardDebugApp;
     NSString *_keyboardDebugSpringBoard;
+    NSString *_keyboardDebugSearch;
     DSLaunchPlaceholderView *_launchPlaceholder;
     DSLaunchPlaceholderView *_topLaunchPlaceholder;
 
@@ -248,6 +249,10 @@ static BOOL sSystemEdgePullAvailable;
     if (_activated) return;
     _activated = YES;
 
+    // The previous boot's log is what made the missing keyboard impossible to
+    // read. This file is only the current SpringBoard start from here on.
+    DSDiagnosticsBeginSession(@"log refreshed after respring");
+
     // Nothing is on the stage when SpringBoard starts. Saying so explicitly clears
     // whatever was published before it last went away: an app that read a stale
     // "you are on the stage" would launch full screen pinned to portrait with no
@@ -263,6 +268,7 @@ static BOOL sSystemEdgePullAvailable;
                               NSStringFromCGRect([self screenBounds]),
                               NSStringFromCGRect([DSGestureController triggerRect]),
                               sSystemEdgePullAvailable ? @"the system edge gesture" : @"a window in the corner");
+    [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"boot" attempt:-1 picker:nil]];
 
     // Only one of the two ever runs. When SpringBoard's own edge pull can be taken
     // over, a second recogniser in the same corner would mean two things happening
@@ -358,14 +364,20 @@ static BOOL sSystemEdgePullAvailable;
 // or in an app hosted on it. SpringBoard gets its window back when the stage
 // leaves, so nothing else on the device notices.
 - (void)takeKeyWindow {
-    if (!_window) return;
+    if (!_window) {
+        [self noteSearchKeyboardDebug:@"takeKey window=none"];
+        return;
+    }
     // A window left on a background scene after respring reports itself key and
     // still never shows a keyboard. Move it first, then ask again.
     BOOL movedScene = [_window attachToForegroundSceneIfNeeded];
     if (movedScene) {
         DSDiagnosticsRecord(@"SpringBoard: moved the stage window onto the foreground scene");
     }
-    if (_window.isKeyWindow && !movedScene) return;
+    if (_window.isKeyWindow && !movedScene) {
+        [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"takeKey already" attempt:-1 picker:nil]];
+        return;
+    }
 
     if (!_windowBeforeStage) {
         for (UIWindow *window in UIApplication.sharedApplication.windows) {
@@ -379,6 +391,9 @@ static BOOL sSystemEdgePullAvailable;
         // Both halves in one call. Being merely unhidden and merely key are not the
         // same as being a window UIKit will bring a keyboard up for.
         [_window makeKeyAndVisible];
+        [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:_window.isKeyWindow ? @"takeKey ok" : @"takeKey failed"
+                                                            attempt:-1
+                                                             picker:nil]];
         if (!_window.isKeyWindow) {
             DSDiagnosticsRecord(@"SpringBoard: the stage window would not become key, so nothing can be typed");
         }
@@ -388,6 +403,9 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)giveBackKeyWindow {
+    if (_searchSlot >= 0) {
+        [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"give key back during search" attempt:-1 picker:nil]];
+    }
     UIWindow *previous = _windowBeforeStage;
     _windowBeforeStage = nil;
     if (!_window.isKeyWindow) return;
@@ -453,6 +471,10 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)keyboardWillShow:(NSNotification *)notification {
+    if (_searchSlot >= 0) {
+        CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+        [self noteSearchKeyboardDebug:[NSString stringWithFormat:@"UIKit willShow %@", NSStringFromCGRect(keyboard)]];
+    }
     if (![self isShowingAppPicker] && _stagedKeyboardSlot < 0) return;
     [self keyboardFrameWillChange:notification];
 }
@@ -465,6 +487,9 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
+    if (_searchSlot >= 0) {
+        [self noteSearchKeyboardDebug:@"UIKit willHide"];
+    }
     if ([self isShowingAppPicker] || _stagedKeyboardSlot >= 0) _notedKeyboardOnce = NO;
     [self noteKeyboardFrame:CGRectZero
                     source:@"SpringBoard"
@@ -2328,12 +2353,71 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
     });
 }
 
+static NSString *DSSceneActivationName(UISceneActivationState state) {
+    switch (state) {
+        case UISceneActivationStateUnattached: return @"unattached";
+        case UISceneActivationStateForegroundActive: return @"fg-active";
+        case UISceneActivationStateForegroundInactive: return @"fg-inactive";
+        case UISceneActivationStateBackground: return @"bg";
+        default: return @"other";
+    }
+}
+
+- (NSString *)searchKeyboardDebugLine:(NSString *)event
+                              attempt:(NSInteger)attempt
+                               picker:(DSAppPickerViewController *)picker {
+    UIWindow *window = _window;
+    UIWindowScene *winScene = window.windowScene;
+    UIWindow *keyWindow = nil;
+    for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
+        if (candidate.isKeyWindow) {
+            keyWindow = candidate;
+            break;
+        }
+    }
+    NSMutableArray *scenes = [NSMutableArray array];
+    for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
+        if (![candidate isKindOfClass:UIWindowScene.class]) continue;
+        UIWindowScene *scene = (UIWindowScene *)candidate;
+        BOOL main = !scene.screen || scene.screen == UIScreen.mainScreen;
+        [scenes addObject:[NSString stringWithFormat:@"%@/%@%@",
+                           DSSceneActivationName(scene.activationState),
+                           main ? @"main" : @"other",
+                           scene == winScene ? @"*" : @""]];
+    }
+    NSString *sceneList = scenes.count ? [scenes componentsJoinedByString:@","] : @"none";
+    CGRect keys = DSVisibleKeyboardFrameOnScreen();
+    NSString *keyText = CGRectIsNull(keys) ? @"null" : NSStringFromCGRect(keys);
+    NSString *field = picker ? [picker searchEditingDebugSummary] : @"field=n/a";
+    NSString *tryText = attempt < 0 ? @"try=-" : [NSString stringWithFormat:@"try=%ld", (long)attempt];
+    return [NSString stringWithFormat:@"%@ %@ slot=%ld settle=%d key=%d hid=%d lvl=%.0f matchKey=%d winScene=%@ %@ keys=%@ scenes=%@",
+            event,
+            tryText,
+            (long)_searchSlot,
+            _overlaySettling,
+            window.isKeyWindow,
+            window.hidden,
+            window.windowLevel,
+            keyWindow == window,
+            winScene ? DSSceneActivationName(winScene.activationState) : @"none",
+            field,
+            keyText,
+            sceneList];
+}
+
+- (void)noteSearchKeyboardDebug:(NSString *)line {
+    if (line.length == 0) return;
+    _keyboardDebugSearch = line;
+    DSDiagnosticsRecord([@"SpringBoard: " stringByAppendingString:line]);
+    [self refreshKeyboardDebugLabel];
+}
+
 - (void)refreshKeyboardDebugLabel {
     if (!_window) return;
     if (!_keyboardDebugLabel) {
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
-        label.numberOfLines = 6;
-        label.font = [UIFont monospacedSystemFontOfSize:10 weight:UIFontWeightMedium];
+        label.numberOfLines = 10;
+        label.font = [UIFont monospacedSystemFontOfSize:9 weight:UIFontWeightMedium];
         label.textColor = UIColor.whiteColor;
         label.backgroundColor = [UIColor colorWithWhite:0 alpha:0.78];
         label.userInteractionEnabled = NO;
@@ -2341,15 +2425,16 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
         [_window.rootViewController.view addSubview:label];
         _keyboardDebugLabel = label;
     }
-    NSString *text = [NSString stringWithFormat:@"%@\n%@\nlift slot0=%.0f slot1=%.0f",
+    NSString *text = [NSString stringWithFormat:@"%@\n%@\nlift slot0=%.0f slot1=%.0f\n%@",
                       _keyboardDebugApp.length ? _keyboardDebugApp : @"app: (no report yet)",
                       _keyboardDebugSpringBoard.length ? _keyboardDebugSpringBoard : @"SB: (no keyboard event yet)",
                       _container.liftOffset,
-                      _topContainer ? _topContainer.liftOffset : 0.0];
+                      _topContainer ? _topContainer.liftOffset : 0.0,
+                      _keyboardDebugSearch.length ? _keyboardDebugSearch : @"search: (not tapped yet)"];
     _keyboardDebugLabel.text = text;
     CGRect screen = [self screenBounds];
-    CGSize fit = [_keyboardDebugLabel sizeThatFits:CGSizeMake(CGRectGetWidth(screen) - 8.0, 120)];
-    _keyboardDebugLabel.frame = CGRectMake(4.0, 2.0, CGRectGetWidth(screen) - 8.0, MIN(110.0, ceil(fit.height) + 6.0));
+    CGSize fit = [_keyboardDebugLabel sizeThatFits:CGSizeMake(CGRectGetWidth(screen) - 8.0, 200)];
+    _keyboardDebugLabel.frame = CGRectMake(4.0, 2.0, CGRectGetWidth(screen) - 8.0, MIN(168.0, ceil(fit.height) + 6.0));
     [_keyboardDebugLabel.superview bringSubviewToFront:_keyboardDebugLabel];
 }
 
@@ -2399,8 +2484,12 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
 // normal SpringBoard keyboard. It is not run just because a picker appeared.
 - (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker {
     NSInteger slot = [self slotForPicker:picker];
-    if ([self sceneHostForSlot:slot].isHosting) return;
+    if ([self sceneHostForSlot:slot].isHosting) {
+        [self noteSearchKeyboardDebug:[NSString stringWithFormat:@"search ignored, slot %ld is hosting", (long)slot]];
+        return;
+    }
     _searchSlot = slot;
+    [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"search asked" attempt:0 picker:picker]];
     [self takeKeyWindow];
     if (_ensuringPickerSearchKeyboard) return;
     _ensuringPickerSearchKeyboard = YES;
@@ -2422,18 +2511,22 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
         if (!strongSelf) return;
         if (generation != strongSelf->_pickerSearchEnsureGeneration || strongSelf->_searchSlot != slot) {
             strongSelf->_ensuringPickerSearchKeyboard = NO;
+            [strongSelf noteSearchKeyboardDebug:[NSString stringWithFormat:@"search ensure stopped gen=%ld slot=%ld nowSlot=%ld",
+                                                 (long)generation, (long)slot, (long)strongSelf->_searchSlot]];
             return;
         }
         CGRect keys = DSVisibleKeyboardFrameOnScreen();
         if (!CGRectIsNull(keys) && CGRectGetHeight(keys) >= kDSKeyboardPresentHeight) {
             strongSelf->_ensuringPickerSearchKeyboard = NO;
+            [strongSelf noteSearchKeyboardDebug:[strongSelf searchKeyboardDebugLine:@"search visible" attempt:attempt picker:picker]];
             return;
         }
         if (attempt >= 5) {
             strongSelf->_ensuringPickerSearchKeyboard = NO;
-            DSDiagnosticsRecord(@"SpringBoard: the picker search keyboard did not appear");
+            [strongSelf noteSearchKeyboardDebug:[strongSelf searchKeyboardDebugLine:@"search missing" attempt:attempt picker:picker]];
             return;
         }
+        [strongSelf noteSearchKeyboardDebug:[strongSelf searchKeyboardDebugLine:@"search retry" attempt:attempt picker:picker]];
         [strongSelf takeKeyWindow];
         if (!strongSelf->_window.isKeyWindow) {
             [strongSelf->_window makeKeyAndVisible];

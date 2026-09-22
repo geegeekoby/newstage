@@ -10,6 +10,7 @@
 - (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view;
 @optional
 - (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker;
+- (void)appPickerDidEndSearch:(DSAppPickerViewController *)picker;
 - (BOOL)appPickerShouldWaitBeforeSearchEditing:(DSAppPickerViewController *)picker;
 @end
 

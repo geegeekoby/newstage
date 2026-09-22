@@ -7,7 +7,8 @@
 - (void)searchFieldDidCancel:(DSSearchFieldView *)field;
 @optional
 - (void)searchFieldNeedsKeyWindow:(DSSearchFieldView *)field;
-// YES while the stage card is still opening; editing is deferred one frame.
+- (void)searchFieldDidEndEditing:(DSSearchFieldView *)field;
+// YES while the stage card is still opening; editing is deferred until it lands.
 - (BOOL)searchFieldShouldWaitBeforeEditing:(DSSearchFieldView *)field;
 @end
 

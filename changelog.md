@@ -1,3 +1,8 @@
+**4.5.14**
+- The corner pull, the right-edge squares, and the + button all open a stage the same way: fixed half size, opaque picker, then the same spring. A second card no longer fades in from invisible, so a cancelled animation cannot leave that half black
+- Every picker search uses the same keyboard as the first picker. The stage window becomes key only while a search field is editing, and it is handed back when that edit ends if an app is still staged. Opening a picker beside an app does not lift the new card
+- Laying out a card clears its keyboard lift before writing the frame, so the card cannot be thrown off screen
+
 **4.5.13**
 - Searching in the picker already shows the normal keyboard and lifts the card. A staged app was covering that with a full-screen keyboard scene. That scene is no longer placed on screen, so a staged app gets the same keyboard as the search field, and the card still lifts
 

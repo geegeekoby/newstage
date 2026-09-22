@@ -128,15 +128,16 @@
         return NO;
     }
 
+    // One place decides the key window: the stage manager. A second makeKey here
+    // used to run even when an app was hosted and the manager had refused.
     [self requestKeyWindowFromDelegate];
-    UIWindow *window = self.window;
-    if (window && !window.isKeyWindow) {
-        @try {
-            [window makeKeyAndVisible];
-        } @catch (NSException *exception) {
-        }
-    }
     return YES;
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    if ([self.delegate respondsToSelector:@selector(searchFieldDidEndEditing:)]) {
+        [self.delegate searchFieldDidEndEditing:self];
+    }
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {

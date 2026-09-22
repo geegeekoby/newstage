@@ -304,6 +304,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     }
 }
 
+- (void)searchFieldDidEndEditing:(DSSearchFieldView *)field {
+    if ([self.delegate respondsToSelector:@selector(appPickerDidEndSearch:)]) {
+        [self.delegate appPickerDidEndSearch:self];
+    }
+}
+
 - (BOOL)searchFieldShouldWaitBeforeEditing:(DSSearchFieldView *)field {
     if (![self.delegate respondsToSelector:@selector(appPickerShouldWaitBeforeSearchEditing:)]) return NO;
     return [self.delegate appPickerShouldWaitBeforeSearchEditing:self];

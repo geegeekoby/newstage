@@ -23,11 +23,6 @@
 // two stages are allowed, so the other app is published here.
 #define kDSStagePeerNotification "com.recreated.dynamicstage.geometry.peer"
 
-// The staged app writes the context id of its keyboard window here. SpringBoard
-// binds that context into its own keyboard window, so the keys are on the
-// display instead of inside the card. Zero means the keyboard is gone.
-#define kDSKeyboardContextNotification "com.recreated.dynamicstage.keyboard.context"
-
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"

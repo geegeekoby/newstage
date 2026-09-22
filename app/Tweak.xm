@@ -6,14 +6,13 @@
 #import "DSBootstrap.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
-#import <notify.h>
-
 // Injected into every UIKit app. While this process is the one on the stage,
 // every route UIKit offers for "how big is the screen" answers with the stage
 // rectangle and the interface stays pinned to portrait.
 //
-// The keyboard is deliberately not one of those routes. Its window is hosted
-// out of the card and shown by SpringBoard, at the full width of the display.
+// The keyboard is deliberately not one of those routes. A staged app does not
+// draw keys at all. SpringBoard is the keyboard UI host, and the keys sit on
+// the display, full width, outside the card.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -29,14 +28,10 @@ static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
 }
 
+static void DSHideInAppKeyboardView(UIView *view);
+
 static CGRect DSStageBounds(void) {
     return [DSStageContext sharedContext].stageBounds;
-}
-
-// The real display, which is what the keyboard is laid out against however small the
-// window this app was given.
-static CGRect DSDeviceBounds(void) {
-    return [DSStageContext sharedContext].deviceBounds;
 }
 
 // A window a keyboard is drawn in - the text effects window and the remote keyboard
@@ -153,6 +148,11 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
     if (DSStaged()) [[DSStageContext sharedContext] refresh];
 }
 
+- (void)didAddSubview:(UIView *)subview {
+    %orig;
+    if (DSStaged()) DSHideInAppKeyboardView(subview);
+}
+
 %end
 
 #pragma mark - Orientation
@@ -192,121 +192,71 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 
 #pragma mark - Keyboard
 
-// The keys are drawn by this app, then handed to SpringBoard. Telling UIKit the
-// keyboard is remote makes it draw nothing on an iPhone, which is why the card
-// kept its own keyboard. Hosting the text-effects window instead puts that same
-// keyboard into SpringBoard's window, full width, outside the card.
+// iPhone UIKit draws keys in the app scene unless this process believes the
+// keyboard is remote. SpringBoard then has to be the keyboard UI host or the
+// keys have nowhere to go. The views below are hidden either way, so a staged
+// app cannot fall back to drawing its own keyboard inside the card.
 
-static void DSPublishKeyboardContextID(unsigned int contextID) {
-    static int token = NOTIFY_TOKEN_INVALID;
-    static unsigned int last = 0xffffffffu;
+static BOOL DSIsInAppKeyboardView(UIView *view) {
+    static Class hostView;
+    static Class containerView;
+    static Class keyboardView;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        notify_register_check(kDSKeyboardContextNotification, &token);
+        hostView = objc_getClass("UIInputSetHostView");
+        containerView = objc_getClass("UIInputSetContainerView");
+        keyboardView = objc_getClass("UIKeyboard");
     });
-    if (token == NOTIFY_TOKEN_INVALID || contextID == last) return;
-    last = contextID;
-    notify_set_state(token, contextID);
-    notify_post(kDSKeyboardContextNotification);
+    if (!view) return NO;
+    if (hostView && [view isKindOfClass:hostView]) return YES;
+    if (containerView && [view isKindOfClass:containerView]) return YES;
+    if (keyboardView && [view isKindOfClass:keyboardView]) return YES;
+    return NO;
 }
 
-static id DSSharedTextEffectsWindow(void) {
-    Class windowClass = objc_getClass("UITextEffectsWindow");
-    SEL shared = @selector(sharedTextEffectsWindow);
-    if (![windowClass respondsToSelector:shared]) return nil;
-    return ((id (*)(id, SEL))objc_msgSend)(windowClass, shared);
-}
-
-static unsigned int DSKeyboardContextID(void) {
-    id window = DSSharedTextEffectsWindow();
-    if (!window) return 0;
-    SEL enable = @selector(setEnableRemoteHosting:);
-    if ([window respondsToSelector:enable]) {
-        ((void (*)(id, SEL, BOOL))objc_msgSend)(window, enable, YES);
-    }
-    SEL sceneSize = @selector(setHostedSceneSize:);
-    if ([window respondsToSelector:sceneSize]) {
-        ((void (*)(id, SEL, CGSize))objc_msgSend)(window, sceneSize, DSDeviceBounds().size);
-    }
-    SEL context = @selector(contextID);
-    if (![window respondsToSelector:context]) return 0;
-    return ((unsigned int (*)(id, SEL))objc_msgSend)(window, context);
-}
-
-static NSUInteger DSKeyboardGeneration = 0;
-
-static void DSPublishKeyboardContextSoon(void) {
-    if (!DSStaged()) {
-        DSKeyboardGeneration++;
-        DSPublishKeyboardContextID(0);
+static void DSHideInAppKeyboardView(UIView *view) {
+    if (!DSStaged() || !view) return;
+    if (DSIsInAppKeyboardView(view)) {
+        if (!view.hidden) view.hidden = YES;
         return;
     }
-    NSUInteger generation = ++DSKeyboardGeneration;
-    // The context id is zero until the keyboard window has been created.
-    for (NSNumber *delay in @[ @0.0, @0.12, @0.35, @0.7 ]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            if (generation != DSKeyboardGeneration) return;
-            if (!DSStaged()) {
-                DSPublishKeyboardContextID(0);
-                return;
-            }
-            unsigned int contextID = DSKeyboardContextID();
-            if (contextID == 0) return;
-            DSPublishKeyboardContextID(contextID);
-        });
+    for (UIView *subview in view.subviews) {
+        DSHideInAppKeyboardView(subview);
     }
 }
 
-%hook UITextEffectsWindow
+%hook UIView
 
-+ (id)_sharedTextEffectsWindowforScreen:(id)screen
-                        aboveStatusBar:(BOOL)above
-                           allowHosted:(BOOL)allowHosted
-  matchesStatusBarOrientationOnAccess:(BOOL)matches
-             shouldCreateIfNecessary:(BOOL)create {
-    if (DSStaged()) allowHosted = YES;
-    return %orig;
-}
-
-- (BOOL)_shouldTextEffectsWindowBeHostedForView:(UIView *)view {
-    if (DSStaged()) return YES;
-    return %orig;
-}
-
-- (BOOL)enableRemoteHosting {
-    if (DSStaged()) return YES;
-    return %orig;
-}
-
-- (void)setFrame:(CGRect)frame {
-    if (DSStaged()) frame = DSDeviceBounds();
+- (void)setHidden:(BOOL)hidden {
+    if (DSStaged() && DSIsInAppKeyboardView(self)) hidden = YES;
     %orig;
 }
 
-- (CGSize)keyboardScreenReferenceSize {
-    if (DSStaged()) return DSDeviceBounds().size;
-    return %orig;
-}
-
-- (void)didAddSubview:(UIView *)subview {
+- (void)didMoveToWindow {
     %orig;
-    if (DSStaged()) DSPublishKeyboardContextSoon();
+    if (DSStaged() && DSIsInAppKeyboardView(self) && !self.hidden) self.hidden = YES;
 }
 
 %end
 
 %hook UIKeyboardImpl
 
-- (void)showKeyboard {
-    %orig;
-    if (DSStaged()) DSPublishKeyboardContextSoon();
++ (BOOL)isUsingRemoteKeyboard {
+    if (DSStaged()) return YES;
+    return %orig;
 }
 
-- (void)hideKeyboard {
+- (BOOL)isUsingRemoteKeyboard {
+    if (DSStaged()) return YES;
+    return %orig;
+}
+
+- (void)showKeyboard {
     %orig;
-    DSKeyboardGeneration++;
-    DSPublishKeyboardContextID(0);
+    if (!DSStaged()) return;
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        DSHideInAppKeyboardView(window);
+    }
 }
 
 %end
@@ -404,7 +354,6 @@ static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         %init(_ungrouped);
-        if (DSStaged()) DSPublishKeyboardContextSoon();
     });
 }
 

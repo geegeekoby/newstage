@@ -111,35 +111,26 @@ BOOL DSRevealSpringBoardKeyboard(void) {
     return DSKeyboardFrameIsOnScreen(DSVisibleKeyboardFrameOnScreen(), screen);
 }
 
-static id DSRemoteContext(unsigned int contextID) {
-    Class contextClass = objc_getClass("CAContext");
-    SEL remote = @selector(remoteContextWithOptions:);
-    if (![contextClass respondsToSelector:remote]) return nil;
-    for (NSString *key in @[ @"CAContextId", @"kCAContextId", @"contextId" ]) {
-        @try {
-            id context = ((id (*)(id, SEL, id))objc_msgSend)(contextClass, remote, @{ key : @(contextID) });
-            if (context) return context;
-        } @catch (NSException *exception) {
-        }
-    }
-    return nil;
-}
-
-void DSHostKeyboardContext(unsigned int contextID) {
+void DSPresentArbiterKeyboardLayer(id sceneLayer) {
     static UIWindow *hostedWindow = nil;
-    static unsigned int boundContext = 0;
+    static BOOL claimed = NO;
 
-    if (contextID == 0) {
-        boundContext = 0;
-        if (hostedWindow) hostedWindow.hidden = YES;
+    if (!sceneLayer) {
+        if (claimed && hostedWindow) {
+            @try {
+                [hostedWindow setValue:nil forKey:@"_externalSceneLayer"];
+            } @catch (NSException *exception) {
+            }
+            hostedWindow.hidden = YES;
+        }
+        claimed = NO;
         return;
     }
-    if (contextID == boundContext && hostedWindow && !hostedWindow.hidden) return;
 
     Class windowClass = objc_getClass("UIRemoteKeyboardWindow");
     SEL create = @selector(remoteKeyboardWindowForScreen:create:);
-    UIWindow *window = nil;
-    if ([windowClass respondsToSelector:create]) {
+    UIWindow *window = hostedWindow;
+    if (!window && [windowClass respondsToSelector:create]) {
         @try {
             window = ((id (*)(id, SEL, id, BOOL))objc_msgSend)(windowClass, create, UIScreen.mainScreen, YES);
         } @catch (NSException *exception) {
@@ -148,14 +139,22 @@ void DSHostKeyboardContext(unsigned int contextID) {
     }
     if (!window) return;
 
-    id remote = DSRemoteContext(contextID);
-    SEL bind = NSSelectorFromString(@"_setBoundContext:");
-    if (remote && [window respondsToSelector:bind]) {
-        @try {
-            ((void (*)(id, SEL, id))objc_msgSend)(window, bind, remote);
-        } @catch (NSException *exception) {
+    BOOL bound = NO;
+    @try {
+        [window setValue:sceneLayer forKey:@"_externalSceneLayer"];
+        bound = YES;
+    } @catch (NSException *exception) {
+        Ivar ivar = NULL;
+        for (Class cls = windowClass; cls && !ivar; cls = class_getSuperclass(cls)) {
+            ivar = class_getInstanceVariable(cls, "_externalSceneLayer");
+        }
+        if (ivar) {
+            object_setIvar(window, ivar, sceneLayer);
+            bound = YES;
         }
     }
+    if (!bound) return;
+
     for (NSString *name in @[ @"attachBindable", @"resetScene" ]) {
         SEL selector = NSSelectorFromString(name);
         if (![window respondsToSelector:selector]) continue;
@@ -172,5 +171,5 @@ void DSHostKeyboardContext(unsigned int contextID) {
         window.windowLevel = UIWindowLevelStatusBar + 1.0;
     }
     hostedWindow = window;
-    boundContext = contextID;
+    claimed = YES;
 }

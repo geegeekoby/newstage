@@ -7,9 +7,11 @@
 #import "DSDiagnostics.h"
 #import "DSBootstrap.h"
 #import "DSHomeReady.h"
+#import "DSKeyboardVisibility.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <unistd.h>
 
 // Load order, after a reboot that then has to be jailbroken:
 //
@@ -27,8 +29,8 @@
 // Keyboard policy for iOS 16.5.1 on an iPhone: never steal a layer, never
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
 // KeyboardArbiter, never point the focus coordinator at a scene. The picker
-// uses SpringBoard's own keyboard. A staged app is told to use that same
-// keyboard; if SpringBoard does not present one, the app draws its own.
+// uses SpringBoard's own keyboard. A staged app is not allowed to draw keys;
+// SpringBoard's client is forced to be the keyboard UI host.
 
 #pragma mark - Calling out of a hook
 
@@ -332,29 +334,245 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
+// Who draws the keys is the keyboard UI host. On an iPhone that is the app, so
+// the keys are composited inside the hosted scene. For a staged app the host is
+// moved to SpringBoard before the arbiter applies the update, and moved back
+// when that keyboard goes away. Text focus stays with the app.
+
+static BOOL DSArbiterBusy = NO;
+static id DSSavedKeyboardUIHandle = nil;
+static BOOL DSKeyboardSceneRequested = NO;
+static NSUInteger DSKeyboardPresentGeneration = 0;
+static BOOL DSLoggedKeyboardRoute = NO;
+
+static NSString *DSHandlerBundle(id handler) {
+    if (![handler respondsToSelector:@selector(bundleIdentifier)]) return nil;
+    NSString *bundle = ((NSString * (*)(id, SEL))objc_msgSend)(handler, @selector(bundleIdentifier));
+    return bundle.length > 0 ? [bundle copy] : nil;
+}
+
+static id DSCallHandler(id arbiter, SEL selector, id argument) {
+    if (![arbiter respondsToSelector:selector]) return nil;
+    return ((id (*)(id, SEL, id))objc_msgSend)(arbiter, selector, argument);
+}
+
+static id DSSpringBoardKeyboardHandler(id arbiter) {
+    id springBoard = DSCallHandler(arbiter, @selector(handlerForBundleID:), @"com.apple.springboard");
+    if (springBoard) return springBoard;
+    SEL byPID = @selector(handlerForPID:);
+    if (![arbiter respondsToSelector:byPID]) return nil;
+    return ((id (*)(id, SEL, int))objc_msgSend)(arbiter, byPID, getpid());
+}
+
+static id DSKeyboardUIHandle(id arbiter) {
+    SEL selector = @selector(keyboardUIHandle);
+    if (![arbiter respondsToSelector:selector]) return nil;
+    return ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
+}
+
+static void DSSetInputUIHost(id handler, BOOL host) {
+    SEL selector = @selector(setInputUIHost:);
+    if (![handler respondsToSelector:selector]) return;
+    ((void (*)(id, SEL, BOOL))objc_msgSend)(handler, selector, host);
+}
+
+static void DSSetKeyboardUIHandle(id arbiter, id handler) {
+    SEL selector = @selector(setKeyboardUIHandle:);
+    if (!handler || ![arbiter respondsToSelector:selector]) return;
+    ((void (*)(id, SEL, id))objc_msgSend)(arbiter, selector, handler);
+}
+
+static void DSCheckHostingState(id arbiter) {
+    SEL selector = @selector(checkHostingState);
+    if (![arbiter respondsToSelector:selector]) return;
+    ((void (*)(id, SEL))objc_msgSend)(arbiter, selector);
+}
+
+static void DSUpdateKeyboardSceneSettings(id arbiter) {
+    SEL selector = @selector(updateKeyboardSceneSettings);
+    if (![arbiter respondsToSelector:selector]) return;
+    ((void (*)(id, SEL))objc_msgSend)(arbiter, selector);
+}
+
+static id DSArbiterSceneLayer(id arbiter) {
+    SEL selector = @selector(sceneLayer);
+    if ([arbiter respondsToSelector:selector]) {
+        id layer = ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
+        if (layer) return layer;
+    }
+    id uiHandle = DSKeyboardUIHandle(arbiter);
+    if ([uiHandle respondsToSelector:selector]) {
+        return ((id (*)(id, SEL))objc_msgSend)(uiHandle, selector);
+    }
+    return nil;
+}
+
+static BOOL DSBundleIsStaged(NSString *bundle) {
+    if (bundle.length == 0 || [bundle isEqualToString:@"com.apple.springboard"]) return NO;
+    return DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager isHostingBundleIdentifier:bundle];
+    });
+}
+
+static void DSRequestKeyboardSceneIfNeeded(id arbiter) {
+    if (DSArbiterSceneLayer(arbiter) || DSKeyboardSceneRequested) return;
+    SEL linkSelector = @selector(sceneLink);
+    if (![arbiter respondsToSelector:linkSelector]) return;
+    id link = ((id (*)(id, SEL))objc_msgSend)(arbiter, linkSelector);
+    SEL create = @selector(createSceneWithCompletion:);
+    if (![link respondsToSelector:create]) return;
+    DSKeyboardSceneRequested = YES;
+    @try {
+        ((void (*)(id, SEL, id))objc_msgSend)(link, create, ^(id scene) {
+            (void)scene;
+            id layer = DSArbiterSceneLayer(arbiter);
+            DSUpdateKeyboardSceneSettings(arbiter);
+            NSUInteger generation = DSKeyboardPresentGeneration;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (generation != DSKeyboardPresentGeneration) return;
+                if (layer) DSPresentArbiterKeyboardLayer(layer);
+                DSRevealSpringBoardKeyboard();
+            });
+        });
+    } @catch (NSException *exception) {
+        DSKeyboardSceneRequested = NO;
+    }
+}
+
+// YES when SpringBoard should be showing this keyboard.
+static BOOL DSRouteStagedKeyboardToSpringBoard(id arbiter, id information, id handler) {
+    if (!information) return NO;
+    BOOL onScreen = YES;
+    if ([information respondsToSelector:@selector(keyboardOnScreen)]) {
+        onScreen = ((BOOL (*)(id, SEL))objc_msgSend)(information, @selector(keyboardOnScreen));
+    }
+
+    NSString *source = nil;
+    if ([information respondsToSelector:@selector(sourceBundleIdentifier)]) {
+        source = ((NSString * (*)(id, SEL))objc_msgSend)(information, @selector(sourceBundleIdentifier));
+    }
+    source = source.length > 0 ? [source copy] : nil;
+    NSString *handlerBundle = DSHandlerBundle(handler);
+    BOOL staged = DSBundleIsStaged(source) || DSBundleIsStaged(handlerBundle);
+
+    if (staged && onScreen) {
+        id springBoard = DSSpringBoardKeyboardHandler(arbiter);
+        id appHandle = source.length > 0 ? DSCallHandler(arbiter, @selector(handlerForBundleID:), source) : nil;
+        if (!appHandle && handlerBundle.length > 0 && DSBundleIsStaged(handlerBundle)) appHandle = handler;
+        id current = DSKeyboardUIHandle(arbiter);
+        BOOL appHostsUI = NO;
+        if (appHandle && [appHandle respondsToSelector:@selector(inputUIHost)]) {
+            appHostsUI = ((BOOL (*)(id, SEL))objc_msgSend)(appHandle, @selector(inputUIHost));
+        }
+        if (springBoard && appHandle && appHandle != springBoard && (current != springBoard || appHostsUI)) {
+            if (!DSSavedKeyboardUIHandle && current && current != springBoard) {
+                DSSavedKeyboardUIHandle = current;
+            }
+            DSSetInputUIHost(appHandle, NO);
+            DSSetInputUIHost(springBoard, YES);
+            if (current != springBoard) {
+                DSSetKeyboardUIHandle(arbiter, springBoard);
+                DSCheckHostingState(arbiter);
+            }
+            if (!DSLoggedKeyboardRoute) {
+                DSLoggedKeyboardRoute = YES;
+                NSString *logged = source.length > 0 ? source : handlerBundle;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    DSDiagnosticsRecordFormat(@"SpringBoard: %@ is using SpringBoard's keyboard",
+                                              logged.length > 0 ? logged : @"staged app");
+                });
+            }
+        }
+        return YES;
+    }
+
+    // A keyboard from some other process must not steal the host back while a
+    // staged app is still the one typing. Only the staged keyboard going away,
+    // or that app leaving the stage, restores the previous host.
+    NSString *savedBundle = DSHandlerBundle(DSSavedKeyboardUIHandle);
+    BOOL savedStillStaged = DSBundleIsStaged(savedBundle);
+    if ((staged && !onScreen) || (DSSavedKeyboardUIHandle && !savedStillStaged)) {
+        if (DSSavedKeyboardUIHandle) {
+            id previous = DSSavedKeyboardUIHandle;
+            DSSavedKeyboardUIHandle = nil;
+            DSKeyboardSceneRequested = NO;
+            DSLoggedKeyboardRoute = NO;
+            id springBoard = DSSpringBoardKeyboardHandler(arbiter);
+            if (previous != springBoard) DSSetInputUIHost(springBoard, NO);
+            DSSetInputUIHost(previous, YES);
+            DSSetKeyboardUIHandle(arbiter, previous);
+            DSCheckHostingState(arbiter);
+        }
+        DSKeyboardPresentGeneration++;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DSPresentArbiterKeyboardLayer(nil);
+        });
+    }
+    return NO;
+}
+
 %group Arbiter
 
 %hook _UIKeyboardArbiter
 
 - (void)updateKeyboardStatus:(_UIKeyboardChangedInformation *)information fromHandler:(id)handler {
-    %orig;
-    if (!DSStageReady() || !information) return;
-    @try {
-        if (![information respondsToSelector:@selector(keyboardPosition)]) return;
-        CGRect frame = information.keyboardPosition;
-        BOOL onScreen = ![information respondsToSelector:@selector(keyboardOnScreen)] ||
-                        information.keyboardOnScreen;
-        NSString *source = [information respondsToSelector:@selector(sourceBundleIdentifier)]
-            ? information.sourceBundleIdentifier
-            : nil;
+    if (DSArbiterBusy) {
+        %orig;
+        return;
+    }
 
-        dispatch_async(dispatch_get_main_queue(), ^{
-            DSTell(^(DSStageManager *manager) {
-                [manager keyboardOnScreen:onScreen frame:frame source:source];
+    DSArbiterBusy = YES;
+    BOOL present = NO;
+    CGRect frame = CGRectZero;
+    BOOL onScreen = YES;
+    NSString *source = nil;
+    @try {
+        if (information && [information respondsToSelector:@selector(keyboardPosition)]) {
+            frame = information.keyboardPosition;
+        }
+        if (information && [information respondsToSelector:@selector(keyboardOnScreen)]) {
+            onScreen = information.keyboardOnScreen;
+        }
+        if (information && [information respondsToSelector:@selector(sourceBundleIdentifier)]) {
+            source = [information.sourceBundleIdentifier copy];
+        }
+        if (DSStageReady() && information) {
+            present = DSRouteStagedKeyboardToSpringBoard(self, information, handler);
+        }
+    } @catch (NSException *exception) {
+        present = NO;
+    }
+
+    %orig;
+
+    @try {
+        if (present && DSStageReady()) {
+            NSUInteger generation = ++DSKeyboardPresentGeneration;
+            DSRouteStagedKeyboardToSpringBoard(self, information, handler);
+            DSUpdateKeyboardSceneSettings(self);
+            DSRequestKeyboardSceneIfNeeded(self);
+            id layer = DSArbiterSceneLayer(self);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (generation != DSKeyboardPresentGeneration) return;
+                if (layer) DSPresentArbiterKeyboardLayer(layer);
+                DSRevealSpringBoardKeyboard();
             });
-        });
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                if (generation != DSKeyboardPresentGeneration) return;
+                DSRevealSpringBoardKeyboard();
+            });
+        }
     } @catch (NSException *exception) {
     }
+    DSArbiterBusy = NO;
+
+    if (!DSStageReady() || !information) return;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSTell(^(DSStageManager *manager) {
+            [manager keyboardOnScreen:onScreen frame:frame source:source];
+        });
+    });
 }
 
 %end
@@ -424,15 +642,6 @@ static void DSRegisterDarwinObservers(void) {
     CFNotificationCenterAddObserver(center, NULL, DSOpenStage,
                                     CFSTR(kDSOpenStageNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
-
-    int keyboardToken = 0;
-    notify_register_dispatch(kDSKeyboardContextNotification, &keyboardToken, dispatch_get_main_queue(), ^(int token) {
-        uint64_t contextID = 0;
-        notify_get_state(token, &contextID);
-        DSTell(^(DSStageManager *manager) {
-            [manager noteRemoteKeyboardContext:(unsigned int)contextID];
-        });
-    });
 }
 
 static void DSInstallRemainingHooks(void) {

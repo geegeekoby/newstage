@@ -271,11 +271,11 @@ tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full wi
 
 **Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up and no app is hosted. The card lifts above the keyboard (301pt floor).
 
-**Staged app.** The app still draws the keys (forcing a remote keyboard on this iPhone firmware draws nothing). Its text-effects window is hosted, and SpringBoard binds that window into `UIRemoteKeyboardWindow` above the stage, full display width. The bottom card lifts. The stage window is not made key while an app is hosted. Both stages are marked staged, so the second app does this too.
+**Staged app.** The app is told the keyboard is remote, and its in-app keyboard views stay hidden, so keys cannot draw inside the card. On SpringBoard, that app's arbiter client stops being the keyboard UI host and SpringBoard's client becomes it. SpringBoard's keyboard window is what shows the keys, full display width, above the card. The bottom card lifts. The stage window is not made key while an app is hosted. Both stages are marked staged, so the second app does this too. If SpringBoard's keyboard does not appear, the app's keyboard is still not drawn.
 
-**What is never done.** No layer reparenting, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no keyboard focus coordinator, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards).
+**What is never done.** No layer reparenting of the hosted app, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no keyboard focus coordinator, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards), no fallback that shows the staged app's own keys.
 
-The arbiter is hooked only if `_UIKeyboardArbiter` is already loaded, and only to learn the frame of a keyboard that is already up.
+The arbiter is hooked only if `_UIKeyboardArbiter` is already loaded. The hook reads the keyboard frame and, for a staged app, points the keyboard UI host at SpringBoard.
 
 ## Settings
 

@@ -387,18 +387,11 @@ static BOOL sSystemEdgePullAvailable;
     DSRevealSpringBoardKeyboard();
 }
 
-- (void)noteRemoteKeyboardContext:(unsigned int)contextID {
-    if (contextID == 0) {
-        DSHostKeyboardContext(0);
-        return;
-    }
-    if (!_sceneHost.isHosting && !_topSceneHost.isHosting) {
-        DSHostKeyboardContext(0);
-        return;
-    }
-    [self giveBackKeyWindow];
-    DSHostKeyboardContext(contextID);
-    DSRevealSpringBoardKeyboard();
+- (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier {
+    if (bundleIdentifier.length == 0) return NO;
+    if (_sceneHost.isHosting && [_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
+    if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
+    return NO;
 }
 
 // While an app is on the stage, the arbiter still hears keyboards from Spotlight and

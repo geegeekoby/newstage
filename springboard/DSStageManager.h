@@ -42,8 +42,8 @@
 // stage, the app sharing the screen with it or SpringBoard itself. The stage does one
 // thing with it: keeps the card off it.
 - (void)keyboardOnScreen:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source;
-// contextID is the staged app's keyboard window. Zero hides SpringBoard's copy.
-- (void)noteRemoteKeyboardContext:(unsigned int)contextID;
+// True when either stage card is currently hosting this bundle.
+- (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;
 

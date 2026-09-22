@@ -1,3 +1,7 @@
+**4.5.6**
+- A staged app no longer draws its own keyboard. SpringBoard is forced to be the keyboard UI host, and the keys are SpringBoard's, full width, outside the card
+- There is no fallback that puts the app's keyboard back inside the stage
+
 **4.5.5**
 - A staged app's keyboard is hosted in SpringBoard's keyboard window, full width, outside the card. The previous build fell back to the keyboard inside the app
 - Both stages are told they are staged, so the second app hosts its keyboard the same way

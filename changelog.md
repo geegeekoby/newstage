@@ -1,3 +1,6 @@
+**4.5.18**
+- After a respring the stage window still said it was key after SpringBoard had taken the real key window back. The search field edited, and UIKit never asked for a keyboard. That stale key state is resigned and the same search keyboard is requested again once this window is actually key
+
 **4.5.17**
 - The diagnostics log is replaced every time SpringBoard starts, so a report after a respring is only that boot. Each picker search attempt records whether the stage window is key, which scene it is on, whether the search field is editing, and the keyboard frame. The same line is on the stage
 

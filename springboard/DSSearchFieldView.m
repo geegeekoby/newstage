@@ -1,6 +1,7 @@
 #import "DSSearchFieldView.h"
 #import "DSConstants.h"
 #import "DSDiagnostics.h"
+#import "DSStageWindow.h"
 
 @interface DSSearchFieldView () <UITextFieldDelegate>
 @end
@@ -11,6 +12,7 @@
     UIImageView *_magnifier;
     UIButton *_clearButton;
     NSInteger _keyWindowAttempts;
+    BOOL _suppressEndEditing;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -145,10 +147,12 @@
 
     // One place decides the key window: the stage manager. A second makeKey here
     // used to run even when an app was hosted and the manager had refused.
+    // A stale isKeyWindow still reads YES after SpringBoard has taken the real
+    // key window. Editing on that turn never raises the keyboard.
+    BOOL staleKey = self.window.isKeyWindow && !DSWindowIsApplicationKey(self.window);
     [self requestKeyWindowFromDelegate];
-    // After a respring SpringBoard takes the key window back for a moment. Editing
-    // on that turn never raises the keyboard, so wait until this window is key.
-    if (self.window && !self.window.isKeyWindow && _keyWindowAttempts < 8) {
+    BOOL ready = DSWindowIsApplicationKey(self.window);
+    if (self.window && (!ready || staleKey) && _keyWindowAttempts < 8) {
         _keyWindowAttempts++;
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)),
@@ -157,7 +161,7 @@
             if (!field) return;
             [field->_field becomeFirstResponder];
         });
-        [self logEditingDecision:@"wait for key window"];
+        [self logEditingDecision:ready ? @"wait after reclaiming key" : @"wait for key window"];
         return NO;
     }
     _keyWindowAttempts = 0;
@@ -175,7 +179,18 @@
     [_field becomeFirstResponder];
 }
 
+- (void)restartEditing {
+    _suppressEndEditing = YES;
+    if (_field.isFirstResponder) {
+        [_field resignFirstResponder];
+        [self logEditingDecision:@"restart"];
+    }
+    [_field becomeFirstResponder];
+    _suppressEndEditing = NO;
+}
+
 - (void)textFieldDidEndEditing:(UITextField *)textField {
+    if (_suppressEndEditing) return;
     if ([self.delegate respondsToSelector:@selector(searchFieldDidEndEditing:)]) {
         [self.delegate searchFieldDidEndEditing:self];
     }

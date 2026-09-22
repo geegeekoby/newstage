@@ -1,5 +1,6 @@
 #import "DSStageWindow.h"
 #import "DSPrivate.h"
+#import <objc/message.h>
 
 @implementation DSStageRootViewController
 
@@ -17,6 +18,19 @@
 }
 
 @end
+
+BOOL DSWindowIsApplicationKey(UIWindow *window) {
+    if (!window.isKeyWindow) return NO;
+    for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
+        if (!candidate.isKeyWindow) continue;
+        return candidate == window;
+    }
+    if ([window.windowScene respondsToSelector:@selector(keyWindow)]) {
+        UIWindow *sceneKey = ((UIWindow *(*)(id, SEL))objc_msgSend)(window.windowScene, @selector(keyWindow));
+        return sceneKey == nil || sceneKey == window;
+    }
+    return YES;
+}
 
 static UIWindowScene *DSForegroundWindowScene(void) {
     if (@available(iOS 13.0, *)) {

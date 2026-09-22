@@ -374,9 +374,25 @@ static BOOL sSystemEdgePullAvailable;
     if (movedScene) {
         DSDiagnosticsRecord(@"SpringBoard: moved the stage window onto the foreground scene");
     }
-    if (_window.isKeyWindow && !movedScene) {
+    // After a respring SpringBoard takes the real key window back, and this
+    // window keeps saying it is key. makeKeyAndVisible then does nothing, the
+    // search field edits, and UIKit never asks for a keyboard.
+    BOOL applicationKey = DSWindowIsApplicationKey(_window);
+    if (applicationKey && !movedScene) {
         [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"takeKey already" attempt:-1 picker:nil]];
         return;
+    }
+    if (_window.isKeyWindow && !applicationKey) {
+        UIWindow *other = nil;
+        for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
+            if (candidate != _window && candidate.isKeyWindow) {
+                other = candidate;
+                break;
+            }
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: key was stale, other window %@, reclaiming",
+                                  other ? NSStringFromClass(other.class) : @"none");
+        [_window resignKeyWindow];
     }
 
     if (!_windowBeforeStage) {
@@ -2528,10 +2544,16 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
         }
         [strongSelf noteSearchKeyboardDebug:[strongSelf searchKeyboardDebugLine:@"search retry" attempt:attempt picker:picker]];
         [strongSelf takeKeyWindow];
-        if (!strongSelf->_window.isKeyWindow) {
+        if (!DSWindowIsApplicationKey(strongSelf->_window)) {
             [strongSelf->_window makeKeyAndVisible];
         }
-        [picker reassertSearchEditing];
+        // The first retries only reload. Restarting editing resigns the field,
+        // which would drop a keyboard that is still on its way in.
+        if (attempt >= 2) {
+            [picker restartSearchEditing];
+        } else {
+            [picker reassertSearchEditing];
+        }
         [strongSelf ensurePickerSearchKeyboard:picker slot:slot generation:generation attempt:attempt + 1];
     });
 }

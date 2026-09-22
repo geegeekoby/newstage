@@ -23,6 +23,9 @@
 - (void)clearText;
 // Asks the text field to edit again. Used when the keyboard did not appear.
 - (void)reassertEditing;
+// Ends editing and starts it again. reloadInputViews does not raise a keyboard
+// that never appeared.
+- (void)restartEditing;
 // Read-only. fr/win/key/att for the diagnostics log.
 - (NSString *)editingDebugSummary;
 

@@ -26,6 +26,7 @@
 - (void)resetScrollPosition;
 - (void)dismissKeyboard;
 - (void)reassertSearchEditing;
+- (void)restartSearchEditing;
 - (NSString *)searchEditingDebugSummary;
 - (BOOL)isSearching;
 

@@ -1,5 +1,10 @@
 #import <UIKit/UIKit.h>
 
+// isKeyWindow can stay YES after SpringBoard has made a different window key.
+// The keyboard follows that other window. YES only when this window is the one
+// UIApplication will actually deliver text to.
+BOOL DSWindowIsApplicationKey(UIWindow *window);
+
 // Full screen window that only claims the touches the stage actually needs, so
 // everything else still reaches the app underneath.
 @interface DSStageWindow : UIWindow

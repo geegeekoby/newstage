@@ -81,7 +81,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
         }
     }
     self.forwardingEdit = NO;
-    return NO;
+    // Rejecting the letter makes the keyboard leave this field and type
+    // somewhere else. The field is off screen. The letter is also forwarded.
+    return YES;
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
@@ -304,6 +306,10 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     UITextField *_stagedKeyboardField;
     NSInteger _stagedKeyboardEnsureGeneration;
     BOOL _suppressStagedKeyboardEnd;
+    // Set only when the app or a minimize asked the keyboard to go away.
+    // A resign without this is the home screen taking the key.
+    BOOL _stagedKeyboardWantsHide;
+    NSInteger _stagedKeyboardReassertCount;
     NSInteger _presentGeneration;
 }
 
@@ -665,7 +671,10 @@ static BOOL sSystemEdgePullAvailable;
         }
         return;
     }
-    if (field.isFirstResponder && attempt >= 2) {
+    CGRect visibleKeys = DSVisibleKeyboardFrameOnScreen();
+    BOOL keysVisible = !CGRectIsNull(visibleKeys) && CGRectGetHeight(visibleKeys) >= kDSKeyboardPresentHeight;
+    // Resigning a field that is already taking keys moves the input somewhere else.
+    if (field.isFirstResponder && attempt >= 2 && !keysVisible) {
         field.suppressEnd = YES;
         [field resignFirstResponder];
         field.suppressEnd = NO;
@@ -713,6 +722,8 @@ static BOOL sSystemEdgePullAvailable;
     NSInteger slot = [self slotForHostedBundle:bundle];
     if (slot < 0) return;
     if ([self cardIsParked:[self containerForSlot:slot]]) return;
+    _stagedKeyboardWantsHide = NO;
+    _stagedKeyboardReassertCount = 0;
     CGRect keys = DSVisibleKeyboardFrameOnScreen();
     if (_stagedKeyboardField.isFirstResponder && _stagedKeyboardSlot == slot &&
         DSWindowIsApplicationKey(_window) &&
@@ -725,12 +736,40 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)hideStagedKeyboardLikePicker {
+    _stagedKeyboardWantsHide = YES;
     _stagedKeyboardEnsureGeneration++;
     if (!_stagedKeyboardField.isFirstResponder) {
         _stagedKeyboardSlot = -1;
         return;
     }
     [_stagedKeyboardField resignFirstResponder];
+}
+
+- (void)keepStagedKeyboardField {
+    if (_stagedKeyboardWantsHide || _searchSlot >= 0 || _stagedKeyboardSlot < 0) return;
+    if (_state == DSStageStateMinimized || _state == DSStageStateClosed) return;
+    if ([self cardIsParked:[self containerForSlot:_stagedKeyboardSlot]]) return;
+    if (DSWindowIsApplicationKey(_window) && _stagedKeyboardField.isFirstResponder) {
+        _stagedKeyboardReassertCount = 0;
+        return;
+    }
+    if (_stagedKeyboardReassertCount >= 6) {
+        DSDiagnosticsRecord(@"SpringBoard: staged keyboard left the field");
+        return;
+    }
+    _stagedKeyboardReassertCount++;
+    DSStagedKeyboardField *field = (DSStagedKeyboardField *)_stagedKeyboardField;
+    field.suppressEnd = YES;
+    _suppressStagedKeyboardEnd = YES;
+    [self takeKeyWindow];
+    _suppressStagedKeyboardEnd = NO;
+    field.suppressEnd = NO;
+    if (DSWindowIsApplicationKey(_window) && !field.isFirstResponder) {
+        [field becomeFirstResponder];
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: staged keyboard stayed on the same field fr=%d key=%d",
+                              field.isFirstResponder,
+                              DSWindowIsApplicationKey(_window));
 }
 
 - (void)noteStagedAppKeyboardRequest:(uint64_t)state {
@@ -743,17 +782,27 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)stagedKeyboardInsertText:(NSString *)text {
+    _stagedKeyboardReassertCount = 0;
     DSDiagnosticsRecordFormat(@"SpringBoard: staged key insert len=%lu", (unsigned long)text.length);
     DSEnqueueStagedKey(@"insert", text);
 }
 
 - (void)stagedKeyboardDeleteBackward {
+    _stagedKeyboardReassertCount = 0;
     DSDiagnosticsRecord(@"SpringBoard: staged key delete");
     DSEnqueueStagedKey(@"delete", @"");
 }
 
 - (void)stagedKeyboardDidEnd {
     if (_suppressStagedKeyboardEnd) return;
+    BOOL stageOpen = _state != DSStageStateMinimized && _state != DSStageStateClosed;
+    if (!_stagedKeyboardWantsHide && _searchSlot < 0 && _stagedKeyboardSlot >= 0 && stageOpen) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf keepStagedKeyboardField];
+        });
+        return;
+    }
     _stagedKeyboardSlot = -1;
     if (_searchSlot >= 0) return;
     if (_sceneHost.isHosting || _topSceneHost.isHosting) {

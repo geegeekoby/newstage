@@ -1,3 +1,6 @@
+**4.5.25**
+- The staged keyboard appeared, then the home screen took the key and the letters went somewhere else. The field was also refusing the letter, so the keyboard left it after one character. The same field keeps the keyboard while that stage is open. Minimizing still hides it
+
 **4.5.24**
 - Letters typed on the staged keyboard never left SpringBoard. Delete did, because that key hits the field directly, and a letter goes through the field editor instead. Those letters are now forwarded into the staged app. A 346pt shortcut-bar frame no longer lifts the card past the 301pt picker keyboard
 

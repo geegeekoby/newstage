@@ -1,3 +1,6 @@
+**4.5.12**
+- 4.5.11 hid SpringBoard's keyboard window whenever any keyboard went down, so no keyboard could come back, and it pulled the new bottom card up as soon as that half opened. Both of those are undone. Keyboards show again, and the bottom stage stays on the bottom half
+
 **4.5.11**
 - Searching in the second stage's picker was ignored while the other stage had an app, so that picker stayed under the keyboard. That search keyboard now lifts the picker card
 - The keyboard window was left on screen after the keys went down. It is hidden when the keyboard goes down

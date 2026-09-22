@@ -45,9 +45,6 @@ static CFAbsoluteTime DSKeyboardShownAt = 0;
 static BOOL DSLoggedMissingTextTarget = NO;
 static BOOL DSLoggedResignStack = NO;
 static NSString *DSLoggedEditingClass = nil;
-// Set while a staged key is being written into the field. That become/resign
-// must not ask for the keyboard again or hide the one already on screen.
-static BOOL DSDeliveringStageKey = NO;
 
 static UIResponder *DSFirstResponderInView(UIView *view) {
     if (![view isKindOfClass:UIView.class]) return nil;
@@ -152,24 +149,6 @@ static void DSLogEditingTarget(UIResponder *responder) {
     DSDiagnosticsRecordFormat(@"app: editing %@ fr=%d win=%d", name, editing, hasWindow);
 }
 
-static void DSNoteTextWillChange(id<UITextInput> input) {
-    id delegate = input.inputDelegate;
-    if (![delegate respondsToSelector:@selector(textWillChange:)]) return;
-    @try {
-        [delegate textWillChange:input];
-    } @catch (NSException *exception) {
-    }
-}
-
-static void DSNoteTextDidChange(id<UITextInput> input) {
-    id delegate = input.inputDelegate;
-    if (![delegate respondsToSelector:@selector(textDidChange:)]) return;
-    @try {
-        [delegate textDidChange:input];
-    } @catch (NSException *exception) {
-    }
-}
-
 static void DSRememberKeyboardTarget(UIResponder *responder) {
     if (!DSResponderTakesText(responder)) return;
     UIResponder *existing = DSKeyboardTarget;
@@ -191,91 +170,26 @@ static UIResponder *DSTypingResponder(void) {
     return DSCurrentKeyInput();
 }
 
-static NSString *DSTextByInserting(UIResponder *responder, NSString *text) {
-    NSString *all = DSPlainText(responder);
-    if (!all || ![responder conformsToProtocol:@protocol(UITextInput)]) {
-        return all ? [all stringByAppendingString:text ?: @""] : nil;
-    }
-    id<UITextInput> input = (id<UITextInput>)responder;
-    UITextRange *selected = input.selectedTextRange;
-    if (!selected || !input.beginningOfDocument) return [all stringByAppendingString:text ?: @""];
-    NSInteger start = [input offsetFromPosition:input.beginningOfDocument toPosition:selected.start];
-    NSInteger end = [input offsetFromPosition:input.beginningOfDocument toPosition:selected.end];
-    if (start < 0 || end < start || end > (NSInteger)all.length) return [all stringByAppendingString:text ?: @""];
-    return [all stringByReplacingCharactersInRange:NSMakeRange((NSUInteger)start, (NSUInteger)(end - start))
-                                        withString:text ?: @""];
-}
-
-static NSString *DSTextByDeleting(UIResponder *responder) {
-    NSString *all = DSPlainText(responder);
-    if (!all) return nil;
-    if (![responder conformsToProtocol:@protocol(UITextInput)]) {
-        return all.length ? [all substringToIndex:all.length - 1] : all;
-    }
-    id<UITextInput> input = (id<UITextInput>)responder;
-    UITextRange *selected = input.selectedTextRange;
-    if (!selected || !input.beginningOfDocument) {
-        return all.length ? [all substringToIndex:all.length - 1] : all;
-    }
-    NSInteger start = [input offsetFromPosition:input.beginningOfDocument toPosition:selected.start];
-    NSInteger end = [input offsetFromPosition:input.beginningOfDocument toPosition:selected.end];
-    if (start < 0 || end < start || end > (NSInteger)all.length) {
-        return all.length ? [all substringToIndex:all.length - 1] : all;
-    }
-    if (end > start) {
-        return [all stringByReplacingCharactersInRange:NSMakeRange((NSUInteger)start, (NSUInteger)(end - start)) withString:@""];
-    }
-    if (start == 0) return all;
-    return [all stringByReplacingCharactersInRange:NSMakeRange((NSUInteger)(start - 1), 1) withString:@""];
-}
-
-static void DSAssignPlainText(UIResponder *responder, NSString *next) {
-    if (!next) return;
-    if ([responder isKindOfClass:UITextField.class]) {
-        UITextField *field = (UITextField *)responder;
-        field.text = next;
-        [field sendActionsForControlEvents:UIControlEventEditingChanged];
-        [NSNotificationCenter.defaultCenter postNotificationName:UITextFieldTextDidChangeNotification object:field];
-        return;
-    }
-    if ([responder isKindOfClass:UITextView.class]) {
-        UITextView *view = (UITextView *)responder;
-        view.text = next;
-        [NSNotificationCenter.defaultCenter postNotificationName:UITextViewTextDidChangeNotification object:view];
-        if ([view.delegate respondsToSelector:@selector(textViewDidChange:)]) {
-            [(id<UITextViewDelegate>)view.delegate textViewDidChange:view];
-        }
-    }
-}
-
 static void DSTypeText(UIResponder *responder, NSString *text) {
-    id<UITextInput> input = [responder conformsToProtocol:@protocol(UITextInput)] ? (id<UITextInput>)responder : nil;
-    if (input) DSNoteTextWillChange(input);
     NSString *before = DSPlainText(responder);
-    if (input) DSInsertTextIntoInput(input, text);
+    if ([responder conformsToProtocol:@protocol(UITextInput)]) {
+        DSInsertTextIntoInput((id<UITextInput>)responder, text);
+    }
     NSString *after = DSPlainText(responder);
     BOOL unchanged = before && after && [before isEqualToString:after];
-    if (unchanged || !input) {
+    if (unchanged || ![responder conformsToProtocol:@protocol(UITextInput)]) {
         if ([responder respondsToSelector:@selector(insertText:)]) [(id)responder insertText:text];
     }
-    after = DSPlainText(responder);
-    unchanged = before && after && [before isEqualToString:after];
-    if (unchanged) DSAssignPlainText(responder, DSTextByInserting(responder, text));
-    if (input) DSNoteTextDidChange(input);
 }
 
 static void DSTypeDelete(UIResponder *responder) {
-    id<UITextInput> input = [responder conformsToProtocol:@protocol(UITextInput)] ? (id<UITextInput>)responder : nil;
-    if (input) DSNoteTextWillChange(input);
     NSString *before = DSPlainText(responder);
     if ([responder respondsToSelector:@selector(deleteBackward)]) [(id)responder deleteBackward];
     NSString *after = DSPlainText(responder);
     BOOL unchanged = before && after && [before isEqualToString:after];
-    if (unchanged && input) DSDeleteFromInput(input);
-    after = DSPlainText(responder);
-    unchanged = before && after && [before isEqualToString:after];
-    if (unchanged) DSAssignPlainText(responder, DSTextByDeleting(responder));
-    if (input) DSNoteTextDidChange(input);
+    if (unchanged && [responder conformsToProtocol:@protocol(UITextInput)]) {
+        DSDeleteFromInput((id<UITextInput>)responder);
+    }
 }
 
 static void DSApplyKeyboardOp(NSString *op, NSString *text) {
@@ -288,10 +202,6 @@ static void DSApplyKeyboardOp(NSString *op, NSString *text) {
         return;
     }
     DSLogEditingTarget(responder);
-    DSDeliveringStageKey = YES;
-    if (!responder.isFirstResponder && [responder respondsToSelector:@selector(becomeFirstResponder)]) {
-        [responder becomeFirstResponder];
-    }
     NSString *before = DSPlainText(responder);
     BOOL isDelete = [op isEqualToString:@"delete"];
     if (isDelete) {
@@ -299,10 +209,8 @@ static void DSApplyKeyboardOp(NSString *op, NSString *text) {
     } else if (text.length > 0) {
         DSTypeText(responder, text);
     } else {
-        DSDeliveringStageKey = NO;
         return;
     }
-    DSDeliveringStageKey = NO;
     NSString *after = DSPlainText(responder);
     NSString *changed = @"?";
     if (before && after) changed = [before isEqualToString:after] ? @"0" : @"1";
@@ -824,7 +732,6 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 - (void)showKeyboard {
     if (DSStaged()) {
-        if (DSDeliveringStageKey) return;
         DSBanishLocalKeyboard();
         DSRequestPickerKeyboard(YES);
         return;
@@ -835,7 +742,7 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (void)hideKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
+        DSRequestPickerKeyboard(NO);
         %orig;
         return;
     }
@@ -850,7 +757,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     BOOL became = %orig;
     if (became && DSStaged() && DSResponderTakesText(self)) {
         DSRememberKeyboardTarget(self);
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
+        DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -865,7 +772,7 @@ static void DSInstallKeyboardBanishObserver(void) {
         return NO;
     }
     BOOL resigned = %orig;
-    if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self) && !DSDeliveringStageKey) {
+    if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self)) {
         DSRequestPickerKeyboard(NO);
     }
     return resigned;
@@ -879,7 +786,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     BOOL became = %orig;
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
+        DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -891,7 +798,7 @@ static void DSInstallKeyboardBanishObserver(void) {
         return NO;
     }
     BOOL resigned = %orig;
-    if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
+    if (wasEditing && resigned && DSStaged()) DSRequestPickerKeyboard(NO);
     return resigned;
 }
 
@@ -903,7 +810,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     BOOL became = %orig;
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
+        DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -915,7 +822,7 @@ static void DSInstallKeyboardBanishObserver(void) {
         return NO;
     }
     BOOL resigned = %orig;
-    if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
+    if (wasEditing && resigned && DSStaged()) DSRequestPickerKeyboard(NO);
     return resigned;
 }
 

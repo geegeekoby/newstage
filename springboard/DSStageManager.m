@@ -29,9 +29,6 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 - (void)stagedKeyboardInsertText:(NSString *)text;
 - (void)stagedKeyboardDeleteBackward;
 - (void)stagedKeyboardDidEnd;
-// YES while the hosted app is still typing. Resigning then is the home screen
-// taking the key, not the user leaving the field.
-- (BOOL)stagedKeyboardShouldKeepEditing;
 @end
 
 // The same kind of field the picker search uses. It lives in the stage window,
@@ -41,8 +38,6 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 // Set while the stage window is reclaiming the key. Resigning then is not the
 // user leaving the field.
 @property (nonatomic, assign) BOOL suppressEnd;
-// Set only for a real close, so the keep-editing refusal does not block it.
-@property (nonatomic, assign) BOOL forceResign;
 @end
 
 @implementation DSStagedKeyboardField
@@ -56,23 +51,15 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardInsertText:)]) {
         [self.keyTarget stagedKeyboardInsertText:text];
     }
-    // The field has to keep a real document or the keyboard stops sending keys.
-    [super insertText:text];
 }
 
 - (void)deleteBackward {
     if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardDeleteBackward)]) {
         [self.keyTarget stagedKeyboardDeleteBackward];
     }
-    [super deleteBackward];
 }
 
 - (BOOL)resignFirstResponder {
-    if (!self.forceResign &&
-        [self.keyTarget respondsToSelector:@selector(stagedKeyboardShouldKeepEditing)] &&
-        [self.keyTarget stagedKeyboardShouldKeepEditing]) {
-        return NO;
-    }
     BOOL resigned = [super resignFirstResponder];
     if (resigned && !self.suppressEnd && [self.keyTarget respondsToSelector:@selector(stagedKeyboardDidEnd)]) {
         [self.keyTarget stagedKeyboardDidEnd];
@@ -238,13 +225,6 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     UITextField *_stagedKeyboardField;
     NSInteger _stagedKeyboardEnsureGeneration;
     BOOL _suppressStagedKeyboardEnd;
-    // The app asked the keyboard to go away. Until then the home screen must
-    // not be given this window's key, or typed characters never reach the app.
-    BOOL _stagedKeyboardWantsHide;
-    BOOL _reassertingStagedKeyboard;
-    BOOL _stagedKeyboardReassertQueued;
-    BOOL _stagedKeyboardReassertLoggedStop;
-    NSInteger _stagedKeyboardReassertCount;
     NSInteger _presentGeneration;
 }
 
@@ -444,21 +424,6 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)giveBackKeyWindow {
-    BOOL leaving = _state == DSStageStateMinimized || _state == DSStageStateClosed;
-    if (_stagedKeyboardSlot >= 0 && !_stagedKeyboardWantsHide && !leaving && _searchSlot < 0) {
-        return;
-    }
-    if (leaving && _stagedKeyboardSlot >= 0 && !_stagedKeyboardWantsHide) {
-        _stagedKeyboardWantsHide = YES;
-        if (_stagedKeyboardField.isFirstResponder) {
-            DSStagedKeyboardField *field = (DSStagedKeyboardField *)_stagedKeyboardField;
-            field.forceResign = YES;
-            [field resignFirstResponder];
-            field.forceResign = NO;
-            return;
-        }
-        _stagedKeyboardSlot = -1;
-    }
     if (_searchSlot >= 0) {
         [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"give key back during search" attempt:-1 picker:nil]];
     }
@@ -513,10 +478,6 @@ static BOOL sSystemEdgePullAvailable;
                                           selector:@selector(keyboardWillHide:)
                                               name:UIKeyboardWillHideNotification
                                             object:nil];
-    [NSNotificationCenter.defaultCenter addObserver:self
-                                          selector:@selector(stageWindowDidBecomeKey:)
-                                              name:UIWindowDidBecomeKeyNotification
-                                            object:nil];
 
     static int requestToken = NOTIFY_TOKEN_INVALID;
     static dispatch_once_t once;
@@ -550,11 +511,6 @@ static BOOL sSystemEdgePullAvailable;
     if (_searchSlot >= 0) {
         [self noteSearchKeyboardDebug:@"UIKit willHide"];
     }
-    // The home screen taking the key posts a hide even though the field is
-    // still the one being typed in. Dropping the lift here is the flicker.
-    if ([self stagedKeyboardShouldKeepEditing] && _stagedKeyboardField.isFirstResponder) {
-        return;
-    }
     if ([self isShowingAppPicker] || _stagedKeyboardSlot >= 0) _notedKeyboardOnce = NO;
     [self noteKeyboardFrame:CGRectZero
                     source:@"SpringBoard"
@@ -587,7 +543,7 @@ static BOOL sSystemEdgePullAvailable;
     if (_stagedKeyboardField) return;
     DSStagedKeyboardField *field = [[DSStagedKeyboardField alloc] initWithFrame:CGRectMake(0, -80, 2, 2)];
     field.keyTarget = self;
-    field.alpha = 1.0;
+    field.alpha = 0.02;
     field.autocorrectionType = UITextAutocorrectionTypeNo;
     field.autocapitalizationType = UITextAutocapitalizationTypeNone;
     field.spellCheckingType = UITextSpellCheckingTypeNo;
@@ -623,16 +579,10 @@ static BOOL sSystemEdgePullAvailable;
         }
         return;
     }
-    CGRect visibleKeys = DSVisibleKeyboardFrameOnScreen();
-    BOOL keysVisible = !CGRectIsNull(visibleKeys) && CGRectGetHeight(visibleKeys) >= kDSKeyboardPresentHeight;
-    // Resigning a field that is already editing drops the keyboard and the
-    // lift, which is what flickered the card while the letters were being typed.
-    if (field.isFirstResponder && attempt >= 2 && !keysVisible) {
-        field.forceResign = YES;
+    if (field.isFirstResponder && attempt >= 2) {
         field.suppressEnd = YES;
         [field resignFirstResponder];
         field.suppressEnd = NO;
-        field.forceResign = NO;
     }
     if (!field.isFirstResponder) {
         [field becomeFirstResponder];
@@ -659,8 +609,6 @@ static BOOL sSystemEdgePullAvailable;
         CGRect keys = DSVisibleKeyboardFrameOnScreen();
         if (!CGRectIsNull(keys) && CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
             DSWindowIsApplicationKey(strongSelf->_window)) {
-            strongSelf->_stagedKeyboardReassertCount = 0;
-            strongSelf->_stagedKeyboardReassertLoggedStop = NO;
             DSDiagnosticsRecordFormat(@"SpringBoard: %@ picker keyboard visible %@", bundle, NSStringFromCGRect(keys));
             return;
         }
@@ -675,14 +623,10 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)showStagedKeyboardLikePickerForBundle:(NSString *)bundle {
     if (_searchSlot >= 0) return;
+    if (_state == DSStageStateMinimized || _state == DSStageStateClosed) return;
     NSInteger slot = [self slotForHostedBundle:bundle];
     if (slot < 0) return;
-    BOOL starting = _stagedKeyboardSlot != slot || _stagedKeyboardWantsHide;
-    _stagedKeyboardWantsHide = NO;
-    if (starting) {
-        _stagedKeyboardReassertCount = 0;
-        _stagedKeyboardReassertLoggedStop = NO;
-    }
+    if ([self cardIsParked:[self containerForSlot:slot]]) return;
     CGRect keys = DSVisibleKeyboardFrameOnScreen();
     if (_stagedKeyboardField.isFirstResponder && _stagedKeyboardSlot == slot &&
         DSWindowIsApplicationKey(_window) &&
@@ -695,16 +639,12 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)hideStagedKeyboardLikePicker {
-    _stagedKeyboardWantsHide = YES;
     _stagedKeyboardEnsureGeneration++;
     if (!_stagedKeyboardField.isFirstResponder) {
         _stagedKeyboardSlot = -1;
         return;
     }
-    DSStagedKeyboardField *field = (DSStagedKeyboardField *)_stagedKeyboardField;
-    field.forceResign = YES;
-    [field resignFirstResponder];
-    field.forceResign = NO;
+    [_stagedKeyboardField resignFirstResponder];
 }
 
 - (void)noteStagedAppKeyboardRequest:(uint64_t)state {
@@ -726,66 +666,8 @@ static BOOL sSystemEdgePullAvailable;
     DSEnqueueStagedKey(@"delete", @"");
 }
 
-- (BOOL)stagedKeyboardShouldKeepEditing {
-    return _stagedKeyboardSlot >= 0 && !_stagedKeyboardWantsHide && _searchSlot < 0;
-}
-
-- (void)reassertStagedKeyboard {
-    if (_reassertingStagedKeyboard) return;
-    if (_searchSlot >= 0 || _stagedKeyboardSlot < 0 || _stagedKeyboardWantsHide) return;
-    if (DSWindowIsApplicationKey(_window) && _stagedKeyboardField.isFirstResponder) {
-        _stagedKeyboardReassertCount = 0;
-        _stagedKeyboardReassertLoggedStop = NO;
-        return;
-    }
-    if (_stagedKeyboardReassertCount >= 8) {
-        if (!_stagedKeyboardReassertLoggedStop) {
-            _stagedKeyboardReassertLoggedStop = YES;
-            DSDiagnosticsRecord(@"SpringBoard: staged keyboard stopped retrying the key window");
-        }
-        return;
-    }
-    _stagedKeyboardReassertCount++;
-    _reassertingStagedKeyboard = YES;
-    NSString *bundle = [self sceneHostForSlot:_stagedKeyboardSlot].bundleIdentifier ?: @"";
-    [self driveStagedKeyboardForBundle:bundle
-                                  slot:_stagedKeyboardSlot
-                            generation:_stagedKeyboardEnsureGeneration
-                               attempt:1];
-    _reassertingStagedKeyboard = NO;
-    DSDiagnosticsRecordFormat(@"SpringBoard: staged keyboard held the key fr=%d key=%d",
-                              _stagedKeyboardField.isFirstResponder,
-                              DSWindowIsApplicationKey(_window));
-}
-
-- (void)stageWindowDidBecomeKey:(NSNotification *)notification {
-    if (_searchSlot >= 0 || _stagedKeyboardSlot < 0 || _stagedKeyboardWantsHide) return;
-    if (notification.object == _window) {
-        _stagedKeyboardReassertCount = 0;
-        _stagedKeyboardReassertLoggedStop = NO;
-        return;
-    }
-    if (_stagedKeyboardReassertQueued || _reassertingStagedKeyboard) return;
-    _stagedKeyboardReassertQueued = YES;
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        strongSelf->_stagedKeyboardReassertQueued = NO;
-        [strongSelf reassertStagedKeyboard];
-    });
-}
-
 - (void)stagedKeyboardDidEnd {
     if (_suppressStagedKeyboardEnd) return;
-    if (!_stagedKeyboardWantsHide && _searchSlot < 0 && _stagedKeyboardSlot >= 0) {
-        DSDiagnosticsRecord(@"SpringBoard: staged keyboard lost the field while the app is still typing");
-        __weak __typeof(self) weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf reassertStagedKeyboard];
-        });
-        return;
-    }
     _stagedKeyboardSlot = -1;
     if (_searchSlot >= 0) return;
     if (_sceneHost.isHosting || _topSceneHost.isHosting) {
@@ -1615,6 +1497,8 @@ static BOOL sSystemEdgePullAvailable;
         card.alpha = 1.0;
     };
     void (^finish)(void) = ^{
+        NSInteger parkedSlot = (card == self->_topContainer) ? 1 : 0;
+        if (self->_stagedKeyboardSlot == parkedSlot) [self hideStagedKeyboardLikePicker];
         if (!otherStillUp) {
             self->_primaryParked = YES;
             self->_secondParked = YES;
@@ -2763,12 +2647,7 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     if (_ensuringPickerSearchKeyboard) return;
     if (_searchSlot == [self slotForPicker:picker]) _searchSlot = -1;
     // Hand the key window back while an app is still staged. Leaving it key
-    // is what took the keyboard away from that app after search. If that app
-    // is in the middle of typing, the same field has to take the key again.
-    if (_stagedKeyboardSlot >= 0 && !_stagedKeyboardWantsHide) {
-        [self reassertStagedKeyboard];
-        return;
-    }
+    // is what took the keyboard away from that app after search.
     if (_sceneHost.isHosting || _topSceneHost.isHosting) {
         [self giveBackKeyWindow];
     }

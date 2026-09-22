@@ -1,3 +1,6 @@
+**4.5.23**
+- 4.5.22 kept the staged keyboard up after the app was minimized, and the shortcut bar came back with it. A staged app uses the picker keyboard again. That keyboard goes away when the stage is minimized or the app is left. The app's own keyboard stays hidden
+
 **4.5.22**
 - Typing in a staged app showed the right keyboard and then dropped the letters, because the home screen took the key back while the field was still open. The stage keeps that key until the field actually closes, and the letters go into the field that was tapped. The log records each key as a length, not the text
 

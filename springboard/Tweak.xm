@@ -84,6 +84,17 @@ static void DSScheduleFullInstall(void) {
 
 %end
 
+static NSString *DSAnySceneIdentifier(id scene) {
+    if (!scene) return nil;
+    for (NSString *name in @[ @"identifier", @"sceneIdentifier" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![scene respondsToSelector:selector]) continue;
+        id value = ((id (*)(id, SEL))objc_msgSend)(scene, selector);
+        if ([value isKindOfClass:NSString.class] && [(NSString *)value length] > 0) return value;
+    }
+    return nil;
+}
+
 #pragma mark - Stage (installed after launch)
 
 %group Stage
@@ -327,6 +338,32 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
     DSTell(^(DSStageManager *manager) {
         [manager noteDisplayDidTurnOff];
     });
+}
+
+%end
+
+// The hosted keyboard view is what paints the keys inside the card. Leaving it
+// out keeps them on the remote-keyboard scene. This does not move that window,
+// hide a view, or assign the keyboard UI host.
+%hook _UIRemoteKeyboards
+
+- (void)addHostedWindowView:(id)view fromPID:(int)pid forScene:(id)scene {
+    NSString *identifier = DSAnySceneIdentifier(scene);
+    BOOL staged = identifier.length > 0 && DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager isHostingSceneIdentifier:identifier];
+    });
+    if (!staged) {
+        %orig;
+        return;
+    }
+    static BOOL logged = NO;
+    if (!logged) {
+        logged = YES;
+        NSString *viewName = view ? NSStringFromClass([view class]) : @"nil";
+        DSDiagnosticsRecordFormat(@"SpringBoard: left %@ out of %@ so the keys stay on the remote keyboard",
+                                  viewName, identifier);
+    }
+    (void)pid;
 }
 
 %end
@@ -652,6 +689,8 @@ static void DSRegisterDarwinObservers(void) {
         BOOL remote = (state & (1ULL << 48)) != 0;
         BOOL mapped = (state & (1ULL << 49)) != 0;
         BOOL remoteSkipped = (state & (1ULL << 50)) != 0;
+        BOOL remoteArmed = (state & (1ULL << 51)) != 0;
+        NSUInteger remotePath = (NSUInteger)((state >> 52) & 0xf);
         NSUInteger ctorReason = (NSUInteger)((state >> 56) & 0xf);
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
@@ -672,11 +711,26 @@ static void DSRegisterDarwinObservers(void) {
         DSTell(^(DSStageManager *manager) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
             [manager noteAppDylibSignal:hash listening:listening loaded:loaded remote:remote];
+            NSString *pathName = @"?";
+            switch (remotePath) {
+                case 1: pathName = @"window-class"; break;
+                case 2: pathName = @"unassociated-scene"; break;
+                case 3: pathName = @"clear-scene"; break;
+                case 4: pathName = @"skip-hosted-view"; break;
+                case 6: pathName = @"input-set"; break;
+                case 8: pathName = @"impl"; break;
+                case 15: pathName = @"class-missing"; break;
+                default: break;
+            }
             NSString *line;
             if (remote) {
-                line = [NSString stringWithFormat:@"app: %@ remote keyboard, message field stays", bundle];
+                line = [NSString stringWithFormat:@"app: %@ remote keyboard via %@, message field stays", bundle, pathName];
+            } else if (remotePath == 15) {
+                line = [NSString stringWithFormat:@"app: %@ remote keyboard class is missing", bundle];
             } else if (remoteSkipped) {
-                line = [NSString stringWithFormat:@"app: %@ isUsingRemoteKeyboard ran but the app was not staged", bundle];
+                line = [NSString stringWithFormat:@"app: %@ keyboard hook %@ ran but the app was not staged", bundle, pathName];
+            } else if (remoteArmed) {
+                line = [NSString stringWithFormat:@"app: %@ remote keyboard hooks are in", bundle];
             } else if (loaded && ctorReason != 0) {
                 line = [NSString stringWithFormat:@"app: %@ ctor bailed reason=%@", bundle, reasonName];
             } else if (loaded) {

@@ -774,6 +774,22 @@ static BOOL sSystemEdgePullAvailable;
     // the keys and the bottom card can lift off them. Until that signal, the
     // keys are pixels in the scene and moving the card only drags them.
     BOOL remote = [self hostedAppReportedRemoteKeyboard:source];
+    CGRect visibleKeys = DSVisibleKeyboardFrameOnScreen();
+    BOOL springBoardDrawingKeys = !CGRectIsNull(visibleKeys) &&
+                                  CGRectGetHeight(visibleKeys) >= kDSKeyboardPresentHeight &&
+                                  CGRectGetMinX(visibleKeys) < 4.0;
+    if (remote && !springBoardDrawingKeys) {
+        static NSString *loggedWaiting = nil;
+        if (source.length && ![loggedWaiting isEqualToString:source]) {
+            loggedWaiting = [source copy];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for the remote keyboard but SpringBoard is not drawing keys yet",
+                                      source);
+            DSDiagnosticsRecord(DSKeyboardWindowCensus());
+        }
+        // The request landed and the keys are still pixels in the scene.
+        // Lifting the card would drag those pixels with it.
+        remote = NO;
+    }
     _keyboardDrawnOutside = remote;
     [self clearHostedKeyboardBands];
     CGRect keys = [self keyboardFrameOnDisplay:frame];
@@ -783,8 +799,16 @@ static BOOL sSystemEdgePullAvailable;
         static NSString *loggedInside = nil;
         if (source.length && ![loggedInside isEqualToString:source]) {
             loggedInside = [source copy];
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard stays in the scene until the app says it is remote",
-                                      source);
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard stays in the scene until SpringBoard is drawing it frame %@",
+                                      source, NSStringFromCGRect(keys));
+            DSDiagnosticsRecord(DSKeyboardWindowCensus());
+        }
+    } else {
+        static NSString *loggedOutside = nil;
+        if (source.length && ![loggedOutside isEqualToString:source]) {
+            loggedOutside = [source copy];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard is SpringBoard's, frame %@",
+                                      source, NSStringFromCGRect(visibleKeys));
         }
     }
 }
@@ -2910,7 +2934,32 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     if (hash == 0) return @"?";
     if (DSIdentifierHash(_sceneHost.bundleIdentifier) == hash) return _sceneHost.bundleIdentifier;
     if (DSIdentifierHash(_topSceneHost.bundleIdentifier) == hash) return _topSceneHost.bundleIdentifier;
+    for (NSString *path in @[ @"/var/tmp/com.recreated.dynamicstage.ctor",
+                              @"/var/jb/tmp/com.recreated.dynamicstage.ctor" ]) {
+        NSString *text = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
+        NSRange marker = [text rangeOfString:@"bundle="];
+        if (marker.location == NSNotFound) continue;
+        NSString *rest = [text substringFromIndex:NSMaxRange(marker)];
+        NSRange end = [rest rangeOfCharacterFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSString *bundle = end.location == NSNotFound ? rest : [rest substringToIndex:end.location];
+        if (bundle.length && DSIdentifierHash(bundle) == hash) return bundle;
+    }
     return [NSString stringWithFormat:@"hash %u", hash];
+}
+
+- (BOOL)isHostingSceneIdentifier:(NSString *)identifier {
+    if (identifier.length == 0) return NO;
+    NSString *bottom = _sceneHost.bundleIdentifier;
+    NSString *top = _topSceneHost.bundleIdentifier;
+    if (_sceneHost.isHosting && bottom.length &&
+        [identifier rangeOfString:bottom].location != NSNotFound) {
+        return YES;
+    }
+    if (_topSceneHost.isHosting && top.length &&
+        [identifier rangeOfString:top].location != NSNotFound) {
+        return YES;
+    }
+    return NO;
 }
 
 - (void)noteKeyboardDebugFromApp:(NSString *)line {

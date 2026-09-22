@@ -1,3 +1,6 @@
+**4.5.47**
+- The keys in the new screenshots start at the card's 5pt inset, so they are Messenger's scene, not a window sitting under the stage. The search keyboard is already visible in the gap at level 10, so raising that window does not pull scene pixels out. iOS 16 does not call `isUsingRemoteKeyboard`, which is why the app never said the keyboard was remote. A staged app now uses the plain remote keyboard window on its own scene, and it does not take the hosted keyboard view into the card. The bottom card lifts only once SpringBoard itself is drawing full-width keys. The scene is not clipped and that window is not moved
+
 **4.5.46**
 - 4.5.45 cut the hosted scene down until the content view was 120pt tall, so the bottom card went blank, and it left the top card alone because that card does not cover the screen keyboard. The scene is not clipped. The bottom card lifts only after the app says the keyboard is remote, which is when SpringBoard is drawing the keys. The in-app filter names UIKit, which is what this ElleKit uses to inject into an app, and system processes return before any hook
 

@@ -56,6 +56,8 @@
 - (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;
+// True when this scene identifier belongs to an app on the stage.
+- (BOOL)isHostingSceneIdentifier:(NSString *)identifier;
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;
 

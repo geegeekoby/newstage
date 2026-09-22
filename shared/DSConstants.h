@@ -45,7 +45,10 @@
 // 38 the process is listening for keys, 39 the in-app constructor ran.
 // Bits 40-47: 0 none, 1 field, 2 text view, 3 other.
 // Bit 48: UIKit was told the keyboard is remote. Bit 49: the dylib image
-// mapped. Bit 50: isUsingRemoteKeyboard ran while the app was not staged.
+// mapped. Bit 50: a keyboard hook ran while the app was not staged.
+// Bit 51: the remote-keyboard hooks were installed. Bits 52-55: which
+// hook (1 window class, 2 unassociated scene, 3 clear scene, 4 skip
+// hosted view, 6 input set, 8 legacy impl, 15 class missing).
 // Bits 56-59: constructor reason (0 ok, 1 kill, 2 bundle, 3 excluded,
 // 4 not a user app, 5 prefs off, 6 exception).
 #define kDSKeyboardApplyNotification "com.recreated.dynamicstage.keyboard.apply"

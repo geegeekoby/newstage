@@ -411,6 +411,41 @@ static void DSReportRemoteSkipped(void) {
     DSPostApply(state);
 }
 
+// Bit 48 is "SpringBoard may lift". A call that happens before the app is
+// staged must not consume that, or the later staged call never gets through.
+static int DSRemoteStagedPath = 0;
+
+static void DSReportRemotePath(int path, BOOL staged) {
+    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
+    state |= (1ULL << 39) | (1ULL << 49) | (1ULL << 51);
+    if (path > 0) state |= ((uint64_t)(path & 0xf) << 52);
+    if (!staged) {
+        static BOOL skipped = NO;
+        if (skipped) return;
+        skipped = YES;
+        state |= (1ULL << 50);
+        DSPostApply(state);
+        return;
+    }
+    if (DSRemoteStagedPath == path) return;
+    DSRemoteStagedPath = path;
+    state |= (1ULL << 48);
+    DSPostApply(state);
+}
+
+static void DSReportRemoteArmed(void) {
+    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
+    state |= (1ULL << 39) | (1ULL << 49) | (1ULL << 51);
+    DSPostApply(state);
+}
+
+static void DSReportRemoteMissing(void) {
+    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
+    state |= (1ULL << 39) | (1ULL << 49);
+    state |= (15ULL << 52);
+    DSPostApply(state);
+}
+
 static void DSTypeText(UIResponder *responder, NSString *text) {
     NSString *before = DSPlainText(responder);
     if ([responder conformsToProtocol:@protocol(UITextInput)]) {
@@ -944,20 +979,14 @@ static void DSInstallKeyboardBanishObserver(void) {
 // remote makes SpringBoard draw it in its own window, outside the card.
 // Nothing here hides views, moves frames, or talks to the arbiter.
 + (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) {
-        DSReportRemoteKeyboard();
-        return YES;
-    }
-    DSReportRemoteSkipped();
+    DSReportRemotePath(8, DSStaged());
+    if (DSStaged()) return YES;
     return %orig;
 }
 
 - (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) {
-        DSReportRemoteKeyboard();
-        return YES;
-    }
-    DSReportRemoteSkipped();
+    DSReportRemotePath(8, DSStaged());
+    if (DSStaged()) return YES;
     return %orig;
 }
 
@@ -1143,12 +1172,107 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 %end
 
+#pragma mark - Remote keyboard
+
+// iOS 16 draws a hosted app's keys with UIRemoteKeyboardWindowHosted, which
+// lives in that app's scene, so the card shows them. The plain remote keyboard
+// window is the one SpringBoard already uses for the picker, on the
+// remote-keyboard scene. Nothing here hides a view, moves a window, or talks
+// to the arbiter.
+%group RemoteKeys
+
+%hook _UIRemoteKeyboards
+
++ (BOOL)wantsUnassociatedWindowSceneForKeyboardWindow {
+    if (DSStaged()) {
+        DSReportRemotePath(2, YES);
+        return YES;
+    }
+    return %orig;
+}
+
+- (Class)keyboardWindowClass {
+    Class chosen = %orig;
+    if (!DSStaged()) return chosen;
+    Class hosted = objc_getClass("UIRemoteKeyboardWindowHosted");
+    Class plain = objc_getClass("UIRemoteKeyboardWindow");
+    if (plain && hosted && chosen == hosted) {
+        DSReportRemotePath(1, YES);
+        return plain;
+    }
+    DSReportRemotePath(1, YES);
+    return chosen;
+}
+
+- (void)setRequiredScene:(id)scene {
+    static BOOL clearing = NO;
+    if (DSStaged() && scene && !clearing) {
+        clearing = YES;
+        DSReportRemotePath(3, YES);
+        %orig(nil);
+        clearing = NO;
+        return;
+    }
+    %orig;
+}
+
+- (void)addHostedWindowView:(id)view fromPID:(int)pid forScene:(id)scene {
+    if (DSStaged()) {
+        DSReportRemotePath(4, YES);
+        (void)view;
+        (void)pid;
+        (void)scene;
+        return;
+    }
+    %orig;
+}
+
+%end
+
+%hook UIInputViewSet
+
+- (void)setIsRemoteKeyboard:(BOOL)remote {
+    if (DSStaged()) {
+        DSReportRemotePath(6, YES);
+        %orig(YES);
+        return;
+    }
+    %orig;
+}
+
+- (BOOL)isRemoteKeyboard {
+    if (DSStaged()) {
+        DSReportRemotePath(6, YES);
+        return YES;
+    }
+    return %orig;
+}
+
+%end
+
+%end
+
 #pragma mark - Entry point
+
+static void DSInstallRemoteKeyboardHooks(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        Class remote = objc_getClass("_UIRemoteKeyboards");
+        Class inputSet = objc_getClass("UIInputViewSet");
+        if (!remote || !inputSet) {
+            DSReportRemoteMissing();
+            return;
+        }
+        %init(RemoteKeys);
+        DSReportRemoteArmed();
+    });
+}
 
 static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         %init(_ungrouped);
+        DSInstallRemoteKeyboardHooks();
         // The stage signal arrives through notify_register_dispatch. A Darwin
         // center observer in this process did not. The letters were recorded
         // in SpringBoard and this process never woke up for them.
@@ -1199,22 +1323,17 @@ static void DSImageMapped(void) {
         DSReportCtor(reason);
         if (reason != 0) return;
 
-        @try {
-            if ([DSStageContext processIsStagedNow]) {
-                DSStartObserving();
+        // Hooks have to be in before the first keyboard. Waiting until the
+        // stage notification meant UIKit had already chosen the hosted
+        // keyboard window, and iOS 16 does not ask again.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @try {
+                if (DSIdentifierIsExcludedFromStage(NSBundle.mainBundle.bundleIdentifier ?: @"")) return;
+                if (!DSBundleLooksLikeUserApplication()) return;
                 DSInstallHooks();
-                return;
+                DSStartObserving();
+            } @catch (NSException *exception) {
             }
-
-            dispatch_async(dispatch_get_main_queue(), ^{
-                @try {
-                    if (DSIdentifierIsExcludedFromStage(NSBundle.mainBundle.bundleIdentifier ?: @"")) return;
-                    if (!DSBundleLooksLikeUserApplication()) return;
-                    DSStartObserving();
-                } @catch (NSException *exception) {
-                }
-            });
-        } @catch (NSException *exception) {
-        }
+        });
     }
 }

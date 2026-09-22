@@ -10,40 +10,41 @@ for stale in launchguard paneguard; do
 	rm -f "/var/tmp/com.recreated.dynamicstage.$stale"
 done
 
-# The settings page was a preference bundle up to 1.4.8, and loading it crashed
-# Settings on this device: the arm64e slice the Linux toolchain produces is not
-# fixed up properly by the loader, and the objc runtime falls over reading the
-# classes out of it. Since 1.5.0 the page is a plist and there is no bundle at
-# all. Upgrading removes it, but it is removed by name as well, because a copy
-# left behind is a copy Settings will still try to load.
 rm -rf /var/jb/Library/PreferenceBundles/DynamicStagePrefs.bundle
 rm -f /var/jb/Library/PreferenceLoader/Preferences/DynamicStagePrefs.plist
 rm -rf /Library/PreferenceBundles/DynamicStagePrefs.bundle
 
-# The date on this file is the moment this build arrived, and the stage uses it to
-# decide whether a crash report on disk is worth showing. Reports from before it are
-# about code that has been replaced - including the crashes the bundle above caused,
-# which otherwise keep being reported for two days after the build that fixed them.
 for dir in /var/mobile/Library/Preferences /var/jb/var/mobile/Library/Preferences; do
 	if [ -d "$dir" ]; then
 		: > "$dir/com.recreated.dynamicstage.installed" || true
 	fi
 done
 
-# ElleKit loads app tweaks from TweakInject. Theos rootless puts this dylib in
-# DynamicLibraries. When TweakInject is a real directory (not a symlink to that
-# folder), the in-app side never reaches Messenger and SpringBoard keeps every
-# letter. Copy the files in. Never replace a TweakInject that is already a
-# symlink - that would replace the directory.
+# ElleKit loads app tweaks from TweakInject. Theos puts the dylib in
+# DynamicLibraries. When TweakInject is a real directory, copy the in-app side
+# there. Write the filter as XML text - a binary plist can fail to parse and
+# Messenger never loads the tweak. Do not put UIKit in the filter: ElleKit
+# ignores Exclude and would inject into PaperBoard.
 LIBS="/var/jb/Library/MobileSubstrate/DynamicLibraries"
 INJECT="/var/jb/usr/lib/TweakInject"
+PLIST_BODY='{
+    Filter = {
+        Bundles = ( "com.facebook.Messenger" );
+    };
+}
+'
+write_plist() {
+	dest="$1"
+	printf '%s' "$PLIST_BODY" > "$dest" || true
+}
+if [ -f "$LIBS/DynamicStageApp.dylib" ]; then
+	write_plist "$LIBS/DynamicStageApp.plist"
+fi
 if [ -d "$INJECT" ] && [ ! -L "$INJECT" ] && [ -f "$LIBS/DynamicStageApp.dylib" ]; then
 	cp -f "$LIBS/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.dylib" || true
-	cp -f "$LIBS/DynamicStageApp.plist" "$INJECT/DynamicStageApp.plist" || true
+	write_plist "$INJECT/DynamicStageApp.plist"
 fi
 
-# An already-open Messenger still has the old process image. Restart it so the
-# copy above is loaded.
 killall -9 Messenger 2>/dev/null || true
 
 exit 0

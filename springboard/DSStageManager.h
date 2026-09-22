@@ -49,6 +49,9 @@
 - (void)noteStagedKeyResult:(NSString *)line;
 - (void)noteAppDylibSignal:(uint32_t)hash listening:(BOOL)listening loaded:(BOOL)loaded;
 - (BOOL)hostedAppHasStageDylib:(NSString *)bundle;
+// True while a picker search field is editing. The arbiter must not retarget
+// that keyboard to a staged app.
+- (BOOL)isPickerSearchActive;
 - (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;

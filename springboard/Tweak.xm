@@ -334,11 +334,11 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
-// The keyboard a staged app shows is the picker search keyboard: a text field
-// in this process, this window key, UIKit drawing the keys. Moving the arbiter
-// UI host, and placing its scene, produced a different keyboard or none at all.
-// This hook only reports that a keyboard changed. It does not retarget it.
+// SpringBoard draws the keys for a staged app. The app keeps the text field.
+// Search still owns its own keyboard. This hook does not raise keyboard
+// windows, does not place a keyboard scene, and does not take the key window.
 
+static NSInteger DSHostAssignAttempts = 0;
 static BOOL DSArbiterBusy = NO;
 
 static NSString *DSHandlerBundle(id handler) {
@@ -361,9 +361,13 @@ static id DSSpringBoardKeyboardHandler(id arbiter) {
 }
 
 static id DSKeyboardUIHandle(id arbiter) {
-    SEL selector = @selector(keyboardUIHandle);
-    if (![arbiter respondsToSelector:selector]) return nil;
-    return ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
+    for (NSString *name in @[ @"keyboardUIHandle", @"keyboardUIHandler" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![arbiter respondsToSelector:selector]) continue;
+        id handle = ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
+        if (handle) return handle;
+    }
+    return nil;
 }
 
 static id DSArbiterSceneLayer(id arbiter) {
@@ -386,6 +390,44 @@ static BOOL DSBundleIsStaged(NSString *bundle) {
     });
 }
 
+static BOOL DSPickerSearchOwnsKeyboard(void) {
+    return DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager isPickerSearchActive];
+    });
+}
+
+// SpringBoard draws the keys. The staged app keeps the text field. Search is
+// left alone. This does not raise windows and does not place a keyboard scene.
+static NSString *DSAssignSpringBoardKeyboardHost(id arbiter) {
+    NSString *before = DSHandlerBundle(DSKeyboardUIHandle(arbiter)) ?: @"none";
+    if ([before isEqualToString:@"com.apple.springboard"]) {
+        return [NSString stringWithFormat:@"keyboard ui host is already %@", before];
+    }
+    id springBoard = DSSpringBoardKeyboardHandler(arbiter);
+    if (!springBoard) {
+        return @"SpringBoard has no keyboard client, so the keys stay in the app";
+    }
+    SEL setHandler = @selector(setKeyboardUIHandler:);
+    SEL setHandle = @selector(setKeyboardUIHandle:);
+    if (![arbiter respondsToSelector:setHandler] && ![arbiter respondsToSelector:setHandle]) {
+        return @"keyboard ui host setter is missing";
+    }
+    @try {
+        if ([arbiter respondsToSelector:setHandler]) {
+            ((void (*)(id, SEL, id))objc_msgSend)(arbiter, setHandler, springBoard);
+        } else {
+            ((void (*)(id, SEL, id))objc_msgSend)(arbiter, setHandle, springBoard);
+        }
+        if ([arbiter respondsToSelector:@selector(checkHostingState)]) {
+            ((void (*)(id, SEL))objc_msgSend)(arbiter, @selector(checkHostingState));
+        }
+    } @catch (NSException *exception) {
+        return [NSString stringWithFormat:@"keyboard ui host threw %@", exception.reason ?: exception.name ?: @"?"];
+    }
+    NSString *after = DSHandlerBundle(DSKeyboardUIHandle(arbiter)) ?: @"none";
+    return [NSString stringWithFormat:@"keyboard ui host %@ -> %@", before, after];
+}
+
 static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onScreen) {
     BOOL staged = DSBundleIsStaged(source);
     id springBoard = DSSpringBoardKeyboardHandler(arbiter);
@@ -396,7 +438,7 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     if (!onScreen) verdict = @"keyboard is down";
     else if (!staged) verdict = @"this keyboard is not from a staged app";
     else if (!springBoard) verdict = @"SpringBoard has no keyboard client, so it cannot draw keys";
-    else if ([uiBundle isEqualToString:@"com.apple.springboard"] && layer) verdict = @"keyboard scene exists";
+    else if ([uiBundle isEqualToString:@"com.apple.springboard"] && layer) verdict = @"SpringBoard draws the keys outside the card";
     else if ([uiBundle isEqualToString:@"com.apple.springboard"]) verdict = @"SpringBoard is host but has no keyboard scene";
     return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d",
             verdict, source ?: @"?", onScreen, staged, springBoard != nil, uiBundle, layer];
@@ -431,21 +473,43 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     (void)handler;
 
     %orig;
-    // The picker search keyboard is the one that looks right. A staged app is
-    // sent down that same path by DSStageManager. This hook does not retarget
-    // the arbiter and does not place a keyboard scene.
+
+    NSString *hostNote = nil;
+    if (onScreen && DSStageReady() && DSBundleIsStaged(source) &&
+        !DSPickerSearchOwnsKeyboard() && DSHostAssignAttempts < 3) {
+        NSString *current = DSHandlerBundle(DSKeyboardUIHandle(self)) ?: @"none";
+        if (![current isEqualToString:@"com.apple.springboard"]) {
+            DSHostAssignAttempts++;
+            hostNote = DSAssignSpringBoardKeyboardHost(self);
+        } else {
+            hostNote = @"keyboard ui host is already com.apple.springboard";
+        }
+    } else if (!onScreen) {
+        DSHostAssignAttempts = 0;
+    }
+
     NSString *summary = nil;
     @try {
         if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];
     } @catch (NSException *exception) {
     }
     DSArbiterBusy = NO;
-    if (summary.length) {
+
+    if (hostNote.length || summary.length) {
+        NSString *hostCopy = [hostNote copy];
+        NSString *summaryCopy = [summary copy];
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *shown = [NSString stringWithFormat:@"%@ | %@", summary, DSPresentedKeyboardWindowStatus()];
-            DSTell(^(DSStageManager *manager) {
-                [manager noteKeyboardDebugFromSpringBoard:shown];
-            });
+            if (hostCopy.length) {
+                DSTell(^(DSStageManager *manager) {
+                    [manager noteKeyboardDebugFromSpringBoard:hostCopy];
+                });
+            }
+            if (summaryCopy.length) {
+                NSString *shown = [NSString stringWithFormat:@"%@ | %@", summaryCopy, DSPresentedKeyboardWindowStatus()];
+                DSTell(^(DSStageManager *manager) {
+                    [manager noteKeyboardDebugFromSpringBoard:shown];
+                });
+            }
         });
     }
 
@@ -558,6 +622,7 @@ static void DSRegisterDarwinObservers(void) {
         BOOL notStaged = (state & (1ULL << 37)) != 0;
         BOOL listening = (state & (1ULL << 38)) != 0;
         BOOL loaded = (state & (1ULL << 39)) != 0;
+        BOOL remote = (state & (1ULL << 48)) != 0;
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
         if (hadField && kind == 1) className = @"field";
@@ -567,7 +632,9 @@ static void DSRegisterDarwinObservers(void) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
             [manager noteAppDylibSignal:hash listening:listening loaded:loaded];
             NSString *line;
-            if (loaded && !listening && !hadField && !changed && !notStaged) {
+            if (remote) {
+                line = [NSString stringWithFormat:@"app: %@ remote keyboard, message field stays", bundle];
+            } else if (loaded && !listening && !hadField && !changed && !notStaged) {
                 line = [NSString stringWithFormat:@"app: %@ loaded the stage dylib", bundle];
             } else if (listening) {
                 line = [NSString stringWithFormat:@"app: %@ is listening for staged keys", bundle];

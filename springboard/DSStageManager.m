@@ -613,7 +613,9 @@ static BOOL sSystemEdgePullAvailable;
     // Picker search owns this window's keyboard. Do not retarget it.
     if (_searchSlot >= 0) return;
     if ([self isHostingBundleIdentifier:source]) {
-        if (onScreen) [self showStagedKeyboardLikePickerForBundle:source];
+        // The message field stays the editor. A SpringBoard text field here
+        // would steal the caret and the letters would never leave SpringBoard.
+        [self noteHostedAppKeyboard:onScreen frame:frame source:source];
         return;
     }
     if (_stagedKeyboardSlot >= 0) return;
@@ -622,6 +624,33 @@ static BOOL sSystemEdgePullAvailable;
                   duration:0.25];
     if (!onScreen) return;
     [self giveBackKeyWindow];
+}
+
+- (BOOL)isPickerSearchActive {
+    return _searchSlot >= 0;
+}
+
+- (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
+    if (_searchSlot >= 0) return;
+    static NSString *loggedBundle = nil;
+    if (!onScreen) {
+        if ([loggedBundle isEqualToString:source]) loggedBundle = nil;
+        [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
+        return;
+    }
+    CGRect screen = [self screenBounds];
+    CGRect keys = frame;
+    BOOL reported = CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
+                    CGRectGetMinY(keys) < CGRectGetMaxY(screen) - 1.0;
+    if (!reported) {
+        keys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
+    }
+    if (![loggedBundle isEqualToString:source]) {
+        loggedBundle = [source copy];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keeps the message field, keyboard %@ (reported %@)",
+                                  source, NSStringFromCGRect(keys), NSStringFromCGRect(frame));
+    }
+    [self noteKeyboardFrame:keys source:source duration:0.25];
 }
 
 - (NSInteger)slotForHostedBundle:(NSString *)bundle {
@@ -798,10 +827,10 @@ static BOOL sSystemEdgePullAvailable;
     NSString *bundle = [self bundleForKeyboardHash:(uint32_t)state];
     if (![self isHostingBundleIdentifier:bundle]) return;
     if (_searchSlot >= 0) return;
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for the picker keyboard to %@",
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for a keyboard to %@, the search field stays out of it",
                               bundle, show ? @"show" : @"hide");
-    if (show) [self showStagedKeyboardLikePickerForBundle:bundle];
-    else [self hideStagedKeyboardLikePicker];
+    // Do not open the SpringBoard proxy field. That moves the caret out of the app.
+    if (!show) [self hideStagedKeyboardLikePicker];
 }
 
 - (NSString *)hostedBundleForStagedKeyboard {
@@ -865,6 +894,8 @@ static BOOL sSystemEdgePullAvailable;
 
     if ([source isEqualToString:@"SpringBoard"]) {
         if ([self isShowingAppPicker] || _searchSlot >= 0 || _stagedKeyboardSlot >= 0) return YES;
+        // SpringBoard draws the remote keyboard for a hosted app. That lift is real.
+        if (anyHost && !CGRectIsEmpty(keyboard)) return YES;
         // Search can end before this hide arrives. Still drop a lift that
         // belongs to a picker, and leave a hosted app's card where it is.
         if (CGRectIsEmpty(keyboard)) {

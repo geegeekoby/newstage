@@ -1,3 +1,6 @@
+**4.5.36**
+- The caret left the tapped field because SpringBoard's proxy field took the key. That path is gone for staged apps. SpringBoard becomes the keyboard UI host so the keys sit outside the card, and Messenger keeps the message field as the editor. The in-app filter is Messenger only (ElleKit ignored Exclude and never loaded a UIKit-wide filter into Messenger). Picker search is unchanged. Keyboard windows are not raised
+
 **4.5.35**
 - Continues from 4.5.29. The picker keyboard still sits outside the card. Letters stayed in SpringBoard because ElleKit never loaded the in-app side into Messenger: that dylib lived only under DynamicLibraries, and TweakInject is a separate directory on this jailbreak. Installing now copies it there and restarts Messenger. Keystrokes are also written under /var/tmp so the app can read them. The post-4.5.29 keyboard host and Foundation-filter experiments are not brought back
 

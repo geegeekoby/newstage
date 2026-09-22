@@ -8,37 +8,26 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
-// Injected into every UIKit app. While this process is the one on the stage,
-// every route UIKit offers for "how big is the screen" answers with the stage
-// rectangle and the interface stays pinned to portrait.
+// Injected into Messenger (and only Messenger). While this process is the one
+// on the stage, every route UIKit offers for "how big is the screen" answers
+// with the stage rectangle and the interface stays pinned to portrait.
 //
-// The keyboard is deliberately not one of those routes. While this process is
-// staged, it does not show a keyboard of its own and it does not ask the
-// keyboard arbiter for one. SpringBoard shows the same keyboard the stage
-// picker search uses, and keystrokes from that keyboard are inserted here.
+// The keyboard is SpringBoard's remote keyboard: this process keeps the
+// message field as the editor, banishes its own key chrome inside the card,
+// and SpringBoard draws the keys outside. The picker search keyboard is a
+// different path and is left alone.
 //
-// Apps that hard-code portrait phone geometry get a small amount of extra help
-// at the bottom of the file.
-//
-// Nothing below is hooked until the app is actually put on the stage. The filter
-// is UIKit, so this dylib loads into everything with a screen - including the
-// package manager the tweak is installed from - and an app that is never staged
-// has no use for any of it. Installing the hooks lazily means such a process
-// carries one notification observer and no patched methods at all, so a mistake
-// in here cannot reach an app that is not using the feature.
+// Nothing below is hooked until the app is actually put on the stage.
 
 static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
 }
 
 static void DSBanishLocalKeyboard(void);
-static void DSRequestPickerKeyboard(BOOL show);
 static BOOL DSResignIsFromKeyWindow(void);
 static BOOL DSResponderTakesText(UIResponder *responder);
 static BOOL DSIsKeyboardWindow(UIWindow *window);
 
-static int DSKeyboardWantGeneration = 0;
-static int DSKeyboardRequestToken = NOTIFY_TOKEN_INVALID;
 static NSInteger DSLastKeyboardInputSeq = 0;
 // The field the user tapped. SpringBoard taking the key window can make UIKit
 // drop first-responder status; the field is still where the text has to go.
@@ -46,7 +35,6 @@ static __weak UIResponder *DSKeyboardTarget = nil;
 static BOOL DSKeyboardTargetOnScreen = NO;
 static CFAbsoluteTime DSKeyboardShownAt = 0;
 static BOOL DSLoggedMissingTextTarget = NO;
-static BOOL DSLoggedResignStack = NO;
 static NSString *DSLoggedEditingClass = nil;
 // Set while a letter is being written into the tapped field. The app must not
 // open its own keyboard for that, and it must not hide the one already up.
@@ -56,6 +44,7 @@ static BOOL DSDeliveringStageKey = NO;
 static BOOL DSComposerHeld = NO;
 static CFAbsoluteTime DSComposerHeldAt = 0;
 static BOOL DSSuppressComposerResign = NO;
+static BOOL DSAllowKeyboardHide = NO;
 
 static void DSHoldComposer(void) {
     DSComposerHeld = YES;
@@ -153,18 +142,6 @@ static BOOL DSResignIsFromKeyWindow(void) {
         if ([frame rangeOfString:@"becomeKeyWindow"].location != NSNotFound) return YES;
     }
     return NO;
-}
-
-static NSString *DSResignStackSummary(void) {
-    NSArray *symbols = NSThread.callStackSymbols;
-    NSMutableArray *parts = [NSMutableArray array];
-    NSUInteger limit = MIN((NSUInteger)4, symbols.count);
-    for (NSUInteger index = 0; index < limit; index++) {
-        NSString *frame = symbols[index];
-        if (frame.length > 70) frame = [frame substringToIndex:70];
-        [parts addObject:frame];
-    }
-    return [parts componentsJoinedByString:@" | "];
 }
 
 static NSString *DSResponderClassName(UIResponder *responder) {
@@ -390,6 +367,21 @@ static void DSReportLoaded(void) {
     });
 }
 
+static void DSReportRemoteKeyboard(void) {
+    static BOOL reported = NO;
+    if (reported) return;
+    reported = YES;
+    static int token = NOTIFY_TOKEN_INVALID;
+    if (token == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardApplyNotification, &token);
+    }
+    if (token == NOTIFY_TOKEN_INVALID) return;
+    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
+    state |= (1ULL << 48) | (1ULL << 38);
+    notify_set_state(token, state);
+    notify_post(kDSKeyboardApplyNotification);
+}
+
 static void DSTypeText(UIResponder *responder, NSString *text) {
     NSString *before = DSPlainText(responder);
     if ([responder conformsToProtocol:@protocol(UITextInput)]) {
@@ -510,46 +502,6 @@ static void DSDrainKeyboardInput(void) {
     // A read can miss the line SpringBoard just wrote. The notification still
     // carries that one letter.
     if (DSLastKeyboardInputSeq == before) DSApplyNotifyState();
-}
-
-static void DSPostKeyboardRequest(BOOL show) {
-    if (DSKeyboardRequestToken == NOTIFY_TOKEN_INVALID) {
-        notify_register_check(kDSKeyboardRequestNotification, &DSKeyboardRequestToken);
-    }
-    if (DSKeyboardRequestToken == NOTIFY_TOKEN_INVALID) return;
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
-    uint64_t state = DSIdentifierHash(identifier);
-    if (show) state |= kDSStageStateActiveBit;
-    notify_set_state(DSKeyboardRequestToken, state);
-    notify_post(kDSKeyboardRequestNotification);
-}
-
-static void DSRequestPickerKeyboard(BOOL show) {
-    if (!DSStaged()) return;
-    DSKeyboardWantGeneration++;
-    int generation = DSKeyboardWantGeneration;
-    if (show) {
-        DSKeyboardShownAt = CFAbsoluteTimeGetCurrent();
-        DSPostKeyboardRequest(YES);
-        return;
-    }
-    // Taking the key window resigns the field a moment after it is tapped.
-    // That is not the user closing the field, and hiding here is what left the
-    // keyboard either stuck up or with nowhere to put the text.
-    if (DSKeyboardShownAt > 0 && CFAbsoluteTimeGetCurrent() - DSKeyboardShownAt < 0.35) return;
-    DSKeyboardTargetOnScreen = NO;
-    NSString *stack = DSResignStackSummary();
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (generation != DSKeyboardWantGeneration || !DSStaged()) return;
-        DSKeyboardTarget = nil;
-        DSLoggedEditingClass = nil;
-        if (!DSLoggedResignStack) {
-            DSLoggedResignStack = YES;
-            DSDiagnosticsRecordFormat(@"app: field resigned %@", stack);
-        }
-        DSDiagnosticsRecord(@"app: text field closed, hiding the picker keyboard");
-        DSPostKeyboardRequest(NO);
-    });
 }
 
 static CGRect DSStageBounds(void) {
@@ -941,7 +893,7 @@ static void DSInstallKeyboardBanishObserver(void) {
                 if (!DSKeyboardTargetOnScreen || ![target isKindOfClass:UIView.class]) return;
                 if (((UIView *)target).window != nil) return;
                 if (DSKeyboardShownAt > 0 && CFAbsoluteTimeGetCurrent() - DSKeyboardShownAt < 0.35) return;
-                DSRequestPickerKeyboard(NO);
+                // The remote keyboard path does not use the picker proxy field.
             });
         if (observer) {
             CFRunLoopAddObserver(CFRunLoopGetMain(), observer, kCFRunLoopCommonModes);
@@ -964,9 +916,7 @@ static void DSInstallKeyboardBanishObserver(void) {
 }
 
 - (void)willMoveToWindow:(UIWindow *)newWindow {
-    if (DSStaged() && newWindow == nil && (UIResponder *)self == DSKeyboardTarget) {
-        DSRequestPickerKeyboard(NO);
-    }
+    (void)newWindow;
     %orig;
 }
 
@@ -993,22 +943,24 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 %hook UIKeyboardImpl
 
-// The remote keyboard is the arbiter's keyboard. A staged app does not use it.
-// The local keyboard would draw inside the card. Neither is allowed to start.
+// SpringBoard draws the keys outside the card. This process keeps the message
+// field as the editor so the letters land where they were tapped.
 + (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return NO;
+    if (DSStaged()) return YES;
     return %orig;
 }
 
 - (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return NO;
+    if (DSStaged()) return YES;
     return %orig;
 }
 
 - (void)showKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
+        DSReportRemoteKeyboard();
+        %orig;
+        DSBanishLocalKeyboard();
         return;
     }
     %orig;
@@ -1017,10 +969,9 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (void)hideKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
-        // Hiding the in-process keyboard resigns the message box. The blue
-        // line leaves, and the stage window's field becomes the only editor.
-        if (DSComposerHeld) return;
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
+        // A local hide while the message box is still the editor resigns it.
+        // The remote keyboard hides when the field itself resigns.
+        if (DSComposerHeld && !DSAllowKeyboardHide) return;
         %orig;
         return;
     }
@@ -1036,23 +987,21 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged() && DSResponderTakesText(self)) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
-    // The stage window has to become key for the picker keyboard. UIKit then
-    // resigns this field. Refusing that keeps the blue line in the message box.
     if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
+    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
+    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self) && !DSDeliveringStageKey) {
         DSReleaseComposer();
-        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }
@@ -1066,7 +1015,6 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -1077,10 +1025,11 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
+    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
+    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         DSReleaseComposer();
-        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }
@@ -1094,7 +1043,6 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -1105,10 +1053,11 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
+    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
+    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         DSReleaseComposer();
-        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }

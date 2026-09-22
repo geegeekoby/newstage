@@ -518,7 +518,11 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
         NSString *hostCopy = [hostNote copy];
         NSString *summaryCopy = [summary copy];
         BOOL release = releaseHost;
+        BOOL keyboardDown = !onScreen;
         dispatch_async(dispatch_get_main_queue(), ^{
+            if (keyboardDown) {
+                DSRestoreRemoteKeyboardPlacement();
+            }
             if (release) {
                 DSReleaseStagedKeyboardHost();
             }

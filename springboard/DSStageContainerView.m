@@ -140,7 +140,11 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
             _contentMask = [CAShapeLayer layer];
             _contentView.layer.mask = _contentMask;
         }
-        UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:bounds
+        // The hosted app keeps laying out at the full card size, so its keyboard
+        // stays in the bottom band. The mask has to omit that band or the keys
+        // are still painted inside the card. A path of the full bounds does not.
+        CGRect visible = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
+        UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:visible
                                                    byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight)
                                                          cornerRadii:CGSizeMake(_cornerRadius, _cornerRadius)];
         _contentMask.frame = bounds;
@@ -294,6 +298,10 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (_keyboardBandHeight > 1.0 &&
+        point.y >= CGRectGetHeight(self.bounds) - _keyboardBandHeight) {
+        return nil;
+    }
     UIView *hit = [super hitTest:point withEvent:event];
     if (!_passThroughToHost) return hit;
     if (!hit) return nil;

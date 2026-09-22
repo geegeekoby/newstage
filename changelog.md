@@ -1,3 +1,6 @@
+**4.5.44**
+- Moving the keyboard window onto the stage scene took it out of the only scene that actually draws it, so the keys had a frame and nothing on screen. The top card then showed no keyboard, and the bottom card still showed Messenger's own keys. That window stays in the remote-keyboard scene. The card cuts off the bottom band where the hosted app paints its keyboard, and touches there fall through to the system keyboard
+
 **4.5.43**
 - The keys stayed inside the card because the system keyboard window is in the remote-keyboard scene at level 10, and the stage is a different scene at level 999. Raising the window level cannot cross scenes. While a staged app has the keyboard up, that existing window is moved onto the stage's scene and set just above the stage. The card is not lifted. The window goes back to its own scene when the keyboard goes down
 

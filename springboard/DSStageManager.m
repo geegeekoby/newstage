@@ -643,66 +643,66 @@ static BOOL sSystemEdgePullAvailable;
     return _searchSlot >= 0;
 }
 
+- (void)clearHostedKeyboardBands {
+    _container.keyboardBandHeight = 0.0;
+    if (_topContainer) _topContainer.keyboardBandHeight = 0.0;
+}
+
+// The system keyboard only paints while its window stays in the
+// remote-keyboard scene. Moving that window onto the stage scene left the
+// keys with a frame and nothing on screen. Cut the hosted app's own keyboard
+// out of the card instead, and let the system keyboard show through the hole.
+- (void)openHostedKeyboardBandForBundle:(NSString *)bundle reported:(CGRect)reported {
+    NSInteger slot = [self slotForHostedBundle:bundle];
+    DSStageContainerView *card = [self containerForSlot:slot];
+    if (!card) return;
+    CGRect screen = [self screenBounds];
+    CGRect systemKeys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
+    CGRect visible = DSVisibleKeyboardFrameOnScreen();
+    if (!CGRectIsNull(visible) && CGRectGetHeight(visible) >= kDSKeyboardPresentHeight &&
+        CGRectGetMinY(visible) > CGRectGetHeight(screen) * 0.4) {
+        systemKeys = visible;
+    }
+    CGRect cardFrame = CGRectOffset(card.frame, 0.0, -card.liftOffset);
+    CGFloat overlap = CGRectGetHeight(CGRectIntersection(cardFrame, systemKeys));
+    CGFloat local = 0.0;
+    if (CGRectGetHeight(reported) >= kDSKeyboardPresentHeight &&
+        CGRectGetMinY(reported) < CGRectGetHeight(screen) * 0.4 &&
+        CGRectGetHeight(reported) < CGRectGetHeight(cardFrame)) {
+        local = CGRectGetHeight(reported);
+    }
+    CGFloat band = MAX(overlap, local);
+    CGFloat limit = MAX(CGRectGetHeight(cardFrame) - 120.0, 0.0);
+    if (band > limit) band = limit;
+    card.keyboardBandHeight = band;
+    DSStageContainerView *other = [self containerForSlot:slot == 0 ? 1 : 0];
+    if (other && other != card) other.keyboardBandHeight = 0.0;
+    static NSString *loggedBand = nil;
+    NSString *mark = [NSString stringWithFormat:@"%@-%.0f", bundle ?: @"?", band];
+    if (![loggedBand isEqualToString:mark]) {
+        loggedBand = mark;
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard band %.0f on slot %ld card %@ system %@",
+                                  bundle, band, (long)slot,
+                                  NSStringFromCGRect(cardFrame), NSStringFromCGRect(systemKeys));
+    }
+}
+
 - (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
     if (_searchSlot >= 0) return;
-    static NSString *loggedPlace = nil;
-    static NSInteger hostedKeyboardGeneration = 0;
-    hostedKeyboardGeneration++;
-    NSInteger generation = hostedKeyboardGeneration;
+    // A window pulled off the remote-keyboard scene stops drawing. Put it back.
+    DSRestoreRemoteKeyboardPlacement();
+    _keyboardDrawnOutside = NO;
     if (!onScreen) {
-        loggedPlace = nil;
-        // Leave this clear so the card is not lifted. The in-scene keys move
-        // with the card; the system keyboard window does not.
-        _keyboardDrawnOutside = NO;
-        DSRestoreRemoteKeyboardPlacement();
+        [self clearHostedKeyboardBands];
         DSReleaseStagedKeyboardHost();
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
         return;
-    }
-    // The remote-keyboard window already holds the keys at the bottom of the
-    // display. It sits in its own scene, so a higher window level never puts
-    // it above the stage. Move that window onto this scene. Do not lift the
-    // card: that drags Messenger's own copy of the keys up with it.
-    _keyboardDrawnOutside = NO;
-    BOOL placed = DSPlaceRemoteKeyboardAboveStage(_window);
-    if (placed) {
-        if (![loggedPlace isEqualToString:@"placed"]) {
-            loggedPlace = @"placed";
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ %@", source, DSPresentedKeyboardWindowStatus());
-        }
-    } else if (![loggedPlace isEqualToString:@"miss"]) {
-        loggedPlace = @"miss";
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard stayed in the app scene (%@) reported %@ %@",
-                                  source,
-                                  DSPresentedKeyboardWindowStatus(),
-                                  NSStringFromCGRect(frame),
-                                  DSKeyboardWindowCensus());
     }
     CGRect keys = [self keyboardFrameOnDisplay:frame];
     if (!CGRectIsEmpty(keys)) {
         [self noteKeyboardFrame:keys source:source duration:0.25];
     }
-    if (placed) return;
-    __weak __typeof(self) weakSelf = self;
-    NSString *bundle = [source copy];
-    CGRect retryFrame = frame;
-    for (NSNumber *delay in @[ @0.12, @0.35, @0.7 ]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            __strong __typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf || generation != hostedKeyboardGeneration) return;
-            if (![strongSelf isHostingBundleIdentifier:bundle]) return;
-            if (strongSelf->_searchSlot >= 0) return;
-            if (!DSPlaceRemoteKeyboardAboveStage(strongSelf->_window)) {
-                DSDiagnosticsRecordFormat(@"SpringBoard: %@ remote keyboard window still not on the stage scene (%@)",
-                                          bundle, DSPresentedKeyboardWindowStatus());
-                return;
-            }
-            loggedPlace = @"placed";
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ %@", bundle, DSPresentedKeyboardWindowStatus());
-            (void)retryFrame;
-        });
-    }
+    [self openHostedKeyboardBandForBundle:source reported:frame];
 }
 
 - (NSInteger)slotForHostedBundle:(NSString *)bundle {
@@ -1074,12 +1074,9 @@ static BOOL sSystemEdgePullAvailable;
 
     BOOL hostedAppKeys = (_sceneHost.isHosting && [source isEqualToString:_sceneHost.bundleIdentifier]) ||
                          (_topSceneHost.isHosting && [source isEqualToString:_topSceneHost.bundleIdentifier]);
-    if (hostedAppKeys) {
-        _container.keyboardBandHeight = 0.0;
-        if (_topContainer) _topContainer.keyboardBandHeight = 0.0;
-    }
     // Keys still painted in the app scene move with the card. Leave the card
-    // alone until SpringBoard is the one drawing them.
+    // alone until SpringBoard is the one drawing them. The keyboard band is
+    // applied by noteHostedAppKeyboard and must survive this call.
     if (hostedAppKeys && !CGRectIsEmpty(keyboard) && !_keyboardDrawnOutside) {
         _keyboardFrame = keyboard;
         return;
@@ -2023,10 +2020,22 @@ static BOOL sSystemEdgePullAvailable;
     if (_state == DSStageStateClosed || _state == DSStageStateMinimized) return NO;
 
     CGRect card = CGRectOffset(_container.frame, 0.0, -_container.liftOffset);
-    if (CGRectContainsPoint(card, point)) return YES;
+    if (CGRectContainsPoint(card, point)) {
+        if (_container.keyboardBandHeight > 1.0 &&
+            point.y >= CGRectGetMaxY(card) - _container.keyboardBandHeight) {
+            return NO;
+        }
+        return YES;
+    }
     if (_stackSlotCount >= kDSMaxStackSlots && _topContainer && !_topContainer.hidden) {
         CGRect top = CGRectOffset(_topContainer.frame, 0.0, -_topContainer.liftOffset);
-        if (CGRectContainsPoint(top, point)) return YES;
+        if (CGRectContainsPoint(top, point)) {
+            if (_topContainer.keyboardBandHeight > 1.0 &&
+                point.y >= CGRectGetMaxY(top) - _topContainer.keyboardBandHeight) {
+                return NO;
+            }
+            return YES;
+        }
     }
 
     return NO;

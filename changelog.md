@@ -1,3 +1,6 @@
+**4.5.1**
+- The right-edge notch shows two squares, top and bottom. An empty square starts a stage on that half, and a staged app fills its square
+
 **4.5.0**
 - A small notch on the right edge of the screen lists apps on the stage and recently staged apps, and tapping one puts it on a stage
 - The notch stays available while the stage cards are closed

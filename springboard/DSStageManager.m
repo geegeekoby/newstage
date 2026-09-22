@@ -247,8 +247,8 @@ static BOOL sSystemEdgePullAvailable;
     _shelf.willOpenHandler = ^{
         [weakSelf refreshShelf];
     };
-    _shelf.selectionHandler = ^(NSString *bundleIdentifier) {
-        [weakSelf presentAppFromShelf:bundleIdentifier];
+    _shelf.halfHandler = ^(NSInteger half) {
+        [weakSelf beginStageOnHalf:half];
     };
     [root addSubview:_shelf];
 
@@ -459,6 +459,12 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     NSInteger bottomSlot = [self slotOnBottomHalf];
+    // A stage sitting on the top half only does not lift. Lifting it would use the
+    // bottom card's numbers and shove it off the screen.
+    if (_stackSlotCount < kDSMaxStackSlots && _primaryHalf != 0) {
+        keyboard = CGRectZero;
+        bottomSlot = 0;
+    }
     NSString *bottomBundle = [self sceneHostForSlot:bottomSlot].bundleIdentifier;
     _keyboardLiftSlot = bottomSlot;
     if (bottomBundle.length > 0 && source.length > 0 && ![source isEqualToString:bottomBundle] &&
@@ -698,6 +704,7 @@ static BOOL sSystemEdgePullAvailable;
 
 - (UIEdgeInsets)stageSafeAreaInsets {
     if (!_sceneHost.isHosting || CGRectIsEmpty(_keyboardFrame)) return UIEdgeInsetsZero;
+    if (_stackSlotCount < kDSMaxStackSlots && _primaryHalf != 0) return UIEdgeInsetsZero;
 
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     DSStageContainerView *bottomCard = [self containerOnHalf:0];
@@ -788,7 +795,9 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (DSStageContainerView *)containerOnHalf:(NSInteger)half {
-    if (_stackSlotCount < kDSMaxStackSlots) return _container;
+    if (_stackSlotCount < kDSMaxStackSlots) {
+        return _primaryHalf == half ? _container : nil;
+    }
     if (_primaryHalf == half) return _container;
     return _topContainer;
 }
@@ -922,7 +931,15 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)layoutAllStackSlotsForState:(DSStageState)state {
     if (_stackSlotCount <= 1) {
-        CGRect frame = [self stageFrameForState:state];
+        CGRect frame;
+        if (state == DSStageStateOverlay) {
+            frame = [self fixedHalfFrame:_primaryHalf];
+        } else if (state == DSStageStateSplit) {
+            _primaryHalf = 0;
+            frame = [self fixedHalfFrame:0];
+        } else {
+            frame = [self stageFrameForState:state];
+        }
         _container.frame = frame;
         _container.cornerRadius = [self stageCardCornerRadius];
         if (_topContainer) _topContainer.hidden = YES;
@@ -1819,6 +1836,10 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
 - (void)teardownStageApp {
     [self collapseStackKeepingBottomApp:NO];
+    // Corner pull always opens the bottom half. A top stage only stays on top
+    // while that stage is still around.
+    _primaryHalf = 0;
+    _secondHalf = 1;
     if (!_sceneHost) {
         [self showPickerImmediately];
         return;
@@ -2265,6 +2286,8 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     _state = DSStageStateClosed;
     _container.frame = [self stageFrameForState:DSStageStateClosed];
+    _primaryHalf = 0;
+    _secondHalf = 1;
     _stageQuarterTurns = 0;
     [self showPickerImmediately];
     [self noteStageWindowIdle];
@@ -2407,7 +2430,8 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 // where the drag started.
 - (void)offsetVisibleStackByY:(CGFloat)dy state:(DSStageState)state {
     if (_stackSlotCount <= 1) {
-        _container.frame = CGRectOffset([self stageFrameForState:state], 0.0, dy);
+        CGRect base = (state == DSStageStateOverlay) ? [self fixedHalfFrame:_primaryHalf] : [self stageFrameForState:state];
+        _container.frame = CGRectOffset(base, 0.0, dy);
         return;
     }
     _container.frame = CGRectOffset([self frameForHalf:_primaryHalf state:state], 0.0, dy);
@@ -2605,33 +2629,77 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
     [self refreshShelf];
 }
 
+- (NSString *)bundleIdentifierOnHalf:(NSInteger)half {
+    if (_stackSlotCount < kDSMaxStackSlots) {
+        if (_primaryHalf != half) return nil;
+        return _sceneHost.bundleIdentifier;
+    }
+    if (_primaryHalf == half) return _sceneHost.bundleIdentifier;
+    if (_secondHalf == half) return _topSceneHost.bundleIdentifier;
+    return nil;
+}
+
 - (void)refreshShelf {
     if (!_shelf) return;
-    NSMutableArray<NSString *> *staged = [NSMutableArray array];
-    if (_sceneHost.bundleIdentifier.length) [staged addObject:_sceneHost.bundleIdentifier];
-    if (_topSceneHost.bundleIdentifier.length) [staged addObject:_topSceneHost.bundleIdentifier];
-    [_shelf reloadStagedIdentifiers:staged
-                 recentIdentifiers:[DSPreferences sharedPreferences].recentApplications];
+    [_shelf reloadTopBundleIdentifier:[self bundleIdentifierOnHalf:1]
+             bottomBundleIdentifier:[self bundleIdentifierOnHalf:0]];
 }
 
-- (NSInteger)shelfSlotForNewApp {
-    if (!_sceneHost) return 0;
-    if (_stackSlotCount >= kDSMaxStackSlots && !_topSceneHost) return 1;
-    if (_stackSlotCount >= kDSMaxStackSlots && _primaryHalf != 0) return 1;
-    return 0;
+// Opens the app picker on one half. An app already on the other half stays there.
+- (void)addPickerStageOnHalf:(NSInteger)half {
+    if (_stackSlotCount >= kDSMaxStackSlots) {
+        DSStageContainerView *card = [self containerOnHalf:half];
+        DSSceneHost *host = (card == _topContainer) ? _topSceneHost : _sceneHost;
+        if (host) return;
+        DSAppPickerViewController *picker = (card == _topContainer) ? _topPicker : _picker;
+        [self presentPickerOnCard:card picker:picker];
+        if (picker == _picker) [self preparePickerForSearchKeyboard];
+        return;
+    }
+    if (_primaryHalf == half) {
+        if (!_sceneHost) [self showPickerImmediately];
+        return;
+    }
+
+    [self ensureTopStackInfrastructure];
+    _topContainer.darkMode = _container.darkMode;
+    _secondHalf = half;
+    _stackSlotCount = 2;
+    [_container setLiftOffset:0.0];
+    [_topContainer setLiftOffset:0.0];
+    _topContainer.frame = [self fixedHalfFrame:half];
+    _topContainer.alpha = 0.0;
+    _topContainer.hidden = NO;
+    [self presentPickerOnCard:_topContainer picker:_topPicker];
+
+    [UIView animateWithDuration:0.32
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                         [self layoutAllStackSlotsForState:DSStageStateOverlay];
+                         self->_topContainer.alpha = 1.0;
+                     }
+                     completion:^(BOOL finished) {
+                         [self presentPickerOnCard:self->_topContainer picker:self->_topPicker];
+                         [self updateStackChrome];
+                         [self bringShelfToFront];
+                         [self refreshShelf];
+                     }];
+    DSDiagnosticsRecordFormat(@"SpringBoard: opened a stage on the %@ half", half == 1 ? @"top" : @"bottom");
 }
 
-- (void)presentAppFromShelf:(NSString *)bundleIdentifier {
-    DSAppEntry *entry = [[DSAppLibrary sharedLibrary] entryForBundleIdentifier:bundleIdentifier];
-    if (!entry) return;
-    if ([[DSPreferences sharedPreferences] isApplicationDisabled:entry.bundleIdentifier]) return;
+- (void)beginStageOnHalf:(NSInteger)half {
+    if (half != 0 && half != 1) return;
+    if (_state == DSStageStateTracking) return;
 
-    BOOL showing = [_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier] ||
-                   [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier];
-    if (showing) {
+    BOOL thisHalfHasApp = [self bundleIdentifierOnHalf:half].length > 0;
+    BOOL otherHalfHasApp = [self bundleIdentifierOnHalf:half == 0 ? 1 : 0].length > 0;
+
+    if (thisHalfHasApp) {
         if (_state == DSStageStateClosed || _state == DSStageStateMinimized) {
             [self openStageAnimated:YES];
         }
+        [self refreshShelf];
         return;
     }
 
@@ -2643,14 +2711,25 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                 return;
             }
         }
+        if (!otherHalfHasApp) {
+            _primaryHalf = half;
+            _stackSlotCount = 1;
+        }
         [self openStageAnimated:NO];
         if (_state != DSStageStateOverlay && _state != DSStageStateSplit) return;
+    } else if (_state == DSStageStateSplit) {
+        [self enterStateOverlayAnimated:NO];
     }
 
-    NSInteger slot = [self shelfSlotForNewApp];
-    if (slot == 1) [self ensureTopStackInfrastructure];
+    if (!otherHalfHasApp && _stackSlotCount < kDSMaxStackSlots && !_sceneHost) {
+        _primaryHalf = half;
+        [self layoutAllStackSlotsForState:DSStageStateOverlay];
+        [self showPickerImmediately];
+    } else {
+        [self addPickerStageOnHalf:half];
+    }
     [self bringShelfToFront];
-    [self launchEntry:entry slot:slot];
+    [self refreshShelf];
 }
 
 #pragma mark - External events

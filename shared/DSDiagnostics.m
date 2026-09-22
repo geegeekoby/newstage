@@ -1,5 +1,8 @@
 #import "DSDiagnostics.h"
 #import "DSConstants.h"
+#import <fcntl.h>
+#import <unistd.h>
+#import <sys/file.h>
 
 static const NSUInteger kDSDiagnosticsMaxBytes = 12288;
 
@@ -65,6 +68,7 @@ void DSDiagnosticsRecord(NSString *message) {
                       message];
 
     dispatch_async(DSDiagnosticsQueue(), ^{
+        __block int lockFile = -1;
         @try {
             NSString *path = DSDiagnosticsPath();
             NSString *session = DSDiagnosticsSessionID();
@@ -73,6 +77,11 @@ void DSDiagnosticsRecord(NSString *message) {
                 written = [[written substringToIndex:written.length - 1]
                     stringByAppendingFormat:@" session=%@\n", session];
             }
+            // SpringBoard and the staged app both append this file. Without a
+            // lock the later write drops the other process's lines.
+            NSString *lockPath = [path stringByAppendingString:@".lock"];
+            lockFile = open(lockPath.fileSystemRepresentation, O_RDWR | O_CREAT, 0644);
+            if (lockFile >= 0) flock(lockFile, LOCK_EX);
             NSString *existing = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil] ?: @"";
             // A write that started before this respring can put the old boot back
             // on disk. Drop that boot once. The new line carries the session id, so
@@ -95,6 +104,11 @@ void DSDiagnosticsRecord(NSString *message) {
             [combined writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
         } @catch (NSException *exception) {
             // Losing a log line is never worth a crash.
+        } @finally {
+            if (lockFile >= 0) {
+                flock(lockFile, LOCK_UN);
+                close(lockFile);
+            }
         }
     });
 }

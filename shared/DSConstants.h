@@ -36,6 +36,13 @@
 #define kDSKeyboardInputPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard.input.plist"
 #define kDSKeyboardInputNotification "com.recreated.dynamicstage.keyboard.input"
 
+// The staged app tells SpringBoard whether that letter changed the field.
+// The app cannot append the shared log from inside its sandbox, so this is
+// the line that shows up in the preferences log.
+// Low 32 bits: bundle hash. Bit 32 changed, 33 had a field, 34 first
+// responder, 35 window, 36 delete. Bits 40-47: 0 none, 1 field, 2 text view, 3 other.
+#define kDSKeyboardApplyNotification "com.recreated.dynamicstage.keyboard.apply"
+
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"

@@ -46,6 +46,7 @@
 // arbiter did. `appLine` is what the hosted app reported.
 - (void)noteKeyboardDebugFromApp:(NSString *)line;
 - (void)noteKeyboardDebugFromSpringBoard:(NSString *)line;
+- (void)noteStagedKeyResult:(NSString *)line;
 - (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;

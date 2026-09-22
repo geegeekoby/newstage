@@ -2692,6 +2692,13 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     [self refreshKeyboardDebugLabel];
 }
 
+- (void)noteStagedKeyResult:(NSString *)line {
+    if (line.length == 0) return;
+    _keyboardDebugApp = line;
+    DSDiagnosticsRecord(line);
+    [self refreshKeyboardDebugLabel];
+}
+
 - (void)noteKeyboardDebugFromSpringBoard:(NSString *)line {
     NSString *shown = line.length ? [@"SB: " stringByAppendingString:line] : @"SB: (empty)";
     if ([shown isEqualToString:_keyboardDebugSpringBoard]) return;

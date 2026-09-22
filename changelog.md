@@ -1,3 +1,6 @@
+**4.5.26**
+- The letters were leaving the picker keyboard. Five of them were recorded, and none of them arrived in Messenger. Each letter is now written into the message field, and Messenger's own keyboard stays hidden. SpringBoard records `app: key insert` with `changed=1` when the message field took the letter
+
 **4.5.25**
 - The staged keyboard appeared, then the home screen took the key and the letters went somewhere else. The field was also refusing the letter, so the keyboard left it after one character. The same field keeps the keyboard while that stage is open. Minimizing still hides it
 

@@ -544,6 +544,34 @@ static void DSRegisterDarwinObservers(void) {
             [manager noteKeyboardDebugFromApp:line];
         });
     });
+
+    int keyboardApplyToken = NOTIFY_TOKEN_INVALID;
+    notify_register_dispatch(kDSKeyboardApplyNotification, &keyboardApplyToken, dispatch_get_main_queue(), ^(int token) {
+        uint64_t state = 0;
+        notify_get_state(token, &state);
+        uint32_t hash = (uint32_t)state;
+        BOOL changed = (state & (1ULL << 32)) != 0;
+        BOOL hadField = (state & (1ULL << 33)) != 0;
+        BOOL editing = (state & (1ULL << 34)) != 0;
+        BOOL hasWindow = (state & (1ULL << 35)) != 0;
+        BOOL isDelete = (state & (1ULL << 36)) != 0;
+        NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
+        NSString *className = @"none";
+        if (hadField && kind == 1) className = @"field";
+        else if (hadField && kind == 2) className = @"textview";
+        else if (hadField && kind == 3) className = @"other";
+        DSTell(^(DSStageManager *manager) {
+            NSString *bundle = [manager bundleForKeyboardHash:hash];
+            NSString *line = [NSString stringWithFormat:@"app: key %@ -> %@ %@ fr=%d win=%d changed=%d",
+                              isDelete ? @"delete" : @"insert",
+                              bundle,
+                              className,
+                              editing,
+                              hasWindow,
+                              changed];
+            [manager noteStagedKeyResult:line];
+        });
+    });
 }
 
 static void DSInstallRemainingHooks(void) {

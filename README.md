@@ -271,7 +271,7 @@ tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full wi
 
 **Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up and no app is hosted. The card lifts above the keyboard (301pt floor).
 
-**Staged app.** The app is told the keyboard is remote, and keyboard views in its text-effects window are forced out of the card. SpringBoard keeps its keyboard window on screen. With two stages, both cards slide up by the same amount so the bottom card clears that keyboard without either card changing size. The line at the top reports the app, whether SpringBoard's keyboard window is actually shown, and its frame. The same lines are appended to `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`.
+**Staged app.** The app is told the keyboard is remote, and keyboard views in its text-effects window are forced out of the card. SpringBoard keeps its own keyboard window on screen, at the size SpringBoard gave it. Only the card the keys cover slides up, and it can overlap the other card. The other card stays on its half. Neither card changes size. The line at the top reports the app, whether SpringBoard's keyboard window is shown, its frame, and `lift slot0` / `lift slot1`. The same lines are appended to `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`.
 
 **What is never done.** No layer reparenting of the hosted app, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no keyboard focus coordinator, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards), no fallback that shows the staged app's own keys.
 

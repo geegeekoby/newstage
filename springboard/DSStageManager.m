@@ -480,24 +480,26 @@ static BOOL sSystemEdgePullAvailable;
         keyboard = CGRectZero;
     }
 
-    NSInteger bottomSlot = [self slotOnBottomHalf];
-    DSStageContainerView *bottomCardForKeys = [self containerOnHalf:0];
-    // A stage sitting on the top half only, or a bottom card that is minimized,
-    // does not lift. Lifting it would use the wrong card and shove it on screen.
-    if (!bottomCardForKeys || [self cardIsParked:bottomCardForKeys] ||
-        (_stackSlotCount < kDSMaxStackSlots && _primaryHalf != 0)) {
+    // A single card on the top half already sits above the keyboard.
+    if (_stackSlotCount < kDSMaxStackSlots && _primaryHalf != 0) {
         keyboard = CGRectZero;
-        bottomSlot = 0;
     }
-    NSString *bottomBundle = [self sceneHostForSlot:bottomSlot].bundleIdentifier;
+
+    NSInteger liftSlot = [self slotOwningKeyboardSource:source];
+    DSStageContainerView *liftCard = [self containerForSlot:liftSlot];
+    if (!liftCard || [self cardIsParked:liftCard]) {
+        keyboard = CGRectZero;
+        liftSlot = 0;
+    }
+    NSString *ownerBundle = [self sceneHostForSlot:liftSlot].bundleIdentifier;
     NSString *otherBundle = nil;
     if (_stackSlotCount >= kDSMaxStackSlots) {
-        otherBundle = [self sceneHostForSlot:bottomSlot == 0 ? 1 : 0].bundleIdentifier;
+        otherBundle = [self sceneHostForSlot:liftSlot == 0 ? 1 : 0].bundleIdentifier;
     }
-    _keyboardLiftSlot = bottomSlot;
-    BOOL fromEitherStage = [source isEqualToString:bottomBundle] ||
+    _keyboardLiftSlot = liftSlot;
+    BOOL fromEitherStage = [source isEqualToString:ownerBundle] ||
                            (otherBundle.length > 0 && [source isEqualToString:otherBundle]);
-    if (bottomBundle.length > 0 && source.length > 0 && !fromEitherStage &&
+    if (ownerBundle.length > 0 && source.length > 0 && !fromEitherStage &&
         ![source isEqualToString:@"SpringBoard"]) {
         keyboard = CGRectZero;
     }
@@ -531,7 +533,10 @@ static BOOL sSystemEdgePullAvailable;
         DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
         CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
         CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
-        if ([self liftOffsetForSlot:_keyboardLiftSlot] >= MAX(overlap, 0.0) - 0.5) return;
+        CGFloat wanted = MAX(overlap, 0.0);
+        NSInteger otherSlot = _keyboardLiftSlot == 0 ? 1 : 0;
+        BOOL otherDown = _stackSlotCount < kDSMaxStackSlots || [self liftOffsetForSlot:otherSlot] < 0.5;
+        if (fabs([self liftOffsetForSlot:_keyboardLiftSlot] - wanted) < 0.5 && otherDown) return;
     } else {
         _keyboardFrame = keyboard;
     }
@@ -564,6 +569,21 @@ static BOOL sSystemEdgePullAvailable;
     return _primaryHalf == 0 ? 0 : 1;
 }
 
+// The card the keyboard belongs to. The other card is not moved.
+- (NSInteger)slotOwningKeyboardSource:(NSString *)source {
+    if (_sceneHost.bundleIdentifier.length > 0 && [source isEqualToString:_sceneHost.bundleIdentifier]) {
+        return 0;
+    }
+    if (_topSceneHost.bundleIdentifier.length > 0 && [source isEqualToString:_topSceneHost.bundleIdentifier]) {
+        return 1;
+    }
+    if (_stackSlotCount >= kDSMaxStackSlots) {
+        if (!_sceneHost.isHosting) return 0;
+        if (!_topSceneHost.isHosting) return 1;
+    }
+    return [self slotOnBottomHalf];
+}
+
 - (CGRect)restingFrameForKeyboardLiftSlot:(NSInteger)slot state:(DSStageState)state {
     if (_stackSlotCount >= kDSMaxStackSlots && state == DSStageStateOverlay) {
         NSInteger half = slot == 1 ? _secondHalf : _primaryHalf;
@@ -579,9 +599,21 @@ static BOOL sSystemEdgePullAvailable;
 
 - (CGFloat)maxLiftForSlot:(NSInteger)slot state:(DSStageState)state {
     CGRect resting = [self restingFrameForKeyboardLiftSlot:slot state:state];
-    // Two stacked cards have no gap between them, so the old cap was zero and
-    // the bottom card never moved. Both cards shift up together instead.
+    // The card may slide up until it meets the top margin. A top-half card is
+    // already there, so its cap is zero and it stays put.
     return MAX(CGRectGetMinY(resting) - kDSStageKeyboardHeadroom, 0.0);
+}
+
+- (void)restoreCardStackingOrder {
+    if (_stackSlotCount < kDSMaxStackSlots || !_topContainer || !_container) return;
+    UIView *upper = [self containerOnHalf:1];
+    UIView *lower = [self containerOnHalf:0];
+    if (!upper || !lower || upper == lower || !upper.superview) return;
+    [upper.superview insertSubview:upper aboveSubview:lower];
+    [self bringShelfToFront];
+    if (_keyboardDebugLabel.superview) {
+        [_keyboardDebugLabel.superview bringSubviewToFront:_keyboardDebugLabel];
+    }
 }
 
 - (void)liftCardBy:(CGFloat)offset duration:(NSTimeInterval)duration {
@@ -589,38 +621,48 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)liftCardBy:(CGFloat)offset slot:(NSInteger)slot duration:(NSTimeInterval)duration {
-    // However wrong the number that got here, the card stays on the screen. A card
-    // lifted off the top takes the search field, the app and every way of closing the
-    // stage with it, and reads as the stage having broken.
+    // Only the card the keyboard covers moves, and it stays on screen. Moving the
+    // other card by the same amount pushes the top stage off the top of the phone.
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     DSStageContainerView *card = [self containerForSlot:slot];
     if (!card || [self cardIsParked:card]) return;
 
+    offset = MIN(MAX(offset, 0.0), [self maxLiftForSlot:slot state:layoutState]);
+
     DSStageContainerView *other = nil;
     if (_stackSlotCount >= kDSMaxStackSlots) {
-        NSInteger bottom = [self slotOnBottomHalf];
-        offset = MIN(MAX(offset, 0.0), [self maxLiftForSlot:bottom state:layoutState]);
-        other = [self containerForSlot:bottom == 0 ? 1 : 0];
+        other = [self containerForSlot:slot == 0 ? 1 : 0];
         if (other && [self cardIsParked:other]) other = nil;
-    } else {
-        offset = MIN(MAX(offset, 0.0), [self maxLiftForSlot:slot state:layoutState]);
     }
 
-    if (fabs(offset - card.liftOffset) < 0.5 &&
-        (!other || fabs(offset - other.liftOffset) < 0.5)) return;
+    BOOL cardAlready = fabs(offset - card.liftOffset) < 0.5;
+    BOOL otherAlready = !other || other.liftOffset < 0.5;
+    if (cardAlready && otherAlready) return;
 
     void (^lift)(void) = ^{
-        // Move the cards. Do not tell the app a new size. That transaction blanks it.
-        // With two cards, the top one slides up by the same amount so the bottom
-        // card can clear the keyboard without changing either card's size.
+        // Do not tell the app a new size. That transaction blanks it.
+        // The moving card comes to the front so it can overlap the other card.
         [card setLiftOffset:offset];
-        if (other) [other setLiftOffset:offset];
+        if (other) [other setLiftOffset:0.0];
+        if (offset > 0.5 && card.superview) {
+            [card.superview bringSubviewToFront:card];
+            [self bringShelfToFront];
+            if (self->_keyboardDebugLabel.superview) {
+                [self->_keyboardDebugLabel.superview bringSubviewToFront:self->_keyboardDebugLabel];
+            }
+        } else {
+            [self restoreCardStackingOrder];
+        }
     };
     if (duration > 0.0) {
         [UIView animateWithDuration:duration animations:lift];
     } else {
         lift();
     }
+    if (!cardAlready) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: lifted stack slot %ld by %.0f", (long)slot, offset);
+    }
+    [self refreshKeyboardDebugLabel];
 }
 
 - (void)pushLiftedGeometryToApp {
@@ -2058,7 +2100,7 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
     if (!_window) return;
     if (!_keyboardDebugLabel) {
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
-        label.numberOfLines = 4;
+        label.numberOfLines = 6;
         label.font = [UIFont monospacedSystemFontOfSize:10 weight:UIFontWeightMedium];
         label.textColor = UIColor.whiteColor;
         label.backgroundColor = [UIColor colorWithWhite:0 alpha:0.78];
@@ -2067,13 +2109,15 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
         [_window.rootViewController.view addSubview:label];
         _keyboardDebugLabel = label;
     }
-    NSString *text = [NSString stringWithFormat:@"%@\n%@",
+    NSString *text = [NSString stringWithFormat:@"%@\n%@\nlift slot0=%.0f slot1=%.0f",
                       _keyboardDebugApp.length ? _keyboardDebugApp : @"app: (no report yet)",
-                      _keyboardDebugSpringBoard.length ? _keyboardDebugSpringBoard : @"SB: (no keyboard event yet)"];
+                      _keyboardDebugSpringBoard.length ? _keyboardDebugSpringBoard : @"SB: (no keyboard event yet)",
+                      _container.liftOffset,
+                      _topContainer ? _topContainer.liftOffset : 0.0];
     _keyboardDebugLabel.text = text;
     CGRect screen = [self screenBounds];
-    CGSize fit = [_keyboardDebugLabel sizeThatFits:CGSizeMake(CGRectGetWidth(screen) - 8.0, 80)];
-    _keyboardDebugLabel.frame = CGRectMake(4.0, 2.0, CGRectGetWidth(screen) - 8.0, MIN(78.0, ceil(fit.height) + 6.0));
+    CGSize fit = [_keyboardDebugLabel sizeThatFits:CGSizeMake(CGRectGetWidth(screen) - 8.0, 120)];
+    _keyboardDebugLabel.frame = CGRectMake(4.0, 2.0, CGRectGetWidth(screen) - 8.0, MIN(110.0, ceil(fit.height) + 6.0));
     [_keyboardDebugLabel.superview bringSubviewToFront:_keyboardDebugLabel];
 }
 

@@ -187,7 +187,8 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
     }
 
     DSRaiseKeyboardWindow(window);
-    window.frame = UIScreen.mainScreen.bounds;
+    // Leave the window at the size SpringBoard gave it. Stretching it to the
+    // whole display puts that window over both cards.
     hostedWindow = window;
     claimed = YES;
     DSClaimedKeyboardWindow = window;

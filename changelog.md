@@ -1,3 +1,7 @@
+**4.5.10**
+- The keyboard stays SpringBoard's. Only the card that the keys cover slides up, and the other card stays on its half. The top stage is no longer pushed off the screen while typing in the bottom one
+- SpringBoard's keyboard window is left at the size SpringBoard gave it, instead of being stretched over both cards
+
 **4.5.9**
 - The log said SpringBoard's keyboard scene was up, but that window was hidden again because it had no key view inside it, so no keys were on screen. The window stays up
 - Two stages had no room to lift the bottom card, so a keyboard at the bottom of the screen sat on that card. Both cards now slide up together and keep their size

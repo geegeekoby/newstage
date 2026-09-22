@@ -1,3 +1,6 @@
+**4.4.5**
+- Two stages still fill the two halves, with a few points of wallpaper around each card and rounded corners
+
 **4.4.4**
 - Two stages fill the screen: top card is the top half, bottom card is the bottom half, edge to edge, same size
 

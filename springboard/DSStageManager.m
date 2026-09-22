@@ -630,16 +630,22 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (CGRect)fixedHalfFrame:(NSInteger)half {
-    // Full bleed. Top card is the top half of the display, bottom card is the
-    // bottom half. Same width, same height, nothing inset.
+    // Each card is one half of the screen, pulled in a few points so a hairline
+    // of wallpaper shows around it. Both cards are the same size.
     CGRect screen = [self screenBounds];
-    CGFloat width = CGRectGetWidth(screen);
+    CGFloat inset = kDSStackCardInset;
+    CGFloat gap = kDSStackSlotGap;
+    CGFloat width = CGRectGetWidth(screen) - inset * 2.0;
     CGFloat height = CGRectGetHeight(screen);
-    CGFloat topHeight = floor(height * 0.5);
+    CGFloat slotHeight = floor((height - inset * 2.0 - gap) * 0.5);
     if (half == 1) {
-        return CGRectMake(0.0, 0.0, width, topHeight);
+        return CGRectMake(inset, inset, width, slotHeight);
     }
-    return CGRectMake(0.0, topHeight, width, height - topHeight);
+    return CGRectMake(inset, inset + slotHeight + gap, width, slotHeight);
+}
+
+- (CGFloat)stageCardCornerRadius {
+    return MAX([self displayCornerRadius] - kDSStackCardInset, 20.0);
 }
 
 - (CGRect)restingStageFrameForState:(DSStageState)state {
@@ -651,9 +657,8 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (CGFloat)cornerRadiusForState:(DSStageState)state {
-    // The card is the full half of the display. The screen's own corners clip it.
     (void)state;
-    return 0.0;
+    return [self stageCardCornerRadius];
 }
 
 // Whatever keyboard was up went away with the app that owned it.
@@ -902,14 +907,15 @@ static BOOL sSystemEdgePullAvailable;
     if (_stackSlotCount <= 1) {
         CGRect frame = [self stageFrameForState:state];
         _container.frame = frame;
-        _container.cornerRadius = 0.0;
+        _container.cornerRadius = [self stageCardCornerRadius];
         if (_topContainer) _topContainer.hidden = YES;
     } else {
+        CGFloat radius = [self stageCardCornerRadius];
         _container.frame = [self frameForHalf:_primaryHalf state:state];
-        _container.cornerRadius = 0.0;
+        _container.cornerRadius = radius;
         _topContainer.hidden = NO;
         _topContainer.frame = [self frameForHalf:_secondHalf state:state];
-        _topContainer.cornerRadius = 0.0;
+        _topContainer.cornerRadius = radius;
         _picker.view.frame = _container.contentView.bounds;
         _topPicker.view.frame = _topContainer.contentView.bounds;
         if (!_sceneHost.isHosting) {

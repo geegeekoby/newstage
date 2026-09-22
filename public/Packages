@@ -1,6 +1,6 @@
 Package: com.recreated.dynamicstage
 Name: Dynamic Stage
-Version: 4.4.1
+Version: 4.4.2
 Architecture: iphoneos-arm64
 Description: Stage Manager Reimagined for iPhone
 Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
@@ -9,12 +9,12 @@ Section: Tweaks
 Tag: compatible::ios16
 Author: Dynamic Stage Recreation
 Maintainer: Dynamic Stage Recreation
-Installed-Size: 920
-Filename: debs/com.recreated.dynamicstage_4.4.1_iphoneos-arm64.deb
-Size: 173298
-MD5sum: 19e438cf8dadcaa9279049f63d81fd9e
-SHA1: f65211932de05b9968ba1fcbd1de8f3fbeac5586
-SHA256: cef8edede90c9efbd222069f2d8d64cd955c48d4723a190da7a6a2d9e1954fd3
+Installed-Size: 952
+Filename: debs/com.recreated.dynamicstage_4.4.2_iphoneos-arm64.deb
+Size: 175734
+MD5sum: eb2e36e48480cfc52ccc438f65128c24
+SHA1: f40722ab14c629ebf7dcefdb5541a6d8f914ed01
+SHA256: f803d49819522956431690846f3b952ce2399398b3cba70b1d1a5b1e4b3a5056
 Icon: https://dallas-clubs-tutorials-orleans.trycloudflare.com/assets/icon.png
 Depiction: https://dallas-clubs-tutorials-orleans.trycloudflare.com/depiction.json
 SileoDepiction: https://dallas-clubs-tutorials-orleans.trycloudflare.com/depiction.json

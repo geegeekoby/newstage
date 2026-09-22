@@ -45,4 +45,7 @@
 @property (nonatomic, copy) void (^stackAddHandler)(void);
 - (CGRect)stackAddButtonRect;
 
+@property (nonatomic, assign) BOOL showsMinimizeButton;
+@property (nonatomic, copy) void (^minimizeHandler)(void);
+
 @end

@@ -1,3 +1,7 @@
+**4.4.2**
+- Second stage is a real picker card (blur plus fallback fill), and the moved app is told its new size again so the card does not stay black
+- Minimize button on the top left of each stage; minimizing one leaves the other as a normal stage
+
 **4.4.1**
 - + moves the existing stage card to the top half (app stays in that card) and opens a new picker stage on the bottom
 - Drag a stage's grabber to swap which card is on the top half and which is on the bottom

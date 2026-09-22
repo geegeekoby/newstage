@@ -234,6 +234,10 @@ static BOOL sSystemEdgePullAvailable;
     _container.stackAddHandler = ^{
         [weakSelf addStackSlotAnimated];
     };
+    __weak DSStageContainerView *weakCard = _container;
+    _container.minimizeHandler = ^{
+        [weakSelf minimizeIndividualCard:weakCard];
+    };
 
     [self applyAppearance];
 }
@@ -739,6 +743,15 @@ static BOOL sSystemEdgePullAvailable;
     _topDragPan.cancelsTouchesInView = NO;
     _topDragPan.delaysTouchesBegan = NO;
     [_topContainer addGestureRecognizer:_topDragPan];
+
+    __weak __typeof(self) weakSelf = self;
+    __weak DSStageContainerView *weakTop = _topContainer;
+    _topContainer.stackAddHandler = ^{
+        [weakSelf addStackSlotAnimated];
+    };
+    _topContainer.minimizeHandler = ^{
+        [weakSelf minimizeIndividualCard:weakTop];
+    };
 }
 
 - (CGRect)frameForHalf:(NSInteger)half state:(DSStageState)state {
@@ -746,7 +759,10 @@ static BOOL sSystemEdgePullAvailable;
         return [self stageFrameForState:state];
     }
     if (state == DSStageStateOverlay) {
-        return DSStageStackHalfScreenFrame([self screenBounds], half, kDSStackSlotGap, kDSStackCardInset);
+        UIEdgeInsets safe = [self screenSafeAreaInsets];
+        CGFloat topInset = MAX(kDSStackCardInset, safe.top);
+        CGFloat bottomInset = MAX(kDSStackCardInset, safe.bottom);
+        return DSStageStackHalfScreenFrame([self screenBounds], half, kDSStackSlotGap, kDSStackCardInset, topInset, bottomInset);
     }
     CGRect combined = [self stageFrameForState:state];
     return DSStageStackSlotFrame(combined, half, _stackSlotCount, kDSStackSlotGap);
@@ -851,9 +867,13 @@ static BOOL sSystemEdgePullAvailable;
 - (void)updateStackChrome {
     BOOL canStack = (_state == DSStageStateOverlay) && _stackSlotCount < kDSMaxStackSlots && self.isStageVisible;
     _container.showsStackAddButton = canStack && _sceneHost.isHosting;
-    if (_topContainer) _topContainer.showsStackAddButton = NO;
+    _container.showsMinimizeButton = self.isStageVisible;
+    if (_topContainer) {
+        _topContainer.showsStackAddButton = NO;
+        _topContainer.showsMinimizeButton = _stackSlotCount >= kDSMaxStackSlots && !_topContainer.hidden;
+        _topContainer.hostingApp = _topSceneHost.isHosting;
+    }
     _container.hostingApp = _sceneHost.isHosting;
-    if (_topContainer) _topContainer.hostingApp = _topSceneHost.isHosting;
 }
 
 - (void)layoutHostedAppInSlot:(NSInteger)slot state:(DSStageState)state {
@@ -870,6 +890,7 @@ static BOOL sSystemEdgePullAvailable;
         insets = [self stageSafeAreaInsets];
     }
     CGRect window = CGRectOffset(frame, 0.0, -card.liftOffset);
+    card.backgroundColor = UIColor.clearColor;
     [host setStageFrame:window safeAreaInsets:insets];
 
     UIView *hostView = host.hostView;
@@ -917,6 +938,99 @@ static BOOL sSystemEdgePullAvailable;
     [self layoutHostedAppInSlot:1 state:state];
 }
 
+- (void)presentPickerOnCard:(DSStageContainerView *)card picker:(DSAppPickerViewController *)picker {
+    if (!card || !picker) return;
+    picker.darkMode = card.darkMode;
+    UIView *pickerView = picker.view;
+    for (UIView *subview in [card.contentView.subviews copy]) {
+        if (subview != pickerView) [subview removeFromSuperview];
+    }
+    card.backgroundColor = [UIColor colorWithWhite:0.11 alpha:1.0];
+    [card setBackdropHidden:NO];
+    pickerView.hidden = NO;
+    pickerView.alpha = 1.0;
+    pickerView.backgroundColor = UIColor.clearColor;
+    if (pickerView.superview != card.contentView) {
+        [card.contentView addSubview:pickerView];
+    }
+    pickerView.frame = card.contentView.bounds;
+    [card.contentView bringSubviewToFront:pickerView];
+    [picker reloadContent];
+    [picker resetScrollPosition];
+    [pickerView layoutIfNeeded];
+}
+
+- (void)refreshStackedGeometrySoon {
+    __weak __typeof(self) weakSelf = self;
+    for (NSNumber *delay in @[ @0.05, @0.4, @1.0, @2.0 ]) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || strongSelf->_stackSlotCount < kDSMaxStackSlots) return;
+            DSStageState state = strongSelf->_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+            [strongSelf layoutAllStackSlotsForState:state];
+            if (!strongSelf->_topSceneHost.isHosting) {
+                [strongSelf presentPickerOnCard:strongSelf->_topContainer picker:strongSelf->_topPicker];
+            }
+            [strongSelf->_sceneHost refreshPresentedGeometry];
+            [strongSelf->_topSceneHost refreshPresentedGeometry];
+        });
+    }
+}
+
+- (void)relinquishStackHost:(DSSceneHost *)host {
+    if (!host) return;
+    [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:CGRectZero active:NO];
+    [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
+}
+
+- (void)minimizeIndividualCard:(DSStageContainerView *)card {
+    if (!card) return;
+    if (_stackSlotCount < kDSMaxStackSlots) {
+        [self minimizeAnimated:YES];
+        return;
+    }
+
+    if (card == _topContainer) {
+        DSSceneHost *host = _topSceneHost;
+        _topSceneHost = nil;
+        [self relinquishStackHost:host];
+        _stackSlotCount = 1;
+        _primaryHalf = 0;
+        _topContainer.hidden = YES;
+        _container.backgroundColor = UIColor.clearColor;
+        [UIView animateWithDuration:0.28 animations:^{
+            [self layoutAllStackSlotsForState:self->_state];
+        }];
+        DSDiagnosticsRecord(@"SpringBoard: minimized the second stage");
+        return;
+    }
+
+    DSSceneHost *dropped = _sceneHost;
+    _sceneHost = _topSceneHost;
+    _topSceneHost = nil;
+    [self relinquishStackHost:dropped];
+
+    DSStageContainerView *kept = _topContainer;
+    DSAppPickerViewController *keptPicker = _topPicker;
+    UIPanGestureRecognizer *keptPan = _topDragPan;
+    _topContainer = _container;
+    _topPicker = _picker;
+    _topDragPan = _dragPan;
+    _container = kept;
+    _picker = keptPicker;
+    _dragPan = keptPan;
+    _stackSlotCount = 1;
+    _primaryHalf = 0;
+    _topContainer.hidden = YES;
+    _container.hidden = NO;
+    _container.backgroundColor = _sceneHost.isHosting ? UIColor.clearColor : [UIColor colorWithWhite:0.11 alpha:1.0];
+    [UIView animateWithDuration:0.28 animations:^{
+        [self layoutAllStackSlotsForState:self->_state];
+    }];
+    DSDiagnosticsRecord(@"SpringBoard: minimized the first stage");
+}
+
 - (void)addStackSlotAnimated {
     if (_stackSlotCount >= kDSMaxStackSlots || _state != DSStageStateOverlay) return;
     if (!_sceneHost.isHosting) {
@@ -925,8 +1039,8 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     // The live app stays inside the card it already has. That card moves to the
-    // top half. A new card, with the same picker the stage opens with, takes the
-    // bottom half. Ripping the host view out of its card is what painted black.
+    // top half. A brand new card, with the same picker the stage first opens
+    // with, takes the bottom half.
     [self ensureTopStackInfrastructure];
     _topContainer.darkMode = _container.darkMode;
     _primaryHalf = 1;
@@ -934,13 +1048,8 @@ static BOOL sSystemEdgePullAvailable;
     _stackSlotCount = 2;
     [_container setLiftOffset:0.0];
     [_topContainer setLiftOffset:0.0];
-    [_topContainer setBackdropHidden:NO];
-    _topPicker.darkMode = _container.darkMode;
-    _topPicker.view.hidden = NO;
-    _topPicker.view.alpha = 1.0;
-    [_topPicker reloadContent];
-    [_topPicker resetScrollPosition];
-    [_topContainer.contentView bringSubviewToFront:_topPicker.view];
+    _container.backgroundColor = UIColor.clearColor;
+    [self presentPickerOnCard:_topContainer picker:_topPicker];
 
     [UIView animateWithDuration:0.32
                           delay:0
@@ -949,8 +1058,11 @@ static BOOL sSystemEdgePullAvailable;
                          [self layoutAllStackSlotsForState:self->_state];
                      }
                      completion:^(BOOL finished) {
+                         [self presentPickerOnCard:self->_topContainer picker:self->_topPicker];
                          [self layoutHostedAppInSlot:0 state:self->_state];
+                         [self->_sceneHost refreshPresentedGeometry];
                          [self updateStackChrome];
+                         [self refreshStackedGeometrySoon];
                      }];
     DSDiagnosticsRecordFormat(@"SpringBoard: moved %@ to the top half and opened a new stage below",
                               _sceneHost.bundleIdentifier);

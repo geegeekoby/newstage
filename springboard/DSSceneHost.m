@@ -1017,7 +1017,22 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     _hostView.transform = CGAffineTransformIdentity;
     _hostView.frame = CGRectMake(0, 0, CGRectGetWidth(logical), CGRectGetHeight(logical));
     _hostView.transform = CGAffineTransformMakeScale(scale, scale);
-    _hostView.center = CGPointMake(CGRectGetWidth(_stageFrame) / 2.0, CGRectGetHeight(_stageFrame) / 2.0);
+    UIView *parent = _hostView.superview;
+    if (parent && !CGRectIsEmpty(parent.bounds)) {
+        _hostView.center = CGPointMake(CGRectGetMidX(parent.bounds), CGRectGetMidY(parent.bounds));
+    } else {
+        _hostView.center = CGPointMake(CGRectGetWidth(_stageFrame) / 2.0, CGRectGetHeight(_stageFrame) / 2.0);
+    }
+}
+
+- (void)refreshPresentedGeometry {
+    [self layoutHostView];
+    if (_appViewController) {
+        [self deliverStageSizeToApp];
+        return;
+    }
+    [self registerOverride];
+    [self pushSettings];
 }
 
 - (void)setForeground:(BOOL)foreground {

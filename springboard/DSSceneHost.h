@@ -31,6 +31,9 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // Frame in screen coordinates that the app should believe it occupies.
 @property (nonatomic, readonly) CGRect stageFrame;
 - (void)setStageFrame:(CGRect)frame safeAreaInsets:(UIEdgeInsets)insets;
+// The app view re-pins itself to the full display and the card stays black until
+// geometry is written again. Call this after the card has moved.
+- (void)refreshPresentedGeometry;
 - (void)setForeground:(BOOL)foreground;
 
 // Hands the scene back to SpringBoard. `background` keeps the process alive so

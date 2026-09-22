@@ -16,6 +16,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIView *_cornerGrip;
     UIView *_edgeGrip;
     UIButton *_stackAddButton;
+    UIButton *_minimizeButton;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -25,7 +26,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         // The card clips its contents, which kills its own shadow, so the drop
         // shadow lives on a sibling underneath.
         _shadowView = [[UIView alloc] initWithFrame:CGRectZero];
-        _shadowView.backgroundColor = UIColor.blackColor;
+        _shadowView.backgroundColor = UIColor.clearColor;
         _shadowView.layer.shadowColor = UIColor.blackColor.CGColor;
         _shadowView.layer.shadowOpacity = 0.28;
         _shadowView.layer.shadowRadius = 24.0;
@@ -93,6 +94,18 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         [_stackAddButton addTarget:self action:@selector(stackAddTapped) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_stackAddButton];
 
+        _minimizeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        if (@available(iOS 13.0, *)) {
+            [_minimizeButton setImage:[UIImage systemImageNamed:@"minus.circle.fill"] forState:UIControlStateNormal];
+        } else {
+            [_minimizeButton setTitle:@"–" forState:UIControlStateNormal];
+        }
+        _minimizeButton.tintColor = [UIColor colorWithWhite:1.0 alpha:0.85];
+        _minimizeButton.hidden = YES;
+        _minimizeButton.accessibilityLabel = @"Minimize stage";
+        [_minimizeButton addTarget:self action:@selector(minimizeTapped) forControlEvents:UIControlEventTouchUpInside];
+        [self addSubview:_minimizeButton];
+
         self.backgroundColor = UIColor.clearColor;
         self.clipsToBounds = YES;
         self.layer.cornerCurve = kCACornerCurveContinuous;
@@ -146,7 +159,11 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                                        addSide,
                                        addSide);
     _stackAddButton.hidden = !_showsStackAddButton;
+    CGFloat minSide = 36.0;
+    _minimizeButton.frame = CGRectMake(8.0, 4.0, minSide, minSide);
+    _minimizeButton.hidden = !_showsMinimizeButton;
     [self bringSubviewToFront:_stackAddButton];
+    [self bringSubviewToFront:_minimizeButton];
     [self bringSubviewToFront:_grabber];
 
     [self updateShadow];
@@ -154,6 +171,15 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
 - (void)stackAddTapped {
     if (_stackAddHandler) _stackAddHandler();
+}
+
+- (void)minimizeTapped {
+    if (_minimizeHandler) _minimizeHandler();
+}
+
+- (void)setShowsMinimizeButton:(BOOL)showsMinimizeButton {
+    _showsMinimizeButton = showsMinimizeButton;
+    _minimizeButton.hidden = !showsMinimizeButton;
 }
 
 - (void)setShowsStackAddButton:(BOOL)showsStackAddButton {
@@ -227,6 +253,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     if (hit == _grabber || [hit isDescendantOfView:_grabber]) return hit;
     if (hit == _cornerGrip || hit == _edgeGrip) return hit;
     if (hit == _stackAddButton || [hit isDescendantOfView:_stackAddButton]) return hit;
+    if (hit == _minimizeButton || [hit isDescendantOfView:_minimizeButton]) return hit;
     return nil;
 }
 

@@ -1,3 +1,6 @@
+**4.5.22**
+- Typing in a staged app showed the right keyboard and then dropped the letters, because the home screen took the key back while the field was still open. The stage keeps that key until the field actually closes, and the letters go into the field that was tapped. The log records each key as a length, not the text
+
 **4.5.21**
 - The picker keyboard for a staged app stayed up after the text field closed, because that close happened in the same moment the stage window took the key. A real close still hides it. Messenger keeps the message box as the field the keys type into, so the same keyboard can actually enter text
 

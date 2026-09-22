@@ -10,6 +10,7 @@
     UITextField *_field;
     UIImageView *_magnifier;
     UIButton *_clearButton;
+    NSInteger _keyWindowAttempts;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -131,7 +132,29 @@
     // One place decides the key window: the stage manager. A second makeKey here
     // used to run even when an app was hosted and the manager had refused.
     [self requestKeyWindowFromDelegate];
+    // After a respring SpringBoard takes the key window back for a moment. Editing
+    // on that turn never raises the keyboard, so wait until this window is key.
+    if (self.window && !self.window.isKeyWindow && _keyWindowAttempts < 8) {
+        _keyWindowAttempts++;
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) field = weakSelf;
+            if (!field) return;
+            [field->_field becomeFirstResponder];
+        });
+        return NO;
+    }
+    _keyWindowAttempts = 0;
     return YES;
+}
+
+- (void)reassertEditing {
+    if (_field.isFirstResponder) {
+        [_field reloadInputViews];
+        return;
+    }
+    [_field becomeFirstResponder];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {

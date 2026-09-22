@@ -1,3 +1,6 @@
+**4.5.16**
+- After a respring the stage window was sometimes left on a scene that was not on screen, so the picker search field took the tap and the keyboard never appeared. The window is moved to the foreground scene, and the same search keyboard is requested again until it is on screen
+
 **4.5.15**
 - A staged app on the top or the bottom uses the picker search keyboard. The app no longer draws its own keys, and SpringBoard no longer swaps in a different keyboard scene. Tapping a text field makes the stage window key and brings up that same keyboard, and the card lifts the same way
 

@@ -281,6 +281,10 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     [_searchField endEditing:YES];
 }
 
+- (void)reassertSearchEditing {
+    [_searchField reassertEditing];
+}
+
 - (BOOL)isSearching {
     return _query.length > 0;
 }

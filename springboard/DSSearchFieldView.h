@@ -21,5 +21,7 @@
 @property (nonatomic, readonly, copy) NSString *text;
 
 - (void)clearText;
+// Asks the text field to edit again. Used when the keyboard did not appear.
+- (void)reassertEditing;
 
 @end

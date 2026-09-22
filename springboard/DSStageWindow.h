@@ -7,6 +7,9 @@
 @property (nonatomic, copy) BOOL (^touchTest)(CGPoint point);
 
 + (instancetype)stageWindow;
+// After a respring the first connected scene is not always the one on screen.
+// Returns YES when the window had to move onto the foreground scene.
+- (BOOL)attachToForegroundSceneIfNeeded;
 
 @end
 

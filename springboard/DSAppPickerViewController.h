@@ -25,6 +25,7 @@
 - (void)reloadContent;
 - (void)resetScrollPosition;
 - (void)dismissKeyboard;
+- (void)reassertSearchEditing;
 - (BOOL)isSearching;
 
 // Where an app's plate currently sits, so the stage can zoom an app back into

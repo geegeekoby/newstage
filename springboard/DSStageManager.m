@@ -214,6 +214,8 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     // -1 unless a picker search field is the one being edited. Opening a second
     // picker must not count as searching, or that card lifts before anyone types.
     NSInteger _searchSlot;
+    NSInteger _pickerSearchEnsureGeneration;
+    BOOL _ensuringPickerSearchKeyboard;
     // The hosted app's card while it is using the picker search keyboard.
     NSInteger _stagedKeyboardSlot;
     UITextField *_stagedKeyboardField;
@@ -356,7 +358,14 @@ static BOOL sSystemEdgePullAvailable;
 // or in an app hosted on it. SpringBoard gets its window back when the stage
 // leaves, so nothing else on the device notices.
 - (void)takeKeyWindow {
-    if (!_window || _window.isKeyWindow) return;
+    if (!_window) return;
+    // A window left on a background scene after respring reports itself key and
+    // still never shows a keyboard. Move it first, then ask again.
+    BOOL movedScene = [_window attachToForegroundSceneIfNeeded];
+    if (movedScene) {
+        DSDiagnosticsRecord(@"SpringBoard: moved the stage window onto the foreground scene");
+    }
+    if (_window.isKeyWindow && !movedScene) return;
 
     if (!_windowBeforeStage) {
         for (UIWindow *window in UIApplication.sharedApplication.windows) {
@@ -2393,6 +2402,45 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
     if ([self sceneHostForSlot:slot].isHosting) return;
     _searchSlot = slot;
     [self takeKeyWindow];
+    if (_ensuringPickerSearchKeyboard) return;
+    _ensuringPickerSearchKeyboard = YES;
+    NSInteger generation = ++_pickerSearchEnsureGeneration;
+    [self ensurePickerSearchKeyboard:picker slot:slot generation:generation attempt:0];
+}
+
+// The search field is already the first responder and the window was asked to
+// be key. After a respring that request is sometimes lost. Ask again, the same
+// way, until the keyboard is actually on screen.
+- (void)ensurePickerSearchKeyboard:(DSAppPickerViewController *)picker
+                             slot:(NSInteger)slot
+                       generation:(NSInteger)generation
+                          attempt:(NSInteger)attempt {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.16 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        if (generation != strongSelf->_pickerSearchEnsureGeneration || strongSelf->_searchSlot != slot) {
+            strongSelf->_ensuringPickerSearchKeyboard = NO;
+            return;
+        }
+        CGRect keys = DSVisibleKeyboardFrameOnScreen();
+        if (!CGRectIsNull(keys) && CGRectGetHeight(keys) >= kDSKeyboardPresentHeight) {
+            strongSelf->_ensuringPickerSearchKeyboard = NO;
+            return;
+        }
+        if (attempt >= 5) {
+            strongSelf->_ensuringPickerSearchKeyboard = NO;
+            DSDiagnosticsRecord(@"SpringBoard: the picker search keyboard did not appear");
+            return;
+        }
+        [strongSelf takeKeyWindow];
+        if (!strongSelf->_window.isKeyWindow) {
+            [strongSelf->_window makeKeyAndVisible];
+        }
+        [picker reassertSearchEditing];
+        [strongSelf ensurePickerSearchKeyboard:picker slot:slot generation:generation attempt:attempt + 1];
+    });
 }
 
 - (void)appPickerDidEndSearch:(DSAppPickerViewController *)picker {

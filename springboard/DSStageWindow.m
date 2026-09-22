@@ -18,19 +18,26 @@
 
 @end
 
+static UIWindowScene *DSForegroundWindowScene(void) {
+    if (@available(iOS 13.0, *)) {
+        UIWindowScene *fallback = nil;
+        for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
+            if (![candidate isKindOfClass:UIWindowScene.class]) continue;
+            UIWindowScene *scene = (UIWindowScene *)candidate;
+            if (scene.screen && scene.screen != UIScreen.mainScreen) continue;
+            if (!fallback) fallback = scene;
+            if (scene.activationState == UISceneActivationStateForegroundActive) return scene;
+        }
+        return fallback;
+    }
+    return nil;
+}
+
 @implementation DSStageWindow
 
 + (instancetype)stageWindow {
     DSStageWindow *window = nil;
-    UIWindowScene *scene = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
-            if ([candidate isKindOfClass:UIWindowScene.class]) {
-                scene = (UIWindowScene *)candidate;
-                break;
-            }
-        }
-    }
+    UIWindowScene *scene = DSForegroundWindowScene();
     if (scene) {
         window = [[DSStageWindow alloc] initWithWindowScene:scene];
         window.frame = UIScreen.mainScreen.bounds;
@@ -45,6 +52,17 @@
     window.windowLevel = UIWindowLevelStatusBar - 1.0;
     window.hidden = YES;
     return window;
+}
+
+- (BOOL)attachToForegroundSceneIfNeeded {
+    UIWindowScene *scene = DSForegroundWindowScene();
+    if (!scene || self.windowScene == scene) return NO;
+    self.windowScene = scene;
+    CGRect bounds = scene.coordinateSpace.bounds;
+    if (!CGRectEqualToRect(self.bounds, bounds)) {
+        self.frame = bounds;
+    }
+    return YES;
 }
 
 // This window covers the display whenever the stage is on screen, so anything it

@@ -10,9 +10,9 @@
 // every route UIKit offers for "how big is the screen" answers with the stage
 // rectangle and the interface stays pinned to portrait.
 //
-// The keyboard is deliberately not one of those routes. A staged app does not
-// draw keys at all. SpringBoard is the keyboard UI host, and the keys sit on
-// the display, full width, outside the card.
+// The keyboard is deliberately not one of those routes. While this process is
+// staged, every keyboard view it owns is forced out of the card. SpringBoard
+// draws the keys on the display instead.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -28,7 +28,7 @@ static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
 }
 
-static void DSHideInAppKeyboardView(UIView *view);
+static void DSBanishLocalKeyboard(void);
 
 static CGRect DSStageBounds(void) {
     return [DSStageContext sharedContext].stageBounds;
@@ -150,7 +150,7 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 
 - (void)didAddSubview:(UIView *)subview {
     %orig;
-    if (DSStaged()) DSHideInAppKeyboardView(subview);
+    if (DSStaged()) DSBanishLocalKeyboard();
 }
 
 %end
@@ -192,49 +192,220 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 
 #pragma mark - Keyboard
 
-// iPhone UIKit draws keys in the app scene unless this process believes the
-// keyboard is remote. SpringBoard then has to be the keyboard UI host or the
-// keys have nowhere to go. The views below are hidden either way, so a staged
-// app cannot fall back to drawing its own keyboard inside the card.
+// The keys are drawn in UITextEffectsWindow. That window is not in
+// UIApplication.windows, and the keyboard views do not go through UIView's
+// setHidden:, which is why a one-shot hide never stuck. While this process is
+// staged, those views are pulled out of the card on every pass UIKit uses to
+// put them back, and again before the run loop sleeps.
 
-static BOOL DSIsInAppKeyboardView(UIView *view) {
-    static Class hostView;
-    static Class containerView;
-    static Class keyboardView;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        hostView = objc_getClass("UIInputSetHostView");
-        containerView = objc_getClass("UIInputSetContainerView");
-        keyboardView = objc_getClass("UIKeyboard");
-    });
-    if (!view) return NO;
-    if (hostView && [view isKindOfClass:hostView]) return YES;
-    if (containerView && [view isKindOfClass:containerView]) return YES;
-    if (keyboardView && [view isKindOfClass:keyboardView]) return YES;
+static BOOL DSBanishing = NO;
+
+static BOOL DSNameIsLocalKeyboard(NSString *name) {
+    if (name.length == 0) return NO;
+    if ([name hasPrefix:@"UIKeyboard"]) return YES;
+    if ([name hasPrefix:@"UIInputSet"]) return YES;
+    if ([name hasPrefix:@"UIKB"]) return YES;
+    if ([name hasPrefix:@"UIRemoteKeyboard"]) return YES;
+    if ([name hasPrefix:@"TUIKeyboard"]) return YES;
+    if ([name hasPrefix:@"UICandidate"]) return YES;
+    if ([name hasPrefix:@"UIPrediction"]) return YES;
     return NO;
 }
 
-static void DSHideInAppKeyboardView(UIView *view) {
-    if (!DSStaged() || !view) return;
-    if (DSIsInAppKeyboardView(view)) {
-        if (!view.hidden) view.hidden = YES;
+static BOOL DSWindowIsKeyboardChrome(UIWindow *window) {
+    if (!window) return NO;
+    if (DSIsKeyboardWindow(window)) return YES;
+    NSString *name = NSStringFromClass(object_getClass(window));
+    if ([name rangeOfString:@"Keyboard"].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"TextEffects"].location != NSNotFound) return YES;
+    return NO;
+}
+
+static void DSSuppressKeyboardView(UIView *view) {
+    if (!view.layer.hidden || view.layer.opacity > 0.01) {
+        [view.layer removeAllAnimations];
+        view.layer.hidden = YES;
+        view.layer.opacity = 0;
+    }
+    if (view.userInteractionEnabled) view.userInteractionEnabled = NO;
+    if (!view.hidden) view.hidden = YES;
+    if (CGRectGetMinY(view.frame) < 8000.0) {
+        CGRect frame = view.frame;
+        frame.origin.y = 10000.0;
+        view.frame = frame;
+    }
+}
+
+static void DSBanishKeyboardInView(UIView *view, CGRect windowBounds, BOOL inKeyboardWindow) {
+    if (![view isKindOfClass:UIView.class]) return;
+    NSString *name = NSStringFromClass(object_getClass(view));
+    CGRect frame = view.frame;
+    // A keyboard sitting on the bottom edge of this window, including one that
+    // fills most of a short stage. The caret is too small to match.
+    BOOL bottomSlab = inKeyboardWindow &&
+                      CGRectGetHeight(frame) >= 100.0 &&
+                      CGRectGetWidth(frame) >= CGRectGetWidth(windowBounds) * 0.5 &&
+                      CGRectGetMaxY(frame) >= CGRectGetHeight(windowBounds) - 8.0 &&
+                      CGRectGetMinY(frame) > 40.0 &&
+                      CGRectGetMinY(frame) < 8000.0;
+    if (DSNameIsLocalKeyboard(name) || bottomSlab) {
+        DSSuppressKeyboardView(view);
         return;
     }
     for (UIView *subview in view.subviews) {
-        DSHideInAppKeyboardView(subview);
+        DSBanishKeyboardInView(subview, windowBounds, inKeyboardWindow);
     }
+}
+
+static void DSBanishKeyboardLayers(CALayer *layer, CGRect windowBounds) {
+    if (!layer) return;
+    NSString *name = NSStringFromClass(object_getClass(layer));
+    id delegate = layer.delegate;
+    NSString *delegateName = nil;
+    if ([delegate isKindOfClass:UIView.class]) {
+        delegateName = NSStringFromClass(object_getClass((UIView *)delegate));
+    }
+    CGRect frame = layer.frame;
+    BOOL bottomSlab = CGRectGetHeight(frame) >= 100.0 &&
+                      CGRectGetWidth(frame) >= CGRectGetWidth(windowBounds) * 0.5 &&
+                      CGRectGetMaxY(frame) >= CGRectGetHeight(windowBounds) - 8.0 &&
+                      CGRectGetMinY(frame) > 40.0 &&
+                      CGRectGetMinY(frame) < 8000.0;
+    if (DSNameIsLocalKeyboard(name) || DSNameIsLocalKeyboard(delegateName) || bottomSlab) {
+        if (!layer.hidden || layer.opacity > 0.01) {
+            [layer removeAllAnimations];
+            layer.hidden = YES;
+            layer.opacity = 0;
+        }
+        if (CGRectGetMinY(layer.frame) < 8000.0) {
+            CGRect moved = layer.frame;
+            moved.origin.y = 10000.0;
+            layer.frame = moved;
+        }
+        return;
+    }
+    for (CALayer *sublayer in layer.sublayers) {
+        DSBanishKeyboardLayers(sublayer, windowBounds);
+    }
+}
+
+static void DSVisitLiveWindows(void (^visitor)(UIWindow *window)) {
+    NSMutableSet *seen = [NSMutableSet set];
+    void (^visit)(UIWindow *) = ^(UIWindow *window) {
+        if (![window isKindOfClass:UIWindow.class] || [seen containsObject:window]) return;
+        [seen addObject:window];
+        visitor(window);
+    };
+
+    for (UIWindow *window in UIApplication.sharedApplication.windows) visit(window);
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+            if (![scene isKindOfClass:UIWindowScene.class]) continue;
+            for (UIWindow *window in ((UIWindowScene *)scene).windows) visit(window);
+        }
+    }
+
+    Class effects = objc_getClass("UITextEffectsWindow");
+    for (NSString *selectorName in @[
+        @"sharedTextEffectsWindow",
+        @"sharedTextEffectsWindowForWindowScene:",
+        @"_sharedTextEffectsWindowAboveStatusBar"
+    ]) {
+        SEL selector = NSSelectorFromString(selectorName);
+        if (![effects respondsToSelector:selector]) continue;
+        @try {
+            if ([selectorName hasSuffix:@":"]) {
+                for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+                    visit(((id (*)(id, SEL, id))objc_msgSend)(effects, selector, scene));
+                }
+            } else {
+                visit(((id (*)(id, SEL))objc_msgSend)(effects, selector));
+            }
+        } @catch (NSException *exception) {
+        }
+    }
+
+    Class remote = objc_getClass("UIRemoteKeyboardWindow");
+    SEL create = @selector(remoteKeyboardWindowForScreen:create:);
+    if ([remote respondsToSelector:create]) {
+        @try {
+            visit(((id (*)(id, SEL, id, BOOL))objc_msgSend)(remote, create, UIScreen.mainScreen, NO));
+        } @catch (NSException *exception) {
+        }
+    }
+}
+
+static void DSBanishLocalKeyboard(void) {
+    if (!DSStaged() || DSBanishing) return;
+    DSBanishing = YES;
+    @try {
+        DSVisitLiveWindows(^(UIWindow *window) {
+            BOOL chrome = DSWindowIsKeyboardChrome(window);
+            if (!chrome) return;
+            NSString *name = NSStringFromClass(object_getClass(window));
+            if ([name rangeOfString:@"RemoteKeyboard"].location != NSNotFound) {
+                DSSuppressKeyboardView(window);
+                return;
+            }
+            CGRect bounds = window.bounds;
+            DSBanishKeyboardInView(window, bounds, YES);
+            DSBanishKeyboardLayers(window.layer, bounds);
+        });
+    } @catch (NSException *exception) {
+    }
+    DSBanishing = NO;
+}
+
+static void DSInstallKeyboardBanishObserver(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        CFRunLoopObserverRef observer = CFRunLoopObserverCreateWithHandler(
+            kCFAllocatorDefault,
+            kCFRunLoopBeforeWaiting,
+            true,
+            0,
+            ^(CFRunLoopObserverRef observer, CFRunLoopActivity activity) {
+                (void)observer;
+                (void)activity;
+                DSBanishLocalKeyboard();
+            });
+        if (observer) {
+            CFRunLoopAddObserver(CFRunLoopGetMain(), observer, kCFRunLoopCommonModes);
+        }
+    });
 }
 
 %hook UIView
 
 - (void)setHidden:(BOOL)hidden {
-    if (DSStaged() && DSIsInAppKeyboardView(self)) hidden = YES;
+    if (DSStaged() && DSNameIsLocalKeyboard(NSStringFromClass(object_getClass(self)))) hidden = YES;
     %orig;
 }
 
 - (void)didMoveToWindow {
     %orig;
-    if (DSStaged() && DSIsInAppKeyboardView(self) && !self.hidden) self.hidden = YES;
+    if (DSStaged() && DSNameIsLocalKeyboard(NSStringFromClass(object_getClass(self)))) {
+        DSSuppressKeyboardView(self);
+    }
+}
+
+%end
+
+%hook UITextEffectsWindow
+
+- (void)layoutSubviews {
+    %orig;
+    if (DSStaged()) DSBanishLocalKeyboard();
+}
+
+- (void)setFrame:(CGRect)frame {
+    %orig;
+    if (DSStaged()) DSBanishLocalKeyboard();
+}
+
+- (void)didAddSubview:(UIView *)subview {
+    %orig;
+    if (DSStaged()) DSBanishLocalKeyboard();
 }
 
 %end
@@ -253,10 +424,7 @@ static void DSHideInAppKeyboardView(UIView *view) {
 
 - (void)showKeyboard {
     %orig;
-    if (!DSStaged()) return;
-    for (UIWindow *window in UIApplication.sharedApplication.windows) {
-        DSHideInAppKeyboardView(window);
-    }
+    if (DSStaged()) DSBanishLocalKeyboard();
 }
 
 %end
@@ -354,6 +522,7 @@ static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         %init(_ungrouped);
+        DSInstallKeyboardBanishObserver();
     });
 }
 

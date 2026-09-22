@@ -1,3 +1,6 @@
+**4.5.7**
+- The staged app's own keyboard is removed from the card. The keyboard window is not part of the app's normal window list, so the previous hide never saw it, and UIKit put the keys back. Those views are now forced out of the card whenever they are laid out
+
 **4.5.6**
 - A staged app no longer draws its own keyboard. SpringBoard is forced to be the keyboard UI host, and the keys are SpringBoard's, full width, outside the card
 - There is no fallback that puts the app's keyboard back inside the stage

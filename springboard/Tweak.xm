@@ -30,7 +30,7 @@
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
 // KeyboardArbiter, never point the focus coordinator at a scene. The picker
 // uses SpringBoard's own keyboard. A staged app is not allowed to draw keys;
-// SpringBoard's client is forced to be the keyboard UI host.
+// each one has its own SpringBoard field outside the card.
 
 #pragma mark - Calling out of a hook
 
@@ -334,10 +334,10 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
-// The keyboard a staged app shows is the picker search keyboard: a text field
-// in this process, this window key, UIKit drawing the keys. Moving the arbiter
-// UI host, and placing its scene, produced a different keyboard or none at all.
-// This hook only reports that a keyboard changed. It does not retarget it.
+// Each staged app has its own SpringBoard text field, outside the card. Picker
+// search is a different field. Moving the arbiter UI host, and placing its
+// scene, produced a different keyboard or none at all. This hook only reports
+// that a keyboard changed. It does not retarget it.
 
 static BOOL DSArbiterBusy = NO;
 
@@ -431,9 +431,8 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     (void)handler;
 
     %orig;
-    // The picker search keyboard is the one that looks right. A staged app is
-    // sent down that same path by DSStageManager. This hook does not retarget
-    // the arbiter and does not place a keyboard scene.
+    // A staged app is given its own SpringBoard field by DSStageManager. This
+    // hook does not retarget the arbiter and does not place a keyboard scene.
     NSString *summary = nil;
     @try {
         if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];
@@ -557,6 +556,7 @@ static void DSRegisterDarwinObservers(void) {
         BOOL isDelete = (state & (1ULL << 36)) != 0;
         BOOL notStaged = (state & (1ULL << 37)) != 0;
         BOOL listening = (state & (1ULL << 38)) != 0;
+        BOOL loaded = (state & (1ULL << 39)) != 0;
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
         if (hadField && kind == 1) className = @"field";
@@ -564,9 +564,14 @@ static void DSRegisterDarwinObservers(void) {
         else if (hadField && kind == 3) className = @"other";
         DSTell(^(DSStageManager *manager) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
+            BOOL hosted = bundle.length > 0 && ![bundle hasPrefix:@"hash "] && ![bundle isEqualToString:@"?"];
+            // Every UIKit app reports that it loaded. Only a hosted one is written down.
+            if (loaded && !listening && !hosted) return;
             NSString *line;
             if (listening) {
                 line = [NSString stringWithFormat:@"app: %@ is listening for staged keys", bundle];
+            } else if (loaded) {
+                line = [NSString stringWithFormat:@"app: %@ loaded", bundle];
             } else if (notStaged) {
                 line = [NSString stringWithFormat:@"app: key arrived in %@ while it was not staged", bundle];
             } else {

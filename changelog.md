@@ -1,3 +1,6 @@
+**4.5.30**
+- Each staged app has its own SpringBoard keyboard, separate from the picker search field, still outside the card. Letters from that keyboard go only to the app that is typing. The app reports `app: loaded` as soon as it is on a card, and `app: is listening` once the message box can take those letters. Picker search is unchanged
+
 **4.5.29**
 - Messenger never ran the in-app side. The log has the picker keyboard and the letters, and no line from Messenger, because an already-open app was only checked at launch. The half-screen card is noticed after that, and the message box is hooked then. The picker keyboard is unchanged
 

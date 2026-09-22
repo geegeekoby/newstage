@@ -387,7 +387,6 @@ static BOOL sSystemEdgePullAvailable;
                   duration:0.25];
     if (!onScreen) return;
     [self giveBackKeyWindow];
-    DSRevealSpringBoardKeyboard();
 }
 
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier {

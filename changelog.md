@@ -1,3 +1,6 @@
+**4.5.13**
+- Searching in the picker already shows the normal keyboard and lifts the card. A staged app was covering that with a full-screen keyboard scene. That scene is no longer placed on screen, so a staged app gets the same keyboard as the search field, and the card still lifts
+
 **4.5.12**
 - 4.5.11 hid SpringBoard's keyboard window whenever any keyboard went down, so no keyboard could come back, and it pulled the new bottom card up as soon as that half opened. Both of those are undone. Keyboards show again, and the bottom stage stays on the bottom half
 

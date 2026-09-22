@@ -341,10 +341,7 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 static BOOL DSArbiterBusy = NO;
 static id DSSavedKeyboardUIHandle = nil;
-static BOOL DSKeyboardSceneRequested = NO;
-static NSUInteger DSKeyboardPresentGeneration = 0;
 static BOOL DSLoggedKeyboardRoute = NO;
-static BOOL DSSignaledSpringBoardKeyboard = NO;
 
 static NSString *DSHandlerBundle(id handler) {
     if (![handler respondsToSelector:@selector(bundleIdentifier)]) return nil;
@@ -389,12 +386,6 @@ static void DSCheckHostingState(id arbiter) {
     ((void (*)(id, SEL))objc_msgSend)(arbiter, selector);
 }
 
-static void DSUpdateKeyboardSceneSettings(id arbiter) {
-    SEL selector = @selector(updateKeyboardSceneSettings);
-    if (![arbiter respondsToSelector:selector]) return;
-    ((void (*)(id, SEL))objc_msgSend)(arbiter, selector);
-}
-
 static id DSArbiterSceneLayer(id arbiter) {
     SEL selector = @selector(sceneLayer);
     if ([arbiter respondsToSelector:selector]) {
@@ -413,31 +404,6 @@ static BOOL DSBundleIsStaged(NSString *bundle) {
     return DSAsk(^BOOL(DSStageManager *manager) {
         return [manager isHostingBundleIdentifier:bundle];
     });
-}
-
-static void DSRequestKeyboardSceneIfNeeded(id arbiter) {
-    if (DSArbiterSceneLayer(arbiter) || DSKeyboardSceneRequested) return;
-    SEL linkSelector = @selector(sceneLink);
-    if (![arbiter respondsToSelector:linkSelector]) return;
-    id link = ((id (*)(id, SEL))objc_msgSend)(arbiter, linkSelector);
-    SEL create = @selector(createSceneWithCompletion:);
-    if (![link respondsToSelector:create]) return;
-    DSKeyboardSceneRequested = YES;
-    @try {
-        ((void (*)(id, SEL, id))objc_msgSend)(link, create, ^(id scene) {
-            (void)scene;
-            id layer = DSArbiterSceneLayer(arbiter);
-            DSUpdateKeyboardSceneSettings(arbiter);
-            NSUInteger generation = DSKeyboardPresentGeneration;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (generation != DSKeyboardPresentGeneration) return;
-                if (layer) DSPresentArbiterKeyboardLayer(layer);
-                DSRevealSpringBoardKeyboard();
-            });
-        });
-    } @catch (NSException *exception) {
-        DSKeyboardSceneRequested = NO;
-    }
 }
 
 // YES when SpringBoard should be showing this keyboard.
@@ -496,22 +462,13 @@ static BOOL DSRouteStagedKeyboardToSpringBoard(id arbiter, id information, id ha
         if (DSSavedKeyboardUIHandle) {
             id previous = DSSavedKeyboardUIHandle;
             DSSavedKeyboardUIHandle = nil;
-            DSKeyboardSceneRequested = NO;
             DSLoggedKeyboardRoute = NO;
-            DSSignaledSpringBoardKeyboard = NO;
             id springBoard = DSSpringBoardKeyboardHandler(arbiter);
             if (previous != springBoard) DSSetInputUIHost(springBoard, NO);
             DSSetInputUIHost(previous, YES);
             DSSetKeyboardUIHandle(arbiter, previous);
             DSCheckHostingState(arbiter);
         }
-        DSKeyboardPresentGeneration++;
-        NSUInteger generation = DSKeyboardPresentGeneration;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            // A keyboard that came up after this one went down must not be hidden.
-            if (generation != DSKeyboardPresentGeneration) return;
-            DSPresentArbiterKeyboardLayer(nil);
-        });
     }
     return NO;
 }
@@ -565,35 +522,10 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     }
 
     %orig;
-
-    @try {
-        if (present && DSStageReady()) {
-            NSUInteger generation = ++DSKeyboardPresentGeneration;
-            DSRouteStagedKeyboardToSpringBoard(self, information, handler);
-            DSUpdateKeyboardSceneSettings(self);
-            if (!DSSignaledSpringBoardKeyboard) {
-                DSSignaledSpringBoardKeyboard = YES;
-                id springBoard = DSSpringBoardKeyboardHandler(self);
-                SEL signal = @selector(signalKeyboardChanged:onCompletion:);
-                if ([springBoard respondsToSelector:signal]) {
-                    ((void (*)(id, SEL, id, id))objc_msgSend)(springBoard, signal, information, nil);
-                }
-            }
-            DSRequestKeyboardSceneIfNeeded(self);
-            id layer = DSArbiterSceneLayer(self);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (generation != DSKeyboardPresentGeneration) return;
-                if (layer) DSPresentArbiterKeyboardLayer(layer);
-                DSRevealSpringBoardKeyboard();
-            });
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)),
-                           dispatch_get_main_queue(), ^{
-                if (generation != DSKeyboardPresentGeneration) return;
-                DSRevealSpringBoardKeyboard();
-            });
-        }
-    } @catch (NSException *exception) {
-    }
+    (void)present;
+    // The picker search keyboard is the one that looks right: SpringBoard draws
+    // it, and the card lifts. Placing the keyboard scene into the remote window
+    // covers that with a full-screen layer and is the broken keyboard.
     NSString *summary = nil;
     @try {
         if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];

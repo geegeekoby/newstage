@@ -12,9 +12,9 @@
 // rectangle and the interface stays pinned to portrait.
 //
 // The keyboard is deliberately not one of those routes. While this process is
-// staged, every keyboard view it owns is forced out of the card. SpringBoard
-// shows the same keyboard the stage picker search uses, and keystrokes from
-// that keyboard are inserted here.
+// staged, it does not show a keyboard of its own and it does not ask the
+// keyboard arbiter for one. SpringBoard shows the same keyboard the stage
+// picker search uses, and keystrokes from that keyboard are inserted here.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -547,31 +547,46 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 %hook UIKeyboardImpl
 
+// The remote keyboard is the arbiter's keyboard. A staged app does not use it.
+// The local keyboard would draw inside the card. Neither is allowed to start.
 + (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return YES;
+    if (DSStaged()) return NO;
     return %orig;
 }
 
 - (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return YES;
+    if (DSStaged()) return NO;
     return %orig;
 }
 
 - (void)showKeyboard {
+    if (DSStaged()) {
+        DSBanishLocalKeyboard();
+        DSRequestPickerKeyboard(YES);
+        return;
+    }
     %orig;
-    if (!DSStaged()) return;
-    DSBanishLocalKeyboard();
-    DSRequestPickerKeyboard(YES);
 }
 
 - (void)hideKeyboard {
+    if (DSStaged()) {
+        DSBanishLocalKeyboard();
+        DSRequestPickerKeyboard(NO);
+        %orig;
+        return;
+    }
     %orig;
-    if (DSStaged()) DSRequestPickerKeyboard(NO);
 }
 
 %end
 
 %hook UITextField
+
+- (BOOL)becomeFirstResponder {
+    BOOL became = %orig;
+    if (became && DSStaged()) DSRequestPickerKeyboard(YES);
+    return became;
+}
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
@@ -583,6 +598,12 @@ static void DSInstallKeyboardBanishObserver(void) {
 %end
 
 %hook UITextView
+
+- (BOOL)becomeFirstResponder {
+    BOOL became = %orig;
+    if (became && DSStaged()) DSRequestPickerKeyboard(YES);
+    return became;
+}
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;

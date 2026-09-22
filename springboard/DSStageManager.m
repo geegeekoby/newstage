@@ -35,6 +35,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 // so UIKit draws the same keyboard. Keystrokes are handed to the hosted app.
 @interface DSStagedKeyboardField : UITextField
 @property (nonatomic, weak) id<DSStagedKeyboardTarget> keyTarget;
+// Set while the stage window is reclaiming the key. Resigning then is not the
+// user leaving the field.
+@property (nonatomic, assign) BOOL suppressEnd;
 @end
 
 @implementation DSStagedKeyboardField
@@ -58,7 +61,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 - (BOOL)resignFirstResponder {
     BOOL resigned = [super resignFirstResponder];
-    if (resigned && [self.keyTarget respondsToSelector:@selector(stagedKeyboardDidEnd)]) {
+    if (resigned && !self.suppressEnd && [self.keyTarget respondsToSelector:@selector(stagedKeyboardDidEnd)]) {
         [self.keyTarget stagedKeyboardDidEnd];
     }
     return resigned;
@@ -220,6 +223,8 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     // The hosted app's card while it is using the picker search keyboard.
     NSInteger _stagedKeyboardSlot;
     UITextField *_stagedKeyboardField;
+    NSInteger _stagedKeyboardEnsureGeneration;
+    BOOL _suppressStagedKeyboardEnd;
     NSInteger _presentGeneration;
 }
 
@@ -543,32 +548,94 @@ static BOOL sSystemEdgePullAvailable;
     field.autocapitalizationType = UITextAutocapitalizationTypeNone;
     field.spellCheckingType = UITextSpellCheckingTypeNo;
     field.returnKeyType = UIReturnKeyDefault;
-    field.userInteractionEnabled = NO;
     field.accessibilityElementsHidden = YES;
     _stagedKeyboardField = field;
 }
 
-// Same steps as a picker search field: this window becomes key, then a text
-// field in it edits, and UIKit's keyboard notification lifts that card.
-- (void)showStagedKeyboardLikePickerForBundle:(NSString *)bundle {
-    if (_searchSlot >= 0) return;
-    NSInteger slot = [self slotForHostedBundle:bundle];
-    if (slot < 0) return;
+// The picker search keyboard, for a hosted app. The app's own keyboard is not
+// started. This window takes the real key, then this field edits on that turn.
+- (void)driveStagedKeyboardForBundle:(NSString *)bundle
+                                slot:(NSInteger)slot
+                          generation:(NSInteger)generation
+                             attempt:(NSInteger)attempt {
+    if (generation != _stagedKeyboardEnsureGeneration || _searchSlot >= 0) return;
+    if ([self slotForHostedBundle:bundle] != slot) return;
     [self ensureStagedKeyboardField];
-    BOOL dark = _container.darkMode;
-    _stagedKeyboardField.keyboardAppearance = dark ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
+    _stagedKeyboardField.keyboardAppearance = _container.darkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
     UIView *root = _window.rootViewController.view;
     if (_stagedKeyboardField.superview != root) {
         [root addSubview:_stagedKeyboardField];
     }
-    if (_stagedKeyboardField.isFirstResponder && _stagedKeyboardSlot == slot) return;
     _stagedKeyboardSlot = slot;
+    DSStagedKeyboardField *field = (DSStagedKeyboardField *)_stagedKeyboardField;
+    field.suppressEnd = YES;
+    _suppressStagedKeyboardEnd = YES;
     [self takeKeyWindow];
-    [_stagedKeyboardField becomeFirstResponder];
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ is using the picker search keyboard", bundle);
+    _suppressStagedKeyboardEnd = NO;
+    field.suppressEnd = NO;
+    if (!DSWindowIsApplicationKey(_window)) {
+        if (attempt == 0) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ is waiting until the stage window is the key window", bundle);
+        }
+        return;
+    }
+    if (field.isFirstResponder && attempt >= 2) {
+        field.suppressEnd = YES;
+        [field resignFirstResponder];
+        field.suppressEnd = NO;
+    }
+    if (!field.isFirstResponder) {
+        [field becomeFirstResponder];
+    }
+    if (attempt == 0) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ is using the picker search keyboard on %@",
+                                  bundle, slot == 1 ? @"the top stage" : @"the bottom stage");
+    }
+}
+
+- (void)ensureStagedKeyboardForBundle:(NSString *)bundle
+                                 slot:(NSInteger)slot
+                           generation:(NSInteger)generation
+                              attempt:(NSInteger)attempt {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.16 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        if (generation != strongSelf->_stagedKeyboardEnsureGeneration || strongSelf->_searchSlot >= 0) return;
+        if ([strongSelf slotForHostedBundle:bundle] != slot) return;
+        CGRect keys = DSVisibleKeyboardFrameOnScreen();
+        if (!CGRectIsNull(keys) && CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
+            DSWindowIsApplicationKey(strongSelf->_window)) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ picker keyboard visible %@", bundle, NSStringFromCGRect(keys));
+            return;
+        }
+        if (attempt >= 5) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ picker keyboard did not appear", bundle);
+            return;
+        }
+        [strongSelf driveStagedKeyboardForBundle:bundle slot:slot generation:generation attempt:attempt + 1];
+        [strongSelf ensureStagedKeyboardForBundle:bundle slot:slot generation:generation attempt:attempt + 1];
+    });
+}
+
+- (void)showStagedKeyboardLikePickerForBundle:(NSString *)bundle {
+    if (_searchSlot >= 0) return;
+    NSInteger slot = [self slotForHostedBundle:bundle];
+    if (slot < 0) return;
+    CGRect keys = DSVisibleKeyboardFrameOnScreen();
+    if (_stagedKeyboardField.isFirstResponder && _stagedKeyboardSlot == slot &&
+        DSWindowIsApplicationKey(_window) &&
+        !CGRectIsNull(keys) && CGRectGetHeight(keys) >= kDSKeyboardPresentHeight) {
+        return;
+    }
+    NSInteger generation = ++_stagedKeyboardEnsureGeneration;
+    [self driveStagedKeyboardForBundle:bundle slot:slot generation:generation attempt:0];
+    [self ensureStagedKeyboardForBundle:bundle slot:slot generation:generation attempt:0];
 }
 
 - (void)hideStagedKeyboardLikePicker {
+    _stagedKeyboardEnsureGeneration++;
     if (!_stagedKeyboardField.isFirstResponder) {
         _stagedKeyboardSlot = -1;
         return;
@@ -594,6 +661,7 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)stagedKeyboardDidEnd {
+    if (_suppressStagedKeyboardEnd) return;
     _stagedKeyboardSlot = -1;
     if (_searchSlot >= 0) return;
     if (_sceneHost.isHosting || _topSceneHost.isHosting) {

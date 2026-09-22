@@ -1,3 +1,6 @@
+**4.5.20**
+- A staged app on the top or the bottom was still allowed to start its own keyboard and the arbiter's keyboard. Both are blocked. Tapping a text field uses the picker search keyboard: the stage window takes the real key, a SpringBoard text field edits, and that keyboard is shown again until it is on screen
+
 **4.5.19**
 - The search keyboard still did not appear: another window kept the real key, on one of the three foreground scenes, and the log was saving only its newest line. The stage window moves onto that window's scene, takes the key, and then asks for the same search keyboard. The log keeps the whole boot again
 

@@ -1,3 +1,6 @@
+**4.5.33**
+- The wallpaper stayed black and other taps stopped landing. The last build had raised a full-screen keyboard window and left it there. That window is no longer touched. Messenger still drew its own keys inside the card because the in-app side had not loaded. That side now matches Foundation, which is what gets a tweak into an app on this iOS, and the message field stays the editor. Picker search is unchanged
+
 **4.5.32**
 - Typing stayed in the message box, and the keys were still Messenger's own keyboard inside the card. Messenger had not loaded the in-app side, so it never asked SpringBoard to draw the keys. That side now loads into the app. The message field stays the editor, and SpringBoard draws the keyboard at the bottom of the display, outside the card. Picker search is unchanged
 

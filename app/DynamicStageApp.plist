@@ -1,12 +1,9 @@
 {
     Filter = {
         Bundles = (
+            "com.apple.Foundation",
             "com.apple.UIKit",
             "com.facebook.Messenger",
         );
-        Classes = (
-            "UIApplication",
-        );
-        Mode = "Any";
     };
 }

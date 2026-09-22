@@ -15,6 +15,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <stdio.h>
 
 // Fraction of the screen height the finger has to travel for the pull to reach
 // the stage's resting size; a little further than that commits to Split View.
@@ -909,10 +910,6 @@ static BOOL sSystemEdgePullAvailable;
     if (_sceneHost.isHosting && [_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     return NO;
-}
-
-- (BOOL)isPickerSearchActive {
-    return _searchSlot >= 0;
 }
 
 // While an app is on the stage, the arbiter still hears keyboards from Spotlight and
@@ -2811,9 +2808,28 @@ static NSString *DSLastDylibCheck;
     [self noteStagedKeyResult:line];
 }
 
+- (BOOL)hostedAppLeftALoadBeacon:(NSString *)bundle {
+    if ([DSSeenAppDylibHashes containsObject:@(DSIdentifierHash(bundle))]) return YES;
+    // One name per app. The shared notification only keeps the last writer, so a
+    // beacon from another process used to hide Messenger's.
+    char name[128];
+    snprintf(name, sizeof(name), "%s.%u", kDSKeyboardApplyNotification, DSIdentifierHash(bundle));
+    int token = NOTIFY_TOKEN_INVALID;
+    if (notify_register_check(name, &token) != NOTIFY_STATUS_OK) return NO;
+    uint64_t state = 0;
+    notify_get_state(token, &state);
+    notify_cancel(token);
+    BOOL seen = (uint32_t)state == DSIdentifierHash(bundle) && (state & (1ULL << 39)) != 0;
+    if (seen) {
+        if (!DSSeenAppDylibHashes) DSSeenAppDylibHashes = [NSMutableSet set];
+        [DSSeenAppDylibHashes addObject:@(DSIdentifierHash(bundle))];
+    }
+    return seen;
+}
+
 - (void)checkHostedAppDylib:(NSString *)bundle {
     if (![self isHostingBundleIdentifier:bundle]) return;
-    BOOL seen = [DSSeenAppDylibHashes containsObject:@(DSIdentifierHash(bundle))];
+    BOOL seen = [self hostedAppLeftALoadBeacon:bundle];
     NSString *line = [NSString stringWithFormat:@"SpringBoard: %@ %@",
                       bundle, seen ? @"has the stage dylib" : @"has not loaded the stage dylib"];
     if ([line isEqualToString:DSLastDylibCheck]) return;

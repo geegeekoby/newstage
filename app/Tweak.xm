@@ -8,6 +8,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <stdio.h>
 // Injected into every UIKit app. While this process is the one on the stage,
 // every route UIKit offers for "how big is the screen" answers with the stage
 // rectangle and the interface stays pinned to portrait.
@@ -385,8 +386,26 @@ static void DSReportListening(void) {
 
 // Posted as soon as this process has a bundle id, and again when it is staged.
 // SpringBoard only writes the line when that app is on a card.
+// A second name that belongs to this app only. The shared one keeps whichever
+// process wrote last, and that hid a loaded Messenger.
+static void DSPostLoadedBeacon(void) {
+    static int token = NOTIFY_TOKEN_INVALID;
+    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+    if (identifier.length == 0) return;
+    uint32_t hash = DSIdentifierHash(identifier);
+    char name[128];
+    snprintf(name, sizeof(name), "%s.%u", kDSKeyboardApplyNotification, hash);
+    if (token == NOTIFY_TOKEN_INVALID) notify_register_check(name, &token);
+    if (token == NOTIFY_TOKEN_INVALID) return;
+    uint64_t state = hash;
+    state |= (1ULL << 39);
+    notify_set_state(token, state);
+    notify_post(name);
+}
+
 static void DSReportLoaded(void) {
     DSPostApplyBits(1ULL << 39);
+    DSPostLoadedBeacon();
     DSDiagnosticsRecord(@"app: loaded");
 }
 

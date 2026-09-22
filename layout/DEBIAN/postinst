@@ -32,14 +32,21 @@ done
 
 # ElleKit injects apps from TweakInject. SpringBoard still loads from
 # MobileSubstrate, which is why the stage comes up and Messenger never sees
-# this dylib. When TweakInject is a real directory, point it at the app dylib.
-# When it is already a symlink onto MobileSubstrate, another link would replace
-# that directory, so it is left alone.
+# this dylib. A missing TweakInject becomes a link to that directory. A real
+# directory gets the app dylib beside the other app tweaks. An existing link
+# is followed, never replaced.
 inject=/var/jb/usr/lib/TweakInject
 libs=/var/jb/Library/MobileSubstrate/DynamicLibraries
-if [ -d "$inject" ] && [ ! -L "$inject" ]; then
+if [ ! -e "$inject" ] && [ -d "$libs" ]; then
+	mkdir -p /var/jb/usr/lib
+	ln -sfn "$libs" "$inject" || true
+elif [ -d "$inject" ] && [ ! -e "$inject/DynamicStageApp.dylib" ]; then
 	ln -sfn "$libs/DynamicStageApp.dylib" "$inject/DynamicStageApp.dylib" || true
 	ln -sfn "$libs/DynamicStageApp.plist" "$inject/DynamicStageApp.plist" || true
 fi
+
+# Respring does not always quit an app that is already running, so Messenger
+# would keep the copy that draws its own keyboard.
+killall -9 Messenger >/dev/null 2>&1 || true
 
 exit 0

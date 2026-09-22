@@ -28,9 +28,10 @@
 //
 // Keyboard policy for iOS 16.5.1 on an iPhone: never steal a layer, never
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
-// KeyboardArbiter, never point the focus coordinator at a scene. The picker
-// uses SpringBoard's own keyboard. A staged app keeps its text field. SpringBoard
-// is only told to draw that keyboard. The stage window does not take the key.
+// KeyboardArbiter, never point the focus coordinator at a scene, never change
+// the keyboard UI host. Doing that left a full-screen window over the wallpaper.
+// The picker uses SpringBoard's own keyboard. A staged app keeps its text field.
+// Its own dylib hides the keys it drew inside the card.
 
 #pragma mark - Calling out of a hook
 
@@ -334,13 +335,9 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
-// A staged app keeps its own text field. This hook reports the keyboard, and when
-// that keyboard belongs to a staged app it asks SpringBoard to draw the keys.
-// It does not take the key window, does not change who receives the letters, and
-// does not place a keyboard scene.
-
-static NSInteger DSHostAssignAttempts = 0;
-static BOOL DSRevealedHostedKeyboard = NO;
+// A staged app keeps its own text field. This hook only reports that a keyboard
+// changed. It does not take the key window, does not choose a keyboard host, and
+// does not place a keyboard scene. Raising the keyboard window covered the wallpaper.
 
 static BOOL DSArbiterBusy = NO;
 
@@ -393,62 +390,6 @@ static BOOL DSBundleIsStaged(NSString *bundle) {
     });
 }
 
-// SpringBoard draws the keys. The staged app keeps the text field. Search is
-// left alone, and this does not ask the focus coordinator for anything.
-static NSString *DSAssignSpringBoardKeyboardHost(id arbiter) {
-    NSString *before = DSHandlerBundle(DSKeyboardUIHandle(arbiter)) ?: @"none";
-    if ([before isEqualToString:@"com.apple.springboard"]) {
-        return [NSString stringWithFormat:@"keyboard ui host is already %@", before];
-    }
-    id springBoard = DSSpringBoardKeyboardHandler(arbiter);
-    if (!springBoard) {
-        return @"SpringBoard has no keyboard client, so the keys stay in the app";
-    }
-    SEL setHandler = @selector(setKeyboardUIHandler:);
-    SEL setHandle = @selector(setKeyboardUIHandle:);
-    if (![arbiter respondsToSelector:setHandler] && ![arbiter respondsToSelector:setHandle]) {
-        return @"keyboard ui host setter is missing";
-    }
-    @try {
-        if ([arbiter respondsToSelector:setHandler]) {
-            ((void (*)(id, SEL, id))objc_msgSend)(arbiter, setHandler, springBoard);
-        } else {
-            ((void (*)(id, SEL, id))objc_msgSend)(arbiter, setHandle, springBoard);
-        }
-    } @catch (NSException *exception) {
-        return [NSString stringWithFormat:@"keyboard ui host threw %@", exception.reason ?: exception.name ?: @"?"];
-    }
-    NSString *after = DSHandlerBundle(DSKeyboardUIHandle(arbiter)) ?: @"none";
-    return [NSString stringWithFormat:@"keyboard ui host %@ -> %@", before, after];
-}
-
-static void DSRevealHostedKeyboardLater(NSString *hostNote) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (DSAsk(^BOOL(DSStageManager *manager) { return [manager isPickerSearchActive]; })) return;
-        BOOL revealed = DSRevealSpringBoardKeyboard();
-        CGRect keys = DSVisibleKeyboardFrameOnScreen();
-        NSString *shown = [NSString stringWithFormat:@"%@ reveal=%d keys=%@",
-                           hostNote ?: @"keyboard ui host",
-                           revealed,
-                           CGRectIsNull(keys) ? @"none" : NSStringFromCGRect(keys)];
-        DSTell(^(DSStageManager *manager) {
-            [manager noteKeyboardDebugFromSpringBoard:shown];
-        });
-        if (revealed || !CGRectIsNull(keys)) return;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if (DSAsk(^BOOL(DSStageManager *manager) { return [manager isPickerSearchActive]; })) return;
-            BOOL again = DSRevealSpringBoardKeyboard();
-            CGRect later = DSVisibleKeyboardFrameOnScreen();
-            NSString *second = [NSString stringWithFormat:@"keyboard window second look reveal=%d keys=%@",
-                                again,
-                                CGRectIsNull(later) ? @"none" : NSStringFromCGRect(later)];
-            DSTell(^(DSStageManager *manager) {
-                [manager noteKeyboardDebugFromSpringBoard:second];
-            });
-        });
-    });
-}
-
 static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onScreen) {
     BOOL staged = DSBundleIsStaged(source);
     id springBoard = DSSpringBoardKeyboardHandler(arbiter);
@@ -494,24 +435,8 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     (void)handler;
 
     %orig;
-    // Draw the keys in SpringBoard. Do not change the text field, and do not
-    // place a keyboard scene. Search still owns this keyboard when it is up.
-    NSString *hostNote = nil;
-    if (onScreen && DSStageReady() && DSBundleIsStaged(source) &&
-        !DSAsk(^BOOL(DSStageManager *manager) { return [manager isPickerSearchActive]; }) &&
-        DSHostAssignAttempts < 2) {
-        NSString *current = DSHandlerBundle(DSKeyboardUIHandle(self)) ?: @"none";
-        if (![current isEqualToString:@"com.apple.springboard"]) {
-            DSHostAssignAttempts++;
-            hostNote = DSAssignSpringBoardKeyboardHost(self);
-        } else if (!DSRevealedHostedKeyboard) {
-            DSRevealedHostedKeyboard = YES;
-            hostNote = @"keyboard ui host is already com.apple.springboard";
-        }
-    } else if (!onScreen) {
-        DSHostAssignAttempts = 0;
-        DSRevealedHostedKeyboard = NO;
-    }
+    // Read only. Choosing a keyboard host and unhiding its window covered the
+    // wallpaper with a full-screen layer and left Messenger's own keys in the card.
     NSString *summary = nil;
     @try {
         if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];
@@ -524,13 +449,6 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
             DSTell(^(DSStageManager *manager) {
                 [manager noteKeyboardDebugFromSpringBoard:shown];
             });
-        });
-    }
-
-    if (hostNote.length) {
-        NSString *note = [hostNote copy];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            DSRevealHostedKeyboardLater(note);
         });
     }
 
@@ -710,6 +628,15 @@ static void DSInstallRemainingHooks(void) {
 
             DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed after home screen, corner pull will come from %@",
                                       systemPull ? @"the system edge gesture" : @"a window in the corner");
+            NSFileManager *files = NSFileManager.defaultManager;
+            NSString *inject = @"/var/jb/usr/lib/TweakInject";
+            NSDictionary *injectInfo = [files attributesOfItemAtPath:inject error:nil];
+            BOOL injectLink = [injectInfo[NSFileType] isEqualToString:NSFileTypeSymbolicLink];
+            NSString *appDylib = @"DynamicStageApp.dylib";
+            BOOL inLibs = [files fileExistsAtPath:[@"/var/jb/Library/MobileSubstrate/DynamicLibraries" stringByAppendingPathComponent:appDylib]];
+            BOOL inInject = [files fileExistsAtPath:[inject stringByAppendingPathComponent:appDylib]];
+            DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d",
+                                      inLibs, injectInfo != nil, injectLink, inInject);
 
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{

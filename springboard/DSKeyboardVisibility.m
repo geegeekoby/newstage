@@ -73,8 +73,6 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
     });
     if (!CGRectIsNull(keyboard)) return keyboard;
 
-    // SpringBoard sometimes hosts the keys in a window whose class name does not mention
-    // keyboard at all; fall back to hunting the UIKeyboard view in every window.
     DSVisitApplicationWindows(^(UIWindow *candidate) {
         if (!CGRectIsNull(keyboard)) return;
         if (candidate.hidden || candidate.alpha < 0.01) return;
@@ -88,13 +86,15 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
 static UIWindow *DSClaimedKeyboardWindow = nil;
 static NSString *DSClaimedKeyboardStatus = @"win=none";
 
-static void DSRaiseKeyboardWindow(UIWindow *window) {
+// The stage sits at StatusBar - 1. Put the keyboard just above that so the
+// keys clear the card. Alert level covered the wallpaper.
+static void DSRaiseKeyboardWindowAboveStage(UIWindow *window) {
     window.backgroundColor = UIColor.clearColor;
     window.opaque = NO;
     window.alpha = 1.0;
     window.hidden = NO;
-    if (window.windowLevel < UIWindowLevelAlert) {
-        window.windowLevel = UIWindowLevelAlert;
+    if (window.windowLevel < UIWindowLevelStatusBar) {
+        window.windowLevel = UIWindowLevelStatusBar;
     }
 }
 
@@ -103,7 +103,7 @@ BOOL DSRevealSpringBoardKeyboard(void) {
     __block BOOL revealed = NO;
     DSVisitApplicationWindows(^(UIWindow *window) {
         if (window == DSClaimedKeyboardWindow) {
-            DSRaiseKeyboardWindow(window);
+            DSRaiseKeyboardWindowAboveStage(window);
             revealed = YES;
             return;
         }
@@ -118,11 +118,7 @@ BOOL DSRevealSpringBoardKeyboard(void) {
             window.alpha = wasAlpha;
             return;
         }
-        // The stage sits just under the status bar. A keyboard window that is
-        // lower than that is covered by the card, so lift only those.
-        if (window.windowLevel < UIWindowLevelStatusBar) {
-            window.windowLevel = UIWindowLevelAlert;
-        }
+        DSRaiseKeyboardWindowAboveStage(window);
         revealed = YES;
     });
     if (revealed) return YES;
@@ -186,7 +182,7 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
         }
     }
 
-    DSRaiseKeyboardWindow(window);
+    DSRaiseKeyboardWindowAboveStage(window);
     // Leave the window at the size SpringBoard gave it. Stretching it to the
     // whole display puts that window over both cards.
     hostedWindow = window;
@@ -197,6 +193,18 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
                                bound,
                                window.windowLevel,
                                NSStringFromCGRect(window.frame)];
+}
+
+void DSHidePresentedArbiterKeyboard(void) {
+    DSPresentArbiterKeyboardLayer(nil);
+}
+
+BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer) {
+    if (sceneLayer) {
+        DSPresentArbiterKeyboardLayer(sceneLayer);
+        if (DSClaimedKeyboardWindow && !DSClaimedKeyboardWindow.hidden) return YES;
+    }
+    return DSRevealSpringBoardKeyboard();
 }
 
 NSString *DSPresentedKeyboardWindowStatus(void) {

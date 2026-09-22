@@ -635,14 +635,13 @@ static BOOL sSystemEdgePullAvailable;
     static NSString *loggedBundle = nil;
     if (!onScreen) {
         if ([loggedBundle isEqualToString:source]) loggedBundle = nil;
+        DSReleaseStagedKeyboardHost();
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
         return;
     }
-    CGRect screen = [self screenBounds];
-    CGRect keys = frame;
-    BOOL reported = CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
-                    CGRectGetMinY(keys) < CGRectGetMaxY(screen) - 1.0;
-    if (!reported) {
+    CGRect keys = [self keyboardFrameForLift:[self keyboardFrameOnDisplay:frame]];
+    if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) {
+        CGRect screen = [self screenBounds];
         keys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
     }
     if (![loggedBundle isEqualToString:source]) {
@@ -1705,6 +1704,7 @@ static BOOL sSystemEdgePullAvailable;
             self->_primaryParked = YES;
             self->_secondParked = YES;
             self->_state = DSStageStateMinimized;
+            DSReleaseStagedKeyboardHost();
             [self giveBackKeyWindow];
             [self updateOpenAppIcon];
             [self scheduleAutoKill];
@@ -2453,6 +2453,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateMinimized;
+        DSReleaseStagedKeyboardHost();
         [self giveBackKeyWindow];
         // The app stays hosted. Putting the card away is not closing it.
         [self updateOpenAppIcon];

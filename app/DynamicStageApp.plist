@@ -1,5 +1,6 @@
 {
     Filter = {
         Bundles = ( "com.facebook.Messenger" );
+        Executables = ( "Messenger" );
     };
 }

@@ -1,3 +1,6 @@
+**4.5.37**
+- Typing stayed in Messenger, but the keys were still drawn inside the card because the remote keyboard window sat under the stage. That window is now lifted to status-bar level only (never alert), and the arbiter scene layer is bound into it. The keyboard UI host is handed back when the keys go down or the stage is minimized, so Spotlight and Filza are not stuck. The in-app dylib is copied into TweakInject again on boot if it is missing
+
 **4.5.36**
 - The caret left the tapped field because SpringBoard's proxy field took the key. That path is gone for staged apps. SpringBoard becomes the keyboard UI host so the keys sit outside the card, and Messenger keeps the message field as the editor. The in-app filter is Messenger only (ElleKit ignored Exclude and never loaded a UIKit-wide filter into Messenger). Picker search is unchanged. Keyboard windows are not raised
 

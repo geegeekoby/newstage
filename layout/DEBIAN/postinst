@@ -2,7 +2,6 @@
 # Installing a build is the user saying "try again", so the boot guard's count of
 # unfinished SpringBoard launches is cleared here. Without this, a build that had
 # tripped it would stay switched off even after being replaced by a fixed one.
-set -e
 
 for stale in launchguard paneguard; do
 	rm -f "/var/mobile/Library/Preferences/com.recreated.dynamicstage.$stale"
@@ -22,29 +21,30 @@ done
 
 # ElleKit loads app tweaks from TweakInject. Theos puts the dylib in
 # DynamicLibraries. When TweakInject is a real directory, copy the in-app side
-# there. Write the filter as XML text - a binary plist can fail to parse and
-# Messenger never loads the tweak. Do not put UIKit in the filter: ElleKit
-# ignores Exclude and would inject into PaperBoard.
+# there. Write the filter as XML text so ElleKit can parse it.
 LIBS="/var/jb/Library/MobileSubstrate/DynamicLibraries"
 INJECT="/var/jb/usr/lib/TweakInject"
 PLIST_BODY='{
     Filter = {
         Bundles = ( "com.facebook.Messenger" );
+        Executables = ( "Messenger" );
     };
 }
 '
 write_plist() {
 	dest="$1"
-	printf '%s' "$PLIST_BODY" > "$dest" || true
+	printf '%s\n' "$PLIST_BODY" > "$dest" || true
 }
+
 if [ -f "$LIBS/DynamicStageApp.dylib" ]; then
 	write_plist "$LIBS/DynamicStageApp.plist"
-fi
-if [ -d "$INJECT" ] && [ ! -L "$INJECT" ] && [ -f "$LIBS/DynamicStageApp.dylib" ]; then
-	cp -f "$LIBS/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.dylib" || true
-	write_plist "$INJECT/DynamicStageApp.plist"
+	if [ -d "$INJECT" ] && [ ! -L "$INJECT" ]; then
+		cp -f "$LIBS/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.dylib" || true
+		write_plist "$INJECT/DynamicStageApp.plist"
+	fi
 fi
 
+# Force Messenger to reload the in-app side.
 killall -9 Messenger 2>/dev/null || true
 
 exit 0

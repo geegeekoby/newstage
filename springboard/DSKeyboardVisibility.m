@@ -150,6 +150,31 @@ static BOOL DSSceneNameIsRemoteKeyboard(NSString *name) {
     return [name rangeOfString:@"remote-keyboard"].location != NSNotFound;
 }
 
+static BOOL DSSceneNameIsAperture(NSString *name) {
+    if (name.length == 0) return NO;
+    return [name rangeOfString:@"Aperture"].location != NSNotFound ||
+           [name rangeOfString:@"aperture"].location != NSNotFound;
+}
+
+static UIWindowScene *DSRemoteKeyboardScene(void) {
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+            if (![scene isKindOfClass:UIWindowScene.class]) continue;
+            NSString *identifier = scene.session.persistentIdentifier ?: @"";
+            if (DSSceneNameIsRemoteKeyboard(identifier)) return (UIWindowScene *)scene;
+        }
+    }
+    return nil;
+}
+
+CGFloat DSKeyboardWindowLevelAboveStage(void) {
+    return UIWindowLevelStatusBar + 5000.0;
+}
+
+BOOL DSKeyboardWindowShouldStayAboveStage(id window) {
+    return DSExternalKeyboardRaised && window != nil && window == DSMovedKeyboardWindow;
+}
+
 BOOL DSExternalKeyboardCoversStage(void) {
     return DSExternalKeyboardRaised;
 }
@@ -298,6 +323,63 @@ BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindowObject) {
         NSString *reason = exception.reason ?: @"?";
         DSRestoreRemoteKeyboardPlacement();
         DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=move-failed %@", reason];
+        return NO;
+    }
+}
+
+BOOL DSRaiseKeyboardWindowAboveStage(void) {
+    CGRect screen = UIScreen.mainScreen.bounds;
+    __block UIWindow *target = nil;
+    __block CGRect shown = CGRectNull;
+    __block NSInteger rank = -1;
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
+        if (window.hidden || window.alpha < 0.01) return;
+        NSString *sceneName = DSWindowSceneName(window);
+        BOOL remote = DSSceneNameIsRemoteKeyboard(sceneName);
+        BOOL aperture = DSSceneNameIsAperture(sceneName);
+        CGRect keys = DSKeyboardViewFrameInView(window);
+        BOOL hasKeys = DSKeyboardFrameIsOnScreen(keys, screen);
+        if (!remote && !aperture && !hasKeys && window != DSMovedKeyboardWindow) return;
+        NSInteger score = 0;
+        if (hasKeys) score += 4;
+        if (aperture) score += 2;
+        if (remote) score += 1;
+        if (score > rank) {
+            rank = score;
+            target = window;
+            shown = keys;
+        }
+    });
+    if (!target) {
+        DSClaimedKeyboardStatus = @"win=none";
+        DSExternalKeyboardRaised = NO;
+        return NO;
+    }
+    @try {
+        if (!DSMovedKeyboardWindow) {
+            DSMovedKeyboardWindow = target;
+            DSMovedKeyboardScene = target.windowScene;
+            DSMovedKeyboardLevel = target.windowLevel;
+        }
+        NSString *before = DSWindowSceneName(target);
+        UIWindowScene *remoteScene = DSRemoteKeyboardScene();
+        // SystemAperture clips the keyboard to the island. The remote-keyboard
+        // scene is the one that already paints the picker keyboard full width.
+        if (DSSceneNameIsAperture(before) && remoteScene && target.windowScene != remoteScene) {
+            target.windowScene = remoteScene;
+        }
+        target.windowLevel = DSKeyboardWindowLevelAboveStage();
+        DSExternalKeyboardRaised = YES;
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=above-stage from=%@ now=%@ lvl=%.0f keys=%@",
+                                   before,
+                                   DSWindowSceneName(target),
+                                   target.windowLevel,
+                                   CGRectIsNull(shown) ? @"none" : NSStringFromCGRect(shown)];
+        return YES;
+    } @catch (NSException *exception) {
+        DSRestoreRemoteKeyboardPlacement();
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=raise-failed %@", exception.reason ?: @"?"];
         return NO;
     }
 }

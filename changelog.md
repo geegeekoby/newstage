@@ -1,3 +1,6 @@
+**4.5.48**
+- The keyboard window SpringBoard already has was sitting on SystemAperture at level 10, and every keyboard event put it back there, under the stage at level 999. While a staged app's keyboard is up, that window is returned to the remote-keyboard scene and its level is held at the status bar plus 5000. The card no longer clips past its own edge. The text field stays the editor. The window is put back when the keyboard goes down
+
 **4.5.47**
 - The keys in the new screenshots start at the card's 5pt inset, so they are Messenger's scene, not a window sitting under the stage. The search keyboard is already visible in the gap at level 10, so raising that window does not pull scene pixels out. iOS 16 does not call `isUsingRemoteKeyboard`, which is why the app never said the keyboard was remote. A staged app now uses the plain remote keyboard window on its own scene, and it does not take the hosted keyboard view into the card. The bottom card lifts only once SpringBoard itself is drawing full-width keys. The scene is not clipped and that window is not moved
 

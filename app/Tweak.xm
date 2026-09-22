@@ -1204,18 +1204,6 @@ static void DSInstallKeyboardBanishObserver(void) {
     return chosen;
 }
 
-- (void)setRequiredScene:(id)scene {
-    static BOOL clearing = NO;
-    if (DSStaged() && scene && !clearing) {
-        clearing = YES;
-        DSReportRemotePath(3, YES);
-        %orig(nil);
-        clearing = NO;
-        return;
-    }
-    %orig;
-}
-
 - (void)addHostedWindowView:(id)view fromPID:(int)pid forScene:(id)scene {
     if (DSStaged()) {
         DSReportRemotePath(4, YES);

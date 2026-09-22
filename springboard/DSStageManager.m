@@ -759,14 +759,28 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
     if (_searchSlot >= 0) return;
-    // A window pulled off the remote-keyboard scene stops drawing. Put it back.
-    DSRestoreRemoteKeyboardPlacement();
     if (!onScreen) {
+        // Put the keyboard window back only after it has gone away. Doing this
+        // on the way up was returning it to level 10 under the stage.
+        DSRestoreRemoteKeyboardPlacement();
+        [_container setClipsContents:YES];
+        [_topContainer setClipsContents:YES];
         DSHostedClipGeneration++;
         [self clearHostedKeyboardBands];
         DSReleaseStagedKeyboardHost();
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
         return;
+    }
+    BOOL raised = DSRaiseKeyboardWindowAboveStage();
+    [_container setClipsContents:!raised];
+    [_topContainer setClipsContents:!raised];
+    {
+        NSString *status = DSPresentedKeyboardWindowStatus();
+        static NSString *loggedStatus = nil;
+        if (status.length && ![loggedStatus isEqualToString:status]) {
+            loggedStatus = [status copy];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@", status);
+        }
     }
     // Cutting the card down to the overlap hid the app: the content view was
     // left 120pt tall and the stage looked blank. Leave the scene whole.

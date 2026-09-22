@@ -20,6 +20,15 @@ BOOL DSRevealSpringBoardKeyboard(void);
 // not create a window, hide a view, or assign the keyboard UI host.
 // `stageWindow` is the stage's UIWindow.
 BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindow);
+
+// Raises the keyboard window SpringBoard is already showing so it sits above
+// the stage. A window left on SystemAperture is moved back to the
+// remote-keyboard scene, which is the scene that paints the keys. The stage
+// scene is left alone. Does not create a window or hide a view.
+BOOL DSRaiseKeyboardWindowAboveStage(void);
+// YES while that window must ignore later level changes from UIKit.
+BOOL DSKeyboardWindowShouldStayAboveStage(id window);
+CGFloat DSKeyboardWindowLevelAboveStage(void);
 void DSRestoreRemoteKeyboardPlacement(void);
 
 // SpringBoard-process keyboard windows only. The hosted app's own keyboard

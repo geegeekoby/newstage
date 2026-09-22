@@ -19,11 +19,13 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIButton *_stackAddButton;
     UIButton *_minimizeButton;
     BOOL _applyingKeyboardBand;
+    BOOL _clipsContents;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
         _cornerRadius = kDSFallbackDisplayCornerRadius;
+        _clipsContents = YES;
 
         // The card clips its contents, which kills its own shadow, so the drop
         // shadow lives on a sibling underneath.
@@ -160,11 +162,19 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         }
     } else {
         _backdrop.frame = bounds;
-        self.clipsToBounds = YES;
+        // The keyboard is a SpringBoard window above this card. The card must
+        // not clip it. The app itself stays inside the content view.
+        self.clipsToBounds = _clipsContents;
         _contentView.clipsToBounds = YES;
         _contentView.layer.mask = nil;
-        _contentView.layer.cornerRadius = 0.0;
-        self.layer.cornerRadius = _cornerRadius;
+        if (_clipsContents) {
+            _contentView.layer.cornerRadius = 0.0;
+            self.layer.cornerRadius = _cornerRadius;
+        } else {
+            _contentView.layer.cornerRadius = _cornerRadius;
+            _contentView.layer.cornerCurve = kCACornerCurveContinuous;
+            self.layer.cornerRadius = 0.0;
+        }
         _contentView.frame = bounds;
         if (pinHost) {
             _applyingKeyboardBand = YES;
@@ -290,14 +300,16 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 }
 
 - (void)setClipsContents:(BOOL)clips {
-    if (_keyboardBandHeight > 1.0) {
-        self.clipsToBounds = NO;
-        self.opaque = NO;
-        _contentView.clipsToBounds = YES;
-        return;
-    }
+    _clipsContents = clips;
     self.clipsToBounds = clips;
-    _contentView.clipsToBounds = clips;
+    self.opaque = NO;
+    // The hosted app stays inside the card. Unclipping this view is what lets
+    // SpringBoard's keyboard window draw past the card edge.
+    _contentView.clipsToBounds = YES;
+    if (!clips) {
+        _contentView.layer.cornerRadius = _cornerRadius;
+        _contentView.layer.cornerCurve = kCACornerCurveContinuous;
+    }
 }
 
 - (void)setKeyboardBandHeight:(CGFloat)keyboardBandHeight {

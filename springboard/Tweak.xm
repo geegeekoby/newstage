@@ -368,6 +368,18 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 %end
 
+%hook UITextEffectsWindow
+
+- (void)setWindowLevel:(CGFloat)level {
+    if (DSKeyboardWindowShouldStayAboveStage(self) && level < DSKeyboardWindowLevelAboveStage()) {
+        %orig(DSKeyboardWindowLevelAboveStage());
+        return;
+    }
+    %orig;
+}
+
+%end
+
 %hook UIWindow
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {

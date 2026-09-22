@@ -28,9 +28,12 @@
 // drawn above the card, so it does not need to spill out of this view.
 - (void)setClipsContents:(BOOL)clips;
 
-// When a staged app's own keyboard is up, the bottom of the card is opened
-// so those keys sit in the system keyboard band instead of inside the chrome.
+// When a system keyboard overlaps this card, the content view is shortened
+// by this many points so the hosted scene is clipped there. A layer mask does
+// not clip that scene. Called again after the content view's frame is set so
+// the host view can be put back to the full card height.
 @property (nonatomic, assign) CGFloat keyboardBandHeight;
+@property (nonatomic, copy) void (^keyboardBandLayoutHandler)(void);
 
 // Top strip that drags the whole card.
 - (CGRect)dragAffordanceRect;

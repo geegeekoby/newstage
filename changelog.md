@@ -1,3 +1,6 @@
+**4.5.45**
+- The 296pt mask on the card never clipped Messenger's scene, so the keys stayed inside the bottom card. The hosted view is clipped by its superview's bounds, not by a mask path. When SpringBoard already has a system keyboard on screen, the content view is shortened to that overlap and the app view stays the full card height, so the app does not relayout the keys up into the opening. The keyboard window stays in the remote-keyboard scene. A top card that does not cover the keyboard is left alone. The in-app dylib no longer links CydiaSubstrate, which a sandboxed app cannot resolve, and its filter is the same OpenStep form SpringBoard's tweak already uses
+
 **4.5.44**
 - Moving the keyboard window onto the stage scene took it out of the only scene that actually draws it, so the keys had a frame and nothing on screen. The top card then showed no keyboard, and the bottom card still showed Messenger's own keys. That window stays in the remote-keyboard scene. The card cuts off the bottom band where the hosted app paints its keyboard, and touches there fall through to the system keyboard
 

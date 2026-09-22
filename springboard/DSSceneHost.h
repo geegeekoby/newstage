@@ -33,6 +33,10 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 - (void)setStageFrame:(CGRect)frame safeAreaInsets:(UIEdgeInsets)insets;
 // Puts the hosted view in the card it is attached to. Does not resize the scene.
 - (void)fitHostViewToCard;
+// How much of the bottom of the card the host view should extend past, so the
+// content view's bounds clip that band. Does not change the scene's size.
+- (void)setKeyboardClipHeight:(CGFloat)height;
+- (CGFloat)keyboardClipHeight;
 // The app view re-pins itself to the full display and the card stays black until
 // geometry is written again. Call this after the card has moved.
 - (void)refreshPresentedGeometry;

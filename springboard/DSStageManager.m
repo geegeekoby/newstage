@@ -17,6 +17,9 @@
 #import <notify.h>
 #import <sys/stat.h>
 
+// Bumped when a hosted keyboard goes down so a late clip retry does not reopen it.
+static NSInteger DSHostedClipGeneration = 0;
+
 // Fraction of the screen height the finger has to travel for the pull to reach
 // the stage's resting size; a little further than that commits to Split View.
 static const CGFloat kDSPullTravelRatio = 0.42;
@@ -397,6 +400,10 @@ static BOOL sSystemEdgePullAvailable;
 
     _container = [[DSStageContainerView alloc] initWithFrame:[self stageFrameForState:DSStageStateClosed]];
     _container.cornerRadius = [self cornerRadiusForState:DSStageStateOverlay];
+    __weak __typeof(self) bandSelf = self;
+    _container.keyboardBandLayoutHandler = ^{
+        [bandSelf clipHostedSceneForKeyboardBandOnSlot:0];
+    };
     [root addSubview:_container];
 
     _picker = [[DSAppPickerViewController alloc] init];
@@ -644,46 +651,110 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)clearHostedKeyboardBands {
+    [_sceneHost setKeyboardClipHeight:0.0];
+    [_topSceneHost setKeyboardClipHeight:0.0];
     _container.keyboardBandHeight = 0.0;
     if (_topContainer) _topContainer.keyboardBandHeight = 0.0;
 }
 
+- (void)clipHostedSceneForKeyboardBandOnSlot:(NSInteger)slot {
+    DSStageContainerView *card = [self containerForSlot:slot];
+    DSSceneHost *host = [self sceneHostForSlot:slot];
+    if (!card || !host.isHosting) return;
+    CGFloat band = card.keyboardBandHeight;
+    if (band > 1.0 || host.keyboardClipHeight > 1.0) {
+        [host setKeyboardClipHeight:band];
+    }
+}
+
 // The system keyboard only paints while its window stays in the
 // remote-keyboard scene. Moving that window onto the stage scene left the
-// keys with a frame and nothing on screen. Cut the hosted app's own keyboard
-// out of the card instead, and let the system keyboard show through the hole.
+// keys with a frame and nothing on screen. A mask on the card did not clip
+// the hosted scene either. Shorten the content view, which does clip, and
+// only where a real system keyboard is already on screen under the card.
 - (void)openHostedKeyboardBandForBundle:(NSString *)bundle reported:(CGRect)reported {
+    [self openHostedKeyboardBandForBundle:bundle reported:reported attempt:0];
+}
+
+- (void)openHostedKeyboardBandForBundle:(NSString *)bundle reported:(CGRect)reported attempt:(NSInteger)attempt {
     NSInteger slot = [self slotForHostedBundle:bundle];
     DSStageContainerView *card = [self containerForSlot:slot];
     if (!card) return;
     CGRect screen = [self screenBounds];
-    CGRect systemKeys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
     CGRect visible = DSVisibleKeyboardFrameOnScreen();
-    if (!CGRectIsNull(visible) && CGRectGetHeight(visible) >= kDSKeyboardPresentHeight &&
-        CGRectGetMinY(visible) > CGRectGetHeight(screen) * 0.4) {
-        systemKeys = visible;
+    BOOL found = !CGRectIsNull(visible) &&
+        CGRectGetHeight(visible) >= kDSKeyboardPresentHeight &&
+        CGRectGetMinY(visible) > CGRectGetHeight(screen) * 0.4;
+    static NSString *loggedBand = nil;
+    if (!found) {
+        if (attempt < 2) {
+            NSInteger generation = DSHostedClipGeneration;
+            NSString *bundleCopy = [bundle copy] ?: @"";
+            CGRect reportedCopy = reported;
+            NSInteger next = attempt + 1;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.45 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                if (generation != DSHostedClipGeneration) return;
+                if (self->_searchSlot >= 0) return;
+                if ([self slotForHostedBundle:bundleCopy] != slot) return;
+                [self openHostedKeyboardBandForBundle:bundleCopy reported:reportedCopy attempt:next];
+            });
+        }
+        NSString *mark = [NSString stringWithFormat:@"%@-skip", bundle ?: @"?"];
+        if (![loggedBand isEqualToString:mark]) {
+            loggedBand = mark;
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard clip skipped, no system keyboard window slot %ld reported %@",
+                                      bundle, (long)slot, NSStringFromCGRect(reported));
+        }
+        return;
     }
+    CGRect systemKeys = visible;
     CGRect cardFrame = CGRectOffset(card.frame, 0.0, -card.liftOffset);
     CGFloat overlap = CGRectGetHeight(CGRectIntersection(cardFrame, systemKeys));
-    CGFloat local = 0.0;
-    if (CGRectGetHeight(reported) >= kDSKeyboardPresentHeight &&
-        CGRectGetMinY(reported) < CGRectGetHeight(screen) * 0.4 &&
-        CGRectGetHeight(reported) < CGRectGetHeight(cardFrame)) {
-        local = CGRectGetHeight(reported);
-    }
-    CGFloat band = MAX(overlap, local);
     CGFloat limit = MAX(CGRectGetHeight(cardFrame) - 120.0, 0.0);
-    if (band > limit) band = limit;
-    card.keyboardBandHeight = band;
+    CGFloat band = overlap > limit ? limit : overlap;
     DSStageContainerView *other = [self containerForSlot:slot == 0 ? 1 : 0];
-    if (other && other != card) other.keyboardBandHeight = 0.0;
-    static NSString *loggedBand = nil;
+    if (other && other != card) {
+        other.keyboardBandHeight = 0.0;
+        [[self sceneHostForSlot:slot == 0 ? 1 : 0] setKeyboardClipHeight:0.0];
+    }
+    if (band < 1.0) {
+        card.keyboardBandHeight = 0.0;
+        [[self sceneHostForSlot:slot] setKeyboardClipHeight:0.0];
+        NSString *mark = [NSString stringWithFormat:@"%@-outside", bundle ?: @"?"];
+        if (![loggedBand isEqualToString:mark]) {
+            loggedBand = mark;
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard already outside slot %ld card %@ system %@",
+                                      bundle, (long)slot,
+                                      NSStringFromCGRect(cardFrame), NSStringFromCGRect(systemKeys));
+        }
+        return;
+    }
+    [[self sceneHostForSlot:slot] setKeyboardClipHeight:band];
+    card.keyboardBandHeight = band;
+    UIView *hostView = [self sceneHostForSlot:slot].hostView;
     NSString *mark = [NSString stringWithFormat:@"%@-%.0f", bundle ?: @"?", band];
     if (![loggedBand isEqualToString:mark]) {
         loggedBand = mark;
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard band %.0f on slot %ld card %@ system %@",
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard band %.0f on slot %ld card %@ content %@ host %@ system %@",
                                   bundle, band, (long)slot,
-                                  NSStringFromCGRect(cardFrame), NSStringFromCGRect(systemKeys));
+                                  NSStringFromCGRect(cardFrame),
+                                  NSStringFromCGRect(card.contentView.frame),
+                                  NSStringFromCGRect(hostView.frame),
+                                  NSStringFromCGRect(systemKeys));
+        NSString *bundleCopy = [bundle copy];
+        NSInteger generation = DSHostedClipGeneration;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            if (generation != DSHostedClipGeneration) return;
+            DSStageContainerView *laterCard = [self containerForSlot:slot];
+            UIView *laterHost = [self sceneHostForSlot:slot].hostView;
+            if (!laterCard || laterCard.keyboardBandHeight < 1.0) return;
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard clip held %.0f content %@ host %@",
+                                      bundleCopy, laterCard.keyboardBandHeight,
+                                      NSStringFromCGRect(laterCard.contentView.frame),
+                                      NSStringFromCGRect(laterHost.frame));
+        });
     }
 }
 
@@ -693,6 +764,7 @@ static BOOL sSystemEdgePullAvailable;
     DSRestoreRemoteKeyboardPlacement();
     _keyboardDrawnOutside = NO;
     if (!onScreen) {
+        DSHostedClipGeneration++;
         [self clearHostedKeyboardBands];
         DSReleaseStagedKeyboardHost();
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
@@ -1409,6 +1481,10 @@ static BOOL sSystemEdgePullAvailable;
     _topContainer = [[DSStageContainerView alloc] initWithFrame:CGRectZero];
     _topContainer.hidden = YES;
     _topContainer.cornerRadius = _container.cornerRadius;
+    __weak __typeof(self) bandSelf = self;
+    _topContainer.keyboardBandLayoutHandler = ^{
+        [bandSelf clipHostedSceneForKeyboardBandOnSlot:1];
+    };
     [root insertSubview:_topContainer aboveSubview:_container];
 
     _topPicker = [[DSAppPickerViewController alloc] init];

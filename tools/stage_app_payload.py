@@ -63,25 +63,16 @@ def main() -> None:
     shutil.copy2(src_dylib, dst_dylib)
     with open(dst_plist, "w", encoding="utf-8") as handle:
         handle.write(
-            '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" '
-            '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
-            '<plist version="1.0">\n'
-            "<dict>\n"
-            "\t<key>Filter</key>\n"
-            "\t<dict>\n"
-            "\t\t<key>Bundles</key>\n"
-            "\t\t<array>\n"
-            "\t\t\t<string>com.facebook.Messenger</string>\n"
-            "\t\t</array>\n"
-            "\t</dict>\n"
-            "</dict>\n"
-            "</plist>\n"
+            "{\n"
+            "    Filter = {\n"
+            '        Bundles = ( "com.facebook.Messenger" );\n'
+            "    };\n"
+            "}\n"
         )
-    # Keep the MobileSubstrate plist as the same XML so ElleKit can parse it.
+    # Same OpenStep filter SpringBoard's own plist uses. ElleKit loads that one.
     libs_plist = os.path.join(os.path.dirname(src_dylib), "DynamicStageApp.plist")
     shutil.copy2(dst_plist, libs_plist)
-    print(f"stage_app_payload: wrote {dst_dylib} and XML plists")
+    print(f"stage_app_payload: wrote {dst_dylib} and OpenStep plists")
 
 
 if __name__ == "__main__":

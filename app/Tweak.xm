@@ -316,11 +316,26 @@ static void DSWritePlainText(UIResponder *responder, NSString *replacement, BOOL
     }
 }
 
-static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL changed, BOOL notStaged) {
+static void DSWriteFile(const char *path, const char *text) {
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) return;
+    ssize_t wrote = write(fd, text, strlen(text));
+    (void)wrote;
+    close(fd);
+}
+
+// notify_register_check can fail in a sandboxed app before anyone is listening.
+// The post still has to happen, or SpringBoard never learns this image mapped.
+static void DSPostApply(uint64_t state) {
     static int token = NOTIFY_TOKEN_INVALID;
     if (token == NOTIFY_TOKEN_INVALID) {
         notify_register_check(kDSKeyboardApplyNotification, &token);
     }
+    if (token != NOTIFY_TOKEN_INVALID) notify_set_state(token, state);
+    notify_post(kDSKeyboardApplyNotification);
+}
+
+static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL changed, BOOL notStaged) {
     uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
     if (changed) state |= (1ULL << 32);
     if (responder) state |= (1ULL << 33);
@@ -334,22 +349,13 @@ static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL chang
     else if ([responder isKindOfClass:UITextView.class]) kind = 2;
     else if (responder) kind = 3;
     state |= ((uint64_t)kind) << 40;
-    if (token != NOTIFY_TOKEN_INVALID) {
-        notify_set_state(token, state);
-        notify_post(kDSKeyboardApplyNotification);
-    }
+    DSPostApply(state);
 }
 
 static void DSReportListening(void) {
-    static int token = NOTIFY_TOKEN_INVALID;
-    if (token == NOTIFY_TOKEN_INVALID) {
-        notify_register_check(kDSKeyboardApplyNotification, &token);
-    }
-    if (token == NOTIFY_TOKEN_INVALID) return;
     uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
     state |= (1ULL << 38);
-    notify_set_state(token, state);
-    notify_post(kDSKeyboardApplyNotification);
+    DSPostApply(state);
 }
 
 static void DSReportCtor(int reason) {
@@ -370,36 +376,20 @@ static void DSReportCtor(int reason) {
              proc.UTF8String ?: "?",
              identifier.UTF8String ?: "?",
              path.UTF8String ?: "?");
-    int fd = open("/var/tmp/com.recreated.dynamicstage.ctor", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (fd >= 0) {
-        ssize_t wrote = write(fd, line, strlen(line));
-        (void)wrote;
-        close(fd);
-    }
-    static int token = NOTIFY_TOKEN_INVALID;
-    if (token == NOTIFY_TOKEN_INVALID) {
-        notify_register_check(kDSKeyboardApplyNotification, &token);
-    }
-    if (token == NOTIFY_TOKEN_INVALID) return;
+    DSWriteFile("/var/tmp/com.recreated.dynamicstage.ctor", line);
+    DSWriteFile("/var/jb/tmp/com.recreated.dynamicstage.ctor", line);
     uint64_t state = DSIdentifierHash(identifier);
     state |= (1ULL << 39) | (1ULL << 49);
     state |= ((uint64_t)(reason & 0xf) << 56);
-    notify_set_state(token, state);
-    notify_post(kDSKeyboardApplyNotification);
+    DSPostApply(state);
 }
 
 static void DSReportLoaded(void) {
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        static int token = NOTIFY_TOKEN_INVALID;
-        if (token == NOTIFY_TOKEN_INVALID) {
-            notify_register_check(kDSKeyboardApplyNotification, &token);
-        }
-        if (token == NOTIFY_TOKEN_INVALID) return;
         uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
         state |= (1ULL << 39);
-        notify_set_state(token, state);
-        notify_post(kDSKeyboardApplyNotification);
+        DSPostApply(state);
     });
 }
 
@@ -407,30 +397,18 @@ static void DSReportRemoteKeyboard(void) {
     static BOOL reported = NO;
     if (reported) return;
     reported = YES;
-    static int token = NOTIFY_TOKEN_INVALID;
-    if (token == NOTIFY_TOKEN_INVALID) {
-        notify_register_check(kDSKeyboardApplyNotification, &token);
-    }
-    if (token == NOTIFY_TOKEN_INVALID) return;
     uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
     state |= (1ULL << 48) | (1ULL << 39) | (1ULL << 38) | (1ULL << 49);
-    notify_set_state(token, state);
-    notify_post(kDSKeyboardApplyNotification);
+    DSPostApply(state);
 }
 
 static void DSReportRemoteSkipped(void) {
     static BOOL reported = NO;
     if (reported) return;
     reported = YES;
-    static int token = NOTIFY_TOKEN_INVALID;
-    if (token == NOTIFY_TOKEN_INVALID) {
-        notify_register_check(kDSKeyboardApplyNotification, &token);
-    }
-    if (token == NOTIFY_TOKEN_INVALID) return;
     uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
     state |= (1ULL << 50) | (1ULL << 39) | (1ULL << 49);
-    notify_set_state(token, state);
-    notify_post(kDSKeyboardApplyNotification);
+    DSPostApply(state);
 }
 
 static void DSTypeText(UIResponder *responder, NSString *text) {
@@ -1196,19 +1174,9 @@ static void DSStartObserving(void) {
 // died before %ctor. If neither appears, ElleKit never loaded the image.
 __attribute__((constructor(101)))
 static void DSImageMapped(void) {
-    int fd = open("/var/tmp/com.recreated.dynamicstage.mapped", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (fd >= 0) {
-        const char msg[] = "mapped\n";
-        ssize_t wrote = write(fd, msg, sizeof(msg) - 1);
-        (void)wrote;
-        close(fd);
-    }
-    int token = NOTIFY_TOKEN_INVALID;
-    if (notify_register_check(kDSKeyboardApplyNotification, &token) == 0 &&
-        token != NOTIFY_TOKEN_INVALID) {
-        notify_set_state(token, (1ULL << 49));
-        notify_post(kDSKeyboardApplyNotification);
-    }
+    DSWriteFile("/var/tmp/com.recreated.dynamicstage.mapped", "mapped\n");
+    DSWriteFile("/var/jb/tmp/com.recreated.dynamicstage.mapped", "mapped\n");
+    DSPostApply(1ULL << 49);
 }
 
 %ctor {

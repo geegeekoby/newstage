@@ -18,7 +18,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIView *_edgeGrip;
     UIButton *_stackAddButton;
     UIButton *_minimizeButton;
-    CAShapeLayer *_contentMask;
+    BOOL _applyingKeyboardBand;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -132,35 +132,47 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     CGRect bounds = self.bounds;
     CGFloat band = MIN(MAX(_keyboardBandHeight, 0.0), CGRectGetHeight(bounds));
     CGFloat appHeight = CGRectGetHeight(bounds) - band;
+    BOOL pinHost = !_applyingKeyboardBand && _keyboardBandLayoutHandler != nil;
     if (band > 1.0) {
+        // Pin the host at the full card height before the content view shrinks.
+        // Otherwise autoresizing hands the app a shorter scene and it draws the
+        // keyboard up into the opening.
+        if (pinHost) {
+            _applyingKeyboardBand = YES;
+            _keyboardBandLayoutHandler();
+            _applyingKeyboardBand = NO;
+        }
         _backdrop.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
         self.clipsToBounds = NO;
+        self.opaque = NO;
         _contentView.clipsToBounds = YES;
-        if (!_contentMask) {
-            _contentMask = [CAShapeLayer layer];
-            _contentView.layer.mask = _contentMask;
-        }
-        // The hosted app keeps laying out at the full card size, so its keyboard
-        // stays in the bottom band. The mask has to omit that band or the keys
-        // are still painted inside the card. A path of the full bounds does not.
-        CGRect visible = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
-        UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:visible
-                                                   byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight)
-                                                         cornerRadii:CGSizeMake(_cornerRadius, _cornerRadius)];
-        _contentMask.frame = bounds;
-        _contentMask.path = path.CGPath;
+        _contentView.opaque = NO;
+        _contentView.layer.mask = nil;
+        _contentView.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
+        _contentView.layer.cornerRadius = _cornerRadius;
+        _contentView.layer.cornerCurve = kCACornerCurveContinuous;
+        _contentView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
         self.layer.cornerRadius = 0.0;
+        if (pinHost) {
+            _applyingKeyboardBand = YES;
+            _keyboardBandLayoutHandler();
+            _applyingKeyboardBand = NO;
+        }
     } else {
         _backdrop.frame = bounds;
         self.clipsToBounds = YES;
+        self.opaque = YES;
         _contentView.clipsToBounds = YES;
-        if (_contentMask) {
-            _contentView.layer.mask = nil;
-            _contentMask = nil;
-        }
+        _contentView.layer.mask = nil;
+        _contentView.layer.cornerRadius = 0.0;
         self.layer.cornerRadius = _cornerRadius;
+        _contentView.frame = bounds;
+        if (pinHost) {
+            _applyingKeyboardBand = YES;
+            _keyboardBandLayoutHandler();
+            _applyingKeyboardBand = NO;
+        }
     }
-    _contentView.frame = bounds;
 
     _grabber.frame = CGRectMake((CGRectGetWidth(bounds) - kDSGrabberWidth) / 2.0,
                                 0.0,
@@ -281,6 +293,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 - (void)setClipsContents:(BOOL)clips {
     if (_keyboardBandHeight > 1.0) {
         self.clipsToBounds = NO;
+        self.opaque = NO;
         _contentView.clipsToBounds = YES;
         return;
     }

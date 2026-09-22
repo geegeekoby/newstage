@@ -131,6 +131,7 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     BOOL _foreground;
     BOOL _registeredOverride;
     NSString *_sceneSource;
+    CGFloat _keyboardClipHeight;
 }
 
 - (instancetype)initWithBundleIdentifier:(NSString *)bundleIdentifier {
@@ -1094,6 +1095,15 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     [self layoutHostView];
 }
 
+- (CGFloat)keyboardClipHeight {
+    return _keyboardClipHeight;
+}
+
+- (void)setKeyboardClipHeight:(CGFloat)height {
+    _keyboardClipHeight = MAX(height, 0.0);
+    [self layoutHostView];
+}
+
 - (void)layoutHostView {
     if (!_hostView) return;
     UIView *parent = _hostView.superview;
@@ -1102,9 +1112,22 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 
     // At the normal scale the app is the card, edge to edge. A view left at the
     // screen size is clipped, which is the bottom stage showing only part of the app.
+    // A mask on an ancestor does not clip this view. Its superview's bounds do,
+    // and only while this view stays the size the scene was given.
     if (parent && !CGRectIsEmpty(parent.bounds) && fabs(scale - 1.0) < 0.02) {
-        _hostView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        _hostView.frame = parent.bounds;
+        CGFloat width = CGRectGetWidth(parent.bounds);
+        CGFloat height = CGRectGetHeight(parent.bounds);
+        UIViewAutoresizing mask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        if (_keyboardClipHeight > 1.0) {
+            UIView *card = parent.superview;
+            if (card && CGRectGetHeight(card.bounds) > height + 0.5) {
+                height = CGRectGetHeight(card.bounds);
+            }
+            mask = UIViewAutoresizingFlexibleWidth;
+        }
+        if (_hostView.autoresizingMask != mask) _hostView.autoresizingMask = mask;
+        CGRect want = CGRectMake(0.0, 0.0, width, height);
+        if (!CGRectEqualToRect(_hostView.frame, want)) _hostView.frame = want;
         return;
     }
 

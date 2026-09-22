@@ -35,8 +35,6 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 // so UIKit draws the same keyboard. Keystrokes are handed to the hosted app.
 @interface DSStagedKeyboardField : UITextField <UITextFieldDelegate>
 @property (nonatomic, weak) id<DSStagedKeyboardTarget> keyTarget;
-// The hosted app this field types into. Top and bottom each have their own.
-@property (nonatomic, copy) NSString *stageBundle;
 // Set while the stage window is reclaiming the key. Resigning then is not the
 // user leaving the field.
 @property (nonatomic, assign) BOOL suppressEnd;
@@ -106,38 +104,19 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 @end
 
-// Two staged apps can be typing, so each bundle keeps its own notify token.
-// A third bundle reuses a slot; only two apps are hosted at once.
-static void DSPostKeyboardInputState(NSString *bundle, uint32_t seq, BOOL isDelete, UTF32Char code) {
-    NSString *name = DSKeyboardInputNotificationName(bundle);
-    if (name.length == 0) return;
-    static int tokens[2] = { NOTIFY_TOKEN_INVALID, NOTIFY_TOKEN_INVALID };
-    static uint32_t hashes[2] = { 0, 0 };
-    uint32_t hash = DSIdentifierHash(bundle);
-    int slot = -1;
-    for (int index = 0; index < 2; index++) {
-        if (hashes[index] == hash && tokens[index] != NOTIFY_TOKEN_INVALID) {
-            slot = index;
-            break;
-        }
+static int DSKeyboardInputStateToken = NOTIFY_TOKEN_INVALID;
+
+static void DSPostKeyboardInputState(uint32_t seq, BOOL isDelete, UTF32Char code) {
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardInputNotification, &DSKeyboardInputStateToken);
     }
-    if (slot < 0) {
-        slot = tokens[0] == NOTIFY_TOKEN_INVALID ? 0 : 1;
-        if (tokens[slot] != NOTIFY_TOKEN_INVALID && hashes[slot] != hash) {
-            notify_cancel(tokens[slot]);
-            tokens[slot] = NOTIFY_TOKEN_INVALID;
-        }
-        if (notify_register_check(name.UTF8String, &tokens[slot]) != NOTIFY_STATUS_OK) {
-            tokens[slot] = NOTIFY_TOKEN_INVALID;
-            return;
-        }
-        hashes[slot] = hash;
+    if (DSKeyboardInputStateToken != NOTIFY_TOKEN_INVALID) {
+        uint64_t state = seq;
+        if (isDelete) state |= (1ULL << 32);
+        else state |= ((uint64_t)code & 0x1FFFFF) << 33;
+        notify_set_state(DSKeyboardInputStateToken, state);
     }
-    uint64_t state = seq;
-    if (isDelete) state |= (1ULL << 32);
-    else state |= ((uint64_t)code & 0x1FFFFF) << 33;
-    notify_set_state(tokens[slot], state);
-    notify_post(name.UTF8String);
+    notify_post(kDSKeyboardInputNotification);
 }
 
 static NSArray<NSNumber *> *DSUTF32Scalars(NSString *text) {
@@ -160,8 +139,8 @@ static NSArray<NSNumber *> *DSUTF32Scalars(NSString *text) {
     return scalars;
 }
 
-static void DSEnqueueStagedKey(NSString *op, NSString *text, NSString *bundle) {
-    if (op.length == 0 || bundle.length == 0) return;
+static void DSEnqueueStagedKey(NSString *op, NSString *text) {
+    if (op.length == 0) return;
     BOOL isDelete = [op isEqualToString:@"delete"];
     NSArray<NSNumber *> *scalars = isDelete ? @[] : DSUTF32Scalars(text);
     NSInteger count = isDelete ? 1 : MAX((NSInteger)scalars.count, 1);
@@ -170,12 +149,7 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text, NSString *bundle) {
         NSMutableDictionary *root = [([NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath] ?: @{}) mutableCopy];
         NSMutableArray *ops = [root[@"ops"] mutableCopy] ?: [NSMutableArray array];
         seq = [root[@"seq"] integerValue] + count;
-        [ops addObject:@{
-            @"seq" : @(seq),
-            @"op" : op,
-            @"text" : text ?: @"",
-            @"bundle" : bundle
-        }];
+        [ops addObject:@{ @"seq" : @(seq), @"op" : op, @"text" : text ?: @"" }];
         if (ops.count > 40) {
             [ops removeObjectsInRange:NSMakeRange(0, ops.count - 40)];
         }
@@ -184,12 +158,12 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text, NSString *bundle) {
         [root writeToFile:kDSKeyboardInputPath atomically:YES];
     }
     if (isDelete || scalars.count == 0) {
-        DSPostKeyboardInputState(bundle, (uint32_t)seq, YES, 0);
+        DSPostKeyboardInputState((uint32_t)seq, YES, 0);
         return;
     }
     NSInteger first = seq - (NSInteger)scalars.count + 1;
     for (NSUInteger index = 0; index < scalars.count; index++) {
-        DSPostKeyboardInputState(bundle, (uint32_t)(first + (NSInteger)index), NO, (UTF32Char)scalars[index].unsignedIntValue);
+        DSPostKeyboardInputState((uint32_t)(first + (NSInteger)index), NO, (UTF32Char)scalars[index].unsignedIntValue);
     }
 }
 
@@ -327,11 +301,9 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text, NSString *bundle) {
     NSInteger _searchSlot;
     NSInteger _pickerSearchEnsureGeneration;
     BOOL _ensuringPickerSearchKeyboard;
-    // Which hosted card is typing. Each card has its own SpringBoard field,
-    // separate from picker search. 0 bottom, 1 top.
+    // The hosted app's card while it is using the picker search keyboard.
     NSInteger _stagedKeyboardSlot;
-    UITextField *_bottomStageKeyboardField;
-    UITextField *_topStageKeyboardField;
+    UITextField *_stagedKeyboardField;
     NSInteger _stagedKeyboardEnsureGeneration;
     BOOL _suppressStagedKeyboardEnd;
     // Set only when the app or a minimize asked the keyboard to go away.
@@ -652,13 +624,9 @@ static BOOL sSystemEdgePullAvailable;
     return -1;
 }
 
-- (DSStagedKeyboardField *)stagedKeyboardFieldForSlot:(NSInteger)slot create:(BOOL)create {
-    if (slot != 0 && slot != 1) return nil;
-    UITextField *existing = slot == 0 ? _bottomStageKeyboardField : _topStageKeyboardField;
-    if (existing || !create) return (DSStagedKeyboardField *)existing;
-    // Off the card, one field per half. Picker search is a different field.
-    CGRect frame = slot == 0 ? CGRectMake(0, -80, 2, 2) : CGRectMake(8, -88, 2, 2);
-    DSStagedKeyboardField *field = [[DSStagedKeyboardField alloc] initWithFrame:frame];
+- (void)ensureStagedKeyboardField {
+    if (_stagedKeyboardField) return;
+    DSStagedKeyboardField *field = [[DSStagedKeyboardField alloc] initWithFrame:CGRectMake(0, -80, 2, 2)];
     field.keyTarget = self;
     field.alpha = 0.02;
     field.delegate = field;
@@ -673,49 +641,25 @@ static BOOL sSystemEdgePullAvailable;
     assistant.leadingBarButtonGroups = @[];
     assistant.trailingBarButtonGroups = @[];
     field.accessibilityElementsHidden = YES;
-    if (slot == 0) _bottomStageKeyboardField = field;
-    else _topStageKeyboardField = field;
-    return field;
+    _stagedKeyboardField = field;
 }
 
-- (void)quietResignStagedField:(DSStagedKeyboardField *)field {
-    if (!field.isFirstResponder) return;
-    field.suppressEnd = YES;
-    _suppressStagedKeyboardEnd = YES;
-    [field resignFirstResponder];
-    _suppressStagedKeyboardEnd = NO;
-    field.suppressEnd = NO;
-}
-
-- (NSString *)bundleForStagedKey {
-    for (NSInteger slot = 0; slot < 2; slot++) {
-        DSStagedKeyboardField *field = [self stagedKeyboardFieldForSlot:slot create:NO];
-        if (field.isFirstResponder && field.stageBundle.length > 0) return field.stageBundle;
-    }
-    if (_stagedKeyboardSlot == 0) return _sceneHost.bundleIdentifier;
-    if (_stagedKeyboardSlot == 1) return _topSceneHost.bundleIdentifier;
-    return nil;
-}
-
-// This app's SpringBoard keyboard. The app's own keyboard is not started.
-// Picker search is a different field and is left alone. This window takes the
-// real key, then this app's field edits on that turn.
+// The picker search keyboard, for a hosted app. The app's own keyboard is not
+// started. This window takes the real key, then this field edits on that turn.
 - (void)driveStagedKeyboardForBundle:(NSString *)bundle
                                 slot:(NSInteger)slot
                           generation:(NSInteger)generation
                              attempt:(NSInteger)attempt {
     if (generation != _stagedKeyboardEnsureGeneration || _searchSlot >= 0) return;
     if ([self slotForHostedBundle:bundle] != slot) return;
-    DSStagedKeyboardField *field = [self stagedKeyboardFieldForSlot:slot create:YES];
-    if (!field) return;
-    field.stageBundle = bundle;
-    field.keyboardAppearance = _container.darkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
+    [self ensureStagedKeyboardField];
+    _stagedKeyboardField.keyboardAppearance = _container.darkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
     UIView *root = _window.rootViewController.view;
-    if (field.superview != root) {
-        [root addSubview:field];
+    if (_stagedKeyboardField.superview != root) {
+        [root addSubview:_stagedKeyboardField];
     }
     _stagedKeyboardSlot = slot;
-    [self quietResignStagedField:[self stagedKeyboardFieldForSlot:slot == 0 ? 1 : 0 create:NO]];
+    DSStagedKeyboardField *field = (DSStagedKeyboardField *)_stagedKeyboardField;
     field.suppressEnd = YES;
     _suppressStagedKeyboardEnd = YES;
     [self takeKeyWindow];
@@ -739,10 +683,10 @@ static BOOL sSystemEdgePullAvailable;
         [field becomeFirstResponder];
     }
     if (attempt == 0) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ is using its SpringBoard keyboard on %@",
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ is using the picker search keyboard on %@",
                                   bundle, slot == 1 ? @"the top stage" : @"the bottom stage");
-        DSDiagnosticsRecordFormat(@"SpringBoard: stage keyboard slot=%ld fr=%d key=%d",
-                                  (long)slot, field.isFirstResponder, DSWindowIsApplicationKey(_window));
+        DSDiagnosticsRecordFormat(@"SpringBoard: picker field fr=%d key=%d",
+                                  field.isFirstResponder, DSWindowIsApplicationKey(_window));
     }
 }
 
@@ -760,11 +704,11 @@ static BOOL sSystemEdgePullAvailable;
         CGRect keys = DSVisibleKeyboardFrameOnScreen();
         if (!CGRectIsNull(keys) && CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
             DSWindowIsApplicationKey(strongSelf->_window)) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ SpringBoard keyboard visible %@", bundle, NSStringFromCGRect(keys));
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ picker keyboard visible %@", bundle, NSStringFromCGRect(keys));
             return;
         }
         if (attempt >= 5) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ SpringBoard keyboard did not appear", bundle);
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ picker keyboard did not appear", bundle);
             return;
         }
         [strongSelf driveStagedKeyboardForBundle:bundle slot:slot generation:generation attempt:attempt + 1];
@@ -784,9 +728,8 @@ static BOOL sSystemEdgePullAvailable;
     // the first post. Wake it again at the moment a text field is tapped.
     notify_post(kDSStageGeometryNotification);
     notify_post(kDSStagePeerNotification);
-    DSStagedKeyboardField *field = [self stagedKeyboardFieldForSlot:slot create:NO];
     CGRect keys = DSVisibleKeyboardFrameOnScreen();
-    if (field.isFirstResponder && [field.stageBundle isEqualToString:bundle] &&
+    if (_stagedKeyboardField.isFirstResponder && _stagedKeyboardSlot == slot &&
         DSWindowIsApplicationKey(_window) &&
         !CGRectIsNull(keys) && CGRectGetHeight(keys) >= kDSKeyboardPresentHeight) {
         return;
@@ -799,23 +742,18 @@ static BOOL sSystemEdgePullAvailable;
 - (void)hideStagedKeyboardLikePicker {
     _stagedKeyboardWantsHide = YES;
     _stagedKeyboardEnsureGeneration++;
-    BOOL editing = NO;
-    for (NSInteger slot = 0; slot < 2; slot++) {
-        DSStagedKeyboardField *field = [self stagedKeyboardFieldForSlot:slot create:NO];
-        if (!field.isFirstResponder) continue;
-        editing = YES;
-        [field resignFirstResponder];
+    if (!_stagedKeyboardField.isFirstResponder) {
+        _stagedKeyboardSlot = -1;
+        return;
     }
-    if (!editing) _stagedKeyboardSlot = -1;
+    [_stagedKeyboardField resignFirstResponder];
 }
 
 - (void)keepStagedKeyboardField {
     if (_stagedKeyboardWantsHide || _searchSlot >= 0 || _stagedKeyboardSlot < 0) return;
     if (_state == DSStageStateMinimized || _state == DSStageStateClosed) return;
     if ([self cardIsParked:[self containerForSlot:_stagedKeyboardSlot]]) return;
-    DSStagedKeyboardField *field = [self stagedKeyboardFieldForSlot:_stagedKeyboardSlot create:NO];
-    if (!field) return;
-    if (DSWindowIsApplicationKey(_window) && field.isFirstResponder) {
+    if (DSWindowIsApplicationKey(_window) && _stagedKeyboardField.isFirstResponder) {
         _stagedKeyboardReassertCount = 0;
         return;
     }
@@ -824,6 +762,7 @@ static BOOL sSystemEdgePullAvailable;
         return;
     }
     _stagedKeyboardReassertCount++;
+    DSStagedKeyboardField *field = (DSStagedKeyboardField *)_stagedKeyboardField;
     field.suppressEnd = YES;
     _suppressStagedKeyboardEnd = YES;
     [self takeKeyWindow];
@@ -842,7 +781,7 @@ static BOOL sSystemEdgePullAvailable;
     NSString *bundle = [self bundleForKeyboardHash:(uint32_t)state];
     if (![self isHostingBundleIdentifier:bundle]) return;
     if (_searchSlot >= 0) return;
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for its SpringBoard keyboard to %@",
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for the picker keyboard to %@",
                               bundle, show ? @"show" : @"hide");
     if (show) [self showStagedKeyboardLikePickerForBundle:bundle];
     else [self hideStagedKeyboardLikePicker];
@@ -850,17 +789,14 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)stagedKeyboardInsertText:(NSString *)text {
     _stagedKeyboardReassertCount = 0;
-    NSString *bundle = [self bundleForStagedKey];
-    DSDiagnosticsRecordFormat(@"SpringBoard: staged key insert len=%lu app=%@",
-                              (unsigned long)text.length, bundle ?: @"?");
-    DSEnqueueStagedKey(@"insert", text, bundle);
+    DSDiagnosticsRecordFormat(@"SpringBoard: staged key insert len=%lu", (unsigned long)text.length);
+    DSEnqueueStagedKey(@"insert", text);
 }
 
 - (void)stagedKeyboardDeleteBackward {
     _stagedKeyboardReassertCount = 0;
-    NSString *bundle = [self bundleForStagedKey];
-    DSDiagnosticsRecordFormat(@"SpringBoard: staged key delete app=%@", bundle ?: @"?");
-    DSEnqueueStagedKey(@"delete", @"", bundle);
+    DSDiagnosticsRecord(@"SpringBoard: staged key delete");
+    DSEnqueueStagedKey(@"delete", @"");
 }
 
 - (void)stagedKeyboardDidEnd {

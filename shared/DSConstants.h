@@ -28,13 +28,11 @@
 // window was found, bits 40-47 are how many keyboard views were forced out.
 #define kDSKeyboardDebugNotification "com.recreated.dynamicstage.keyboard.debug"
 
-// A staged app asks SpringBoard to show that app's own SpringBoard keyboard.
-// The low 32 bits are the bundle hash. Bit 32 set means the keyboard should come up.
+// A staged app asks SpringBoard to show the picker search keyboard. The low 32
+// bits are the bundle hash. Bit 32 set means the keyboard should come up.
 #define kDSKeyboardRequestNotification "com.recreated.dynamicstage.keyboard.request"
 
 // Keystrokes from that keyboard, written by SpringBoard and applied in the app.
-// The posted name is this prefix plus the bundle hash, so the other staged app
-// does not receive the letter.
 #define kDSKeyboardInputPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard.input.plist"
 #define kDSKeyboardInputNotification "com.recreated.dynamicstage.keyboard.input"
 
@@ -43,7 +41,7 @@
 // the line that shows up in the preferences log.
 // Low 32 bits: bundle hash. Bit 32 changed, 33 had a field, 34 first
 // responder, 35 window, 36 delete, 37 the process was not staged,
-// 38 the process is listening for keys, 39 the process loaded this dylib.
+// 38 the process is listening for keys.
 // Bits 40-47: 0 none, 1 field, 2 text view, 3 other.
 #define kDSKeyboardApplyNotification "com.recreated.dynamicstage.keyboard.apply"
 
@@ -77,13 +75,6 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
         hash *= 16777619u;
     }
     return hash;
-}
-
-// One keyboard stream per staged app. SpringBoard posts this name; that app is
-// the only process registered for it.
-static inline NSString *DSKeyboardInputNotificationName(NSString *identifier) {
-    if (identifier.length == 0) return nil;
-    return [NSString stringWithFormat:@"%s.%u", kDSKeyboardInputNotification, DSIdentifierHash(identifier)];
 }
 
 // SpringBoard counts its own launches here while the tweak is starting up and

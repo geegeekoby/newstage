@@ -14,9 +14,8 @@
 //
 // The keyboard is deliberately not one of those routes. While this process is
 // staged, it does not show a keyboard of its own and it does not ask the
-// keyboard arbiter for one. SpringBoard keeps a text field of its own for this
-// app, outside the card, and keystrokes from that keyboard are inserted here.
-// Picker search is a different field and is not used.
+// keyboard arbiter for one. SpringBoard shows the same keyboard the stage
+// picker search uses, and keystrokes from that keyboard are inserted here.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -364,28 +363,16 @@ static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL chang
     }
 }
 
-static void DSPostApplyBits(uint64_t extra) {
+static void DSReportListening(void) {
     static int token = NOTIFY_TOKEN_INVALID;
     if (token == NOTIFY_TOKEN_INVALID) {
         notify_register_check(kDSKeyboardApplyNotification, &token);
     }
     if (token == NOTIFY_TOKEN_INVALID) return;
     uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
-    state |= extra;
+    state |= (1ULL << 38);
     notify_set_state(token, state);
     notify_post(kDSKeyboardApplyNotification);
-}
-
-static void DSReportListening(void) {
-    DSPostApplyBits(1ULL << 38);
-    DSDiagnosticsRecord(@"app: listening for staged keys");
-}
-
-// Posted as soon as this process has a bundle id, and again when it is staged.
-// SpringBoard only writes the line when that app is on a card.
-static void DSReportLoaded(void) {
-    DSPostApplyBits(1ULL << 39);
-    DSDiagnosticsRecord(@"app: loaded");
 }
 
 static void DSTypeText(UIResponder *responder, NSString *text) {
@@ -456,7 +443,7 @@ static void DSApplyKeyboardOp(NSString *op, NSString *text) {
                               changed);
 }
 
-static int DSPerAppInputToken = NOTIFY_TOKEN_INVALID;
+static int DSKeyboardInputStateToken = NOTIFY_TOKEN_INVALID;
 
 static NSString *DSStringFromUTF32(UTF32Char code) {
     if (code == 0 || code > 0x10FFFF) return nil;
@@ -473,14 +460,12 @@ static NSString *DSStringFromUTF32(UTF32Char code) {
 // Messenger cannot always read the preferences file. The same letter is also
 // carried on the notification, one character at a time.
 static void DSApplyNotifyState(void) {
-    if (DSPerAppInputToken == NOTIFY_TOKEN_INVALID) {
-        NSString *name = DSKeyboardInputNotificationName(NSBundle.mainBundle.bundleIdentifier);
-        if (name.length == 0) return;
-        notify_register_check(name.UTF8String, &DSPerAppInputToken);
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardInputNotification, &DSKeyboardInputStateToken);
     }
-    if (DSPerAppInputToken == NOTIFY_TOKEN_INVALID) return;
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID) return;
     uint64_t state = 0;
-    notify_get_state(DSPerAppInputToken, &state);
+    notify_get_state(DSKeyboardInputStateToken, &state);
     NSInteger seq = (NSInteger)(state & 0xFFFFFFFF);
     if (seq <= DSLastKeyboardInputSeq) return;
     DSLastKeyboardInputSeq = seq;
@@ -493,33 +478,15 @@ static void DSApplyNotifyState(void) {
     DSApplyKeyboardOp(@"insert", text);
 }
 
-static void DSDrainKeyboardInput(void);
-
-static void DSInstallKeyboardInputListener(void) {
-    if (DSPerAppInputToken != NOTIFY_TOKEN_INVALID) return;
-    NSString *name = DSKeyboardInputNotificationName(NSBundle.mainBundle.bundleIdentifier);
-    if (name.length == 0) return;
-    int token = NOTIFY_TOKEN_INVALID;
-    uint32_t status = notify_register_dispatch(name.UTF8String, &token, dispatch_get_main_queue(), ^(int t) {
-        (void)t;
-        DSDrainKeyboardInput();
-    });
-    if (status != NOTIFY_STATUS_OK) return;
-    DSPerAppInputToken = token;
-}
-
 static void DSDrainKeyboardInput(void) {
     if (!DSStaged()) {
         DSReportKeyApplied(NO, nil, NO, YES);
         return;
     }
     NSInteger before = DSLastKeyboardInputSeq;
-    NSString *mine = NSBundle.mainBundle.bundleIdentifier ?: @"";
     NSDictionary *root = [NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath];
     for (NSDictionary *op in root[@"ops"]) {
         if (![op isKindOfClass:NSDictionary.class]) continue;
-        NSString *bundle = op[@"bundle"];
-        if (bundle.length > 0 && mine.length > 0 && ![bundle isEqualToString:mine]) continue;
         NSInteger seq = [op[@"seq"] integerValue];
         if (seq <= DSLastKeyboardInputSeq) continue;
         DSLastKeyboardInputSeq = seq;
@@ -565,7 +532,7 @@ static void DSRequestPickerKeyboard(BOOL show) {
             DSLoggedResignStack = YES;
             DSDiagnosticsRecordFormat(@"app: field resigned %@", stack);
         }
-        DSDiagnosticsRecord(@"app: text field closed, hiding the SpringBoard keyboard");
+        DSDiagnosticsRecord(@"app: text field closed, hiding the picker keyboard");
         DSPostKeyboardRequest(NO);
     });
 }
@@ -1227,7 +1194,14 @@ static void DSInstallHooks(void) {
     dispatch_once(&token, ^{
         %init(_ungrouped);
         DSInstallKeyboardBanishObserver();
-        DSInstallKeyboardInputListener();
+        // The stage signal arrives through notify_register_dispatch. A Darwin
+        // center observer in this process did not. The letters were recorded
+        // in SpringBoard and this process never woke up for them.
+        static int inputToken = NOTIFY_TOKEN_INVALID;
+        notify_register_dispatch(kDSKeyboardInputNotification, &inputToken, dispatch_get_main_queue(), ^(int t) {
+            (void)t;
+            DSDrainKeyboardInput();
+        });
         DSReportListening();
     });
 }
@@ -1235,41 +1209,31 @@ static void DSInstallHooks(void) {
 static void DSStartObserving(void) {
     DSStageContext *context = [DSStageContext sharedContext];
     context.stagedHandler = ^{
-        DSReportLoaded();
-        DSInstallKeyboardInputListener();
         DSInstallHooks();
     };
     [context startObserving];
 }
 
-// The bundle path can be empty at the moment this dylib is injected. Retrying
-// is what lets an already-open app still register for its own keyboard.
-static void DSTryStart(void) {
-    if (DSKillSwitchPresent()) return;
-    if (!DSBundleLooksLikeUserApplication()) return;
-    if (![DSPreferences sharedPreferences].enabled) return;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        DSReportLoaded();
-        DSInstallKeyboardInputListener();
-        DSStartObserving();
-        if ([DSStageContext processIsStagedNow]) DSInstallHooks();
-    });
-}
-
 %ctor {
     @autoreleasepool {
         @try {
-            DSTryStart();
-            dispatch_async(dispatch_get_main_queue(), ^{
-                DSTryStart();
-            });
-            for (NSNumber *delay in @[ @0.4, @1.2, @3.0 ]) {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                               dispatch_get_main_queue(), ^{
-                    DSTryStart();
-                });
+            if (DSKillSwitchPresent()) return;
+            if (!DSBundleLooksLikeUserApplication()) return;
+            if (![DSPreferences sharedPreferences].enabled) return;
+
+            if ([DSStageContext processIsStagedNow]) {
+                DSStartObserving();
+                DSInstallHooks();
+                return;
             }
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @try {
+                    if (!DSBundleLooksLikeUserApplication()) return;
+                    DSStartObserving();
+                } @catch (NSException *exception) {
+                }
+            });
         } @catch (NSException *exception) {
         }
     }

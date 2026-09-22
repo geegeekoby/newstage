@@ -1,3 +1,6 @@
+**4.5.27**
+- The letters were still only recorded in SpringBoard. Messenger never answered, because it was listening on a notification center that does not receive this post. It now listens the same way it learns that it is on the stage. The picker keyboard is unchanged
+
 **4.5.26**
 - The letters were leaving the picker keyboard. Five of them were recorded, and none of them arrived in Messenger. Each letter is now written into the message field, and Messenger's own keyboard stays hidden. SpringBoard records `app: key insert` with `changed=1` when the message field took the letter
 

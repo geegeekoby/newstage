@@ -283,7 +283,7 @@ static void DSWritePlainText(UIResponder *responder, NSString *replacement, BOOL
     }
 }
 
-static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL changed) {
+static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL changed, BOOL notStaged) {
     static int token = NOTIFY_TOKEN_INVALID;
     if (token == NOTIFY_TOKEN_INVALID) {
         notify_register_check(kDSKeyboardApplyNotification, &token);
@@ -295,6 +295,7 @@ static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL chang
     BOOL hasWindow = [responder isKindOfClass:UIView.class] && ((UIView *)responder).window != nil;
     if (hasWindow) state |= (1ULL << 35);
     if (isDelete) state |= (1ULL << 36);
+    if (notStaged) state |= (1ULL << 37);
     NSUInteger kind = 0;
     if ([responder isKindOfClass:UITextField.class]) kind = 1;
     else if ([responder isKindOfClass:UITextView.class]) kind = 2;
@@ -336,7 +337,7 @@ static void DSApplyKeyboardOp(NSString *op, NSString *text) {
             DSLoggedMissingTextTarget = YES;
             DSDiagnosticsRecord(@"app: keyboard had no text field to type into");
         }
-        DSReportKeyApplied(isDelete, nil, NO);
+        DSReportKeyApplied(isDelete, nil, NO, NO);
         return;
     }
     DSLogEditingTarget(responder);
@@ -361,7 +362,7 @@ static void DSApplyKeyboardOp(NSString *op, NSString *text) {
         unchanged = (!before && !after) || (before && after && [before isEqualToString:after]);
     }
     DSDeliveringStageKey = NO;
-    DSReportKeyApplied(isDelete, responder, before && after && !unchanged);
+    DSReportKeyApplied(isDelete, responder, before && after && !unchanged, NO);
     NSString *changed = @"?";
     if (before && after) changed = unchanged ? @"0" : @"1";
     BOOL editing = responder.isFirstResponder;
@@ -411,11 +412,7 @@ static void DSApplyNotifyState(void) {
 
 static void DSDrainKeyboardInput(void) {
     if (!DSStaged()) {
-        static BOOL logged = NO;
-        if (!logged) {
-            logged = YES;
-            DSDiagnosticsRecord(@"app: key arrived while this process was not staged");
-        }
+        DSReportKeyApplied(NO, nil, NO, YES);
         return;
     }
     NSInteger before = DSLastKeyboardInputSeq;
@@ -469,14 +466,6 @@ static void DSRequestPickerKeyboard(BOOL show) {
         }
         DSDiagnosticsRecord(@"app: text field closed, hiding the picker keyboard");
         DSPostKeyboardRequest(NO);
-    });
-}
-
-static void DSKeyboardInputArrived(CFNotificationCenterRef center, void *observer, CFStringRef name,
-                                   const void *object, CFDictionaryRef userInfo) {
-    (void)center; (void)observer; (void)name; (void)object; (void)userInfo;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        DSDrainKeyboardInput();
     });
 }
 
@@ -1118,12 +1107,14 @@ static void DSInstallHooks(void) {
     dispatch_once(&token, ^{
         %init(_ungrouped);
         DSInstallKeyboardBanishObserver();
-        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
-                                        NULL,
-                                        DSKeyboardInputArrived,
-                                        CFSTR(kDSKeyboardInputNotification),
-                                        NULL,
-                                        CFNotificationSuspensionBehaviorDeliverImmediately);
+        // The stage signal arrives through notify_register_dispatch. A Darwin
+        // center observer in this process did not. The letters were recorded
+        // in SpringBoard and this process never woke up for them.
+        static int inputToken = NOTIFY_TOKEN_INVALID;
+        notify_register_dispatch(kDSKeyboardInputNotification, &inputToken, dispatch_get_main_queue(), ^(int t) {
+            (void)t;
+            DSDrainKeyboardInput();
+        });
     });
 }
 

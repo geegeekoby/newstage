@@ -224,9 +224,48 @@ static void DSApplyKeyboardOp(NSString *op, NSString *text) {
                               changed);
 }
 
+static int DSKeyboardInputStateToken = NOTIFY_TOKEN_INVALID;
+
+static NSString *DSStringFromUTF32(UTF32Char code) {
+    if (code == 0 || code > 0x10FFFF) return nil;
+    if (code <= 0xFFFF) {
+        unichar unit = (unichar)code;
+        return [NSString stringWithCharacters:&unit length:1];
+    }
+    unichar pair[2];
+    pair[0] = (unichar)(((code - 0x10000) >> 10) + 0xD800);
+    pair[1] = (unichar)(((code - 0x10000) & 0x3FF) + 0xDC00);
+    return [NSString stringWithCharacters:pair length:2];
+}
+
+// Messenger cannot always read the preferences file. The same letter is also
+// carried on the notification, one character at a time.
+static void DSApplyNotifyState(void) {
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardInputNotification, &DSKeyboardInputStateToken);
+    }
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID) return;
+    uint64_t state = 0;
+    notify_get_state(DSKeyboardInputStateToken, &state);
+    NSInteger seq = (NSInteger)(state & 0xFFFFFFFF);
+    if (seq <= DSLastKeyboardInputSeq) return;
+    DSLastKeyboardInputSeq = seq;
+    if ((state & (1ULL << 32)) != 0) {
+        DSApplyKeyboardOp(@"delete", @"");
+        return;
+    }
+    NSString *text = DSStringFromUTF32((UTF32Char)((state >> 33) & 0x1FFFFF));
+    if (text.length == 0) return;
+    DSApplyKeyboardOp(@"insert", text);
+}
+
 static void DSDrainKeyboardInput(void) {
     if (!DSStaged()) return;
     NSDictionary *root = [NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath];
+    if (!root) {
+        DSApplyNotifyState();
+        return;
+    }
     for (NSDictionary *op in root[@"ops"]) {
         if (![op isKindOfClass:NSDictionary.class]) continue;
         NSInteger seq = [op[@"seq"] integerValue];

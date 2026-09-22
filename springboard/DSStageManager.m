@@ -33,11 +33,14 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 // The same kind of field the picker search uses. It lives in the stage window,
 // so UIKit draws the same keyboard. Keystrokes are handed to the hosted app.
-@interface DSStagedKeyboardField : UITextField
+@interface DSStagedKeyboardField : UITextField <UITextFieldDelegate>
 @property (nonatomic, weak) id<DSStagedKeyboardTarget> keyTarget;
 // Set while the stage window is reclaiming the key. Resigning then is not the
 // user leaving the field.
 @property (nonatomic, assign) BOOL suppressEnd;
+// Set while the delegate is already forwarding this edit, so insertText and
+// deleteBackward do not send the same key twice.
+@property (nonatomic, assign) BOOL forwardingEdit;
 @end
 
 @implementation DSStagedKeyboardField
@@ -47,16 +50,46 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 }
 
 - (void)insertText:(NSString *)text {
-    if (text.length == 0) return;
+    if (self.forwardingEdit || text.length == 0) return;
     if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardInsertText:)]) {
         [self.keyTarget stagedKeyboardInsertText:text];
     }
 }
 
 - (void)deleteBackward {
+    if (self.forwardingEdit) return;
     if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardDeleteBackward)]) {
         [self.keyTarget stagedKeyboardDeleteBackward];
     }
+}
+
+// Letters go to the field editor, which asks the delegate. They never arrive
+// at insertText:, which is why the log showed deletes and no letters.
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    (void)textField;
+    self.forwardingEdit = YES;
+    if (string.length > 0) {
+        if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardInsertText:)]) {
+            [self.keyTarget stagedKeyboardInsertText:string];
+        }
+    } else if (range.length > 0) {
+        NSUInteger count = MIN(range.length, (NSUInteger)20);
+        for (NSUInteger index = 0; index < count; index++) {
+            if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardDeleteBackward)]) {
+                [self.keyTarget stagedKeyboardDeleteBackward];
+            }
+        }
+    }
+    self.forwardingEdit = NO;
+    return NO;
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    (void)textField;
+    if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardInsertText:)]) {
+        [self.keyTarget stagedKeyboardInsertText:@"\n"];
+    }
+    return NO;
 }
 
 - (BOOL)resignFirstResponder {
@@ -69,12 +102,51 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 @end
 
+static int DSKeyboardInputStateToken = NOTIFY_TOKEN_INVALID;
+
+static void DSPostKeyboardInputState(uint32_t seq, BOOL isDelete, UTF32Char code) {
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardInputNotification, &DSKeyboardInputStateToken);
+    }
+    if (DSKeyboardInputStateToken != NOTIFY_TOKEN_INVALID) {
+        uint64_t state = seq;
+        if (isDelete) state |= (1ULL << 32);
+        else state |= ((uint64_t)code & 0x1FFFFF) << 33;
+        notify_set_state(DSKeyboardInputStateToken, state);
+    }
+    notify_post(kDSKeyboardInputNotification);
+}
+
+static NSArray<NSNumber *> *DSUTF32Scalars(NSString *text) {
+    if (text.length == 0) return @[];
+    NSMutableArray<NSNumber *> *scalars = [NSMutableArray array];
+    NSUInteger index = 0;
+    while (index < text.length) {
+        unichar unit = [text characterAtIndex:index];
+        index++;
+        UTF32Char code = unit;
+        if (CFStringIsSurrogateHighCharacter(unit) && index < text.length) {
+            unichar low = [text characterAtIndex:index];
+            if (CFStringIsSurrogateLowCharacter(low)) {
+                code = CFStringGetLongCharacterForSurrogatePair(unit, low);
+                index++;
+            }
+        }
+        [scalars addObject:@(code)];
+    }
+    return scalars;
+}
+
 static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     if (op.length == 0) return;
+    BOOL isDelete = [op isEqualToString:@"delete"];
+    NSArray<NSNumber *> *scalars = isDelete ? @[] : DSUTF32Scalars(text);
+    NSInteger count = isDelete ? 1 : MAX((NSInteger)scalars.count, 1);
+    NSInteger seq = 0;
     @synchronized ([DSStagedKeyboardField class]) {
         NSMutableDictionary *root = [([NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath] ?: @{}) mutableCopy];
         NSMutableArray *ops = [root[@"ops"] mutableCopy] ?: [NSMutableArray array];
-        NSInteger seq = [root[@"seq"] integerValue] + 1;
+        seq = [root[@"seq"] integerValue] + count;
         [ops addObject:@{ @"seq" : @(seq), @"op" : op, @"text" : text ?: @"" }];
         if (ops.count > 40) {
             [ops removeObjectsInRange:NSMakeRange(0, ops.count - 40)];
@@ -83,7 +155,14 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
         root[@"ops"] = ops;
         [root writeToFile:kDSKeyboardInputPath atomically:YES];
     }
-    notify_post(kDSKeyboardInputNotification);
+    if (isDelete || scalars.count == 0) {
+        DSPostKeyboardInputState((uint32_t)seq, YES, 0);
+        return;
+    }
+    NSInteger first = seq - (NSInteger)scalars.count + 1;
+    for (NSUInteger index = 0; index < scalars.count; index++) {
+        DSPostKeyboardInputState((uint32_t)(first + (NSInteger)index), NO, (UTF32Char)scalars[index].unsignedIntValue);
+    }
 }
 
 #pragma mark - Launch placeholder
@@ -544,10 +623,17 @@ static BOOL sSystemEdgePullAvailable;
     DSStagedKeyboardField *field = [[DSStagedKeyboardField alloc] initWithFrame:CGRectMake(0, -80, 2, 2)];
     field.keyTarget = self;
     field.alpha = 0.02;
+    field.delegate = field;
     field.autocorrectionType = UITextAutocorrectionTypeNo;
     field.autocapitalizationType = UITextAutocapitalizationTypeNone;
     field.spellCheckingType = UITextSpellCheckingTypeNo;
+    field.smartQuotesType = UITextSmartQuotesTypeNo;
+    field.smartDashesType = UITextSmartDashesTypeNo;
+    field.smartInsertDeleteType = UITextSmartInsertDeleteTypeNo;
     field.returnKeyType = UIReturnKeyDefault;
+    UITextInputAssistantItem *assistant = field.inputAssistantItem;
+    assistant.leadingBarButtonGroups = @[];
+    assistant.trailingBarButtonGroups = @[];
     field.accessibilityElementsHidden = YES;
     _stagedKeyboardField = field;
 }
@@ -737,7 +823,9 @@ static BOOL sSystemEdgePullAvailable;
     if (CGRectIsEmpty(keyboard)) return keyboard;
     CGRect screen = [self screenBounds];
     CGFloat keys = CGRectGetHeight(keyboard);
-    if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6) {
+    // The picker keyboard is 301pt. A 346pt frame is the shortcut bar flashing
+    // over that keyboard, and lifting for it shoves the card.
+    if (keys < kDSKeyboardPresentHeight || keys > CGRectGetHeight(screen) * 0.6 || keys > 301.0) {
         keys = 301.0;
     } else {
         keys = MAX(keys, 301.0);

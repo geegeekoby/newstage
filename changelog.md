@@ -1,3 +1,6 @@
+**4.5.24**
+- Letters typed on the staged keyboard never left SpringBoard. Delete did, because that key hits the field directly, and a letter goes through the field editor instead. Those letters are now forwarded into the staged app. A 346pt shortcut-bar frame no longer lifts the card past the 301pt picker keyboard
+
 **4.5.23**
 - 4.5.22 kept the staged keyboard up after the app was minimized, and the shortcut bar came back with it. A staged app uses the picker keyboard again. That keyboard goes away when the stage is minimized or the app is left. The app's own keyboard stays hidden
 

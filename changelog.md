@@ -1,3 +1,7 @@
+**4.5.3**
+- The app in a stage is pinned to the card, so the bottom stage shows the whole app instead of a clipped full-screen scene
+- Swipe inward from the right side of a staged app to return to the app picker
+
 **4.5.2**
 - Minimize slides a card away and leaves its app running. It no longer tears the app down
 - Staged apps keep an opaque card, including Safari, instead of showing the wallpaper through the stage

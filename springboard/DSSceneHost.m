@@ -123,6 +123,7 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     NSString *_ownSceneIdentifier;
     BOOL _nudgedThisLaunch;
     BOOL _deliveredOnce;
+    BOOL _sizeCorrectionScheduled;
     CGFloat _deliveredWidth;
     CGFloat _deliveredHeight;
     CGRect _stageFrame;
@@ -545,9 +546,47 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     _deliveredOnce = YES;
     _deliveredWidth = size.width;
     _deliveredHeight = size.height;
-    [self setContentReferenceSizeOnAppView];
+    // The transaction re-pins the scene to the whole display. The stage size has
+    // to be the last thing written, or the card clips a full-screen app.
     [self beginSceneTransactionDeliveringActions:NO];
+    [self setContentReferenceSizeOnAppView];
     [self forceSceneGeometry];
+    [self layoutHostView];
+    [self scheduleSizeCorrection];
+}
+
+- (BOOL)sceneFrameIsLargerThanStage {
+    FBScene *scene = [self appViewScene];
+    if (!scene || ![scene respondsToSelector:@selector(settings)]) return NO;
+    FBSSceneSettings *settings = scene.settings;
+    if (!settings) return NO;
+    CGRect got = settings.frame;
+    CGRect want = [self frameForScene];
+    if (CGRectIsEmpty(got) || CGRectIsEmpty(want)) return NO;
+    return CGRectGetWidth(got) > CGRectGetWidth(want) + 24.0 ||
+           CGRectGetHeight(got) > CGRectGetHeight(want) + 24.0;
+}
+
+// The launch transaction finishes after we return and puts the full display back.
+// Correct that once it has landed. Do not start another transaction: that is the flicker.
+- (void)scheduleSizeCorrection {
+    if (_sizeCorrectionScheduled) return;
+    _sizeCorrectionScheduled = YES;
+    __weak __typeof(self) weakSelf = self;
+    for (NSNumber *delay in @[ @0.15, @0.45, @0.9 ]) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || !strongSelf->_appViewController) return;
+            if (![strongSelf sceneFrameIsLargerThanStage]) {
+                [strongSelf layoutHostView];
+                return;
+            }
+            [strongSelf setContentReferenceSizeOnAppView];
+            [strongSelf forceSceneGeometry];
+            [strongSelf layoutHostView];
+        });
+    }
 }
 
 // The app view's own idea of how big the app is. It is the size the app view then
@@ -616,6 +655,7 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     _appViewController = nil;
     _entity = nil;
     _deliveredOnce = NO;
+    _sizeCorrectionScheduled = NO;
     _deliveredWidth = 0;
     _deliveredHeight = 0;
     if (!controller) return;
@@ -1050,15 +1090,29 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     return CGRectMake(0, 0, CGRectGetWidth(logical), CGRectGetHeight(logical));
 }
 
+- (void)fitHostViewToCard {
+    [self layoutHostView];
+}
+
 - (void)layoutHostView {
     if (!_hostView) return;
-    CGRect logical = [self logicalFrame];
-    CGFloat scale = _contentScale > 0 ? 1.0 / _contentScale : 1.0;
-
-    _hostView.transform = CGAffineTransformIdentity;
-    _hostView.frame = CGRectMake(0, 0, CGRectGetWidth(logical), CGRectGetHeight(logical));
-    _hostView.transform = CGAffineTransformMakeScale(scale, scale);
     UIView *parent = _hostView.superview;
+    CGFloat scale = _contentScale > 0 ? _contentScale : 1.0;
+    _hostView.transform = CGAffineTransformIdentity;
+
+    // At the normal scale the app is the card, edge to edge. A view left at the
+    // screen size is clipped, which is the bottom stage showing only part of the app.
+    if (parent && !CGRectIsEmpty(parent.bounds) && fabs(scale - 1.0) < 0.02) {
+        _hostView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        _hostView.frame = parent.bounds;
+        return;
+    }
+
+    CGRect logical = [self logicalFrame];
+    CGFloat shrink = scale > 0 ? 1.0 / scale : 1.0;
+    _hostView.autoresizingMask = UIViewAutoresizingNone;
+    _hostView.frame = CGRectMake(0, 0, CGRectGetWidth(logical), CGRectGetHeight(logical));
+    _hostView.transform = CGAffineTransformMakeScale(shrink, shrink);
     if (parent && !CGRectIsEmpty(parent.bounds)) {
         _hostView.center = CGPointMake(CGRectGetMidX(parent.bounds), CGRectGetMidY(parent.bounds));
     } else {

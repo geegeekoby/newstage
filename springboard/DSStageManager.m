@@ -951,13 +951,18 @@ static BOOL sSystemEdgePullAvailable;
     BOOL sameOrigin = fabs(CGRectGetMinX(current) - CGRectGetMinX(frame)) < 0.5 &&
                       fabs(CGRectGetMinY(current) - CGRectGetMinY(frame)) < 0.5;
     card.backgroundColor = UIColor.clearColor;
+    [card layoutIfNeeded];
     if (sameSize && sameOrigin) {
+        // The scene is already the right size. The view still has to fill the
+        // card: the app view controller resets its frame after we leave.
+        [host fitHostViewToCard];
         return;
     }
     if (sameSize) {
         // Same card, new half of the screen. Do not run the scene resize
         // transaction; that is what blanks the app.
         [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:frame active:YES];
+        [host fitHostViewToCard];
         return;
     }
     [host setStageFrame:frame safeAreaInsets:UIEdgeInsetsZero];
@@ -966,6 +971,8 @@ static BOOL sSystemEdgePullAvailable;
     if (hostView && hostView.superview != card.contentView) {
         [card.contentView insertSubview:hostView atIndex:0];
     }
+    [card layoutIfNeeded];
+    [host fitHostViewToCard];
     [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:frame active:YES];
 }
 
@@ -2202,8 +2209,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         hostView.backgroundColor = UIColor.whiteColor;
         card.contentView.backgroundColor = UIColor.whiteColor;
     }
-    hostView.frame = card.contentView.bounds;
     [card.contentView insertSubview:hostView atIndex:0];
+    [card layoutIfNeeded];
+    [host fitHostViewToCard];
     [card setBackdropHidden:YES];
     [host noteHostViewAttached];
 
@@ -2624,8 +2632,8 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
             if ((fromCorner || fromEdge) && cornerIntent == DSCornerIntentLeaveApp) {
                 BOOL leave = NO;
                 if (fromEdge) {
-                    leave = (-translation.x > 55.0 && -translation.x > fabs(translation.y) * 1.1) ||
-                            (-velocity.x > 650.0 && -velocity.x > fabs(velocity.y));
+                    leave = (-translation.x > 36.0 && -translation.x > fabs(translation.y) * 0.8) ||
+                            (-velocity.x > 500.0 && -velocity.x > fabs(velocity.y));
                 } else {
                     leave = DSInwardTravel(translation) > 48.0 ||
                             (DSInwardTravel(translation) > 32.0 && DSInwardTravel(velocity) > 500.0);

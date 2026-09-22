@@ -162,6 +162,8 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     CGFloat minSide = 36.0;
     _minimizeButton.frame = CGRectMake(8.0, 4.0, minSide, minSide);
     _minimizeButton.hidden = !_showsMinimizeButton;
+    [self bringSubviewToFront:_cornerGrip];
+    [self bringSubviewToFront:_edgeGrip];
     [self bringSubviewToFront:_stackAddButton];
     [self bringSubviewToFront:_minimizeButton];
     [self bringSubviewToFront:_grabber];
@@ -280,17 +282,14 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                       height);
 }
 
-// A thumb's worth up the right-hand edge, starting above the home indicator and ending
-// short of the grabber so a drag of the card itself is still a drag of the card.
+// The whole right side of the card, under the top buttons. A swipe that starts
+// here and moves inward leaves the app and brings the picker back.
 - (CGRect)edgeGripRect {
     CGRect bounds = self.bounds;
-    CGFloat width = MIN(28.0, CGRectGetWidth(bounds));
-    CGFloat top = kDSDragAffordanceHeight + 8.0;
-    CGRect corner = [self cornerGripRect];
-    CGFloat bottom = MAX(top + 80.0, CGRectGetMinY(corner) - 8.0);
-    CGFloat height = MAX(80.0, bottom - top);
-    if (top + height > CGRectGetHeight(bounds)) height = CGRectGetHeight(bounds) - top;
-    return CGRectMake(CGRectGetWidth(bounds) - width, top, width, height);
+    CGFloat width = 44.0;
+    CGFloat top = 46.0;
+    if (top > CGRectGetHeight(bounds)) top = 0.0;
+    return CGRectMake(CGRectGetWidth(bounds) - width, top, width, CGRectGetHeight(bounds) - top);
 }
 
 - (void)setLiftOffset:(CGFloat)offset {

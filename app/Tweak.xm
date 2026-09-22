@@ -33,6 +33,8 @@ static BOOL DSStaged(void) {
 
 static void DSBanishLocalKeyboard(void);
 static void DSRequestPickerKeyboard(BOOL show);
+static BOOL DSResignIsFromKeyWindow(void);
+static BOOL DSResponderTakesText(UIResponder *responder);
 
 static int DSKeyboardWantGeneration = 0;
 static int DSKeyboardRequestToken = NOTIFY_TOKEN_INVALID;
@@ -48,6 +50,31 @@ static NSString *DSLoggedEditingClass = nil;
 // Set while a letter is being written into the tapped field. The app must not
 // open its own keyboard for that, and it must not hide the one already up.
 static BOOL DSDeliveringStageKey = NO;
+// The message box became the editor. UIKit then hides its own keyboard because
+// the stage window took the key, and that hide is what removes the blue line.
+static BOOL DSComposerHeld = NO;
+static CFAbsoluteTime DSComposerHeldAt = 0;
+static BOOL DSSuppressComposerResign = NO;
+
+static void DSHoldComposer(void) {
+    DSComposerHeld = YES;
+    DSComposerHeldAt = CFAbsoluteTimeGetCurrent();
+}
+
+static void DSReleaseComposer(void) {
+    DSComposerHeld = NO;
+    DSComposerHeldAt = 0;
+}
+
+static BOOL DSKeepComposer(UIResponder *responder) {
+    if (!DSStaged() || !DSComposerHeld || DSDeliveringStageKey || !responder) return NO;
+    BOOL text = DSResponderTakesText(responder) ||
+        [responder isKindOfClass:UITextField.class] ||
+        [responder isKindOfClass:UITextView.class];
+    if (!text) return NO;
+    if (DSSuppressComposerResign || DSResignIsFromKeyWindow()) return YES;
+    return DSComposerHeldAt > 0 && CFAbsoluteTimeGetCurrent() - DSComposerHeldAt < 1.0;
+}
 
 static UIResponder *DSFirstResponderInView(UIView *view) {
     if (![view isKindOfClass:UIView.class]) return nil;
@@ -307,6 +334,18 @@ static void DSReportKeyApplied(BOOL isDelete, UIResponder *responder, BOOL chang
     }
 }
 
+static void DSReportListening(void) {
+    static int token = NOTIFY_TOKEN_INVALID;
+    if (token == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardApplyNotification, &token);
+    }
+    if (token == NOTIFY_TOKEN_INVALID) return;
+    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
+    state |= (1ULL << 38);
+    notify_set_state(token, state);
+    notify_post(kDSKeyboardApplyNotification);
+}
+
 static void DSTypeText(UIResponder *responder, NSString *text) {
     NSString *before = DSPlainText(responder);
     if ([responder conformsToProtocol:@protocol(UITextInput)]) {
@@ -564,6 +603,13 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 - (BOOL)_shouldAdjustSizeClassesAndResizeWindow {
     if (DSStaged() && !DSIsKeyboardWindow(self)) return YES;
     return %orig;
+}
+
+- (void)resignKeyWindow {
+    BOOL hold = DSStaged() && !DSIsKeyboardWindow(self);
+    if (hold) DSSuppressComposerResign = YES;
+    %orig;
+    if (hold) DSSuppressComposerResign = NO;
 }
 
 // Letting the window believe it owns the orientation is what stops UIKit from
@@ -927,6 +973,9 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (void)hideKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
+        // Hiding the in-process keyboard resigns the message box. The blue
+        // line leaves, and the stage window's field becomes the only editor.
+        if (DSComposerHeld) return;
         if (!DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
         %orig;
         return;
@@ -942,6 +991,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     BOOL became = %orig;
     if (became && DSStaged() && DSResponderTakesText(self)) {
         DSRememberKeyboardTarget(self);
+        DSHoldComposer();
         if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
@@ -950,14 +1000,14 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
     // The stage window has to become key for the picker keyboard. UIKit then
-    // resigns this field. Refusing that keeps the message box as the place
-    // text is inserted, without changing how the keyboard is shown.
-    if (wasEditing && DSStaged() && DSResponderTakesText(self) && DSResignIsFromKeyWindow()) {
+    // resigns this field. Refusing that keeps the blue line in the message box.
+    if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
     BOOL resigned = %orig;
     if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self) && !DSDeliveringStageKey) {
+        DSReleaseComposer();
         DSRequestPickerKeyboard(NO);
     }
     return resigned;
@@ -971,6 +1021,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     BOOL became = %orig;
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
+        DSHoldComposer();
         if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
@@ -978,12 +1029,15 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
-    if (wasEditing && DSStaged() && DSResignIsFromKeyWindow()) {
+    if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
     BOOL resigned = %orig;
-    if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
+    if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
+        DSReleaseComposer();
+        DSRequestPickerKeyboard(NO);
+    }
     return resigned;
 }
 
@@ -995,6 +1049,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     BOOL became = %orig;
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
+        DSHoldComposer();
         if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
@@ -1002,12 +1057,15 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
-    if (wasEditing && DSStaged() && DSResignIsFromKeyWindow()) {
+    if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
     BOOL resigned = %orig;
-    if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
+    if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
+        DSReleaseComposer();
+        DSRequestPickerKeyboard(NO);
+    }
     return resigned;
 }
 
@@ -1115,6 +1173,7 @@ static void DSInstallHooks(void) {
             (void)t;
             DSDrainKeyboardInput();
         });
+        DSReportListening();
     });
 }
 

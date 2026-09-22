@@ -556,6 +556,7 @@ static void DSRegisterDarwinObservers(void) {
         BOOL hasWindow = (state & (1ULL << 35)) != 0;
         BOOL isDelete = (state & (1ULL << 36)) != 0;
         BOOL notStaged = (state & (1ULL << 37)) != 0;
+        BOOL listening = (state & (1ULL << 38)) != 0;
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
         if (hadField && kind == 1) className = @"field";
@@ -563,15 +564,20 @@ static void DSRegisterDarwinObservers(void) {
         else if (hadField && kind == 3) className = @"other";
         DSTell(^(DSStageManager *manager) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
-            NSString *line = notStaged
-                ? [NSString stringWithFormat:@"app: key arrived in %@ while it was not staged", bundle]
-                : [NSString stringWithFormat:@"app: key %@ -> %@ %@ fr=%d win=%d changed=%d",
-                   isDelete ? @"delete" : @"insert",
-                   bundle,
-                   className,
-                   editing,
-                   hasWindow,
-                   changed];
+            NSString *line;
+            if (listening) {
+                line = [NSString stringWithFormat:@"app: %@ is listening for staged keys", bundle];
+            } else if (notStaged) {
+                line = [NSString stringWithFormat:@"app: key arrived in %@ while it was not staged", bundle];
+            } else {
+                line = [NSString stringWithFormat:@"app: key %@ -> %@ %@ fr=%d win=%d changed=%d",
+                        isDelete ? @"delete" : @"insert",
+                        bundle,
+                        className,
+                        editing,
+                        hasWindow,
+                        changed];
+            }
             [manager noteStagedKeyResult:line];
         });
     });

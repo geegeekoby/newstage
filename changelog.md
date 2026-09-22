@@ -1,3 +1,6 @@
+**4.5.28**
+- The blue line appeared in Messenger and then left, because hiding Messenger's own keyboard resigned the message box and the stage window's field became the editor. That hide no longer resigns the message box. The picker keyboard is unchanged
+
 **4.5.27**
 - The letters were still only recorded in SpringBoard. Messenger never answered, because it was listening on a notification center that does not receive this post. It now listens the same way it learns that it is on the stage. The picker keyboard is unchanged
 

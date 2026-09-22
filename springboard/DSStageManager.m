@@ -777,6 +777,8 @@ static BOOL sSystemEdgePullAvailable;
     NSString *bundle = [self bundleForKeyboardHash:(uint32_t)state];
     if (![self isHostingBundleIdentifier:bundle]) return;
     if (_searchSlot >= 0) return;
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for the picker keyboard to %@",
+                              bundle, show ? @"show" : @"hide");
     if (show) [self showStagedKeyboardLikePickerForBundle:bundle];
     else [self hideStagedKeyboardLikePicker];
 }

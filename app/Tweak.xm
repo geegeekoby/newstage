@@ -8,17 +8,16 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
-// Injected into Messenger (and only Messenger). While this process is the one
-// on the stage, every route UIKit offers for "how big is the screen" answers
-// with the stage rectangle and the interface stays pinned to portrait.
-//
-// The message field stays the editor. Forcing UIKit's remote keyboard on
-// this phone took SpringBoard to safe mode, so this process draws its own
-// keys. SpringBoard opens the bottom of the card so those keys sit in the
-// system keyboard band rather than inside the rounded chrome. The picker
-// search keyboard is a different path and is left alone.
-//
-// Nothing below is hooked until the app is actually put on the stage.
+#import <fcntl.h>
+#import <unistd.h>
+#import <stdio.h>
+#import <string.h>
+// Injected into Messenger only. While that process is on the stage, UIKit is
+// told the keyboard is remote so SpringBoard draws the keys outside the card.
+// The message field stays the editor. Hooks wait until the app is staged.
+// The constructor always reports, including when it returns without hooking,
+// because a silent return is indistinguishable from ElleKit never loading this
+// dylib.
 
 static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
@@ -353,6 +352,42 @@ static void DSReportListening(void) {
     notify_post(kDSKeyboardApplyNotification);
 }
 
+static void DSReportCtor(int reason) {
+    NSString *identifier = @"";
+    NSString *path = @"";
+    NSString *proc = @"";
+    @try {
+        identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+        path = NSBundle.mainBundle.bundlePath ?: @"";
+        proc = NSProcessInfo.processInfo.processName ?: @"";
+    } @catch (NSException *exception) {
+    }
+    const char *names[] = { "ok", "kill", "bundle", "excluded", "not-user", "prefs", "threw" };
+    const char *why = (reason >= 0 && reason <= 6) ? names[reason] : "other";
+    char line[1024];
+    snprintf(line, sizeof(line), "%s proc=%s bundle=%s path=%s\n",
+             why,
+             proc.UTF8String ?: "?",
+             identifier.UTF8String ?: "?",
+             path.UTF8String ?: "?");
+    int fd = open("/var/tmp/com.recreated.dynamicstage.ctor", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd >= 0) {
+        ssize_t wrote = write(fd, line, strlen(line));
+        (void)wrote;
+        close(fd);
+    }
+    static int token = NOTIFY_TOKEN_INVALID;
+    if (token == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardApplyNotification, &token);
+    }
+    if (token == NOTIFY_TOKEN_INVALID) return;
+    uint64_t state = DSIdentifierHash(identifier);
+    state |= (1ULL << 39) | (1ULL << 49);
+    state |= ((uint64_t)(reason & 0xf) << 56);
+    notify_set_state(token, state);
+    notify_post(kDSKeyboardApplyNotification);
+}
+
 static void DSReportLoaded(void) {
     static dispatch_once_t once;
     dispatch_once(&once, ^{
@@ -378,7 +413,22 @@ static void DSReportRemoteKeyboard(void) {
     }
     if (token == NOTIFY_TOKEN_INVALID) return;
     uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
-    state |= (1ULL << 48) | (1ULL << 38);
+    state |= (1ULL << 48) | (1ULL << 39) | (1ULL << 38) | (1ULL << 49);
+    notify_set_state(token, state);
+    notify_post(kDSKeyboardApplyNotification);
+}
+
+static void DSReportRemoteSkipped(void) {
+    static BOOL reported = NO;
+    if (reported) return;
+    reported = YES;
+    static int token = NOTIFY_TOKEN_INVALID;
+    if (token == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardApplyNotification, &token);
+    }
+    if (token == NOTIFY_TOKEN_INVALID) return;
+    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
+    state |= (1ULL << 50) | (1ULL << 39) | (1ULL << 49);
     notify_set_state(token, state);
     notify_post(kDSKeyboardApplyNotification);
 }
@@ -920,6 +970,7 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSReportRemoteKeyboard();
         return YES;
     }
+    DSReportRemoteSkipped();
     return %orig;
 }
 
@@ -928,6 +979,7 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSReportRemoteKeyboard();
         return YES;
     }
+    DSReportRemoteSkipped();
     return %orig;
 }
 
@@ -1139,18 +1191,45 @@ static void DSStartObserving(void) {
     [context startObserving];
 }
 
+// Runs as soon as dyld maps the image, before the Objective-C constructor.
+// If this file appears and the ctor line does not, the image loaded and then
+// died before %ctor. If neither appears, ElleKit never loaded the image.
+__attribute__((constructor(101)))
+static void DSImageMapped(void) {
+    int fd = open("/var/tmp/com.recreated.dynamicstage.mapped", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd >= 0) {
+        const char msg[] = "mapped\n";
+        ssize_t wrote = write(fd, msg, sizeof(msg) - 1);
+        (void)wrote;
+        close(fd);
+    }
+    int token = NOTIFY_TOKEN_INVALID;
+    if (notify_register_check(kDSKeyboardApplyNotification, &token) == 0 &&
+        token != NOTIFY_TOKEN_INVALID) {
+        notify_set_state(token, (1ULL << 49));
+        notify_post(kDSKeyboardApplyNotification);
+    }
+}
+
 %ctor {
     @autoreleasepool {
+        int reason = 0;
         @try {
-            if (DSKillSwitchPresent()) return;
-            NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
-            if (![identifier isEqualToString:@"com.facebook.Messenger"]) return;
-            if (DSIdentifierIsExcludedFromStage(identifier)) return;
-            if (!DSBundleLooksLikeUserApplication()) return;
-            if (![DSPreferences sharedPreferences].enabled) return;
+            if (DSKillSwitchPresent()) reason = 1;
+            else {
+                NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+                if (![identifier isEqualToString:@"com.facebook.Messenger"]) reason = 2;
+                else if (DSIdentifierIsExcludedFromStage(identifier)) reason = 3;
+                else if (!DSBundleLooksLikeUserApplication()) reason = 4;
+                else if (![DSPreferences sharedPreferences].enabled) reason = 5;
+            }
+        } @catch (NSException *exception) {
+            reason = 6;
+        }
+        DSReportCtor(reason);
+        if (reason != 0) return;
 
-            DSReportLoaded();
-
+        @try {
             if ([DSStageContext processIsStagedNow]) {
                 DSStartObserving();
                 DSInstallHooks();

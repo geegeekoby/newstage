@@ -1,3 +1,6 @@
+**4.5.42**
+- 4.5.41 reported the keyboard as outside the card and lifted slot 0 by 306pt. That window was SpringBoard's own text-effects window, and Messenger never ran the in-app dylib, so the keys the user saw stayed in the card and moved with it. The card now stays put until Messenger reports that UIKit is using the remote keyboard. The in-app filter is XML and lists only the Messenger bundle, which is what ElleKit matches. The log prints that filter, whether the dylib image mapped, and the constructor's reason if it returned early
+
 **4.5.41**
 - Opening the bottom of the card cannot move the keys. They are painted inside Messenger's scene, and that scene is the card. While Messenger is staged it now tells UIKit the keyboard is remote, which is what makes SpringBoard draw the keys in its own window. That window is lifted just above the stage, and the card lifts only after those keys are actually there. Touches outside the keys fall through to the app. Nothing creates a keyboard window, assigns the arbiter host, or hides keyboard views
 

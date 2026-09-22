@@ -1,5 +1,6 @@
 #import "DSKeyboardVisibility.h"
 #import "DSConstants.h"
+#import "DSDiagnostics.h"
 #import <UIKit/UIKit.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
@@ -70,6 +71,68 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
     return keyboard;
 }
 
+static NSString *DSWindowSceneName(UIWindow *window) {
+    if (@available(iOS 13.0, *)) {
+        UIWindowScene *scene = window.windowScene;
+        if (!scene) return @"none";
+        NSString *identifier = scene.session.persistentIdentifier;
+        if (identifier.length == 0) identifier = @"?";
+        if (identifier.length > 42) identifier = [identifier substringToIndex:42];
+        return identifier;
+    }
+    return @"n/a";
+}
+
+NSString *DSKeyboardWindowCensus(void) {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (parts.count >= 4) return;
+        NSString *name = NSStringFromClass(window.class);
+        if (!DSClassNameLooksLikeKeyboard(name)) return;
+        CGRect keys = DSKeyboardViewFrameInView(window);
+        NSString *keyText = CGRectIsNull(keys) ? @"none" : NSStringFromCGRect(keys);
+        UIView *superview = window.superview;
+        [parts addObject:[NSString stringWithFormat:@"%@ scene=%@ super=%@ hid=%d a=%.2f lvl=%.0f frame=%@ keys=%@",
+                          name,
+                          DSWindowSceneName(window),
+                          superview ? NSStringFromClass(superview.class) : @"none",
+                          window.hidden,
+                          window.alpha,
+                          window.windowLevel,
+                          NSStringFromCGRect(window.frame),
+                          keyText]];
+    });
+    if (parts.count == 0) return @"census=0";
+    return [NSString stringWithFormat:@"census=%lu %@", (unsigned long)parts.count, [parts componentsJoinedByString:@" || "]];
+}
+
+static NSString *DSFlatFile(NSString *path, NSUInteger limit) {
+    NSFileManager *files = NSFileManager.defaultManager;
+    NSDictionary *attrs = [files attributesOfItemAtPath:path error:nil];
+    if (!attrs) return @"missing";
+    NSString *text = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
+    if (text.length == 0) text = @"empty";
+    NSArray *pieces = [text componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSMutableArray<NSString *> *kept = [NSMutableArray array];
+    for (NSString *piece in pieces) {
+        if (piece.length) [kept addObject:piece];
+    }
+    NSString *flat = [kept componentsJoinedByString:@" "];
+    if (flat.length > limit) flat = [[flat substringToIndex:limit] stringByAppendingString:@"..."];
+    NSDate *modified = attrs[NSFileModificationDate];
+    NSTimeInterval age = modified ? -[modified timeIntervalSinceNow] : -1.0;
+    return [NSString stringWithFormat:@"age=%.0fs %@", age, flat];
+}
+
+void DSLogStagedAppInjection(NSString *why) {
+    NSString *libs = DSFlatFile(@"/var/jb/Library/MobileSubstrate/DynamicLibraries/DynamicStageApp.plist", 220);
+    NSString *inject = DSFlatFile(@"/var/jb/usr/lib/TweakInject/DynamicStageApp.plist", 220);
+    NSString *ctor = DSFlatFile(@"/var/tmp/com.recreated.dynamicstage.ctor", 180);
+    NSString *mapped = DSFlatFile(@"/var/tmp/com.recreated.dynamicstage.mapped", 60);
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ libsPlist=[%@] injectPlist=[%@] ctor=[%@] mapped=[%@]",
+                              why ?: @"filter", libs, inject, ctor, mapped);
+}
+
 static NSString *DSClaimedKeyboardStatus = @"win=none";
 
 static BOOL DSExternalKeyboardRaised = NO;
@@ -103,11 +166,12 @@ BOOL DSRevealSpringBoardKeyboard(void) {
         revealed = YES;
         shown = keys;
         level = window.windowLevel;
-        windowName = NSStringFromClass(window.class);
+        windowName = [NSString stringWithFormat:@"%@ scene=%@",
+                      NSStringFromClass(window.class), DSWindowSceneName(window)];
     });
     DSExternalKeyboardRaised = revealed;
     if (revealed) {
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=outside %@ lvl=%.0f keys=%@",
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=raised %@ lvl=%.0f keys=%@",
                                    windowName ?: @"?", level, NSStringFromCGRect(shown)];
         return YES;
     }

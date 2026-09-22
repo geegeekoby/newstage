@@ -352,9 +352,10 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
-// Search still owns its own keyboard. A staged app draws its own keys; this
-// hook only records what the arbiter said. Assigning the keyboard UI host
-// and creating a remote window is what took the phone to safe mode.
+// Search still owns its own keyboard. This hook only records what the arbiter
+// said. It does not raise a window: SpringBoard's own text-effects window is
+// not the staged app's keyboard. Assigning the keyboard UI host and creating
+// a remote window is what took the phone to safe mode.
 
 static NSInteger DSHostAssignAttempts = 0;
 static BOOL DSArbiterBusy = NO;
@@ -536,9 +537,7 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     }
 
     if (!DSStageReady() || !information) return;
-    BOOL placeOutside = onScreen && DSBundleIsStaged(source);
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (placeOutside) DSShowArbiterKeyboardAboveStage(nil);
         DSTell(^(DSStageManager *manager) {
             [manager keyboardOnScreen:onScreen frame:frame source:source];
         });
@@ -647,19 +646,39 @@ static void DSRegisterDarwinObservers(void) {
         BOOL listening = (state & (1ULL << 38)) != 0;
         BOOL loaded = (state & (1ULL << 39)) != 0;
         BOOL remote = (state & (1ULL << 48)) != 0;
+        BOOL mapped = (state & (1ULL << 49)) != 0;
+        BOOL remoteSkipped = (state & (1ULL << 50)) != 0;
+        NSUInteger ctorReason = (NSUInteger)((state >> 56) & 0xf);
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
         if (hadField && kind == 1) className = @"field";
         else if (hadField && kind == 2) className = @"textview";
         else if (hadField && kind == 3) className = @"other";
+        NSString *reasonName = @"other";
+        switch (ctorReason) {
+            case 0: reasonName = @"ok"; break;
+            case 1: reasonName = @"kill"; break;
+            case 2: reasonName = @"bundle"; break;
+            case 3: reasonName = @"excluded"; break;
+            case 4: reasonName = @"not-user"; break;
+            case 5: reasonName = @"prefs"; break;
+            case 6: reasonName = @"threw"; break;
+            default: break;
+        }
         DSTell(^(DSStageManager *manager) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
-            [manager noteAppDylibSignal:hash listening:listening loaded:loaded];
+            [manager noteAppDylibSignal:hash listening:listening loaded:loaded remote:remote];
             NSString *line;
             if (remote) {
                 line = [NSString stringWithFormat:@"app: %@ remote keyboard, message field stays", bundle];
-            } else if (loaded && !listening && !hadField && !changed && !notStaged) {
-                line = [NSString stringWithFormat:@"app: %@ loaded the stage dylib", bundle];
+            } else if (remoteSkipped) {
+                line = [NSString stringWithFormat:@"app: %@ isUsingRemoteKeyboard ran but the app was not staged", bundle];
+            } else if (loaded && ctorReason != 0) {
+                line = [NSString stringWithFormat:@"app: %@ ctor bailed reason=%@", bundle, reasonName];
+            } else if (loaded) {
+                line = [NSString stringWithFormat:@"app: %@ ctor ok", bundle];
+            } else if (mapped) {
+                line = @"app: dylib image mapped, ctor did not finish";
             } else if (listening) {
                 line = [NSString stringWithFormat:@"app: %@ is listening for staged keys", bundle];
             } else if (notStaged) {
@@ -735,6 +754,7 @@ static void DSInstallRemainingHooks(void) {
             DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d injectplist=%d payload=%d files=%@",
                                       libs, tweakInject, tweakLink, injectDylib, injectPlistOn, payload,
                                       [libNames componentsJoinedByString:@","]);
+            DSLogStagedAppInjection(@"filter at boot");
 
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{

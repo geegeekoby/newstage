@@ -21,7 +21,9 @@ done
 
 # ElleKit loads app tweaks from TweakInject. Theos puts the dylib in
 # DynamicLibraries. When TweakInject is a real directory, copy the in-app side
-# there. Write the filter as XML text so ElleKit can parse it.
+# there. The filter is XML and matches the Messenger bundle only. An extra
+# Executables entry is AND-ed by ElleKit and was skipping the dylib when the
+# process name was not exactly "Messenger".
 #
 # On this device DynamicLibraries has repeatedly lost DynamicStageApp.dylib
 # even though the .deb contains it. A second copy lives under Application
@@ -29,16 +31,24 @@ done
 LIBS="/var/jb/Library/MobileSubstrate/DynamicLibraries"
 INJECT="/var/jb/usr/lib/TweakInject"
 PAYLOAD="/var/jb/Library/Application Support/DynamicStage"
-PLIST_BODY='{
-    Filter = {
-        Bundles = ( "com.facebook.Messenger" );
-        Executables = ( "Messenger" );
-    };
-}
-'
+rm -f /var/tmp/com.recreated.dynamicstage.ctor /var/tmp/com.recreated.dynamicstage.mapped
 write_plist() {
 	dest="$1"
-	printf '%s\n' "$PLIST_BODY" > "$dest" || true
+	cat > "$dest" <<'EOF' || true
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Filter</key>
+	<dict>
+		<key>Bundles</key>
+		<array>
+			<string>com.facebook.Messenger</string>
+		</array>
+	</dict>
+</dict>
+</plist>
+EOF
 }
 
 mkdir -p "$LIBS" || true

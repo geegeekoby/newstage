@@ -316,6 +316,7 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     NSInteger _presentGeneration;
     NSMutableSet<NSNumber *> *_loadedAppHashes;
     NSMutableSet<NSNumber *> *_listeningAppHashes;
+    NSMutableSet<NSNumber *> *_remoteKeyboardHashes;
     // Messenger is drawing keys in SpringBoard's window, so the card may lift
     // without dragging those keys. Until that window exists the card stays put.
     BOOL _keyboardDrawnOutside;
@@ -339,6 +340,7 @@ static BOOL sSystemEdgePullAvailable;
         _stagedKeyboardSlot = -1;
         _loadedAppHashes = [NSMutableSet set];
         _listeningAppHashes = [NSMutableSet set];
+        _remoteKeyboardHashes = [NSMutableSet set];
     }
     return self;
 }
@@ -643,42 +645,101 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
     if (_searchSlot >= 0) return;
-    static NSString *loggedBundle = nil;
+    static NSString *loggedInside = nil;
+    static NSString *loggedRaised = nil;
+    static NSString *loggedMiss = nil;
+    static NSInteger hostedKeyboardGeneration = 0;
+    hostedKeyboardGeneration++;
+    NSInteger generation = hostedKeyboardGeneration;
     if (!onScreen) {
-        if ([loggedBundle isEqualToString:source]) loggedBundle = nil;
+        if ([loggedInside isEqualToString:source]) loggedInside = nil;
+        if ([loggedRaised isEqualToString:source]) loggedRaised = nil;
+        if ([loggedMiss isEqualToString:source]) loggedMiss = nil;
         _keyboardDrawnOutside = NO;
         DSReleaseStagedKeyboardHost();
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
         return;
     }
-    CGRect keys = [self keyboardFrameForLift:[self keyboardFrameOnDisplay:frame]];
-    if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) {
-        CGRect screen = [self screenBounds];
-        keys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
+    BOOL remote = [self hostedAppReportedRemoteKeyboard:source];
+    CGRect display = [self keyboardFrameOnDisplay:frame];
+    CGRect keys = display;
+    if (remote) {
+        keys = [self keyboardFrameForLift:display];
+        if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) {
+            CGRect screen = [self screenBounds];
+            keys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
+        }
+    }
+    // A UITextEffectsWindow that already lives in SpringBoard is not Messenger's
+    // keyboard. Raising it and lifting the card just moves the in-scene keys.
+    if (!remote) {
+        _keyboardDrawnOutside = NO;
+        if (![loggedInside isEqualToString:source]) {
+            loggedInside = [source copy];
+            BOOL dylib = [self hostedAppHasStageDylib:source];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard is still inside the app scene (%@) reported %@ %@",
+                                      source,
+                                      dylib ? @"dylib running, remote not reported" : @"dylib never started",
+                                      NSStringFromCGRect(frame),
+                                      DSKeyboardWindowCensus());
+            DSLogStagedAppInjection(@"filter checked because the keyboard stayed in the app");
+        }
+        if (!CGRectIsEmpty(keys)) {
+            [self noteKeyboardFrame:keys source:source duration:0.25];
+        }
+        __weak __typeof(self) weakSelf = self;
+        NSString *bundle = [source copy];
+        CGRect retryFrame = frame;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || generation != hostedKeyboardGeneration) return;
+            if (![strongSelf isHostingBundleIdentifier:bundle]) return;
+            if (![strongSelf hostedAppReportedRemoteKeyboard:bundle]) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: %@ still has no remote keyboard %@",
+                                          bundle, DSKeyboardWindowCensus());
+                return;
+            }
+            [strongSelf noteHostedAppKeyboard:YES frame:retryFrame source:bundle];
+        });
+        return;
     }
     _keyboardDrawnOutside = DSRevealSpringBoardKeyboard();
-    if (![loggedBundle isEqualToString:source]) {
-        loggedBundle = [source copy];
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keeps the message field, keyboard %@ (reported %@) outside=%d %@",
-                                  source, NSStringFromCGRect(keys), NSStringFromCGRect(frame),
-                                  _keyboardDrawnOutside, DSPresentedKeyboardWindowStatus());
+    if (_keyboardDrawnOutside) {
+        if (![loggedRaised isEqualToString:source]) {
+            loggedRaised = [source copy];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ reported remote, %@",
+                                      source, DSPresentedKeyboardWindowStatus());
+        }
+        [self noteKeyboardFrame:keys source:source duration:0.25];
+        return;
+    }
+    if (![loggedMiss isEqualToString:source]) {
+        loggedMiss = [source copy];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ reported remote but SpringBoard has no key window yet %@",
+                                  source, DSKeyboardWindowCensus());
     }
     [self noteKeyboardFrame:keys source:source duration:0.25];
-    if (_keyboardDrawnOutside) return;
     __weak __typeof(self) weakSelf = self;
     NSString *bundle = [source copy];
+    CGRect retryKeys = keys;
     for (NSNumber *delay in @[ @0.12, @0.35, @0.7 ]) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
             __strong __typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf || ![strongSelf isHostingBundleIdentifier:bundle]) return;
+            if (!strongSelf || generation != hostedKeyboardGeneration) return;
+            if (![strongSelf isHostingBundleIdentifier:bundle]) return;
+            if (strongSelf->_keyboardDrawnOutside) return;
+            if (![strongSelf hostedAppReportedRemoteKeyboard:bundle]) return;
             if (!DSRevealSpringBoardKeyboard()) {
-                DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard is still drawn in the app scene (%@)",
-                                          bundle, DSPresentedKeyboardWindowStatus());
+                DSDiagnosticsRecordFormat(@"SpringBoard: %@ remote keyboard still missing %@",
+                                          bundle, DSKeyboardWindowCensus());
                 return;
             }
             strongSelf->_keyboardDrawnOutside = YES;
-            [strongSelf noteKeyboardFrame:keys source:bundle duration:0.2];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ remote keyboard is in SpringBoard's window, %@",
+                                      bundle, DSPresentedKeyboardWindowStatus());
+            [strongSelf noteKeyboardFrame:retryKeys source:bundle duration:0.2];
         });
     }
 }
@@ -2812,17 +2873,27 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     [self refreshKeyboardDebugLabel];
 }
 
-- (void)noteAppDylibSignal:(uint32_t)hash listening:(BOOL)listening loaded:(BOOL)loaded {
+- (void)noteAppDylibSignal:(uint32_t)hash listening:(BOOL)listening loaded:(BOOL)loaded remote:(BOOL)remote {
     if (hash == 0) return;
     NSNumber *key = @(hash);
     if (loaded) [_loadedAppHashes addObject:key];
     if (listening) [_listeningAppHashes addObject:key];
+    if (remote) [_remoteKeyboardHashes addObject:key];
+    if (!remote || _keyboardDrawnOutside || CGRectIsEmpty(_keyboardFrame)) return;
+    NSString *bundle = [self bundleForKeyboardHash:hash];
+    if (![self isHostingBundleIdentifier:bundle]) return;
+    [self noteHostedAppKeyboard:YES frame:_keyboardFrame source:bundle];
 }
 
 - (BOOL)hostedAppHasStageDylib:(NSString *)bundle {
     if (bundle.length == 0) return NO;
     NSNumber *key = @(DSIdentifierHash(bundle));
     return [_listeningAppHashes containsObject:key] || [_loadedAppHashes containsObject:key];
+}
+
+- (BOOL)hostedAppReportedRemoteKeyboard:(NSString *)bundle {
+    if (bundle.length == 0) return NO;
+    return [_remoteKeyboardHashes containsObject:@(DSIdentifierHash(bundle))];
 }
 
 - (void)noteKeyboardDebugFromSpringBoard:(NSString *)line {

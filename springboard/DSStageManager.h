@@ -47,8 +47,9 @@
 - (void)noteKeyboardDebugFromApp:(NSString *)line;
 - (void)noteKeyboardDebugFromSpringBoard:(NSString *)line;
 - (void)noteStagedKeyResult:(NSString *)line;
-- (void)noteAppDylibSignal:(uint32_t)hash listening:(BOOL)listening loaded:(BOOL)loaded;
+- (void)noteAppDylibSignal:(uint32_t)hash listening:(BOOL)listening loaded:(BOOL)loaded remote:(BOOL)remote;
 - (BOOL)hostedAppHasStageDylib:(NSString *)bundle;
+- (BOOL)hostedAppReportedRemoteKeyboard:(NSString *)bundle;
 // True while a picker search field is editing. The arbiter must not retarget
 // that keyboard to a staged app.
 - (BOOL)isPickerSearchActive;

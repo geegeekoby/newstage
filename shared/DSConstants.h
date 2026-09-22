@@ -42,8 +42,12 @@
 // the line that shows up in the preferences log.
 // Low 32 bits: bundle hash. Bit 32 changed, 33 had a field, 34 first
 // responder, 35 window, 36 delete, 37 the process was not staged,
-// 38 the process is listening for keys, 39 the in-app dylib loaded.
+// 38 the process is listening for keys, 39 the in-app constructor ran.
 // Bits 40-47: 0 none, 1 field, 2 text view, 3 other.
+// Bit 48: UIKit was told the keyboard is remote. Bit 49: the dylib image
+// mapped. Bit 50: isUsingRemoteKeyboard ran while the app was not staged.
+// Bits 56-59: constructor reason (0 ok, 1 kill, 2 bundle, 3 excluded,
+// 4 not a user app, 5 prefs off, 6 exception).
 #define kDSKeyboardApplyNotification "com.recreated.dynamicstage.keyboard.apply"
 
 // Rotating the app on the stage without rotating the device. Suffixed with

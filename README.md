@@ -128,10 +128,11 @@ Or open the `.deb` with Filza on the device and install it there.
 ## The Sileo repo
 
 `public/` is a flat APT repository — the same shape as any tweak repo you would add in
-Sileo — and it is deployable as-is. Deploying this project publishes it; the repo URL is
-then just the deployment's root URL, which you add under Sileo › Sources › **+**. The
-landing page at that URL shows the URL, an **Add to Sileo** button and a direct `.deb`
-download.
+Sileo — and it is deployable as-is. Publish this project once. The deployment's root URL
+is the repo, and it does not change when a new version is built. Add it once under
+Sileo › Sources › **+**. Later versions show up on that same source after you refresh it.
+The landing page at that URL shows the URL, an **Add to Sileo** button and a direct `.deb`
+download. A temporary tunnel address expires and should not be added as another source.
 
 What it serves:
 

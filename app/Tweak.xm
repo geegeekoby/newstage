@@ -12,10 +12,11 @@
 // on the stage, every route UIKit offers for "how big is the screen" answers
 // with the stage rectangle and the interface stays pinned to portrait.
 //
-// The keyboard is SpringBoard's remote keyboard: this process keeps the
-// message field as the editor, banishes its own key chrome inside the card,
-// and SpringBoard draws the keys outside. The picker search keyboard is a
-// different path and is left alone.
+// The message field stays the editor. Forcing UIKit's remote keyboard on
+// this phone took SpringBoard to safe mode, so this process draws its own
+// keys. SpringBoard opens the bottom of the card so those keys sit in the
+// system keyboard band rather than inside the rounded chrome. The picker
+// search keyboard is a different path and is left alone.
 //
 // Nothing below is hooked until the app is actually put on the stage.
 
@@ -629,11 +630,6 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
     if (DSStaged()) [[DSStageContext sharedContext] refresh];
 }
 
-- (void)didAddSubview:(UIView *)subview {
-    %orig;
-    if (DSStaged()) DSBanishLocalKeyboard();
-}
-
 %end
 
 #pragma mark - Orientation
@@ -852,29 +848,8 @@ static void DSReportKeyboardDebug(NSString *windowNames) {
 }
 
 static void DSBanishLocalKeyboard(void) {
-    if (!DSStaged() || DSBanishing) return;
-    DSBanishing = YES;
-    DSBanishHits = 0;
-    DSBanishFoundChrome = NO;
-    NSMutableArray *names = [NSMutableArray array];
-    @try {
-        DSVisitLiveWindows(^(UIWindow *window) {
-            NSString *name = NSStringFromClass(object_getClass(window));
-            if (names.count < 8 && name.length) [names addObject:name];
-            BOOL chrome = DSWindowIsKeyboardChrome(window);
-            if (chrome) DSBanishFoundChrome = YES;
-            if (chrome && [name rangeOfString:@"RemoteKeyboard"].location != NSNotFound) {
-                DSSuppressKeyboardView(window);
-                return;
-            }
-            CGRect bounds = window.bounds;
-            DSBanishKeyboardInView(window, bounds, chrome, 0);
-            if (chrome) DSBanishKeyboardLayers(window.layer, bounds);
-        });
-    } @catch (NSException *exception) {
-    }
-    DSBanishing = NO;
-    DSReportKeyboardDebug([names componentsJoinedByString:@","]);
+    // Left as a no-op. Hiding this process's keyboard while also claiming
+    // the remote keyboard is what took the device to safe mode.
 }
 
 static void DSInstallKeyboardBanishObserver(void) {
@@ -904,15 +879,11 @@ static void DSInstallKeyboardBanishObserver(void) {
 %hook UIView
 
 - (void)setHidden:(BOOL)hidden {
-    if (DSStaged() && DSNameIsLocalKeyboard(NSStringFromClass(object_getClass(self)))) hidden = YES;
     %orig;
 }
 
 - (void)didMoveToWindow {
     %orig;
-    if (DSStaged() && DSNameIsLocalKeyboard(NSStringFromClass(object_getClass(self)))) {
-        DSSuppressKeyboardView(self);
-    }
 }
 
 - (void)willMoveToWindow:(UIWindow *)newWindow {
@@ -926,55 +897,29 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 - (void)layoutSubviews {
     %orig;
-    if (DSStaged()) DSBanishLocalKeyboard();
 }
 
 - (void)setFrame:(CGRect)frame {
     %orig;
-    if (DSStaged()) DSBanishLocalKeyboard();
 }
 
 - (void)didAddSubview:(UIView *)subview {
     %orig;
-    if (DSStaged()) DSBanishLocalKeyboard();
 }
 
 %end
 
 %hook UIKeyboardImpl
 
-// SpringBoard draws the keys outside the card. This process keeps the message
-// field as the editor so the letters land where they were tapped.
-+ (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return YES;
-    return %orig;
-}
-
-- (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return YES;
-    return %orig;
-}
+// Do not claim the remote keyboard. On this iPhone that path crashed
+// KeyboardArbiter and put the device in safe mode.
 
 - (void)showKeyboard {
-    if (DSStaged()) {
-        DSBanishLocalKeyboard();
-        DSReportRemoteKeyboard();
-        %orig;
-        DSBanishLocalKeyboard();
-        return;
-    }
     %orig;
 }
 
 - (void)hideKeyboard {
-    if (DSStaged()) {
-        DSBanishLocalKeyboard();
-        // A local hide while the message box is still the editor resigns it.
-        // The remote keyboard hides when the field itself resigns.
-        if (DSComposerHeld && !DSAllowKeyboardHide) return;
-        %orig;
-        return;
-    }
+    if (DSStaged() && DSComposerHeld && !DSAllowKeyboardHide) return;
     %orig;
 }
 
@@ -1157,7 +1102,6 @@ static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         %init(_ungrouped);
-        DSInstallKeyboardBanishObserver();
         // The stage signal arrives through notify_register_dispatch. A Darwin
         // center observer in this process did not. The letters were recorded
         // in SpringBoard and this process never woke up for them.
@@ -1183,6 +1127,7 @@ static void DSStartObserving(void) {
         @try {
             if (DSKillSwitchPresent()) return;
             NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+            if (![identifier isEqualToString:@"com.facebook.Messenger"]) return;
             if (DSIdentifierIsExcludedFromStage(identifier)) return;
             if (!DSBundleLooksLikeUserApplication()) return;
             if (![DSPreferences sharedPreferences].enabled) return;

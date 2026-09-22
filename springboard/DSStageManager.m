@@ -1024,19 +1024,27 @@ static BOOL sSystemEdgePullAvailable;
         keyboard = [self keyboardFrameForLift:keyboard];
     }
 
+    BOOL hostedAppKeys = (_sceneHost.isHosting && [source isEqualToString:_sceneHost.bundleIdentifier]) ||
+                         (_topSceneHost.isHosting && [source isEqualToString:_topSceneHost.bundleIdentifier]);
+    BOOL openBand = hostedAppKeys && liftSlot == 0 && !CGRectIsEmpty(keyboard);
+
     BOOL unchanged = CGRectEqualToRect(keyboard, _keyboardFrame);
     if (unchanged) {
-        // The frame did not move but something else cleared the lift underneath it -
-        // the overlay open path calling preparePickerForSearchKeyboard after the first
-        // keyboardWillShow is the usual case.
         if (CGRectIsEmpty(keyboard)) return;
-        DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-        CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
-        CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
-        CGFloat wanted = MAX(overlap, 0.0);
-        NSInteger otherSlot = _keyboardLiftSlot == 0 ? 1 : 0;
-        BOOL otherDown = _stackSlotCount < kDSMaxStackSlots || [self liftOffsetForSlot:otherSlot] < 0.5;
-        if (fabs([self liftOffsetForSlot:_keyboardLiftSlot] - wanted) < 0.5 && otherDown) return;
+        if (openBand) {
+            if (fabs(liftCard.keyboardBandHeight - CGRectGetHeight(keyboard)) < 0.5 &&
+                liftCard.liftOffset < 0.5) {
+                return;
+            }
+        } else {
+            DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+            CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
+            CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
+            CGFloat wanted = MAX(overlap, 0.0);
+            NSInteger otherSlot = _keyboardLiftSlot == 0 ? 1 : 0;
+            BOOL otherDown = _stackSlotCount < kDSMaxStackSlots || [self liftOffsetForSlot:otherSlot] < 0.5;
+            if (fabs([self liftOffsetForSlot:_keyboardLiftSlot] - wanted) < 0.5 && otherDown) return;
+        }
     } else {
         _keyboardFrame = keyboard;
     }
@@ -1057,6 +1065,20 @@ static BOOL sSystemEdgePullAvailable;
                                   source, _sceneHost.bundleIdentifier);
     }
 
+    if (openBand) {
+        // The app draws keys at the bottom of the unlifted card, which is
+        // already the system keyboard band. Lifting would drag those keys up
+        // inside the chrome and leave a hole at the bottom of the display.
+        liftCard.keyboardBandHeight = CGRectGetHeight(keyboard);
+        if (_topContainer && _topContainer != liftCard) _topContainer.keyboardBandHeight = 0.0;
+        [self liftCardBy:0.0 slot:liftSlot duration:duration];
+        DSDiagnosticsRecordFormat(@"SpringBoard: opened the bottom of slot %ld so the keys sit outside the card",
+                                  (long)liftSlot);
+        return;
+    }
+
+    _container.keyboardBandHeight = 0.0;
+    if (_topContainer) _topContainer.keyboardBandHeight = 0.0;
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
     CGFloat overlap = CGRectIsEmpty(keyboard) ? 0.0
@@ -1273,7 +1295,11 @@ static BOOL sSystemEdgePullAvailable;
     _keyboardFrame = CGRectZero;
     _keyboardLiftSlot = 0;
     [_container setLiftOffset:0.0];
-    if (_topContainer) [_topContainer setLiftOffset:0.0];
+    _container.keyboardBandHeight = 0.0;
+    if (_topContainer) {
+        [_topContainer setLiftOffset:0.0];
+        _topContainer.keyboardBandHeight = 0.0;
+    }
     _notedStrayKeyboard = NO;
     _container.passThroughToHost = NO;
     [_container setClipsContents:YES];

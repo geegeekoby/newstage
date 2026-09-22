@@ -5,27 +5,19 @@
 extern "C" {
 #endif
 
-// Walks every on-screen UIWindow (window scenes first, then UIApplication.windows)
-// and returns the frame of a visible UIKeyboard in screen coordinates, or
-// CGRectNull when none is on the display.
+// Walks SpringBoard's own windows and returns the frame of a visible
+// UIKeyboard, or CGRectNull when none is on the display. Does not unhide
+// windows or call private selectors on unrelated ones.
 CGRect DSVisibleKeyboardFrameOnScreen(void);
 
-// Unhides SpringBoard's own keyboard window when it actually contains keys, and
-// lifts it just above the stage (status-bar level, never alert). Returns YES
-// when a keyboard is on the display.
+// Reports whether a keyboard is already visible. Does not create, unhide,
+// restack, or bind keyboard windows.
 BOOL DSRevealSpringBoardKeyboard(void);
 
-// Older builds bound the arbiter scene into a newly created
-// UIRemoteKeyboardWindow (create:YES). That produced an empty full-screen
-// window (bind=0) and left the keys inside the card. Pass nil to mark the
-// keyboard hidden; a non-nil layer is ignored.
+// No-ops kept for existing callers. Creating or binding a remote keyboard
+// window crashed SpringBoard on this phone.
 void DSPresentArbiterKeyboardLayer(id sceneLayer);
-
-// Reveals an existing SpringBoard keyboard that already contains keys and
-// lifts it above the stage. Never creates an empty remote keyboard window.
 BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer);
-
-// Marks the presented keyboard as hidden. Does not create windows.
 void DSHidePresentedArbiterKeyboard(void);
 
 // Hands the keyboard UI host back after a staged session so Spotlight and

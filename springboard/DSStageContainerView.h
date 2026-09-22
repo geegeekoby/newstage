@@ -28,6 +28,10 @@
 // drawn above the card, so it does not need to spill out of this view.
 - (void)setClipsContents:(BOOL)clips;
 
+// When a staged app's own keyboard is up, the bottom of the card is opened
+// so those keys sit in the system keyboard band instead of inside the chrome.
+@property (nonatomic, assign) CGFloat keyboardBandHeight;
+
 // Top strip that drags the whole card.
 - (CGRect)dragAffordanceRect;
 // The bottom-right corner, and a strip up the right-hand edge well clear of the home

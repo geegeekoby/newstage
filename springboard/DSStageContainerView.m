@@ -1,5 +1,6 @@
 #import "DSStageContainerView.h"
 #import "DSConstants.h"
+#import <QuartzCore/QuartzCore.h>
 
 static const CGFloat kDSDragAffordanceHeight = 36.0;
 
@@ -17,6 +18,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIView *_edgeGrip;
     UIButton *_stackAddButton;
     UIButton *_minimizeButton;
+    CAShapeLayer *_contentMask;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -127,10 +129,35 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    _backdrop.frame = self.bounds;
-    _contentView.frame = self.bounds;
-
     CGRect bounds = self.bounds;
+    CGFloat band = MIN(MAX(_keyboardBandHeight, 0.0), CGRectGetHeight(bounds));
+    CGFloat appHeight = CGRectGetHeight(bounds) - band;
+    if (band > 1.0) {
+        _backdrop.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
+        self.clipsToBounds = NO;
+        _contentView.clipsToBounds = YES;
+        if (!_contentMask) {
+            _contentMask = [CAShapeLayer layer];
+            _contentView.layer.mask = _contentMask;
+        }
+        UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:bounds
+                                                   byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight)
+                                                         cornerRadii:CGSizeMake(_cornerRadius, _cornerRadius)];
+        _contentMask.frame = bounds;
+        _contentMask.path = path.CGPath;
+        self.layer.cornerRadius = 0.0;
+    } else {
+        _backdrop.frame = bounds;
+        self.clipsToBounds = YES;
+        _contentView.clipsToBounds = YES;
+        if (_contentMask) {
+            _contentView.layer.mask = nil;
+            _contentMask = nil;
+        }
+        self.layer.cornerRadius = _cornerRadius;
+    }
+    _contentView.frame = bounds;
+
     _grabber.frame = CGRectMake((CGRectGetWidth(bounds) - kDSGrabberWidth) / 2.0,
                                 0.0,
                                 kDSGrabberWidth,
@@ -204,8 +231,12 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 }
 
 - (void)updateShadow {
-    _shadowView.frame = self.frame;
-    _shadowView.layer.cornerRadius = self.layer.cornerRadius;
+    CGRect frame = self.frame;
+    if (_keyboardBandHeight > 1.0) {
+        frame.size.height = MAX(CGRectGetHeight(frame) - _keyboardBandHeight, 0.0);
+    }
+    _shadowView.frame = frame;
+    _shadowView.layer.cornerRadius = _cornerRadius;
     _shadowView.alpha = self.alpha;
 }
 
@@ -244,8 +275,22 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 }
 
 - (void)setClipsContents:(BOOL)clips {
+    if (_keyboardBandHeight > 1.0) {
+        self.clipsToBounds = NO;
+        _contentView.clipsToBounds = YES;
+        return;
+    }
     self.clipsToBounds = clips;
     _contentView.clipsToBounds = clips;
+}
+
+- (void)setKeyboardBandHeight:(CGFloat)keyboardBandHeight {
+    CGFloat height = MAX(keyboardBandHeight, 0.0);
+    if (fabs(_keyboardBandHeight - height) < 0.5) return;
+    _keyboardBandHeight = height;
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
+    [self updateShadow];
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {

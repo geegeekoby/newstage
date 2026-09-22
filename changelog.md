@@ -1,3 +1,6 @@
+**4.5.39**
+- The phone went to safe mode after staging an app because Messenger was forced onto UIKit's remote keyboard and SpringBoard stole the keyboard UI host. That path is off. SpringBoard no longer overwrites TweakInject (the failed copy was deleting the filter). A staged app draws its own keys; the bottom of the card opens so those keys sit in the system keyboard band instead of inside the rounded chrome. Picker search still lifts the card over SpringBoard's own keyboard
+
 **4.5.38**
 - The keys were still inside the card because DynamicStageApp.dylib was missing on the device (`libs=0`), so Messenger never banished its own keyboard, and SpringBoard created an empty full-screen remote keyboard window (`bind=0`) that covered nothing useful. The package now embeds that dylib under Application Support and restores it into DynamicLibraries and TweakInject on install and on boot, then restarts Messenger. Empty remote windows are no longer created; only a real keyboard with keys is raised above the stage
 

@@ -4,9 +4,11 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-static BOOL DSWindowRespondsYes(id object, SEL selector) {
-    if (![object respondsToSelector:selector]) return NO;
-    return ((BOOL (*)(id, SEL))objc_msgSend)(object, selector);
+static BOOL DSClassNameLooksLikeKeyboard(NSString *name) {
+    if (name.length == 0) return NO;
+    if ([name rangeOfString:@"Keyboard"].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"TextEffects"].location != NSNotFound) return YES;
+    return NO;
 }
 
 static CGRect DSKeyboardViewFrameInView(UIView *view) {
@@ -25,31 +27,25 @@ static CGRect DSKeyboardViewFrameInView(UIView *view) {
     return CGRectNull;
 }
 
-static BOOL DSWindowMightContainKeyboard(UIWindow *window) {
-    NSString *name = NSStringFromClass(window.class);
-    if ([name rangeOfString:@"Keyboard"].location != NSNotFound) return YES;
-    if ([name rangeOfString:@"TextEffects"].location != NSNotFound) return YES;
-    if (DSWindowRespondsYes(window, @selector(_isTextEffectsWindow))) return YES;
-    if (DSWindowRespondsYes(window, @selector(_isRemoteKeyboardWindow))) return YES;
-    return NO;
-}
-
 static void DSVisitApplicationWindows(void (^visitor)(UIWindow *window)) {
     NSMutableSet *seen = [NSMutableSet set];
+    NSArray *appWindows = [UIApplication.sharedApplication.windows copy];
+    for (UIWindow *window in appWindows) {
+        if (!window || [seen containsObject:window]) continue;
+        [seen addObject:window];
+        visitor(window);
+    }
     if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        NSArray *scenes = [UIApplication.sharedApplication.connectedScenes.allObjects copy];
+        for (UIScene *scene in scenes) {
             if (![scene isKindOfClass:UIWindowScene.class]) continue;
-            for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            NSArray *windows = [((UIWindowScene *)scene).windows copy];
+            for (UIWindow *window in windows) {
                 if (!window || [seen containsObject:window]) continue;
                 [seen addObject:window];
                 visitor(window);
             }
         }
-    }
-    for (UIWindow *window in UIApplication.sharedApplication.windows) {
-        if (!window || [seen containsObject:window]) continue;
-        [seen addObject:window];
-        visitor(window);
     }
 }
 
@@ -66,16 +62,7 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
     DSVisitApplicationWindows(^(UIWindow *candidate) {
         if (!CGRectIsNull(keyboard)) return;
         if (candidate.hidden || candidate.alpha < 0.01) return;
-        if (!DSWindowMightContainKeyboard(candidate)) return;
-        CGRect keys = DSKeyboardViewFrameInView(candidate);
-        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
-        keyboard = keys;
-    });
-    if (!CGRectIsNull(keyboard)) return keyboard;
-
-    DSVisitApplicationWindows(^(UIWindow *candidate) {
-        if (!CGRectIsNull(keyboard)) return;
-        if (candidate.hidden || candidate.alpha < 0.01) return;
+        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(candidate.class))) return;
         CGRect keys = DSKeyboardViewFrameInView(candidate);
         if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
         keyboard = keys;
@@ -85,65 +72,22 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
 
 static NSString *DSClaimedKeyboardStatus = @"win=none";
 
-// The stage sits at StatusBar - 1. Put a real keyboard window just above that.
-// Never alert level. Never create an empty full-screen remote keyboard window.
-static void DSRaiseKeyboardWindowAboveStage(UIWindow *window) {
-    window.backgroundColor = UIColor.clearColor;
-    window.opaque = NO;
-    window.alpha = 1.0;
-    window.hidden = NO;
-    if (window.windowLevel < UIWindowLevelStatusBar) {
-        window.windowLevel = UIWindowLevelStatusBar;
-    }
-}
-
 BOOL DSRevealSpringBoardKeyboard(void) {
-    CGRect screen = UIScreen.mainScreen.bounds;
-    __block BOOL revealed = NO;
-    __block CGRect shown = CGRectNull;
-    __block CGFloat level = 0;
-    DSVisitApplicationWindows(^(UIWindow *window) {
-        if (revealed) return;
-        if (!DSWindowMightContainKeyboard(window)) return;
-        BOOL wasHidden = window.hidden;
-        CGFloat wasAlpha = window.alpha;
-        if (wasHidden) window.hidden = NO;
-        if (window.alpha < 0.01) window.alpha = 1.0;
-        CGRect keys = DSKeyboardViewFrameInView(window);
-        // An empty remote keyboard window is full-screen with no UIKeyboard
-        // inside it. Leave those alone - they cover the wallpaper and do not
-        // draw keys outside the card.
-        if (!DSKeyboardFrameIsOnScreen(keys, screen)) {
-            window.hidden = wasHidden;
-            window.alpha = wasAlpha;
-            return;
-        }
-        if (CGRectGetHeight(window.frame) >= CGRectGetHeight(screen) - 1.0 &&
-            CGRectGetWidth(window.frame) >= CGRectGetWidth(screen) - 1.0 &&
-            CGRectGetHeight(keys) < CGRectGetHeight(screen) * 0.55) {
-            // Keep the window's size. Stretching it was already rejected.
-        }
-        DSRaiseKeyboardWindowAboveStage(window);
-        revealed = YES;
-        shown = keys;
-        level = window.windowLevel;
-    });
-    if (revealed) {
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=shown lvl=%.0f keys=%@",
-                                   level, NSStringFromCGRect(shown)];
+    // Never unhide, create, or restack keyboard windows. That empty remote
+    // window covered the wallpaper, and touching KeyboardArbiter's windows
+    // took the phone to safe mode.
+    CGRect keys = DSVisibleKeyboardFrameOnScreen();
+    if (DSKeyboardFrameIsOnScreen(keys, UIScreen.mainScreen.bounds)) {
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=visible keys=%@",
+                                   NSStringFromCGRect(keys)];
         return YES;
     }
     DSClaimedKeyboardStatus = @"win=none";
     return NO;
 }
 
-// Kept for callers that used to bind a scene layer. Creating an empty
-// UIRemoteKeyboardWindow produced a full-screen bind=0 window and put the keys
-// back inside the card. These now only hide / no-op.
 void DSPresentArbiterKeyboardLayer(id sceneLayer) {
-    if (!sceneLayer) {
-        DSClaimedKeyboardStatus = @"win=hidden";
-    }
+    if (!sceneLayer) DSClaimedKeyboardStatus = @"win=hidden";
 }
 
 void DSHidePresentedArbiterKeyboard(void) {

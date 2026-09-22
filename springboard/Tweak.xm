@@ -11,7 +11,6 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
-#import <spawn.h>
 #import <unistd.h>
 
 // Load order, after a reboot that then has to be jailbroken:
@@ -29,9 +28,10 @@
 //
 // Keyboard policy for iOS 16.5.1 on an iPhone: never steal a layer, never
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
-// KeyboardArbiter, never point the focus coordinator at a scene. The picker
-// uses SpringBoard's own keyboard. A staged app is not allowed to draw keys;
-// SpringBoard's client is forced to be the keyboard UI host.
+// KeyboardArbiter, never point the focus coordinator at a scene, never assign
+// the keyboard UI host, never create a remote keyboard window. The picker
+// uses SpringBoard's own keyboard. A staged app draws its own keys; the card
+// opens at the bottom so those keys sit in the system keyboard band.
 
 #pragma mark - Calling out of a hook
 
@@ -335,10 +335,9 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
-// SpringBoard draws the keys for a staged app. The app keeps the text field.
-// Search still owns its own keyboard. The remote keyboard window is lifted to
-// status-bar level only - never alert - so it clears the card without covering
-// the wallpaper.
+// Search still owns its own keyboard. A staged app draws its own keys; this
+// hook only records what the arbiter said. Assigning the keyboard UI host
+// and creating a remote window is what took the phone to safe mode.
 
 static NSInteger DSHostAssignAttempts = 0;
 static BOOL DSArbiterBusy = NO;
@@ -395,12 +394,6 @@ static BOOL DSBundleIsStaged(NSString *bundle) {
     });
 }
 
-static BOOL DSPickerSearchOwnsKeyboard(void) {
-    return DSAsk(^BOOL(DSStageManager *manager) {
-        return [manager isPickerSearchActive];
-    });
-}
-
 static void DSSetKeyboardUIHandle(id arbiter, id handle) {
     SEL setHandler = @selector(setKeyboardUIHandler:);
     SEL setHandle = @selector(setKeyboardUIHandle:);
@@ -443,40 +436,15 @@ void DSReleaseStagedKeyboardHost(void) {
     if (arbiter) DSSetKeyboardUIHandle(arbiter, restore);
 }
 
-// SpringBoard draws the keys. The staged app keeps the text field. Search is
-// left alone.
-static NSString *DSAssignSpringBoardKeyboardHost(id arbiter) {
-    id current = DSKeyboardUIHandle(arbiter);
-    NSString *before = DSHandlerBundle(current) ?: @"none";
-    if ([before isEqualToString:@"com.apple.springboard"]) {
-        DSWeOwnKeyboardHost = YES;
-        return [NSString stringWithFormat:@"keyboard ui host is already %@", before];
-    }
-    id springBoard = DSSpringBoardKeyboardHandler(arbiter);
-    if (!springBoard) {
-        return @"SpringBoard has no keyboard client, so the keys stay in the app";
-    }
-    if (!DSWeOwnKeyboardHost) {
-        DSSavedKeyboardUIHandle = current;
-        DSWeOwnKeyboardHost = YES;
-    }
-    DSSetKeyboardUIHandle(arbiter, springBoard);
-    NSString *after = DSHandlerBundle(DSKeyboardUIHandle(arbiter)) ?: @"none";
-    return [NSString stringWithFormat:@"keyboard ui host %@ -> %@", before, after];
-}
-
 static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onScreen) {
     BOOL staged = DSBundleIsStaged(source);
     id springBoard = DSSpringBoardKeyboardHandler(arbiter);
     id uiHandle = DSKeyboardUIHandle(arbiter);
     NSString *uiBundle = DSHandlerBundle(uiHandle) ?: @"none";
     BOOL layer = DSArbiterSceneLayer(arbiter) != nil;
-    NSString *verdict = @"app is still the keyboard host";
+    NSString *verdict = @"hosted app is drawing its own keyboard";
     if (!onScreen) verdict = @"keyboard is down";
     else if (!staged) verdict = @"this keyboard is not from a staged app";
-    else if (!springBoard) verdict = @"SpringBoard has no keyboard client, so it cannot draw keys";
-    else if ([uiBundle isEqualToString:@"com.apple.springboard"] && layer) verdict = @"SpringBoard draws the keys outside the card";
-    else if ([uiBundle isEqualToString:@"com.apple.springboard"]) verdict = @"SpringBoard is host but has no keyboard scene";
     return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d",
             verdict, source ?: @"?", onScreen, staged, springBoard != nil, uiBundle, layer];
 }
@@ -513,20 +481,8 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     %orig;
 
     NSString *hostNote = nil;
-    id sceneLayer = nil;
-    BOOL showOutside = NO;
     BOOL releaseHost = NO;
-    if (onScreen && DSStageReady() && DSBundleIsStaged(source) && !DSPickerSearchOwnsKeyboard()) {
-        if (DSHostAssignAttempts < 4) {
-            NSString *current = DSHandlerBundle(DSKeyboardUIHandle(self)) ?: @"none";
-            if (![current isEqualToString:@"com.apple.springboard"]) {
-                DSHostAssignAttempts++;
-            }
-            hostNote = DSAssignSpringBoardKeyboardHost(self);
-        }
-        sceneLayer = DSArbiterSceneLayer(self);
-        showOutside = YES;
-    } else if (!onScreen && (DSBundleIsStaged(source) || DSWeOwnKeyboardHost)) {
+    if (!onScreen && (DSBundleIsStaged(source) || DSWeOwnKeyboardHost)) {
         releaseHost = YES;
         DSHostAssignAttempts = 0;
     } else if (!onScreen) {
@@ -540,22 +496,13 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     }
     DSArbiterBusy = NO;
 
-    if (hostNote.length || summary.length || showOutside || releaseHost) {
+    if (hostNote.length || summary.length || releaseHost) {
         NSString *hostCopy = [hostNote copy];
         NSString *summaryCopy = [summary copy];
-        id layerCopy = sceneLayer;
-        BOOL show = showOutside;
         BOOL release = releaseHost;
         dispatch_async(dispatch_get_main_queue(), ^{
             if (release) {
                 DSReleaseStagedKeyboardHost();
-            } else if (show && !DSPickerSearchOwnsKeyboard()) {
-                BOOL shown = DSShowArbiterKeyboardAboveStage(layerCopy);
-                DSTell(^(DSStageManager *manager) {
-                    [manager noteKeyboardDebugFromSpringBoard:
-                     [NSString stringWithFormat:@"outside keys show=%d %@",
-                      shown, DSPresentedKeyboardWindowStatus()]];
-                });
             }
             if (hostCopy.length) {
                 DSTell(^(DSStageManager *manager) {
@@ -749,34 +696,10 @@ static void DSInstallRemainingHooks(void) {
             NSString *injectDir = @"/var/jb/usr/lib/TweakInject";
             NSString *injectPath = [injectDir stringByAppendingPathComponent:@"DynamicStageApp.dylib"];
             NSString *injectPlist = [injectDir stringByAppendingPathComponent:@"DynamicStageApp.plist"];
-            NSString *libsPlist = @"/var/jb/Library/MobileSubstrate/DynamicLibraries/DynamicStageApp.plist";
-            NSString *payloadDir = @"/var/jb/Library/Application Support/DynamicStage";
-            NSString *payloadDylib = [payloadDir stringByAppendingPathComponent:@"DynamicStageApp.dylib"];
-            NSString *payloadPlist = [payloadDir stringByAppendingPathComponent:@"DynamicStageApp.plist"];
+            NSString *payloadDylib = @"/var/jb/Library/Application Support/DynamicStage/DynamicStageApp.dylib";
             NSFileManager *files = NSFileManager.defaultManager;
             BOOL libs = [files fileExistsAtPath:libsPath];
-            BOOL restored = NO;
-            // The .deb has this dylib, but ElleKit installs on this device have
-            // repeatedly left DynamicLibraries without it. The package also ships
-            // a copy under Application Support; put it back when it is missing.
-            if (!libs && [files fileExistsAtPath:payloadDylib]) {
-                NSError *restoreError = nil;
-                NSString *libsDir = [libsPath stringByDeletingLastPathComponent];
-                [files createDirectoryAtPath:libsDir withIntermediateDirectories:YES attributes:nil error:nil];
-                [files removeItemAtPath:libsPath error:nil];
-                [files copyItemAtPath:payloadDylib toPath:libsPath error:&restoreError];
-                if ([files fileExistsAtPath:payloadPlist]) {
-                    [files removeItemAtPath:libsPlist error:nil];
-                    [files copyItemAtPath:payloadPlist toPath:libsPlist error:nil];
-                }
-                libs = [files fileExistsAtPath:libsPath];
-                restored = libs;
-                if (restoreError) {
-                    DSDiagnosticsRecordFormat(@"SpringBoard: app payload restore failed %@", restoreError.localizedDescription);
-                } else {
-                    DSDiagnosticsRecordFormat(@"SpringBoard: restored app dylib from Application Support libs=%d", libs);
-                }
-            }
+            BOOL payload = [files fileExistsAtPath:payloadDylib];
             BOOL tweakInject = [files fileExistsAtPath:injectDir];
             BOOL tweakLink = NO;
             {
@@ -784,38 +707,15 @@ static void DSInstallRemainingHooks(void) {
                 ssize_t n = readlink(injectDir.fileSystemRepresentation, link, sizeof(link) - 1);
                 if (n > 0) tweakLink = YES;
             }
-            // ElleKit only loads from TweakInject when that directory is real.
-            if (libs && tweakInject && !tweakLink) {
-                NSError *copyError = nil;
-                [files removeItemAtPath:injectPath error:nil];
-                [files copyItemAtPath:libsPath toPath:injectPath error:&copyError];
-                if ([files fileExistsAtPath:libsPlist]) {
-                    [files removeItemAtPath:injectPlist error:nil];
-                    [files copyItemAtPath:libsPlist toPath:injectPlist error:nil];
-                } else if ([files fileExistsAtPath:payloadPlist]) {
-                    [files removeItemAtPath:injectPlist error:nil];
-                    [files copyItemAtPath:payloadPlist toPath:injectPlist error:nil];
-                }
-                if (copyError) {
-                    DSDiagnosticsRecordFormat(@"SpringBoard: TweakInject copy failed %@", copyError.localizedDescription);
-                }
-            }
             BOOL injectDylib = [files fileExistsAtPath:injectPath];
-            BOOL payload = [files fileExistsAtPath:payloadDylib];
+            BOOL injectPlistOn = [files fileExistsAtPath:injectPlist];
+            // SpringBoard runs as mobile and must not overwrite TweakInject.
+            // A failed remove+copy left the filter missing and was taking the
+            // phone to safe mode. postinst (root) is the only writer.
             NSArray *libNames = [files contentsOfDirectoryAtPath:@"/var/jb/Library/MobileSubstrate/DynamicLibraries" error:nil] ?: @[];
-            DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d payload=%d restored=%d files=%@",
-                                      libs, tweakInject, tweakLink, injectDylib, payload, restored,
+            DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d injectplist=%d payload=%d files=%@",
+                                      libs, tweakInject, tweakLink, injectDylib, injectPlistOn, payload,
                                       [libNames componentsJoinedByString:@","]);
-            // An already-open Messenger will not pick up a freshly restored
-            // dylib until it is restarted.
-            if (restored) {
-                pid_t pid = 0;
-                char *argv[] = { (char *)"/var/jb/usr/bin/killall", (char *)"-9", (char *)"Messenger", NULL };
-                if (posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL) != 0) {
-                    argv[0] = (char *)"/usr/bin/killall";
-                    posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL);
-                }
-            }
 
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{

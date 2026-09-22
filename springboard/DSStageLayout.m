@@ -70,12 +70,14 @@ CGRect DSStageStackSlotFrame(CGRect combinedCardFrame, NSInteger slot, NSInteger
                       height);
 }
 
-CGRect DSStageStackHalfScreenFrame(CGRect screen, NSInteger slot, CGFloat gap) {
+CGRect DSStageStackHalfScreenFrame(CGRect screen, NSInteger slot, CGFloat gap, CGFloat inset) {
     CGFloat width = CGRectGetWidth(screen);
     CGFloat height = CGRectGetHeight(screen);
-    CGFloat slotHeight = floor((height - gap) * 0.5);
+    CGFloat innerWidth = width - inset * 2.0;
+    CGFloat usableHeight = height - inset * 2.0 - gap;
+    CGFloat slotHeight = floor(usableHeight * 0.5);
     if (slot == 1) {
-        return CGRectMake(0.0, 0.0, width, slotHeight);
+        return CGRectMake(inset, inset, innerWidth, slotHeight);
     }
-    return CGRectMake(0.0, slotHeight + gap, width, height - slotHeight - gap);
+    return CGRectMake(inset, inset + slotHeight + gap, innerWidth, slotHeight);
 }

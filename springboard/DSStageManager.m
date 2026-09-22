@@ -103,6 +103,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     DSSceneHost *_topSceneHost;
 
     NSInteger _stackSlotCount;
+    NSInteger _keyboardLiftSlot;
     UIPanGestureRecognizer *_topDragPan;
 
     UIView *_hostSnapshot;
@@ -432,8 +433,15 @@ static BOOL sSystemEdgePullAvailable;
         keyboard = CGRectZero;
     }
 
-    if (_sceneHost.isHosting && !CGRectIsEmpty(keyboard)) {
-        keyboard = [self keyboardFrameForHostedApp:keyboard];
+    _keyboardLiftSlot = 0;
+    if (_topSceneHost.isHosting && [source isEqualToString:_topSceneHost.bundleIdentifier]) {
+        _keyboardLiftSlot = 1;
+    }
+    if ((_sceneHost.isHosting && [source isEqualToString:_sceneHost.bundleIdentifier]) ||
+        (_topSceneHost.isHosting && [source isEqualToString:_topSceneHost.bundleIdentifier])) {
+        if (!CGRectIsEmpty(keyboard)) {
+            keyboard = [self keyboardFrameForHostedApp:keyboard];
+        }
     }
 
     if (![self keyboardSourceAffectsLayout:source keyboard:keyboard]) {
@@ -457,9 +465,9 @@ static BOOL sSystemEdgePullAvailable;
         // keyboardWillShow is the usual case.
         if (CGRectIsEmpty(keyboard)) return;
         DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-        CGRect resting = [self restingStageFrameForState:layoutState];
+        CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
         CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
-        if (_container.liftOffset >= MAX(overlap, 0.0) - 0.5) return;
+        if ([self liftOffsetForSlot:_keyboardLiftSlot] >= MAX(overlap, 0.0) - 0.5) return;
     } else {
         _keyboardFrame = keyboard;
     }
@@ -481,24 +489,53 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-    CGRect resting = [self restingStageFrameForState:layoutState];
+    CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
     CGFloat overlap = CGRectIsEmpty(keyboard) ? 0.0
                                              : CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
-    [self liftCardBy:MAX(overlap, 0.0) duration:duration];
+    [self liftCardBy:MAX(overlap, 0.0) slot:_keyboardLiftSlot duration:duration];
+}
+
+- (CGRect)restingFrameForKeyboardLiftSlot:(NSInteger)slot state:(DSStageState)state {
+    if (_stackSlotCount >= kDSMaxStackSlots && state == DSStageStateOverlay) {
+        return [self frameForStackSlot:slot state:state];
+    }
+    if (slot == 1) {
+        return [self frameForStackSlot:1 state:state];
+    }
+    return [self restingStageFrameForState:state];
+}
+
+- (CGFloat)liftOffsetForSlot:(NSInteger)slot {
+    DSStageContainerView *card = [self containerForSlot:slot];
+    return card ? card.liftOffset : 0.0;
+}
+
+- (CGFloat)maxLiftForSlot:(NSInteger)slot state:(DSStageState)state {
+    CGRect resting = [self restingFrameForKeyboardLiftSlot:slot state:state];
+    if (_stackSlotCount >= kDSMaxStackSlots && state == DSStageStateOverlay && slot == 0 && _topContainer) {
+        CGRect top = [self frameForStackSlot:1 state:state];
+        CGFloat cap = CGRectGetMinY(resting) - (CGRectGetMaxY(top) + kDSStackSlotGap);
+        return MAX(cap, 0.0);
+    }
+    return MAX(CGRectGetMinY(resting) - kDSStageKeyboardHeadroom, 0.0);
 }
 
 - (void)liftCardBy:(CGFloat)offset duration:(NSTimeInterval)duration {
+    [self liftCardBy:offset slot:_keyboardLiftSlot duration:duration];
+}
+
+- (void)liftCardBy:(CGFloat)offset slot:(NSInteger)slot duration:(NSTimeInterval)duration {
     // However wrong the number that got here, the card stays on the screen. A card
     // lifted off the top takes the search field, the app and every way of closing the
     // stage with it, and reads as the stage having broken.
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-    CGRect resting = [self restingStageFrameForState:layoutState];
-    CGFloat headroom = MAX(CGRectGetMinY(resting) - kDSStageKeyboardHeadroom, 0.0);
-    offset = MIN(MAX(offset, 0.0), headroom);
+    offset = MIN(MAX(offset, 0.0), [self maxLiftForSlot:slot state:layoutState]);
 
-    BOOL hosting = _sceneHost.isHosting;
-    if (fabs(offset - _container.liftOffset) < 0.5) {
-        if (hosting) {
+    DSStageContainerView *card = [self containerForSlot:slot];
+    if (!card) return;
+
+    if (fabs(offset - card.liftOffset) < 0.5) {
+        if ([self sceneHostForSlot:slot].isHosting) {
             [self pushLiftedGeometryToApp];
             [self layoutStageForState:layoutState];
         }
@@ -506,16 +543,13 @@ static BOOL sSystemEdgePullAvailable;
     }
 
     void (^lift)(void) = ^{
-        [self->_container setLiftOffset:offset];
-        if (self->_stackSlotCount >= kDSMaxStackSlots && self->_topContainer) {
-            [self->_topContainer setLiftOffset:offset];
-        }
-        if (!self->_sceneHost.isHosting && !self->_topSceneHost.isHosting) return;
+        [card setLiftOffset:offset];
+        if (![self sceneHostForSlot:slot].isHosting) return;
         [self pushLiftedGeometryToApp];
         [self layoutStageForState:layoutState];
         if (offset > 0.5) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: card lifted %.0f pt for %@ (keyboard, staged app)",
-                                      offset, self->_sceneHost.bundleIdentifier);
+            DSDiagnosticsRecordFormat(@"SpringBoard: stack slot %ld lifted %.0f pt for keyboard",
+                                      (long)slot, offset);
         }
     };
     if (duration > 0.0) {
@@ -610,6 +644,7 @@ static BOOL sSystemEdgePullAvailable;
 // Whatever keyboard was up went away with the app that owned it.
 - (void)forgetStagedAppKeyboard {
     _keyboardFrame = CGRectZero;
+    _keyboardLiftSlot = 0;
     [_container setLiftOffset:0.0];
     if (_topContainer) [_topContainer setLiftOffset:0.0];
     _notedStrayKeyboard = NO;
@@ -684,7 +719,7 @@ static BOOL sSystemEdgePullAvailable;
         return [self stageFrameForState:state];
     }
     if (state == DSStageStateOverlay) {
-        return DSStageStackHalfScreenFrame([self screenBounds], slot, kDSStackSlotGap);
+        return DSStageStackHalfScreenFrame([self screenBounds], slot, kDSStackSlotGap, kDSStackCardInset);
     }
     CGRect combined = [self stageFrameForState:state];
     return DSStageStackSlotFrame(combined, slot, _stackSlotCount, kDSStackSlotGap);
@@ -702,12 +737,43 @@ static BOOL sSystemEdgePullAvailable;
     return picker == _topPicker ? 1 : 0;
 }
 
-- (void)refreshTopSlotEmptyState {
-    if (_stackSlotCount < kDSMaxStackSlots || !_topContainer || _topSceneHost.isHosting) return;
+- (void)prepareTopSlotForPicker {
+    if (!_topContainer || !_topPicker) return;
+
+    [_topLaunchPlaceholder removeFromSuperview];
+    _topLaunchPlaceholder = nil;
+
+    if (_topSceneHost && !_topSceneHost.isHosting) {
+        [_topSceneHost.hostView removeFromSuperview];
+        _topSceneHost = nil;
+    }
+    if (_topSceneHost.isHosting) return;
+
+    UIView *pickerView = _topPicker.view;
+    for (UIView *subview in [_topContainer.contentView.subviews copy]) {
+        if (subview != pickerView) [subview removeFromSuperview];
+    }
+
+    _topPicker.darkMode = _container.darkMode;
+    (void)_topPicker.view;
+    [_topPicker reloadContent];
+    [_topPicker resetScrollPosition];
+
     [_topContainer setBackdropHidden:NO];
-    _topPicker.view.hidden = NO;
-    _topPicker.view.alpha = 1.0;
-    [_topContainer.contentView bringSubviewToFront:_topPicker.view];
+    pickerView.hidden = NO;
+    pickerView.alpha = 1.0;
+    pickerView.frame = _topContainer.contentView.bounds;
+    if (pickerView.superview != _topContainer.contentView) {
+        [_topContainer.contentView addSubview:pickerView];
+    }
+    [_topContainer.contentView bringSubviewToFront:pickerView];
+    [_topContainer layoutIfNeeded];
+    [pickerView layoutIfNeeded];
+}
+
+- (void)refreshTopSlotEmptyState {
+    if (_stackSlotCount < kDSMaxStackSlots || !_topContainer) return;
+    [self prepareTopSlotForPicker];
 }
 
 - (void)updateStackChrome {
@@ -746,7 +812,7 @@ static BOOL sSystemEdgePullAvailable;
         _container.frame = frame;
         if (_topContainer) _topContainer.hidden = YES;
     } else {
-        CGFloat radius = [self displayCornerRadius];
+        CGFloat radius = MAX([self displayCornerRadius] - kDSStackCardInset, 12.0);
         _container.frame = [self frameForStackSlot:0 state:state];
         _container.cornerRadius = radius;
         _topContainer.hidden = NO;
@@ -773,14 +839,7 @@ static BOOL sSystemEdgePullAvailable;
     [self ensureTopStackInfrastructure];
     _topContainer.darkMode = _container.darkMode;
     _stackSlotCount = 2;
-    _topContainer.backdropHidden = NO;
-    [_topContainer setBackdropHidden:NO];
-    _topPicker.view.hidden = NO;
-    _topPicker.view.alpha = 1.0;
-    [_topPicker reloadContent];
-    [_topPicker resetScrollPosition];
-    [_topContainer.contentView bringSubviewToFront:_topPicker.view];
-    [self refreshTopSlotEmptyState];
+    [self prepareTopSlotForPicker];
 
     [UIView animateWithDuration:0.28
                           delay:0

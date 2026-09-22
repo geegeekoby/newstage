@@ -1,3 +1,7 @@
+**4.3.2**
+- Top stack slot: force app picker (clear stale host layers that showed black)
+- Thin inset gap around each stacked stage; bottom slot alone lifts for its keyboard
+
 **4.3.1**
 - Two stages: equal top/bottom halves of the display (not two small cards in the bottom half)
 - Top slot shows the app picker until an app is loaded; + control stays above the grabber

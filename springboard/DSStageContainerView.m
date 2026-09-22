@@ -93,6 +93,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         [_stackAddButton addTarget:self action:@selector(stackAddTapped) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_stackAddButton];
 
+        self.backgroundColor = UIColor.clearColor;
         self.clipsToBounds = YES;
         self.layer.cornerCurve = kCACornerCurveContinuous;
         self.layer.cornerRadius = _cornerRadius;

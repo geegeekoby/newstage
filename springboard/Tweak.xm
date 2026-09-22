@@ -30,8 +30,8 @@
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
 // KeyboardArbiter, never point the focus coordinator at a scene, never assign
 // the keyboard UI host, never create a remote keyboard window. The picker
-// uses SpringBoard's own keyboard. A staged app draws its own keys; the card
-// opens at the bottom so those keys sit in the system keyboard band.
+// uses SpringBoard's own keyboard. A staged app tells UIKit its keyboard is
+// remote, so the keys are drawn in SpringBoard's window above the card.
 
 #pragma mark - Calling out of a hook
 
@@ -331,6 +331,23 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 %end
 
+%hook UIWindow
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *hit = %orig;
+    if (!DSExternalKeyboardCoversStage()) return hit;
+    NSString *name = NSStringFromClass(self.class);
+    BOOL keyboardWindow = [name rangeOfString:@"Keyboard"].location != NSNotFound ||
+                          [name rangeOfString:@"TextEffects"].location != NSNotFound;
+    if (!keyboardWindow) return hit;
+    if (!hit) return nil;
+    CGRect keys = DSVisibleKeyboardFrameOnScreen();
+    if (!CGRectIsNull(keys) && CGRectContainsPoint(keys, point)) return hit;
+    return nil;
+}
+
+%end
+
 %end
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
@@ -519,7 +536,9 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     }
 
     if (!DSStageReady() || !information) return;
+    BOOL placeOutside = onScreen && DSBundleIsStaged(source);
     dispatch_async(dispatch_get_main_queue(), ^{
+        if (placeOutside) DSShowArbiterKeyboardAboveStage(nil);
         DSTell(^(DSStageManager *manager) {
             [manager keyboardOnScreen:onScreen frame:frame source:source];
         });

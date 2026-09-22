@@ -1,3 +1,6 @@
+**4.5.41**
+- Opening the bottom of the card cannot move the keys. They are painted inside Messenger's scene, and that scene is the card. While Messenger is staged it now tells UIKit the keyboard is remote, which is what makes SpringBoard draw the keys in its own window. That window is lifted just above the stage, and the card lifts only after those keys are actually there. Touches outside the keys fall through to the app. Nothing creates a keyboard window, assigns the arbiter host, or hides keyboard views
+
 **4.5.40**
 - The keys stayed inside the card because UIKit in SpringBoard posted `UIKeyboardWillChangeFrame` for Messenger's keyboard. That was treated as SpringBoard's own keyboard and lifted the card 306pt, dragging the keys up inside the chrome a moment after the bottom of the card had been opened. A hosted app's keyboard no longer lifts the card. Those keys stay in the system keyboard band under the chrome
 

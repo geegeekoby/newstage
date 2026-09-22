@@ -911,8 +911,25 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 %hook UIKeyboardImpl
 
-// Do not claim the remote keyboard. On this iPhone that path crashed
-// KeyboardArbiter and put the device in safe mode.
+// The hosted scene is the card. Keys drawn in this process are inside that
+// scene no matter how the card is masked. Telling UIKit this keyboard is
+// remote makes SpringBoard draw it in its own window, outside the card.
+// Nothing here hides views, moves frames, or talks to the arbiter.
++ (BOOL)isUsingRemoteKeyboard {
+    if (DSStaged()) {
+        DSReportRemoteKeyboard();
+        return YES;
+    }
+    return %orig;
+}
+
+- (BOOL)isUsingRemoteKeyboard {
+    if (DSStaged()) {
+        DSReportRemoteKeyboard();
+        return YES;
+    }
+    return %orig;
+}
 
 - (void)showKeyboard {
     %orig;

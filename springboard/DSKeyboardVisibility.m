@@ -72,14 +72,43 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
 
 static NSString *DSClaimedKeyboardStatus = @"win=none";
 
+static BOOL DSExternalKeyboardRaised = NO;
+
+BOOL DSExternalKeyboardCoversStage(void) {
+    return DSExternalKeyboardRaised;
+}
+
 BOOL DSRevealSpringBoardKeyboard(void) {
-    // Never unhide, create, or restack keyboard windows. That empty remote
-    // window covered the wallpaper, and touching KeyboardArbiter's windows
-    // took the phone to safe mode.
-    CGRect keys = DSVisibleKeyboardFrameOnScreen();
-    if (DSKeyboardFrameIsOnScreen(keys, UIScreen.mainScreen.bounds)) {
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=visible keys=%@",
-                                   NSStringFromCGRect(keys)];
+    // UIKit creates this window when the app says the keyboard is remote.
+    // Never create one ourselves, never unhide an empty full-screen window,
+    // never use alert level. A window that already contains keys is lifted
+    // just above the stage so those keys are not clipped to the card.
+    CGRect screen = UIScreen.mainScreen.bounds;
+    __block BOOL revealed = NO;
+    __block CGRect shown = CGRectNull;
+    __block CGFloat level = 0;
+    __block NSString *windowName = nil;
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (revealed) return;
+        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
+        if (window.hidden || window.alpha < 0.01) return;
+        CGRect keys = DSKeyboardViewFrameInView(window);
+        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
+        @try {
+            if (window.windowLevel < UIWindowLevelStatusBar) {
+                window.windowLevel = UIWindowLevelStatusBar;
+            }
+        } @catch (NSException *exception) {
+        }
+        revealed = YES;
+        shown = keys;
+        level = window.windowLevel;
+        windowName = NSStringFromClass(window.class);
+    });
+    DSExternalKeyboardRaised = revealed;
+    if (revealed) {
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=outside %@ lvl=%.0f keys=%@",
+                                   windowName ?: @"?", level, NSStringFromCGRect(shown)];
         return YES;
     }
     DSClaimedKeyboardStatus = @"win=none";
@@ -91,6 +120,7 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
 }
 
 void DSHidePresentedArbiterKeyboard(void) {
+    DSExternalKeyboardRaised = NO;
     DSClaimedKeyboardStatus = @"win=hidden";
 }
 

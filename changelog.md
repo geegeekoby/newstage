@@ -1,3 +1,6 @@
+**4.5.49**
+- The level-6000 window was one window. UIKit left a second keyboard window on SystemAperture at level 10, and that is the one the stage clipped. Every visible keyboard window is now held at the status bar plus 5000, and any window UIKit puts on an aperture scene is moved onto the same scene as the stage. The remote-keyboard window stays on its own scene, because moving that one off it stopped the keys painting. The card's layer does not mask while those windows are up. Letters typed on SpringBoard's keyboard are written through to the field the staged app already has. The keyboard UI host is not assigned and no keyboard class is removed
+
 **4.5.48**
 - The keyboard window SpringBoard already has was sitting on SystemAperture at level 10, and every keyboard event put it back there, under the stage at level 999. While a staged app's keyboard is up, that window is returned to the remote-keyboard scene and its level is held at the status bar plus 5000. The card no longer clips past its own edge. The text field stays the editor. The window is put back when the keyboard goes down
 

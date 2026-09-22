@@ -650,6 +650,22 @@ static BOOL sSystemEdgePullAvailable;
     return _searchSlot >= 0;
 }
 
+- (BOOL)shouldForwardHostedKeyboardText {
+    if (_searchSlot >= 0) return NO;
+    if (_state == DSStageStateMinimized || _state == DSStageStateClosed) return NO;
+    return _sceneHost.isHosting || _topSceneHost.isHosting;
+}
+
+- (void)forwardHostedKeyboardText:(NSString *)text {
+    if (text.length == 0 || ![self shouldForwardHostedKeyboardText]) return;
+    [self stagedKeyboardInsertText:text];
+}
+
+- (void)forwardHostedKeyboardDelete {
+    if (![self shouldForwardHostedKeyboardText]) return;
+    [self stagedKeyboardDeleteBackward];
+}
+
 - (void)clearHostedKeyboardBands {
     [_sceneHost setKeyboardClipHeight:0.0];
     [_topSceneHost setKeyboardClipHeight:0.0];
@@ -774,6 +790,19 @@ static BOOL sSystemEdgePullAvailable;
     BOOL raised = DSRaiseKeyboardWindowAboveStage();
     [_container setClipsContents:!raised];
     [_topContainer setClipsContents:!raised];
+    if (raised) {
+        NSInteger generation = DSHostedClipGeneration;
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            DSStageManager *manager = weakSelf;
+            if (!manager || generation != DSHostedClipGeneration) return;
+            BOOL stillUp = DSRaiseKeyboardWindowAboveStage();
+            [manager->_container setClipsContents:!stillUp];
+            [manager->_topContainer setClipsContents:!stillUp];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@", DSPresentedKeyboardWindowStatus());
+        });
+    }
     {
         NSString *status = DSPresentedKeyboardWindowStatus();
         static NSString *loggedStatus = nil;

@@ -368,6 +368,22 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 %end
 
+static void DSForwardHostedKeyboardText(NSString *text, BOOL isDelete) {
+    if (!isDelete && text.length == 0) return;
+    static NSString *lastMark = nil;
+    static CFAbsoluteTime lastAt = 0;
+    NSString *mark = isDelete ? @"\b" : text;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (lastMark && [lastMark isEqualToString:mark] && (now - lastAt) < 0.03) return;
+    lastMark = [mark copy];
+    lastAt = now;
+    NSString *copy = [text copy];
+    DSTell(^(DSStageManager *manager) {
+        if (isDelete) [manager forwardHostedKeyboardDelete];
+        else [manager forwardHostedKeyboardText:copy];
+    });
+}
+
 %hook UITextEffectsWindow
 
 - (void)setWindowLevel:(CGFloat)level {
@@ -376,6 +392,38 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
         return;
     }
     %orig;
+}
+
+- (void)setWindowScene:(UIWindowScene *)scene {
+    id replacement = DSReplacementSceneForKeyboardWindow(self, scene);
+    if ([replacement isKindOfClass:UIWindowScene.class]) {
+        %orig((UIWindowScene *)replacement);
+        return;
+    }
+    %orig;
+}
+
+%end
+
+// Letters typed on SpringBoard's keyboard are delivered here. The staged app
+// is another process, so the characters are written through to the field it
+// already remembered. This does not take the key window or open a text field.
+%hook UIKeyboardImpl
+
+- (void)addInputString:(NSString *)string {
+    %orig;
+    DSForwardHostedKeyboardText(string, NO);
+}
+
+- (void)addInputString:(NSString *)string withFlags:(unsigned long long)flags {
+    %orig;
+    (void)flags;
+    DSForwardHostedKeyboardText(string, NO);
+}
+
+- (void)deleteFromInput {
+    %orig;
+    DSForwardHostedKeyboardText(nil, YES);
 }
 
 %end

@@ -53,6 +53,11 @@
 // True while a picker search field is editing. The arbiter must not retarget
 // that keyboard to a staged app.
 - (BOOL)isPickerSearchActive;
+// Letters from SpringBoard's keyboard, written through to the staged app.
+// Search keeps its own field. This does not move the caret.
+- (BOOL)shouldForwardHostedKeyboardText;
+- (void)forwardHostedKeyboardText:(NSString *)text;
+- (void)forwardHostedKeyboardDelete;
 - (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;

@@ -112,6 +112,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
         self.backgroundColor = UIColor.clearColor;
         self.clipsToBounds = YES;
+        self.layer.masksToBounds = YES;
         self.layer.cornerCurve = kCACornerCurveContinuous;
         self.layer.cornerRadius = _cornerRadius;
 
@@ -146,6 +147,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         }
         _backdrop.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
         self.clipsToBounds = NO;
+        self.layer.masksToBounds = NO;
         self.opaque = NO;
         _contentView.clipsToBounds = YES;
         _contentView.opaque = NO;
@@ -165,6 +167,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         // The keyboard is a SpringBoard window above this card. The card must
         // not clip it. The app itself stays inside the content view.
         self.clipsToBounds = _clipsContents;
+        self.layer.masksToBounds = _clipsContents;
         _contentView.clipsToBounds = YES;
         _contentView.layer.mask = nil;
         if (_clipsContents) {
@@ -302,6 +305,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 - (void)setClipsContents:(BOOL)clips {
     _clipsContents = clips;
     self.clipsToBounds = clips;
+    self.layer.masksToBounds = clips;
     self.opaque = NO;
     // The hosted app stays inside the card. Unclipping this view is what lets
     // SpringBoard's keyboard window draw past the card edge.

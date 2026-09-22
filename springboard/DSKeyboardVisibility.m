@@ -142,9 +142,14 @@ void DSLogStagedAppInjection(NSString *why) {
 static NSString *DSClaimedKeyboardStatus = @"win=none";
 
 static BOOL DSExternalKeyboardRaised = NO;
-static __weak UIWindow *DSMovedKeyboardWindow = nil;
-static UIWindowScene *DSMovedKeyboardScene = nil;
-static CGFloat DSMovedKeyboardLevel = 0.0;
+static NSMapTable<UIWindow *, NSDictionary *> *DSKeyboardPlacements = nil;
+
+static NSMapTable<UIWindow *, NSDictionary *> *DSKeyboardPlacementTable(void) {
+    if (!DSKeyboardPlacements) {
+        DSKeyboardPlacements = [NSMapTable weakToStrongObjectsMapTable];
+    }
+    return DSKeyboardPlacements;
+}
 
 static BOOL DSSceneNameIsRemoteKeyboard(NSString *name) {
     return [name rangeOfString:@"remote-keyboard"].location != NSNotFound;
@@ -156,15 +161,33 @@ static BOOL DSSceneNameIsAperture(NSString *name) {
            [name rangeOfString:@"aperture"].location != NSNotFound;
 }
 
-static UIWindowScene *DSRemoteKeyboardScene(void) {
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
-            if (![scene isKindOfClass:UIWindowScene.class]) continue;
-            NSString *identifier = scene.session.persistentIdentifier ?: @"";
-            if (DSSceneNameIsRemoteKeyboard(identifier)) return (UIWindowScene *)scene;
-        }
-    }
-    return nil;
+static NSString *DSSceneIdentifier(id scene) {
+    if (![scene isKindOfClass:UIScene.class]) return @"";
+    return ((UIScene *)scene).session.persistentIdentifier ?: @"";
+}
+
+// The stage window already lives on SpringBoard's foreground scene. A keyboard
+// window has to be on that same scene before its level can sit above the card.
+static UIWindowScene *DSForegroundScene(void) {
+    __block UIWindowScene *stage = nil;
+    __block UIWindowScene *home = nil;
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (window.hidden || !window.windowScene) return;
+        NSString *name = NSStringFromClass(window.class);
+        if ([name rangeOfString:@"StageWindow"].location != NSNotFound) stage = window.windowScene;
+        if ([name rangeOfString:@"HomeScreenWindow"].location != NSNotFound) home = window.windowScene;
+    });
+    return stage ?: home;
+}
+
+static void DSRememberKeyboardWindow(UIWindow *window) {
+    if (!window) return;
+    NSMapTable *table = DSKeyboardPlacementTable();
+    if ([table objectForKey:window]) return;
+    [table setObject:@{
+        @"scene" : window.windowScene ?: (id)NSNull.null,
+        @"level" : @(window.windowLevel)
+    } forKey:window];
 }
 
 CGFloat DSKeyboardWindowLevelAboveStage(void) {
@@ -172,7 +195,17 @@ CGFloat DSKeyboardWindowLevelAboveStage(void) {
 }
 
 BOOL DSKeyboardWindowShouldStayAboveStage(id window) {
-    return DSExternalKeyboardRaised && window != nil && window == DSMovedKeyboardWindow;
+    if (!DSExternalKeyboardRaised || ![window isKindOfClass:UIWindow.class]) return NO;
+    return DSClassNameLooksLikeKeyboard(NSStringFromClass([(UIWindow *)window class]));
+}
+
+id DSReplacementSceneForKeyboardWindow(id window, id proposedScene) {
+    if (!DSExternalKeyboardRaised || ![window isKindOfClass:UIWindow.class]) return nil;
+    if (!DSClassNameLooksLikeKeyboard(NSStringFromClass([(UIWindow *)window class]))) return nil;
+    if (!DSSceneNameIsAperture(DSSceneIdentifier(proposedScene))) return nil;
+    UIWindowScene *foreground = DSForegroundScene();
+    if (!foreground || proposedScene == foreground) return nil;
+    return foreground;
 }
 
 BOOL DSExternalKeyboardCoversStage(void) {
@@ -222,166 +255,82 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
 }
 
 void DSRestoreRemoteKeyboardPlacement(void) {
-    UIWindow *window = DSMovedKeyboardWindow;
-    UIWindowScene *scene = DSMovedKeyboardScene;
-    CGFloat level = DSMovedKeyboardLevel;
-    DSMovedKeyboardWindow = nil;
-    DSMovedKeyboardScene = nil;
-    DSMovedKeyboardLevel = 0.0;
+    // Clear this before touching levels. The window hook pins any keyboard
+    // window at 6000 while the flag is set, including the restore itself.
     DSExternalKeyboardRaised = NO;
-    if (!window) {
-        DSClaimedKeyboardStatus = @"win=hidden";
-        return;
-    }
-    @try {
-        if (scene && window.windowScene != scene) {
-            window.windowScene = scene;
+    NSMapTable *table = DSKeyboardPlacements;
+    NSArray<UIWindow *> *windows = table ? [table.keyEnumerator.allObjects copy] : @[];
+    if (windows.count == 0) return;
+    for (UIWindow *window in windows) {
+        NSDictionary *saved = [table objectForKey:window];
+        id scene = saved[@"scene"];
+        CGFloat level = [saved[@"level"] doubleValue];
+        @try {
+            if ([scene isKindOfClass:UIWindowScene.class] && window.windowScene != scene) {
+                window.windowScene = scene;
+            }
+            window.windowLevel = level;
+        } @catch (NSException *exception) {
         }
-        window.windowLevel = level;
-    } @catch (NSException *exception) {
     }
+    [table removeAllObjects];
     DSClaimedKeyboardStatus = @"win=restored";
 }
 
 BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindowObject) {
-    UIWindow *stageWindow = [stageWindowObject isKindOfClass:UIWindow.class] ? stageWindowObject : nil;
-    UIWindowScene *stageScene = stageWindow.windowScene;
-    if (!stageScene) {
-        DSClaimedKeyboardStatus = @"win=no-stage-scene";
-        DSExternalKeyboardRaised = NO;
-        return NO;
-    }
-    CGRect screen = UIScreen.mainScreen.bounds;
-    __block UIWindow *target = nil;
-    __block CGRect shown = CGRectNull;
-    DSVisitApplicationWindows(^(UIWindow *window) {
-        if (target) return;
-        if (!DSSceneNameIsRemoteKeyboard(DSWindowSceneName(window)) &&
-            window != DSMovedKeyboardWindow) {
-            return;
-        }
-        if (window.hidden || window.alpha < 0.01) return;
-        CGRect keys = DSKeyboardViewFrameInView(window);
-        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
-        target = window;
-        shown = keys;
-    });
-    if (!target) {
-        DSClaimedKeyboardStatus = @"win=no-remote-keyboard-scene";
-        DSExternalKeyboardRaised = NO;
-        return NO;
-    }
-    @try {
-        if (DSMovedKeyboardWindow && DSMovedKeyboardWindow != target) {
-            DSRestoreRemoteKeyboardPlacement();
-        }
-        UIWindow *previousKey = nil;
-        for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
-            if (candidate.isKeyWindow && candidate != target) {
-                previousKey = candidate;
-                break;
-            }
-        }
-        if (!DSMovedKeyboardWindow) {
-            DSMovedKeyboardWindow = target;
-            DSMovedKeyboardScene = target.windowScene;
-            DSMovedKeyboardLevel = target.windowLevel;
-        }
-        NSString *before = DSWindowSceneName(target);
-        if (target.windowScene != stageScene) {
-            target.windowScene = stageScene;
-        }
-        if (target.windowLevel < UIWindowLevelStatusBar) {
-            target.windowLevel = UIWindowLevelStatusBar;
-        }
-        if (target.windowScene != stageScene) {
-            target.windowLevel = DSMovedKeyboardLevel;
-            DSMovedKeyboardWindow = nil;
-            DSMovedKeyboardScene = nil;
-            DSMovedKeyboardLevel = 0.0;
-            DSExternalKeyboardRaised = NO;
-            DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=scene-rejected from=%@ now=%@ stage=%@ lvl=%.0f keys=%@",
-                                       before,
-                                       DSWindowSceneName(target),
-                                       DSWindowSceneName(stageWindow),
-                                       target.windowLevel,
-                                       NSStringFromCGRect(shown)];
-            return NO;
-        }
-        if (target.isKeyWindow && previousKey) {
-            [previousKey makeKeyWindow];
-        }
-        DSExternalKeyboardRaised = YES;
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=on-stage-scene from=%@ now=%@ stage=%@ lvl=%.0f keys=%@",
-                                   before,
-                                   DSWindowSceneName(target),
-                                   DSWindowSceneName(stageWindow),
-                                   target.windowLevel,
-                                   NSStringFromCGRect(shown)];
-        return YES;
-    } @catch (NSException *exception) {
-        NSString *reason = exception.reason ?: @"?";
-        DSRestoreRemoteKeyboardPlacement();
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=move-failed %@", reason];
-        return NO;
-    }
+    (void)stageWindowObject;
+    return DSRaiseKeyboardWindowAboveStage();
 }
 
 BOOL DSRaiseKeyboardWindowAboveStage(void) {
+    UIWindowScene *foreground = DSForegroundScene();
     CGRect screen = UIScreen.mainScreen.bounds;
-    __block UIWindow *target = nil;
-    __block CGRect shown = CGRectNull;
-    __block NSInteger rank = -1;
+    NSMutableArray<NSString *> *notes = [NSMutableArray array];
+    __block NSInteger raised = 0;
+    __block NSInteger moved = 0;
+    // Pin levels before the loop. setWindowLevel: is hooked and would otherwise
+    // let UIKit write level 10 back onto a window we have not finished yet.
+    DSExternalKeyboardRaised = YES;
     DSVisitApplicationWindows(^(UIWindow *window) {
         if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
         if (window.hidden || window.alpha < 0.01) return;
-        NSString *sceneName = DSWindowSceneName(window);
-        BOOL remote = DSSceneNameIsRemoteKeyboard(sceneName);
-        BOOL aperture = DSSceneNameIsAperture(sceneName);
+        NSString *before = DSWindowSceneName(window);
+        BOOL remote = DSSceneNameIsRemoteKeyboard(before);
+        BOOL aperture = DSSceneNameIsAperture(before);
         CGRect keys = DSKeyboardViewFrameInView(window);
         BOOL hasKeys = DSKeyboardFrameIsOnScreen(keys, screen);
-        if (!remote && !aperture && !hasKeys && window != DSMovedKeyboardWindow) return;
-        NSInteger score = 0;
-        if (hasKeys) score += 4;
-        if (aperture) score += 2;
-        if (remote) score += 1;
-        if (score > rank) {
-            rank = score;
-            target = window;
-            shown = keys;
+        if (!remote && !aperture && !hasKeys) return;
+        @try {
+            DSRememberKeyboardWindow(window);
+            // SystemAperture clips to the island. The remote-keyboard scene is
+            // left alone: moving that window off its scene stopped the keys
+            // painting. An aperture window can move onto the stage's scene.
+            if (aperture && foreground && window.windowScene != foreground) {
+                window.windowScene = foreground;
+                moved++;
+            }
+            window.windowLevel = DSKeyboardWindowLevelAboveStage();
+            raised++;
+            if (notes.count < 4) {
+                [notes addObject:[NSString stringWithFormat:@"%@->%@ lvl=%.0f keys=%@",
+                                  before,
+                                  DSWindowSceneName(window),
+                                  window.windowLevel,
+                                  hasKeys ? @"yes" : @"no"]];
+            }
+        } @catch (NSException *exception) {
         }
     });
-    if (!target) {
-        DSClaimedKeyboardStatus = @"win=none";
+    if (raised == 0) {
         DSExternalKeyboardRaised = NO;
+        DSClaimedKeyboardStatus = @"win=none";
         return NO;
     }
-    @try {
-        if (!DSMovedKeyboardWindow) {
-            DSMovedKeyboardWindow = target;
-            DSMovedKeyboardScene = target.windowScene;
-            DSMovedKeyboardLevel = target.windowLevel;
-        }
-        NSString *before = DSWindowSceneName(target);
-        UIWindowScene *remoteScene = DSRemoteKeyboardScene();
-        // SystemAperture clips the keyboard to the island. The remote-keyboard
-        // scene is the one that already paints the picker keyboard full width.
-        if (DSSceneNameIsAperture(before) && remoteScene && target.windowScene != remoteScene) {
-            target.windowScene = remoteScene;
-        }
-        target.windowLevel = DSKeyboardWindowLevelAboveStage();
-        DSExternalKeyboardRaised = YES;
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=above-stage from=%@ now=%@ lvl=%.0f keys=%@",
-                                   before,
-                                   DSWindowSceneName(target),
-                                   target.windowLevel,
-                                   CGRectIsNull(shown) ? @"none" : NSStringFromCGRect(shown)];
-        return YES;
-    } @catch (NSException *exception) {
-        DSRestoreRemoteKeyboardPlacement();
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=raise-failed %@", exception.reason ?: @"?"];
-        return NO;
-    }
+    DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=above-stage n=%ld moved=%ld %@",
+                               (long)raised,
+                               (long)moved,
+                               [notes componentsJoinedByString:@" | "]];
+    return YES;
 }
 
 void DSHidePresentedArbiterKeyboard(void) {

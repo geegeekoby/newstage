@@ -26,9 +26,14 @@ BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindow);
 // remote-keyboard scene, which is the scene that paints the keys. The stage
 // scene is left alone. Does not create a window or hide a view.
 BOOL DSRaiseKeyboardWindowAboveStage(void);
-// YES while that window must ignore later level changes from UIKit.
+// YES while every keyboard window must stay above the stage. UIKit keeps
+// making a second one on SystemAperture at level 10; that one is clipped.
 BOOL DSKeyboardWindowShouldStayAboveStage(id window);
 CGFloat DSKeyboardWindowLevelAboveStage(void);
+// While a staged keyboard is up, an aperture scene is replaced with the
+// foreground scene the stage window is already on. A remote-keyboard scene
+// is left where it is.
+id DSReplacementSceneForKeyboardWindow(id window, id proposedScene);
 void DSRestoreRemoteKeyboardPlacement(void);
 
 // SpringBoard-process keyboard windows only. The hosted app's own keyboard

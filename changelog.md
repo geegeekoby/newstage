@@ -1,3 +1,7 @@
+**4.5.8**
+- The second staged app was missing the signal that it is on the stage, so it kept drawing its own keyboard. That signal is delivered again
+- A debug line on the stage says whether each app is staged, whether its keyboard views were removed, and whether SpringBoard actually has a keyboard to draw
+
 **4.5.7**
 - The staged app's own keyboard is removed from the card. The keyboard window is not part of the app's normal window list, so the previous hide never saw it, and UIKit put the keys back. Those views are now forced out of the card whenever they are laid out
 

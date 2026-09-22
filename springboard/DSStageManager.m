@@ -122,6 +122,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     UIView *_splitCornerMask;
     UIImageView *_openAppIcon;
     DSStageShelfView *_shelf;
+    UILabel *_keyboardDebugLabel;
+    NSString *_keyboardDebugApp;
+    NSString *_keyboardDebugSpringBoard;
     DSLaunchPlaceholderView *_launchPlaceholder;
     DSLaunchPlaceholderView *_topLaunchPlaceholder;
 
@@ -2029,6 +2032,61 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
     DSSetStageNotify(kDSStagePeerNotification, stages.count > 1 ? stages[1] : nil);
     notify_post(kDSStageGeometryNotification);
     notify_post(kDSStagePeerNotification);
+    // A process that starts listening a moment later still has to see this.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        notify_post(kDSStageGeometryNotification);
+        notify_post(kDSStagePeerNotification);
+    });
+}
+
+- (void)refreshKeyboardDebugLabel {
+    if (!_window) return;
+    if (!_keyboardDebugLabel) {
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
+        label.numberOfLines = 4;
+        label.font = [UIFont monospacedSystemFontOfSize:10 weight:UIFontWeightMedium];
+        label.textColor = UIColor.whiteColor;
+        label.backgroundColor = [UIColor colorWithWhite:0 alpha:0.78];
+        label.userInteractionEnabled = NO;
+        label.layer.zPosition = 5000;
+        [_window.rootViewController.view addSubview:label];
+        _keyboardDebugLabel = label;
+    }
+    NSString *text = [NSString stringWithFormat:@"%@\n%@",
+                      _keyboardDebugApp.length ? _keyboardDebugApp : @"app: (no report yet)",
+                      _keyboardDebugSpringBoard.length ? _keyboardDebugSpringBoard : @"SB: (no keyboard event yet)"];
+    _keyboardDebugLabel.text = text;
+    CGRect screen = [self screenBounds];
+    CGSize fit = [_keyboardDebugLabel sizeThatFits:CGSizeMake(CGRectGetWidth(screen) - 8.0, 80)];
+    _keyboardDebugLabel.frame = CGRectMake(4.0, 2.0, CGRectGetWidth(screen) - 8.0, MIN(78.0, ceil(fit.height) + 6.0));
+    [_keyboardDebugLabel.superview bringSubviewToFront:_keyboardDebugLabel];
+}
+
+- (NSString *)bundleForKeyboardHash:(uint32_t)hash {
+    if (hash == 0) return @"?";
+    if (DSIdentifierHash(_sceneHost.bundleIdentifier) == hash) return _sceneHost.bundleIdentifier;
+    if (DSIdentifierHash(_topSceneHost.bundleIdentifier) == hash) return _topSceneHost.bundleIdentifier;
+    return [NSString stringWithFormat:@"hash %u", hash];
+}
+
+- (void)noteKeyboardDebugFromApp:(NSString *)line {
+    NSString *shown = line;
+    NSString *written = [NSString stringWithContentsOfFile:@"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard.txt"
+                                                 encoding:NSUTF8StringEncoding
+                                                    error:nil];
+    if (written.length) shown = written;
+    _keyboardDebugApp = shown.length ? [@"app: " stringByAppendingString:shown] : @"app: (empty)";
+    DSDiagnosticsRecord(_keyboardDebugApp);
+    [self refreshKeyboardDebugLabel];
+}
+
+- (void)noteKeyboardDebugFromSpringBoard:(NSString *)line {
+    NSString *shown = line.length ? [@"SB: " stringByAppendingString:line] : @"SB: (empty)";
+    if ([shown isEqualToString:_keyboardDebugSpringBoard]) return;
+    _keyboardDebugSpringBoard = shown;
+    DSDiagnosticsRecord(_keyboardDebugSpringBoard);
+    [self refreshKeyboardDebugLabel];
 }
 
 #pragma mark - Stage content

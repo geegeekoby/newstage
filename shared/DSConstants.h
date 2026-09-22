@@ -23,6 +23,11 @@
 // two stages are allowed, so the other app is published here.
 #define kDSStagePeerNotification "com.recreated.dynamicstage.geometry.peer"
 
+// The staged app writes a packed status here so SpringBoard can show it.
+// Low 32 bits are the bundle hash. Bit 32 is staged, bit 33 means a keyboard
+// window was found, bits 40-47 are how many keyboard views were forced out.
+#define kDSKeyboardDebugNotification "com.recreated.dynamicstage.keyboard.debug"
+
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"

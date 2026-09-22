@@ -42,6 +42,11 @@
 // stage, the app sharing the screen with it or SpringBoard itself. The stage does one
 // thing with it: keeps the card off it.
 - (void)keyboardOnScreen:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source;
+// Live keyboard diagnosis, shown on the stage. `springBoardLine` is what the
+// arbiter did. `appLine` is what the hosted app reported.
+- (void)noteKeyboardDebugFromApp:(NSString *)line;
+- (void)noteKeyboardDebugFromSpringBoard:(NSString *)line;
+- (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;
 - (void)closeStageAnimated:(BOOL)animated;

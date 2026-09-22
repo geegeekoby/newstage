@@ -511,6 +511,22 @@ static BOOL DSRouteStagedKeyboardToSpringBoard(id arbiter, id information, id ha
     return NO;
 }
 
+static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onScreen) {
+    BOOL staged = DSBundleIsStaged(source);
+    id springBoard = DSSpringBoardKeyboardHandler(arbiter);
+    id uiHandle = DSKeyboardUIHandle(arbiter);
+    NSString *uiBundle = DSHandlerBundle(uiHandle) ?: @"none";
+    BOOL layer = DSArbiterSceneLayer(arbiter) != nil;
+    NSString *verdict = @"app is still the keyboard host";
+    if (!onScreen) verdict = @"keyboard is down";
+    else if (!staged) verdict = @"this keyboard is not from a staged app";
+    else if (!springBoard) verdict = @"SpringBoard has no keyboard client, so it cannot draw keys";
+    else if ([uiBundle isEqualToString:@"com.apple.springboard"] && layer) verdict = @"SpringBoard keyboard scene is up";
+    else if ([uiBundle isEqualToString:@"com.apple.springboard"]) verdict = @"SpringBoard is host but has no keyboard scene";
+    return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d",
+            verdict, source ?: @"?", onScreen, staged, springBoard != nil, uiBundle, layer];
+}
+
 %group Arbiter
 
 %hook _UIKeyboardArbiter
@@ -565,7 +581,19 @@ static BOOL DSRouteStagedKeyboardToSpringBoard(id arbiter, id information, id ha
         }
     } @catch (NSException *exception) {
     }
+    NSString *summary = nil;
+    @try {
+        if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];
+    } @catch (NSException *exception) {
+    }
     DSArbiterBusy = NO;
+    if (summary.length) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DSTell(^(DSStageManager *manager) {
+                [manager noteKeyboardDebugFromSpringBoard:summary];
+            });
+        });
+    }
 
     if (!DSStageReady() || !information) return;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -642,6 +670,26 @@ static void DSRegisterDarwinObservers(void) {
     CFNotificationCenterAddObserver(center, NULL, DSOpenStage,
                                     CFSTR(kDSOpenStageNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
+
+    int keyboardDebugToken = NOTIFY_TOKEN_INVALID;
+    notify_register_dispatch(kDSKeyboardDebugNotification, &keyboardDebugToken, dispatch_get_main_queue(), ^(int token) {
+        uint64_t state = 0;
+        notify_get_state(token, &state);
+        uint32_t hash = (uint32_t)state;
+        BOOL staged = (state & kDSStageStateActiveBit) != 0;
+        BOOL chrome = (state & (1ULL << 33)) != 0;
+        NSUInteger hidden = (NSUInteger)((state >> 40) & 0xff);
+        NSString *fallback = [NSString stringWithFormat:@"hash %u staged=%d chrome=%d hid=%lu",
+                              hash, staged, chrome, (unsigned long)hidden];
+        DSTell(^(DSStageManager *manager) {
+            NSString *bundle = [manager bundleForKeyboardHash:hash];
+            NSString *line = [bundle isEqualToString:[NSString stringWithFormat:@"hash %u", hash]]
+                ? fallback
+                : [NSString stringWithFormat:@"%@ staged=%d chrome=%d hid=%lu",
+                   bundle, staged, chrome, (unsigned long)hidden];
+            [manager noteKeyboardDebugFromApp:line];
+        });
+    });
 }
 
 static void DSInstallRemainingHooks(void) {

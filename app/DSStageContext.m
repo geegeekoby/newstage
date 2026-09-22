@@ -71,25 +71,39 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
 
     [self refresh];
 
-    int token = 0;
+    // Zero is a valid token, so an unset out-parameter has to be the invalid
+    // one. Starting at zero makes the registration reuse a token this process
+    // does not own, and the app never hears that it was put on the stage.
+    int token = NOTIFY_TOKEN_INVALID;
     notify_register_dispatch(kDSStageGeometryNotification, &token, dispatch_get_main_queue(), ^(int t) {
         [self refresh];
         [self applyGeometryChange];
     });
-    int peerWatch = 0;
+    int peerWatch = NOTIFY_TOKEN_INVALID;
     notify_register_dispatch(kDSStagePeerNotification, &peerWatch, dispatch_get_main_queue(), ^(int t) {
         [self refresh];
         [self applyGeometryChange];
     });
-    notify_register_dispatch(kDSAppInfoChangedNotification, &token, dispatch_get_main_queue(), ^(int t) {
+    int infoToken = NOTIFY_TOKEN_INVALID;
+    notify_register_dispatch(kDSAppInfoChangedNotification, &infoToken, dispatch_get_main_queue(), ^(int t) {
         [[DSPreferences sharedPreferences] reload];
         [self refresh];
     });
 
+    // The post can land before this process is listening. Reading the state
+    // again covers that without depending on the notification arriving.
+    __weak DSStageContext *weakSelf = self;
+    for (NSNumber *delay in @[ @0.3, @0.9, @1.8, @3.5 ]) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [weakSelf refresh];
+        });
+    }
+
     NSArray<NSString *> *suffixes = @[ @".left", @".right", @".reset" ];
     for (NSString *suffix in suffixes) {
         NSString *name = [kDSRotateNotificationPrefix stringByAppendingString:suffix];
-        int rotateToken = 0;
+        int rotateToken = NOTIFY_TOKEN_INVALID;
         notify_register_dispatch(name.UTF8String, &rotateToken, dispatch_get_main_queue(), ^(int t) {
             if (!self.staged) return;
             if ([suffix isEqualToString:@".reset"]) {

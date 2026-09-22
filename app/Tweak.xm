@@ -6,6 +6,7 @@
 #import "DSBootstrap.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
+#import <notify.h>
 // Injected into every UIKit app. While this process is the one on the stage,
 // every route UIKit offers for "how big is the screen" answers with the stage
 // rectangle and the interface stays pinned to portrait.
@@ -199,6 +200,8 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 // put them back, and again before the run loop sleeps.
 
 static BOOL DSBanishing = NO;
+static NSUInteger DSBanishHits = 0;
+static BOOL DSBanishFoundChrome = NO;
 
 static BOOL DSNameIsLocalKeyboard(NSString *name) {
     if (name.length == 0) return NO;
@@ -222,6 +225,7 @@ static BOOL DSWindowIsKeyboardChrome(UIWindow *window) {
 }
 
 static void DSSuppressKeyboardView(UIView *view) {
+    DSBanishHits++;
     if (!view.layer.hidden || view.layer.opacity > 0.01) {
         [view.layer removeAllAnimations];
         view.layer.hidden = YES;
@@ -236,8 +240,8 @@ static void DSSuppressKeyboardView(UIView *view) {
     }
 }
 
-static void DSBanishKeyboardInView(UIView *view, CGRect windowBounds, BOOL inKeyboardWindow) {
-    if (![view isKindOfClass:UIView.class]) return;
+static void DSBanishKeyboardInView(UIView *view, CGRect windowBounds, BOOL inKeyboardWindow, NSInteger depth) {
+    if (depth > (inKeyboardWindow ? 8 : 3) || ![view isKindOfClass:UIView.class]) return;
     NSString *name = NSStringFromClass(object_getClass(view));
     CGRect frame = view.frame;
     // A keyboard sitting on the bottom edge of this window, including one that
@@ -253,7 +257,7 @@ static void DSBanishKeyboardInView(UIView *view, CGRect windowBounds, BOOL inKey
         return;
     }
     for (UIView *subview in view.subviews) {
-        DSBanishKeyboardInView(subview, windowBounds, inKeyboardWindow);
+        DSBanishKeyboardInView(subview, windowBounds, inKeyboardWindow, depth + 1);
     }
 }
 
@@ -335,25 +339,62 @@ static void DSVisitLiveWindows(void (^visitor)(UIWindow *window)) {
     }
 }
 
+static void DSReportKeyboardDebug(NSString *windowNames) {
+    static int token = NOTIFY_TOKEN_INVALID;
+    static uint64_t lastState = 0;
+    static NSString *lastNames = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        notify_register_check(kDSKeyboardDebugNotification, &token);
+    });
+    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+    BOOL staged = DSStaged();
+    uint64_t state = DSIdentifierHash(identifier);
+    if (staged) state |= kDSStageStateActiveBit;
+    if (DSBanishFoundChrome) state |= (1ULL << 33);
+    state |= (uint64_t)MIN(DSBanishHits, (NSUInteger)255) << 40;
+    BOOL changed = state != lastState || (windowNames.length > 0 && ![windowNames isEqualToString:lastNames]);
+    if (!changed) return;
+    lastState = state;
+    lastNames = [windowNames copy];
+    if (token != NOTIFY_TOKEN_INVALID) {
+        notify_set_state(token, state);
+        notify_post(kDSKeyboardDebugNotification);
+    }
+    // A separate file so this cannot overwrite the stage list SpringBoard publishes.
+    NSString *summary = [NSString stringWithFormat:@"%@ staged=%d chrome=%d hid=%lu windows=%@",
+                         identifier, staged, DSBanishFoundChrome, (unsigned long)DSBanishHits,
+                         windowNames ?: @"?"];
+    [summary writeToFile:@"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard.txt"
+              atomically:YES
+                encoding:NSUTF8StringEncoding
+                   error:nil];
+}
+
 static void DSBanishLocalKeyboard(void) {
     if (!DSStaged() || DSBanishing) return;
     DSBanishing = YES;
+    DSBanishHits = 0;
+    DSBanishFoundChrome = NO;
+    NSMutableArray *names = [NSMutableArray array];
     @try {
         DSVisitLiveWindows(^(UIWindow *window) {
-            BOOL chrome = DSWindowIsKeyboardChrome(window);
-            if (!chrome) return;
             NSString *name = NSStringFromClass(object_getClass(window));
-            if ([name rangeOfString:@"RemoteKeyboard"].location != NSNotFound) {
+            if (names.count < 8 && name.length) [names addObject:name];
+            BOOL chrome = DSWindowIsKeyboardChrome(window);
+            if (chrome) DSBanishFoundChrome = YES;
+            if (chrome && [name rangeOfString:@"RemoteKeyboard"].location != NSNotFound) {
                 DSSuppressKeyboardView(window);
                 return;
             }
             CGRect bounds = window.bounds;
-            DSBanishKeyboardInView(window, bounds, YES);
-            DSBanishKeyboardLayers(window.layer, bounds);
+            DSBanishKeyboardInView(window, bounds, chrome, 0);
+            if (chrome) DSBanishKeyboardLayers(window.layer, bounds);
         });
     } @catch (NSException *exception) {
     }
     DSBanishing = NO;
+    DSReportKeyboardDebug([names componentsJoinedByString:@","]);
 }
 
 static void DSInstallKeyboardBanishObserver(void) {

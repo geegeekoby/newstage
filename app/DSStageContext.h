@@ -29,9 +29,6 @@
 @property (nonatomic, readonly) BOOL padMode;
 // Quarter turns requested from SpringBoard: 0, 1 (right) or 3 (left).
 @property (nonatomic, readonly) NSInteger quarterTurns;
-// YES after SpringBoard says it could not present its own keyboard. The app
-// then draws keys itself, at the bottom of the card.
-@property (nonatomic, assign) BOOL preferLocalKeyboard;
 
 // Called the first time this process becomes the app on the stage, which is when
 // the geometry hooks are worth installing.

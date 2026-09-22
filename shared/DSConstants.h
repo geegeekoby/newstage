@@ -19,10 +19,14 @@
 // being picked up" without needing a log.
 #define kDSOpenStageNotification "com.recreated.dynamicstage.stage.open"
 
-// Posted by SpringBoard when a staged app asked for SpringBoard's keyboard and
-// no keyboard window appeared. The app then draws its own keys inside the card
-// so the field is not left blank.
-#define kDSKeyboardLocalFallbackNotification "com.recreated.dynamicstage.keyboard.local"
+// Second hosted app. The geometry notification only carries one bundle hash, and
+// two stages are allowed, so the other app is published here.
+#define kDSStagePeerNotification "com.recreated.dynamicstage.geometry.peer"
+
+// The staged app writes the context id of its keyboard window here. SpringBoard
+// binds that context into its own keyboard window, so the keys are on the
+// display instead of inside the card. Zero means the keyboard is gone.
+#define kDSKeyboardContextNotification "com.recreated.dynamicstage.keyboard.context"
 
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.

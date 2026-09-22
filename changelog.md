@@ -1,3 +1,7 @@
+**4.5.5**
+- A staged app's keyboard is hosted in SpringBoard's keyboard window, full width, outside the card. The previous build fell back to the keyboard inside the app
+- Both stages are told they are staged, so the second app hosts its keyboard the same way
+
 **4.5.4**
 - Hold a filled square in the right-edge notch to send that stage back to the app picker. An empty square does not. A short tap still opens or shows that half
 - Scene updates that were still resizing a hosted app, and moving an app's view between cards, are gone so those paths cannot blank the stage

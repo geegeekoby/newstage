@@ -424,6 +424,15 @@ static void DSRegisterDarwinObservers(void) {
     CFNotificationCenterAddObserver(center, NULL, DSOpenStage,
                                     CFSTR(kDSOpenStageNotification), NULL,
                                     CFNotificationSuspensionBehaviorCoalesce);
+
+    int keyboardToken = 0;
+    notify_register_dispatch(kDSKeyboardContextNotification, &keyboardToken, dispatch_get_main_queue(), ^(int token) {
+        uint64_t contextID = 0;
+        notify_get_state(token, &contextID);
+        DSTell(^(DSStageManager *manager) {
+            [manager noteRemoteKeyboardContext:(unsigned int)contextID];
+        });
+    });
 }
 
 static void DSInstallRemainingHooks(void) {

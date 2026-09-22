@@ -271,7 +271,7 @@ tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full wi
 
 **Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up and no app is hosted. The card lifts above the keyboard (301pt floor).
 
-**Staged app.** The app is told to use SpringBoard's keyboard (`isUsingRemoteKeyboard` and the text-effects window hosted for the view), and only while it is staged. SpringBoard unhides its own keyboard window when that window actually contains keys, and the bottom card lifts. The stage window is not made key while an app is hosted. If no SpringBoard keyboard window appears, SpringBoard tells the app to draw its own keys at the bottom of the card so the field is not left blank.
+**Staged app.** The app still draws the keys (forcing a remote keyboard on this iPhone firmware draws nothing). Its text-effects window is hosted, and SpringBoard binds that window into `UIRemoteKeyboardWindow` above the stage, full display width. The bottom card lifts. The stage window is not made key while an app is hosted. Both stages are marked staged, so the second app does this too.
 
 **What is never done.** No layer reparenting, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no keyboard focus coordinator, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards).
 

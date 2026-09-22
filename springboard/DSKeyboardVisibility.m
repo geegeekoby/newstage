@@ -2,6 +2,7 @@
 #import "DSConstants.h"
 #import <UIKit/UIKit.h>
 #import <objc/message.h>
+#import <objc/runtime.h>
 
 static BOOL DSWindowRespondsYes(id object, SEL selector) {
     if (![object respondsToSelector:selector]) return NO;
@@ -108,4 +109,68 @@ BOOL DSRevealSpringBoardKeyboard(void) {
     });
     if (revealed) return YES;
     return DSKeyboardFrameIsOnScreen(DSVisibleKeyboardFrameOnScreen(), screen);
+}
+
+static id DSRemoteContext(unsigned int contextID) {
+    Class contextClass = objc_getClass("CAContext");
+    SEL remote = @selector(remoteContextWithOptions:);
+    if (![contextClass respondsToSelector:remote]) return nil;
+    for (NSString *key in @[ @"CAContextId", @"kCAContextId", @"contextId" ]) {
+        @try {
+            id context = ((id (*)(id, SEL, id))objc_msgSend)(contextClass, remote, @{ key : @(contextID) });
+            if (context) return context;
+        } @catch (NSException *exception) {
+        }
+    }
+    return nil;
+}
+
+void DSHostKeyboardContext(unsigned int contextID) {
+    static UIWindow *hostedWindow = nil;
+    static unsigned int boundContext = 0;
+
+    if (contextID == 0) {
+        boundContext = 0;
+        if (hostedWindow) hostedWindow.hidden = YES;
+        return;
+    }
+    if (contextID == boundContext && hostedWindow && !hostedWindow.hidden) return;
+
+    Class windowClass = objc_getClass("UIRemoteKeyboardWindow");
+    SEL create = @selector(remoteKeyboardWindowForScreen:create:);
+    UIWindow *window = nil;
+    if ([windowClass respondsToSelector:create]) {
+        @try {
+            window = ((id (*)(id, SEL, id, BOOL))objc_msgSend)(windowClass, create, UIScreen.mainScreen, YES);
+        } @catch (NSException *exception) {
+            window = nil;
+        }
+    }
+    if (!window) return;
+
+    id remote = DSRemoteContext(contextID);
+    SEL bind = NSSelectorFromString(@"_setBoundContext:");
+    if (remote && [window respondsToSelector:bind]) {
+        @try {
+            ((void (*)(id, SEL, id))objc_msgSend)(window, bind, remote);
+        } @catch (NSException *exception) {
+        }
+    }
+    for (NSString *name in @[ @"attachBindable", @"resetScene" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![window respondsToSelector:selector]) continue;
+        @try {
+            ((void (*)(id, SEL))objc_msgSend)(window, selector);
+        } @catch (NSException *exception) {
+        }
+    }
+
+    window.backgroundColor = UIColor.clearColor;
+    window.opaque = NO;
+    window.hidden = NO;
+    if (window.windowLevel < UIWindowLevelStatusBar) {
+        window.windowLevel = UIWindowLevelStatusBar + 1.0;
+    }
+    hostedWindow = window;
+    boundContext = contextID;
 }

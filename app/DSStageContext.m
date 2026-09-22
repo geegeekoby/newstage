@@ -12,6 +12,7 @@
     CGRect _deviceBounds;
     BOOL _resolvedDeviceBounds;
     int _stateToken;
+    int _peerToken;
 }
 
 + (instancetype)sharedContext {
@@ -23,35 +24,60 @@
     return shared;
 }
 
+static BOOL DSNotifyNamesUs(int token, NSString *identifier) {
+    if (token == NOTIFY_TOKEN_INVALID || identifier.length == 0) return NO;
+    uint64_t published = 0;
+    if (notify_get_state(token, &published) != NOTIFY_STATUS_OK || published == 0) return NO;
+    if ((published & kDSStageStateActiveBit) == 0) return NO;
+    uint32_t staged = (uint32_t)published;
+    return staged != 0 && staged == DSIdentifierHash(identifier);
+}
+
+static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
+    if (!state || identifier.length == 0) return NO;
+    NSArray *stages = state[@"stages"];
+    if ([stages isKindOfClass:NSArray.class] && [stages containsObject:identifier]) return YES;
+    return [state[@"active"] boolValue] && [state[@"stage"] isEqualToString:identifier];
+}
+
 + (BOOL)processIsStagedNow {
     NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
     if (identifier.length == 0) return NO;
 
     NSDictionary *state = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
-    if (state) {
-        return [state[@"active"] boolValue] && [state[@"stage"] isEqualToString:identifier];
-    }
+    if (DSFileNamesUs(state, identifier)) return YES;
 
     int token = NOTIFY_TOKEN_INVALID;
-    if (notify_register_check(kDSStageGeometryNotification, &token) != NOTIFY_STATUS_OK) return NO;
-    uint64_t published = 0;
-    BOOL staged = notify_get_state(token, &published) == NOTIFY_STATUS_OK &&
-                  (published & kDSStageStateActiveBit) != 0 &&
-                  (uint32_t)published == DSIdentifierHash(identifier);
-    notify_cancel(token);
-    return staged;
+    int peer = NOTIFY_TOKEN_INVALID;
+    BOOL named = NO;
+    if (notify_register_check(kDSStageGeometryNotification, &token) == NOTIFY_STATUS_OK) {
+        named = DSNotifyNamesUs(token, identifier);
+        notify_cancel(token);
+    }
+    if (!named && notify_register_check(kDSStagePeerNotification, &peer) == NOTIFY_STATUS_OK) {
+        named = DSNotifyNamesUs(peer, identifier);
+        notify_cancel(peer);
+    }
+    return named;
 }
 
 - (void)startObserving {
     // Registered as a check so the notification's state can be read even where
     // the sandbox will not let this process near the state file.
     _stateToken = NOTIFY_TOKEN_INVALID;
+    _peerToken = NOTIFY_TOKEN_INVALID;
     notify_register_check(kDSStageGeometryNotification, &_stateToken);
+    notify_register_check(kDSStagePeerNotification, &_peerToken);
 
     [self refresh];
 
     int token = 0;
     notify_register_dispatch(kDSStageGeometryNotification, &token, dispatch_get_main_queue(), ^(int t) {
+        [self refresh];
+        [self applyGeometryChange];
+    });
+    int peerWatch = 0;
+    notify_register_dispatch(kDSStagePeerNotification, &peerWatch, dispatch_get_main_queue(), ^(int t) {
         [self refresh];
         [self applyGeometryChange];
     });
@@ -101,27 +127,15 @@
     NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
     BOOL wasStaged = _staged;
 
-    BOOL active = NO;
-    BOOL isUs = NO;
-
-    // The notification first and the file second. Both are written together, but an
-    // app is sandboxed and the file is in SpringBoard's preferences directory, so the
-    // notification is the one that arrives everywhere.
-    uint64_t published = 0;
-    if (_stateToken != NOTIFY_TOKEN_INVALID &&
-        notify_get_state(_stateToken, &published) == NOTIFY_STATUS_OK && published != 0) {
-        uint32_t staged = (uint32_t)published;
-        active = (published & kDSStageStateActiveBit) != 0;
-        isUs = staged != 0 && staged == DSIdentifierHash(identifier);
-    } else {
-        NSDictionary *state = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
-        if (state) {
-            active = [state[@"active"] boolValue];
-            isUs = identifier.length > 0 && [state[@"stage"] isEqualToString:identifier];
-        }
+    // Either hosted app counts. The geometry notification carries one of them and
+    // the peer notification carries the other. The file is only a fallback for a
+    // process that cannot read those states.
+    BOOL isUs = DSNotifyNamesUs(_stateToken, identifier) || DSNotifyNamesUs(_peerToken, identifier);
+    if (!isUs) {
+        isUs = DSFileNamesUs([NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath], identifier);
     }
 
-    _staged = active && isUs && preferences.enabled;
+    _staged = isUs && preferences.enabled;
 
     CGRect bounds = [self sceneBounds];
     _stageBounds = CGRectIsEmpty(bounds) ? self.deviceBounds : bounds;
@@ -129,10 +143,8 @@
     if (!_staged) {
         _quarterTurns = 0;
         _padMode = NO;
-        _preferLocalKeyboard = NO;
         return;
     }
-    if (!wasStaged) _preferLocalKeyboard = NO;
     _padMode = [preferences launchTypeForApplication:identifier] == DSLaunchTypePad &&
                ![preferences landscapeDisabledForApplication:identifier];
 

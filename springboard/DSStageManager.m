@@ -129,8 +129,6 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_bundleIdentifierToRestoreInFront;
     BOOL _notedKeyboardOnce;
     BOOL _notedStrayKeyboard;
-    BOOL _keyboardFallbackScheduled;
-    BOOL _keyboardFallbackSent;
     NSTimeInterval _ignoreSystemPullUntil;
     // The keyboard as the arbiter last described it, in display points, or zero when
     // there is none on screen. Whose keyboard it is does not matter: it is on the
@@ -384,46 +382,23 @@ static BOOL sSystemEdgePullAvailable;
     [self noteKeyboardFrame:onScreen ? frame : CGRectZero
                     source:source.length > 0 ? source : @"an app"
                   duration:0.25];
-    if (!onScreen) {
-        _keyboardFallbackScheduled = NO;
-        _keyboardFallbackSent = NO;
-        return;
-    }
-    [self surfaceSpringBoardKeyboardForSource:source];
-}
-
-// A staged app is told to use SpringBoard's keyboard. That keyboard is a window
-// in this process; if it is sitting hidden under the stage, bring it up. If it
-// never appears, tell the app to draw its own keys so the field is not left blank.
-- (BOOL)sourceIsStagedApp:(NSString *)source {
-    if (source.length == 0) return NO;
-    if (_sceneHost.isHosting && [_sceneHost.bundleIdentifier isEqualToString:source]) return YES;
-    if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:source]) return YES;
-    return NO;
-}
-
-- (void)surfaceSpringBoardKeyboardForSource:(NSString *)source {
-    if (![self sourceIsStagedApp:source]) return;
+    if (!onScreen) return;
     [self giveBackKeyWindow];
-    if (DSRevealSpringBoardKeyboard()) {
-        _keyboardFallbackSent = NO;
+    DSRevealSpringBoardKeyboard();
+}
+
+- (void)noteRemoteKeyboardContext:(unsigned int)contextID {
+    if (contextID == 0) {
+        DSHostKeyboardContext(0);
         return;
     }
-    if (_keyboardFallbackSent || _keyboardFallbackScheduled) return;
-    _keyboardFallbackScheduled = YES;
-    NSString *expected = [source copy];
-    __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.45 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        if (!strongSelf) return;
-        strongSelf->_keyboardFallbackScheduled = NO;
-        if (![strongSelf sourceIsStagedApp:expected]) return;
-        if (DSRevealSpringBoardKeyboard()) return;
-        strongSelf->_keyboardFallbackSent = YES;
-        notify_post(kDSKeyboardLocalFallbackNotification);
-        DSDiagnosticsRecord(@"SpringBoard: no keyboard window of its own, so the staged app draws the keys");
-    });
+    if (!_sceneHost.isHosting && !_topSceneHost.isHosting) {
+        DSHostKeyboardContext(0);
+        return;
+    }
+    [self giveBackKeyWindow];
+    DSHostKeyboardContext(contextID);
+    DSRevealSpringBoardKeyboard();
 }
 
 // While an app is on the stage, the arbiter still hears keyboards from Spotlight and
@@ -2022,28 +1997,45 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 // The injected app-side dylib has to know it is being hosted before its first
 // frame, so the target and its rectangle are published to disk plus a Darwin
 // notification for anything already running.
+static void DSSetStageNotify(const char *name, NSString *identifier) {
+    static int primary = NOTIFY_TOKEN_INVALID;
+    static int peer = NOTIFY_TOKEN_INVALID;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        notify_register_check(kDSStageGeometryNotification, &primary);
+        notify_register_check(kDSStagePeerNotification, &peer);
+    });
+    int token = strcmp(name, kDSStagePeerNotification) == 0 ? peer : primary;
+    if (token == NOTIFY_TOKEN_INVALID) return;
+    uint64_t value = 0;
+    if (identifier.length > 0) value = DSIdentifierHash(identifier) | kDSStageStateActiveBit;
+    notify_set_state(token, value);
+}
+
 - (void)publishStageStateForBundleIdentifier:(NSString *)identifier frame:(CGRect)frame active:(BOOL)active {
+    // Both hosted apps have to be told. Publishing only the last one left the
+    // other drawing its own keyboard inside the card.
+    NSMutableArray *stages = [NSMutableArray array];
+    NSString *bottom = _sceneHost.isHosting ? _sceneHost.bundleIdentifier : nil;
+    NSString *top = _topSceneHost.isHosting ? _topSceneHost.bundleIdentifier : nil;
+    if (bottom.length) [stages addObject:bottom];
+    if (top.length && ![stages containsObject:top]) [stages addObject:top];
+    if (!active && identifier.length) [stages removeObject:identifier];
+    if (active && identifier.length && ![stages containsObject:identifier]) [stages addObject:identifier];
+
     // The same file carries the recents list, so merge rather than overwrite.
     NSMutableDictionary *state = [([NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath] ?: @{}) mutableCopy];
-    state[@"stage"] = identifier ?: @"";
-    state[@"active"] = @(active);
+    state[@"stages"] = stages;
+    state[@"stage"] = stages.firstObject ?: @"";
+    state[@"active"] = @(stages.count > 0);
     state[@"width"] = @(CGRectGetWidth(frame));
     state[@"height"] = @(CGRectGetHeight(frame));
     [state writeToFile:kDSSharedStatePath atomically:YES];
 
-    // Carried on the notification as well, so an app that the sandbox keeps away
-    // from the file above can still recognise itself and hook nothing when it is
-    // not the one being hosted.
-    static int token = NOTIFY_TOKEN_INVALID;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        notify_register_check(kDSStageGeometryNotification, &token);
-    });
-    if (token != NOTIFY_TOKEN_INVALID) {
-        notify_set_state(token, active ? (DSIdentifierHash(identifier) | kDSStageStateActiveBit) : 0);
-    }
-
+    DSSetStageNotify(kDSStageGeometryNotification, stages.count > 0 ? stages[0] : nil);
+    DSSetStageNotify(kDSStagePeerNotification, stages.count > 1 ? stages[1] : nil);
     notify_post(kDSStageGeometryNotification);
+    notify_post(kDSStagePeerNotification);
 }
 
 #pragma mark - Stage content

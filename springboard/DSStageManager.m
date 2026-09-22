@@ -11,6 +11,7 @@
 #import "DSDiagnostics.h"
 #import "DSKeyboardVisibility.h"
 #import "DSStageLayout.h"
+#import "DSStageShelfView.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -116,6 +117,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     UIView *_hostBackdrop;
     UIView *_splitCornerMask;
     UIImageView *_openAppIcon;
+    DSStageShelfView *_shelf;
     DSLaunchPlaceholderView *_launchPlaceholder;
     DSLaunchPlaceholderView *_topLaunchPlaceholder;
 
@@ -241,7 +243,20 @@ static BOOL sSystemEdgePullAvailable;
         [weakSelf minimizeIndividualCard:weakCard];
     };
 
+    _shelf = [[DSStageShelfView alloc] initWithFrame:root.bounds];
+    _shelf.willOpenHandler = ^{
+        [weakSelf refreshShelf];
+    };
+    _shelf.selectionHandler = ^(NSString *bundleIdentifier) {
+        [weakSelf presentAppFromShelf:bundleIdentifier];
+    };
+    [root addSubview:_shelf];
+
     [self applyAppearance];
+    [self refreshShelf];
+    // The cards stay off screen until a stage is open. The window itself stays
+    // up so the edge notch can be tapped with nothing staged.
+    _window.hidden = NO;
 }
 
 - (void)preferencesChanged {
@@ -588,6 +603,7 @@ static BOOL sSystemEdgePullAvailable;
     _picker.darkMode = dark;
     if (_topContainer) _topContainer.darkMode = dark;
     if (_topPicker) _topPicker.darkMode = dark;
+    _shelf.darkMode = dark;
 }
 
 #pragma mark - Geometry
@@ -749,6 +765,7 @@ static BOOL sSystemEdgePullAvailable;
     _topDragPan.cancelsTouchesInView = NO;
     _topDragPan.delaysTouchesBegan = NO;
     [_topContainer addGestureRecognizer:_topDragPan];
+    [self bringShelfToFront];
 
     __weak __typeof(self) weakSelf = self;
     __weak DSStageContainerView *weakTop = _topContainer;
@@ -1007,6 +1024,7 @@ static BOOL sSystemEdgePullAvailable;
             [self layoutAllStackSlotsForState:self->_state];
         }];
         DSDiagnosticsRecord(@"SpringBoard: minimized the second stage");
+        [self refreshShelf];
         return;
     }
 
@@ -1033,6 +1051,7 @@ static BOOL sSystemEdgePullAvailable;
         [self layoutAllStackSlotsForState:self->_state];
     }];
     DSDiagnosticsRecord(@"SpringBoard: minimized the first stage");
+    [self refreshShelf];
 }
 
 - (void)addStackSlotAnimated {
@@ -1238,6 +1257,8 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (BOOL)shouldWindowCaptureTouchAtPoint:(CGPoint)point {
+    // The notch (and its list, while open) is tappable with the stage closed.
+    if ([_shelf claimsPoint:point]) return YES;
     if (_state == DSStageStateClosed || _state == DSStageStateMinimized) return NO;
 
     CGRect card = CGRectOffset(_container.frame, 0.0, -_container.liftOffset);
@@ -1350,6 +1371,7 @@ static BOOL sSystemEdgePullAvailable;
     _state = DSStageStateTracking;
 
     [_feedback prepare];
+    [_shelf setOpen:NO animated:NO];
     if (!self.hasHostedApp) [_picker resetScrollPosition];
     _container.frame = [self peekFrameForProgress:0.0];
     _container.cornerRadius = kDSPeekCornerRadius;
@@ -1412,7 +1434,7 @@ static BOOL sSystemEdgePullAvailable;
             [self updateOpenAppIcon];
             [self->_sceneHost setForeground:NO];
         } else {
-            self->_window.hidden = YES;
+            [self noteStageWindowIdle];
         }
     }];
 }
@@ -1723,6 +1745,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         [self updateOpenAppIcon];
         [self updateHomeAffordance];
         [self scheduleAutoKill];
+        [self refreshShelf];
     };
 
     if (animated) {
@@ -1780,9 +1803,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         self->_container.frame = [self stageFrameForState:DSStageStateClosed];
         self->_openAppIcon.alpha = 0.0;
         [self giveBackKeyWindow];
-        self->_window.hidden = YES;
         self->_stageQuarterTurns = 0;
         [self teardownStageApp];
+        [self noteStageWindowIdle];
         [self updateHomeAffordance];
     };
 
@@ -1978,6 +2001,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         }
     }
     host.parentViewController = _window.rootViewController;
+    [self refreshShelf];
 
     DSDiagnosticsRecordFormat(@"SpringBoard: putting %@ on stack slot %ld", entry.bundleIdentifier, (long)slot);
 
@@ -1999,6 +2023,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
                 [strongSelf publishStageStateForBundleIdentifier:nil frame:CGRectZero active:NO];
                 [host relinquishKeepingBackgrounded:NO];
             }
+            [strongSelf refreshShelf];
             return;
         }
         [strongSelf attachHostedAppForSlot:slot];
@@ -2091,6 +2116,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     }
 
     [self updateHomeAffordance];
+    [self refreshShelf];
 
     UIView *placeholder = slot == 0 ? _launchPlaceholder : _topLaunchPlaceholder;
     if (slot == 0) {
@@ -2239,9 +2265,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
     _state = DSStageStateClosed;
     _container.frame = [self stageFrameForState:DSStageStateClosed];
-    _window.hidden = YES;
     _stageQuarterTurns = 0;
     [self showPickerImmediately];
+    [self noteStageWindowIdle];
     [self updateHomeAffordance];
 }
 
@@ -2287,7 +2313,9 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         [UIView animateWithDuration:0.2 animations:^{
             self->_openAppIcon.alpha = 0.0;
         } completion:^(BOOL finished) {
-            if (self->_state == DSStageStateClosed) self->_window.hidden = YES;
+            if (self->_state == DSStageStateClosed || self->_state == DSStageStateMinimized) {
+                [self noteStageWindowIdle];
+            }
         }];
         return;
     }
@@ -2565,6 +2593,66 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
     return CGRectUnion([_container cornerGripRect], [_container edgeGripRect]);
 }
 
+#pragma mark - Stage shelf
+
+- (void)bringShelfToFront {
+    if (_shelf.superview) [_shelf.superview bringSubviewToFront:_shelf];
+}
+
+- (void)noteStageWindowIdle {
+    _window.hidden = NO;
+    [self bringShelfToFront];
+    [self refreshShelf];
+}
+
+- (void)refreshShelf {
+    if (!_shelf) return;
+    NSMutableArray<NSString *> *staged = [NSMutableArray array];
+    if (_sceneHost.bundleIdentifier.length) [staged addObject:_sceneHost.bundleIdentifier];
+    if (_topSceneHost.bundleIdentifier.length) [staged addObject:_topSceneHost.bundleIdentifier];
+    [_shelf reloadStagedIdentifiers:staged
+                 recentIdentifiers:[DSPreferences sharedPreferences].recentApplications];
+}
+
+- (NSInteger)shelfSlotForNewApp {
+    if (!_sceneHost) return 0;
+    if (_stackSlotCount >= kDSMaxStackSlots && !_topSceneHost) return 1;
+    if (_stackSlotCount >= kDSMaxStackSlots && _primaryHalf != 0) return 1;
+    return 0;
+}
+
+- (void)presentAppFromShelf:(NSString *)bundleIdentifier {
+    DSAppEntry *entry = [[DSAppLibrary sharedLibrary] entryForBundleIdentifier:bundleIdentifier];
+    if (!entry) return;
+    if ([[DSPreferences sharedPreferences] isApplicationDisabled:entry.bundleIdentifier]) return;
+
+    BOOL showing = [_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier] ||
+                   [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier];
+    if (showing) {
+        if (_state == DSStageStateClosed || _state == DSStageStateMinimized) {
+            [self openStageAnimated:YES];
+        }
+        return;
+    }
+
+    if (_state != DSStageStateOverlay && _state != DSStageStateSplit) {
+        if (_state != DSStageStateMinimized) {
+            NSString *refusal = [self reasonStageCannotActivate];
+            if (refusal) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: shelf refused to open because %@", refusal);
+                return;
+            }
+        }
+        [self openStageAnimated:NO];
+        if (_state != DSStageStateOverlay && _state != DSStageStateSplit) return;
+    }
+
+    NSInteger slot = [self shelfSlotForNewApp];
+    if (slot == 1) [self ensureTopStackInfrastructure];
+    [self bringShelfToFront];
+    [self launchEntry:entry slot:slot];
+}
+
 #pragma mark - External events
 
 - (void)noteSceneDestroyedForBundleIdentifier:(NSString *)bundleIdentifier {
@@ -2575,8 +2663,9 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
     [self showPickerImmediately];
     if (_state == DSStageStateMinimized) {
         _state = DSStageStateClosed;
-        _window.hidden = YES;
+        [self noteStageWindowIdle];
     }
+    [self refreshShelf];
     [self updateOpenAppIcon];
     [self updateHomeAffordance];
 }

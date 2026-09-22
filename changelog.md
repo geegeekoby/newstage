@@ -1,3 +1,7 @@
+**4.5.0**
+- A small notch on the right edge of the screen lists apps on the stage and recently staged apps, and tapping one puts it on a stage
+- The notch stays available while the stage cards are closed
+
 **4.4.5**
 - Two stages still fill the two halves, with a few points of wallpaper around each card and rounded corners
 

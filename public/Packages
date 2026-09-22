@@ -1,6 +1,6 @@
 Package: com.recreated.dynamicstage
 Name: Dynamic Stage
-Version: 4.4.0
+Version: 4.4.1
 Architecture: iphoneos-arm64
 Description: Stage Manager Reimagined for iPhone
 Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
@@ -10,11 +10,11 @@ Tag: compatible::ios16
 Author: Dynamic Stage Recreation
 Maintainer: Dynamic Stage Recreation
 Installed-Size: 920
-Filename: debs/com.recreated.dynamicstage_4.4.0_iphoneos-arm64.deb
-Size: 171814
-MD5sum: 71748136ff4a80f7f8306bdae6c69ee6
-SHA1: 80347855256f8801cefdca8bacbedb258f83eda7
-SHA256: b766efac3be9183c6ecf1a7e60450fdfedacb0701381e517b450156451cfb659
-Icon: https://facility-icons-broader-academic.trycloudflare.com/assets/icon.png
-Depiction: https://facility-icons-broader-academic.trycloudflare.com/depiction.json
-SileoDepiction: https://facility-icons-broader-academic.trycloudflare.com/depiction.json
+Filename: debs/com.recreated.dynamicstage_4.4.1_iphoneos-arm64.deb
+Size: 173298
+MD5sum: 19e438cf8dadcaa9279049f63d81fd9e
+SHA1: f65211932de05b9968ba1fcbd1de8f3fbeac5586
+SHA256: cef8edede90c9efbd222069f2d8d64cd955c48d4723a190da7a6a2d9e1954fd3
+Icon: https://dallas-clubs-tutorials-orleans.trycloudflare.com/assets/icon.png
+Depiction: https://dallas-clubs-tutorials-orleans.trycloudflare.com/depiction.json
+SileoDepiction: https://dallas-clubs-tutorials-orleans.trycloudflare.com/depiction.json

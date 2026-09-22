@@ -104,6 +104,10 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
     NSInteger _stackSlotCount;
     NSInteger _keyboardLiftSlot;
+    // Which half of the display each card occupies once two stages are open.
+    // 0 = bottom, 1 = top. The hosted app stays inside its own card.
+    NSInteger _primaryHalf;
+    NSInteger _secondHalf;
     UIPanGestureRecognizer *_topDragPan;
 
     UIView *_hostSnapshot;
@@ -433,9 +437,12 @@ static BOOL sSystemEdgePullAvailable;
         keyboard = CGRectZero;
     }
 
-    _keyboardLiftSlot = 0;
-    if (_topSceneHost.isHosting && [source isEqualToString:_topSceneHost.bundleIdentifier]) {
-        _keyboardLiftSlot = 1;
+    NSInteger bottomSlot = [self slotOnBottomHalf];
+    NSString *bottomBundle = [self sceneHostForSlot:bottomSlot].bundleIdentifier;
+    _keyboardLiftSlot = bottomSlot;
+    if (bottomBundle.length > 0 && source.length > 0 && ![source isEqualToString:bottomBundle] &&
+        ![source isEqualToString:@"SpringBoard"]) {
+        keyboard = CGRectZero;
     }
     if ((_sceneHost.isHosting && [source isEqualToString:_sceneHost.bundleIdentifier]) ||
         (_topSceneHost.isHosting && [source isEqualToString:_topSceneHost.bundleIdentifier])) {
@@ -495,12 +502,15 @@ static BOOL sSystemEdgePullAvailable;
     [self liftCardBy:MAX(overlap, 0.0) slot:_keyboardLiftSlot duration:duration];
 }
 
+- (NSInteger)slotOnBottomHalf {
+    if (_stackSlotCount < kDSMaxStackSlots) return 0;
+    return _primaryHalf == 0 ? 0 : 1;
+}
+
 - (CGRect)restingFrameForKeyboardLiftSlot:(NSInteger)slot state:(DSStageState)state {
     if (_stackSlotCount >= kDSMaxStackSlots && state == DSStageStateOverlay) {
-        return [self frameForStackSlot:slot state:state];
-    }
-    if (slot == 1) {
-        return [self frameForStackSlot:1 state:state];
+        NSInteger half = slot == 1 ? _secondHalf : _primaryHalf;
+        return [self frameForHalf:half state:state];
     }
     return [self restingStageFrameForState:state];
 }
@@ -512,8 +522,8 @@ static BOOL sSystemEdgePullAvailable;
 
 - (CGFloat)maxLiftForSlot:(NSInteger)slot state:(DSStageState)state {
     CGRect resting = [self restingFrameForKeyboardLiftSlot:slot state:state];
-    if (_stackSlotCount >= kDSMaxStackSlots && state == DSStageStateOverlay && slot == 0 && _topContainer) {
-        CGRect top = [self frameForStackSlot:1 state:state];
+    if (_stackSlotCount >= kDSMaxStackSlots && state == DSStageStateOverlay && slot == [self slotOnBottomHalf]) {
+        CGRect top = [self frameForHalf:1 state:state];
         CGFloat cap = CGRectGetMinY(resting) - (CGRectGetMaxY(top) + kDSStackSlotGap);
         return MAX(cap, 0.0);
     }
@@ -664,10 +674,11 @@ static BOOL sSystemEdgePullAvailable;
     if (!_sceneHost.isHosting || CGRectIsEmpty(_keyboardFrame)) return UIEdgeInsetsZero;
 
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    DSStageContainerView *bottomCard = [self containerOnHalf:0];
     CGRect resting = (_stackSlotCount >= kDSMaxStackSlots && layoutState == DSStageStateOverlay)
-        ? [self frameForStackSlot:0 state:layoutState]
+        ? [self frameForHalf:0 state:layoutState]
         : [self restingStageFrameForState:layoutState];
-    CGRect card = CGRectOffset(resting, 0.0, -_container.liftOffset);
+    CGRect card = CGRectOffset(resting, 0.0, -(bottomCard ? bottomCard.liftOffset : 0.0));
     CGFloat keyboardTop = CGRectGetMinY(_keyboardFrame);
     CGFloat overlap = CGRectGetMaxY(card) - keyboardTop;
     if (overlap <= 1.0) return UIEdgeInsetsZero;
@@ -681,8 +692,9 @@ static BOOL sSystemEdgePullAvailable;
     if (!_topSceneHost.isHosting || CGRectIsEmpty(_keyboardFrame)) return UIEdgeInsetsZero;
 
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-    CGRect resting = [self frameForStackSlot:1 state:layoutState];
-    CGRect card = CGRectOffset(resting, 0.0, -_topContainer.liftOffset);
+    CGRect resting = [self frameForHalf:1 state:layoutState];
+    DSStageContainerView *topCard = [self containerOnHalf:1];
+    CGRect card = CGRectOffset(resting, 0.0, -(topCard ? topCard.liftOffset : 0.0));
     CGFloat keyboardTop = CGRectGetMinY(_keyboardFrame);
     CGFloat overlap = CGRectGetMaxY(card) - keyboardTop;
     if (overlap <= 1.0) return UIEdgeInsetsZero;
@@ -729,15 +741,48 @@ static BOOL sSystemEdgePullAvailable;
     [_topContainer addGestureRecognizer:_topDragPan];
 }
 
-- (CGRect)frameForStackSlot:(NSInteger)slot state:(DSStageState)state {
+- (CGRect)frameForHalf:(NSInteger)half state:(DSStageState)state {
     if (_stackSlotCount <= 1) {
         return [self stageFrameForState:state];
     }
     if (state == DSStageStateOverlay) {
-        return DSStageStackHalfScreenFrame([self screenBounds], slot, kDSStackSlotGap, kDSStackCardInset);
+        return DSStageStackHalfScreenFrame([self screenBounds], half, kDSStackSlotGap, kDSStackCardInset);
     }
     CGRect combined = [self stageFrameForState:state];
-    return DSStageStackSlotFrame(combined, slot, _stackSlotCount, kDSStackSlotGap);
+    return DSStageStackSlotFrame(combined, half, _stackSlotCount, kDSStackSlotGap);
+}
+
+- (NSInteger)halfForContainer:(DSStageContainerView *)card {
+    if (card == _topContainer) return _secondHalf;
+    return _primaryHalf;
+}
+
+- (DSStageContainerView *)containerOnHalf:(NSInteger)half {
+    if (_stackSlotCount < kDSMaxStackSlots) return _container;
+    if (_primaryHalf == half) return _container;
+    return _topContainer;
+}
+
+- (void)swapStackHalvesAnimated:(BOOL)animated {
+    if (_stackSlotCount < kDSMaxStackSlots) return;
+    NSInteger previous = _primaryHalf;
+    _primaryHalf = _secondHalf;
+    _secondHalf = previous;
+    [_container setLiftOffset:0.0];
+    [_topContainer setLiftOffset:0.0];
+    void (^layout)(void) = ^{
+        [self layoutAllStackSlotsForState:self->_state];
+    };
+    if (animated) {
+        [UIView animateWithDuration:0.32
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseInOut
+                         animations:layout
+                         completion:nil];
+    } else {
+        layout();
+    }
+    DSDiagnosticsRecord(@"SpringBoard: swapped the two stages between top and bottom");
 }
 
 - (DSStageContainerView *)containerForSlot:(NSInteger)slot {
@@ -816,24 +861,20 @@ static BOOL sSystemEdgePullAvailable;
     DSStageContainerView *card = [self containerForSlot:slot];
     if (!host.isHosting || !card) return;
 
-    CGRect frame = [self frameForStackSlot:slot state:state];
+    CGRect frame = card.frame;
+    if (CGRectIsEmpty(frame)) {
+        frame = [self frameForHalf:[self halfForContainer:card] state:state];
+    }
     UIEdgeInsets insets = UIEdgeInsetsZero;
-    if (slot == 0 && host == _sceneHost) {
+    if ([self containerOnHalf:0] == card && !CGRectIsEmpty(_keyboardFrame)) {
         insets = [self stageSafeAreaInsets];
-    } else if (slot == 1 && host == _topSceneHost) {
-        insets = [self stageSafeAreaInsetsForTopSlot];
     }
     CGRect window = CGRectOffset(frame, 0.0, -card.liftOffset);
     [host setStageFrame:window safeAreaInsets:insets];
 
     UIView *hostView = host.hostView;
-    if (hostView) {
-        hostView.layer.mask = nil;
-        if (hostView.superview != card.contentView) {
-            [card.contentView insertSubview:hostView atIndex:0];
-        }
-        hostView.frame = card.contentView.bounds;
-        hostView.clipsToBounds = YES;
+    if (hostView && hostView.superview != card.contentView) {
+        [card.contentView insertSubview:hostView atIndex:0];
     }
     [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:window active:YES];
 }
@@ -845,16 +886,22 @@ static BOOL sSystemEdgePullAvailable;
         if (_topContainer) _topContainer.hidden = YES;
     } else {
         CGFloat radius = MAX([self displayCornerRadius] - kDSStackCardInset, 12.0);
-        _container.frame = [self frameForStackSlot:0 state:state];
+        _container.frame = [self frameForHalf:_primaryHalf state:state];
         _container.cornerRadius = radius;
         _topContainer.hidden = NO;
-        _topContainer.frame = [self frameForStackSlot:1 state:state];
+        _topContainer.frame = [self frameForHalf:_secondHalf state:state];
         _topContainer.cornerRadius = radius;
+        _picker.view.frame = _container.contentView.bounds;
         _topPicker.view.frame = _topContainer.contentView.bounds;
-        if (_topSceneHost.isHosting) {
-            [_topContainer setBackdropHidden:YES];
-        } else {
-            [self prepareTopSlotForPicker];
+        if (!_sceneHost.isHosting) {
+            [_container setBackdropHidden:NO];
+            _picker.view.hidden = NO;
+            [_container.contentView bringSubviewToFront:_picker.view];
+        }
+        if (!_topSceneHost.isHosting) {
+            [_topContainer setBackdropHidden:NO];
+            _topPicker.view.hidden = NO;
+            [_topContainer.contentView bringSubviewToFront:_topPicker.view];
         }
     }
 
@@ -877,26 +924,23 @@ static BOOL sSystemEdgePullAvailable;
         return;
     }
 
+    // The live app stays inside the card it already has. That card moves to the
+    // top half. A new card, with the same picker the stage opens with, takes the
+    // bottom half. Ripping the host view out of its card is what painted black.
     [self ensureTopStackInfrastructure];
     _topContainer.darkMode = _container.darkMode;
-
-    DSSceneHost *promoted = _sceneHost;
-    UIView *hostView = promoted.hostView;
-    _topSceneHost = promoted;
-    _sceneHost = nil;
-
-    [_launchPlaceholder removeFromSuperview];
-    _launchPlaceholder = nil;
+    _primaryHalf = 1;
+    _secondHalf = 0;
     _stackSlotCount = 2;
-
-    if (hostView) {
-        [_topContainer.contentView insertSubview:hostView atIndex:0];
-        hostView.frame = _topContainer.contentView.bounds;
-        hostView.alpha = 1.0;
-        hostView.transform = CGAffineTransformIdentity;
-    }
-    _topContainer.hostingApp = YES;
-    [_topContainer setBackdropHidden:YES];
+    [_container setLiftOffset:0.0];
+    [_topContainer setLiftOffset:0.0];
+    [_topContainer setBackdropHidden:NO];
+    _topPicker.darkMode = _container.darkMode;
+    _topPicker.view.hidden = NO;
+    _topPicker.view.alpha = 1.0;
+    [_topPicker reloadContent];
+    [_topPicker resetScrollPosition];
+    [_topContainer.contentView bringSubviewToFront:_topPicker.view];
 
     [UIView animateWithDuration:0.32
                           delay:0
@@ -905,12 +949,11 @@ static BOOL sSystemEdgePullAvailable;
                          [self layoutAllStackSlotsForState:self->_state];
                      }
                      completion:^(BOOL finished) {
-                         [self showFreshBottomStagePicker];
-                         [self layoutHostedAppInSlot:1 state:self->_state];
+                         [self layoutHostedAppInSlot:0 state:self->_state];
                          [self updateStackChrome];
                      }];
-    DSDiagnosticsRecordFormat(@"SpringBoard: pushed %@ up and opened a fresh stage below",
-                              promoted.bundleIdentifier);
+    DSDiagnosticsRecordFormat(@"SpringBoard: moved %@ to the top half and opened a new stage below",
+                              _sceneHost.bundleIdentifier);
 }
 
 - (void)collapseStackKeepingBottomApp:(BOOL)animated {
@@ -941,6 +984,8 @@ static BOOL sSystemEdgePullAvailable;
     [_topLaunchPlaceholder removeFromSuperview];
     _topLaunchPlaceholder = nil;
     _stackSlotCount = 1;
+    _primaryHalf = 0;
+    _secondHalf = 1;
     _topContainer.hidden = YES;
 
     void (^layout)(void) = ^{
@@ -1802,7 +1847,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [preferences noteApplicationOpened:entry.bundleIdentifier];
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     [self publishStageStateForBundleIdentifier:entry.bundleIdentifier
-                                        frame:[self frameForStackSlot:slot state:layoutState]
+                                        frame:[self frameForHalf:(slot == 1 ? _secondHalf : _primaryHalf) state:layoutState]
                                        active:YES];
     [self presentLaunchPlaceholderForEntry:entry slot:slot];
 
@@ -2220,8 +2265,8 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
         _container.frame = CGRectOffset([self stageFrameForState:state], 0.0, dy);
         return;
     }
-    _container.frame = CGRectOffset([self frameForStackSlot:0 state:state], 0.0, dy);
-    _topContainer.frame = CGRectOffset([self frameForStackSlot:1 state:state], 0.0, dy);
+    _container.frame = CGRectOffset([self frameForHalf:_primaryHalf state:state], 0.0, dy);
+    _topContainer.frame = CGRectOffset([self frameForHalf:_secondHalf state:state], 0.0, dy);
 }
 
 - (void)handleStagePan:(UIPanGestureRecognizer *)recognizer {
@@ -2344,7 +2389,18 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
                     [self snapBackToLayoutForState:layoutState];
                 }
             } else if (fromTop) {
-                if (translation.y > CGRectGetHeight(resting) * 0.38 || velocity.y > 950.0) {
+                if (_stackSlotCount >= kDSMaxStackSlots && _state == DSStageStateOverlay) {
+                    BOOL onBottom = [self halfForContainer:card] == 0;
+                    BOOL swapUp = onBottom && (translation.y < -70.0 || velocity.y < -700.0);
+                    BOOL swapDown = !onBottom && (translation.y > 70.0 || velocity.y > 700.0);
+                    if (swapUp || swapDown) {
+                        [self swapStackHalvesAnimated:YES];
+                    } else if (onBottom && (translation.y > CGRectGetHeight(resting) * 0.38 || velocity.y > 950.0)) {
+                        [self minimizeAnimated:YES];
+                    } else {
+                        [self snapBackToLayoutForState:layoutState];
+                    }
+                } else if (translation.y > CGRectGetHeight(resting) * 0.38 || velocity.y > 950.0) {
                     [self minimizeAnimated:YES];
                 } else if (translation.y < -40.0 && _state == DSStageStateOverlay && _stackSlotCount <= 1) {
                     [self enterStateSplitAnimated:YES];

@@ -384,7 +384,40 @@ static void DSForwardHostedKeyboardText(NSString *text, BOOL isDelete) {
     });
 }
 
-%hook UITextEffectsWindow
+// Letters typed on SpringBoard's keyboard are delivered here. The staged app
+// is another process, so the characters are written through to the field it
+// already remembered. This does not take the key window or open a text field.
+%hook UIKeyboardImpl
+
+- (void)addInputString:(NSString *)string {
+    %orig;
+    DSForwardHostedKeyboardText(string, NO);
+}
+
+- (void)addInputString:(NSString *)string withFlags:(unsigned long long)flags {
+    %orig;
+    (void)flags;
+    DSForwardHostedKeyboardText(string, NO);
+}
+
+- (void)insertText:(NSString *)text {
+    %orig;
+    DSForwardHostedKeyboardText(text, NO);
+}
+
+- (void)deleteFromInput {
+    %orig;
+    DSForwardHostedKeyboardText(nil, YES);
+}
+
+- (void)deleteBackward {
+    %orig;
+    DSForwardHostedKeyboardText(nil, YES);
+}
+
+%end
+
+%hook UIWindow
 
 - (void)setWindowLevel:(CGFloat)level {
     if (DSKeyboardWindowShouldStayAboveStage(self) && level < DSKeyboardWindowLevelAboveStage()) {
@@ -402,33 +435,6 @@ static void DSForwardHostedKeyboardText(NSString *text, BOOL isDelete) {
     }
     %orig;
 }
-
-%end
-
-// Letters typed on SpringBoard's keyboard are delivered here. The staged app
-// is another process, so the characters are written through to the field it
-// already remembered. This does not take the key window or open a text field.
-%hook UIKeyboardImpl
-
-- (void)addInputString:(NSString *)string {
-    %orig;
-    DSForwardHostedKeyboardText(string, NO);
-}
-
-- (void)addInputString:(NSString *)string withFlags:(unsigned long long)flags {
-    %orig;
-    (void)flags;
-    DSForwardHostedKeyboardText(string, NO);
-}
-
-- (void)deleteFromInput {
-    %orig;
-    DSForwardHostedKeyboardText(nil, YES);
-}
-
-%end
-
-%hook UIWindow
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     UIView *hit = %orig;
@@ -557,7 +563,7 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     id uiHandle = DSKeyboardUIHandle(arbiter);
     NSString *uiBundle = DSHandlerBundle(uiHandle) ?: @"none";
     BOOL layer = DSArbiterSceneLayer(arbiter) != nil;
-    NSString *verdict = @"hosted app is drawing its own keyboard";
+    NSString *verdict = @"staged app keyboard is up";
     if (!onScreen) verdict = @"keyboard is down";
     else if (!staged) verdict = @"this keyboard is not from a staged app";
     return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d",

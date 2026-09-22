@@ -1,3 +1,6 @@
+**4.5.50**
+- The log showed five keyboard windows, the remote-keyboard one left on its own scene, and `SBMedusaHostedKeyboardWindow` on SpringBoard at level 20, under the stage at 999. Every keyboard window is now moved onto the stage's scene and held at the status bar plus 5000, including Medusa and the remote-keyboard window, and UIKit cannot put the level or the scene back. The card does not clip. Letters, deletes, and `insertText:` from SpringBoard's keyboard are written through to the staged field. Keyboard classes are not removed and the keyboard UI host is not assigned; both of those sent the phone to safe mode
+
 **4.5.49**
 - The level-6000 window was one window. UIKit left a second keyboard window on SystemAperture at level 10, and that is the one the stage clipped. Every visible keyboard window is now held at the status bar plus 5000, and any window UIKit puts on an aperture scene is moved onto the same scene as the stage. The remote-keyboard window stays on its own scene, because moving that one off it stopped the keys painting. The card's layer does not mask while those windows are up. Letters typed on SpringBoard's keyboard are written through to the field the staged app already has. The keyboard UI host is not assigned and no keyboard class is removed
 

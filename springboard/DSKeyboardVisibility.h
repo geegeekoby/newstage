@@ -30,9 +30,8 @@ BOOL DSRaiseKeyboardWindowAboveStage(void);
 // making a second one on SystemAperture at level 10; that one is clipped.
 BOOL DSKeyboardWindowShouldStayAboveStage(id window);
 CGFloat DSKeyboardWindowLevelAboveStage(void);
-// While a staged keyboard is up, an aperture scene is replaced with the
-// foreground scene the stage window is already on. A remote-keyboard scene
-// is left where it is.
+// While a staged keyboard is up, any scene other than the stage's own scene
+// is replaced with that scene. Level alone cannot cross scenes.
 id DSReplacementSceneForKeyboardWindow(id window, id proposedScene);
 void DSRestoreRemoteKeyboardPlacement(void);
 

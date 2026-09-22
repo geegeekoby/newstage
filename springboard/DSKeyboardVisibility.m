@@ -151,21 +151,6 @@ static NSMapTable<UIWindow *, NSDictionary *> *DSKeyboardPlacementTable(void) {
     return DSKeyboardPlacements;
 }
 
-static BOOL DSSceneNameIsRemoteKeyboard(NSString *name) {
-    return [name rangeOfString:@"remote-keyboard"].location != NSNotFound;
-}
-
-static BOOL DSSceneNameIsAperture(NSString *name) {
-    if (name.length == 0) return NO;
-    return [name rangeOfString:@"Aperture"].location != NSNotFound ||
-           [name rangeOfString:@"aperture"].location != NSNotFound;
-}
-
-static NSString *DSSceneIdentifier(id scene) {
-    if (![scene isKindOfClass:UIScene.class]) return @"";
-    return ((UIScene *)scene).session.persistentIdentifier ?: @"";
-}
-
 // The stage window already lives on SpringBoard's foreground scene. A keyboard
 // window has to be on that same scene before its level can sit above the card.
 static UIWindowScene *DSForegroundScene(void) {
@@ -202,9 +187,11 @@ BOOL DSKeyboardWindowShouldStayAboveStage(id window) {
 id DSReplacementSceneForKeyboardWindow(id window, id proposedScene) {
     if (!DSExternalKeyboardRaised || ![window isKindOfClass:UIWindow.class]) return nil;
     if (!DSClassNameLooksLikeKeyboard(NSStringFromClass([(UIWindow *)window class]))) return nil;
-    if (!DSSceneNameIsAperture(DSSceneIdentifier(proposedScene))) return nil;
     UIWindowScene *foreground = DSForegroundScene();
     if (!foreground || proposedScene == foreground) return nil;
+    // remote-keyboard, SystemAperture, and any other scene sit under the stage
+    // no matter what level they use. The stage's own scene is the one that
+    // can paint above the card.
     return foreground;
 }
 
@@ -289,30 +276,40 @@ BOOL DSRaiseKeyboardWindowAboveStage(void) {
     __block NSInteger raised = 0;
     __block NSInteger moved = 0;
     // Pin levels before the loop. setWindowLevel: is hooked and would otherwise
-    // let UIKit write level 10 back onto a window we have not finished yet.
+    // let UIKit write level 10 or 20 back onto a window we have not finished yet.
     DSExternalKeyboardRaised = YES;
     DSVisitApplicationWindows(^(UIWindow *window) {
-        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
-        if (window.hidden || window.alpha < 0.01) return;
-        NSString *before = DSWindowSceneName(window);
-        BOOL remote = DSSceneNameIsRemoteKeyboard(before);
-        BOOL aperture = DSSceneNameIsAperture(before);
+        NSString *className = NSStringFromClass(window.class);
+        if (!DSClassNameLooksLikeKeyboard(className)) return;
         CGRect keys = DSKeyboardViewFrameInView(window);
         BOOL hasKeys = DSKeyboardFrameIsOnScreen(keys, screen);
-        if (!remote && !aperture && !hasKeys) return;
+        CGFloat height = CGRectGetHeight(window.frame);
+        BOOL keyboardBand = height >= 80.0 && height <= CGRectGetHeight(screen) * 0.55;
+        BOOL medusa = [className rangeOfString:@"Medusa"].location != NSNotFound;
+        // A hidden full-screen text-effects window is not the keyboard. Unhiding
+        // one of those covers the wallpaper. A Medusa keyboard or a short band
+        // is the window that was sitting at level 20.
+        if (window.hidden || window.alpha < 0.01) {
+            if (!hasKeys && !medusa && !keyboardBand) return;
+        }
+        NSString *before = DSWindowSceneName(window);
         @try {
             DSRememberKeyboardWindow(window);
-            // SystemAperture clips to the island. The remote-keyboard scene is
-            // left alone: moving that window off its scene stopped the keys
-            // painting. An aperture window can move onto the stage's scene.
-            if (aperture && foreground && window.windowScene != foreground) {
+            if ((hasKeys || medusa || keyboardBand) && (window.hidden || window.alpha < 0.01)) {
+                window.alpha = 1.0;
+                window.hidden = NO;
+            }
+            if (foreground && window.windowScene != foreground) {
                 window.windowScene = foreground;
                 moved++;
             }
             window.windowLevel = DSKeyboardWindowLevelAboveStage();
+            window.clipsToBounds = NO;
+            window.layer.masksToBounds = NO;
             raised++;
-            if (notes.count < 4) {
-                [notes addObject:[NSString stringWithFormat:@"%@->%@ lvl=%.0f keys=%@",
+            if (notes.count < 6) {
+                [notes addObject:[NSString stringWithFormat:@"%@ %@->%@ lvl=%.0f keys=%@",
+                                  className,
                                   before,
                                   DSWindowSceneName(window),
                                   window.windowLevel,

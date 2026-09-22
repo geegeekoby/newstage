@@ -108,6 +108,8 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     // 0 = bottom, 1 = top. The hosted app stays inside its own card.
     NSInteger _primaryHalf;
     NSInteger _secondHalf;
+    UIEdgeInsets _lockedScreenInsets;
+    BOOL _lockedScreenInsetsReady;
     UIPanGestureRecognizer *_topDragPan;
 
     UIView *_hostSnapshot;
@@ -548,23 +550,12 @@ static BOOL sSystemEdgePullAvailable;
     DSStageContainerView *card = [self containerForSlot:slot];
     if (!card) return;
 
-    if (fabs(offset - card.liftOffset) < 0.5) {
-        if ([self sceneHostForSlot:slot].isHosting) {
-            [self pushLiftedGeometryToApp];
-            [self layoutStageForState:layoutState];
-        }
-        return;
-    }
+    if (fabs(offset - card.liftOffset) < 0.5) return;
 
     void (^lift)(void) = ^{
+        // Move the card. Do not tell the app a new size — that transaction is what
+        // blanks a staged app.
         [card setLiftOffset:offset];
-        if (![self sceneHostForSlot:slot].isHosting) return;
-        [self pushLiftedGeometryToApp];
-        [self layoutStageForState:layoutState];
-        if (offset > 0.5) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: stack slot %ld lifted %.0f pt for keyboard",
-                                      (long)slot, offset);
-        }
     };
     if (duration > 0.0) {
         [UIView animateWithDuration:duration animations:lift];
@@ -625,26 +616,30 @@ static BOOL sSystemEdgePullAvailable;
     return [self restingStageFrameForState:state];
 }
 
-// The card's usual size, ignoring any keyboard. Overlay is the inset half-screen
-// card; split is edge to edge below the split line.
-- (CGRect)restingStageFrameForState:(DSStageState)state {
-    CGRect bounds = [self screenBounds];
-    CGFloat screenHeight = CGRectGetHeight(bounds);
-    CGFloat screenWidth = CGRectGetWidth(bounds);
-    CGFloat top = [self splitLine] + kDSStageInset;
+// One size for every stage, taken from the screen and never changed. Top and
+// bottom are the same width and height. Overlay and Split View use that same
+// card; the keyboard only slides it.
+- (UIEdgeInsets)lockedScreenInsets {
+    if (_lockedScreenInsetsReady) return _lockedScreenInsets;
+    UIEdgeInsets safe = [self screenSafeAreaInsets];
+    if (safe.top < 1.0) safe.top = 47.0;
+    if (safe.bottom < 1.0) safe.bottom = 34.0;
+    _lockedScreenInsets = safe;
+    _lockedScreenInsetsReady = YES;
+    return _lockedScreenInsets;
+}
 
-    switch (state) {
-        case DSStageStateSplit:
-            return CGRectMake(0, top, screenWidth, screenHeight - top);
-        case DSStageStateOverlay:
-            return CGRectMake(kDSStageInset, top,
-                              screenWidth - kDSStageInset * 2.0,
-                              screenHeight - top - kDSStageInset);
-        default:
-            return CGRectMake(kDSStageInset, screenHeight,
-                              screenWidth - kDSStageInset * 2.0,
-                              screenHeight - top - kDSStageInset);
+- (CGRect)fixedHalfFrame:(NSInteger)half {
+    UIEdgeInsets safe = [self lockedScreenInsets];
+    return DSStageStackHalfScreenFrame([self screenBounds], half, kDSStackSlotGap, kDSStackCardInset, safe.top, safe.bottom);
+}
+
+- (CGRect)restingStageFrameForState:(DSStageState)state {
+    CGRect bottom = [self fixedHalfFrame:0];
+    if (state == DSStageStateClosed || state == DSStageStateMinimized) {
+        bottom.origin.y = CGRectGetHeight([self screenBounds]);
     }
+    return bottom;
 }
 
 - (CGFloat)cornerRadiusForState:(DSStageState)state {
@@ -755,17 +750,8 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (CGRect)frameForHalf:(NSInteger)half state:(DSStageState)state {
-    if (_stackSlotCount <= 1) {
-        return [self stageFrameForState:state];
-    }
-    if (state == DSStageStateOverlay) {
-        UIEdgeInsets safe = [self screenSafeAreaInsets];
-        CGFloat topInset = MAX(kDSStackCardInset, safe.top);
-        CGFloat bottomInset = MAX(kDSStackCardInset, safe.bottom);
-        return DSStageStackHalfScreenFrame([self screenBounds], half, kDSStackSlotGap, kDSStackCardInset, topInset, bottomInset);
-    }
-    CGRect combined = [self stageFrameForState:state];
-    return DSStageStackSlotFrame(combined, half, _stackSlotCount, kDSStackSlotGap);
+    (void)state;
+    return [self fixedHalfFrame:half];
 }
 
 - (NSInteger)halfForContainer:(DSStageContainerView *)card {
@@ -881,23 +867,29 @@ static BOOL sSystemEdgePullAvailable;
     DSStageContainerView *card = [self containerForSlot:slot];
     if (!host.isHosting || !card) return;
 
-    CGRect frame = card.frame;
-    if (CGRectIsEmpty(frame)) {
-        frame = [self frameForHalf:[self halfForContainer:card] state:state];
-    }
-    UIEdgeInsets insets = UIEdgeInsetsZero;
-    if ([self containerOnHalf:0] == card && !CGRectIsEmpty(_keyboardFrame)) {
-        insets = [self stageSafeAreaInsets];
-    }
-    CGRect window = CGRectOffset(frame, 0.0, -card.liftOffset);
+    CGRect frame = [self fixedHalfFrame:[self halfForContainer:card]];
+    CGRect current = host.stageFrame;
+    BOOL sameSize = fabs(CGRectGetWidth(current) - CGRectGetWidth(frame)) < 0.5 &&
+                    fabs(CGRectGetHeight(current) - CGRectGetHeight(frame)) < 0.5;
+    BOOL sameOrigin = fabs(CGRectGetMinX(current) - CGRectGetMinX(frame)) < 0.5 &&
+                      fabs(CGRectGetMinY(current) - CGRectGetMinY(frame)) < 0.5;
     card.backgroundColor = UIColor.clearColor;
-    [host setStageFrame:window safeAreaInsets:insets];
+    if (sameSize && sameOrigin) {
+        return;
+    }
+    if (sameSize) {
+        // Same card, new half of the screen. Do not run the scene resize
+        // transaction; that is what blanks the app.
+        [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:frame active:YES];
+        return;
+    }
+    [host setStageFrame:frame safeAreaInsets:UIEdgeInsetsZero];
 
     UIView *hostView = host.hostView;
     if (hostView && hostView.superview != card.contentView) {
         [card.contentView insertSubview:hostView atIndex:0];
     }
-    [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:window active:YES];
+    [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:frame active:YES];
 }
 
 - (void)layoutAllStackSlotsForState:(DSStageState)state {
@@ -1049,6 +1041,9 @@ static BOOL sSystemEdgePullAvailable;
     [_container setLiftOffset:0.0];
     [_topContainer setLiftOffset:0.0];
     _container.backgroundColor = UIColor.clearColor;
+    _topContainer.frame = [self fixedHalfFrame:_secondHalf];
+    _topContainer.alpha = 0.0;
+    _topContainer.hidden = NO;
     [self presentPickerOnCard:_topContainer picker:_topPicker];
 
     [UIView animateWithDuration:0.32
@@ -1059,10 +1054,8 @@ static BOOL sSystemEdgePullAvailable;
                      }
                      completion:^(BOOL finished) {
                          [self presentPickerOnCard:self->_topContainer picker:self->_topPicker];
-                         [self layoutHostedAppInSlot:0 state:self->_state];
-                         [self->_sceneHost refreshPresentedGeometry];
+                         self->_topContainer.alpha = 1.0;
                          [self updateStackChrome];
-                         [self refreshStackedGeometrySoon];
                      }];
     DSDiagnosticsRecordFormat(@"SpringBoard: moved %@ to the top half and opened a new stage below",
                               _sceneHost.bundleIdentifier);

@@ -1,3 +1,7 @@
+**4.4.3**
+- Every stage is one fixed size from the screen (top half and bottom half match). Opening a second stage, Split View, and the keyboard do not resize a card
+- Scene resize transactions are not repeated when the card only moves
+
 **4.4.2**
 - Second stage is a real picker card (blur plus fallback fill), and the moved app is told its new size again so the card does not stay black
 - Minimize button on the top left of each stage; minimizing one leaves the other as a normal stage

@@ -316,6 +316,9 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     NSInteger _presentGeneration;
     NSMutableSet<NSNumber *> *_loadedAppHashes;
     NSMutableSet<NSNumber *> *_listeningAppHashes;
+    // Messenger is drawing keys in the card. A SpringBoard keyboard notification
+    // must not lift that card, or the keys travel up inside the chrome.
+    BOOL _hostedAppKeyboardActive;
 }
 
 static BOOL sSystemEdgePullAvailable;
@@ -588,21 +591,31 @@ static BOOL sSystemEdgePullAvailable;
         CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
         [self noteSearchKeyboardDebug:[NSString stringWithFormat:@"UIKit willShow %@", NSStringFromCGRect(keyboard)]];
     }
+    if (_hostedAppKeyboardActive) return;
     if (![self isShowingAppPicker] && _stagedKeyboardSlot < 0) return;
     [self keyboardFrameWillChange:notification];
 }
 
 - (void)keyboardFrameWillChange:(NSNotification *)notification {
     CGRect keyboard = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    [self noteKeyboardFrame:keyboard
-                    source:@"SpringBoard"
-                  duration:[notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
+    NSTimeInterval duration = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    // UIKit in SpringBoard also posts this when a staged app's keyboard moves.
+    // Treating that as SpringBoard's own keyboard is what lifted the card 306pt
+    // and dragged Messenger's keys back inside the chrome.
+    if (_searchSlot < 0 && _stagedKeyboardSlot < 0 &&
+        (_sceneHost.isHosting || _topSceneHost.isHosting)) {
+        NSString *bundle = _sceneHost.isHosting ? _sceneHost.bundleIdentifier : _topSceneHost.bundleIdentifier;
+        [self noteKeyboardFrame:keyboard source:bundle duration:duration];
+        return;
+    }
+    [self noteKeyboardFrame:keyboard source:@"SpringBoard" duration:duration];
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
     if (_searchSlot >= 0) {
         [self noteSearchKeyboardDebug:@"UIKit willHide"];
     }
+    if (_hostedAppKeyboardActive) return;
     if ([self isShowingAppPicker] || _stagedKeyboardSlot >= 0) _notedKeyboardOnce = NO;
     [self noteKeyboardFrame:CGRectZero
                     source:@"SpringBoard"
@@ -892,15 +905,10 @@ static BOOL sSystemEdgePullAvailable;
     if (topStaged.length > 0 && [source isEqualToString:topStaged]) return YES;
 
     if ([source isEqualToString:@"SpringBoard"]) {
-        if ([self isShowingAppPicker] || _searchSlot >= 0 || _stagedKeyboardSlot >= 0) return YES;
-        // SpringBoard draws the remote keyboard for a hosted app. That lift is real.
-        if (anyHost && !CGRectIsEmpty(keyboard)) return YES;
-        // Search can end before this hide arrives. Still drop a lift that
-        // belongs to a picker, and leave a hosted app's card where it is.
-        if (CGRectIsEmpty(keyboard)) {
-            NSInteger slot = _keyboardLiftSlot;
-            if (![self sceneHostForSlot:slot].isHosting && [self liftOffsetForSlot:slot] > 0.5) return YES;
-        }
+        if (_searchSlot >= 0 || _stagedKeyboardSlot >= 0) return YES;
+        if ([self isShowingAppPicker]) return YES;
+        // A hosted app draws its own keys. SpringBoard's keyboard notification
+        // is not a reason to lift that card.
         return NO;
     }
 
@@ -1069,7 +1077,14 @@ static BOOL sSystemEdgePullAvailable;
         // The app draws keys at the bottom of the unlifted card, which is
         // already the system keyboard band. Lifting would drag those keys up
         // inside the chrome and leave a hole at the bottom of the display.
+        _hostedAppKeyboardActive = YES;
         liftCard.keyboardBandHeight = CGRectGetHeight(keyboard);
+        liftCard.contentView.backgroundColor = UIColor.clearColor;
+        UIView *hostView = [self sceneHostForSlot:liftSlot].hostView;
+        if (hostView) {
+            hostView.opaque = NO;
+            hostView.backgroundColor = UIColor.clearColor;
+        }
         if (_topContainer && _topContainer != liftCard) _topContainer.keyboardBandHeight = 0.0;
         [self liftCardBy:0.0 slot:liftSlot duration:duration];
         DSDiagnosticsRecordFormat(@"SpringBoard: opened the bottom of slot %ld so the keys sit outside the card",
@@ -1077,6 +1092,9 @@ static BOOL sSystemEdgePullAvailable;
         return;
     }
 
+    if (CGRectIsEmpty(keyboard)) {
+        _hostedAppKeyboardActive = NO;
+    }
     _container.keyboardBandHeight = 0.0;
     if (_topContainer) _topContainer.keyboardBandHeight = 0.0;
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
@@ -1150,6 +1168,14 @@ static BOOL sSystemEdgePullAvailable;
 - (void)liftCardBy:(CGFloat)offset slot:(NSInteger)slot duration:(NSTimeInterval)duration {
     // Only the card the keyboard covers moves, and it stays on screen. Moving the
     // other card by the same amount pushes the top stage off the top of the phone.
+    if (_hostedAppKeyboardActive && offset > 0.5) {
+        static BOOL logged = NO;
+        if (!logged) {
+            logged = YES;
+            DSDiagnosticsRecord(@"SpringBoard: ignored a lift while the hosted app owns the keys");
+        }
+        offset = 0.0;
+    }
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     DSStageContainerView *card = [self containerForSlot:slot];
     if (!card || [self cardIsParked:card]) return;
@@ -1294,6 +1320,7 @@ static BOOL sSystemEdgePullAvailable;
 - (void)forgetStagedAppKeyboard {
     _keyboardFrame = CGRectZero;
     _keyboardLiftSlot = 0;
+    _hostedAppKeyboardActive = NO;
     [_container setLiftOffset:0.0];
     _container.keyboardBandHeight = 0.0;
     if (_topContainer) {

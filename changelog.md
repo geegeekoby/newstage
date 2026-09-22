@@ -1,3 +1,6 @@
+**4.5.40**
+- The keys stayed inside the card because UIKit in SpringBoard posted `UIKeyboardWillChangeFrame` for Messenger's keyboard. That was treated as SpringBoard's own keyboard and lifted the card 306pt, dragging the keys up inside the chrome a moment after the bottom of the card had been opened. A hosted app's keyboard no longer lifts the card. Those keys stay in the system keyboard band under the chrome
+
 **4.5.39**
 - The phone went to safe mode after staging an app because Messenger was forced onto UIKit's remote keyboard and SpringBoard stole the keyboard UI host. That path is off. SpringBoard no longer overwrites TweakInject (the failed copy was deleting the filter). A staged app draws its own keys; the bottom of the card opens so those keys sit in the system keyboard band instead of inside the rounded chrome. Picker search still lifts the card over SpringBoard's own keyboard
 

@@ -557,6 +557,7 @@ static void DSRegisterDarwinObservers(void) {
         BOOL isDelete = (state & (1ULL << 36)) != 0;
         BOOL notStaged = (state & (1ULL << 37)) != 0;
         BOOL listening = (state & (1ULL << 38)) != 0;
+        BOOL loaded = (state & (1ULL << 39)) != 0;
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
         if (hadField && kind == 1) className = @"field";
@@ -564,8 +565,11 @@ static void DSRegisterDarwinObservers(void) {
         else if (hadField && kind == 3) className = @"other";
         DSTell(^(DSStageManager *manager) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
+            [manager noteAppDylibSignal:hash listening:listening loaded:loaded];
             NSString *line;
-            if (listening) {
+            if (loaded && !listening && !hadField && !changed && !notStaged) {
+                line = [NSString stringWithFormat:@"app: %@ loaded the stage dylib", bundle];
+            } else if (listening) {
                 line = [NSString stringWithFormat:@"app: %@ is listening for staged keys", bundle];
             } else if (notStaged) {
                 line = [NSString stringWithFormat:@"app: key arrived in %@ while it was not staged", bundle];
@@ -615,6 +619,22 @@ static void DSInstallRemainingHooks(void) {
 
             DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed after home screen, corner pull will come from %@",
                                       systemPull ? @"the system edge gesture" : @"a window in the corner");
+
+            BOOL libs = access("/var/jb/Library/MobileSubstrate/DynamicLibraries/DynamicStageApp.dylib", F_OK) == 0;
+            BOOL tweakInject = access("/var/jb/usr/lib/TweakInject", F_OK) == 0;
+            BOOL tweakLink = NO;
+            BOOL injectDylib = NO;
+            {
+                char link[512];
+                ssize_t n = readlink("/var/jb/usr/lib/TweakInject", link, sizeof(link) - 1);
+                if (n > 0) {
+                    link[n] = '\0';
+                    tweakLink = YES;
+                }
+                injectDylib = access("/var/jb/usr/lib/TweakInject/DynamicStageApp.dylib", F_OK) == 0;
+            }
+            DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d",
+                                      libs, tweakInject, tweakLink, injectDylib);
 
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{

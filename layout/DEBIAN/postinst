@@ -30,4 +30,20 @@ for dir in /var/mobile/Library/Preferences /var/jb/var/mobile/Library/Preference
 	fi
 done
 
+# ElleKit loads app tweaks from TweakInject. Theos rootless puts this dylib in
+# DynamicLibraries. When TweakInject is a real directory (not a symlink to that
+# folder), the in-app side never reaches Messenger and SpringBoard keeps every
+# letter. Copy the files in. Never replace a TweakInject that is already a
+# symlink - that would replace the directory.
+LIBS="/var/jb/Library/MobileSubstrate/DynamicLibraries"
+INJECT="/var/jb/usr/lib/TweakInject"
+if [ -d "$INJECT" ] && [ ! -L "$INJECT" ] && [ -f "$LIBS/DynamicStageApp.dylib" ]; then
+	cp -f "$LIBS/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.dylib" || true
+	cp -f "$LIBS/DynamicStageApp.plist" "$INJECT/DynamicStageApp.plist" || true
+fi
+
+# An already-open Messenger still has the old process image. Restart it so the
+# copy above is loaded.
+killall -9 Messenger 2>/dev/null || true
+
 exit 0

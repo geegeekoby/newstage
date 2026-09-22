@@ -33,7 +33,8 @@
 #define kDSKeyboardRequestNotification "com.recreated.dynamicstage.keyboard.request"
 
 // Keystrokes from that keyboard, written by SpringBoard and applied in the app.
-#define kDSKeyboardInputPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard.input.plist"
+// /var/tmp is readable from a sandboxed app. Preferences is not.
+#define kDSKeyboardInputPath @"/var/tmp/com.recreated.dynamicstage.keyboard.input.plist"
 #define kDSKeyboardInputNotification "com.recreated.dynamicstage.keyboard.input"
 
 // The staged app tells SpringBoard whether that letter changed the field.
@@ -41,7 +42,7 @@
 // the line that shows up in the preferences log.
 // Low 32 bits: bundle hash. Bit 32 changed, 33 had a field, 34 first
 // responder, 35 window, 36 delete, 37 the process was not staged,
-// 38 the process is listening for keys.
+// 38 the process is listening for keys, 39 the in-app dylib loaded.
 // Bits 40-47: 0 none, 1 field, 2 text view, 3 other.
 #define kDSKeyboardApplyNotification "com.recreated.dynamicstage.keyboard.apply"
 

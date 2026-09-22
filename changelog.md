@@ -1,3 +1,6 @@
+**4.5.35**
+- Continues from 4.5.29. The picker keyboard still sits outside the card. Letters stayed in SpringBoard because ElleKit never loaded the in-app side into Messenger: that dylib lived only under DynamicLibraries, and TweakInject is a separate directory on this jailbreak. Installing now copies it there and restarts Messenger. Keystrokes are also written under /var/tmp so the app can read them. The post-4.5.29 keyboard host and Foundation-filter experiments are not brought back
+
 **4.5.29**
 - Messenger never ran the in-app side. The log has the picker keyboard and the letters, and no line from Messenger, because an already-open app was only checked at launch. The half-screen card is noticed after that, and the message box is hooked then. The picker keyboard is unchanged
 

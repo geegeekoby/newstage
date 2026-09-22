@@ -375,6 +375,21 @@ static void DSReportListening(void) {
     notify_post(kDSKeyboardApplyNotification);
 }
 
+static void DSReportLoaded(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        static int token = NOTIFY_TOKEN_INVALID;
+        if (token == NOTIFY_TOKEN_INVALID) {
+            notify_register_check(kDSKeyboardApplyNotification, &token);
+        }
+        if (token == NOTIFY_TOKEN_INVALID) return;
+        uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
+        state |= (1ULL << 39);
+        notify_set_state(token, state);
+        notify_post(kDSKeyboardApplyNotification);
+    });
+}
+
 static void DSTypeText(UIResponder *responder, NSString *text) {
     NSString *before = DSPlainText(responder);
     if ([responder conformsToProtocol:@protocol(UITextInput)]) {
@@ -1218,8 +1233,12 @@ static void DSStartObserving(void) {
     @autoreleasepool {
         @try {
             if (DSKillSwitchPresent()) return;
+            NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+            if (DSIdentifierIsExcludedFromStage(identifier)) return;
             if (!DSBundleLooksLikeUserApplication()) return;
             if (![DSPreferences sharedPreferences].enabled) return;
+
+            DSReportLoaded();
 
             if ([DSStageContext processIsStagedNow]) {
                 DSStartObserving();
@@ -1229,6 +1248,7 @@ static void DSStartObserving(void) {
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 @try {
+                    if (DSIdentifierIsExcludedFromStage(NSBundle.mainBundle.bundleIdentifier ?: @"")) return;
                     if (!DSBundleLooksLikeUserApplication()) return;
                     DSStartObserving();
                 } @catch (NSException *exception) {

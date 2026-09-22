@@ -47,6 +47,8 @@
 - (void)noteKeyboardDebugFromApp:(NSString *)line;
 - (void)noteKeyboardDebugFromSpringBoard:(NSString *)line;
 - (void)noteStagedKeyResult:(NSString *)line;
+- (void)noteAppDylibSignal:(uint32_t)hash listening:(BOOL)listening loaded:(BOOL)loaded;
+- (BOOL)hostedAppHasStageDylib:(NSString *)bundle;
 - (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;

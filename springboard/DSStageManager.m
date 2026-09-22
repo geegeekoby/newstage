@@ -15,6 +15,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <sys/stat.h>
 
 // Fraction of the screen height the finger has to travel for the pull to reach
 // the stage's resting size; a little further than that commits to Split View.
@@ -156,6 +157,8 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
         root[@"seq"] = @(seq);
         root[@"ops"] = ops;
         [root writeToFile:kDSKeyboardInputPath atomically:YES];
+        // A sandboxed app can read /var/tmp. Preferences was not readable.
+        chmod(kDSKeyboardInputPath.fileSystemRepresentation, 0666);
     }
     if (isDelete || scalars.count == 0) {
         DSPostKeyboardInputState((uint32_t)seq, YES, 0);
@@ -311,6 +314,8 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
     BOOL _stagedKeyboardWantsHide;
     NSInteger _stagedKeyboardReassertCount;
     NSInteger _presentGeneration;
+    NSMutableSet<NSNumber *> *_loadedAppHashes;
+    NSMutableSet<NSNumber *> *_listeningAppHashes;
 }
 
 static BOOL sSystemEdgePullAvailable;
@@ -329,6 +334,8 @@ static BOOL sSystemEdgePullAvailable;
         _state = DSStageStateClosed;
         _searchSlot = -1;
         _stagedKeyboardSlot = -1;
+        _loadedAppHashes = [NSMutableSet set];
+        _listeningAppHashes = [NSMutableSet set];
     }
     return self;
 }
@@ -737,6 +744,16 @@ static BOOL sSystemEdgePullAvailable;
     NSInteger generation = ++_stagedKeyboardEnsureGeneration;
     [self driveStagedKeyboardForBundle:bundle slot:slot generation:generation attempt:0];
     [self ensureStagedKeyboardForBundle:bundle slot:slot generation:generation attempt:0];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        if (generation != strongSelf->_stagedKeyboardEnsureGeneration) return;
+        if ([strongSelf hostedAppHasStageDylib:bundle]) return;
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ has not loaded the stage dylib - letters stay in SpringBoard until it does",
+                                  bundle);
+    });
 }
 
 - (void)hideStagedKeyboardLikePicker {
@@ -787,15 +804,26 @@ static BOOL sSystemEdgePullAvailable;
     else [self hideStagedKeyboardLikePicker];
 }
 
+- (NSString *)hostedBundleForStagedKeyboard {
+    if (_stagedKeyboardSlot == 0 && _sceneHost.isHosting) return _sceneHost.bundleIdentifier;
+    if (_stagedKeyboardSlot == 1 && _topSceneHost.isHosting) return _topSceneHost.bundleIdentifier;
+    if (_sceneHost.isHosting) return _sceneHost.bundleIdentifier;
+    if (_topSceneHost.isHosting) return _topSceneHost.bundleIdentifier;
+    return @"?";
+}
+
 - (void)stagedKeyboardInsertText:(NSString *)text {
     _stagedKeyboardReassertCount = 0;
-    DSDiagnosticsRecordFormat(@"SpringBoard: staged key insert len=%lu", (unsigned long)text.length);
+    DSDiagnosticsRecordFormat(@"SpringBoard: staged key insert len=%lu app=%@",
+                              (unsigned long)text.length,
+                              [self hostedBundleForStagedKeyboard]);
     DSEnqueueStagedKey(@"insert", text);
 }
 
 - (void)stagedKeyboardDeleteBackward {
     _stagedKeyboardReassertCount = 0;
-    DSDiagnosticsRecord(@"SpringBoard: staged key delete");
+    DSDiagnosticsRecordFormat(@"SpringBoard: staged key delete app=%@",
+                              [self hostedBundleForStagedKeyboard]);
     DSEnqueueStagedKey(@"delete", @"");
 }
 
@@ -2703,6 +2731,19 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     _keyboardDebugApp = line;
     DSDiagnosticsRecord(line);
     [self refreshKeyboardDebugLabel];
+}
+
+- (void)noteAppDylibSignal:(uint32_t)hash listening:(BOOL)listening loaded:(BOOL)loaded {
+    if (hash == 0) return;
+    NSNumber *key = @(hash);
+    if (loaded) [_loadedAppHashes addObject:key];
+    if (listening) [_listeningAppHashes addObject:key];
+}
+
+- (BOOL)hostedAppHasStageDylib:(NSString *)bundle {
+    if (bundle.length == 0) return NO;
+    NSNumber *key = @(DSIdentifierHash(bundle));
+    return [_listeningAppHashes containsObject:key] || [_loadedAppHashes containsObject:key];
 }
 
 - (void)noteKeyboardDebugFromSpringBoard:(NSString *)line {

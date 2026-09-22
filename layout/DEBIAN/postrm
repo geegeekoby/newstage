@@ -1,0 +1,12 @@
+#!/bin/sh
+# Only remove our own copies under TweakInject. If TweakInject is a symlink to
+# DynamicLibraries, leaving it alone is correct - the package manager removes
+# the DynamicLibraries files itself.
+set -e
+
+INJECT="/var/jb/usr/lib/TweakInject"
+if [ -d "$INJECT" ] && [ ! -L "$INJECT" ]; then
+	rm -f "$INJECT/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.plist"
+fi
+
+exit 0

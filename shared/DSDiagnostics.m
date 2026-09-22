@@ -51,6 +51,10 @@ static NSString *DSDiagnosticsStamp(void) {
 
 void DSDiagnosticsRecord(NSString *message) {
     if (message.length == 0) return;
+    // Only SpringBoard writes this file. Other processes that load the shared
+    // helpers used to append garbage over the keyboard lines.
+    NSString *processName = NSProcessInfo.processInfo.processName ?: @"";
+    if (![processName isEqualToString:@"SpringBoard"]) return;
     // One entry is one line, including when what is being recorded is not: the log is
     // trimmed by finding a newline and cutting there, so a message carrying its own
     // would be cut in the middle of itself.
@@ -58,13 +62,29 @@ void DSDiagnosticsRecord(NSString *message) {
         message = [[message componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet]
             componentsJoinedByString:@" "];
     }
+    // Drop control characters that other writers used to paste into the middle
+    // of a SpringBoard line.
+    if ([message rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:NSMakeRange(0, 32)]].location != NSNotFound ||
+        [message rangeOfString:@"\x7f"].location != NSNotFound) {
+        NSMutableString *clean = [message mutableCopy];
+        for (NSUInteger index = 0; index < clean.length; ) {
+            unichar unit = [clean characterAtIndex:index];
+            if (unit < 0x20 || unit == 0x7f) {
+                [clean deleteCharactersInRange:NSMakeRange(index, 1)];
+            } else {
+                index++;
+            }
+        }
+        message = clean;
+        if (message.length == 0) return;
+    }
     if (message.length > kDSDiagnosticsMaxLineLength) {
         message = [[message substringToIndex:kDSDiagnosticsMaxLineLength - 3] stringByAppendingString:@"..."];
     }
 
     NSString *line = [NSString stringWithFormat:@"%@ %@: %@\n",
                       DSDiagnosticsStamp(),
-                      NSProcessInfo.processInfo.processName ?: @"?",
+                      processName,
                       message];
 
     dispatch_async(DSDiagnosticsQueue(), ^{

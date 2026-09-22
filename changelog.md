@@ -1,3 +1,6 @@
+**4.4.4**
+- Two stages fill the screen: top card is the top half, bottom card is the bottom half, edge to edge, same size
+
 **4.4.3**
 - Every stage is one fixed size from the screen (top half and bottom half match). Opening a second stage, Split View, and the keyboard do not resize a card
 - Scene resize transactions are not repeated when the card only moves

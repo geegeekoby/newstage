@@ -147,12 +147,10 @@
 
     // One place decides the key window: the stage manager. A second makeKey here
     // used to run even when an app was hosted and the manager had refused.
-    // A stale isKeyWindow still reads YES after SpringBoard has taken the real
-    // key window. Editing on that turn never raises the keyboard.
-    BOOL staleKey = self.window.isKeyWindow && !DSWindowIsApplicationKey(self.window);
+    // Editing has to start on this same turn. Waiting lets SpringBoard take the
+    // key window back before UIKit is asked for the keyboard.
     [self requestKeyWindowFromDelegate];
-    BOOL ready = DSWindowIsApplicationKey(self.window);
-    if (self.window && (!ready || staleKey) && _keyWindowAttempts < 8) {
+    if (self.window && !DSWindowIsApplicationKey(self.window) && _keyWindowAttempts < 8) {
         _keyWindowAttempts++;
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)),
@@ -161,7 +159,7 @@
             if (!field) return;
             [field->_field becomeFirstResponder];
         });
-        [self logEditingDecision:ready ? @"wait after reclaiming key" : @"wait for key window"];
+        [self logEditingDecision:@"wait for key window"];
         return NO;
     }
     _keyWindowAttempts = 0;

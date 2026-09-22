@@ -32,6 +32,24 @@ BOOL DSWindowIsApplicationKey(UIWindow *window) {
     return YES;
 }
 
+UIWindow *DSCompetingKeyWindow(UIWindow *window) {
+    for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
+        if (candidate != window && candidate.isKeyWindow) return candidate;
+    }
+    UIWindow *fallback = nil;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:UIWindowScene.class]) continue;
+        UIWindowScene *windowScene = (UIWindowScene *)scene;
+        for (UIWindow *candidate in windowScene.windows) {
+            if (candidate == window || !candidate.isKeyWindow) continue;
+            BOOL main = !windowScene.screen || windowScene.screen == UIScreen.mainScreen;
+            if (main && windowScene.activationState == UISceneActivationStateForegroundActive) return candidate;
+            if (!fallback) fallback = candidate;
+        }
+    }
+    return fallback;
+}
+
 static UIWindowScene *DSForegroundWindowScene(void) {
     if (@available(iOS 13.0, *)) {
         UIWindowScene *fallback = nil;
@@ -69,7 +87,14 @@ static UIWindowScene *DSForegroundWindowScene(void) {
 }
 
 - (BOOL)attachToForegroundSceneIfNeeded {
-    UIWindowScene *scene = DSForegroundWindowScene();
+    // Already the window UIKit will type into. Leave it on this scene.
+    if (DSWindowIsApplicationKey(self)) return NO;
+    // After a respring several scenes are foreground at once. The keyboard
+    // follows whichever of them holds the real key window, not the first scene.
+    UIWindow *other = DSCompetingKeyWindow(self);
+    UIWindowScene *scene = other.windowScene;
+    if (scene.screen && scene.screen != UIScreen.mainScreen) scene = nil;
+    if (!scene) scene = DSForegroundWindowScene();
     if (!scene || self.windowScene == scene) return NO;
     self.windowScene = scene;
     CGRect bounds = scene.coordinateSpace.bounds;

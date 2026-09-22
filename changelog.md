@@ -1,3 +1,6 @@
+**4.5.19**
+- The search keyboard still did not appear: another window kept the real key, on one of the three foreground scenes, and the log was saving only its newest line. The stage window moves onto that window's scene, takes the key, and then asks for the same search keyboard. The log keeps the whole boot again
+
 **4.5.18**
 - After a respring the stage window still said it was key after SpringBoard had taken the real key window back. The search field edited, and UIKit never asked for a keyboard. That stale key state is resigned and the same search keyboard is requested again once this window is actually key
 

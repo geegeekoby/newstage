@@ -382,16 +382,16 @@ static BOOL sSystemEdgePullAvailable;
         [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"takeKey already" attempt:-1 picker:nil]];
         return;
     }
-    if (_window.isKeyWindow && !applicationKey) {
-        UIWindow *other = nil;
-        for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
-            if (candidate != _window && candidate.isKeyWindow) {
-                other = candidate;
-                break;
-            }
-        }
-        DSDiagnosticsRecordFormat(@"SpringBoard: key was stale, other window %@, reclaiming",
-                                  other ? NSStringFromClass(other.class) : @"none");
+    UIWindow *other = DSCompetingKeyWindow(_window);
+    if (other) {
+        if (!_windowBeforeStage) _windowBeforeStage = other;
+        DSDiagnosticsRecordFormat(@"SpringBoard: taking key from %@ on %@",
+                                  NSStringFromClass(other.class),
+                                  other.windowScene == _window.windowScene ? @"this scene" : @"its scene");
+        [other resignKeyWindow];
+    }
+    // makeKeyAndVisible does nothing while this window already says it is key.
+    if (_window.isKeyWindow) {
         [_window resignKeyWindow];
     }
 
@@ -2385,11 +2385,17 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     UIWindow *window = _window;
     UIWindowScene *winScene = window.windowScene;
     UIWindow *keyWindow = nil;
+    NSString *otherName = @"none";
     for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
-        if (candidate.isKeyWindow) {
-            keyWindow = candidate;
-            break;
+        if (!candidate.isKeyWindow) continue;
+        if (!keyWindow) keyWindow = candidate;
+        if (candidate != window && [otherName isEqualToString:@"none"]) {
+            otherName = NSStringFromClass(candidate.class);
         }
+    }
+    if ([otherName isEqualToString:@"none"]) {
+        UIWindow *other = DSCompetingKeyWindow(window);
+        if (other) otherName = NSStringFromClass(other.class);
     }
     NSMutableArray *scenes = [NSMutableArray array];
     for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
@@ -2406,7 +2412,7 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     NSString *keyText = CGRectIsNull(keys) ? @"null" : NSStringFromCGRect(keys);
     NSString *field = picker ? [picker searchEditingDebugSummary] : @"field=n/a";
     NSString *tryText = attempt < 0 ? @"try=-" : [NSString stringWithFormat:@"try=%ld", (long)attempt];
-    return [NSString stringWithFormat:@"%@ %@ slot=%ld settle=%d key=%d hid=%d lvl=%.0f matchKey=%d winScene=%@ %@ keys=%@ scenes=%@",
+    return [NSString stringWithFormat:@"%@ %@ slot=%ld settle=%d key=%d hid=%d lvl=%.0f matchKey=%d other=%@ winScene=%@ %@ keys=%@ scenes=%@",
             event,
             tryText,
             (long)_searchSlot,
@@ -2415,6 +2421,7 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
             window.hidden,
             window.windowLevel,
             keyWindow == window,
+            otherName,
             winScene ? DSSceneActivationName(winScene.activationState) : @"none",
             field,
             keyText,
@@ -2559,6 +2566,9 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
 }
 
 - (void)appPickerDidEndSearch:(DSAppPickerViewController *)picker {
+    // Reclaiming the key window resigns the field. That is not the user leaving
+    // search, and clearing the slot here stops the keyboard from being asked again.
+    if (_ensuringPickerSearchKeyboard) return;
     if (_searchSlot == [self slotForPicker:picker]) _searchSlot = -1;
     // Hand the key window back while an app is still staged. Leaving it key
     // is what took the keyboard away from that app after search.

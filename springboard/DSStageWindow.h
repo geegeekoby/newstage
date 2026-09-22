@@ -4,6 +4,8 @@
 // The keyboard follows that other window. YES only when this window is the one
 // UIApplication will actually deliver text to.
 BOOL DSWindowIsApplicationKey(UIWindow *window);
+// The window UIKit will actually type into, when it is not `window`.
+UIWindow *DSCompetingKeyWindow(UIWindow *window);
 
 // Full screen window that only claims the touches the stage actually needs, so
 // everything else still reaches the app underneath.

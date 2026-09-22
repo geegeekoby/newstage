@@ -68,13 +68,19 @@ void DSDiagnosticsRecord(NSString *message) {
         @try {
             NSString *path = DSDiagnosticsPath();
             NSString *session = DSDiagnosticsSessionID();
+            NSString *written = line;
+            if (session.length > 0 && [written rangeOfString:session].location == NSNotFound) {
+                written = [[written substringToIndex:written.length - 1]
+                    stringByAppendingFormat:@" session=%@\n", session];
+            }
             NSString *existing = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil] ?: @"";
             // A write that started before this respring can put the old boot back
-            // on disk. Drop it the next time anything is recorded.
+            // on disk. Drop that boot once. The new line carries the session id, so
+            // the next line is appended instead of replacing the file.
             if (session.length > 0 && [existing rangeOfString:session].location == NSNotFound) {
                 existing = @"";
             }
-            NSString *combined = [existing stringByAppendingString:line];
+            NSString *combined = [existing stringByAppendingString:written];
 
             // The log is a rolling window, not a record: it exists to be read on a
             // phone screen, and it must never be able to fill a disk.

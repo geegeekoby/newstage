@@ -99,6 +99,7 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
             [weakSelf refresh];
         });
     }
+    [self scheduleProbe];
 
     NSArray<NSString *> *suffixes = @[ @".left", @".right", @".reset" ];
     for (NSString *suffix in suffixes) {
@@ -148,6 +149,9 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
     if (!isUs) {
         isUs = DSFileNamesUs([NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath], identifier);
     }
+    // An app that is already running misses the stage notification. The card
+    // is about half the screen; a full-screen scene is not.
+    if (!isUs) isUs = [self sceneLooksLikeStageCard];
 
     _staged = isUs && preferences.enabled;
 
@@ -179,6 +183,32 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
 
 // The scene's coordinate space follows the frame SpringBoard hands us and is not
 // something this dylib rewrites, so it stays trustworthy.
+- (void)scheduleProbe {
+    __weak DSStageContext *weakSelf = self;
+    NSTimeInterval delay = self.staged ? 1.5 : 0.35;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        DSStageContext *strongSelf = weakSelf;
+        if (!strongSelf) return;
+        [strongSelf refresh];
+        [strongSelf scheduleProbe];
+    });
+}
+
+// Portrait card on this phone is about 420 by 458. Full screen, in either
+// orientation, still has one side as long as the display.
+- (BOOL)sceneLooksLikeStageCard {
+    CGRect bounds = [self sceneBounds];
+    CGRect device = [self deviceBounds];
+    if (CGRectIsEmpty(bounds) || CGRectIsEmpty(device)) return NO;
+    CGFloat longSide = MAX(CGRectGetWidth(device), CGRectGetHeight(device));
+    CGFloat shortSide = MIN(CGRectGetWidth(device), CGRectGetHeight(device));
+    CGFloat sceneLong = MAX(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
+    CGFloat sceneShort = MIN(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
+    return sceneShort > shortSide * 0.75 && sceneShort < shortSide * 1.15 &&
+           sceneLong > longSide * 0.35 && sceneLong < longSide * 0.65;
+}
+
 - (CGRect)sceneBounds {
     if (@available(iOS 13.0, *)) {
         for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {

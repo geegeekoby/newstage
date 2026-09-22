@@ -724,6 +724,10 @@ static BOOL sSystemEdgePullAvailable;
     if ([self cardIsParked:[self containerForSlot:slot]]) return;
     _stagedKeyboardWantsHide = NO;
     _stagedKeyboardReassertCount = 0;
+    // The app may already have been running when it was staged, so it missed
+    // the first post. Wake it again at the moment a text field is tapped.
+    notify_post(kDSStageGeometryNotification);
+    notify_post(kDSStagePeerNotification);
     CGRect keys = DSVisibleKeyboardFrameOnScreen();
     if (_stagedKeyboardField.isFirstResponder && _stagedKeyboardSlot == slot &&
         DSWindowIsApplicationKey(_window) &&

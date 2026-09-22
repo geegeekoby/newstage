@@ -1,3 +1,6 @@
+**4.5.29**
+- Messenger never ran the in-app side. The log has the picker keyboard and the letters, and no line from Messenger, because an already-open app was only checked at launch. The half-screen card is noticed after that, and the message box is hooked then. The picker keyboard is unchanged
+
 **4.5.28**
 - The blue line appeared in Messenger and then left, because hiding Messenger's own keyboard resigned the message box and the stage window's field became the editor. That hide no longer resigns the message box. The picker keyboard is unchanged
 

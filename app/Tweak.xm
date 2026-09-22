@@ -35,6 +35,7 @@ static void DSBanishLocalKeyboard(void);
 static void DSRequestPickerKeyboard(BOOL show);
 static BOOL DSResignIsFromKeyWindow(void);
 static BOOL DSResponderTakesText(UIResponder *responder);
+static BOOL DSIsKeyboardWindow(UIWindow *window);
 
 static int DSKeyboardWantGeneration = 0;
 static int DSKeyboardRequestToken = NOTIFY_TOKEN_INVALID;
@@ -193,11 +194,39 @@ static void DSRememberKeyboardTarget(UIResponder *responder) {
     DSLoggedMissingTextTarget = NO;
 }
 
+static UIResponder *DSBottomTextInputInView(UIView *view, UIResponder *best, CGFloat *bestY) {
+    if (([view isKindOfClass:UITextField.class] || [view isKindOfClass:UITextView.class]) &&
+        !view.hidden && view.alpha > 0.01 && view.window) {
+        CGRect frame = [view convertRect:view.bounds toView:nil];
+        CGFloat y = CGRectGetMaxY(frame);
+        if (y >= *bestY) {
+            *bestY = y;
+            best = view;
+        }
+    }
+    for (UIView *subview in view.subviews) {
+        best = DSBottomTextInputInView(subview, best, bestY);
+    }
+    return best;
+}
+
+static UIResponder *DSBottomTextInput(void) {
+    UIResponder *best = nil;
+    CGFloat bestY = -CGFLOAT_MAX;
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        if (DSIsKeyboardWindow(window)) continue;
+        best = DSBottomTextInputInView(window, best, &bestY);
+    }
+    return best;
+}
+
 static UIResponder *DSTypingResponder(void) {
     UIResponder *remembered = DSKeyboardTarget;
     if ([remembered isKindOfClass:UIView.class] && ((UIView *)remembered).window) return remembered;
     if (remembered && ![remembered isKindOfClass:UIView.class]) return remembered;
-    return DSCurrentKeyInput();
+    UIResponder *current = DSCurrentKeyInput();
+    if (current) return current;
+    return DSBottomTextInput();
 }
 
 static NSRange DSEditRange(NSString *current, NSRange range, BOOL isDelete) {

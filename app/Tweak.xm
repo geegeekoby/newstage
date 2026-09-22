@@ -21,11 +21,11 @@
 // at the bottom of the file.
 //
 // Nothing below is hooked until the app is actually put on the stage. The filter
-// is UIKit, so this dylib loads into everything with a screen - including the
-// package manager the tweak is installed from - and an app that is never staged
-// has no use for any of it. Installing the hooks lazily means such a process
-// carries one notification observer and no patched methods at all, so a mistake
-// in here cannot reach an app that is not using the feature.
+// matches UIKit, Messenger, or any process that has UIApplication, so this dylib
+// loads into apps on screen. An app that is never staged has no use for the
+// hooks. Installing them lazily means such a process carries one notification
+// observer and no patched methods at all, so a mistake in here cannot reach an
+// app that is not using the feature.
 
 static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
@@ -1038,6 +1038,7 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSBanishLocalKeyboard();
         DSReportRemoteKeyboard();
         %orig;
+        DSBanishLocalKeyboard();
         return;
     }
     %orig;
@@ -1230,6 +1231,50 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 #pragma mark - Entry point
 
+static id DSSharedKeyboardImpl(void) {
+    Class keyboardClass = objc_getClass("UIKeyboardImpl");
+    if (!keyboardClass) return nil;
+    for (NSString *name in @[ @"activeInstance", @"sharedInstance" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![keyboardClass respondsToSelector:selector]) continue;
+        id impl = ((id (*)(id, SEL))objc_msgSend)(keyboardClass, selector);
+        if (impl) return impl;
+    }
+    return nil;
+}
+
+static BOOL DSKeyboardSurfaceIsUp(id impl) {
+    if (!impl) return NO;
+    for (NSString *name in @[ @"isOnScreen", @"keyboardIsShown" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![impl respondsToSelector:selector]) continue;
+        return ((BOOL (*)(id, SEL))objc_msgSend)(impl, selector);
+    }
+    return NO;
+}
+
+static BOOL DSTextFieldIsEditing(void) {
+    UIResponder *current = DSCurrentKeyInput();
+    if (current.isFirstResponder && DSResponderTakesText(current)) return YES;
+    UIResponder *remembered = DSKeyboardTarget;
+    return remembered.isFirstResponder && DSResponderTakesText(remembered);
+}
+
+// Hooks can land after the message field is already editing. Ask for the remote
+// keyboard once, and only while that field is up, so a stage with no editor
+// does not grow a keyboard.
+static void DSRefreshRemoteKeyboard(void) {
+    if (!DSStaged() || !DSTextFieldIsEditing()) return;
+    id impl = DSSharedKeyboardImpl();
+    if (!DSKeyboardSurfaceIsUp(impl)) return;
+    DSBanishLocalKeyboard();
+    DSReportRemoteKeyboard();
+    SEL show = @selector(showKeyboard);
+    if ([impl respondsToSelector:show]) {
+        ((void (*)(id, SEL))objc_msgSend)(impl, show);
+    }
+}
+
 static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
@@ -1246,6 +1291,7 @@ static void DSStartObserving(void) {
         DSReportLoaded();
         DSInstallKeyboardInputListener();
         DSInstallHooks();
+        DSRefreshRemoteKeyboard();
     };
     [context startObserving];
 }
@@ -1261,20 +1307,38 @@ static void DSTryStart(void) {
         DSReportLoaded();
         DSInstallKeyboardInputListener();
         DSStartObserving();
-        if ([DSStageContext processIsStagedNow]) DSInstallHooks();
+        if ([DSStageContext processIsStagedNow]) {
+            DSInstallHooks();
+            DSRefreshRemoteKeyboard();
+        }
     });
+}
+
+// Posted before the path check. An empty bundle path used to return without a
+// word, so SpringBoard could not tell a loaded app from one that was never injected.
+static void DSBeaconLoadedProcess(void) {
+    static BOOL decided = NO;
+    if (decided || DSKillSwitchPresent()) return;
+    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+    if (identifier.length == 0) return;
+    decided = YES;
+    if (DSIdentifierIsExcludedFromStage(identifier)) return;
+    DSReportLoaded();
 }
 
 %ctor {
     @autoreleasepool {
         @try {
+            DSBeaconLoadedProcess();
             DSTryStart();
             dispatch_async(dispatch_get_main_queue(), ^{
+                DSBeaconLoadedProcess();
                 DSTryStart();
             });
             for (NSNumber *delay in @[ @0.4, @1.2, @3.0 ]) {
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
                                dispatch_get_main_queue(), ^{
+                    DSBeaconLoadedProcess();
                     DSTryStart();
                 });
             }

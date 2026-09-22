@@ -1,3 +1,6 @@
+**4.5.32**
+- Typing stayed in the message box, and the keys were still Messenger's own keyboard inside the card. Messenger had not loaded the in-app side, so it never asked SpringBoard to draw the keys. That side now loads into the app. The message field stays the editor, and SpringBoard draws the keyboard at the bottom of the display, outside the card. Picker search is unchanged
+
 **4.5.31**
 - The staged keyboard was still the search field. That field took the key, so the letters stayed in SpringBoard and the message box lost the caret. A staged app now keeps its own text field. SpringBoard draws the remote keyboard outside the card, and the search field is not used. The log says whether Messenger loaded the in-app side
 

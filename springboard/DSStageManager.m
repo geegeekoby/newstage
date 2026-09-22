@@ -911,6 +911,10 @@ static BOOL sSystemEdgePullAvailable;
     return NO;
 }
 
+- (BOOL)isPickerSearchActive {
+    return _searchSlot >= 0;
+}
+
 // While an app is on the stage, the arbiter still hears keyboards from Spotlight and
 // from other processes behind the card. Only the staged app (or the picker on SpringBoard)
 // may move the card.

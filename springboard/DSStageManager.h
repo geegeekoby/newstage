@@ -52,6 +52,8 @@
 - (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;
+// True while a picker search field is the editor. A staged app must not touch that keyboard.
+- (BOOL)isPickerSearchActive;
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;
 

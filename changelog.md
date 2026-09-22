@@ -1,3 +1,6 @@
+**4.5.54**
+- A tap on the bottom card was hitting a keyboard key. The keyboard windows are full screen and sit above the stage, so they were taking every touch. They now accept a touch only inside the key band. A tap on the app reaches the app. The windows stay where 4.5.50 put them
+
 **4.5.53**
 - The keyboard windows are still placed the same way as 4.5.50. The card was the part that sometimes stayed down: it waited for the app to report a remote keyboard, and Signal's keys were already on screen before that report. The bottom card now lifts as soon as those keys are on the display, and again a moment later if the key view was not ready on the first event. While it is up, the top card leaves the screen. Both snap back the moment the keyboard goes down. The old routine that shortened the hosted scene is gone. The in-app keyboard hooks are unchanged
 

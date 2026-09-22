@@ -1,3 +1,6 @@
+**4.5.34**
+- The black wallpaper and torn log came from the in-app dylib loading into PaperBoard and other system processes, then all of them writing the same log. Only SpringBoard writes that file now. That dylib no longer matches Foundation. A leftover black backdrop from the corner pull is cleared when the stage is put away. When Messenger has not loaded the in-app side, the staged keyboard is the same SpringBoard keyboard the picker uses, outside the card. Picker search is unchanged
+
 **4.5.33**
 - The wallpaper stayed black and other taps stopped landing. The last build had raised a full-screen keyboard window and left it there. That window is no longer touched. Messenger still drew its own keys inside the card because the in-app side had not loaded. That side now matches Foundation, which is what gets a tweak into an app on this iOS, and the message field stays the editor. Picker search is unchanged
 

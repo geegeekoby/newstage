@@ -845,7 +845,20 @@ static BOOL sSystemEdgePullAvailable;
     static NSString *loggedBundle = nil;
     if (!onScreen) {
         if ([loggedBundle isEqualToString:source]) loggedBundle = nil;
+        [self hideStagedKeyboardLikePicker];
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
+        return;
+    }
+    // Without the in-app side, Messenger draws its own keys inside the card.
+    // The same SpringBoard field the picker uses puts the keys outside the card.
+    // When that side has loaded, the message field stays the editor instead.
+    if (![self hostedAppLeftALoadBeacon:source]) {
+        if (![loggedBundle isEqualToString:source]) {
+            loggedBundle = [source copy];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ has no stage dylib yet, using the SpringBoard keyboard outside the card",
+                                      source);
+        }
+        [self showStagedKeyboardLikePickerForBundle:source];
         return;
     }
     CGRect screen = [self screenBounds];
@@ -1735,6 +1748,7 @@ static BOOL sSystemEdgePullAvailable;
             self->_primaryParked = YES;
             self->_secondParked = YES;
             self->_state = DSStageStateMinimized;
+            [self discardHostSnapshotAnimated:NO];
             [self giveBackKeyWindow];
             [self updateOpenAppIcon];
             [self scheduleAutoKill];
@@ -2483,6 +2497,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateMinimized;
+        [self discardHostSnapshotAnimated:NO];
         [self giveBackKeyWindow];
         // The app stays hosted. Putting the card away is not closing it.
         [self updateOpenAppIcon];
@@ -3654,6 +3669,7 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 }
 
 - (void)noteStageWindowIdle {
+    [self discardHostSnapshotAnimated:NO];
     _window.hidden = NO;
     [self bringShelfToFront];
     [self refreshShelf];

@@ -1317,8 +1317,19 @@ static void DSStartObserving(void) {
 
 // The bundle path can be empty at the moment this dylib is injected. Retrying
 // is what lets an already-open app still register for its own keyboard.
+static BOOL DSProcessIsRealApp(void) {
+    NSString *path = NSBundle.mainBundle.bundlePath ?: @"";
+    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+    if (identifier.length == 0) return NO;
+    if (DSIdentifierIsExcludedFromStage(identifier)) return NO;
+    if ([path rangeOfString:@".app"].location == NSNotFound) return NO;
+    if ([path hasPrefix:@"/System/"] || [path hasPrefix:@"/usr/"]) return NO;
+    return YES;
+}
+
 static void DSTryStart(void) {
     if (DSKillSwitchPresent()) return;
+    if (!DSProcessIsRealApp()) return;
     if (!DSBundleLooksLikeUserApplication()) return;
     if (![DSPreferences sharedPreferences].enabled) return;
     static dispatch_once_t once;
@@ -1338,16 +1349,27 @@ static void DSTryStart(void) {
 static void DSBeaconLoadedProcess(void) {
     static BOOL decided = NO;
     if (decided || DSKillSwitchPresent()) return;
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
-    if (identifier.length == 0) return;
+    if (!DSProcessIsRealApp()) {
+        // Do not set decided yet when the path is still empty; retry later.
+        if ((NSBundle.mainBundle.bundleIdentifier ?: @"").length == 0) return;
+        if ((NSBundle.mainBundle.bundlePath ?: @"").length == 0) return;
+        decided = YES;
+        return;
+    }
     decided = YES;
-    if (DSIdentifierIsExcludedFromStage(identifier)) return;
     DSReportLoaded();
 }
 
 %ctor {
     @autoreleasepool {
         @try {
+            // Never touch PaperBoard, daemons, or anything that is not a real .app.
+            if (!DSProcessIsRealApp() &&
+                (NSBundle.mainBundle.bundlePath.length > 0 ||
+                 NSBundle.mainBundle.bundleIdentifier.length > 0) &&
+                DSIdentifierIsExcludedFromStage(NSBundle.mainBundle.bundleIdentifier)) {
+                return;
+            }
             DSBeaconLoadedProcess();
             DSTryStart();
             dispatch_async(dispatch_get_main_queue(), ^{

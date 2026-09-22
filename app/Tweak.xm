@@ -13,7 +13,8 @@
 //
 // The keyboard is deliberately not one of those routes. While this process is
 // staged, every keyboard view it owns is forced out of the card. SpringBoard
-// draws the keys on the display instead.
+// shows the same keyboard the stage picker search uses, and keystrokes from
+// that keyboard are inserted here.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -30,6 +31,99 @@ static BOOL DSStaged(void) {
 }
 
 static void DSBanishLocalKeyboard(void);
+static void DSRequestPickerKeyboard(BOOL show);
+
+static int DSKeyboardWantGeneration = 0;
+static int DSKeyboardRequestToken = NOTIFY_TOKEN_INVALID;
+static NSInteger DSLastKeyboardInputSeq = 0;
+
+static UIResponder *DSFirstResponderInView(UIView *view) {
+    if (![view isKindOfClass:UIView.class]) return nil;
+    if (view.isFirstResponder) return view;
+    for (UIView *subview in view.subviews) {
+        UIResponder *found = DSFirstResponderInView(subview);
+        if (found) return found;
+    }
+    return nil;
+}
+
+static UIResponder *DSCurrentKeyInput(void) {
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        UIResponder *found = DSFirstResponderInView(window);
+        if (found) return found;
+    }
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+            if (![scene isKindOfClass:UIWindowScene.class]) continue;
+            for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+                UIResponder *found = DSFirstResponderInView(window);
+                if (found) return found;
+            }
+        }
+    }
+    return nil;
+}
+
+static void DSApplyKeyboardOp(NSString *op, NSString *text) {
+    UIResponder *responder = DSCurrentKeyInput();
+    if (!responder) return;
+    if ([op isEqualToString:@"delete"]) {
+        if ([responder respondsToSelector:@selector(deleteBackward)]) {
+            [(id)responder deleteBackward];
+        }
+        return;
+    }
+    if (text.length == 0) return;
+    if ([responder respondsToSelector:@selector(insertText:)]) {
+        [(id)responder insertText:text];
+    }
+}
+
+static void DSDrainKeyboardInput(void) {
+    if (!DSStaged()) return;
+    NSDictionary *root = [NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath];
+    for (NSDictionary *op in root[@"ops"]) {
+        if (![op isKindOfClass:NSDictionary.class]) continue;
+        NSInteger seq = [op[@"seq"] integerValue];
+        if (seq <= DSLastKeyboardInputSeq) continue;
+        DSLastKeyboardInputSeq = seq;
+        DSApplyKeyboardOp(op[@"op"], op[@"text"]);
+    }
+}
+
+static void DSPostKeyboardRequest(BOOL show) {
+    if (DSKeyboardRequestToken == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardRequestNotification, &DSKeyboardRequestToken);
+    }
+    if (DSKeyboardRequestToken == NOTIFY_TOKEN_INVALID) return;
+    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
+    uint64_t state = DSIdentifierHash(identifier);
+    if (show) state |= kDSStageStateActiveBit;
+    notify_set_state(DSKeyboardRequestToken, state);
+    notify_post(kDSKeyboardRequestNotification);
+}
+
+static void DSRequestPickerKeyboard(BOOL show) {
+    if (!DSStaged()) return;
+    DSKeyboardWantGeneration++;
+    int generation = DSKeyboardWantGeneration;
+    if (show) {
+        DSPostKeyboardRequest(YES);
+        return;
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (generation != DSKeyboardWantGeneration || !DSStaged()) return;
+        DSPostKeyboardRequest(NO);
+    });
+}
+
+static void DSKeyboardInputArrived(CFNotificationCenterRef center, void *observer, CFStringRef name,
+                                   const void *object, CFDictionaryRef userInfo) {
+    (void)center; (void)observer; (void)name; (void)object; (void)userInfo;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSDrainKeyboardInput();
+    });
+}
 
 static CGRect DSStageBounds(void) {
     return [DSStageContext sharedContext].stageBounds;
@@ -465,7 +559,36 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 - (void)showKeyboard {
     %orig;
-    if (DSStaged()) DSBanishLocalKeyboard();
+    if (!DSStaged()) return;
+    DSBanishLocalKeyboard();
+    DSRequestPickerKeyboard(YES);
+}
+
+- (void)hideKeyboard {
+    %orig;
+    if (DSStaged()) DSRequestPickerKeyboard(NO);
+}
+
+%end
+
+%hook UITextField
+
+- (BOOL)resignFirstResponder {
+    BOOL wasEditing = self.isFirstResponder;
+    BOOL resigned = %orig;
+    if (wasEditing && resigned && DSStaged()) DSRequestPickerKeyboard(NO);
+    return resigned;
+}
+
+%end
+
+%hook UITextView
+
+- (BOOL)resignFirstResponder {
+    BOOL wasEditing = self.isFirstResponder;
+    BOOL resigned = %orig;
+    if (wasEditing && resigned && DSStaged()) DSRequestPickerKeyboard(NO);
+    return resigned;
 }
 
 %end
@@ -564,6 +687,12 @@ static void DSInstallHooks(void) {
     dispatch_once(&token, ^{
         %init(_ungrouped);
         DSInstallKeyboardBanishObserver();
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                        NULL,
+                                        DSKeyboardInputArrived,
+                                        CFSTR(kDSKeyboardInputNotification),
+                                        NULL,
+                                        CFNotificationSuspensionBehaviorDeliverImmediately);
     });
 }
 

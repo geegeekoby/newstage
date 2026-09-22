@@ -28,6 +28,14 @@
 // window was found, bits 40-47 are how many keyboard views were forced out.
 #define kDSKeyboardDebugNotification "com.recreated.dynamicstage.keyboard.debug"
 
+// A staged app asks SpringBoard to show the picker search keyboard. The low 32
+// bits are the bundle hash. Bit 32 set means the keyboard should come up.
+#define kDSKeyboardRequestNotification "com.recreated.dynamicstage.keyboard.request"
+
+// Keystrokes from that keyboard, written by SpringBoard and applied in the app.
+#define kDSKeyboardInputPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard.input.plist"
+#define kDSKeyboardInputNotification "com.recreated.dynamicstage.keyboard.input"
+
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"

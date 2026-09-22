@@ -271,9 +271,9 @@ tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full wi
 
 **Picker search.** The field is SpringBoard's, on every picker. The stage window becomes key only while a search field is editing. If an app is still staged when that edit ends, the window is handed back. The card that owns the field lifts above the keyboard (301pt floor). Opening a picker does not lift it.
 
-**Staged app.** The app is told the keyboard is remote, and keyboard views in its text-effects window are forced out of the card. The keyboard on screen is the same one the picker search uses. The card the keys cover slides up. The other card stays on its half. Neither card changes size. The line at the top reports the app and `lift slot0` / `lift slot1`. The same lines are appended to `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`.
+**Staged app.** Top and bottom both use the picker search keyboard. The app's own keys are forced out of the card. Tapping a text field makes the stage window key and UIKit shows that keyboard. The card the keys cover slides up. The other card stays on its half. Neither card changes size. The line at the top reports the app and `lift slot0` / `lift slot1`. The same lines are appended to `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`.
 
-**What is never done.** No layer reparenting of the hosted app, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no keyboard focus coordinator, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no leaving the stage window key after a search while an app is hosted (that stole Messenger's keyboard and broke search afterwards), no fallback that shows the staged app's own keys.
+**What is never done.** No layer reparenting of the hosted app, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no keyboard focus coordinator, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no leaving the stage window key after typing ends while an app is hosted (that stole Messenger's keyboard and broke search afterwards), no fallback that shows the staged app's own keys.
 
 The arbiter is hooked only if `_UIKeyboardArbiter` is already loaded. The hook reads the keyboard frame and, for a staged app, points the keyboard UI host at SpringBoard.
 

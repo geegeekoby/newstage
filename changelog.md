@@ -1,3 +1,6 @@
+**4.5.15**
+- A staged app on the top or the bottom uses the picker search keyboard. The app no longer draws its own keys, and SpringBoard no longer swaps in a different keyboard scene. Tapping a text field makes the stage window key and brings up that same keyboard, and the card lifts the same way
+
 **4.5.14**
 - The corner pull, the right-edge squares, and the + button all open a stage the same way: fixed half size, opaque picker, then the same spring. A second card no longer fades in from invisible, so a cancelled animation cannot leave that half black
 - Every picker search uses the same keyboard as the first picker. The stage window becomes key only while a search field is editing, and it is handed back when that edit ends if an app is still staged. Opening a picker beside an app does not lift the new card

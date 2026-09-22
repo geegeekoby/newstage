@@ -23,6 +23,66 @@ static const CGFloat kDSCancelProgress = 0.14;
 static const CGFloat kDSSplitProgress = 0.82;
 static const CGFloat kDSFlickVelocity = -1150.0;
 
+#pragma mark - Staged app keyboard
+
+@protocol DSStagedKeyboardTarget <NSObject>
+- (void)stagedKeyboardInsertText:(NSString *)text;
+- (void)stagedKeyboardDeleteBackward;
+- (void)stagedKeyboardDidEnd;
+@end
+
+// The same kind of field the picker search uses. It lives in the stage window,
+// so UIKit draws the same keyboard. Keystrokes are handed to the hosted app.
+@interface DSStagedKeyboardField : UITextField
+@property (nonatomic, weak) id<DSStagedKeyboardTarget> keyTarget;
+@end
+
+@implementation DSStagedKeyboardField
+
+- (BOOL)hasText {
+    return YES;
+}
+
+- (void)insertText:(NSString *)text {
+    if (text.length == 0) return;
+    if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardInsertText:)]) {
+        [self.keyTarget stagedKeyboardInsertText:text];
+    }
+}
+
+- (void)deleteBackward {
+    if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardDeleteBackward)]) {
+        [self.keyTarget stagedKeyboardDeleteBackward];
+    }
+}
+
+- (BOOL)resignFirstResponder {
+    BOOL resigned = [super resignFirstResponder];
+    if (resigned && [self.keyTarget respondsToSelector:@selector(stagedKeyboardDidEnd)]) {
+        [self.keyTarget stagedKeyboardDidEnd];
+    }
+    return resigned;
+}
+
+@end
+
+static void DSEnqueueStagedKey(NSString *op, NSString *text) {
+    if (op.length == 0) return;
+    @synchronized ([DSStagedKeyboardField class]) {
+        NSMutableDictionary *root = [([NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath] ?: @{}) mutableCopy];
+        NSMutableArray *ops = [root[@"ops"] mutableCopy] ?: [NSMutableArray array];
+        NSInteger seq = [root[@"seq"] integerValue] + 1;
+        [ops addObject:@{ @"seq" : @(seq), @"op" : op, @"text" : text ?: @"" }];
+        if (ops.count > 40) {
+            [ops removeObjectsInRange:NSMakeRange(0, ops.count - 40)];
+        }
+        root[@"seq"] = @(seq);
+        root[@"ops"] = ops;
+        [root writeToFile:kDSKeyboardInputPath atomically:YES];
+    }
+    notify_post(kDSKeyboardInputNotification);
+}
+
 #pragma mark - Launch placeholder
 
 // While the app boots, the stage shows its launch storyboard if it has one and
@@ -90,7 +150,7 @@ static const CGFloat kDSFlickVelocity = -1150.0;
 
 #pragma mark - Stage manager
 
-@interface DSStageManager () <DSGestureControllerDelegate, DSAppPickerDelegate>
+@interface DSStageManager () <DSGestureControllerDelegate, DSAppPickerDelegate, DSStagedKeyboardTarget>
 @end
 
 @implementation DSStageManager {
@@ -154,6 +214,9 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     // -1 unless a picker search field is the one being edited. Opening a second
     // picker must not count as searching, or that card lifts before anyone types.
     NSInteger _searchSlot;
+    // The hosted app's card while it is using the picker search keyboard.
+    NSInteger _stagedKeyboardSlot;
+    UITextField *_stagedKeyboardField;
     NSInteger _presentGeneration;
 }
 
@@ -172,6 +235,7 @@ static BOOL sSystemEdgePullAvailable;
     if ((self = [super init])) {
         _state = DSStageStateClosed;
         _searchSlot = -1;
+        _stagedKeyboardSlot = -1;
     }
     return self;
 }
@@ -366,10 +430,21 @@ static BOOL sSystemEdgePullAvailable;
                                           selector:@selector(keyboardWillHide:)
                                               name:UIKeyboardWillHideNotification
                                             object:nil];
+
+    static int requestToken = NOTIFY_TOKEN_INVALID;
+    static dispatch_once_t once;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_once(&once, ^{
+        notify_register_dispatch(kDSKeyboardRequestNotification, &requestToken, dispatch_get_main_queue(), ^(int token) {
+            uint64_t state = 0;
+            notify_get_state(token, &state);
+            [weakSelf noteStagedAppKeyboardRequest:state];
+        });
+    });
 }
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    if (![self isShowingAppPicker]) return;
+    if (![self isShowingAppPicker] && _stagedKeyboardSlot < 0) return;
     [self keyboardFrameWillChange:notification];
 }
 
@@ -381,18 +456,99 @@ static BOOL sSystemEdgePullAvailable;
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    if ([self isShowingAppPicker]) _notedKeyboardOnce = NO;
+    if ([self isShowingAppPicker] || _stagedKeyboardSlot >= 0) _notedKeyboardOnce = NO;
     [self noteKeyboardFrame:CGRectZero
                     source:@"SpringBoard"
                   duration:[notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
 }
 
 - (void)keyboardOnScreen:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
+    // Picker search owns this window's keyboard. Do not retarget it.
+    if (_searchSlot >= 0) return;
+    if ([self isHostingBundleIdentifier:source]) {
+        if (onScreen) [self showStagedKeyboardLikePickerForBundle:source];
+        return;
+    }
+    if (_stagedKeyboardSlot >= 0) return;
     [self noteKeyboardFrame:onScreen ? frame : CGRectZero
                     source:source.length > 0 ? source : @"an app"
                   duration:0.25];
     if (!onScreen) return;
     [self giveBackKeyWindow];
+}
+
+- (NSInteger)slotForHostedBundle:(NSString *)bundle {
+    if (bundle.length == 0) return -1;
+    if (_sceneHost.isHosting && [_sceneHost.bundleIdentifier isEqualToString:bundle]) return 0;
+    if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundle]) return 1;
+    return -1;
+}
+
+- (void)ensureStagedKeyboardField {
+    if (_stagedKeyboardField) return;
+    DSStagedKeyboardField *field = [[DSStagedKeyboardField alloc] initWithFrame:CGRectMake(0, -80, 2, 2)];
+    field.keyTarget = self;
+    field.alpha = 0.02;
+    field.autocorrectionType = UITextAutocorrectionTypeNo;
+    field.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    field.spellCheckingType = UITextSpellCheckingTypeNo;
+    field.returnKeyType = UIReturnKeyDefault;
+    field.userInteractionEnabled = NO;
+    field.accessibilityElementsHidden = YES;
+    _stagedKeyboardField = field;
+}
+
+// Same steps as a picker search field: this window becomes key, then a text
+// field in it edits, and UIKit's keyboard notification lifts that card.
+- (void)showStagedKeyboardLikePickerForBundle:(NSString *)bundle {
+    if (_searchSlot >= 0) return;
+    NSInteger slot = [self slotForHostedBundle:bundle];
+    if (slot < 0) return;
+    [self ensureStagedKeyboardField];
+    BOOL dark = _container.darkMode;
+    _stagedKeyboardField.keyboardAppearance = dark ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
+    UIView *root = _window.rootViewController.view;
+    if (_stagedKeyboardField.superview != root) {
+        [root addSubview:_stagedKeyboardField];
+    }
+    if (_stagedKeyboardField.isFirstResponder && _stagedKeyboardSlot == slot) return;
+    _stagedKeyboardSlot = slot;
+    [self takeKeyWindow];
+    [_stagedKeyboardField becomeFirstResponder];
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ is using the picker search keyboard", bundle);
+}
+
+- (void)hideStagedKeyboardLikePicker {
+    if (!_stagedKeyboardField.isFirstResponder) {
+        _stagedKeyboardSlot = -1;
+        return;
+    }
+    [_stagedKeyboardField resignFirstResponder];
+}
+
+- (void)noteStagedAppKeyboardRequest:(uint64_t)state {
+    BOOL show = (state & kDSStageStateActiveBit) != 0;
+    NSString *bundle = [self bundleForKeyboardHash:(uint32_t)state];
+    if (![self isHostingBundleIdentifier:bundle]) return;
+    if (_searchSlot >= 0) return;
+    if (show) [self showStagedKeyboardLikePickerForBundle:bundle];
+    else [self hideStagedKeyboardLikePicker];
+}
+
+- (void)stagedKeyboardInsertText:(NSString *)text {
+    DSEnqueueStagedKey(@"insert", text);
+}
+
+- (void)stagedKeyboardDeleteBackward {
+    DSEnqueueStagedKey(@"delete", @"");
+}
+
+- (void)stagedKeyboardDidEnd {
+    _stagedKeyboardSlot = -1;
+    if (_searchSlot >= 0) return;
+    if (_sceneHost.isHosting || _topSceneHost.isHosting) {
+        [self giveBackKeyWindow];
+    }
 }
 
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier {
@@ -415,7 +571,7 @@ static BOOL sSystemEdgePullAvailable;
     if (topStaged.length > 0 && [source isEqualToString:topStaged]) return YES;
 
     if ([source isEqualToString:@"SpringBoard"]) {
-        if ([self isShowingAppPicker] || _searchSlot >= 0) return YES;
+        if ([self isShowingAppPicker] || _searchSlot >= 0 || _stagedKeyboardSlot >= 0) return YES;
         // Search can end before this hide arrives. Still drop a lift that
         // belongs to a picker, and leave a hosted app's card where it is.
         if (CGRectIsEmpty(keyboard)) {
@@ -494,7 +650,8 @@ static BOOL sSystemEdgePullAvailable;
 
     // A staged app's keyboard going down must not cancel a picker search that
     // just took the screen. The search field's own hide still clears the lift.
-    if (CGRectIsEmpty(keyboard) && _searchSlot >= 0 && ![source isEqualToString:@"SpringBoard"]) {
+    if (CGRectIsEmpty(keyboard) && (_searchSlot >= 0 || _stagedKeyboardSlot >= 0) &&
+        ![source isEqualToString:@"SpringBoard"]) {
         return;
     }
 
@@ -598,6 +755,7 @@ static BOOL sSystemEdgePullAvailable;
     // The field the user is typing in. Otherwise a keyboard from SpringBoard
     // would lift the other card.
     if ([source isEqualToString:@"SpringBoard"] && _searchSlot >= 0) return _searchSlot;
+    if ([source isEqualToString:@"SpringBoard"] && _stagedKeyboardSlot >= 0) return _stagedKeyboardSlot;
     if (_stackSlotCount >= kDSMaxStackSlots) {
         if (!_sceneHost.isHosting && _topSceneHost.isHosting) return 0;
         if (_sceneHost.isHosting && !_topSceneHost.isHosting) return 1;
@@ -2520,6 +2678,7 @@ static void DSSetStageNotify(const char *name, NSString *identifier) {
     }
     [card setLiftOffset:0.0];
     _searchSlot = -1;
+    if (_stagedKeyboardSlot == slot) [self hideStagedKeyboardLikePicker];
     if (slot == 0) {
         _sceneHost = nil;
         _stageQuarterTurns = 0;

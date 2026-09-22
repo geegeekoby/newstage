@@ -683,94 +683,11 @@ static BOOL sSystemEdgePullAvailable;
     }
 }
 
-// Kept so a hosted keyboard cannot clip the scene. 4.5.45 shortened the
-// content view to the overlap and the card went blank.
-- (void)openHostedKeyboardBandForBundle:(NSString *)bundle reported:(CGRect)reported {
-    (void)bundle;
-    (void)reported;
-    [self clearHostedKeyboardBands];
-}
-
-- (void)openHostedKeyboardBandForBundle:(NSString *)bundle reported:(CGRect)reported attempt:(NSInteger)attempt {
-    NSInteger slot = [self slotForHostedBundle:bundle];
-    DSStageContainerView *card = [self containerForSlot:slot];
-    if (!card) return;
-    CGRect screen = [self screenBounds];
-    CGRect visible = DSVisibleKeyboardFrameOnScreen();
-    BOOL found = !CGRectIsNull(visible) &&
-        CGRectGetHeight(visible) >= kDSKeyboardPresentHeight &&
-        CGRectGetMinY(visible) > CGRectGetHeight(screen) * 0.4;
-    static NSString *loggedBand = nil;
-    if (!found) {
-        if (attempt < 2) {
-            NSInteger generation = DSHostedClipGeneration;
-            NSString *bundleCopy = [bundle copy] ?: @"";
-            CGRect reportedCopy = reported;
-            NSInteger next = attempt + 1;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.45 * NSEC_PER_SEC)),
-                           dispatch_get_main_queue(), ^{
-                if (generation != DSHostedClipGeneration) return;
-                if (self->_searchSlot >= 0) return;
-                if ([self slotForHostedBundle:bundleCopy] != slot) return;
-                [self openHostedKeyboardBandForBundle:bundleCopy reported:reportedCopy attempt:next];
-            });
-        }
-        NSString *mark = [NSString stringWithFormat:@"%@-skip", bundle ?: @"?"];
-        if (![loggedBand isEqualToString:mark]) {
-            loggedBand = mark;
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard clip skipped, no system keyboard window slot %ld reported %@",
-                                      bundle, (long)slot, NSStringFromCGRect(reported));
-        }
-        return;
-    }
-    CGRect systemKeys = visible;
-    CGRect cardFrame = CGRectOffset(card.frame, 0.0, -card.liftOffset);
-    CGFloat overlap = CGRectGetHeight(CGRectIntersection(cardFrame, systemKeys));
-    CGFloat limit = MAX(CGRectGetHeight(cardFrame) - 120.0, 0.0);
-    CGFloat band = overlap > limit ? limit : overlap;
-    DSStageContainerView *other = [self containerForSlot:slot == 0 ? 1 : 0];
-    if (other && other != card) {
-        other.keyboardBandHeight = 0.0;
-        [[self sceneHostForSlot:slot == 0 ? 1 : 0] setKeyboardClipHeight:0.0];
-    }
-    if (band < 1.0) {
-        card.keyboardBandHeight = 0.0;
-        [[self sceneHostForSlot:slot] setKeyboardClipHeight:0.0];
-        NSString *mark = [NSString stringWithFormat:@"%@-outside", bundle ?: @"?"];
-        if (![loggedBand isEqualToString:mark]) {
-            loggedBand = mark;
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard already outside slot %ld card %@ system %@",
-                                      bundle, (long)slot,
-                                      NSStringFromCGRect(cardFrame), NSStringFromCGRect(systemKeys));
-        }
-        return;
-    }
-    [[self sceneHostForSlot:slot] setKeyboardClipHeight:band];
-    card.keyboardBandHeight = band;
-    UIView *hostView = [self sceneHostForSlot:slot].hostView;
-    NSString *mark = [NSString stringWithFormat:@"%@-%.0f", bundle ?: @"?", band];
-    if (![loggedBand isEqualToString:mark]) {
-        loggedBand = mark;
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard band %.0f on slot %ld card %@ content %@ host %@ system %@",
-                                  bundle, band, (long)slot,
-                                  NSStringFromCGRect(cardFrame),
-                                  NSStringFromCGRect(card.contentView.frame),
-                                  NSStringFromCGRect(hostView.frame),
-                                  NSStringFromCGRect(systemKeys));
-        NSString *bundleCopy = [bundle copy];
-        NSInteger generation = DSHostedClipGeneration;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            if (generation != DSHostedClipGeneration) return;
-            DSStageContainerView *laterCard = [self containerForSlot:slot];
-            UIView *laterHost = [self sceneHostForSlot:slot].hostView;
-            if (!laterCard || laterCard.keyboardBandHeight < 1.0) return;
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard clip held %.0f content %@ host %@",
-                                      bundleCopy, laterCard.keyboardBandHeight,
-                                      NSStringFromCGRect(laterCard.contentView.frame),
-                                      NSStringFromCGRect(laterHost.frame));
-        });
-    }
+- (BOOL)springBoardIsDrawingKeyboard {
+    CGRect visibleKeys = DSVisibleKeyboardFrameOnScreen();
+    return !CGRectIsNull(visibleKeys) &&
+           CGRectGetHeight(visibleKeys) >= kDSKeyboardPresentHeight &&
+           CGRectGetMinX(visibleKeys) < 4.0;
 }
 
 - (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
@@ -784,7 +701,8 @@ static BOOL sSystemEdgePullAvailable;
         DSHostedClipGeneration++;
         [self clearHostedKeyboardBands];
         DSReleaseStagedKeyboardHost();
-        [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
+        _keyboardDrawnOutside = NO;
+        [self noteKeyboardFrame:CGRectZero source:source duration:0.0];
         return;
     }
     BOOL raised = DSRaiseKeyboardWindowAboveStage();
@@ -792,6 +710,8 @@ static BOOL sSystemEdgePullAvailable;
     [_topContainer setClipsContents:!raised];
     if (raised) {
         NSInteger generation = DSHostedClipGeneration;
+        NSString *sourceCopy = [source copy];
+        CGRect frameCopy = frame;
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
@@ -801,6 +721,13 @@ static BOOL sSystemEdgePullAvailable;
             [manager->_container setClipsContents:!stillUp];
             [manager->_topContainer setClipsContents:!stillUp];
             DSDiagnosticsRecordFormat(@"SpringBoard: %@", DSPresentedKeyboardWindowStatus());
+            // The first event often arrives before the key view is in the window.
+            // The windows are already where 4.5.50 put them. This only lifts the card.
+            if (manager->_keyboardDrawnOutside || ![manager springBoardIsDrawingKeyboard]) return;
+            manager->_keyboardDrawnOutside = YES;
+            CGRect later = [manager keyboardFrameOnDisplay:frameCopy];
+            if (CGRectIsEmpty(later)) later = frameCopy;
+            [manager noteKeyboardFrame:later source:sourceCopy duration:0.2];
         });
     }
     {
@@ -811,34 +738,19 @@ static BOOL sSystemEdgePullAvailable;
             DSDiagnosticsRecordFormat(@"SpringBoard: %@", status);
         }
     }
-    // Cutting the card down to the overlap hid the app: the content view was
-    // left 120pt tall and the stage looked blank. Leave the scene whole.
-    // Once the app itself says the keyboard is remote, SpringBoard is drawing
-    // the keys and the bottom card can lift off them. Until that signal, the
-    // keys are pixels in the scene and moving the card only drags them.
-    BOOL remote = [self hostedAppReportedRemoteKeyboard:source];
+    // The keyboard windows are already on the stage scene. Lift when those
+    // keys are actually on the display. Waiting for the app's remote signal
+    // is why the card sometimes never moved: Signal's keys were on screen
+    // and the signal had not arrived. Do not lift before the keys are there,
+    // or the card drags the in-scene keyboard with it.
+    BOOL springBoardDrawingKeys = [self springBoardIsDrawingKeyboard];
+    _keyboardDrawnOutside = springBoardDrawingKeys;
     CGRect visibleKeys = DSVisibleKeyboardFrameOnScreen();
-    BOOL springBoardDrawingKeys = !CGRectIsNull(visibleKeys) &&
-                                  CGRectGetHeight(visibleKeys) >= kDSKeyboardPresentHeight &&
-                                  CGRectGetMinX(visibleKeys) < 4.0;
-    if (remote && !springBoardDrawingKeys) {
-        static NSString *loggedWaiting = nil;
-        if (source.length && ![loggedWaiting isEqualToString:source]) {
-            loggedWaiting = [source copy];
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for the remote keyboard but SpringBoard is not drawing keys yet",
-                                      source);
-            DSDiagnosticsRecord(DSKeyboardWindowCensus());
-        }
-        // The request landed and the keys are still pixels in the scene.
-        // Lifting the card would drag those pixels with it.
-        remote = NO;
-    }
-    _keyboardDrawnOutside = remote;
     [self clearHostedKeyboardBands];
     CGRect keys = [self keyboardFrameOnDisplay:frame];
     if (CGRectIsEmpty(keys)) keys = frame;
     [self noteKeyboardFrame:keys source:source duration:0.25];
-    if (!remote) {
+    if (!springBoardDrawingKeys) {
         static NSString *loggedInside = nil;
         if (source.length && ![loggedInside isEqualToString:source]) {
             loggedInside = [source copy];
@@ -1241,8 +1153,14 @@ static BOOL sSystemEdgePullAvailable;
         CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
         CGFloat wanted = MAX(overlap, 0.0);
         NSInteger otherSlot = _keyboardLiftSlot == 0 ? 1 : 0;
-        BOOL otherDown = _stackSlotCount < kDSMaxStackSlots || [self liftOffsetForSlot:otherSlot] < 0.5;
-        if (fabs([self liftOffsetForSlot:_keyboardLiftSlot] - wanted) < 0.5 && otherDown) return;
+        CGFloat companion = 0.0;
+        if (_stackSlotCount >= kDSMaxStackSlots && _keyboardLiftSlot == [self slotOnBottomHalf] && wanted > 0.5) {
+            companion = [self offscreenLiftForCard:[self containerForSlot:otherSlot]];
+        }
+        BOOL bottomReady = fabs([self liftOffsetForSlot:_keyboardLiftSlot] - wanted) < 0.5;
+        BOOL topReady = _stackSlotCount < kDSMaxStackSlots ||
+                        fabs([self liftOffsetForSlot:otherSlot] - companion) < 0.5;
+        if (bottomReady && topReady) return;
     } else {
         _keyboardFrame = keyboard;
     }
@@ -1269,7 +1187,10 @@ static BOOL sSystemEdgePullAvailable;
     CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
     CGFloat overlap = CGRectIsEmpty(keyboard) ? 0.0
                                              : CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
-    [self liftCardBy:MAX(overlap, 0.0) slot:_keyboardLiftSlot duration:duration];
+    // The card drops the moment the field resigns. The keyboard window itself
+    // is left to the path that already places it.
+    NSTimeInterval motion = CGRectIsEmpty(keyboard) ? 0.0 : duration;
+    [self liftCardBy:MAX(overlap, 0.0) slot:_keyboardLiftSlot duration:motion];
     if (hostedAppKeys && !CGRectIsEmpty(keyboard)) {
         DSDiagnosticsRecordFormat(@"SpringBoard: keys are in SpringBoard's window, lifted slot %ld",
                                   (long)_keyboardLiftSlot);
@@ -1337,9 +1258,14 @@ static BOOL sSystemEdgePullAvailable;
     [self liftCardBy:offset slot:_keyboardLiftSlot duration:duration];
 }
 
+- (CGFloat)offscreenLiftForCard:(DSStageContainerView *)card {
+    if (!card) return 0.0;
+    // center stays at the resting position. This translation puts the whole
+    // card above the top of the screen.
+    return card.center.y + CGRectGetHeight(card.bounds) * 0.5 + kDSStageInset;
+}
+
 - (void)liftCardBy:(CGFloat)offset slot:(NSInteger)slot duration:(NSTimeInterval)duration {
-    // Only the card the keyboard covers moves, and it stays on screen. Moving the
-    // other card by the same amount pushes the top stage off the top of the phone.
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     DSStageContainerView *card = [self containerForSlot:slot];
     if (!card || [self cardIsParked:card]) return;
@@ -1352,15 +1278,22 @@ static BOOL sSystemEdgePullAvailable;
         if (other && [self cardIsParked:other]) other = nil;
     }
 
+    // The bottom card moving up over the keyboard takes the top card off the
+    // screen. Offset 0, when the keyboard collapses, brings the top card back.
+    CGFloat companion = 0.0;
+    if (other && offset > 0.5 && slot == [self slotOnBottomHalf]) {
+        companion = [self offscreenLiftForCard:other];
+    }
+
     BOOL cardAlready = fabs(offset - card.liftOffset) < 0.5;
-    BOOL otherAlready = !other || other.liftOffset < 0.5;
+    BOOL otherAlready = !other || fabs(other.liftOffset - companion) < 0.5;
     if (cardAlready && otherAlready) return;
 
     void (^lift)(void) = ^{
         // Do not tell the app a new size. That transaction blanks it.
         // The moving card comes to the front so it can overlap the other card.
         [card setLiftOffset:offset];
-        if (other) [other setLiftOffset:0.0];
+        if (other) [other setLiftOffset:companion];
         if (offset > 0.5 && card.superview) {
             [card.superview bringSubviewToFront:card];
             [self bringShelfToFront];
@@ -1371,13 +1304,14 @@ static BOOL sSystemEdgePullAvailable;
             [self restoreCardStackingOrder];
         }
     };
-    if (duration > 0.0) {
+    if (offset > 0.5 && duration > 0.0) {
         [UIView animateWithDuration:duration animations:lift];
     } else {
         lift();
     }
-    if (!cardAlready) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: lifted stack slot %ld by %.0f", (long)slot, offset);
+    if (!cardAlready || !otherAlready) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: lifted stack slot %ld by %.0f companion %.0f",
+                                  (long)slot, offset, companion);
     }
     [self refreshKeyboardDebugLabel];
 }

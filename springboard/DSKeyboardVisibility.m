@@ -85,10 +85,28 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
     return keyboard;
 }
 
+static UIWindow *DSClaimedKeyboardWindow = nil;
+static NSString *DSClaimedKeyboardStatus = @"win=none";
+
+static void DSRaiseKeyboardWindow(UIWindow *window) {
+    window.backgroundColor = UIColor.clearColor;
+    window.opaque = NO;
+    window.alpha = 1.0;
+    window.hidden = NO;
+    if (window.windowLevel < UIWindowLevelAlert) {
+        window.windowLevel = UIWindowLevelAlert;
+    }
+}
+
 BOOL DSRevealSpringBoardKeyboard(void) {
     CGRect screen = UIScreen.mainScreen.bounds;
     __block BOOL revealed = NO;
     DSVisitApplicationWindows(^(UIWindow *window) {
+        if (window == DSClaimedKeyboardWindow) {
+            DSRaiseKeyboardWindow(window);
+            revealed = YES;
+            return;
+        }
         if (!DSWindowMightContainKeyboard(window)) return;
         BOOL wasHidden = window.hidden;
         CGFloat wasAlpha = window.alpha;
@@ -124,6 +142,8 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
             hostedWindow.hidden = YES;
         }
         claimed = NO;
+        DSClaimedKeyboardWindow = nil;
+        DSClaimedKeyboardStatus = @"win=hidden";
         return;
     }
 
@@ -137,7 +157,10 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
             window = nil;
         }
     }
-    if (!window) return;
+    if (!window) {
+        DSClaimedKeyboardStatus = @"win=missing";
+        return;
+    }
 
     BOOL bound = NO;
     @try {
@@ -153,7 +176,6 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
             bound = YES;
         }
     }
-    if (!bound) return;
 
     for (NSString *name in @[ @"attachBindable", @"resetScene" ]) {
         SEL selector = NSSelectorFromString(name);
@@ -164,12 +186,18 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
         }
     }
 
-    window.backgroundColor = UIColor.clearColor;
-    window.opaque = NO;
-    window.hidden = NO;
-    if (window.windowLevel < UIWindowLevelStatusBar) {
-        window.windowLevel = UIWindowLevelStatusBar + 1.0;
-    }
+    DSRaiseKeyboardWindow(window);
+    window.frame = UIScreen.mainScreen.bounds;
     hostedWindow = window;
     claimed = YES;
+    DSClaimedKeyboardWindow = window;
+    DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=%@ bind=%d lvl=%.0f frame=%@",
+                               window.hidden ? @"hidden" : @"shown",
+                               bound,
+                               window.windowLevel,
+                               NSStringFromCGRect(window.frame)];
+}
+
+NSString *DSPresentedKeyboardWindowStatus(void) {
+    return DSClaimedKeyboardStatus ?: @"win=none";
 }

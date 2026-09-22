@@ -490,8 +490,14 @@ static BOOL sSystemEdgePullAvailable;
         bottomSlot = 0;
     }
     NSString *bottomBundle = [self sceneHostForSlot:bottomSlot].bundleIdentifier;
+    NSString *otherBundle = nil;
+    if (_stackSlotCount >= kDSMaxStackSlots) {
+        otherBundle = [self sceneHostForSlot:bottomSlot == 0 ? 1 : 0].bundleIdentifier;
+    }
     _keyboardLiftSlot = bottomSlot;
-    if (bottomBundle.length > 0 && source.length > 0 && ![source isEqualToString:bottomBundle] &&
+    BOOL fromEitherStage = [source isEqualToString:bottomBundle] ||
+                           (otherBundle.length > 0 && [source isEqualToString:otherBundle]);
+    if (bottomBundle.length > 0 && source.length > 0 && !fromEitherStage &&
         ![source isEqualToString:@"SpringBoard"]) {
         keyboard = CGRectZero;
     }
@@ -573,11 +579,8 @@ static BOOL sSystemEdgePullAvailable;
 
 - (CGFloat)maxLiftForSlot:(NSInteger)slot state:(DSStageState)state {
     CGRect resting = [self restingFrameForKeyboardLiftSlot:slot state:state];
-    if (_stackSlotCount >= kDSMaxStackSlots && state == DSStageStateOverlay && slot == [self slotOnBottomHalf]) {
-        CGRect top = [self frameForHalf:1 state:state];
-        CGFloat cap = CGRectGetMinY(resting) - (CGRectGetMaxY(top) + kDSStackSlotGap);
-        return MAX(cap, 0.0);
-    }
+    // Two stacked cards have no gap between them, so the old cap was zero and
+    // the bottom card never moved. Both cards shift up together instead.
     return MAX(CGRectGetMinY(resting) - kDSStageKeyboardHeadroom, 0.0);
 }
 
@@ -590,17 +593,28 @@ static BOOL sSystemEdgePullAvailable;
     // lifted off the top takes the search field, the app and every way of closing the
     // stage with it, and reads as the stage having broken.
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-    offset = MIN(MAX(offset, 0.0), [self maxLiftForSlot:slot state:layoutState]);
-
     DSStageContainerView *card = [self containerForSlot:slot];
-    if (!card) return;
+    if (!card || [self cardIsParked:card]) return;
 
-    if (fabs(offset - card.liftOffset) < 0.5) return;
+    DSStageContainerView *other = nil;
+    if (_stackSlotCount >= kDSMaxStackSlots) {
+        NSInteger bottom = [self slotOnBottomHalf];
+        offset = MIN(MAX(offset, 0.0), [self maxLiftForSlot:bottom state:layoutState]);
+        other = [self containerForSlot:bottom == 0 ? 1 : 0];
+        if (other && [self cardIsParked:other]) other = nil;
+    } else {
+        offset = MIN(MAX(offset, 0.0), [self maxLiftForSlot:slot state:layoutState]);
+    }
+
+    if (fabs(offset - card.liftOffset) < 0.5 &&
+        (!other || fabs(offset - other.liftOffset) < 0.5)) return;
 
     void (^lift)(void) = ^{
-        // Move the card. Do not tell the app a new size — that transaction is what
-        // blanks a staged app.
+        // Move the cards. Do not tell the app a new size. That transaction blanks it.
+        // With two cards, the top one slides up by the same amount so the bottom
+        // card can clear the keyboard without changing either card's size.
         [card setLiftOffset:offset];
+        if (other) [other setLiftOffset:offset];
     };
     if (duration > 0.0) {
         [UIView animateWithDuration:duration animations:lift];

@@ -17,6 +17,9 @@ BOOL DSRevealSpringBoardKeyboard(void);
 // window, above the stage. Pass nil to put that window away.
 void DSPresentArbiterKeyboardLayer(id sceneLayer);
 
+// What the last present call did to SpringBoard's keyboard window.
+NSString *DSPresentedKeyboardWindowStatus(void);
+
 #ifdef __cplusplus
 }
 #endif

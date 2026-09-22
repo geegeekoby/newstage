@@ -1,3 +1,7 @@
+**4.5.9**
+- The log said SpringBoard's keyboard scene was up, but that window was hidden again because it had no key view inside it, so no keys were on screen. The window stays up
+- Two stages had no room to lift the bottom card, so a keyboard at the bottom of the screen sat on that card. Both cards now slide up together and keep their size
+
 **4.5.8**
 - The second staged app was missing the signal that it is on the stage, so it kept drawing its own keyboard. That signal is delivered again
 - A debug line on the stage says whether each app is staged, whether its keyboard views were removed, and whether SpringBoard actually has a keyboard to draw

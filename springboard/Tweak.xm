@@ -344,6 +344,7 @@ static id DSSavedKeyboardUIHandle = nil;
 static BOOL DSKeyboardSceneRequested = NO;
 static NSUInteger DSKeyboardPresentGeneration = 0;
 static BOOL DSLoggedKeyboardRoute = NO;
+static BOOL DSSignaledSpringBoardKeyboard = NO;
 
 static NSString *DSHandlerBundle(id handler) {
     if (![handler respondsToSelector:@selector(bundleIdentifier)]) return nil;
@@ -497,6 +498,7 @@ static BOOL DSRouteStagedKeyboardToSpringBoard(id arbiter, id information, id ha
             DSSavedKeyboardUIHandle = nil;
             DSKeyboardSceneRequested = NO;
             DSLoggedKeyboardRoute = NO;
+            DSSignaledSpringBoardKeyboard = NO;
             id springBoard = DSSpringBoardKeyboardHandler(arbiter);
             if (previous != springBoard) DSSetInputUIHost(springBoard, NO);
             DSSetInputUIHost(previous, YES);
@@ -521,7 +523,7 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     if (!onScreen) verdict = @"keyboard is down";
     else if (!staged) verdict = @"this keyboard is not from a staged app";
     else if (!springBoard) verdict = @"SpringBoard has no keyboard client, so it cannot draw keys";
-    else if ([uiBundle isEqualToString:@"com.apple.springboard"] && layer) verdict = @"SpringBoard keyboard scene is up";
+    else if ([uiBundle isEqualToString:@"com.apple.springboard"] && layer) verdict = @"keyboard scene exists";
     else if ([uiBundle isEqualToString:@"com.apple.springboard"]) verdict = @"SpringBoard is host but has no keyboard scene";
     return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d",
             verdict, source ?: @"?", onScreen, staged, springBoard != nil, uiBundle, layer];
@@ -566,6 +568,14 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
             NSUInteger generation = ++DSKeyboardPresentGeneration;
             DSRouteStagedKeyboardToSpringBoard(self, information, handler);
             DSUpdateKeyboardSceneSettings(self);
+            if (!DSSignaledSpringBoardKeyboard) {
+                DSSignaledSpringBoardKeyboard = YES;
+                id springBoard = DSSpringBoardKeyboardHandler(self);
+                SEL signal = @selector(signalKeyboardChanged:onCompletion:);
+                if ([springBoard respondsToSelector:signal]) {
+                    ((void (*)(id, SEL, id, id))objc_msgSend)(springBoard, signal, information, nil);
+                }
+            }
             DSRequestKeyboardSceneIfNeeded(self);
             id layer = DSArbiterSceneLayer(self);
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -589,8 +599,9 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     DSArbiterBusy = NO;
     if (summary.length) {
         dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *shown = [NSString stringWithFormat:@"%@ | %@", summary, DSPresentedKeyboardWindowStatus()];
             DSTell(^(DSStageManager *manager) {
-                [manager noteKeyboardDebugFromSpringBoard:summary];
+                [manager noteKeyboardDebugFromSpringBoard:shown];
             });
         });
     }

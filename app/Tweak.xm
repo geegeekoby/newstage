@@ -4,6 +4,7 @@
 #import "DSConstants.h"
 #import "DSExclusions.h"
 #import "DSBootstrap.h"
+#import "DSDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -36,6 +37,12 @@ static void DSRequestPickerKeyboard(BOOL show);
 static int DSKeyboardWantGeneration = 0;
 static int DSKeyboardRequestToken = NOTIFY_TOKEN_INVALID;
 static NSInteger DSLastKeyboardInputSeq = 0;
+// The field the user tapped. SpringBoard taking the key window can make UIKit
+// drop first-responder status; the field is still where the text has to go.
+static __weak UIResponder *DSKeyboardTarget = nil;
+static BOOL DSKeyboardTargetOnScreen = NO;
+static CFAbsoluteTime DSKeyboardShownAt = 0;
+static BOOL DSLoggedMissingTextTarget = NO;
 
 static UIResponder *DSFirstResponderInView(UIView *view) {
     if (![view isKindOfClass:UIView.class]) return nil;
@@ -64,19 +71,113 @@ static UIResponder *DSCurrentKeyInput(void) {
     return nil;
 }
 
+static BOOL DSResponderTakesText(UIResponder *responder) {
+    if (!responder) return NO;
+    if ([responder isKindOfClass:UITextField.class] || [responder isKindOfClass:UITextView.class]) return YES;
+    return [responder respondsToSelector:@selector(insertText:)] &&
+           [responder respondsToSelector:@selector(deleteBackward)];
+}
+
+static NSString *DSPlainText(UIResponder *responder) {
+    if ([responder isKindOfClass:UITextField.class]) return ((UITextField *)responder).text ?: @"";
+    if ([responder isKindOfClass:UITextView.class]) return ((UITextView *)responder).text ?: @"";
+    if ([responder conformsToProtocol:@protocol(UITextInput)]) {
+        id<UITextInput> input = (id<UITextInput>)responder;
+        UITextRange *all = [input textRangeFromPosition:input.beginningOfDocument toPosition:input.endOfDocument];
+        return all ? ([input textInRange:all] ?: @"") : @"";
+    }
+    return nil;
+}
+
+static void DSInsertTextIntoInput(id<UITextInput> input, NSString *text) {
+    UITextRange *selected = input.selectedTextRange;
+    if (!selected && input.endOfDocument) {
+        UITextPosition *end = input.endOfDocument;
+        selected = [input textRangeFromPosition:end toPosition:end];
+    }
+    if (selected) [input replaceRange:selected withText:text];
+}
+
+static void DSDeleteFromInput(id<UITextInput> input) {
+    UITextRange *selected = input.selectedTextRange;
+    if (!selected) return;
+    if ([input comparePosition:selected.start toPosition:selected.end] != NSOrderedSame) {
+        [input replaceRange:selected withText:@""];
+        return;
+    }
+    UITextPosition *before = [input positionFromPosition:selected.start offset:-1];
+    if (!before) return;
+    UITextRange *range = [input textRangeFromPosition:before toPosition:selected.start];
+    if (range) [input replaceRange:range withText:@""];
+}
+
+// SpringBoard became the key window so its keyboard can show. That calls
+// resignKeyWindow here, which is not the user leaving the text field.
+static BOOL DSResignIsFromKeyWindow(void) {
+    for (NSString *frame in NSThread.callStackSymbols) {
+        if ([frame rangeOfString:@"resignKeyWindow"].location != NSNotFound) return YES;
+    }
+    return NO;
+}
+
+static void DSRememberKeyboardTarget(UIResponder *responder) {
+    if (!DSResponderTakesText(responder)) return;
+    UIResponder *existing = DSKeyboardTarget;
+    if (existing && existing != responder &&
+        [existing isKindOfClass:UITextField.class] &&
+        [responder isKindOfClass:UIView.class] &&
+        [(UIView *)responder isDescendantOfView:(UIView *)existing]) {
+        return;
+    }
+    DSKeyboardTarget = responder;
+    DSKeyboardTargetOnScreen = [responder isKindOfClass:UIView.class] && ((UIView *)responder).window != nil;
+    DSLoggedMissingTextTarget = NO;
+}
+
+static UIResponder *DSTypingResponder(void) {
+    UIResponder *remembered = DSKeyboardTarget;
+    if ([remembered isKindOfClass:UIView.class] && ((UIView *)remembered).window) return remembered;
+    if (remembered && ![remembered isKindOfClass:UIView.class]) return remembered;
+    return DSCurrentKeyInput();
+}
+
+static void DSTypeText(UIResponder *responder, NSString *text) {
+    NSString *before = DSPlainText(responder);
+    if ([responder conformsToProtocol:@protocol(UITextInput)]) {
+        DSInsertTextIntoInput((id<UITextInput>)responder, text);
+    }
+    NSString *after = DSPlainText(responder);
+    BOOL unchanged = before && after && [before isEqualToString:after];
+    if (unchanged || ![responder conformsToProtocol:@protocol(UITextInput)]) {
+        if ([responder respondsToSelector:@selector(insertText:)]) [(id)responder insertText:text];
+    }
+}
+
+static void DSTypeDelete(UIResponder *responder) {
+    NSString *before = DSPlainText(responder);
+    if ([responder respondsToSelector:@selector(deleteBackward)]) [(id)responder deleteBackward];
+    NSString *after = DSPlainText(responder);
+    BOOL unchanged = before && after && [before isEqualToString:after];
+    if (unchanged && [responder conformsToProtocol:@protocol(UITextInput)]) {
+        DSDeleteFromInput((id<UITextInput>)responder);
+    }
+}
+
 static void DSApplyKeyboardOp(NSString *op, NSString *text) {
-    UIResponder *responder = DSCurrentKeyInput();
-    if (!responder) return;
-    if ([op isEqualToString:@"delete"]) {
-        if ([responder respondsToSelector:@selector(deleteBackward)]) {
-            [(id)responder deleteBackward];
+    UIResponder *responder = DSTypingResponder();
+    if (!responder) {
+        if (!DSLoggedMissingTextTarget) {
+            DSLoggedMissingTextTarget = YES;
+            DSDiagnosticsRecord(@"app: keyboard had no text field to type into");
         }
         return;
     }
-    if (text.length == 0) return;
-    if ([responder respondsToSelector:@selector(insertText:)]) {
-        [(id)responder insertText:text];
+    if ([op isEqualToString:@"delete"]) {
+        DSTypeDelete(responder);
+        return;
     }
+    if (text.length == 0) return;
+    DSTypeText(responder, text);
 }
 
 static void DSDrainKeyboardInput(void) {
@@ -108,11 +209,19 @@ static void DSRequestPickerKeyboard(BOOL show) {
     DSKeyboardWantGeneration++;
     int generation = DSKeyboardWantGeneration;
     if (show) {
+        DSKeyboardShownAt = CFAbsoluteTimeGetCurrent();
         DSPostKeyboardRequest(YES);
         return;
     }
+    // Taking the key window resigns the field a moment after it is tapped.
+    // That is not the user closing the field, and hiding here is what left the
+    // keyboard either stuck up or with nowhere to put the text.
+    if (DSKeyboardShownAt > 0 && CFAbsoluteTimeGetCurrent() - DSKeyboardShownAt < 0.35) return;
+    DSKeyboardTargetOnScreen = NO;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (generation != DSKeyboardWantGeneration || !DSStaged()) return;
+        DSKeyboardTarget = nil;
+        DSDiagnosticsRecord(@"app: text field closed, hiding the picker keyboard");
         DSPostKeyboardRequest(NO);
     });
 }
@@ -503,6 +612,11 @@ static void DSInstallKeyboardBanishObserver(void) {
                 (void)observer;
                 (void)activity;
                 DSBanishLocalKeyboard();
+                UIResponder *target = DSKeyboardTarget;
+                if (!DSKeyboardTargetOnScreen || ![target isKindOfClass:UIView.class]) return;
+                if (((UIView *)target).window != nil) return;
+                if (DSKeyboardShownAt > 0 && CFAbsoluteTimeGetCurrent() - DSKeyboardShownAt < 0.35) return;
+                DSRequestPickerKeyboard(NO);
             });
         if (observer) {
             CFRunLoopAddObserver(CFRunLoopGetMain(), observer, kCFRunLoopCommonModes);
@@ -522,6 +636,13 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (DSStaged() && DSNameIsLocalKeyboard(NSStringFromClass(object_getClass(self)))) {
         DSSuppressKeyboardView(self);
     }
+}
+
+- (void)willMoveToWindow:(UIWindow *)newWindow {
+    if (DSStaged() && newWindow == nil && (UIResponder *)self == DSKeyboardTarget) {
+        DSRequestPickerKeyboard(NO);
+    }
+    %orig;
 }
 
 %end
@@ -580,16 +701,52 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 %end
 
-%hook UITextField
+%hook UIResponder
 
 - (BOOL)becomeFirstResponder {
     BOOL became = %orig;
-    if (became && DSStaged()) DSRequestPickerKeyboard(YES);
+    if (became && DSStaged() && DSResponderTakesText(self)) {
+        DSRememberKeyboardTarget(self);
+        DSRequestPickerKeyboard(YES);
+    }
     return became;
 }
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
+    // The stage window has to become key for the picker keyboard. UIKit then
+    // resigns this field. Refusing that keeps the message box as the place
+    // text is inserted, without changing how the keyboard is shown.
+    if (wasEditing && DSStaged() && DSResponderTakesText(self) && DSResignIsFromKeyWindow()) {
+        DSRememberKeyboardTarget(self);
+        return NO;
+    }
+    BOOL resigned = %orig;
+    if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self)) {
+        DSRequestPickerKeyboard(NO);
+    }
+    return resigned;
+}
+
+%end
+
+%hook UITextField
+
+- (BOOL)becomeFirstResponder {
+    BOOL became = %orig;
+    if (became && DSStaged()) {
+        DSRememberKeyboardTarget(self);
+        DSRequestPickerKeyboard(YES);
+    }
+    return became;
+}
+
+- (BOOL)resignFirstResponder {
+    BOOL wasEditing = self.isFirstResponder;
+    if (wasEditing && DSStaged() && DSResignIsFromKeyWindow()) {
+        DSRememberKeyboardTarget(self);
+        return NO;
+    }
     BOOL resigned = %orig;
     if (wasEditing && resigned && DSStaged()) DSRequestPickerKeyboard(NO);
     return resigned;
@@ -601,12 +758,19 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 - (BOOL)becomeFirstResponder {
     BOOL became = %orig;
-    if (became && DSStaged()) DSRequestPickerKeyboard(YES);
+    if (became && DSStaged()) {
+        DSRememberKeyboardTarget(self);
+        DSRequestPickerKeyboard(YES);
+    }
     return became;
 }
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
+    if (wasEditing && DSStaged() && DSResignIsFromKeyWindow()) {
+        DSRememberKeyboardTarget(self);
+        return NO;
+    }
     BOOL resigned = %orig;
     if (wasEditing && resigned && DSStaged()) DSRequestPickerKeyboard(NO);
     return resigned;

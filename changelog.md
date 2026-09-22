@@ -1,3 +1,6 @@
+**4.5.21**
+- The picker keyboard for a staged app stayed up after the text field closed, because that close happened in the same moment the stage window took the key. A real close still hides it. Messenger keeps the message box as the field the keys type into, so the same keyboard can actually enter text
+
 **4.5.20**
 - A staged app on the top or the bottom was still allowed to start its own keyboard and the arbiter's keyboard. Both are blocked. Tapping a text field uses the picker search keyboard: the stage window takes the real key, a SpringBoard text field edits, and that keyboard is shown again until it is on screen
 

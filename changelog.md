@@ -1,3 +1,6 @@
+**4.5.51**
+- The bottom card lifts as soon as SpringBoard is drawing the keys, including when the app's remote-keyboard signal shows up late. That was the lift that sometimes never ran. While the bottom card is up, the top card leaves the screen, and both come back the moment the field resigns. Leaving a field no longer waits out the one-second hold. The old scene-clipping band and the SpringBoard proxy field that took the key are gone
+
 **4.5.50**
 - The log showed five keyboard windows, the remote-keyboard one left on its own scene, and `SBMedusaHostedKeyboardWindow` on SpringBoard at level 20, under the stage at 999. Every keyboard window is now moved onto the stage's scene and held at the status bar plus 5000, including Medusa and the remote-keyboard window, and UIKit cannot put the level or the scene back. The card does not clip. Letters, deletes, and `insertText:` from SpringBoard's keyboard are written through to the staged field. Keyboard classes are not removed and the keyboard UI host is not assigned; both of those sent the phone to safe mode
 

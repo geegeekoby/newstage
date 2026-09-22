@@ -199,48 +199,6 @@ BOOL DSExternalKeyboardCoversStage(void) {
     return DSExternalKeyboardRaised;
 }
 
-BOOL DSRevealSpringBoardKeyboard(void) {
-    // UIKit creates this window when the app says the keyboard is remote.
-    // Never create one ourselves, never unhide an empty full-screen window,
-    // never use alert level. A window that already contains keys is lifted
-    // just above the stage so those keys are not clipped to the card.
-    CGRect screen = UIScreen.mainScreen.bounds;
-    __block BOOL revealed = NO;
-    __block CGRect shown = CGRectNull;
-    __block CGFloat level = 0;
-    __block NSString *windowName = nil;
-    DSVisitApplicationWindows(^(UIWindow *window) {
-        if (revealed) return;
-        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
-        if (window.hidden || window.alpha < 0.01) return;
-        CGRect keys = DSKeyboardViewFrameInView(window);
-        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
-        @try {
-            if (window.windowLevel < UIWindowLevelStatusBar) {
-                window.windowLevel = UIWindowLevelStatusBar;
-            }
-        } @catch (NSException *exception) {
-        }
-        revealed = YES;
-        shown = keys;
-        level = window.windowLevel;
-        windowName = [NSString stringWithFormat:@"%@ scene=%@",
-                      NSStringFromClass(window.class), DSWindowSceneName(window)];
-    });
-    DSExternalKeyboardRaised = revealed;
-    if (revealed) {
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=raised %@ lvl=%.0f keys=%@",
-                                   windowName ?: @"?", level, NSStringFromCGRect(shown)];
-        return YES;
-    }
-    DSClaimedKeyboardStatus = @"win=none";
-    return NO;
-}
-
-void DSPresentArbiterKeyboardLayer(id sceneLayer) {
-    if (!sceneLayer) DSClaimedKeyboardStatus = @"win=hidden";
-}
-
 void DSRestoreRemoteKeyboardPlacement(void) {
     // Clear this before touching levels. The window hook pins any keyboard
     // window at 6000 while the flag is set, including the restore itself.
@@ -262,11 +220,6 @@ void DSRestoreRemoteKeyboardPlacement(void) {
     }
     [table removeAllObjects];
     DSClaimedKeyboardStatus = @"win=restored";
-}
-
-BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindowObject) {
-    (void)stageWindowObject;
-    return DSRaiseKeyboardWindowAboveStage();
 }
 
 BOOL DSRaiseKeyboardWindowAboveStage(void) {
@@ -332,11 +285,6 @@ BOOL DSRaiseKeyboardWindowAboveStage(void) {
 
 void DSHidePresentedArbiterKeyboard(void) {
     DSRestoreRemoteKeyboardPlacement();
-}
-
-BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer) {
-    (void)sceneLayer;
-    return DSRevealSpringBoardKeyboard();
 }
 
 NSString *DSPresentedKeyboardWindowStatus(void) {

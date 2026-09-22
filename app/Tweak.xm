@@ -42,18 +42,15 @@ static BOOL DSDeliveringStageKey = NO;
 // The message box became the editor. UIKit then hides its own keyboard because
 // the stage window took the key, and that hide is what removes the blue line.
 static BOOL DSComposerHeld = NO;
-static CFAbsoluteTime DSComposerHeldAt = 0;
 static BOOL DSSuppressComposerResign = NO;
 static BOOL DSAllowKeyboardHide = NO;
 
 static void DSHoldComposer(void) {
     DSComposerHeld = YES;
-    DSComposerHeldAt = CFAbsoluteTimeGetCurrent();
 }
 
 static void DSReleaseComposer(void) {
     DSComposerHeld = NO;
-    DSComposerHeldAt = 0;
 }
 
 static BOOL DSKeepComposer(UIResponder *responder) {
@@ -62,8 +59,9 @@ static BOOL DSKeepComposer(UIResponder *responder) {
         [responder isKindOfClass:UITextField.class] ||
         [responder isKindOfClass:UITextView.class];
     if (!text) return NO;
-    if (DSSuppressComposerResign || DSResignIsFromKeyWindow()) return YES;
-    return DSComposerHeldAt > 0 && CFAbsoluteTimeGetCurrent() - DSComposerHeldAt < 1.0;
+    // A real tap away resigns immediately. Only a key-window change, which the
+    // stage causes while the field is still the editor, is held.
+    return DSSuppressComposerResign || DSResignIsFromKeyWindow();
 }
 
 static UIResponder *DSFirstResponderInView(UIView *view) {
@@ -939,39 +937,6 @@ static void DSInstallKeyboardBanishObserver(void) {
     });
 }
 
-%hook UIView
-
-- (void)setHidden:(BOOL)hidden {
-    %orig;
-}
-
-- (void)didMoveToWindow {
-    %orig;
-}
-
-- (void)willMoveToWindow:(UIWindow *)newWindow {
-    (void)newWindow;
-    %orig;
-}
-
-%end
-
-%hook UITextEffectsWindow
-
-- (void)layoutSubviews {
-    %orig;
-}
-
-- (void)setFrame:(CGRect)frame {
-    %orig;
-}
-
-- (void)didAddSubview:(UIView *)subview {
-    %orig;
-}
-
-%end
-
 %hook UIKeyboardImpl
 
 // The hosted scene is the card. Keys drawn in this process are inside that
@@ -995,7 +960,9 @@ static void DSInstallKeyboardBanishObserver(void) {
 }
 
 - (void)hideKeyboard {
-    if (DSStaged() && DSComposerHeld && !DSAllowKeyboardHide) return;
+    UIResponder *target = DSKeyboardTarget;
+    BOOL stillEditing = [target isKindOfClass:UIResponder.class] && target.isFirstResponder;
+    if (DSStaged() && DSComposerHeld && !DSAllowKeyboardHide && stillEditing) return;
     %orig;
 }
 

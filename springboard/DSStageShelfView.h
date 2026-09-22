@@ -2,6 +2,8 @@
 
 // A small tab on the right edge. Tapping it shows two squares, top and bottom.
 // An empty square starts a stage on that half. A staged app fills its square.
+// Holding a filled square, and only a filled square, sends that half back to
+// the app picker. A short tap still just shows that half.
 @interface DSStageShelfView : UIView
 
 @property (nonatomic, assign) BOOL darkMode;
@@ -9,6 +11,8 @@
 
 // half is 1 for the top of the screen and 0 for the bottom.
 @property (nonatomic, copy) void (^halfHandler)(NSInteger half);
+// Fired only after a hold on a square that currently shows an app.
+@property (nonatomic, copy) void (^halfHoldHandler)(NSInteger half);
 @property (nonatomic, copy) void (^willOpenHandler)(void);
 
 - (void)reloadTopBundleIdentifier:(NSString *)top bottomBundleIdentifier:(NSString *)bottom;

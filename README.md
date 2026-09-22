@@ -267,15 +267,13 @@ answered.
 
 ## The keyboard
 
-tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full width, outside the card. That is the layout this rebuild keeps. How it gets there on **iOS 16.5.1 / iPhone** is not the iPad path.
+tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full width, outside the card.
 
-On a phone this firmware reports the keyboard in arbiter mode 0: the keys are drawn in the app's own scene. There is no presentable hosted keyboard scene to steal, and refusing the keyboard layer leaves the keys nowhere.
+**Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up and no app is hosted. The card lifts above the keyboard (301pt floor).
 
-**Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up. The card lifts above the keyboard (301pt floor).
+**Staged app.** The app is told to use SpringBoard's keyboard (`isUsingRemoteKeyboard` and the text-effects window hosted for the view), and only while it is staged. SpringBoard unhides its own keyboard window when that window actually contains keys, and the bottom card lifts. The stage window is not made key while an app is hosted. If no SpringBoard keyboard window appears, SpringBoard tells the app to draw its own keys at the bottom of the card so the field is not left blank.
 
-**Staged app (4.0.1).** Same as picker search: the card **does not resize**. It **lifts** so the field you are typing in stays above the keyboard (301pt floor for partial arbiter frames). Geometry is pushed into the hosted app so accessories track the lifted card. No display-level masks or pass-through hacks.
-
-**What is never done.** No layer reparenting, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards).
+**What is never done.** No layer reparenting, no presentation-mode cycling, no `dlopen` of KeyboardArbiter, no keyboard focus coordinator, no class walks at boot, no forcing `isMedusaCapable` except for apps set to iPad mode, no making the stage window key while an app is hosted (that stole Messenger's keyboard and broke search afterwards).
 
 The arbiter is hooked only if `_UIKeyboardArbiter` is already loaded, and only to learn the frame of a keyboard that is already up.
 

@@ -8,6 +8,7 @@ static const CGFloat kDSShelfPanelWidth = 116.0;
 
 @interface DSShelfSlotView : UIControl
 @property (nonatomic, assign) NSInteger half;
+@property (nonatomic, copy) void (^holdHandler)(DSShelfSlotView *slot);
 - (void)showBundleIdentifier:(NSString *)bundleIdentifier dark:(BOOL)dark title:(NSString *)title;
 @end
 
@@ -15,6 +16,7 @@ static const CGFloat kDSShelfPanelWidth = 116.0;
     UIImageView *_iconView;
     UIImageView *_plusView;
     UILabel *_caption;
+    UILongPressGestureRecognizer *_hold;
     NSString *_bundleIdentifier;
 }
 
@@ -43,8 +45,36 @@ static const CGFloat kDSShelfPanelWidth = 116.0;
         _caption.textAlignment = NSTextAlignmentCenter;
         _caption.userInteractionEnabled = NO;
         [self addSubview:_caption];
+
+        // A hold is the way back to the picker. It only arms once a square
+        // actually has an app in it, and it eats the touch so the tap that
+        // would only reveal the card does not also fire.
+        _hold = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(held:)];
+        _hold.minimumPressDuration = 0.42;
+        _hold.allowableMovement = 18.0;
+        _hold.cancelsTouchesInView = YES;
+        _hold.enabled = NO;
+        [self addGestureRecognizer:_hold];
     }
     return self;
+}
+
+- (void)held:(UILongPressGestureRecognizer *)recognizer {
+    if (recognizer.state == UIGestureRecognizerStateBegan) {
+        self.transform = CGAffineTransformMakeScale(0.9, 0.9);
+        UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+        [feedback impactOccurred];
+        return;
+    }
+    if (recognizer.state == UIGestureRecognizerStateEnded) {
+        self.transform = CGAffineTransformIdentity;
+        if (_bundleIdentifier.length > 0 && self.holdHandler) self.holdHandler(self);
+        return;
+    }
+    if (recognizer.state == UIGestureRecognizerStateCancelled ||
+        recognizer.state == UIGestureRecognizerStateFailed) {
+        self.transform = CGAffineTransformIdentity;
+    }
 }
 
 - (void)showBundleIdentifier:(NSString *)bundleIdentifier dark:(BOOL)dark title:(NSString *)title {
@@ -56,14 +86,17 @@ static const CGFloat kDSShelfPanelWidth = 116.0;
     _plusView.hidden = filled;
     _caption.hidden = filled;
 
+    _hold.enabled = filled;
     if (filled) {
         DSAppEntry *entry = [[DSAppLibrary sharedLibrary] entryForBundleIdentifier:bundleIdentifier];
         NSString *name = entry.displayName.length ? entry.displayName : bundleIdentifier;
         self.accessibilityLabel = name;
+        self.accessibilityHint = @"Hold to return to the app picker";
         self.backgroundColor = UIColor.clearColor;
         self.layer.borderWidth = 0.0;
     } else {
         self.accessibilityLabel = [NSString stringWithFormat:@"Start %@ stage", title.lowercaseString];
+        self.accessibilityHint = nil;
         self.backgroundColor = [UIColor colorWithWhite:dark ? 1.0 : 0.0 alpha:dark ? 0.08 : 0.05];
         self.layer.borderWidth = 1.5;
         self.layer.borderColor = [UIColor colorWithWhite:dark ? 1.0 : 0.0 alpha:0.28].CGColor;
@@ -130,14 +163,21 @@ static const CGFloat kDSShelfPanelWidth = 116.0;
         _panel.transform = CGAffineTransformMakeTranslation(28.0, 0.0);
         [self addSubview:_panel];
 
+        __weak DSStageShelfView *weakSelf = self;
         _topSlot = [[DSShelfSlotView alloc] initWithFrame:CGRectZero];
         _topSlot.half = 1;
         [_topSlot addTarget:self action:@selector(slotTapped:) forControlEvents:UIControlEventTouchUpInside];
+        _topSlot.holdHandler = ^(DSShelfSlotView *slot) {
+            [weakSelf slotHeld:slot];
+        };
         [_panel.contentView addSubview:_topSlot];
 
         _bottomSlot = [[DSShelfSlotView alloc] initWithFrame:CGRectZero];
         _bottomSlot.half = 0;
         [_bottomSlot addTarget:self action:@selector(slotTapped:) forControlEvents:UIControlEventTouchUpInside];
+        _bottomSlot.holdHandler = ^(DSShelfSlotView *slot) {
+            [weakSelf slotHeld:slot];
+        };
         [_panel.contentView addSubview:_bottomSlot];
 
         self.darkMode = YES;
@@ -263,6 +303,14 @@ static const CGFloat kDSShelfPanelWidth = 116.0;
 
 - (void)slotTapped:(DSShelfSlotView *)slot {
     void (^handler)(NSInteger) = self.halfHandler;
+    [self setOpen:NO animated:YES];
+    if (handler) handler(slot.half);
+}
+
+- (void)slotHeld:(DSShelfSlotView *)slot {
+    NSString *bundle = slot.half == 1 ? _topBundle : _bottomBundle;
+    if (bundle.length == 0) return;
+    void (^handler)(NSInteger) = self.halfHoldHandler;
     [self setOpen:NO animated:YES];
     if (handler) handler(slot.half);
 }

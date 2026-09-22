@@ -129,8 +129,10 @@
     if (!_staged) {
         _quarterTurns = 0;
         _padMode = NO;
+        _preferLocalKeyboard = NO;
         return;
     }
+    if (!wasStaged) _preferLocalKeyboard = NO;
     _padMode = [preferences launchTypeForApplication:identifier] == DSLaunchTypePad &&
                ![preferences landscapeDisabledForApplication:identifier];
 

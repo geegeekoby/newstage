@@ -1,3 +1,8 @@
+**4.5.4**
+- Hold a filled square in the right-edge notch to send that stage back to the app picker. An empty square does not. A short tap still opens or shows that half
+- Scene updates that were still resizing a hosted app, and moving an app's view between cards, are gone so those paths cannot blank the stage
+- A staged app uses SpringBoard's keyboard. If that keyboard never appears, the app draws its own keys at the bottom of the card
+
 **4.5.3**
 - The app in a stage is pinned to the card, so the bottom stage shows the whole app instead of a clipped full-screen scene
 - Swipe inward from the right side of a staged app to return to the app picker

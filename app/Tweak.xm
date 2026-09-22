@@ -6,16 +6,15 @@
 #import "DSBootstrap.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
+#import <notify.h>
 
 // Injected into every UIKit app. While this process is the one on the stage,
 // every route UIKit offers for "how big is the screen" answers with the stage
 // rectangle and the interface stays pinned to portrait.
 //
-// The keyboard is deliberately not one of those routes. Keyboard windows are
-// left out of every size hook and asked nothing but the truth, so the keys lay
-// out against the display rather than the card. Builds up to 1.5.0 clamped
-// those windows to the card, which is the whole reason the keyboard was ever
-// inside it.
+// The keyboard is deliberately not one of those routes. A staged app is told
+// to use SpringBoard's keyboard. If that window never appears, the app draws
+// its own keys at the bottom of the card instead of leaving the field blank.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -194,16 +193,92 @@ static BOOL DSIsKeyboardWindow(UIWindow *window) {
 
 #pragma mark - Keyboard
 
-// On iOS 16.5.1 an iPhone keyboard is drawn in this app's own scene. Earlier
-// builds forced UIKit to host it in SpringBoard's keyboard scene; that path
-// does not exist for a phone on this firmware, and lying about it left the
-// keys nowhere. Keyboard windows are asked nothing but the display size so
-// the keys come out full width. SpringBoard then masks the hosted view so
-// those keys sit on the bottom edge of the display, outside the card chrome.
+// A staged app uses SpringBoard's keyboard. UIKit only does that when it is
+// told the keyboard is remote; otherwise the keys are drawn in this scene and
+// clipped to the card. If SpringBoard never presents a keyboard window it
+// posts a fallback and these hooks step aside, so the keys still appear.
+
+static BOOL DSUseSpringBoardKeyboard(void) {
+    return DSStaged() && ![DSStageContext sharedContext].preferLocalKeyboard;
+}
+
+static __weak UIResponder *DSFoundResponder;
+
+@interface UIResponder (DSFindFirst)
+- (void)ds_captureFirstResponder:(id)sender;
+@end
+
+@implementation UIResponder (DSFindFirst)
+- (void)ds_captureFirstResponder:(id)sender {
+    DSFoundResponder = self;
+}
+@end
+
+static BOOL DSEditingText(void) {
+    DSFoundResponder = nil;
+    [UIApplication.sharedApplication sendAction:@selector(ds_captureFirstResponder:)
+                                             to:nil
+                                           from:nil
+                                       forEvent:nil];
+    UIResponder *responder = DSFoundResponder;
+    if (!responder) return NO;
+    return [responder conformsToProtocol:@protocol(UITextInput)];
+}
+
+static void DSRebuildLocalKeyboard(void) {
+    Class keyboardClass = objc_getClass("UIKeyboardImpl");
+    if (!keyboardClass) return;
+    id keyboard = nil;
+    SEL active = @selector(activeInstance);
+    SEL shared = @selector(sharedInstance);
+    if ([keyboardClass respondsToSelector:active]) {
+        keyboard = ((id (*)(Class, SEL))objc_msgSend)(keyboardClass, active);
+    }
+    if (!keyboard && [keyboardClass respondsToSelector:shared]) {
+        keyboard = ((id (*)(Class, SEL))objc_msgSend)(keyboardClass, shared);
+    }
+    if (!keyboard) return;
+    SEL hide = @selector(hideKeyboard);
+    SEL show = @selector(showKeyboard);
+    if ([keyboard respondsToSelector:hide]) {
+        ((void (*)(id, SEL))objc_msgSend)(keyboard, hide);
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (![DSStageContext sharedContext].preferLocalKeyboard) return;
+        if (!DSEditingText()) return;
+        if ([keyboard respondsToSelector:show]) {
+            ((void (*)(id, SEL))objc_msgSend)(keyboard, show);
+        }
+    });
+}
+
 %hook UITextEffectsWindow
 
+- (BOOL)_shouldTextEffectsWindowBeHostedForView:(UIView *)view {
+    if (DSUseSpringBoardKeyboard()) return YES;
+    return %orig;
+}
+
 - (CGSize)keyboardScreenReferenceSize {
-    if (DSStaged()) return DSDeviceBounds().size;
+    if (!DSStaged()) return %orig;
+    // Remote keys are laid out by SpringBoard against the display. Local
+    // fallback keys have to sit at the bottom of the card, which is the size
+    // this scene was given.
+    if (DSUseSpringBoardKeyboard()) return DSDeviceBounds().size;
+    return DSStageBounds().size;
+}
+
+%end
+
+%hook UIKeyboardImpl
+
++ (BOOL)isUsingRemoteKeyboard {
+    if (DSUseSpringBoardKeyboard()) return YES;
+    return %orig;
+}
+
+- (BOOL)isUsingRemoteKeyboard {
+    if (DSUseSpringBoardKeyboard()) return YES;
     return %orig;
 }
 
@@ -302,6 +377,16 @@ static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         %init(_ungrouped);
+        int fallbackToken = 0;
+        notify_register_dispatch(kDSKeyboardLocalFallbackNotification, &fallbackToken,
+                                 dispatch_get_main_queue(), ^(int t) {
+            if (!DSStaged()) return;
+            DSStageContext *context = [DSStageContext sharedContext];
+            if (context.preferLocalKeyboard) return;
+            context.preferLocalKeyboard = YES;
+            if (!DSEditingText()) return;
+            DSRebuildLocalKeyboard();
+        });
     });
 }
 

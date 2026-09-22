@@ -1121,13 +1121,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 }
 
 - (void)refreshPresentedGeometry {
+    // Fit the view that is already on the card. Starting another scene
+    // transaction here re-pins the app to the whole display and the card goes black.
     [self layoutHostView];
-    if (_appViewController) {
-        [self deliverStageSizeToApp];
-        return;
-    }
-    [self registerOverride];
-    [self pushSettings];
 }
 
 - (void)setForeground:(BOOL)foreground {

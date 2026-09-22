@@ -19,10 +19,10 @@
 // being picked up" without needing a log.
 #define kDSOpenStageNotification "com.recreated.dynamicstage.stage.open"
 
-// Nothing here for the keyboard, by design. On iOS 16.5.1 an iPhone keyboard
-// lives in the app's own scene. The stage never steals it and never refuses it.
-// The picker lifts the card; a staged app keeps the card still and shows the
-// keys on the display below it. See the keyboard section of the README.
+// Posted by SpringBoard when a staged app asked for SpringBoard's keyboard and
+// no keyboard window appeared. The app then draws its own keys inside the card
+// so the field is not left blank.
+#define kDSKeyboardLocalFallbackNotification "com.recreated.dynamicstage.keyboard.local"
 
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.

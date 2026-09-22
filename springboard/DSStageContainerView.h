@@ -24,9 +24,8 @@
 // except the grabber and the exit grips has to fall through.
 @property (nonatomic, assign) BOOL passThroughToHost;
 
-// Whether the content is clipped to the card. Off while an app is typing, so the
-// keyboard that is drawn at the bottom of the app's window can sit on the display
-// below the card rather than being clipped inside it.
+// The card always clips. A staged app's keyboard is SpringBoard's own window,
+// drawn above the card, so it does not need to spill out of this view.
 - (void)setClipsContents:(BOOL)clips;
 
 // Top strip that drags the whole card.

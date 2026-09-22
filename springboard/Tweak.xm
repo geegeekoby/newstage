@@ -26,9 +26,9 @@
 //
 // Keyboard policy for iOS 16.5.1 on an iPhone: never steal a layer, never
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
-// KeyboardArbiter. The picker uses SpringBoard's own keyboard and the card
-// lifts. A staged app draws its keyboard in its own scene; the card stays put
-// and the host view is masked so the keys sit on the display below it.
+// KeyboardArbiter, never point the focus coordinator at a scene. The picker
+// uses SpringBoard's own keyboard. A staged app is told to use that same
+// keyboard; if SpringBoard does not present one, the app draws its own.
 
 #pragma mark - Calling out of a hook
 

@@ -129,6 +129,8 @@ static const CGFloat kDSFlickVelocity = -1150.0;
     NSString *_bundleIdentifierToRestoreInFront;
     BOOL _notedKeyboardOnce;
     BOOL _notedStrayKeyboard;
+    BOOL _keyboardFallbackScheduled;
+    BOOL _keyboardFallbackSent;
     NSTimeInterval _ignoreSystemPullUntil;
     // The keyboard as the arbiter last described it, in display points, or zero when
     // there is none on screen. Whose keyboard it is does not matter: it is on the
@@ -254,6 +256,9 @@ static BOOL sSystemEdgePullAvailable;
     _shelf.halfHandler = ^(NSInteger half) {
         [weakSelf beginStageOnHalf:half];
     };
+    _shelf.halfHoldHandler = ^(NSInteger half) {
+        [weakSelf returnHalfToPicker:half];
+    };
     [root addSubview:_shelf];
 
     [self applyAppearance];
@@ -318,7 +323,9 @@ static BOOL sSystemEdgePullAvailable;
 // stole the keyboard from Messenger and left search unable to type after an app
 // had been staged.
 - (void)preparePickerForSearchKeyboard {
-    if (_sceneHost.isHosting) {
+    // A hosted app types through SpringBoard's keyboard. Making this window key
+    // while that app is up is what took the keys away from it.
+    if (_sceneHost.isHosting || _topSceneHost.isHosting) {
         [self giveBackKeyWindow];
         return;
     }
@@ -377,6 +384,46 @@ static BOOL sSystemEdgePullAvailable;
     [self noteKeyboardFrame:onScreen ? frame : CGRectZero
                     source:source.length > 0 ? source : @"an app"
                   duration:0.25];
+    if (!onScreen) {
+        _keyboardFallbackScheduled = NO;
+        _keyboardFallbackSent = NO;
+        return;
+    }
+    [self surfaceSpringBoardKeyboardForSource:source];
+}
+
+// A staged app is told to use SpringBoard's keyboard. That keyboard is a window
+// in this process; if it is sitting hidden under the stage, bring it up. If it
+// never appears, tell the app to draw its own keys so the field is not left blank.
+- (BOOL)sourceIsStagedApp:(NSString *)source {
+    if (source.length == 0) return NO;
+    if (_sceneHost.isHosting && [_sceneHost.bundleIdentifier isEqualToString:source]) return YES;
+    if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:source]) return YES;
+    return NO;
+}
+
+- (void)surfaceSpringBoardKeyboardForSource:(NSString *)source {
+    if (![self sourceIsStagedApp:source]) return;
+    [self giveBackKeyWindow];
+    if (DSRevealSpringBoardKeyboard()) {
+        _keyboardFallbackSent = NO;
+        return;
+    }
+    if (_keyboardFallbackSent || _keyboardFallbackScheduled) return;
+    _keyboardFallbackScheduled = YES;
+    NSString *expected = [source copy];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.45 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        strongSelf->_keyboardFallbackScheduled = NO;
+        if (![strongSelf sourceIsStagedApp:expected]) return;
+        if (DSRevealSpringBoardKeyboard()) return;
+        strongSelf->_keyboardFallbackSent = YES;
+        notify_post(kDSKeyboardLocalFallbackNotification);
+        DSDiagnosticsRecord(@"SpringBoard: no keyboard window of its own, so the staged app draws the keys");
+    });
 }
 
 // While an app is on the stage, the arbiter still hears keyboards from Spotlight and
@@ -968,7 +1015,10 @@ static BOOL sSystemEdgePullAvailable;
     [host setStageFrame:frame safeAreaInsets:UIEdgeInsetsZero];
 
     UIView *hostView = host.hostView;
-    if (hostView && hostView.superview != card.contentView) {
+    // A view that already has a parent stays there. Moving it between cards is
+    // what blanks the app. A view with no parent is one the attach path has
+    // not placed yet, and that one may be inserted.
+    if (hostView && hostView.superview == nil) {
         [card.contentView insertSubview:hostView atIndex:0];
     }
     [card layoutIfNeeded];
@@ -1026,6 +1076,7 @@ static BOOL sSystemEdgePullAvailable;
         [subview removeFromSuperview];
     }
     card.backgroundColor = [UIColor colorWithWhite:0.11 alpha:1.0];
+    card.contentView.backgroundColor = UIColor.clearColor;
     [card setBackdropHidden:NO];
     pickerView.hidden = NO;
     pickerView.alpha = 1.0;
@@ -1040,23 +1091,6 @@ static BOOL sSystemEdgePullAvailable;
     [pickerView layoutIfNeeded];
 }
 
-- (void)refreshStackedGeometrySoon {
-    __weak __typeof(self) weakSelf = self;
-    for (NSNumber *delay in @[ @0.05, @0.4, @1.0, @2.0 ]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            __strong __typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf || strongSelf->_stackSlotCount < kDSMaxStackSlots) return;
-            DSStageState state = strongSelf->_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
-            [strongSelf layoutAllStackSlotsForState:state];
-            if (!strongSelf->_topSceneHost.isHosting) {
-                [strongSelf presentPickerOnCard:strongSelf->_topContainer picker:strongSelf->_topPicker];
-            }
-            [strongSelf->_sceneHost refreshPresentedGeometry];
-            [strongSelf->_topSceneHost refreshPresentedGeometry];
-        });
-    }
-}
 
 - (void)relinquishStackHost:(DSSceneHost *)host {
     if (!host) return;
@@ -2313,6 +2347,8 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     [card setClipsContents:YES];
     [card setBackdropHidden:NO];
     card.hostingApp = NO;
+    card.backgroundColor = [UIColor colorWithWhite:0.11 alpha:1.0];
+    card.contentView.backgroundColor = UIColor.clearColor;
 
     picker.view.hidden = NO;
     picker.view.alpha = 0.0;
@@ -2326,6 +2362,7 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         [self scheduleAutoKillForHost:host];
         [self updateHomeAffordance];
         [self layoutStageForState:_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+        [self refreshShelf];
         return;
     }
 
@@ -2351,6 +2388,8 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
         [self scheduleAutoKillForHost:host];
         [self updateHomeAffordance];
         [self layoutStageForState:self->_state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay];
+        [self refreshShelf];
+        [self bringShelfToFront];
     };
 
     if (animated) {
@@ -2493,14 +2532,10 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
 
 #pragma mark - Keyboard
 
-// There is deliberately nothing here that tells SpringBoard which scene the keyboard
-// belongs to. 1.4.0 asked the keyboard focus coordinator to point the keyboard at the
-// staged app's scene, which is what broke typing in the picker: once an app had been
-// staged, SpringBoard's keyboard belonged to that app's scene and the stage's own
-// search field could not raise one again. Neither side needs the help. The picker's
-// field is SpringBoard's own, in a window the stage makes key; a text field inside the
-// staged app is asked for by that app, in its own process, the way it would be if the
-// app were full screen.
+// The focus coordinator stays out of this. 1.4.0 pointed it at the staged app's
+// scene and the picker's search field could not raise a keyboard afterwards.
+// A staged app asks for SpringBoard's keyboard from its own process. This side
+// only lifts the card and, when that keyboard window exists, keeps it visible.
 
 #pragma mark - In-stage gestures
 
@@ -2810,6 +2845,43 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
     }
 }
 
+- (NSInteger)slotForHalf:(NSInteger)half {
+    if (_stackSlotCount < kDSMaxStackSlots) {
+        return _primaryHalf == half ? 0 : -1;
+    }
+    if (_primaryHalf == half) return 0;
+    if (_secondHalf == half) return 1;
+    return -1;
+}
+
+// Hold on a filled notch square. That half drops its app and shows the picker.
+// An empty square never reaches here.
+- (void)returnHalfToPicker:(NSInteger)half {
+    NSInteger slot = [self slotForHalf:half];
+    if (slot < 0) return;
+    DSSceneHost *host = [self sceneHostForSlot:slot];
+    if (!host.isHosting) return;
+
+    DSStageContainerView *card = [self containerForSlot:slot];
+    BOOL wasParked = card && [self cardIsParked:card];
+    if (card) [self setParked:NO forCard:card];
+    if (_state != DSStageStateOverlay && _state != DSStageStateSplit) {
+        _state = DSStageStateOverlay;
+        _window.hidden = NO;
+        [self cancelAutoKill];
+    }
+    if (wasParked) {
+        [self layoutAllStackSlotsForState:DSStageStateOverlay];
+    }
+    [self exitToPickerAnimated:YES slot:slot];
+    if (!_sceneHost.isHosting && !_topSceneHost.isHosting) {
+        [self preparePickerForSearchKeyboard];
+    }
+    [self bringShelfToFront];
+    [self refreshShelf];
+    DSDiagnosticsRecordFormat(@"SpringBoard: held the %@ stage, back to the picker", half == 1 ? @"top" : @"bottom");
+}
+
 - (void)beginStageOnHalf:(NSInteger)half {
     if (half != 0 && half != 1) return;
     if (_state == DSStageStateTracking) return;
@@ -2864,6 +2936,18 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 #pragma mark - External events
 
 - (void)noteSceneDestroyedForBundleIdentifier:(NSString *)bundleIdentifier {
+    if (bundleIdentifier.length == 0) return;
+    if (_topSceneHost && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ went away while it was on the top stage", bundleIdentifier);
+        _topSceneHost = nil;
+        if (_topContainer) {
+            [self presentPickerOnCard:_topContainer picker:_topPicker];
+        }
+        [self refreshShelf];
+        [self updateHomeAffordance];
+        [self updateStackChrome];
+        return;
+    }
     if (!_sceneHost || ![_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return;
     DSDiagnosticsRecordFormat(@"SpringBoard: %@ went away while it was on the stage", bundleIdentifier);
     _sceneHost = nil;

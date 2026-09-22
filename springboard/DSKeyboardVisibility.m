@@ -83,3 +83,29 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
     });
     return keyboard;
 }
+
+BOOL DSRevealSpringBoardKeyboard(void) {
+    CGRect screen = UIScreen.mainScreen.bounds;
+    __block BOOL revealed = NO;
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (!DSWindowMightContainKeyboard(window)) return;
+        BOOL wasHidden = window.hidden;
+        CGFloat wasAlpha = window.alpha;
+        if (wasHidden) window.hidden = NO;
+        if (window.alpha < 0.01) window.alpha = 1.0;
+        CGRect keys = DSKeyboardViewFrameInView(window);
+        if (!DSKeyboardFrameIsOnScreen(keys, screen)) {
+            window.hidden = wasHidden;
+            window.alpha = wasAlpha;
+            return;
+        }
+        // The stage sits just under the status bar. A keyboard window that is
+        // lower than that is covered by the card, so lift only those.
+        if (window.windowLevel < UIWindowLevelStatusBar) {
+            window.windowLevel = UIWindowLevelAlert;
+        }
+        revealed = YES;
+    });
+    if (revealed) return YES;
+    return DSKeyboardFrameIsOnScreen(DSVisibleKeyboardFrameOnScreen(), screen);
+}

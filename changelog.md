@@ -1,3 +1,7 @@
+**4.5.11**
+- Searching in the second stage's picker was ignored while the other stage had an app, so that picker stayed under the keyboard. That search keyboard now lifts the picker card
+- The keyboard window was left on screen after the keys went down. It is hidden when the keyboard goes down
+
 **4.5.10**
 - The keyboard stays SpringBoard's. Only the card that the keys cover slides up, and the other card stays on its half. The top stage is no longer pushed off the screen while typing in the bottom one
 - SpringBoard's keyboard window is left at the size SpringBoard gave it, instead of being stretched over both cards

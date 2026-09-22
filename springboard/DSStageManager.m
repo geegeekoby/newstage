@@ -1285,8 +1285,22 @@ static BOOL sSystemEdgePullAvailable;
     }
 }
 
+- (BOOL)pickerVisibleOnSlot:(NSInteger)slot {
+    if (slot == 1 && _stackSlotCount < kDSMaxStackSlots) return NO;
+    DSAppPickerViewController *picker = slot == 0 ? _picker : _topPicker;
+    DSSceneHost *host = slot == 0 ? _sceneHost : _topSceneHost;
+    DSStageContainerView *card = [self containerForSlot:slot];
+    if (!picker || picker.view.hidden) return NO;
+    if (host.isHosting) return NO;
+    if (!card || card.hidden || [self cardIsParked:card]) return NO;
+    return YES;
+}
+
 - (BOOL)isShowingAppPicker {
-    return self.isStageVisible && !_picker.view.hidden && !_sceneHost.isHosting;
+    if (!self.isStageVisible) return NO;
+    // The second card has its own picker. Messenger on the top half must not
+    // make the bottom picker's search keyboard look like a stray keyboard.
+    return [self pickerVisibleOnSlot:0] || [self pickerVisibleOnSlot:1];
 }
 
 - (NSString *)stageBundleIdentifier {

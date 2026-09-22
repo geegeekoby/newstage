@@ -509,6 +509,13 @@ static BOOL DSRouteStagedKeyboardToSpringBoard(id arbiter, id information, id ha
         dispatch_async(dispatch_get_main_queue(), ^{
             DSPresentArbiterKeyboardLayer(nil);
         });
+    } else if (!onScreen) {
+        // The picker keyboard, and every other non-staged keyboard, was leaving
+        // the full-screen keyboard window up after the keys had gone.
+        DSKeyboardPresentGeneration++;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DSPresentArbiterKeyboardLayer(nil);
+        });
     }
     return NO;
 }

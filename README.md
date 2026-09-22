@@ -269,7 +269,7 @@ answered.
 
 tomt000's Dynamic Stage puts the keys on the bottom edge of the display, full width, outside the card.
 
-**Picker search.** The field is SpringBoard's. The stage window becomes key only while the picker is up and no app is hosted. The card lifts above the keyboard (301pt floor).
+**Picker search.** The field is SpringBoard's. Either card's picker counts, including the second stage opened while the other half already has an app. The stage window becomes key only while a picker is up and no app is hosted. The picker card lifts above the keyboard (301pt floor). The keyboard window is hidden again when the keys go down.
 
 **Staged app.** The app is told the keyboard is remote, and keyboard views in its text-effects window are forced out of the card. SpringBoard keeps its own keyboard window on screen, at the size SpringBoard gave it. Only the card the keys cover slides up, and it can overlap the other card. The other card stays on its half. Neither card changes size. The line at the top reports the app, whether SpringBoard's keyboard window is shown, its frame, and `lift slot0` / `lift slot1`. The same lines are appended to `/var/mobile/Library/Preferences/com.recreated.dynamicstage.log`.
 

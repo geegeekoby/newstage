@@ -334,10 +334,8 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
-// Each staged app has its own SpringBoard text field, outside the card. Picker
-// search is a different field. Moving the arbiter UI host, and placing its
-// scene, produced a different keyboard or none at all. This hook only reports
-// that a keyboard changed. It does not retarget it.
+// A staged app keeps its own text field. This hook only reports that a keyboard
+// changed. It does not take the key window and it does not place a keyboard scene.
 
 static BOOL DSArbiterBusy = NO;
 
@@ -431,8 +429,8 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     (void)handler;
 
     %orig;
-    // A staged app is given its own SpringBoard field by DSStageManager. This
-    // hook does not retarget the arbiter and does not place a keyboard scene.
+    // A staged app keeps the message field. This hook does not retarget the
+    // arbiter and does not place a keyboard scene.
     NSString *summary = nil;
     @try {
         if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];
@@ -557,6 +555,7 @@ static void DSRegisterDarwinObservers(void) {
         BOOL notStaged = (state & (1ULL << 37)) != 0;
         BOOL listening = (state & (1ULL << 38)) != 0;
         BOOL loaded = (state & (1ULL << 39)) != 0;
+        BOOL remote = (state & (1ULL << 48)) != 0;
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
         if (hadField && kind == 1) className = @"field";
@@ -565,13 +564,16 @@ static void DSRegisterDarwinObservers(void) {
         DSTell(^(DSStageManager *manager) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
             BOOL hosted = bundle.length > 0 && ![bundle hasPrefix:@"hash "] && ![bundle isEqualToString:@"?"];
-            // Every UIKit app reports that it loaded. Only a hosted one is written down.
-            if (loaded && !listening && !hosted) return;
+            if (loaded || listening || remote) [manager rememberAppDylibHash:hash];
+            // A loaded beacon from an app that is not on a card is only remembered.
+            if (loaded && !listening && !remote && !hosted) return;
             NSString *line;
-            if (listening) {
+            if (remote) {
+                line = [NSString stringWithFormat:@"app: %@ remote keyboard, message field stays", bundle];
+            } else if (listening) {
                 line = [NSString stringWithFormat:@"app: %@ is listening for staged keys", bundle];
             } else if (loaded) {
-                line = [NSString stringWithFormat:@"app: %@ loaded", bundle];
+                return;
             } else if (notStaged) {
                 line = [NSString stringWithFormat:@"app: key arrived in %@ while it was not staged", bundle];
             } else {

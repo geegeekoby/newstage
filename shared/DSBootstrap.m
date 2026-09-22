@@ -100,10 +100,17 @@ bool DSBundleLooksLikeUserApplication(void) {
         if ([path hasPrefix:prefix]) return false;
     }
 
-    return [path hasPrefix:@"/var/containers"] ||
-           [path hasPrefix:@"/private/var/containers"] ||
-           [path hasPrefix:@"/Applications"] ||
-           [path hasPrefix:@"/var/jb/Applications"] ||
-           [path hasPrefix:@"/private/var/jb/Applications"] ||
-           [path hasPrefix:@"/var/jb/var/containers"];
+    if ([path hasPrefix:@"/var/containers"] ||
+        [path hasPrefix:@"/private/var/containers"] ||
+        [path hasPrefix:@"/var/mobile/Containers"] ||
+        [path hasPrefix:@"/private/var/mobile/Containers"] ||
+        [path hasPrefix:@"/Applications"] ||
+        [path hasPrefix:@"/var/jb/Applications"] ||
+        [path hasPrefix:@"/private/var/jb/Applications"] ||
+        [path hasPrefix:@"/var/jb/var/containers"]) {
+        return true;
+    }
+    // System processes are already excluded by bundle id. An app whose path
+    // is unusual still has to receive the keyboard.
+    return identifier.length > 0 && ![identifier hasPrefix:@"com.apple."];
 }

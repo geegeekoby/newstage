@@ -1,3 +1,6 @@
+**4.5.31**
+- The staged keyboard was still the search field. That field took the key, so the letters stayed in SpringBoard and the message box lost the caret. A staged app now keeps its own text field. SpringBoard draws the remote keyboard outside the card, and the search field is not used. The log says whether Messenger loaded the in-app side
+
 **4.5.30**
 - Each staged app has its own SpringBoard keyboard, separate from the picker search field, still outside the card. Letters from that keyboard go only to the app that is typing. The app reports `app: loaded` as soon as it is on a card, and `app: is listening` once the message box can take those letters. Picker search is unchanged
 

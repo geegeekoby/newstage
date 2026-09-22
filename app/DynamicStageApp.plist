@@ -1,18 +1,5 @@
 {
     Filter = {
         Bundles = ( "com.apple.UIKit" );
-        Exclude = {
-            Bundles = (
-                "com.apple.springboard",
-                "com.apple.SpringBoard",
-                "com.apple.KeyboardArbiter",
-                "com.apple.Preferences",
-                "com.apple.Spotlight",
-                "com.apple.searchd",
-                "com.apple.InCallService",
-                "com.apple.ScreenshotServicesService",
-                "com.apple.PaperBoard"
-            );
-        };
     };
 }

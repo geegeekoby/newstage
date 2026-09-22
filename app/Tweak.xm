@@ -13,10 +13,9 @@
 // rectangle and the interface stays pinned to portrait.
 //
 // The keyboard is deliberately not one of those routes. While this process is
-// staged, it does not show a keyboard of its own and it does not ask the
-// keyboard arbiter for one. SpringBoard keeps a text field of its own for this
-// app, outside the card, and keystrokes from that keyboard are inserted here.
-// Picker search is a different field and is not used.
+// staged, the message field stays the editor. The keyboard is the remote one
+// SpringBoard draws at the bottom of the display, outside the card. Picker
+// search is a different field and is not used.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
@@ -57,6 +56,9 @@ static BOOL DSDeliveringStageKey = NO;
 static BOOL DSComposerHeld = NO;
 static CFAbsoluteTime DSComposerHeldAt = 0;
 static BOOL DSSuppressComposerResign = NO;
+// Set only around a real resign of the message field, so a local keyboard
+// hide does not take the remote keyboard down with it.
+static BOOL DSAllowKeyboardHide = NO;
 
 static void DSHoldComposer(void) {
     DSComposerHeld = YES;
@@ -386,6 +388,14 @@ static void DSReportListening(void) {
 static void DSReportLoaded(void) {
     DSPostApplyBits(1ULL << 39);
     DSDiagnosticsRecord(@"app: loaded");
+}
+
+static void DSReportRemoteKeyboard(void) {
+    static BOOL reported = NO;
+    if (reported) return;
+    reported = YES;
+    DSPostApplyBits((1ULL << 48) | (1ULL << 38));
+    DSDiagnosticsRecord(@"app: remote keyboard, message field stays");
 }
 
 static void DSTypeText(UIResponder *responder, NSString *text) {
@@ -754,7 +764,6 @@ static BOOL DSNameIsLocalKeyboard(NSString *name) {
     if ([name hasPrefix:@"UIKeyboard"]) return YES;
     if ([name hasPrefix:@"UIInputSet"]) return YES;
     if ([name hasPrefix:@"UIKB"]) return YES;
-    if ([name hasPrefix:@"UIRemoteKeyboard"]) return YES;
     if ([name hasPrefix:@"TUIKeyboard"]) return YES;
     if ([name hasPrefix:@"UICandidate"]) return YES;
     if ([name hasPrefix:@"UIPrediction"]) return YES;
@@ -929,8 +938,9 @@ static void DSBanishLocalKeyboard(void) {
             if (names.count < 8 && name.length) [names addObject:name];
             BOOL chrome = DSWindowIsKeyboardChrome(window);
             if (chrome) DSBanishFoundChrome = YES;
+            // The remote keyboard is SpringBoard's. Hiding that window takes the
+            // keys off the display. Only the local keyboard inside the card goes.
             if (chrome && [name rangeOfString:@"RemoteKeyboard"].location != NSNotFound) {
-                DSSuppressKeyboardView(window);
                 return;
             }
             CGRect bounds = window.bounds;
@@ -1011,22 +1021,23 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 %hook UIKeyboardImpl
 
-// The remote keyboard is the arbiter's keyboard. A staged app does not use it.
-// The local keyboard would draw inside the card. Neither is allowed to start.
+// The remote keyboard is drawn by SpringBoard, outside the card. The message
+// field in this process stays the editor, so the letters land there.
 + (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return NO;
+    if (DSStaged()) return YES;
     return %orig;
 }
 
 - (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return NO;
+    if (DSStaged()) return YES;
     return %orig;
 }
 
 - (void)showKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
+        DSReportRemoteKeyboard();
+        %orig;
         return;
     }
     %orig;
@@ -1035,10 +1046,9 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (void)hideKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
-        // Hiding the in-process keyboard resigns the message box. The blue
-        // line leaves, and the stage window's field becomes the only editor.
-        if (DSComposerHeld) return;
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
+        // A local hide while the message box is still the editor resigns it.
+        // The remote keyboard hides when the field itself resigns.
+        if (DSComposerHeld && !DSAllowKeyboardHide) return;
         %orig;
         return;
     }
@@ -1054,23 +1064,21 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged() && DSResponderTakesText(self)) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
-    // The stage window has to become key for the picker keyboard. UIKit then
-    // resigns this field. Refusing that keeps the blue line in the message box.
     if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
+    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
+    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self) && !DSDeliveringStageKey) {
         DSReleaseComposer();
-        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }
@@ -1084,7 +1092,6 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -1095,10 +1102,11 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
+    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
+    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         DSReleaseComposer();
-        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }
@@ -1112,7 +1120,6 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
-        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -1123,10 +1130,11 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
+    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
+    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         DSReleaseComposer();
-        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }

@@ -15,16 +15,17 @@ CGRect DSVisibleKeyboardFrameOnScreen(void);
 // when a keyboard is on the display.
 BOOL DSRevealSpringBoardKeyboard(void);
 
-// Places the arbiter's keyboard scene layer in SpringBoard's remote keyboard
-// window, above the stage. Pass nil to put that window away. Does not stretch
-// the window to the full display and does not use alert level.
+// Older builds bound the arbiter scene into a newly created
+// UIRemoteKeyboardWindow (create:YES). That produced an empty full-screen
+// window (bind=0) and left the keys inside the card. Pass nil to mark the
+// keyboard hidden; a non-nil layer is ignored.
 void DSPresentArbiterKeyboardLayer(id sceneLayer);
 
-// Convenience: bind the scene layer when present, otherwise reveal an existing
-// SpringBoard keyboard window above the stage.
+// Reveals an existing SpringBoard keyboard that already contains keys and
+// lifts it above the stage. Never creates an empty remote keyboard window.
 BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer);
 
-// Puts the presented remote keyboard window away.
+// Marks the presented keyboard as hidden. Does not create windows.
 void DSHidePresentedArbiterKeyboard(void);
 
 // Hands the keyboard UI host back after a staged session so Spotlight and

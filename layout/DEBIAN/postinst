@@ -22,8 +22,13 @@ done
 # ElleKit loads app tweaks from TweakInject. Theos puts the dylib in
 # DynamicLibraries. When TweakInject is a real directory, copy the in-app side
 # there. Write the filter as XML text so ElleKit can parse it.
+#
+# On this device DynamicLibraries has repeatedly lost DynamicStageApp.dylib
+# even though the .deb contains it. A second copy lives under Application
+# Support and is restored here (and again from SpringBoard on boot).
 LIBS="/var/jb/Library/MobileSubstrate/DynamicLibraries"
 INJECT="/var/jb/usr/lib/TweakInject"
+PAYLOAD="/var/jb/Library/Application Support/DynamicStage"
 PLIST_BODY='{
     Filter = {
         Bundles = ( "com.facebook.Messenger" );
@@ -35,6 +40,15 @@ write_plist() {
 	dest="$1"
 	printf '%s\n' "$PLIST_BODY" > "$dest" || true
 }
+
+mkdir -p "$LIBS" || true
+
+if [ ! -f "$LIBS/DynamicStageApp.dylib" ] && [ -f "$PAYLOAD/DynamicStageApp.dylib" ]; then
+	cp -f "$PAYLOAD/DynamicStageApp.dylib" "$LIBS/DynamicStageApp.dylib" || true
+	if [ -f "$PAYLOAD/DynamicStageApp.plist" ]; then
+		cp -f "$PAYLOAD/DynamicStageApp.plist" "$LIBS/DynamicStageApp.plist" || true
+	fi
+fi
 
 if [ -f "$LIBS/DynamicStageApp.dylib" ]; then
 	write_plist "$LIBS/DynamicStageApp.plist"

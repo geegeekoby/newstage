@@ -24,6 +24,7 @@ include $(THEOS_MAKE_PATH)/aggregate.mk
 # which is the only point where the finished fat binaries exist.
 after-stage::
 	@python3 $(THEOS_PROJECT_DIR)/tools/newabi.py "$(THEOS_STAGING_DIR)"
+	@python3 $(THEOS_PROJECT_DIR)/tools/stage_app_payload.py "$(THEOS_STAGING_DIR)"
 
 # A package whose binaries this device will not load fails silently: nothing in
 # the build output looks wrong, the tweak simply never injects. So the finished

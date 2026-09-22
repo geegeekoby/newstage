@@ -83,11 +83,10 @@ CGRect DSVisibleKeyboardFrameOnScreen(void) {
     return keyboard;
 }
 
-static UIWindow *DSClaimedKeyboardWindow = nil;
 static NSString *DSClaimedKeyboardStatus = @"win=none";
 
-// The stage sits at StatusBar - 1. Put the keyboard just above that so the
-// keys clear the card. Alert level covered the wallpaper.
+// The stage sits at StatusBar - 1. Put a real keyboard window just above that.
+// Never alert level. Never create an empty full-screen remote keyboard window.
 static void DSRaiseKeyboardWindowAboveStage(UIWindow *window) {
     window.backgroundColor = UIColor.clearColor;
     window.opaque = NO;
@@ -101,109 +100,58 @@ static void DSRaiseKeyboardWindowAboveStage(UIWindow *window) {
 BOOL DSRevealSpringBoardKeyboard(void) {
     CGRect screen = UIScreen.mainScreen.bounds;
     __block BOOL revealed = NO;
+    __block CGRect shown = CGRectNull;
+    __block CGFloat level = 0;
     DSVisitApplicationWindows(^(UIWindow *window) {
-        if (window == DSClaimedKeyboardWindow) {
-            DSRaiseKeyboardWindowAboveStage(window);
-            revealed = YES;
-            return;
-        }
+        if (revealed) return;
         if (!DSWindowMightContainKeyboard(window)) return;
         BOOL wasHidden = window.hidden;
         CGFloat wasAlpha = window.alpha;
         if (wasHidden) window.hidden = NO;
         if (window.alpha < 0.01) window.alpha = 1.0;
         CGRect keys = DSKeyboardViewFrameInView(window);
+        // An empty remote keyboard window is full-screen with no UIKeyboard
+        // inside it. Leave those alone - they cover the wallpaper and do not
+        // draw keys outside the card.
         if (!DSKeyboardFrameIsOnScreen(keys, screen)) {
             window.hidden = wasHidden;
             window.alpha = wasAlpha;
             return;
         }
+        if (CGRectGetHeight(window.frame) >= CGRectGetHeight(screen) - 1.0 &&
+            CGRectGetWidth(window.frame) >= CGRectGetWidth(screen) - 1.0 &&
+            CGRectGetHeight(keys) < CGRectGetHeight(screen) * 0.55) {
+            // Keep the window's size. Stretching it was already rejected.
+        }
         DSRaiseKeyboardWindowAboveStage(window);
         revealed = YES;
+        shown = keys;
+        level = window.windowLevel;
     });
-    if (revealed) return YES;
-    return DSKeyboardFrameIsOnScreen(DSVisibleKeyboardFrameOnScreen(), screen);
+    if (revealed) {
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=shown lvl=%.0f keys=%@",
+                                   level, NSStringFromCGRect(shown)];
+        return YES;
+    }
+    DSClaimedKeyboardStatus = @"win=none";
+    return NO;
 }
 
+// Kept for callers that used to bind a scene layer. Creating an empty
+// UIRemoteKeyboardWindow produced a full-screen bind=0 window and put the keys
+// back inside the card. These now only hide / no-op.
 void DSPresentArbiterKeyboardLayer(id sceneLayer) {
-    static UIWindow *hostedWindow = nil;
-    static BOOL claimed = NO;
-
     if (!sceneLayer) {
-        if (claimed && hostedWindow) {
-            @try {
-                [hostedWindow setValue:nil forKey:@"_externalSceneLayer"];
-            } @catch (NSException *exception) {
-            }
-            hostedWindow.hidden = YES;
-        }
-        claimed = NO;
-        DSClaimedKeyboardWindow = nil;
         DSClaimedKeyboardStatus = @"win=hidden";
-        return;
     }
-
-    Class windowClass = objc_getClass("UIRemoteKeyboardWindow");
-    SEL create = @selector(remoteKeyboardWindowForScreen:create:);
-    UIWindow *window = hostedWindow;
-    if (!window && [windowClass respondsToSelector:create]) {
-        @try {
-            window = ((id (*)(id, SEL, id, BOOL))objc_msgSend)(windowClass, create, UIScreen.mainScreen, YES);
-        } @catch (NSException *exception) {
-            window = nil;
-        }
-    }
-    if (!window) {
-        DSClaimedKeyboardStatus = @"win=missing";
-        return;
-    }
-
-    BOOL bound = NO;
-    @try {
-        [window setValue:sceneLayer forKey:@"_externalSceneLayer"];
-        bound = YES;
-    } @catch (NSException *exception) {
-        Ivar ivar = NULL;
-        for (Class cls = windowClass; cls && !ivar; cls = class_getSuperclass(cls)) {
-            ivar = class_getInstanceVariable(cls, "_externalSceneLayer");
-        }
-        if (ivar) {
-            object_setIvar(window, ivar, sceneLayer);
-            bound = YES;
-        }
-    }
-
-    for (NSString *name in @[ @"attachBindable", @"resetScene" ]) {
-        SEL selector = NSSelectorFromString(name);
-        if (![window respondsToSelector:selector]) continue;
-        @try {
-            ((void (*)(id, SEL))objc_msgSend)(window, selector);
-        } @catch (NSException *exception) {
-        }
-    }
-
-    DSRaiseKeyboardWindowAboveStage(window);
-    // Leave the window at the size SpringBoard gave it. Stretching it to the
-    // whole display puts that window over both cards.
-    hostedWindow = window;
-    claimed = YES;
-    DSClaimedKeyboardWindow = window;
-    DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=%@ bind=%d lvl=%.0f frame=%@",
-                               window.hidden ? @"hidden" : @"shown",
-                               bound,
-                               window.windowLevel,
-                               NSStringFromCGRect(window.frame)];
 }
 
 void DSHidePresentedArbiterKeyboard(void) {
-    DSPresentArbiterKeyboardLayer(nil);
+    DSClaimedKeyboardStatus = @"win=hidden";
 }
 
 BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer) {
-    if (sceneLayer) {
-        DSPresentArbiterKeyboardLayer(sceneLayer);
-        if (DSClaimedKeyboardWindow && !DSClaimedKeyboardWindow.hidden) return YES;
-    }
+    (void)sceneLayer;
     return DSRevealSpringBoardKeyboard();
 }
 

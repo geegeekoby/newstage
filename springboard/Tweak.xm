@@ -11,6 +11,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <spawn.h>
 #import <unistd.h>
 
 // Load order, after a reboot that then has to be jailbroken:
@@ -749,8 +750,33 @@ static void DSInstallRemainingHooks(void) {
             NSString *injectPath = [injectDir stringByAppendingPathComponent:@"DynamicStageApp.dylib"];
             NSString *injectPlist = [injectDir stringByAppendingPathComponent:@"DynamicStageApp.plist"];
             NSString *libsPlist = @"/var/jb/Library/MobileSubstrate/DynamicLibraries/DynamicStageApp.plist";
+            NSString *payloadDir = @"/var/jb/Library/Application Support/DynamicStage";
+            NSString *payloadDylib = [payloadDir stringByAppendingPathComponent:@"DynamicStageApp.dylib"];
+            NSString *payloadPlist = [payloadDir stringByAppendingPathComponent:@"DynamicStageApp.plist"];
             NSFileManager *files = NSFileManager.defaultManager;
             BOOL libs = [files fileExistsAtPath:libsPath];
+            BOOL restored = NO;
+            // The .deb has this dylib, but ElleKit installs on this device have
+            // repeatedly left DynamicLibraries without it. The package also ships
+            // a copy under Application Support; put it back when it is missing.
+            if (!libs && [files fileExistsAtPath:payloadDylib]) {
+                NSError *restoreError = nil;
+                NSString *libsDir = [libsPath stringByDeletingLastPathComponent];
+                [files createDirectoryAtPath:libsDir withIntermediateDirectories:YES attributes:nil error:nil];
+                [files removeItemAtPath:libsPath error:nil];
+                [files copyItemAtPath:payloadDylib toPath:libsPath error:&restoreError];
+                if ([files fileExistsAtPath:payloadPlist]) {
+                    [files removeItemAtPath:libsPlist error:nil];
+                    [files copyItemAtPath:payloadPlist toPath:libsPlist error:nil];
+                }
+                libs = [files fileExistsAtPath:libsPath];
+                restored = libs;
+                if (restoreError) {
+                    DSDiagnosticsRecordFormat(@"SpringBoard: app payload restore failed %@", restoreError.localizedDescription);
+                } else {
+                    DSDiagnosticsRecordFormat(@"SpringBoard: restored app dylib from Application Support libs=%d", libs);
+                }
+            }
             BOOL tweakInject = [files fileExistsAtPath:injectDir];
             BOOL tweakLink = NO;
             {
@@ -766,16 +792,30 @@ static void DSInstallRemainingHooks(void) {
                 if ([files fileExistsAtPath:libsPlist]) {
                     [files removeItemAtPath:injectPlist error:nil];
                     [files copyItemAtPath:libsPlist toPath:injectPlist error:nil];
+                } else if ([files fileExistsAtPath:payloadPlist]) {
+                    [files removeItemAtPath:injectPlist error:nil];
+                    [files copyItemAtPath:payloadPlist toPath:injectPlist error:nil];
                 }
                 if (copyError) {
                     DSDiagnosticsRecordFormat(@"SpringBoard: TweakInject copy failed %@", copyError.localizedDescription);
                 }
             }
             BOOL injectDylib = [files fileExistsAtPath:injectPath];
+            BOOL payload = [files fileExistsAtPath:payloadDylib];
             NSArray *libNames = [files contentsOfDirectoryAtPath:@"/var/jb/Library/MobileSubstrate/DynamicLibraries" error:nil] ?: @[];
-            DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d files=%@",
-                                      libs, tweakInject, tweakLink, injectDylib,
+            DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d payload=%d restored=%d files=%@",
+                                      libs, tweakInject, tweakLink, injectDylib, payload, restored,
                                       [libNames componentsJoinedByString:@","]);
+            // An already-open Messenger will not pick up a freshly restored
+            // dylib until it is restarted.
+            if (restored) {
+                pid_t pid = 0;
+                char *argv[] = { (char *)"/var/jb/usr/bin/killall", (char *)"-9", (char *)"Messenger", NULL };
+                if (posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL) != 0) {
+                    argv[0] = (char *)"/usr/bin/killall";
+                    posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL);
+                }
+            }
 
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{

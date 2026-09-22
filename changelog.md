@@ -1,3 +1,6 @@
+**4.5.38**
+- The keys were still inside the card because DynamicStageApp.dylib was missing on the device (`libs=0`), so Messenger never banished its own keyboard, and SpringBoard created an empty full-screen remote keyboard window (`bind=0`) that covered nothing useful. The package now embeds that dylib under Application Support and restores it into DynamicLibraries and TweakInject on install and on boot, then restarts Messenger. Empty remote windows are no longer created; only a real keyboard with keys is raised above the stage
+
 **4.5.37**
 - Typing stayed in Messenger, but the keys were still drawn inside the card because the remote keyboard window sat under the stage. That window is now lifted to status-bar level only (never alert), and the arbiter scene layer is bound into it. The keyboard UI host is handed back when the keys go down or the stage is minimized, so Spotlight and Filza are not stuck. The in-app dylib is copied into TweakInject again on boot if it is missing
 

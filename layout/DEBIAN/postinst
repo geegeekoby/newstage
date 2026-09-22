@@ -30,18 +30,4 @@ for dir in /var/mobile/Library/Preferences /var/jb/var/mobile/Library/Preference
 	fi
 done
 
-# ElleKit injects apps from TweakInject. Never replace a TweakInject that is
-# already a symlink onto MobileSubstrate. Only add our app dylib into a real
-# directory that is already there.
-inject=/var/jb/usr/lib/TweakInject
-libs=/var/jb/Library/MobileSubstrate/DynamicLibraries
-if [ -d "$inject" ] && [ ! -L "$inject" ] && [ -f "$libs/DynamicStageApp.dylib" ]; then
-	cp -f "$libs/DynamicStageApp.dylib" "$inject/DynamicStageApp.dylib" || true
-	cp -f "$libs/DynamicStageApp.plist" "$inject/DynamicStageApp.plist" || true
-fi
-
-# Quit Messenger so the next open loads this build. A running copy keeps the
-# old image and keeps drawing its own keyboard inside the card.
-killall -9 Messenger >/dev/null 2>&1 || true
-
 exit 0

@@ -51,11 +51,6 @@ static NSString *DSDiagnosticsStamp(void) {
 
 void DSDiagnosticsRecord(NSString *message) {
     if (message.length == 0) return;
-    // Only SpringBoard writes this file. The Foundation filter used to load the
-    // app dylib into PaperBoard and dozens of other processes, and every one of
-    // them appended here. That tore the log and left the wallpaper black.
-    NSString *process = NSProcessInfo.processInfo.processName ?: @"";
-    if (![process isEqualToString:@"SpringBoard"]) return;
     // One entry is one line, including when what is being recorded is not: the log is
     // trimmed by finding a newline and cutting there, so a message carrying its own
     // would be cut in the middle of itself.
@@ -63,21 +58,13 @@ void DSDiagnosticsRecord(NSString *message) {
         message = [[message componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet]
             componentsJoinedByString:@" "];
     }
-    // Drop control bytes so a torn write cannot leave garbage in the middle of a line.
-    NSMutableString *clean = [NSMutableString stringWithCapacity:message.length];
-    for (NSUInteger i = 0; i < message.length; i++) {
-        unichar c = [message characterAtIndex:i];
-        if (c >= 0x20 && c != 0x7f) [clean appendFormat:@"%C", c];
-        else [clean appendString:@" "];
-    }
-    message = clean;
     if (message.length > kDSDiagnosticsMaxLineLength) {
         message = [[message substringToIndex:kDSDiagnosticsMaxLineLength - 3] stringByAppendingString:@"..."];
     }
 
     NSString *line = [NSString stringWithFormat:@"%@ %@: %@\n",
                       DSDiagnosticsStamp(),
-                      process,
+                      NSProcessInfo.processInfo.processName ?: @"?",
                       message];
 
     dispatch_async(DSDiagnosticsQueue(), ^{

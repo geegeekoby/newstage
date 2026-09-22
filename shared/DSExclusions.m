@@ -17,11 +17,6 @@ BOOL DSIdentifierIsExcludedFromStage(NSString *identifier) {
             @"com.apple.searchd",
             @"com.apple.assertiond",
             @"com.apple.SpringBoard",
-            @"com.apple.wallpaper",
-            @"com.apple.WallpaperAgent",
-            @"com.apple.WallpaperSettings",
-            @"com.apple.chronod",
-            @"com.apple.SystemUI",
 
             @"com.apple.webapp",
             @"com.apple.Web",
@@ -58,7 +53,5 @@ BOOL DSIdentifierIsExcludedFromStage(NSString *identifier) {
     if ([excluded containsObject:identifier]) return YES;
     if ([identifier hasPrefix:@"com.recreated.dynamicstage"]) return YES;
     if ([identifier hasPrefix:@"com.apple.springboard."]) return YES;
-    if ([identifier hasPrefix:@"com.apple.Wallpaper"]) return YES;
-    if ([identifier hasPrefix:@"com.apple.wallpaper"]) return YES;
     return NO;
 }

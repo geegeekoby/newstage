@@ -8,25 +8,25 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
-#import <stdio.h>
 // Injected into every UIKit app. While this process is the one on the stage,
 // every route UIKit offers for "how big is the screen" answers with the stage
 // rectangle and the interface stays pinned to portrait.
 //
 // The keyboard is deliberately not one of those routes. While this process is
-// staged, the message field stays the editor. The keyboard is the remote one
-// SpringBoard draws at the bottom of the display, outside the card. Picker
-// search is a different field and is not used.
+// staged, it does not show a keyboard of its own and it does not ask the
+// keyboard arbiter for one. SpringBoard keeps a text field of its own for this
+// app, outside the card, and keystrokes from that keyboard are inserted here.
+// Picker search is a different field and is not used.
 //
 // Apps that hard-code portrait phone geometry get a small amount of extra help
 // at the bottom of the file.
 //
 // Nothing below is hooked until the app is actually put on the stage. The filter
-// matches UIKit, Messenger, or any process that has UIApplication, so this dylib
-// loads into apps on screen. An app that is never staged has no use for the
-// hooks. Installing them lazily means such a process carries one notification
-// observer and no patched methods at all, so a mistake in here cannot reach an
-// app that is not using the feature.
+// is UIKit, so this dylib loads into everything with a screen - including the
+// package manager the tweak is installed from - and an app that is never staged
+// has no use for any of it. Installing the hooks lazily means such a process
+// carries one notification observer and no patched methods at all, so a mistake
+// in here cannot reach an app that is not using the feature.
 
 static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
@@ -57,9 +57,6 @@ static BOOL DSDeliveringStageKey = NO;
 static BOOL DSComposerHeld = NO;
 static CFAbsoluteTime DSComposerHeldAt = 0;
 static BOOL DSSuppressComposerResign = NO;
-// Set only around a real resign of the message field, so a local keyboard
-// hide does not take the remote keyboard down with it.
-static BOOL DSAllowKeyboardHide = NO;
 
 static void DSHoldComposer(void) {
     DSComposerHeld = YES;
@@ -386,35 +383,9 @@ static void DSReportListening(void) {
 
 // Posted as soon as this process has a bundle id, and again when it is staged.
 // SpringBoard only writes the line when that app is on a card.
-// A second name that belongs to this app only. The shared one keeps whichever
-// process wrote last, and that hid a loaded Messenger.
-static void DSPostLoadedBeacon(void) {
-    static int token = NOTIFY_TOKEN_INVALID;
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
-    if (identifier.length == 0) return;
-    uint32_t hash = DSIdentifierHash(identifier);
-    char name[128];
-    snprintf(name, sizeof(name), "%s.%u", kDSKeyboardApplyNotification, hash);
-    if (token == NOTIFY_TOKEN_INVALID) notify_register_check(name, &token);
-    if (token == NOTIFY_TOKEN_INVALID) return;
-    uint64_t state = hash;
-    state |= (1ULL << 39);
-    notify_set_state(token, state);
-    notify_post(name);
-}
-
 static void DSReportLoaded(void) {
     DSPostApplyBits(1ULL << 39);
-    DSPostLoadedBeacon();
     DSDiagnosticsRecord(@"app: loaded");
-}
-
-static void DSReportRemoteKeyboard(void) {
-    static BOOL reported = NO;
-    if (reported) return;
-    reported = YES;
-    DSPostApplyBits((1ULL << 48) | (1ULL << 38));
-    DSDiagnosticsRecord(@"app: remote keyboard, message field stays");
 }
 
 static void DSTypeText(UIResponder *responder, NSString *text) {
@@ -783,6 +754,7 @@ static BOOL DSNameIsLocalKeyboard(NSString *name) {
     if ([name hasPrefix:@"UIKeyboard"]) return YES;
     if ([name hasPrefix:@"UIInputSet"]) return YES;
     if ([name hasPrefix:@"UIKB"]) return YES;
+    if ([name hasPrefix:@"UIRemoteKeyboard"]) return YES;
     if ([name hasPrefix:@"TUIKeyboard"]) return YES;
     if ([name hasPrefix:@"UICandidate"]) return YES;
     if ([name hasPrefix:@"UIPrediction"]) return YES;
@@ -957,9 +929,8 @@ static void DSBanishLocalKeyboard(void) {
             if (names.count < 8 && name.length) [names addObject:name];
             BOOL chrome = DSWindowIsKeyboardChrome(window);
             if (chrome) DSBanishFoundChrome = YES;
-            // The remote keyboard is SpringBoard's. Hiding that window takes the
-            // keys off the display. Only the local keyboard inside the card goes.
             if (chrome && [name rangeOfString:@"RemoteKeyboard"].location != NSNotFound) {
+                DSSuppressKeyboardView(window);
                 return;
             }
             CGRect bounds = window.bounds;
@@ -1040,24 +1011,22 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 %hook UIKeyboardImpl
 
-// The remote keyboard is drawn by SpringBoard, outside the card. The message
-// field in this process stays the editor, so the letters land there.
+// The remote keyboard is the arbiter's keyboard. A staged app does not use it.
+// The local keyboard would draw inside the card. Neither is allowed to start.
 + (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return YES;
+    if (DSStaged()) return NO;
     return %orig;
 }
 
 - (BOOL)isUsingRemoteKeyboard {
-    if (DSStaged()) return YES;
+    if (DSStaged()) return NO;
     return %orig;
 }
 
 - (void)showKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
-        DSReportRemoteKeyboard();
-        %orig;
-        DSBanishLocalKeyboard();
+        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
         return;
     }
     %orig;
@@ -1066,9 +1035,10 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (void)hideKeyboard {
     if (DSStaged()) {
         DSBanishLocalKeyboard();
-        // A local hide while the message box is still the editor resigns it.
-        // The remote keyboard hides when the field itself resigns.
-        if (DSComposerHeld && !DSAllowKeyboardHide) return;
+        // Hiding the in-process keyboard resigns the message box. The blue
+        // line leaves, and the stage window's field becomes the only editor.
+        if (DSComposerHeld) return;
+        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(NO);
         %orig;
         return;
     }
@@ -1084,21 +1054,23 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged() && DSResponderTakesText(self)) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
+        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
 
 - (BOOL)resignFirstResponder {
     BOOL wasEditing = self.isFirstResponder;
+    // The stage window has to become key for the picker keyboard. UIKit then
+    // resigns this field. Refusing that keeps the blue line in the message box.
     if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
-    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
-    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self) && !DSDeliveringStageKey) {
         DSReleaseComposer();
+        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }
@@ -1112,6 +1084,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
+        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -1122,11 +1095,10 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
-    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
-    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         DSReleaseComposer();
+        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }
@@ -1140,6 +1112,7 @@ static void DSInstallKeyboardBanishObserver(void) {
     if (became && DSStaged()) {
         DSRememberKeyboardTarget(self);
         DSHoldComposer();
+        if (!DSDeliveringStageKey) DSRequestPickerKeyboard(YES);
     }
     return became;
 }
@@ -1150,11 +1123,10 @@ static void DSInstallKeyboardBanishObserver(void) {
         DSRememberKeyboardTarget(self);
         return NO;
     }
-    if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
-    DSAllowKeyboardHide = NO;
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         DSReleaseComposer();
+        DSRequestPickerKeyboard(NO);
     }
     return resigned;
 }
@@ -1250,50 +1222,6 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 #pragma mark - Entry point
 
-static id DSSharedKeyboardImpl(void) {
-    Class keyboardClass = objc_getClass("UIKeyboardImpl");
-    if (!keyboardClass) return nil;
-    for (NSString *name in @[ @"activeInstance", @"sharedInstance" ]) {
-        SEL selector = NSSelectorFromString(name);
-        if (![keyboardClass respondsToSelector:selector]) continue;
-        id impl = ((id (*)(id, SEL))objc_msgSend)(keyboardClass, selector);
-        if (impl) return impl;
-    }
-    return nil;
-}
-
-static BOOL DSKeyboardSurfaceIsUp(id impl) {
-    if (!impl) return NO;
-    for (NSString *name in @[ @"isOnScreen", @"keyboardIsShown" ]) {
-        SEL selector = NSSelectorFromString(name);
-        if (![impl respondsToSelector:selector]) continue;
-        return ((BOOL (*)(id, SEL))objc_msgSend)(impl, selector);
-    }
-    return NO;
-}
-
-static BOOL DSTextFieldIsEditing(void) {
-    UIResponder *current = DSCurrentKeyInput();
-    if (current.isFirstResponder && DSResponderTakesText(current)) return YES;
-    UIResponder *remembered = DSKeyboardTarget;
-    return remembered.isFirstResponder && DSResponderTakesText(remembered);
-}
-
-// Hooks can land after the message field is already editing. Ask for the remote
-// keyboard once, and only while that field is up, so a stage with no editor
-// does not grow a keyboard.
-static void DSRefreshRemoteKeyboard(void) {
-    if (!DSStaged() || !DSTextFieldIsEditing()) return;
-    id impl = DSSharedKeyboardImpl();
-    if (!DSKeyboardSurfaceIsUp(impl)) return;
-    DSBanishLocalKeyboard();
-    DSReportRemoteKeyboard();
-    SEL show = @selector(showKeyboard);
-    if ([impl respondsToSelector:show]) {
-        ((void (*)(id, SEL))objc_msgSend)(impl, show);
-    }
-}
-
 static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
@@ -1310,26 +1238,14 @@ static void DSStartObserving(void) {
         DSReportLoaded();
         DSInstallKeyboardInputListener();
         DSInstallHooks();
-        DSRefreshRemoteKeyboard();
     };
     [context startObserving];
 }
 
 // The bundle path can be empty at the moment this dylib is injected. Retrying
 // is what lets an already-open app still register for its own keyboard.
-static BOOL DSProcessIsRealApp(void) {
-    NSString *path = NSBundle.mainBundle.bundlePath ?: @"";
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
-    if (identifier.length == 0) return NO;
-    if (DSIdentifierIsExcludedFromStage(identifier)) return NO;
-    if ([path rangeOfString:@".app"].location == NSNotFound) return NO;
-    if ([path hasPrefix:@"/System/"] || [path hasPrefix:@"/usr/"]) return NO;
-    return YES;
-}
-
 static void DSTryStart(void) {
     if (DSKillSwitchPresent()) return;
-    if (!DSProcessIsRealApp()) return;
     if (!DSBundleLooksLikeUserApplication()) return;
     if (![DSPreferences sharedPreferences].enabled) return;
     static dispatch_once_t once;
@@ -1337,49 +1253,20 @@ static void DSTryStart(void) {
         DSReportLoaded();
         DSInstallKeyboardInputListener();
         DSStartObserving();
-        if ([DSStageContext processIsStagedNow]) {
-            DSInstallHooks();
-            DSRefreshRemoteKeyboard();
-        }
+        if ([DSStageContext processIsStagedNow]) DSInstallHooks();
     });
-}
-
-// Posted before the path check. An empty bundle path used to return without a
-// word, so SpringBoard could not tell a loaded app from one that was never injected.
-static void DSBeaconLoadedProcess(void) {
-    static BOOL decided = NO;
-    if (decided || DSKillSwitchPresent()) return;
-    if (!DSProcessIsRealApp()) {
-        // Do not set decided yet when the path is still empty; retry later.
-        if ((NSBundle.mainBundle.bundleIdentifier ?: @"").length == 0) return;
-        if ((NSBundle.mainBundle.bundlePath ?: @"").length == 0) return;
-        decided = YES;
-        return;
-    }
-    decided = YES;
-    DSReportLoaded();
 }
 
 %ctor {
     @autoreleasepool {
         @try {
-            // Never touch PaperBoard, daemons, or anything that is not a real .app.
-            if (!DSProcessIsRealApp() &&
-                (NSBundle.mainBundle.bundlePath.length > 0 ||
-                 NSBundle.mainBundle.bundleIdentifier.length > 0) &&
-                DSIdentifierIsExcludedFromStage(NSBundle.mainBundle.bundleIdentifier)) {
-                return;
-            }
-            DSBeaconLoadedProcess();
             DSTryStart();
             dispatch_async(dispatch_get_main_queue(), ^{
-                DSBeaconLoadedProcess();
                 DSTryStart();
             });
             for (NSNumber *delay in @[ @0.4, @1.2, @3.0 ]) {
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
                                dispatch_get_main_queue(), ^{
-                    DSBeaconLoadedProcess();
                     DSTryStart();
                 });
             }

@@ -28,10 +28,9 @@
 //
 // Keyboard policy for iOS 16.5.1 on an iPhone: never steal a layer, never
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
-// KeyboardArbiter, never point the focus coordinator at a scene, never change
-// the keyboard UI host. Doing that left a full-screen window over the wallpaper.
-// The picker uses SpringBoard's own keyboard. A staged app keeps its text field.
-// Its own dylib hides the keys it drew inside the card.
+// KeyboardArbiter, never point the focus coordinator at a scene. The picker
+// uses SpringBoard's own keyboard. A staged app is not allowed to draw keys;
+// each one has its own SpringBoard field outside the card.
 
 #pragma mark - Calling out of a hook
 
@@ -335,9 +334,10 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 #pragma mark - Keyboard arbiter (optional; never dlopen'd)
 
-// A staged app keeps its own text field. This hook only reports that a keyboard
-// changed. It does not take the key window, does not choose a keyboard host, and
-// does not place a keyboard scene. Raising the keyboard window covered the wallpaper.
+// Each staged app has its own SpringBoard text field, outside the card. Picker
+// search is a different field. Moving the arbiter UI host, and placing its
+// scene, produced a different keyboard or none at all. This hook only reports
+// that a keyboard changed. It does not retarget it.
 
 static BOOL DSArbiterBusy = NO;
 
@@ -361,13 +361,9 @@ static id DSSpringBoardKeyboardHandler(id arbiter) {
 }
 
 static id DSKeyboardUIHandle(id arbiter) {
-    for (NSString *name in @[ @"keyboardUIHandle", @"keyboardUIHandler" ]) {
-        SEL selector = NSSelectorFromString(name);
-        if (![arbiter respondsToSelector:selector]) continue;
-        id handle = ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
-        if (handle) return handle;
-    }
-    return nil;
+    SEL selector = @selector(keyboardUIHandle);
+    if (![arbiter respondsToSelector:selector]) return nil;
+    return ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
 }
 
 static id DSArbiterSceneLayer(id arbiter) {
@@ -435,8 +431,8 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     (void)handler;
 
     %orig;
-    // Read only. Choosing a keyboard host and unhiding its window covered the
-    // wallpaper with a full-screen layer and left Messenger's own keys in the card.
+    // A staged app is given its own SpringBoard field by DSStageManager. This
+    // hook does not retarget the arbiter and does not place a keyboard scene.
     NSString *summary = nil;
     @try {
         if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];
@@ -561,7 +557,6 @@ static void DSRegisterDarwinObservers(void) {
         BOOL notStaged = (state & (1ULL << 37)) != 0;
         BOOL listening = (state & (1ULL << 38)) != 0;
         BOOL loaded = (state & (1ULL << 39)) != 0;
-        BOOL remote = (state & (1ULL << 48)) != 0;
         NSUInteger kind = (NSUInteger)((state >> 40) & 0xff);
         NSString *className = @"none";
         if (hadField && kind == 1) className = @"field";
@@ -570,16 +565,13 @@ static void DSRegisterDarwinObservers(void) {
         DSTell(^(DSStageManager *manager) {
             NSString *bundle = [manager bundleForKeyboardHash:hash];
             BOOL hosted = bundle.length > 0 && ![bundle hasPrefix:@"hash "] && ![bundle isEqualToString:@"?"];
-            if (loaded || listening || remote) [manager rememberAppDylibHash:hash];
-            // A loaded beacon from an app that is not on a card is only remembered.
-            if (loaded && !listening && !remote && !hosted) return;
+            // Every UIKit app reports that it loaded. Only a hosted one is written down.
+            if (loaded && !listening && !hosted) return;
             NSString *line;
-            if (remote) {
-                line = [NSString stringWithFormat:@"app: %@ remote keyboard, message field stays", bundle];
-            } else if (listening) {
+            if (listening) {
                 line = [NSString stringWithFormat:@"app: %@ is listening for staged keys", bundle];
             } else if (loaded) {
-                return;
+                line = [NSString stringWithFormat:@"app: %@ loaded", bundle];
             } else if (notStaged) {
                 line = [NSString stringWithFormat:@"app: key arrived in %@ while it was not staged", bundle];
             } else {
@@ -628,15 +620,6 @@ static void DSInstallRemainingHooks(void) {
 
             DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed after home screen, corner pull will come from %@",
                                       systemPull ? @"the system edge gesture" : @"a window in the corner");
-            NSFileManager *files = NSFileManager.defaultManager;
-            NSString *inject = @"/var/jb/usr/lib/TweakInject";
-            NSDictionary *injectInfo = [files attributesOfItemAtPath:inject error:nil];
-            BOOL injectLink = [injectInfo[NSFileType] isEqualToString:NSFileTypeSymbolicLink];
-            NSString *appDylib = @"DynamicStageApp.dylib";
-            BOOL inLibs = [files fileExistsAtPath:[@"/var/jb/Library/MobileSubstrate/DynamicLibraries" stringByAppendingPathComponent:appDylib]];
-            BOOL inInject = [files fileExistsAtPath:[inject stringByAppendingPathComponent:appDylib]];
-            DSDiagnosticsRecordFormat(@"SpringBoard: app dylib libs=%d tweakinject=%d link=%d injectdylib=%d",
-                                      inLibs, injectInfo != nil, injectLink, inInject);
 
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{

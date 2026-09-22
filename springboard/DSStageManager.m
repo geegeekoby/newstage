@@ -15,7 +15,6 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
-#import <stdio.h>
 
 // Fraction of the screen height the finger has to travel for the pull to reach
 // the stage's resting size; a little further than that commits to Split View.
@@ -635,9 +634,7 @@ static BOOL sSystemEdgePullAvailable;
     // Picker search owns this window's keyboard. Do not retarget it.
     if (_searchSlot >= 0) return;
     if ([self isHostingBundleIdentifier:source]) {
-        // The message field stays the editor. A SpringBoard text field here is
-        // the search keyboard, and the letters never leave it.
-        [self noteHostedAppKeyboard:onScreen frame:frame source:source];
+        if (onScreen) [self showStagedKeyboardLikePickerForBundle:source];
         return;
     }
     if (_stagedKeyboardSlot >= 0) return;
@@ -840,50 +837,15 @@ static BOOL sSystemEdgePullAvailable;
                               DSWindowIsApplicationKey(_window));
 }
 
-- (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
-    if (_searchSlot >= 0) return;
-    static NSString *loggedBundle = nil;
-    if (!onScreen) {
-        if ([loggedBundle isEqualToString:source]) loggedBundle = nil;
-        [self hideStagedKeyboardLikePicker];
-        [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
-        return;
-    }
-    // Without the in-app side, Messenger draws its own keys inside the card.
-    // The same SpringBoard field the picker uses puts the keys outside the card.
-    // When that side has loaded, the message field stays the editor instead.
-    if (![self hostedAppLeftALoadBeacon:source]) {
-        if (![loggedBundle isEqualToString:source]) {
-            loggedBundle = [source copy];
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ has no stage dylib yet, using the SpringBoard keyboard outside the card",
-                                      source);
-        }
-        [self showStagedKeyboardLikePickerForBundle:source];
-        return;
-    }
-    CGRect screen = [self screenBounds];
-    CGRect keys = frame;
-    BOOL reported = CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
-                    CGRectGetMinY(keys) < CGRectGetMaxY(screen) - 1.0;
-    if (!reported) {
-        keys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
-    }
-    if (![loggedBundle isEqualToString:source]) {
-        loggedBundle = [source copy];
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keeps the message field, keyboard %@ (reported %@)",
-                                  source, NSStringFromCGRect(keys), NSStringFromCGRect(frame));
-    }
-    [self noteKeyboardFrame:keys source:source duration:0.25];
-}
-
 - (void)noteStagedAppKeyboardRequest:(uint64_t)state {
     BOOL show = (state & kDSStageStateActiveBit) != 0;
     NSString *bundle = [self bundleForKeyboardHash:(uint32_t)state];
     if (![self isHostingBundleIdentifier:bundle]) return;
     if (_searchSlot >= 0) return;
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for a keyboard to %@, the search field stays out of it",
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ asked for its SpringBoard keyboard to %@",
                               bundle, show ? @"show" : @"hide");
-    if (!show) [self hideStagedKeyboardLikePicker];
+    if (show) [self showStagedKeyboardLikePickerForBundle:bundle];
+    else [self hideStagedKeyboardLikePicker];
 }
 
 - (void)stagedKeyboardInsertText:(NSString *)text {
@@ -1748,7 +1710,6 @@ static BOOL sSystemEdgePullAvailable;
             self->_primaryParked = YES;
             self->_secondParked = YES;
             self->_state = DSStageStateMinimized;
-            [self discardHostSnapshotAnimated:NO];
             [self giveBackKeyWindow];
             [self updateOpenAppIcon];
             [self scheduleAutoKill];
@@ -2497,7 +2458,6 @@ static UIBezierPath *DSContinuousRoundedPath(CGRect rect, CGFloat radius, UIRect
     };
     void (^finish)(void) = ^{
         self->_state = DSStageStateMinimized;
-        [self discardHostSnapshotAnimated:NO];
         [self giveBackKeyWindow];
         // The app stays hosted. Putting the card away is not closing it.
         [self updateOpenAppIcon];
@@ -2809,49 +2769,6 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     [self refreshKeyboardDebugLabel];
 }
 
-static NSMutableSet<NSNumber *> *DSSeenAppDylibHashes;
-static NSString *DSLastDylibCheck;
-
-- (void)rememberAppDylibHash:(uint32_t)hash {
-    if (hash == 0) return;
-    if (!DSSeenAppDylibHashes) DSSeenAppDylibHashes = [NSMutableSet set];
-    [DSSeenAppDylibHashes addObject:@(hash)];
-    NSString *bundle = [self bundleForKeyboardHash:hash];
-    if ([bundle hasPrefix:@"hash "] || [bundle isEqualToString:@"?"]) return;
-    NSString *line = [NSString stringWithFormat:@"app: %@ loaded", bundle];
-    if ([line isEqualToString:_keyboardDebugApp]) return;
-    [self noteStagedKeyResult:line];
-}
-
-- (BOOL)hostedAppLeftALoadBeacon:(NSString *)bundle {
-    if ([DSSeenAppDylibHashes containsObject:@(DSIdentifierHash(bundle))]) return YES;
-    // One name per app. The shared notification only keeps the last writer, so a
-    // beacon from another process used to hide Messenger's.
-    char name[128];
-    snprintf(name, sizeof(name), "%s.%u", kDSKeyboardApplyNotification, DSIdentifierHash(bundle));
-    int token = NOTIFY_TOKEN_INVALID;
-    if (notify_register_check(name, &token) != NOTIFY_STATUS_OK) return NO;
-    uint64_t state = 0;
-    notify_get_state(token, &state);
-    notify_cancel(token);
-    BOOL seen = (uint32_t)state == DSIdentifierHash(bundle) && (state & (1ULL << 39)) != 0;
-    if (seen) {
-        if (!DSSeenAppDylibHashes) DSSeenAppDylibHashes = [NSMutableSet set];
-        [DSSeenAppDylibHashes addObject:@(DSIdentifierHash(bundle))];
-    }
-    return seen;
-}
-
-- (void)checkHostedAppDylib:(NSString *)bundle {
-    if (![self isHostingBundleIdentifier:bundle]) return;
-    BOOL seen = [self hostedAppLeftALoadBeacon:bundle];
-    NSString *line = [NSString stringWithFormat:@"SpringBoard: %@ %@",
-                      bundle, seen ? @"has the stage dylib" : @"has not loaded the stage dylib"];
-    if ([line isEqualToString:DSLastDylibCheck]) return;
-    DSLastDylibCheck = line;
-    DSDiagnosticsRecord(line);
-}
-
 - (void)noteKeyboardDebugFromSpringBoard:(NSString *)line {
     NSString *shown = line.length ? [@"SB: " stringByAppendingString:line] : @"SB: (empty)";
     if ([shown isEqualToString:_keyboardDebugSpringBoard]) return;
@@ -3112,14 +3029,6 @@ static NSString *DSLastDylibCheck;
         return;
     }
     DSDiagnosticsRecordFormat(@"SpringBoard: %@ is on stack slot %ld", host.bundleIdentifier, (long)slot);
-    NSString *hostedBundle = host.bundleIdentifier;
-    __weak __typeof(self) weakSelf = self;
-    for (NSNumber *delay in @[ @1.2, @3.0 ]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            [weakSelf checkHostedAppDylib:hostedBundle];
-        });
-    }
 
     picker.view.hidden = YES;
     picker.view.alpha = 1.0;
@@ -3669,7 +3578,6 @@ typedef NS_ENUM(NSInteger, DSCornerIntent) {
 }
 
 - (void)noteStageWindowIdle {
-    [self discardHostSnapshotAnimated:NO];
     _window.hidden = NO;
     [self bringShelfToFront];
     [self refreshShelf];

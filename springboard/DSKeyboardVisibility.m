@@ -129,13 +129,20 @@ void DSLogStagedAppInjection(NSString *why) {
     NSString *inject = DSFlatFile(@"/var/jb/usr/lib/TweakInject/DynamicStageApp.plist", 220);
     NSString *ctor = DSFlatFile(@"/var/tmp/com.recreated.dynamicstage.ctor", 180);
     NSString *mapped = DSFlatFile(@"/var/tmp/com.recreated.dynamicstage.mapped", 60);
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ libsPlist=[%@] injectPlist=[%@] ctor=[%@] mapped=[%@]",
-                              why ?: @"filter", libs, inject, ctor, mapped);
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ ctor=[%@] mapped=[%@] libsPlist=[%@] injectPlist=[%@]",
+                              why ?: @"filter", ctor, mapped, libs, inject);
 }
 
 static NSString *DSClaimedKeyboardStatus = @"win=none";
 
 static BOOL DSExternalKeyboardRaised = NO;
+static __weak UIWindow *DSMovedKeyboardWindow = nil;
+static UIWindowScene *DSMovedKeyboardScene = nil;
+static CGFloat DSMovedKeyboardLevel = 0.0;
+
+static BOOL DSSceneNameIsRemoteKeyboard(NSString *name) {
+    return [name rangeOfString:@"remote-keyboard"].location != NSNotFound;
+}
 
 BOOL DSExternalKeyboardCoversStage(void) {
     return DSExternalKeyboardRaised;
@@ -183,9 +190,114 @@ void DSPresentArbiterKeyboardLayer(id sceneLayer) {
     if (!sceneLayer) DSClaimedKeyboardStatus = @"win=hidden";
 }
 
-void DSHidePresentedArbiterKeyboard(void) {
+void DSRestoreRemoteKeyboardPlacement(void) {
+    UIWindow *window = DSMovedKeyboardWindow;
+    UIWindowScene *scene = DSMovedKeyboardScene;
+    CGFloat level = DSMovedKeyboardLevel;
+    DSMovedKeyboardWindow = nil;
+    DSMovedKeyboardScene = nil;
+    DSMovedKeyboardLevel = 0.0;
     DSExternalKeyboardRaised = NO;
-    DSClaimedKeyboardStatus = @"win=hidden";
+    if (!window) {
+        DSClaimedKeyboardStatus = @"win=hidden";
+        return;
+    }
+    @try {
+        if (scene && window.windowScene != scene) {
+            window.windowScene = scene;
+        }
+        window.windowLevel = level;
+    } @catch (NSException *exception) {
+    }
+    DSClaimedKeyboardStatus = @"win=restored";
+}
+
+BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindowObject) {
+    UIWindow *stageWindow = [stageWindowObject isKindOfClass:UIWindow.class] ? stageWindowObject : nil;
+    UIWindowScene *stageScene = stageWindow.windowScene;
+    if (!stageScene) {
+        DSClaimedKeyboardStatus = @"win=no-stage-scene";
+        DSExternalKeyboardRaised = NO;
+        return NO;
+    }
+    CGRect screen = UIScreen.mainScreen.bounds;
+    __block UIWindow *target = nil;
+    __block CGRect shown = CGRectNull;
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (target) return;
+        if (!DSSceneNameIsRemoteKeyboard(DSWindowSceneName(window)) &&
+            window != DSMovedKeyboardWindow) {
+            return;
+        }
+        if (window.hidden || window.alpha < 0.01) return;
+        CGRect keys = DSKeyboardViewFrameInView(window);
+        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
+        target = window;
+        shown = keys;
+    });
+    if (!target) {
+        DSClaimedKeyboardStatus = @"win=no-remote-keyboard-scene";
+        DSExternalKeyboardRaised = NO;
+        return NO;
+    }
+    @try {
+        if (DSMovedKeyboardWindow && DSMovedKeyboardWindow != target) {
+            DSRestoreRemoteKeyboardPlacement();
+        }
+        UIWindow *previousKey = nil;
+        for (UIWindow *candidate in UIApplication.sharedApplication.windows) {
+            if (candidate.isKeyWindow && candidate != target) {
+                previousKey = candidate;
+                break;
+            }
+        }
+        if (!DSMovedKeyboardWindow) {
+            DSMovedKeyboardWindow = target;
+            DSMovedKeyboardScene = target.windowScene;
+            DSMovedKeyboardLevel = target.windowLevel;
+        }
+        NSString *before = DSWindowSceneName(target);
+        if (target.windowScene != stageScene) {
+            target.windowScene = stageScene;
+        }
+        if (target.windowLevel < UIWindowLevelStatusBar) {
+            target.windowLevel = UIWindowLevelStatusBar;
+        }
+        if (target.windowScene != stageScene) {
+            target.windowLevel = DSMovedKeyboardLevel;
+            DSMovedKeyboardWindow = nil;
+            DSMovedKeyboardScene = nil;
+            DSMovedKeyboardLevel = 0.0;
+            DSExternalKeyboardRaised = NO;
+            DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=scene-rejected from=%@ now=%@ stage=%@ lvl=%.0f keys=%@",
+                                       before,
+                                       DSWindowSceneName(target),
+                                       DSWindowSceneName(stageWindow),
+                                       target.windowLevel,
+                                       NSStringFromCGRect(shown)];
+            return NO;
+        }
+        if (target.isKeyWindow && previousKey) {
+            [previousKey makeKeyWindow];
+        }
+        DSExternalKeyboardRaised = YES;
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=on-stage-scene from=%@ now=%@ stage=%@ lvl=%.0f keys=%@",
+                                   before,
+                                   DSWindowSceneName(target),
+                                   DSWindowSceneName(stageWindow),
+                                   target.windowLevel,
+                                   NSStringFromCGRect(shown)];
+        return YES;
+    } @catch (NSException *exception) {
+        NSString *reason = exception.reason ?: @"?";
+        DSRestoreRemoteKeyboardPlacement();
+        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=move-failed %@", reason];
+        return NO;
+    }
+}
+
+void DSHidePresentedArbiterKeyboard(void) {
+    DSRestoreRemoteKeyboardPlacement();
 }
 
 BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer) {

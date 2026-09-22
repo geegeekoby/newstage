@@ -645,101 +645,62 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
     if (_searchSlot >= 0) return;
-    static NSString *loggedInside = nil;
-    static NSString *loggedRaised = nil;
-    static NSString *loggedMiss = nil;
+    static NSString *loggedPlace = nil;
     static NSInteger hostedKeyboardGeneration = 0;
     hostedKeyboardGeneration++;
     NSInteger generation = hostedKeyboardGeneration;
     if (!onScreen) {
-        if ([loggedInside isEqualToString:source]) loggedInside = nil;
-        if ([loggedRaised isEqualToString:source]) loggedRaised = nil;
-        if ([loggedMiss isEqualToString:source]) loggedMiss = nil;
+        loggedPlace = nil;
+        // Leave this clear so the card is not lifted. The in-scene keys move
+        // with the card; the system keyboard window does not.
         _keyboardDrawnOutside = NO;
+        DSRestoreRemoteKeyboardPlacement();
         DSReleaseStagedKeyboardHost();
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
         return;
     }
-    BOOL remote = [self hostedAppReportedRemoteKeyboard:source];
-    CGRect display = [self keyboardFrameOnDisplay:frame];
-    CGRect keys = display;
-    if (remote) {
-        keys = [self keyboardFrameForLift:display];
-        if (CGRectGetHeight(keys) < kDSKeyboardPresentHeight) {
-            CGRect screen = [self screenBounds];
-            keys = CGRectMake(0.0, CGRectGetHeight(screen) - 301.0, CGRectGetWidth(screen), 301.0);
+    // The remote-keyboard window already holds the keys at the bottom of the
+    // display. It sits in its own scene, so a higher window level never puts
+    // it above the stage. Move that window onto this scene. Do not lift the
+    // card: that drags Messenger's own copy of the keys up with it.
+    _keyboardDrawnOutside = NO;
+    BOOL placed = DSPlaceRemoteKeyboardAboveStage(_window);
+    if (placed) {
+        if (![loggedPlace isEqualToString:@"placed"]) {
+            loggedPlace = @"placed";
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ %@", source, DSPresentedKeyboardWindowStatus());
         }
+    } else if (![loggedPlace isEqualToString:@"miss"]) {
+        loggedPlace = @"miss";
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard stayed in the app scene (%@) reported %@ %@",
+                                  source,
+                                  DSPresentedKeyboardWindowStatus(),
+                                  NSStringFromCGRect(frame),
+                                  DSKeyboardWindowCensus());
     }
-    // A UITextEffectsWindow that already lives in SpringBoard is not Messenger's
-    // keyboard. Raising it and lifting the card just moves the in-scene keys.
-    if (!remote) {
-        _keyboardDrawnOutside = NO;
-        if (![loggedInside isEqualToString:source]) {
-            loggedInside = [source copy];
-            BOOL dylib = [self hostedAppHasStageDylib:source];
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard is still inside the app scene (%@) reported %@ %@",
-                                      source,
-                                      dylib ? @"dylib running, remote not reported" : @"dylib never started",
-                                      NSStringFromCGRect(frame),
-                                      DSKeyboardWindowCensus());
-            DSLogStagedAppInjection(@"filter checked because the keyboard stayed in the app");
-        }
-        if (!CGRectIsEmpty(keys)) {
-            [self noteKeyboardFrame:keys source:source duration:0.25];
-        }
-        __weak __typeof(self) weakSelf = self;
-        NSString *bundle = [source copy];
-        CGRect retryFrame = frame;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            __strong __typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf || generation != hostedKeyboardGeneration) return;
-            if (![strongSelf isHostingBundleIdentifier:bundle]) return;
-            if (![strongSelf hostedAppReportedRemoteKeyboard:bundle]) {
-                DSDiagnosticsRecordFormat(@"SpringBoard: %@ still has no remote keyboard %@",
-                                          bundle, DSKeyboardWindowCensus());
-                return;
-            }
-            [strongSelf noteHostedAppKeyboard:YES frame:retryFrame source:bundle];
-        });
-        return;
-    }
-    _keyboardDrawnOutside = DSRevealSpringBoardKeyboard();
-    if (_keyboardDrawnOutside) {
-        if (![loggedRaised isEqualToString:source]) {
-            loggedRaised = [source copy];
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ reported remote, %@",
-                                      source, DSPresentedKeyboardWindowStatus());
-        }
+    CGRect keys = [self keyboardFrameOnDisplay:frame];
+    if (!CGRectIsEmpty(keys)) {
         [self noteKeyboardFrame:keys source:source duration:0.25];
-        return;
     }
-    if (![loggedMiss isEqualToString:source]) {
-        loggedMiss = [source copy];
-        DSDiagnosticsRecordFormat(@"SpringBoard: %@ reported remote but SpringBoard has no key window yet %@",
-                                  source, DSKeyboardWindowCensus());
-    }
-    [self noteKeyboardFrame:keys source:source duration:0.25];
+    if (placed) return;
     __weak __typeof(self) weakSelf = self;
     NSString *bundle = [source copy];
-    CGRect retryKeys = keys;
+    CGRect retryFrame = frame;
     for (NSNumber *delay in @[ @0.12, @0.35, @0.7 ]) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf || generation != hostedKeyboardGeneration) return;
             if (![strongSelf isHostingBundleIdentifier:bundle]) return;
-            if (strongSelf->_keyboardDrawnOutside) return;
-            if (![strongSelf hostedAppReportedRemoteKeyboard:bundle]) return;
-            if (!DSRevealSpringBoardKeyboard()) {
-                DSDiagnosticsRecordFormat(@"SpringBoard: %@ remote keyboard still missing %@",
-                                          bundle, DSKeyboardWindowCensus());
+            if (strongSelf->_searchSlot >= 0) return;
+            if (!DSPlaceRemoteKeyboardAboveStage(strongSelf->_window)) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: %@ remote keyboard window still not on the stage scene (%@)",
+                                          bundle, DSPresentedKeyboardWindowStatus());
                 return;
             }
-            strongSelf->_keyboardDrawnOutside = YES;
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ remote keyboard is in SpringBoard's window, %@",
-                                      bundle, DSPresentedKeyboardWindowStatus());
-            [strongSelf noteKeyboardFrame:retryKeys source:bundle duration:0.2];
+            loggedPlace = @"placed";
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ %@", bundle, DSPresentedKeyboardWindowStatus());
+            (void)retryFrame;
         });
     }
 }

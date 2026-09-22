@@ -12,9 +12,15 @@ CGRect DSVisibleKeyboardFrameOnScreen(void);
 
 // If SpringBoard already has a window that contains keys, lift that window
 // just above the stage. Does not create windows and does not unhide empty ones.
-// Call this only after the staged app has reported a remote keyboard. A
-// text-effects window that already exists in SpringBoard is not that keyboard.
 BOOL DSRevealSpringBoardKeyboard(void);
+
+// The system keyboard already lives in the remote-keyboard scene, under the
+// stage. Window level does not cross scenes, so this moves that existing
+// window onto the stage's scene and sets it just above the stage. It does
+// not create a window, hide a view, or assign the keyboard UI host.
+// `stageWindow` is the stage's UIWindow.
+BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindow);
+void DSRestoreRemoteKeyboardPlacement(void);
 
 // SpringBoard-process keyboard windows only. The hosted app's own keyboard
 // is not in this list; it is painted inside the hosted scene.

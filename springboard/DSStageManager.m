@@ -667,13 +667,12 @@ static BOOL sSystemEdgePullAvailable;
     }
 }
 
-// The system keyboard only paints while its window stays in the
-// remote-keyboard scene. Moving that window onto the stage scene left the
-// keys with a frame and nothing on screen. A mask on the card did not clip
-// the hosted scene either. Shorten the content view, which does clip, and
-// only where a real system keyboard is already on screen under the card.
+// Kept so a hosted keyboard cannot clip the scene. 4.5.45 shortened the
+// content view to the overlap and the card went blank.
 - (void)openHostedKeyboardBandForBundle:(NSString *)bundle reported:(CGRect)reported {
-    [self openHostedKeyboardBandForBundle:bundle reported:reported attempt:0];
+    (void)bundle;
+    (void)reported;
+    [self clearHostedKeyboardBands];
 }
 
 - (void)openHostedKeyboardBandForBundle:(NSString *)bundle reported:(CGRect)reported attempt:(NSInteger)attempt {
@@ -762,7 +761,6 @@ static BOOL sSystemEdgePullAvailable;
     if (_searchSlot >= 0) return;
     // A window pulled off the remote-keyboard scene stops drawing. Put it back.
     DSRestoreRemoteKeyboardPlacement();
-    _keyboardDrawnOutside = NO;
     if (!onScreen) {
         DSHostedClipGeneration++;
         [self clearHostedKeyboardBands];
@@ -770,11 +768,25 @@ static BOOL sSystemEdgePullAvailable;
         [self noteKeyboardFrame:CGRectZero source:source duration:0.25];
         return;
     }
+    // Cutting the card down to the overlap hid the app: the content view was
+    // left 120pt tall and the stage looked blank. Leave the scene whole.
+    // Once the app itself says the keyboard is remote, SpringBoard is drawing
+    // the keys and the bottom card can lift off them. Until that signal, the
+    // keys are pixels in the scene and moving the card only drags them.
+    BOOL remote = [self hostedAppReportedRemoteKeyboard:source];
+    _keyboardDrawnOutside = remote;
+    [self clearHostedKeyboardBands];
     CGRect keys = [self keyboardFrameOnDisplay:frame];
-    if (!CGRectIsEmpty(keys)) {
-        [self noteKeyboardFrame:keys source:source duration:0.25];
+    if (CGRectIsEmpty(keys)) keys = frame;
+    [self noteKeyboardFrame:keys source:source duration:0.25];
+    if (!remote) {
+        static NSString *loggedInside = nil;
+        if (source.length && ![loggedInside isEqualToString:source]) {
+            loggedInside = [source copy];
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@ keyboard stays in the scene until the app says it is remote",
+                                      source);
+        }
     }
-    [self openHostedKeyboardBandForBundle:source reported:frame];
 }
 
 - (NSInteger)slotForHostedBundle:(NSString *)bundle {

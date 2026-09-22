@@ -1174,9 +1174,9 @@ static void DSStartObserving(void) {
 // died before %ctor. If neither appears, ElleKit never loaded the image.
 __attribute__((constructor(101)))
 static void DSImageMapped(void) {
-    DSWriteFile("/var/tmp/com.recreated.dynamicstage.mapped", "mapped\n");
-    DSWriteFile("/var/jb/tmp/com.recreated.dynamicstage.mapped", "mapped\n");
-    DSPostApply(1ULL << 49);
+    // Reporting here runs in every process the filter matches, including
+    // SpringBoard and PaperBoard, and the last writer clobbers the file.
+    // The Objective-C constructor reports after it knows this is a user app.
 }
 
 %ctor {
@@ -1186,10 +1186,12 @@ static void DSImageMapped(void) {
             if (DSKillSwitchPresent()) reason = 1;
             else {
                 NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
-                if (![identifier isEqualToString:@"com.facebook.Messenger"]) reason = 2;
-                else if (DSIdentifierIsExcludedFromStage(identifier)) reason = 3;
-                else if (!DSBundleLooksLikeUserApplication()) reason = 4;
-                else if (![DSPreferences sharedPreferences].enabled) reason = 5;
+                // System processes get this image because the filter names
+                // UIKit. They must not hook, notify, or write the shared files.
+                if (DSIdentifierIsExcludedFromStage(identifier) || !DSBundleLooksLikeUserApplication()) {
+                    return;
+                }
+                if (![DSPreferences sharedPreferences].enabled) reason = 5;
             }
         } @catch (NSException *exception) {
             reason = 6;

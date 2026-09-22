@@ -1,3 +1,6 @@
+**4.5.46**
+- 4.5.45 cut the hosted scene down until the content view was 120pt tall, so the bottom card went blank, and it left the top card alone because that card does not cover the screen keyboard. The scene is not clipped. The bottom card lifts only after the app says the keyboard is remote, which is when SpringBoard is drawing the keys. The in-app filter names UIKit, which is what this ElleKit uses to inject into an app, and system processes return before any hook
+
 **4.5.45**
 - The 296pt mask on the card never clipped Messenger's scene, so the keys stayed inside the bottom card. The hosted view is clipped by its superview's bounds, not by a mask path. When SpringBoard already has a system keyboard on screen, the content view is shortened to that overlap and the app view stays the full card height, so the app does not relayout the keys up into the opening. The keyboard window stays in the remote-keyboard scene. A top card that does not cover the keyboard is left alone. The in-app dylib no longer links CydiaSubstrate, which a sandboxed app cannot resolve, and its filter is the same OpenStep form SpringBoard's tweak already uses
 

@@ -161,7 +161,6 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     } else {
         _backdrop.frame = bounds;
         self.clipsToBounds = YES;
-        self.opaque = YES;
         _contentView.clipsToBounds = YES;
         _contentView.layer.mask = nil;
         _contentView.layer.cornerRadius = 0.0;

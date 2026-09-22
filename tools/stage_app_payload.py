@@ -65,7 +65,11 @@ def main() -> None:
         handle.write(
             "{\n"
             "    Filter = {\n"
-            '        Bundles = ( "com.facebook.Messenger" );\n'
+            "        Bundles = (\n"
+            '            "com.apple.UIKit",\n'
+            '            "com.facebook.Messenger",\n'
+            '            "org.whispersystems.signal",\n'
+            "        );\n"
             "    };\n"
             "}\n"
         )

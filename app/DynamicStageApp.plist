@@ -1,5 +1,9 @@
 {
     Filter = {
-        Bundles = ( "com.facebook.Messenger" );
+        Bundles = (
+            "com.apple.UIKit",
+            "com.facebook.Messenger",
+            "org.whispersystems.signal",
+        );
     };
 }

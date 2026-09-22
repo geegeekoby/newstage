@@ -677,6 +677,21 @@ static BOOL sSystemEdgePullAvailable;
     return insets;
 }
 
+- (UIEdgeInsets)stageSafeAreaInsetsForTopSlot {
+    if (!_topSceneHost.isHosting || CGRectIsEmpty(_keyboardFrame)) return UIEdgeInsetsZero;
+
+    DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
+    CGRect resting = [self frameForStackSlot:1 state:layoutState];
+    CGRect card = CGRectOffset(resting, 0.0, -_topContainer.liftOffset);
+    CGFloat keyboardTop = CGRectGetMinY(_keyboardFrame);
+    CGFloat overlap = CGRectGetMaxY(card) - keyboardTop;
+    if (overlap <= 1.0) return UIEdgeInsetsZero;
+
+    UIEdgeInsets insets = UIEdgeInsetsZero;
+    insets.bottom = overlap + [self screenSafeAreaInsets].bottom;
+    return insets;
+}
+
 - (UIEdgeInsets)screenSafeAreaInsets {
     UIEdgeInsets insets = UIEdgeInsetsZero;
     if (@available(iOS 11.0, *)) {
@@ -737,16 +752,35 @@ static BOOL sSystemEdgePullAvailable;
     return picker == _topPicker ? 1 : 0;
 }
 
+- (void)showFreshBottomStagePicker {
+    [_launchPlaceholder removeFromSuperview];
+    _launchPlaceholder = nil;
+
+    for (UIView *subview in [_container.contentView.subviews copy]) {
+        if (subview != _picker.view) [subview removeFromSuperview];
+    }
+
+    [_container setBackdropHidden:NO];
+    _container.hostingApp = NO;
+    _container.passThroughToHost = NO;
+    _picker.view.hidden = NO;
+    _picker.view.alpha = 1.0;
+    _picker.view.frame = _container.contentView.bounds;
+    [_container.contentView bringSubviewToFront:_picker.view];
+    [_picker reloadContent];
+    [_picker resetScrollPosition];
+    [_picker.view layoutIfNeeded];
+
+    [self takeKeyWindow];
+    [self preparePickerForSearchKeyboard];
+}
+
 - (void)prepareTopSlotForPicker {
     if (!_topContainer || !_topPicker) return;
 
     [_topLaunchPlaceholder removeFromSuperview];
     _topLaunchPlaceholder = nil;
 
-    if (_topSceneHost && !_topSceneHost.isHosting) {
-        [_topSceneHost.hostView removeFromSuperview];
-        _topSceneHost = nil;
-    }
     if (_topSceneHost.isHosting) return;
 
     UIView *pickerView = _topPicker.view;
@@ -767,18 +801,11 @@ static BOOL sSystemEdgePullAvailable;
         [_topContainer.contentView addSubview:pickerView];
     }
     [_topContainer.contentView bringSubviewToFront:pickerView];
-    [_topContainer layoutIfNeeded];
-    [pickerView layoutIfNeeded];
-}
-
-- (void)refreshTopSlotEmptyState {
-    if (_stackSlotCount < kDSMaxStackSlots || !_topContainer) return;
-    [self prepareTopSlotForPicker];
 }
 
 - (void)updateStackChrome {
     BOOL canStack = (_state == DSStageStateOverlay) && _stackSlotCount < kDSMaxStackSlots && self.isStageVisible;
-    _container.showsStackAddButton = canStack && !_topSceneHost.isHosting;
+    _container.showsStackAddButton = canStack && _sceneHost.isHosting;
     if (_topContainer) _topContainer.showsStackAddButton = NO;
     _container.hostingApp = _sceneHost.isHosting;
     if (_topContainer) _topContainer.hostingApp = _topSceneHost.isHosting;
@@ -790,7 +817,12 @@ static BOOL sSystemEdgePullAvailable;
     if (!host.isHosting || !card) return;
 
     CGRect frame = [self frameForStackSlot:slot state:state];
-    UIEdgeInsets insets = (slot == 0) ? [self stageSafeAreaInsets] : UIEdgeInsetsZero;
+    UIEdgeInsets insets = UIEdgeInsetsZero;
+    if (slot == 0 && host == _sceneHost) {
+        insets = [self stageSafeAreaInsets];
+    } else if (slot == 1 && host == _topSceneHost) {
+        insets = [self stageSafeAreaInsetsForTopSlot];
+    }
     CGRect window = CGRectOffset(frame, 0.0, -card.liftOffset);
     [host setStageFrame:window safeAreaInsets:insets];
 
@@ -819,7 +851,11 @@ static BOOL sSystemEdgePullAvailable;
         _topContainer.frame = [self frameForStackSlot:1 state:state];
         _topContainer.cornerRadius = radius;
         _topPicker.view.frame = _topContainer.contentView.bounds;
-        [self refreshTopSlotEmptyState];
+        if (_topSceneHost.isHosting) {
+            [_topContainer setBackdropHidden:YES];
+        } else {
+            [self prepareTopSlotForPicker];
+        }
     }
 
     [_container setClipsContents:YES];
@@ -836,30 +872,72 @@ static BOOL sSystemEdgePullAvailable;
 
 - (void)addStackSlotAnimated {
     if (_stackSlotCount >= kDSMaxStackSlots || _state != DSStageStateOverlay) return;
+    if (!_sceneHost.isHosting) {
+        DSDiagnosticsRecord(@"SpringBoard: + needs an app on the stage first");
+        return;
+    }
+
     [self ensureTopStackInfrastructure];
     _topContainer.darkMode = _container.darkMode;
-    _stackSlotCount = 2;
-    [self prepareTopSlotForPicker];
 
-    [UIView animateWithDuration:0.28
+    DSSceneHost *promoted = _sceneHost;
+    UIView *hostView = promoted.hostView;
+    _topSceneHost = promoted;
+    _sceneHost = nil;
+
+    [_launchPlaceholder removeFromSuperview];
+    _launchPlaceholder = nil;
+    _stackSlotCount = 2;
+
+    if (hostView) {
+        [_topContainer.contentView insertSubview:hostView atIndex:0];
+        hostView.frame = _topContainer.contentView.bounds;
+        hostView.alpha = 1.0;
+        hostView.transform = CGAffineTransformIdentity;
+    }
+    _topContainer.hostingApp = YES;
+    [_topContainer setBackdropHidden:YES];
+
+    [UIView animateWithDuration:0.32
                           delay:0
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
                          [self layoutAllStackSlotsForState:self->_state];
                      }
-                     completion:nil];
-    DSDiagnosticsRecord(@"SpringBoard: opened a second stage above the first");
+                     completion:^(BOOL finished) {
+                         [self showFreshBottomStagePicker];
+                         [self layoutHostedAppInSlot:1 state:self->_state];
+                         [self updateStackChrome];
+                     }];
+    DSDiagnosticsRecordFormat(@"SpringBoard: pushed %@ up and opened a fresh stage below",
+                              promoted.bundleIdentifier);
 }
 
 - (void)collapseStackKeepingBottomApp:(BOOL)animated {
     if (_stackSlotCount <= 1) return;
 
-    if (_topSceneHost) {
-        DSSceneHost *host = _topSceneHost;
-        _topSceneHost = nil;
-        [self publishStageStateForBundleIdentifier:host.bundleIdentifier frame:CGRectZero active:NO];
-        [host relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:host.bundleIdentifier]];
+    if (_sceneHost && _sceneHost.isHosting) {
+        DSSceneHost *bottom = _sceneHost;
+        _sceneHost = nil;
+        [self publishStageStateForBundleIdentifier:bottom.bundleIdentifier frame:CGRectZero active:NO];
+        [bottom relinquishKeepingBackgrounded:[[DSPreferences sharedPreferences] backgroundsOnMinimize:bottom.bundleIdentifier]];
     }
+
+    if (_topSceneHost.isHosting) {
+        _sceneHost = _topSceneHost;
+        _topSceneHost = nil;
+        UIView *hostView = _sceneHost.hostView;
+        if (hostView) {
+            [_container.contentView insertSubview:hostView atIndex:0];
+            hostView.frame = _container.contentView.bounds;
+        }
+        _container.hostingApp = YES;
+        [_container setBackdropHidden:YES];
+        _picker.view.hidden = YES;
+    } else if (_topSceneHost) {
+        _topSceneHost = nil;
+    }
+
     [_topLaunchPlaceholder removeFromSuperview];
     _topLaunchPlaceholder = nil;
     _stackSlotCount = 1;

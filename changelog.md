@@ -1,3 +1,7 @@
+**4.4.0**
+- + pushes the current hosted app into the top stage and opens a fresh bottom stage (full picker, like first open)
+- + only appears while an app is on the stage; no second picker on top / black top slot
+
 **4.3.2**
 - Top stack slot: force app picker (clear stale host layers that showed black)
 - Thin inset gap around each stacked stage; bottom slot alone lifts for its keyboard

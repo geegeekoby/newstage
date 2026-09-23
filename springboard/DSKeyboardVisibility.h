@@ -59,6 +59,16 @@ BOOL DSKeyboardWindowIsInteractive(id window);
 // The key strip of that one window, in screen coordinates, or CGRectNull.
 CGRect DSInteractiveKeyboardFrameOnScreen(void);
 
+// While a staged keyboard is up, a remembered keyboard window's frame is the
+// key strip rather than the screen UIKit passed in. CGRectNull means the
+// caller's frame should be used as-is. The window is not hidden.
+CGRect DSReplacementFrameForKeyboardWindow(id window, CGRect requested);
+void DSShrinkRaisedKeyboardWindows(void);
+void DSRealignShrunkKeyboardWindow(id window);
+// YES for a keyboard window that was moved above the stage. Its frame is the
+// key strip until that keyboard goes away.
+BOOL DSKeyboardWindowShouldMatchKeys(id window);
+
 // No-ops kept for existing callers. Creating or binding a remote keyboard
 // window crashed SpringBoard on this phone.
 void DSPresentArbiterKeyboardLayer(id sceneLayer);

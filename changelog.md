@@ -1,3 +1,6 @@
+**4.5.59**
+- The keyboard window was still the full screen, so a touch on the bottom card was inside that window even though the keys start at y=631. Its frame is now the key strip, and the other keyboard windows use that same frame. A touch above the keys is outside the window. The keys stay on the stage scene at level 6000, and the original frame is put back when the keyboard closes
+
 **4.5.58**
 - Several keyboard windows were all taking touches at level 6000, so a scroll on the staged app pressed keys on a second keyboard stacked just above the visible one. Only the lowest key strip stays interactive. Medusa and the aperture windows ignore every touch. Nothing is hidden, and the windows stay on the stage scene at level 6000
 

@@ -203,10 +203,166 @@ static void DSRememberKeyboardWindow(UIWindow *window) {
     if (!window) return;
     NSMapTable *table = DSKeyboardPlacementTable();
     if ([table objectForKey:window]) return;
+    NSString *sceneName = @"";
+    if (@available(iOS 13.0, *)) {
+        sceneName = window.windowScene.session.persistentIdentifier ?: @"";
+    }
     [table setObject:@{
         @"scene" : window.windowScene ?: (id)NSNull.null,
-        @"level" : @(window.windowLevel)
+        @"level" : @(window.windowLevel),
+        @"touches" : @(window.userInteractionEnabled),
+        @"sceneName" : sceneName ?: @""
     } forKey:window];
+}
+
+static NSString *DSRememberedSceneName(UIWindow *window) {
+    NSDictionary *saved = [DSKeyboardPlacementTable() objectForKey:window];
+    NSString *name = saved[@"sceneName"];
+    return [name isKindOfClass:NSString.class] ? name : @"";
+}
+
+static BOOL DSNameContains(NSString *name, NSString *needle) {
+    return name.length > 0 && needle.length > 0 &&
+           [name rangeOfString:needle options:NSCaseInsensitiveSearch].location != NSNotFound;
+}
+
+static BOOL DSWindowCameFromAperture(UIWindow *window) {
+    if (DSNameContains(NSStringFromClass(window.class), @"Aperture")) return YES;
+    return DSNameContains(DSRememberedSceneName(window), @"Aperture");
+}
+
+static BOOL DSWindowCameFromRemoteKeyboard(UIWindow *window) {
+    if (DSNameContains(NSStringFromClass(window.class), @"RemoteKeyboard")) return YES;
+    NSString *scene = DSRememberedSceneName(window);
+    return DSNameContains(scene, @"remote-keyboard") || DSNameContains(scene, @"RemoteKeyboard");
+}
+
+static BOOL DSKeyboardWindowBlocked(UIWindow *window) {
+    if (DSNameContains(NSStringFromClass(window.class), @"Medusa")) return YES;
+    return DSWindowCameFromAperture(window);
+}
+
+static __weak UIWindow *DSCachedActiveKeyboardWindow = nil;
+static CFAbsoluteTime DSCachedActiveKeyboardWindowAt = 0;
+static BOOL DSAdjustingKeyboardInteraction = NO;
+
+static void DSInvalidateActiveKeyboardWindow(void) {
+    DSCachedActiveKeyboardWindow = nil;
+    DSCachedActiveKeyboardWindowAt = 0;
+}
+
+static CGFloat DSKeyStripScreenMinY(UIWindow *window, CGRect keysInWindow) {
+    @try {
+        if (@available(iOS 13.0, *)) {
+            id space = window.screen.coordinateSpace;
+            if (space) {
+                CGRect onScreen = [window convertRect:keysInWindow toCoordinateSpace:space];
+                return CGRectGetMinY(onScreen);
+            }
+        }
+    } @catch (NSException *exception) {
+    }
+    return CGRectGetMinY(window.frame) + CGRectGetMinY(keysInWindow);
+}
+
+static void DSSetRememberedInteraction(UIWindow *window, BOOL allow) {
+    if (DSAdjustingKeyboardInteraction || !window) return;
+    if (![DSKeyboardPlacementTable() objectForKey:window]) return;
+    if (window.userInteractionEnabled == allow) return;
+    DSAdjustingKeyboardInteraction = YES;
+    @try {
+        window.userInteractionEnabled = allow;
+    } @catch (NSException *exception) {
+    }
+    DSAdjustingKeyboardInteraction = NO;
+}
+
+// The visible keys are the strip that sits lowest on the screen. A second
+// text-effects window stacked just above that strip is the ghost. The first
+// window visited is often an aperture window, so it is never chosen that way.
+static UIWindow *DSActiveKeyboardWindow(void) {
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (DSCachedActiveKeyboardWindow && (now - DSCachedActiveKeyboardWindowAt) < 0.1) {
+        return DSCachedActiveKeyboardWindow;
+    }
+    __block UIWindow *best = nil;
+    __block CGFloat bestMinY = -CGFLOAT_MAX;
+    __block BOOL bestRemote = NO;
+    __block BOOL bestVisible = NO;
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
+        if (DSKeyboardWindowBlocked(window)) return;
+        CGRect keys = DSKeyboardKeysInWindow(window);
+        if (CGRectIsNull(keys)) return;
+        BOOL visible = !window.hidden && window.alpha > 0.01;
+        CGFloat minY = DSKeyStripScreenMinY(window, keys);
+        BOOL remote = DSWindowCameFromRemoteKeyboard(window);
+        BOOL better = NO;
+        if (!best) {
+            better = YES;
+        } else if (visible && !bestVisible) {
+            better = YES;
+        } else if (visible == bestVisible && minY > bestMinY + 1.0) {
+            better = YES;
+        } else if (visible == bestVisible && fabs(minY - bestMinY) <= 1.0 && remote && !bestRemote) {
+            better = YES;
+        }
+        if (!better) return;
+        best = window;
+        bestMinY = minY;
+        bestRemote = remote;
+        bestVisible = visible;
+    });
+    DSCachedActiveKeyboardWindow = best;
+    DSCachedActiveKeyboardWindowAt = now;
+    return best;
+}
+
+static void DSSilenceExtraKeyboardWindows(void) {
+    if (!DSExternalKeyboardRaised) return;
+    UIWindow *active = DSActiveKeyboardWindow();
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
+        if (![DSKeyboardPlacementTable() objectForKey:window]) return;
+        BOOL allow = YES;
+        if (DSKeyboardWindowBlocked(window)) allow = NO;
+        else if (active) allow = (window == active);
+        DSSetRememberedInteraction(window, allow);
+    });
+}
+
+BOOL DSKeyboardWindowIsInteractive(id windowObject) {
+    if (!DSExternalKeyboardRaised || ![windowObject isKindOfClass:UIWindow.class]) return YES;
+    UIWindow *window = (UIWindow *)windowObject;
+    if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return YES;
+    if (DSKeyboardWindowBlocked(window)) {
+        DSSetRememberedInteraction(window, NO);
+        return NO;
+    }
+    UIWindow *active = DSActiveKeyboardWindow();
+    if (!active) return YES;
+    BOOL allow = (window == active);
+    DSSetRememberedInteraction(window, allow);
+    return allow;
+}
+
+CGRect DSInteractiveKeyboardFrameOnScreen(void) {
+    if (!DSExternalKeyboardRaised) return CGRectNull;
+    UIWindow *active = DSActiveKeyboardWindow();
+    if (!active) return CGRectNull;
+    CGRect keys = DSKeyboardKeysInWindow(active);
+    if (CGRectIsNull(keys)) return CGRectNull;
+    @try {
+        if (@available(iOS 13.0, *)) {
+            id space = active.screen.coordinateSpace;
+            if (space) return [active convertRect:keys toCoordinateSpace:space];
+        }
+    } @catch (NSException *exception) {
+    }
+    return CGRectMake(CGRectGetMinX(active.frame) + CGRectGetMinX(keys),
+                       CGRectGetMinY(active.frame) + CGRectGetMinY(keys),
+                       CGRectGetWidth(keys),
+                       CGRectGetHeight(keys));
 }
 
 CGFloat DSKeyboardWindowLevelAboveStage(void) {
@@ -279,6 +435,7 @@ void DSRestoreRemoteKeyboardPlacement(void) {
     // Clear this before touching levels. The window hook pins any keyboard
     // window at 6000 while the flag is set, including the restore itself.
     DSExternalKeyboardRaised = NO;
+    DSInvalidateActiveKeyboardWindow();
     NSMapTable *table = DSKeyboardPlacements;
     NSArray<UIWindow *> *windows = table ? [table.keyEnumerator.allObjects copy] : @[];
     if (windows.count == 0) return;
@@ -286,11 +443,15 @@ void DSRestoreRemoteKeyboardPlacement(void) {
         NSDictionary *saved = [table objectForKey:window];
         id scene = saved[@"scene"];
         CGFloat level = [saved[@"level"] doubleValue];
+        NSNumber *touches = saved[@"touches"];
         @try {
             if ([scene isKindOfClass:UIWindowScene.class] && window.windowScene != scene) {
                 window.windowScene = scene;
             }
             window.windowLevel = level;
+            if ([touches isKindOfClass:NSNumber.class]) {
+                window.userInteractionEnabled = touches.boolValue;
+            }
         } @catch (NSException *exception) {
         }
     }
@@ -357,9 +518,24 @@ BOOL DSRaiseKeyboardWindowAboveStage(void) {
         DSClaimedKeyboardStatus = @"win=none";
         return NO;
     }
-    DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=above-stage n=%ld moved=%ld %@",
+    DSInvalidateActiveKeyboardWindow();
+    DSSilenceExtraKeyboardWindows();
+    UIWindow *active = DSActiveKeyboardWindow();
+    NSString *touch = @"all";
+    if (active) {
+        CGRect keys = DSKeyboardKeysInWindow(active);
+        CGFloat keyY = CGRectIsNull(keys) ? -1.0 : DSKeyStripScreenMinY(active, keys);
+        NSString *scene = DSRememberedSceneName(active);
+        if (scene.length > 28) scene = [scene substringFromIndex:scene.length - 28];
+        touch = [NSString stringWithFormat:@"%@ y=%.0f %@",
+                 NSStringFromClass(active.class),
+                 keyY,
+                 scene.length ? scene : @"scene=?"];
+    }
+    DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=above-stage n=%ld moved=%ld touch=%@ %@",
                                (long)raised,
                                (long)moved,
+                               touch,
                                [notes componentsJoinedByString:@" | "]];
     return YES;
 }

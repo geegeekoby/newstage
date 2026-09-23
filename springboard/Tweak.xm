@@ -514,13 +514,26 @@ static BOOL DSViewNameIsKeyboardChrome(UIView *view) {
            [name rangeOfString:@"UIKB"].location != NSNotFound;
 }
 
-// YES when this touch is on the full-screen keyboard cover, above the keys,
-// and has to fall through to the card. The windows are not moved.
+static void DSNoteGhostKeyboardIgnored(void) {
+    static BOOL noted = NO;
+    if (noted) return;
+    noted = YES;
+    DSDiagnosticsRecord(@"SpringBoard: a second keyboard window ignored a touch");
+}
+
+// YES when this touch is on a keyboard window that should not take it. A
+// second keyboard window stacked on the real one is ignored for every point,
+// including the key strip. The windows are not moved.
 static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
     if (!DSExternalKeyboardCoversStage() || ![view isKindOfClass:UIView.class]) return NO;
     UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
     if (!window) return NO;
-    if (!DSWindowIsKeyboard(window) && !DSViewNameIsKeyboardChrome(view)) return NO;
+    BOOL keyboardWindow = DSWindowIsKeyboard(window);
+    if (!keyboardWindow && !DSViewNameIsKeyboardChrome(view)) return NO;
+    if (keyboardWindow && !DSKeyboardWindowIsInteractive(window)) {
+        DSNoteGhostKeyboardIgnored();
+        return YES;
+    }
     CGPoint inWindow = (view == (UIView *)window) ? point : [view convertPoint:point toView:window];
     if (DSPointInWindowIsOnKeys(window, inWindow)) return NO;
     return YES;
@@ -535,7 +548,8 @@ static BOOL DSScreenPointHitsKeys(CGPoint screenPoint) {
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     if (cachedAt == 0 || (now - cachedAt) > 0.1) {
         CGRect screen = UIScreen.mainScreen.bounds;
-        CGRect keys = DSVisibleKeyboardFrameOnScreen();
+        CGRect keys = DSInteractiveKeyboardFrameOnScreen();
+        if (CGRectIsNull(keys)) keys = DSVisibleKeyboardFrameOnScreen();
         BOOL plausible = !CGRectIsNull(keys) &&
             CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
             CGRectGetHeight(keys) <= CGRectGetHeight(screen) * 0.5 &&
@@ -554,6 +568,7 @@ static BOOL DSTouchShouldStayWithKeyboard(UITouch *touch) {
     if (![touch isKindOfClass:UITouch.class]) return YES;
     UIWindow *window = touch.window;
     if (!window) return YES;
+    if (DSWindowIsKeyboard(window) && !DSKeyboardWindowIsInteractive(window)) return NO;
     CGPoint local = [touch locationInView:window];
     if (DSWindowIsKeyboard(window)) return DSPointInWindowIsOnKeys(window, local);
     CGPoint screen = local;
@@ -621,13 +636,19 @@ static void DSNoteCardTouchKeptOffKeys(void) {
 %end
 
 // The keyboard window is the size of the screen. pointInside is what decides
-// whether that window owns the touch. Only the keyboard view's bounds own it.
-// A touch anywhere above the keys returns NO and UIKit gives it to the stage.
+// whether that window owns the touch. Only one text-effects window owns it,
+// and only inside the keyboard view's bounds. Every other keyboard window
+// returns NO for the whole screen so the touch can reach the real keys or
+// the staged app. The window is not hidden.
 %hook UITextEffectsWindow
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     if (!DSExternalKeyboardCoversStage()) return %orig;
     UIWindow *window = (UIWindow *)self;
+    if (!DSKeyboardWindowIsInteractive(window)) {
+        DSNoteGhostKeyboardIgnored();
+        return NO;
+    }
     UIView *keyboardView = DSKeyboardViewInWindow(window);
     if (!keyboardView) return %orig;
     CGPoint inKeyboard = [window convertPoint:point toView:keyboardView];
@@ -780,6 +801,36 @@ static void DSNoteCardTouchKeptOffKeys(void) {
         }
     }
     %orig;
+}
+
+%end
+
+%end
+
+#pragma mark - Medusa keyboard window
+
+// SBMedusaHostedKeyboardWindow is one of the extra windows at level 6000.
+// It never draws the keys the user taps. Hit testing stops on it. It is not
+// hidden, and its level is left alone: lowering it puts a real keyboard
+// under the stage, and hiding a keyboard window has taken the phone to safe
+// mode before.
+
+%group MedusaKeyboard
+
+%hook SBMedusaHostedKeyboardWindow
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    (void)point;
+    (void)event;
+    if (DSExternalKeyboardCoversStage()) return NO;
+    return %orig;
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    (void)point;
+    (void)event;
+    if (DSExternalKeyboardCoversStage()) return nil;
+    return %orig;
 }
 
 %end
@@ -1179,6 +1230,11 @@ static void DSInstallRemainingHooks(void) {
             Class arbiter = objc_getClass("_UIKeyboardArbiter");
             if (arbiter && class_getInstanceMethod(arbiter, @selector(updateKeyboardStatus:fromHandler:))) {
                 %init(Arbiter, _UIKeyboardArbiter = arbiter);
+            }
+
+            Class medusaKeyboard = objc_getClass("SBMedusaHostedKeyboardWindow");
+            if (medusaKeyboard) {
+                %init(MedusaKeyboard);
             }
 
             [[DSStageManager sharedManager] activate];

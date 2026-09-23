@@ -1,3 +1,6 @@
+**4.5.58**
+- Several keyboard windows were all taking touches at level 6000, so a scroll on the staged app pressed keys on a second keyboard stacked just above the visible one. Only the lowest key strip stays interactive. Medusa and the aperture windows ignore every touch. Nothing is hidden, and the windows stay on the stage scene at level 6000
+
 **4.5.57**
 - The keyboard window is the full screen, so a touch on the card was still a keyboard touch. `UITextEffectsWindow` now accepts a touch only when it lands inside the keyboard view itself. A touch above the keys goes to the staged app. The windows stay where 4.5.50 put them
 

@@ -51,6 +51,14 @@ void DSLogStagedAppInjection(NSString *why);
 // outside the keys must fall through that window onto the card.
 BOOL DSExternalKeyboardCoversStage(void);
 
+// While that keyboard is up, only one keyboard window takes a touch. Medusa,
+// any window that came from an aperture scene, and every other keyboard
+// window return NO. Those windows are not hidden and their level stays put.
+BOOL DSKeyboardWindowIsInteractive(id window);
+
+// The key strip of that one window, in screen coordinates, or CGRectNull.
+CGRect DSInteractiveKeyboardFrameOnScreen(void);
+
 // No-ops kept for existing callers. Creating or binding a remote keyboard
 // window crashed SpringBoard on this phone.
 void DSPresentArbiterKeyboardLayer(id sceneLayer);

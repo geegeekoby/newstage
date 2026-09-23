@@ -43,6 +43,7 @@ write_plist() {
             "com.apple.UIKit",
             "com.facebook.Messenger",
             "org.whispersystems.signal",
+            "com.beeper.chat.ios",
         );
     };
 }
@@ -66,7 +67,10 @@ if [ -f "$LIBS/DynamicStageApp.dylib" ]; then
 	fi
 fi
 
-# Force Messenger to reload the in-app side.
+# These processes keep the previous in-app tweak until they start again.
+# A respring does not restart them, so the keyboard inside the card stays.
 killall -9 Messenger 2>/dev/null || true
+killall -9 Signal 2>/dev/null || true
+killall -9 Beeper 2>/dev/null || true
 
 exit 0

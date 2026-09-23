@@ -1,3 +1,6 @@
+**4.5.61**
+- The keyboard SpringBoard draws is already at y=631. The other one is inside the staged app, and Beeper never loaded the in-app tweak (`ctor` missing), so that copy kept taking taps. Beeper is named in the filter. A staged app that still has not loaded the tweak is restarted once so its keyboard is the remote one, not a second keyboard inside the card
+
 **4.5.60**
 - 4.5.59 moved the keyboard window to y=1262, past the bottom of the screen, so the keys never drew and the card lift dropped to 0. The window frame is not changed again. The keys stay on the stage scene at level 6000, and a touch above that strip still does not count as a key
 

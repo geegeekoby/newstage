@@ -69,6 +69,7 @@ def main() -> None:
             '            "com.apple.UIKit",\n'
             '            "com.facebook.Messenger",\n'
             '            "org.whispersystems.signal",\n'
+            '            "com.beeper.chat.ios",\n'
             "        );\n"
             "    };\n"
             "}\n"

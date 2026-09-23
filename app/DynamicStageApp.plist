@@ -4,6 +4,7 @@
             "com.apple.UIKit",
             "com.facebook.Messenger",
             "org.whispersystems.signal",
+            "com.beeper.chat.ios",
         );
     };
 }

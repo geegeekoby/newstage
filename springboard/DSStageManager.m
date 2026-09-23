@@ -15,6 +15,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <signal.h>
 #import <sys/stat.h>
 
 // Bumped when a hosted keyboard goes down so a late clip retry does not reopen it.
@@ -241,6 +242,7 @@ static void DSEnqueueStagedKey(NSString *op, NSString *text) {
 #pragma mark - Stage manager
 
 @interface DSStageManager () <DSGestureControllerDelegate, DSAppPickerDelegate, DSStagedKeyboardTarget>
+- (void)restartHostedAppMissingDylib:(NSString *)bundle;
 @end
 
 @implementation DSStageManager {
@@ -690,6 +692,51 @@ static BOOL sSystemEdgePullAvailable;
            CGRectGetMinX(visibleKeys) < 4.0;
 }
 
+// The keyboard drawn inside the card belongs to the app process. That process
+// only drops it once DynamicStageApp.dylib is actually loaded, and a respring
+// does not restart the app. One restart is enough; doing it again would loop
+// if the filter still missed.
+- (void)restartHostedAppMissingDylib:(NSString *)bundle {
+    if (bundle.length == 0 || [bundle hasPrefix:@"com.apple."]) return;
+    static NSMutableSet<NSString *> *attempted;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        attempted = [NSMutableSet set];
+    });
+    if ([attempted containsObject:bundle]) return;
+    [attempted addObject:bundle];
+
+    Class controllerClass = objc_getClass("SBApplicationController");
+    id controller = controllerClass ? [controllerClass sharedInstance] : nil;
+    SEL byID = @selector(applicationWithBundleIdentifier:);
+    id app = ([controller respondsToSelector:byID])
+        ? ((id (*)(id, SEL, id))objc_msgSend)(controller, byID, bundle)
+        : nil;
+    id process = nil;
+    for (NSString *name in @[ @"process", @"applicationProcess" ]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![app respondsToSelector:selector]) continue;
+        process = ((id (*)(id, SEL))objc_msgSend)(app, selector);
+        if (process) break;
+    }
+    pid_t pid = 0;
+    SEL pidSelector = @selector(pid);
+    if ([process respondsToSelector:pidSelector]) {
+        pid = ((pid_t (*)(id, SEL))objc_msgSend)(process, pidSelector);
+    } else if ([app respondsToSelector:pidSelector]) {
+        pid = ((pid_t (*)(id, SEL))objc_msgSend)(app, pidSelector);
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ has not loaded the in-app tweak, so its own keyboard is still inside the card",
+                              bundle);
+    if (pid <= 1) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: could not restart %@ (no pid)", bundle);
+        return;
+    }
+    int result = kill(pid, SIGKILL);
+    DSDiagnosticsRecordFormat(@"SpringBoard: restarted %@ pid %d so the in-app keyboard can load (%d)",
+                              bundle, (int)pid, result);
+}
+
 - (void)noteHostedAppKeyboard:(BOOL)onScreen frame:(CGRect)frame source:(NSString *)source {
     if (_searchSlot >= 0) return;
     if (!onScreen) {
@@ -707,6 +754,9 @@ static BOOL sSystemEdgePullAvailable;
     }
     BOOL raised = DSRaiseKeyboardWindowAboveStage();
     DSLogStagedAppInjection(@"keyboard up");
+    if ([self isHostingBundleIdentifier:source] && ![self hostedAppHasStageDylib:source]) {
+        [self restartHostedAppMissingDylib:source];
+    }
     [_container setClipsContents:!raised];
     [_topContainer setClipsContents:!raised];
     if (raised) {

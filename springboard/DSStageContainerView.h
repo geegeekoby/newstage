@@ -1,57 +1,43 @@
 #import <UIKit/UIKit.h>
 
-// The stage card. The recordings show no chrome of any kind: whatever is on the
-// stage runs edge to edge and is simply clipped to the display's corner
-// profile, so this is a material backdrop plus a clipped content view.
+NS_ASSUME_NONNULL_BEGIN
+
 @interface DSStageContainerView : UIView
 
-@property (nonatomic, readonly) UIView *contentView;   // picker view or hosted app
-@property (nonatomic, assign) BOOL darkMode;
-@property (nonatomic, assign) CGFloat cornerRadius;
-// How far the card is being held up out of the keyboard's way.
-@property (nonatomic, readonly) CGFloat liftOffset;
+@property (nonatomic) CGFloat cornerRadius;
+@property (nonatomic) BOOL darkMode;
+@property (nonatomic) BOOL showsStackAddButton;
+@property (nonatomic) BOOL showsMinimizeButton;
+@property (nonatomic) BOOL passThroughToHost;
+@property (nonatomic) BOOL hostingApp;
+@property (nonatomic) BOOL clipsContents;
+@property (nonatomic) CGFloat keyboardBandHeight;
+@property (nonatomic) CGFloat liftOffset;
 
-// Hidden while a live app is hosted, since the app paints its own background.
-- (void)setBackdropHidden:(BOOL)hidden;
+@property (nonatomic, copy, nullable) void (^stackAddHandler)(void);
+@property (nonatomic, copy, nullable) void (^minimizeHandler)(void);
+@property (nonatomic, copy, nullable) void (^keyboardBandLayoutHandler)(void);
 
-// An app is on the stage rather than the app grid, so the grips take the touches that
-// land on them instead of letting them through to the app: a touch the app receives is
-// one no gesture on this side of the fence ever hears about, which is what left an app
-// on the stage with no way out of it.
-@property (nonatomic, assign) BOOL hostingApp;
-
-// The hosted app is sitting behind the card rather than in it, so everything
-// except the grabber and the exit grips has to fall through.
-@property (nonatomic, assign) BOOL passThroughToHost;
-
-// The card always clips. A staged app's keyboard is SpringBoard's own window,
-// drawn above the card, so it does not need to spill out of this view.
-- (void)setClipsContents:(BOOL)clips;
-
-// When a system keyboard overlaps this card, the content view is shortened
-// by this many points so the hosted scene is clipped there. A layer mask does
-// not clip that scene. Called again after the content view's frame is set so
-// the host view can be put back to the full card height.
-@property (nonatomic, assign) CGFloat keyboardBandHeight;
-@property (nonatomic, copy) void (^keyboardBandLayoutHandler)(void);
-
-// Top strip that drags the whole card.
+- (UIView *)contentView;
+- (CGRect)stackAddButtonRect;
 - (CGRect)dragAffordanceRect;
-// The bottom-right corner, and a strip up the right-hand edge well clear of the home
-// gesture. Either one starts the same drag: inward leaves the app, down puts the card
-// away. The edge exists because the corner sits in the home gesture's own territory
-// and the phone takes those drags away mid-gesture.
 - (CGRect)cornerGripRect;
 - (CGRect)edgeGripRect;
 
-- (void)setLiftOffset:(CGFloat)offset;
-
-// Top-right control to add another stage card above this one (overlay mode only).
-@property (nonatomic, assign) BOOL showsStackAddButton;
-@property (nonatomic, copy) void (^stackAddHandler)(void);
-- (CGRect)stackAddButtonRect;
-
-@property (nonatomic, assign) BOOL showsMinimizeButton;
-@property (nonatomic, copy) void (^minimizeHandler)(void);
-
 @end
+
+NS_ASSUME_NONNULL_END
+
+// This header defines the public interface for the stage container view.
+// The implementation lives in DSStageContainerView.m and handles:
+//
+// - card clipping behavior
+// - keyboard band layout
+// - shadow rendering
+// - drag affordance
+// - corner/edge grip hit‑testing
+// - hosting app content inside the card
+//
+// No private UIKit headers are used here.
+// All properties are safe for external use by the stage controller.
+

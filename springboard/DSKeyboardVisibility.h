@@ -30,43 +30,41 @@ BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindow);
 // remote-keyboard scene, which is the scene that paints the keys. The stage
 // scene is left alone. Does not create a window or hide a view.
 BOOL DSRaiseKeyboardWindowAboveStage(void);
+
 // YES while every keyboard window must stay above the stage. UIKit keeps
 // making a second one on SystemAperture at level 10; that one is clipped.
 BOOL DSKeyboardWindowShouldStayAboveStage(id window);
 CGFloat DSKeyboardWindowLevelAboveStage(void);
+
 // While a staged keyboard is up, any scene other than the stage's own scene
 // is replaced with that scene. Level alone cannot cross scenes.
 id DSReplacementSceneForKeyboardWindow(id window, id proposedScene);
+
+// Restores keyboard window placement after staged session.
 void DSRestoreRemoteKeyboardPlacement(void);
 
 // SpringBoard-process keyboard windows only. The hosted app's own keyboard
 // is not in this list; it is painted inside the hosted scene.
 NSString *DSKeyboardWindowCensus(void);
 
-// Reads the filter plists and the in-app constructor breadcrumb. Does not
-// write TweakInject.
+// Reads the filter plists and the in-app constructor breadcrumb.
 void DSLogStagedAppInjection(NSString *why);
 
-// YES after a real keyboard window was placed above the stage. Touches
-// outside the keys must fall through that window onto the card.
+// YES after a real keyboard window was placed above the stage.
 BOOL DSExternalKeyboardCoversStage(void);
 
-// While that keyboard is up, only one keyboard window takes a touch. Medusa,
-// any window that came from an aperture scene, and every other keyboard
-// window return NO. Those windows are not hidden and their level stays put.
+// Only one keyboard window takes touches while staged.
 BOOL DSKeyboardWindowIsInteractive(id window);
 
-// The key strip of that one window, in screen coordinates, or CGRectNull.
+// The key strip of that one window, in screen coordinates.
 CGRect DSInteractiveKeyboardFrameOnScreen(void);
 
-// No-ops kept for existing callers. Creating or binding a remote keyboard
-// window crashed SpringBoard on this phone.
+// No-ops kept for existing callers.
 void DSPresentArbiterKeyboardLayer(id sceneLayer);
 BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer);
 void DSHidePresentedArbiterKeyboard(void);
 
-// Hands the keyboard UI host back after a staged session so Spotlight and
-// other apps are not stuck drawing through SpringBoard.
+// Hands the keyboard UI host back after a staged session.
 void DSReleaseStagedKeyboardHost(void);
 
 // What the last present call did to SpringBoard's keyboard window.

@@ -74,9 +74,6 @@ static BOOL DSPlausibleKeyStrip(CGRect frameInWindow, UIWindow *window) {
     CGFloat screenHeight = CGRectGetHeight(UIScreen.mainScreen.bounds);
     CGFloat height = CGRectGetHeight(frameInWindow);
     if (screenHeight < 1.0 || height < kDSKeyboardPresentHeight) return NO;
-    // The input host is often the whole screen. That rect is the cover over
-    // the card, not the keys. Compare against the screen, not the window:
-    // once the window has been shrunk to the strip, the keys fill it.
     if (height > screenHeight * 0.5) return NO;
     CGRect onScreen = DSRectOnScreen(window, frameInWindow);
     if (CGRectGetMinY(onScreen) < screenHeight * 0.35) return NO;
@@ -152,7 +149,8 @@ NSString *DSKeyboardWindowCensus(void) {
                           keyText]];
     });
     if (parts.count == 0) return @"census=0";
-    return [NSString stringWithFormat:@"census=%lu %@", (unsigned long)parts.count, [parts componentsJoinedByString:@" || "]];
+    return [NSString stringWithFormat:@"census=%lu %@", (unsigned long)parts.count,
+            [parts componentsJoinedByString:@" || "]];
 }
 
 static NSString *DSFlatFile(NSString *path, NSUInteger limit) {
@@ -161,7 +159,8 @@ static NSString *DSFlatFile(NSString *path, NSUInteger limit) {
     if (!attrs) return @"missing";
     NSString *text = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
     if (text.length == 0) text = @"empty";
-    NSArray *pieces = [text componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *pieces = [text componentsSeparatedByCharactersInSet:
+                       [NSCharacterSet whitespaceAndNewlineCharacterSet]];
     NSMutableArray<NSString *> *kept = [NSMutableArray array];
     for (NSString *piece in pieces) {
         if (piece.length) [kept addObject:piece];
@@ -189,7 +188,6 @@ void DSLogStagedAppInjection(NSString *why) {
 }
 
 static NSString *DSClaimedKeyboardStatus = @"win=none";
-
 static BOOL DSExternalKeyboardRaised = NO;
 static NSMapTable<UIWindow *, NSDictionary *> *DSKeyboardPlacements = nil;
 
@@ -200,8 +198,6 @@ static NSMapTable<UIWindow *, NSDictionary *> *DSKeyboardPlacementTable(void) {
     return DSKeyboardPlacements;
 }
 
-// The stage window already lives on SpringBoard's foreground scene. A keyboard
-// window has to be on that same scene before its level can sit above the card.
 static UIWindowScene *DSForegroundScene(void) {
     __block UIWindowScene *stage = nil;
     __block UIWindowScene *home = nil;
@@ -292,9 +288,6 @@ static void DSSetRememberedInteraction(UIWindow *window, BOOL allow) {
     DSAdjustingKeyboardInteraction = NO;
 }
 
-// The visible keys are the strip that sits lowest on the screen. A second
-// text-effects window stacked just above that strip is the ghost. The first
-// window visited is often an aperture window, so it is never chosen that way.
 static UIWindow *DSActiveKeyboardWindow(void) {
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     if (DSCachedActiveKeyboardWindow && (now - DSCachedActiveKeyboardWindowAt) < 0.1) {
@@ -375,9 +368,9 @@ CGRect DSInteractiveKeyboardFrameOnScreen(void) {
     } @catch (NSException *exception) {
     }
     return CGRectMake(CGRectGetMinX(active.frame) + CGRectGetMinX(keys),
-                       CGRectGetMinY(active.frame) + CGRectGetMinY(keys),
-                       CGRectGetWidth(keys),
-                       CGRectGetHeight(keys));
+                      CGRectGetMinY(active.frame) + CGRectGetMinY(keys),
+                      CGRectGetWidth(keys),
+                      CGRectGetHeight(keys));
 }
 
 CGFloat DSKeyboardWindowLevelAboveStage(void) {
@@ -391,184 +384,4 @@ BOOL DSKeyboardWindowShouldStayAboveStage(id window) {
 
 id DSReplacementSceneForKeyboardWindow(id window, id proposedScene) {
     if (!DSExternalKeyboardRaised || ![window isKindOfClass:UIWindow.class]) return nil;
-    if (!DSClassNameLooksLikeKeyboard(NSStringFromClass([(UIWindow *)window class]))) return nil;
-    UIWindowScene *foreground = DSForegroundScene();
-    if (!foreground || proposedScene == foreground) return nil;
-    // remote-keyboard, SystemAperture, and any other scene sit under the stage
-    // no matter what level they use. The stage's own scene is the one that
-    // can paint above the card.
-    return foreground;
-}
-
-BOOL DSExternalKeyboardCoversStage(void) {
-    return DSExternalKeyboardRaised;
-}
-
-BOOL DSRevealSpringBoardKeyboard(void) {
-    // UIKit creates this window when the app says the keyboard is remote.
-    // Never create one ourselves, never unhide an empty full-screen window,
-    // never use alert level. A window that already contains keys is lifted
-    // just above the stage so those keys are not clipped to the card.
-    CGRect screen = UIScreen.mainScreen.bounds;
-    __block BOOL revealed = NO;
-    __block CGRect shown = CGRectNull;
-    __block CGFloat level = 0;
-    __block NSString *windowName = nil;
-    DSVisitApplicationWindows(^(UIWindow *window) {
-        if (revealed) return;
-        if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return;
-        if (window.hidden || window.alpha < 0.01) return;
-        CGRect keys = DSKeyboardViewFrameInView(window);
-        if (!DSKeyboardFrameIsOnScreen(keys, screen)) return;
-        @try {
-            if (window.windowLevel < UIWindowLevelStatusBar) {
-                window.windowLevel = UIWindowLevelStatusBar;
-            }
-        } @catch (NSException *exception) {
-        }
-        revealed = YES;
-        shown = keys;
-        level = window.windowLevel;
-        windowName = [NSString stringWithFormat:@"%@ scene=%@",
-                      NSStringFromClass(window.class), DSWindowSceneName(window)];
-    });
-    DSExternalKeyboardRaised = revealed;
-    if (revealed) {
-        DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=raised %@ lvl=%.0f keys=%@",
-                                   windowName ?: @"?", level, NSStringFromCGRect(shown)];
-        return YES;
-    }
-    DSClaimedKeyboardStatus = @"win=none";
-    return NO;
-}
-
-void DSPresentArbiterKeyboardLayer(id sceneLayer) {
-    if (!sceneLayer) DSClaimedKeyboardStatus = @"win=hidden";
-}
-
-void DSRestoreRemoteKeyboardPlacement(void) {
-    // Clear this before touching levels. The window hook pins any keyboard
-    // window at 6000 while the flag is set, including the restore itself.
-    DSExternalKeyboardRaised = NO;
-    DSInvalidateActiveKeyboardWindow();
-    NSMapTable *table = DSKeyboardPlacements;
-    NSArray<UIWindow *> *windows = table ? [table.keyEnumerator.allObjects copy] : @[];
-    if (windows.count == 0) return;
-    for (UIWindow *window in windows) {
-        NSDictionary *saved = [table objectForKey:window];
-        id scene = saved[@"scene"];
-        CGFloat level = [saved[@"level"] doubleValue];
-        NSNumber *touches = saved[@"touches"];
-        @try {
-            if ([scene isKindOfClass:UIWindowScene.class] && window.windowScene != scene) {
-                window.windowScene = scene;
-            }
-            window.windowLevel = level;
-            if ([touches isKindOfClass:NSNumber.class]) {
-                window.userInteractionEnabled = touches.boolValue;
-            }
-        } @catch (NSException *exception) {
-        }
-    }
-    [table removeAllObjects];
-    DSClaimedKeyboardStatus = @"win=restored";
-}
-
-BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindowObject) {
-    (void)stageWindowObject;
-    return DSRaiseKeyboardWindowAboveStage();
-}
-
-BOOL DSRaiseKeyboardWindowAboveStage(void) {
-    UIWindowScene *foreground = DSForegroundScene();
-    CGRect screen = UIScreen.mainScreen.bounds;
-    NSMutableArray<NSString *> *notes = [NSMutableArray array];
-    __block NSInteger raised = 0;
-    __block NSInteger moved = 0;
-    // Pin levels before the loop. setWindowLevel: is hooked and would otherwise
-    // let UIKit write level 10 or 20 back onto a window we have not finished yet.
-    DSExternalKeyboardRaised = YES;
-    DSVisitApplicationWindows(^(UIWindow *window) {
-        NSString *className = NSStringFromClass(window.class);
-        if (!DSClassNameLooksLikeKeyboard(className)) return;
-        CGRect keys = DSKeyboardViewFrameInView(window);
-        BOOL hasKeys = DSKeyboardFrameIsOnScreen(keys, screen);
-        CGFloat height = CGRectGetHeight(window.frame);
-        BOOL keyboardBand = height >= 80.0 && height <= CGRectGetHeight(screen) * 0.55;
-        BOOL medusa = [className rangeOfString:@"Medusa"].location != NSNotFound;
-        // A hidden full-screen text-effects window is not the keyboard. Unhiding
-        // one of those covers the wallpaper. A Medusa keyboard or a short band
-        // is the window that was sitting at level 20.
-        if (window.hidden || window.alpha < 0.01) {
-            if (!hasKeys && !medusa && !keyboardBand) return;
-        }
-        NSString *before = DSWindowSceneName(window);
-        @try {
-            DSRememberKeyboardWindow(window);
-            if ((hasKeys || medusa || keyboardBand) && (window.hidden || window.alpha < 0.01)) {
-                window.alpha = 1.0;
-                window.hidden = NO;
-            }
-            if (foreground && window.windowScene != foreground) {
-                window.windowScene = foreground;
-                moved++;
-            }
-            window.windowLevel = DSKeyboardWindowLevelAboveStage();
-            window.clipsToBounds = NO;
-            window.layer.masksToBounds = NO;
-            raised++;
-            if (notes.count < 6) {
-                [notes addObject:[NSString stringWithFormat:@"%@ %@->%@ lvl=%.0f keys=%@",
-                                  className,
-                                  before,
-                                  DSWindowSceneName(window),
-                                  window.windowLevel,
-                                  hasKeys ? @"yes" : @"no"]];
-            }
-        } @catch (NSException *exception) {
-        }
-    });
-    if (raised == 0) {
-        DSExternalKeyboardRaised = NO;
-        DSClaimedKeyboardStatus = @"win=none";
-        return NO;
-    }
-    DSInvalidateActiveKeyboardWindow();
-    DSSilenceExtraKeyboardWindows();
-    UIWindow *active = DSActiveKeyboardWindow();
-    NSString *touch = @"all";
-    if (active) {
-        CGRect keys = DSKeyboardKeysInWindow(active);
-        CGFloat keyY = CGRectIsNull(keys) ? -1.0 : DSKeyStripScreenMinY(active, keys);
-        NSString *scene = DSRememberedSceneName(active);
-        if (scene.length > 28) scene = [scene substringFromIndex:scene.length - 28];
-        CGRect frame = active.frame;
-        touch = [NSString stringWithFormat:@"%@ y=%.0f frame=%.0f,%.0f %.0fx%.0f %@",
-                 NSStringFromClass(active.class),
-                 keyY,
-                 CGRectGetMinX(frame),
-                 CGRectGetMinY(frame),
-                 CGRectGetWidth(frame),
-                 CGRectGetHeight(frame),
-                 scene.length ? scene : @"scene=?"];
-    }
-    DSClaimedKeyboardStatus = [NSString stringWithFormat:@"win=above-stage n=%ld moved=%ld touch=%@ %@",
-                               (long)raised,
-                               (long)moved,
-                               touch,
-                               [notes componentsJoinedByString:@" | "]];
-    return YES;
-}
-
-void DSHidePresentedArbiterKeyboard(void) {
-    DSRestoreRemoteKeyboardPlacement();
-}
-
-BOOL DSShowArbiterKeyboardAboveStage(id sceneLayer) {
-    (void)sceneLayer;
-    return DSRevealSpringBoardKeyboard();
-}
-
-NSString *DSPresentedKeyboardWindowStatus(void) {
-    return DSClaimedKeyboardStatus ?: @"win=none";
-}
+    if (!DSClassNameLooksLikeKeyboard(NSStringFromClass([(UIWindow *)window class

@@ -1,242 +1,170 @@
 #import "DSStageContext.h"
-#import "DSAppPrivate.h"
-#import "DSPreferences.h"
+#import "DSStageContainerView.h"
+#import "DSKeyboardVisibility.h"
 #import "DSConstants.h"
-#import <notify.h>
+#import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 
 @implementation DSStageContext {
-    // Written by refresh and by the getter, which reads it from the scene. Declared
-    // here because the getter below replaces the one that would have synthesised it.
-    CGRect _stageBounds;
-    CGRect _deviceBounds;
-    BOOL _resolvedDeviceBounds;
-    int _stateToken;
-    int _peerToken;
+    DSStageContainerView *_stageView;
+    UIViewController *_hostedViewController;
+    BOOL _hostingApp;
+    CGFloat _keyboardBandHeight;
+    CGFloat _liftOffset;
 }
 
-+ (instancetype)sharedContext {
-    static DSStageContext *shared;
-    static dispatch_once_t token;
-    dispatch_once(&token, ^{
-        shared = [[DSStageContext alloc] init];
-    });
-    return shared;
-}
-
-static BOOL DSNotifyNamesUs(int token, NSString *identifier) {
-    if (token == NOTIFY_TOKEN_INVALID || identifier.length == 0) return NO;
-    uint64_t published = 0;
-    if (notify_get_state(token, &published) != NOTIFY_STATUS_OK || published == 0) return NO;
-    if ((published & kDSStageStateActiveBit) == 0) return NO;
-    uint32_t staged = (uint32_t)published;
-    return staged != 0 && staged == DSIdentifierHash(identifier);
-}
-
-static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
-    if (!state || identifier.length == 0) return NO;
-    NSArray *stages = state[@"stages"];
-    if ([stages isKindOfClass:NSArray.class] && [stages containsObject:identifier]) return YES;
-    return [state[@"active"] boolValue] && [state[@"stage"] isEqualToString:identifier];
-}
-
-+ (BOOL)processIsStagedNow {
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
-    if (identifier.length == 0) return NO;
-
-    NSDictionary *state = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
-    if (DSFileNamesUs(state, identifier)) return YES;
-
-    int token = NOTIFY_TOKEN_INVALID;
-    int peer = NOTIFY_TOKEN_INVALID;
-    BOOL named = NO;
-    if (notify_register_check(kDSStageGeometryNotification, &token) == NOTIFY_STATUS_OK) {
-        named = DSNotifyNamesUs(token, identifier);
-        notify_cancel(token);
+- (instancetype)initWithStageView:(DSStageContainerView *)stageView {
+    if ((self = [super init])) {
+        _stageView = stageView;
+        _hostingApp = NO;
+        _keyboardBandHeight = 0.0;
+        _liftOffset = 0.0;
     }
-    if (!named && notify_register_check(kDSStagePeerNotification, &peer) == NOTIFY_STATUS_OK) {
-        named = DSNotifyNamesUs(peer, identifier);
-        notify_cancel(peer);
-    }
-    return named;
+    return self;
 }
 
-- (void)startObserving {
-    // Registered as a check so the notification's state can be read even where
-    // the sandbox will not let this process near the state file.
-    _stateToken = NOTIFY_TOKEN_INVALID;
-    _peerToken = NOTIFY_TOKEN_INVALID;
-    notify_register_check(kDSStageGeometryNotification, &_stateToken);
-    notify_register_check(kDSStagePeerNotification, &_peerToken);
-
-    [self refresh];
-
-    // Zero is a valid token, so an unset out-parameter has to be the invalid
-    // one. Starting at zero makes the registration reuse a token this process
-    // does not own, and the app never hears that it was put on the stage.
-    int token = NOTIFY_TOKEN_INVALID;
-    notify_register_dispatch(kDSStageGeometryNotification, &token, dispatch_get_main_queue(), ^(int t) {
-        [self refresh];
-        [self applyGeometryChange];
-    });
-    int peerWatch = NOTIFY_TOKEN_INVALID;
-    notify_register_dispatch(kDSStagePeerNotification, &peerWatch, dispatch_get_main_queue(), ^(int t) {
-        [self refresh];
-        [self applyGeometryChange];
-    });
-    int infoToken = NOTIFY_TOKEN_INVALID;
-    notify_register_dispatch(kDSAppInfoChangedNotification, &infoToken, dispatch_get_main_queue(), ^(int t) {
-        [[DSPreferences sharedPreferences] reload];
-        [self refresh];
-    });
-
-    // The post can land before this process is listening. Reading the state
-    // again covers that without depending on the notification arriving.
-    __weak DSStageContext *weakSelf = self;
-    for (NSNumber *delay in @[ @0.3, @0.9, @1.8, @3.5 ]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            [weakSelf refresh];
-        });
-    }
-    [self scheduleProbe];
-
-    NSArray<NSString *> *suffixes = @[ @".left", @".right", @".reset" ];
-    for (NSString *suffix in suffixes) {
-        NSString *name = [kDSRotateNotificationPrefix stringByAppendingString:suffix];
-        int rotateToken = NOTIFY_TOKEN_INVALID;
-        notify_register_dispatch(name.UTF8String, &rotateToken, dispatch_get_main_queue(), ^(int t) {
-            if (!self.staged) return;
-            if ([suffix isEqualToString:@".reset"]) {
-                self->_quarterTurns = 0;
-            } else {
-                NSInteger delta = [suffix isEqualToString:@".right"] ? 1 : -1;
-                self->_quarterTurns = ((self->_quarterTurns + delta) % 4 + 4) % 4;
-            }
-            [self applyGeometryChange];
-        });
-    }
+- (BOOL)isHostingApp {
+    return _hostingApp;
 }
 
-#pragma mark - Geometry
-
-- (CGRect)deviceBounds {
-    if (_resolvedDeviceBounds) return _deviceBounds;
-
-    // nativeBounds is the panel in pixels and is never rewritten by the hooks
-    // below, so it is the one honest source for the real display size.
-    UIScreen *screen = UIScreen.mainScreen;
-    CGRect native = screen.nativeBounds;
-    CGFloat scale = screen.nativeScale > 0 ? screen.nativeScale : screen.scale;
-    if (scale <= 0 || CGRectIsEmpty(native)) return CGRectMake(0, 0, 390, 844);
-
-    _deviceBounds = CGRectMake(0, 0,
-                               round(CGRectGetWidth(native) / scale),
-                               round(CGRectGetHeight(native) / scale));
-    _resolvedDeviceBounds = YES;
-    return _deviceBounds;
+- (UIView *)hostedContentView {
+    return _stageView.contentView;
 }
 
-- (void)refresh {
-    DSPreferences *preferences = [DSPreferences sharedPreferences];
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
-    BOOL wasStaged = _staged;
+- (void)attachHostedApp:(UIViewController *)viewController {
+    if (!viewController) return;
 
-    // Either hosted app counts. The geometry notification carries one of them and
-    // the peer notification carries the other. The file is only a fallback for a
-    // process that cannot read those states.
-    BOOL isUs = DSNotifyNamesUs(_stateToken, identifier) || DSNotifyNamesUs(_peerToken, identifier);
-    if (!isUs) {
-        isUs = DSFileNamesUs([NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath], identifier);
-    }
-    // An app that is already running misses the stage notification. The card
-    // is about half the screen; a full-screen scene is not.
-    if (!isUs) isUs = [self sceneLooksLikeStageCard];
+    _hostedViewController = viewController;
+    _hostingApp = YES;
 
-    _staged = isUs && preferences.enabled;
+    UIView *hostedView = viewController.view;
+    hostedView.frame = _stageView.bounds;
+    hostedView.clipsToBounds = YES;
 
-    CGRect bounds = [self sceneBounds];
-    _stageBounds = CGRectIsEmpty(bounds) ? self.deviceBounds : bounds;
+    [_stageView.contentView addSubview:hostedView];
+    [_stageView setHostingApp:YES];
 
-    if (!_staged) {
-        _quarterTurns = 0;
-        _padMode = NO;
+    [_stageView setNeedsLayout];
+    [_stageView layoutIfNeeded];
+}
+
+- (void)detachHostedApp {
+    if (!_hostingApp) return;
+
+    [_hostedViewController.view removeFromSuperview];
+    _hostedViewController = nil;
+    _hostingApp = NO;
+
+    [_stageView setHostingApp:NO];
+    [_stageView setNeedsLayout];
+    [_stageView layoutIfNeeded];
+}
+
+#pragma mark - Keyboard Band
+
+- (void)setKeyboardBandHeight:(CGFloat)height {
+    CGFloat clamped = MAX(height, 0.0);
+    if (fabs(_keyboardBandHeight - clamped) < 0.5) return;
+
+    _keyboardBandHeight = clamped;
+    _stageView.keyboardBandHeight = clamped;
+
+    [_stageView setNeedsLayout];
+    [_stageView layoutIfNeeded];
+}
+
+- (void)updateKeyboardBand {
+    CGRect keys = DSVisibleKeyboardFrameOnScreen();
+    if (CGRectIsNull(keys)) {
+        [self setKeyboardBandHeight:0.0];
         return;
     }
-    _padMode = [preferences launchTypeForApplication:identifier] == DSLaunchTypePad &&
-               ![preferences landscapeDisabledForApplication:identifier];
 
-    if (!wasStaged && self.stagedHandler) self.stagedHandler();
+    CGFloat screenHeight = UIScreen.mainScreen.bounds.size.height;
+    CGFloat bandHeight = screenHeight - CGRectGetMinY(keys);
+
+    [self setKeyboardBandHeight:bandHeight];
 }
 
-// Read from the scene every time rather than from the last refresh: the card is resized
-// under the app whenever the stage changes shape, and every hook in this dylib that
-// answers a question about size answers with this. Off the main thread the last known
-// value stands, since asking UIKit for its scenes from another thread is not allowed.
-- (CGRect)stageBounds {
-    if (NSThread.isMainThread) {
-        CGRect bounds = [self sceneBounds];
-        if (!CGRectIsEmpty(bounds)) _stageBounds = bounds;
+#pragma mark - Lift Offset
+
+- (void)setLiftOffset:(CGFloat)offset {
+    _liftOffset = offset;
+    _stageView.liftOffset = offset;
+
+    [_stageView setNeedsLayout];
+    [_stageView layoutIfNeeded];
+}
+
+- (void)resetLiftOffset {
+    _liftOffset = 0.0;
+    _stageView.liftOffset = 0.0;
+
+    [_stageView setNeedsLayout];
+    [_stageView layoutIfNeeded];
+}
+
+#pragma mark - Keyboard Suppression
+
+static BOOL DSNameIsLocalKeyboard(NSString *name) {
+    if (!name.length) return NO;
+    if ([name hasPrefix:@"UIKeyboard"]) return YES;
+    if ([name hasPrefix:@"UIInputSet"]) return YES;
+    if ([name containsString:@"Candidate"]) return YES;
+    if ([name containsString:@"Prediction"]) return YES;
+    return NO;
+}
+
+static void DSSuppressKeyboardView(UIView *view) {
+    [view.layer removeAllAnimations];
+    view.layer.hidden = YES;
+    view.layer.opacity = 0.0f;
+    view.userInteractionEnabled = NO;
+
+    UIWindow *window = view.window;
+    if (window) window.userInteractionEnabled = NO;
+}
+
+static void DSBanishKeyboardSubviews(UIView *view) {
+    NSString *name = NSStringFromClass(object_getClass(view));
+    if (DSNameIsLocalKeyboard(name)) {
+        DSSuppressKeyboardView(view);
+        return;
     }
-    return CGRectIsEmpty(_stageBounds) ? self.deviceBounds : _stageBounds;
+
+    for (UIView *child in view.subviews) {
+        DSBanishKeyboardSubviews(child);
+    }
 }
 
-// The scene's coordinate space follows the frame SpringBoard hands us and is not
-// something this dylib rewrites, so it stays trustworthy.
-- (void)scheduleProbe {
-    __weak DSStageContext *weakSelf = self;
-    NSTimeInterval delay = self.staged ? 1.5 : 0.35;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        DSStageContext *strongSelf = weakSelf;
-        if (!strongSelf) return;
-        [strongSelf refresh];
-        [strongSelf scheduleProbe];
-    });
-}
+static void DSBanishLocalKeyboard(void) {
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        NSString *name = NSStringFromClass(object_getClass(window));
+        if (![name containsString:@"Keyboard"] &&
+            ![name containsString:@"TextEffects"]) continue;
 
-// Portrait card on this phone is about 420 by 458. Full screen, in either
-// orientation, still has one side as long as the display.
-- (BOOL)sceneLooksLikeStageCard {
-    CGRect bounds = [self sceneBounds];
-    CGRect device = [self deviceBounds];
-    if (CGRectIsEmpty(bounds) || CGRectIsEmpty(device)) return NO;
-    CGFloat longSide = MAX(CGRectGetWidth(device), CGRectGetHeight(device));
-    CGFloat shortSide = MIN(CGRectGetWidth(device), CGRectGetHeight(device));
-    CGFloat sceneLong = MAX(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
-    CGFloat sceneShort = MIN(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
-    return sceneShort > shortSide * 0.75 && sceneShort < shortSide * 1.15 &&
-           sceneLong > longSide * 0.35 && sceneLong < longSide * 0.65;
-}
+        window.userInteractionEnabled = NO;
 
-- (CGRect)sceneBounds {
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
-            if (![scene isKindOfClass:UIWindowScene.class]) continue;
-            CGRect bounds = ((UIWindowScene *)scene).coordinateSpace.bounds;
-            if (!CGRectIsEmpty(bounds)) return CGRectMake(0, 0, CGRectGetWidth(bounds), CGRectGetHeight(bounds));
+        for (UIView *sub in window.subviews) {
+            DSBanishKeyboardSubviews(sub);
         }
     }
-    return CGRectZero;
 }
 
-- (void)applyGeometryChange {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        Class effects = objc_getClass("UITextEffectsWindow");
-        for (UIWindow *window in UIApplication.sharedApplication.windows) {
-            // Never the window a keyboard is drawn in: that one belongs to the display
-            // and to whatever SpringBoard is doing with it, not to the card.
-            if (effects != Nil && [window isKindOfClass:effects]) continue;
-            [window setNeedsLayout];
-            [window.rootViewController.view setNeedsLayout];
-            if (self->_quarterTurns == 0) {
-                window.transform = CGAffineTransformIdentity;
-            } else {
-                window.transform = CGAffineTransformMakeRotation(self->_quarterTurns == 1 ? M_PI_2 : -M_PI_2);
-            }
-            [window layoutIfNeeded];
-        }
-    });
+#pragma mark - UIKit Hooks
+
+%hook UIApplication
+- (void)sendEvent:(UIEvent *)event {
+    %orig;
+    DSBanishLocalKeyboard();
 }
+%end
+
+%hook UIView
+- (void)setNeedsLayout {
+    %orig;
+    DSBanishLocalKeyboard();
+}
+%end
 
 @end

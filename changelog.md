@@ -1,3 +1,6 @@
+**4.5.57**
+- The keyboard window is the full screen, so a touch on the card was still a keyboard touch. `UITextEffectsWindow` now accepts a touch only when it lands inside the keyboard view itself. A touch above the keys goes to the staged app. The windows stay where 4.5.50 put them
+
 **4.5.56**
 - 4.5.55 let the touch through the keyboard window, and the log shows that, but the keyboard still watches every event in the process and starts a key from a scroll on the card. That tracker now ignores a touch unless it is on the key strip. The staged app's own tracker does the same. The keyboard windows stay where 4.5.50 put them
 

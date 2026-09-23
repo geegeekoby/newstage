@@ -1022,6 +1022,17 @@ static BOOL DSStagedKeyboardHitBlocksContent(UIWindow *window, UIView *hit) {
 
 %hook UITextEffectsWindow
 
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    // The keys the user sees are SpringBoard's. This window is the full card.
+    if (DSStaged()) return NO;
+    return %orig;
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return nil;
+    return %orig;
+}
+
 - (void)layoutSubviews {
     %orig;
 }

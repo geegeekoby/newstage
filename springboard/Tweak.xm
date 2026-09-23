@@ -448,9 +448,61 @@ static CGRect DSKeyBandInWindow(UIWindow *window) {
     return keys;
 }
 
+static BOOL DSNameIsKeyboardSurface(NSString *name) {
+    if (name.length == 0) return NO;
+    if ([name rangeOfString:@"TextEffects"].location != NSNotFound) return NO;
+    if ([name rangeOfString:@"Window"].location != NSNotFound) return NO;
+    return [name rangeOfString:@"UIKeyboard"].location != NSNotFound ||
+           [name rangeOfString:@"KeyboardLayout"].location != NSNotFound ||
+           [name rangeOfString:@"Keyboard"].location != NSNotFound;
+}
+
+// The key view itself, not the full-screen window it sits in. A host view that
+// fills the window is the cover over the card, so it is skipped.
+static UIView *DSFindKeyboardView(UIView *root, UIWindow *window, NSInteger depth, UIView **best, CGFloat *bestHeight) {
+    if (depth > 14 || ![root isKindOfClass:UIView.class] || root.hidden || root.alpha < 0.01) return nil;
+    NSString *name = NSStringFromClass(root.class);
+    if (root != (UIView *)window && DSNameIsKeyboardSurface(name) && !CGRectIsEmpty(root.bounds)) {
+        CGRect inWindow = [root convertRect:root.bounds toView:window];
+        CGFloat windowHeight = CGRectGetHeight(window.bounds);
+        CGFloat height = CGRectGetHeight(inWindow);
+        if (windowHeight > 1.0 &&
+            height >= kDSKeyboardPresentHeight &&
+            height <= windowHeight * 0.55 &&
+            CGRectGetMinY(inWindow) >= windowHeight * 0.30 &&
+            height > *bestHeight) {
+            *best = root;
+            *bestHeight = height;
+        }
+    }
+    for (UIView *subview in root.subviews) {
+        DSFindKeyboardView(subview, window, depth + 1, best, bestHeight);
+    }
+    return *best;
+}
+
+static UIView *DSKeyboardViewInWindow(UIWindow *window) {
+    static __weak UIWindow *cachedWindow = nil;
+    static __weak UIView *cachedView = nil;
+    static CFAbsoluteTime cachedAt = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (cachedWindow == window && (now - cachedAt) < 0.1) return cachedView;
+    UIView *best = nil;
+    CGFloat bestHeight = 0;
+    DSFindKeyboardView(window, window, 0, &best, &bestHeight);
+    cachedWindow = window;
+    cachedView = best;
+    cachedAt = now;
+    return best;
+}
+
+// YES only when the point lands inside the keyboard view's own bounds.
 static BOOL DSPointInWindowIsOnKeys(UIWindow *window, CGPoint pointInWindow) {
     if (![window isKindOfClass:UIWindow.class]) return NO;
-    return CGRectContainsPoint(DSKeyBandInWindow(window), pointInWindow);
+    UIView *keyboardView = DSKeyboardViewInWindow(window);
+    if (!keyboardView) return CGRectContainsPoint(DSKeyBandInWindow(window), pointInWindow);
+    CGPoint inKeyboard = [window convertPoint:pointInWindow toView:keyboardView];
+    return CGRectContainsPoint(keyboardView.bounds, inKeyboard);
 }
 
 static BOOL DSViewNameIsKeyboardChrome(UIView *view) {
@@ -471,11 +523,6 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
     if (!DSWindowIsKeyboard(window) && !DSViewNameIsKeyboardChrome(view)) return NO;
     CGPoint inWindow = (view == (UIView *)window) ? point : [view convertPoint:point toView:window];
     if (DSPointInWindowIsOnKeys(window, inWindow)) return NO;
-    static BOOL noted = NO;
-    if (!noted) {
-        noted = YES;
-        DSDiagnosticsRecord(@"SpringBoard: a touch above the keys passed through the keyboard window");
-    }
     return YES;
 }
 
@@ -569,6 +616,24 @@ static void DSNoteCardTouchKeptOffKeys(void) {
     (void)serverWindow;
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
     return %orig;
+}
+
+%end
+
+// The keyboard window is the size of the screen. pointInside is what decides
+// whether that window owns the touch. Only the keyboard view's bounds own it.
+// A touch anywhere above the keys returns NO and UIKit gives it to the stage.
+%hook UITextEffectsWindow
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (!DSExternalKeyboardCoversStage()) return %orig;
+    UIWindow *window = (UIWindow *)self;
+    UIView *keyboardView = DSKeyboardViewInWindow(window);
+    if (!keyboardView) return %orig;
+    CGPoint inKeyboard = [window convertPoint:point toView:keyboardView];
+    if (CGRectContainsPoint(keyboardView.bounds, inKeyboard)) return YES;
+    DSNoteCardTouchKeptOffKeys();
+    return NO;
 }
 
 %end

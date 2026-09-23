@@ -1,3 +1,6 @@
+**4.5.62**
+- Messenger still had not loaded the in-app tweak, so its own keyboard stayed inside the card. The restart looked for a process id and found none. It now quits the hosted app the same way the stage already can, then puts that app back on the card so the in-app tweak loads and that second keyboard is gone
+
 **4.5.61**
 - The keyboard SpringBoard draws is already at y=631. The other one is inside the staged app, and Beeper never loaded the in-app tweak (`ctor` missing), so that copy kept taking taps. Beeper is named in the filter. A staged app that still has not loaded the tweak is restarted once so its keyboard is the remote one, not a second keyboard inside the card
 

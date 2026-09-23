@@ -615,15 +615,6 @@ static void DSNoteCardTouchKeptOffKeys(void) {
     %orig;
 }
 
-// UIKit sets this window to the full screen. The keys are only the bottom
-// strip, and the bottom card sits in the rest of that rect. The frame that
-// sticks is the strip, so a touch on the card is not inside the window.
-- (void)setFrame:(CGRect)frame {
-    CGRect replacement = DSReplacementFrameForKeyboardWindow(self, frame);
-    if (!CGRectIsNull(replacement)) frame = replacement;
-    %orig(frame);
-}
-
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
     return %orig;
@@ -650,37 +641,6 @@ static void DSNoteCardTouchKeptOffKeys(void) {
 // returns NO for the whole screen so the touch can reach the real keys or
 // the staged app. The window is not hidden.
 %hook UITextEffectsWindow
-
-- (BOOL)_shouldResizeWithScene {
-    if (DSKeyboardWindowShouldMatchKeys((UIWindow *)self)) return NO;
-    return %orig;
-}
-
-- (BOOL)_isFullscreen {
-    if (DSKeyboardWindowShouldMatchKeys((UIWindow *)self)) return NO;
-    return %orig;
-}
-
-- (BOOL)isFullscreen {
-    if (DSKeyboardWindowShouldMatchKeys((UIWindow *)self)) return NO;
-    return %orig;
-}
-
-- (void)_sceneBoundsDidChange {
-    %orig;
-    if (DSKeyboardWindowShouldMatchKeys((UIWindow *)self)) DSShrinkRaisedKeyboardWindows();
-}
-
-- (void)layoutSubviews {
-    %orig;
-    UIWindow *window = (UIWindow *)self;
-    if (!DSKeyboardWindowShouldMatchKeys(window)) return;
-    if (CGRectGetHeight(window.frame) > CGRectGetHeight(UIScreen.mainScreen.bounds) * 0.7) {
-        DSShrinkRaisedKeyboardWindows();
-    } else {
-        DSRealignShrunkKeyboardWindow(window);
-    }
-}
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     if (!DSExternalKeyboardCoversStage()) return %orig;

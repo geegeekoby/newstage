@@ -1,3 +1,6 @@
+**4.5.60**
+- 4.5.59 moved the keyboard window to y=1262, past the bottom of the screen, so the keys never drew and the card lift dropped to 0. The window frame is not changed again. The keys stay on the stage scene at level 6000, and a touch above that strip still does not count as a key
+
 **4.5.59**
 - The keyboard window was still the full screen, so a touch on the bottom card was inside that window even though the keys start at y=631. Its frame is now the key strip, and the other keyboard windows use that same frame. A touch above the keys is outside the window. The keys stay on the stage scene at level 6000, and the original frame is put back when the keyboard closes
 

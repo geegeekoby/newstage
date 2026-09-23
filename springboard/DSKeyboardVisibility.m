@@ -222,17 +222,11 @@ static void DSRememberKeyboardWindow(UIWindow *window) {
     if (@available(iOS 13.0, *)) {
         sceneName = window.windowScene.session.persistentIdentifier ?: @"";
     }
-    NSMutableArray<NSValue *> *subframes = [NSMutableArray array];
-    for (UIView *subview in window.subviews) {
-        [subframes addObject:[NSValue valueWithCGRect:subview.frame]];
-    }
     [table setObject:@{
         @"scene" : window.windowScene ?: (id)NSNull.null,
         @"level" : @(window.windowLevel),
         @"touches" : @(window.userInteractionEnabled),
-        @"sceneName" : sceneName ?: @"",
-        @"frame" : [NSValue valueWithCGRect:window.frame],
-        @"subframes" : subframes
+        @"sceneName" : sceneName ?: @""
     } forKey:window];
 }
 
@@ -386,92 +380,6 @@ CGRect DSInteractiveKeyboardFrameOnScreen(void) {
                        CGRectGetHeight(keys));
 }
 
-static BOOL DSRectsClose(CGRect a, CGRect b) {
-    return fabs(CGRectGetMinX(a) - CGRectGetMinX(b)) < 1.0 &&
-           fabs(CGRectGetMinY(a) - CGRectGetMinY(b)) < 1.0 &&
-           fabs(CGRectGetWidth(a) - CGRectGetWidth(b)) < 1.0 &&
-           fabs(CGRectGetHeight(a) - CGRectGetHeight(b)) < 1.0;
-}
-
-// UIKit keeps the text-effects window the size of the screen. The keys are
-// only the bottom strip, so every other point on that window is the card.
-// All of the raised keyboard windows share that strip's frame. A window that
-// has not been remembered is left alone, and so is a strip we could not measure.
-BOOL DSKeyboardWindowShouldMatchKeys(id windowObject) {
-    if (!DSExternalKeyboardRaised || ![windowObject isKindOfClass:UIWindow.class]) return NO;
-    UIWindow *window = (UIWindow *)windowObject;
-    if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return NO;
-    return [DSKeyboardPlacementTable() objectForKey:window] != nil;
-}
-
-CGRect DSReplacementFrameForKeyboardWindow(id windowObject, CGRect requested) {
-    (void)requested;
-    if (!DSExternalKeyboardRaised || ![windowObject isKindOfClass:UIWindow.class]) return CGRectNull;
-    UIWindow *window = (UIWindow *)windowObject;
-    if (!DSClassNameLooksLikeKeyboard(NSStringFromClass(window.class))) return CGRectNull;
-    if (![DSKeyboardPlacementTable() objectForKey:window]) return CGRectNull;
-    CGRect target = DSInteractiveKeyboardFrameOnScreen();
-    if (CGRectIsNull(target) || CGRectIsEmpty(target)) return CGRectNull;
-    CGFloat screenHeight = CGRectGetHeight(UIScreen.mainScreen.bounds);
-    if (CGRectGetHeight(target) < kDSKeyboardPresentHeight) return CGRectNull;
-    if (CGRectGetHeight(target) > screenHeight * 0.55) return CGRectNull;
-    if (CGRectGetMinY(target) < screenHeight * 0.35) return CGRectNull;
-    if (DSRectsClose(window.frame, target)) return CGRectNull;
-    return target;
-}
-
-static NSInteger DSShrinkDepth = 0;
-
-// The window frame is the strip on screen. If the key view stayed at its old
-// y inside that shorter window, it would draw below the screen. Pull the
-// window's subviews up so the keys land on that strip.
-void DSRealignShrunkKeyboardWindow(id windowObject) {
-    if (DSShrinkDepth > 0 || ![windowObject isKindOfClass:UIWindow.class]) return;
-    UIWindow *window = (UIWindow *)windowObject;
-    if (!DSKeyboardWindowShouldMatchKeys(window)) return;
-    CGFloat screenHeight = CGRectGetHeight(UIScreen.mainScreen.bounds);
-    if (CGRectGetHeight(window.frame) > screenHeight * 0.7) return;
-    CGRect keys = DSKeyboardKeysInWindow(window);
-    if (CGRectIsNull(keys)) return;
-    CGRect onScreen = DSRectOnScreen(window, keys);
-    CGFloat delta = CGRectGetMinY(onScreen) - CGRectGetMinY(window.frame);
-    if (fabs(delta) < 20.0) return;
-    DSShrinkDepth++;
-    @try {
-        for (UIView *subview in [window.subviews copy]) {
-            CGRect sub = subview.frame;
-            sub.origin.y -= delta;
-            subview.frame = sub;
-        }
-    } @catch (NSException *exception) {
-    }
-    DSShrinkDepth--;
-}
-
-void DSShrinkRaisedKeyboardWindows(void) {
-    if (!DSExternalKeyboardRaised || DSShrinkDepth > 0) return;
-    CGRect target = DSInteractiveKeyboardFrameOnScreen();
-    if (CGRectIsNull(target) || CGRectIsEmpty(target)) return;
-    DSShrinkDepth++;
-    @try {
-        DSVisitApplicationWindows(^(UIWindow *window) {
-            CGRect replacement = DSReplacementFrameForKeyboardWindow(window, window.frame);
-            if (CGRectIsNull(replacement)) return;
-            @try {
-                window.frame = replacement;
-                window.clipsToBounds = NO;
-                window.layer.masksToBounds = NO;
-            } @catch (NSException *exception) {
-            }
-        });
-    } @catch (NSException *exception) {
-    }
-    DSShrinkDepth--;
-    DSVisitApplicationWindows(^(UIWindow *window) {
-        DSRealignShrunkKeyboardWindow(window);
-    });
-}
-
 CGFloat DSKeyboardWindowLevelAboveStage(void) {
     return UIWindowLevelStatusBar + 5000.0;
 }
@@ -559,19 +467,6 @@ void DSRestoreRemoteKeyboardPlacement(void) {
             if ([touches isKindOfClass:NSNumber.class]) {
                 window.userInteractionEnabled = touches.boolValue;
             }
-            NSArray *subframes = saved[@"subframes"];
-            NSArray<UIView *> *subviews = window.subviews;
-            if ([subframes isKindOfClass:NSArray.class] && subframes.count == subviews.count) {
-                [subframes enumerateObjectsUsingBlock:^(NSValue *value, NSUInteger index, BOOL *stop) {
-                    (void)stop;
-                    if (![value isKindOfClass:NSValue.class]) return;
-                    subviews[index].frame = value.CGRectValue;
-                }];
-            }
-            NSValue *frameValue = saved[@"frame"];
-            if ([frameValue isKindOfClass:NSValue.class]) {
-                window.frame = frameValue.CGRectValue;
-            }
         } @catch (NSException *exception) {
         }
     }
@@ -640,7 +535,6 @@ BOOL DSRaiseKeyboardWindowAboveStage(void) {
     }
     DSInvalidateActiveKeyboardWindow();
     DSSilenceExtraKeyboardWindows();
-    DSShrinkRaisedKeyboardWindows();
     UIWindow *active = DSActiveKeyboardWindow();
     NSString *touch = @"all";
     if (active) {

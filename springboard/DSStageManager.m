@@ -706,6 +706,7 @@ static BOOL sSystemEdgePullAvailable;
         return;
     }
     BOOL raised = DSRaiseKeyboardWindowAboveStage();
+    DSLogStagedAppInjection(@"keyboard up");
     [_container setClipsContents:!raised];
     [_topContainer setClipsContents:!raised];
     if (raised) {

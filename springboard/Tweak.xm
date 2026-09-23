@@ -454,6 +454,7 @@ static BOOL DSPointInWindowIsOnKeys(UIWindow *window, CGPoint pointInWindow) {
 }
 
 static BOOL DSViewNameIsKeyboardChrome(UIView *view) {
+    if (![view isKindOfClass:UIView.class]) return NO;
     NSString *name = NSStringFromClass(object_getClass(view));
     return [name rangeOfString:@"Keyboard"].location != NSNotFound ||
            [name rangeOfString:@"TextEffects"].location != NSNotFound ||
@@ -476,6 +477,61 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
         DSDiagnosticsRecord(@"SpringBoard: a touch above the keys passed through the keyboard window");
     }
     return YES;
+}
+
+// Hit testing already lets the touch through. The keyboard still watches every
+// event in the process and treats a scroll on the card as a key. A touch stays
+// with the keyboard only when it is actually on the key strip.
+static BOOL DSScreenPointHitsKeys(CGPoint screenPoint) {
+    static CGRect cached = {{0, 0}, {0, 0}};
+    static CFAbsoluteTime cachedAt = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (cachedAt == 0 || (now - cachedAt) > 0.1) {
+        CGRect screen = UIScreen.mainScreen.bounds;
+        CGRect keys = DSVisibleKeyboardFrameOnScreen();
+        BOOL plausible = !CGRectIsNull(keys) &&
+            CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
+            CGRectGetHeight(keys) <= CGRectGetHeight(screen) * 0.5 &&
+            CGRectGetMinY(keys) >= CGRectGetHeight(screen) * 0.35;
+        if (!plausible) {
+            CGFloat band = 320.0;
+            keys = CGRectMake(0.0, CGRectGetMaxY(screen) - band, CGRectGetWidth(screen), band);
+        }
+        cached = CGRectInset(keys, -8.0, -12.0);
+        cachedAt = now;
+    }
+    return CGRectContainsPoint(cached, screenPoint);
+}
+
+static BOOL DSTouchShouldStayWithKeyboard(UITouch *touch) {
+    if (![touch isKindOfClass:UITouch.class]) return YES;
+    UIWindow *window = touch.window;
+    if (!window) return YES;
+    CGPoint local = [touch locationInView:window];
+    if (DSWindowIsKeyboard(window)) return DSPointInWindowIsOnKeys(window, local);
+    CGPoint screen = local;
+    if (@available(iOS 13.0, *)) {
+        id space = window.screen.coordinateSpace;
+        if (space) screen = [window convertPoint:local toCoordinateSpace:space];
+    }
+    return DSScreenPointHitsKeys(screen);
+}
+
+static BOOL DSEventIsOnlyAboveKeys(UIEvent *event) {
+    if (!DSExternalKeyboardCoversStage() || ![event isKindOfClass:UIEvent.class] || event.allTouches.count == 0) {
+        return NO;
+    }
+    for (UITouch *touch in event.allTouches) {
+        if (DSTouchShouldStayWithKeyboard(touch)) return NO;
+    }
+    return YES;
+}
+
+static void DSNoteCardTouchKeptOffKeys(void) {
+    static BOOL noted = NO;
+    if (noted) return;
+    noted = YES;
+    DSDiagnosticsRecord(@"SpringBoard: a touch on the card was kept off the keys");
 }
 
 %hook UIWindow
@@ -575,6 +631,90 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
     return %orig;
+}
+
+%end
+
+// This observer sees every event, including ones hit testing already gave to
+// the card, and it was starting a key from those.
+%hook _UIRemoteKeyboardsEventObserver
+
+- (BOOL)_shouldTrackTouch:(UITouch *)touch {
+    if (DSExternalKeyboardCoversStage() && !DSTouchShouldStayWithKeyboard(touch)) {
+        DSNoteCardTouchKeptOffKeys();
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)_startTrackingForTouch:(UITouch *)touch {
+    if (DSExternalKeyboardCoversStage() && !DSTouchShouldStayWithKeyboard(touch)) {
+        DSNoteCardTouchKeptOffKeys();
+        return;
+    }
+    %orig;
+}
+
+- (void)peekApplicationEvent:(UIEvent *)event {
+    if (DSEventIsOnlyAboveKeys(event)) {
+        DSNoteCardTouchKeptOffKeys();
+        return;
+    }
+    %orig;
+}
+
+%end
+
+%hook _UIRemoteKeyboards
+
+- (void)peekApplicationEvent:(UIEvent *)event {
+    if (DSEventIsOnlyAboveKeys(event)) {
+        DSNoteCardTouchKeptOffKeys();
+        return;
+    }
+    %orig;
+}
+
+%end
+
+%hook UIGestureRecognizer
+
+- (BOOL)shouldReceiveTouch:(UITouch *)touch {
+    if (DSExternalKeyboardCoversStage()) {
+        UIView *view = self.view;
+        UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+        if ((DSWindowIsKeyboard(window) || DSViewNameIsKeyboardChrome(view)) &&
+            !DSTouchShouldStayWithKeyboard(touch)) {
+            DSNoteCardTouchKeptOffKeys();
+            return NO;
+        }
+    }
+    return %orig;
+}
+
+%end
+
+%hook UIKeyboard
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    if (DSExternalKeyboardCoversStage()) {
+        for (UITouch *touch in touches) {
+            if (!DSTouchShouldStayWithKeyboard(touch)) {
+                DSNoteCardTouchKeptOffKeys();
+                return;
+            }
+        }
+    }
+    %orig;
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    if (DSExternalKeyboardCoversStage()) {
+        for (UITouch *touch in touches) {
+            if (!DSTouchShouldStayWithKeyboard(touch)) return;
+        }
+    }
+    %orig;
 }
 
 %end

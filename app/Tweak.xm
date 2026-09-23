@@ -1048,6 +1048,57 @@ static BOOL DSStagedKeyboardHitBlocksContent(UIWindow *window, UIView *hit) {
     return %orig;
 }
 
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    if (DSStaged()) return;
+    %orig;
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    if (DSStaged()) return;
+    %orig;
+}
+
+%end
+
+// The visible keys are SpringBoard's. This process still tracks every touch
+// on the card and sends it to those keys. While the app is staged, it does not.
+%hook _UIRemoteKeyboardsEventObserver
+
+- (BOOL)_shouldTrackTouch:(UITouch *)touch {
+    (void)touch;
+    if (DSStaged()) return NO;
+    return %orig;
+}
+
+- (void)_startTrackingForTouch:(UITouch *)touch {
+    if (DSStaged()) return;
+    %orig;
+}
+
+- (void)peekApplicationEvent:(UIEvent *)event {
+    if (DSStaged()) return;
+    %orig;
+}
+
+%end
+
+%hook _UIRemoteKeyboards
+
+- (void)peekApplicationEvent:(UIEvent *)event {
+    if (DSStaged()) return;
+    %orig;
+}
+
+%end
+
+%hook UIGestureRecognizer
+
+- (BOOL)shouldReceiveTouch:(UITouch *)touch {
+    (void)touch;
+    if (DSStaged() && DSHitViewIsKeyboardChrome(self.view)) return NO;
+    return %orig;
+}
+
 %end
 
 %hook UIInputSetHostView

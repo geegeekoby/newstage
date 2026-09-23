@@ -1,3 +1,6 @@
+**4.5.56**
+- 4.5.55 let the touch through the keyboard window, and the log shows that, but the keyboard still watches every event in the process and starts a key from a scroll on the card. That tracker now ignores a touch unless it is on the key strip. The staged app's own tracker does the same. The keyboard windows stay where 4.5.50 put them
+
 **4.5.55**
 - A tap or a scroll on the staged app was still pressing a key. The keyboard windows override the hit test 4.5.54 hooked, and the app keeps its own invisible keyboard over the card. Touches above the keys now pass through both, so the app gets the scroll. The card also sits a little higher above the keyboard. The keyboard windows stay where 4.5.50 put them
 

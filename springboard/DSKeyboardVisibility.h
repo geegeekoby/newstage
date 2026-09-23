@@ -10,6 +10,10 @@ extern "C" {
 // windows or call private selectors on unrelated ones.
 CGRect DSVisibleKeyboardFrameOnScreen(void);
 
+// The key strip in this window's coordinates, or CGRectNull. A host view
+// that fills the window is the invisible cover, not the keys.
+CGRect DSKeyboardKeysInWindow(id window);
+
 // If SpringBoard already has a window that contains keys, lift that window
 // just above the stage. Does not create windows and does not unhide empty ones.
 BOOL DSRevealSpringBoardKeyboard(void);

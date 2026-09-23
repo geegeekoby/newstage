@@ -57,6 +57,40 @@ static BOOL DSKeyboardFrameIsOnScreen(CGRect keys, CGRect screen) {
     return YES;
 }
 
+static BOOL DSPlausibleKeyStrip(CGRect frame, CGRect windowBounds) {
+    CGFloat windowHeight = CGRectGetHeight(windowBounds);
+    CGFloat height = CGRectGetHeight(frame);
+    if (windowHeight < 1.0 || height < kDSKeyboardPresentHeight) return NO;
+    // The input host is often the whole window. That rect is the cover over
+    // the card, not the keys.
+    if (height > windowHeight * 0.5) return NO;
+    if (CGRectGetMinY(frame) < windowHeight * 0.35) return NO;
+    return YES;
+}
+
+static void DSCollectKeyStrips(UIView *view, UIWindow *window, CGRect *best, NSInteger depth) {
+    if (depth > 12 || ![view isKindOfClass:UIView.class] || view.hidden || view.alpha < 0.01) return;
+    NSString *name = NSStringFromClass(view.class);
+    BOOL isKeyboard = [name rangeOfString:@"UIKeyboard"].location == 0 ||
+                      [name rangeOfString:@"InputSetHostView"].location != NSNotFound;
+    if (isKeyboard && !CGRectIsEmpty(view.bounds)) {
+        CGRect frame = [view convertRect:view.bounds toView:window];
+        if (DSPlausibleKeyStrip(frame, window.bounds)) {
+            if (CGRectIsNull(*best) || CGRectGetHeight(frame) > CGRectGetHeight(*best)) *best = frame;
+        }
+    }
+    for (UIView *child in view.subviews) {
+        DSCollectKeyStrips(child, window, best, depth + 1);
+    }
+}
+
+CGRect DSKeyboardKeysInWindow(id window) {
+    if (![window isKindOfClass:UIWindow.class]) return CGRectNull;
+    CGRect best = CGRectNull;
+    DSCollectKeyStrips((UIWindow *)window, (UIWindow *)window, &best, 0);
+    return best;
+}
+
 CGRect DSVisibleKeyboardFrameOnScreen(void) {
     __block CGRect keyboard = CGRectNull;
     CGRect screen = UIScreen.mainScreen.bounds;

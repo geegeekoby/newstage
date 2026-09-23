@@ -1,3 +1,6 @@
+**4.5.55**
+- A tap or a scroll on the staged app was still pressing a key. The keyboard windows override the hit test 4.5.54 hooked, and the app keeps its own invisible keyboard over the card. Touches above the keys now pass through both, so the app gets the scroll. The card also sits a little higher above the keyboard. The keyboard windows stay where 4.5.50 put them
+
 **4.5.54**
 - A tap on the bottom card was hitting a keyboard key. The keyboard windows are full screen and sit above the stage, so they were taking every touch. They now accept a touch only inside the key band. A tap on the app reaches the app. The windows stay where 4.5.50 put them
 

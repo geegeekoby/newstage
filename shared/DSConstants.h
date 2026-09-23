@@ -194,6 +194,9 @@ static const CGFloat kDSStageTypingHeadroom = 250.0;
 
 static const CGFloat kDSSplitRatio = 0.5;
 static const CGFloat kDSStageInset = 10.0;
+// The inset alone left the lifted card sitting on the keys. This is the
+// extra gap above the keyboard.
+static const CGFloat kDSKeyboardLiftGap = 36.0;
 static const CGFloat kDSStackSlotGap = 6.0;
 static const CGFloat kDSStackCardInset = 5.0;
 static const NSInteger kDSMaxStackSlots = 2;

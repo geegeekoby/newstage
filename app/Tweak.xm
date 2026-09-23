@@ -939,6 +939,36 @@ static void DSInstallKeyboardBanishObserver(void) {
     });
 }
 
+static BOOL DSHitViewIsKeyboardChrome(UIView *view) {
+    UIView *cursor = view;
+    for (NSInteger depth = 0; cursor && depth < 14; depth++) {
+        if ([cursor isKindOfClass:UIWindow.class]) break;
+        NSString *name = NSStringFromClass(object_getClass(cursor));
+        if (DSNameIsLocalKeyboard(name)) return YES;
+        if ([name rangeOfString:@"Keyboard"].location != NSNotFound) return YES;
+        if ([name rangeOfString:@"InputSet"].location != NSNotFound) return YES;
+        cursor = cursor.superview;
+    }
+    return NO;
+}
+
+// The staged app still has its own text-effects window, full of key buttons,
+// even though SpringBoard is drawing the keys. A tap on the card was hitting
+// those buttons. Selection handles in that window are small and stay tappable.
+// Nothing here hides a view or moves a window.
+static BOOL DSStagedKeyboardHitBlocksContent(UIWindow *window, UIView *hit) {
+    if (!DSStaged() || !DSWindowIsKeyboardChrome(window)) return NO;
+    if (!hit || hit == (UIView *)window) return YES;
+    if (DSHitViewIsKeyboardChrome(hit)) return YES;
+    CGRect inWindow = [hit convertRect:hit.bounds toView:window];
+    CGRect bounds = window.bounds;
+    if (CGRectGetHeight(inWindow) > CGRectGetHeight(bounds) * 0.45 &&
+        CGRectGetWidth(inWindow) > CGRectGetWidth(bounds) * 0.7) {
+        return YES;
+    }
+    return NO;
+}
+
 %hook UIView
 
 - (void)setHidden:(BOOL)hidden {
@@ -952,6 +982,40 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (void)willMoveToWindow:(UIWindow *)newWindow {
     (void)newWindow;
     %orig;
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged() && DSHitViewIsKeyboardChrome((UIView *)self)) return nil;
+    return %orig;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged() && DSHitViewIsKeyboardChrome((UIView *)self)) return NO;
+    return %orig;
+}
+
+%end
+
+%hook UIWindow
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (!DSStaged() || !DSWindowIsKeyboardChrome(self)) return %orig;
+    UIView *hit = %orig;
+    if (DSStagedKeyboardHitBlocksContent(self, hit)) return nil;
+    return hit;
+}
+
+%end
+
+// UITextEffectsWindow inherits hitTest from UIAutoRotatingWindow, which does
+// not call the UIWindow implementation above.
+%hook UIAutoRotatingWindow
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (!DSStaged() || !DSWindowIsKeyboardChrome((UIWindow *)self)) return %orig;
+    UIView *hit = %orig;
+    if (DSStagedKeyboardHitBlocksContent((UIWindow *)self, hit)) return nil;
+    return hit;
 }
 
 %end
@@ -968,6 +1032,48 @@ static void DSInstallKeyboardBanishObserver(void) {
 
 - (void)didAddSubview:(UIView *)subview {
     %orig;
+}
+
+%end
+
+%hook UIKeyboard
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return nil;
+    return %orig;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return NO;
+    return %orig;
+}
+
+%end
+
+%hook UIInputSetHostView
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return nil;
+    return %orig;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return NO;
+    return %orig;
+}
+
+%end
+
+%hook _UIRemoteKeyboardPlaceholderView
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return nil;
+    return %orig;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return NO;
+    return %orig;
 }
 
 %end
@@ -997,6 +1103,11 @@ static void DSInstallKeyboardBanishObserver(void) {
 - (void)hideKeyboard {
     if (DSStaged() && DSComposerHeld && !DSAllowKeyboardHide) return;
     %orig;
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStaged()) return nil;
+    return %orig;
 }
 
 %end

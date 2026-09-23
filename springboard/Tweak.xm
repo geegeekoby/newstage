@@ -418,36 +418,64 @@ static void DSForwardHostedKeyboardText(NSString *text, BOOL isDelete) {
 %end
 
 static BOOL DSWindowIsKeyboard(UIWindow *window) {
+    if (![window isKindOfClass:UIWindow.class]) return NO;
     NSString *name = NSStringFromClass(window.class);
     return [name rangeOfString:@"Keyboard"].location != NSNotFound ||
            [name rangeOfString:@"TextEffects"].location != NSNotFound;
 }
 
-// The keyboard windows are full screen at level 6000, so they sit over the
-// whole card. Only the key band should accept a touch. A tap anywhere else
-// has to reach the app. The windows themselves are not moved.
-static CGRect DSKeyboardTouchBand(void) {
-    CGRect screen = UIScreen.mainScreen.bounds;
-    CGRect keys = DSVisibleKeyboardFrameOnScreen();
-    if (!CGRectIsNull(keys) &&
-        CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
-        CGRectGetHeight(keys) <= CGRectGetHeight(screen) * 0.5 &&
-        CGRectGetMinY(keys) >= CGRectGetHeight(screen) * 0.4) {
-        return CGRectInset(keys, -6.0, -6.0);
+// Key strip in this window's own coordinates. Comparing a point that was
+// converted into screen space treated taps on the card as keys.
+static CGRect DSKeyBandInWindow(UIWindow *window) {
+    static CGRect cached = {{0, 0}, {0, 0}};
+    static BOOL cachedValid = NO;
+    static __weak UIWindow *cachedWindow = nil;
+    static CFAbsoluteTime cachedAt = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (cachedValid && cachedWindow == window && (now - cachedAt) < 0.1) return cached;
+    CGRect keys = DSKeyboardKeysInWindow(window);
+    if (CGRectIsNull(keys)) {
+        CGRect bounds = window.bounds;
+        CGFloat band = MIN(340.0, CGRectGetHeight(bounds));
+        keys = CGRectMake(0.0, CGRectGetMaxY(bounds) - band, CGRectGetWidth(bounds), band);
+    } else {
+        keys = CGRectInset(keys, -6.0, -8.0);
     }
-    return CGRectMake(0.0, CGRectGetMaxY(screen) - 340.0, CGRectGetWidth(screen), 340.0);
+    cached = keys;
+    cachedWindow = window;
+    cachedAt = now;
+    cachedValid = YES;
+    return keys;
 }
 
-static BOOL DSScreenPointIsOnKeys(CGPoint screenPoint) {
-    return CGRectContainsPoint(DSKeyboardTouchBand(), screenPoint);
+static BOOL DSPointInWindowIsOnKeys(UIWindow *window, CGPoint pointInWindow) {
+    if (![window isKindOfClass:UIWindow.class]) return NO;
+    return CGRectContainsPoint(DSKeyBandInWindow(window), pointInWindow);
 }
 
-static CGPoint DSWindowPointOnScreen(UIWindow *window, CGPoint point) {
-    if (@available(iOS 13.0, *)) {
-        id space = window.screen.coordinateSpace;
-        if (space) return [window convertPoint:point toCoordinateSpace:space];
+static BOOL DSViewNameIsKeyboardChrome(UIView *view) {
+    NSString *name = NSStringFromClass(object_getClass(view));
+    return [name rangeOfString:@"Keyboard"].location != NSNotFound ||
+           [name rangeOfString:@"TextEffects"].location != NSNotFound ||
+           [name rangeOfString:@"InputSet"].location != NSNotFound ||
+           [name rangeOfString:@"UIKB"].location != NSNotFound;
+}
+
+// YES when this touch is on the full-screen keyboard cover, above the keys,
+// and has to fall through to the card. The windows are not moved.
+static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
+    if (!DSExternalKeyboardCoversStage() || ![view isKindOfClass:UIView.class]) return NO;
+    UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+    if (!window) return NO;
+    if (!DSWindowIsKeyboard(window) && !DSViewNameIsKeyboardChrome(view)) return NO;
+    CGPoint inWindow = (view == (UIView *)window) ? point : [view convertPoint:point toView:window];
+    if (DSPointInWindowIsOnKeys(window, inWindow)) return NO;
+    static BOOL noted = NO;
+    if (!noted) {
+        noted = YES;
+        DSDiagnosticsRecord(@"SpringBoard: a touch above the keys passed through the keyboard window");
     }
-    return [window convertPoint:point toView:nil];
+    return YES;
 }
 
 %hook UIWindow
@@ -470,34 +498,82 @@ static CGPoint DSWindowPointOnScreen(UIWindow *window, CGPoint point) {
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    if (!DSExternalKeyboardCoversStage() || !DSWindowIsKeyboard(self)) return %orig;
-    CGPoint onScreen = DSWindowPointOnScreen(self, point);
-    if (DSScreenPointIsOnKeys(onScreen) || DSScreenPointIsOnKeys(point)) return %orig;
-    return NO;
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
+    return %orig;
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    if (DSExternalKeyboardCoversStage() && DSWindowIsKeyboard(self)) {
-        CGPoint onScreen = DSWindowPointOnScreen(self, point);
-        if (!DSScreenPointIsOnKeys(onScreen) && !DSScreenPointIsOnKeys(point)) return nil;
-    }
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
     return %orig;
 }
 
 - (UIView *)_hitTestLocation:(CGPoint)point sceneLocationZ:(CGFloat)z inScene:(id)scene withWindowServerHitTestWindow:(id)serverWindow event:(UIEvent *)event {
     (void)z;
+    (void)scene;
     (void)serverWindow;
-    if (DSExternalKeyboardCoversStage() && DSWindowIsKeyboard(self)) {
-        CGPoint onScreen = point;
-        if (@available(iOS 13.0, *)) {
-            id sceneSpace = [scene respondsToSelector:@selector(coordinateSpace)] ? [scene coordinateSpace] : nil;
-            id screenSpace = self.screen.coordinateSpace;
-            if (sceneSpace && screenSpace) {
-                onScreen = [sceneSpace convertPoint:point toCoordinateSpace:screenSpace];
-            }
-        }
-        if (!DSScreenPointIsOnKeys(onScreen) && !DSScreenPointIsOnKeys(point)) return nil;
-    }
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
+    return %orig;
+}
+
+%end
+
+// UITextEffectsWindow and UIRemoteKeyboardWindow override hitTest on
+// UIAutoRotatingWindow, so the UIWindow hook never sees the touch.
+%hook UIAutoRotatingWindow
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
+    return %orig;
+}
+
+%end
+
+%hook UIView
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
+    return %orig;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
+    return %orig;
+}
+
+%end
+
+%hook UIKeyboard
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
+    return %orig;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
+    return %orig;
+}
+
+%end
+
+%hook UIKeyboardImpl
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
+    return %orig;
+}
+
+%end
+
+%hook UIInputSetHostView
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
+    return %orig;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
     return %orig;
 }
 

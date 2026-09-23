@@ -1150,7 +1150,7 @@ static BOOL sSystemEdgePullAvailable;
         if (CGRectIsEmpty(keyboard)) return;
         DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
         CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
-        CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
+        CGFloat overlap = CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset + kDSKeyboardLiftGap;
         CGFloat wanted = MAX(overlap, 0.0);
         NSInteger otherSlot = _keyboardLiftSlot == 0 ? 1 : 0;
         CGFloat companion = 0.0;
@@ -1186,7 +1186,7 @@ static BOOL sSystemEdgePullAvailable;
     DSStageState layoutState = _state == DSStageStateSplit ? DSStageStateSplit : DSStageStateOverlay;
     CGRect resting = [self restingFrameForKeyboardLiftSlot:_keyboardLiftSlot state:layoutState];
     CGFloat overlap = CGRectIsEmpty(keyboard) ? 0.0
-                                             : CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset;
+                                             : CGRectGetMaxY(resting) - CGRectGetMinY(keyboard) + kDSStageInset + kDSKeyboardLiftGap;
     // The card drops the moment the field resigns. The keyboard window itself
     // is left to the path that already places it.
     NSTimeInterval motion = CGRectIsEmpty(keyboard) ? 0.0 : duration;

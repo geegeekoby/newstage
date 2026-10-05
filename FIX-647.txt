@@ -1,0 +1,37 @@
+DynamicStage 4.5.647 — dial pad LIFTED to fill the stage (2026-10-05 NZDT)
+
+Symptom (4.5.646): width perfect, all keys 1–# visible, but a big empty black
+band (~110pt) sat at the top of the stage above 1-2-3. On some passes the green
+call button floated over the 7 key instead of sitting under 0.
+
+Root cause (app/Tweak.xm, DSResizePhoneKeypad):
+- Band top reserved a 44pt status strip PLUS the full LCD height (+4), and the
+  pad was bottom-aligned above the tabs → the void above the keys.
+- Every control was mapped proportionally from its natural spot; when the call
+  button was mid-fade (alpha≈0) it was dropped from the set / mapped from a
+  stale position, so it could end up over the grid.
+
+Fix (app/Tweak.xm, DSResizePhoneKeypad rewritten as one full function):
+- Top strip is now a 14pt corner pad + 36pt typed-number strip (card pt,
+  converted to root space by the root fill scale). Pad envelope starts at the
+  band top (any tiny slack split 30/70 so it reads high).
+- Digits (12 top-most keys) are placed on an explicit 3x4 grid built from
+  their natural column/row centers. Column spread = availW / digit width (the
+  approved side-to-side fit). Row spread fills the band height down to 8pt
+  above the Favourites/Recent/Contacts/Keypad/Voicemail tab bar.
+- A call row is ALWAYS reserved one digit pitch below *0#. Call → under 0
+  (center column), delete → under # (right column). Classification by class
+  name/accessibilityIdentifier ("Call", "Delete"/"Backspace"), else largest
+  leftover = call. Transparent (fading) controls are still placed, so call can
+  never be left over the grid. Hidden controls are skipped.
+- One uniform scale k = min(sx, 1.06·sy) per key (falls back to min(sx, sy) if
+  it would overflow) → keys stay round.
+- LCD centered in the number strip, uniform shrink 0.75–1.0 if taller.
+- Falls back to the 4.5.646-style proportional placement (top-aligned) if 12
+  digits can't be identified.
+- Log line: "app: phone pad fit647 grid=… k=… sx=… sy=… band=… padTop=…".
+- Stage card size untouched (only Phone content transforms).
+
+Version: control + shared/DSConstants.h + changelog.md → 4.5.647
+Deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.647_iphoneos-arm64.deb
+Sileo: https://geegeekoby.github.io/newstage/

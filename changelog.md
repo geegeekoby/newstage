@@ -1,3 +1,6 @@
+**4.5.647**
+- Staged Phone: dial pad lifted to fill the stage. 4.5.646 kept a tall status strip plus the full number-field height above the keys, so a big empty black band sat over 1-2-3. Now only a small corner pad and a modest typed-number strip stay at the top, and the 1–# grid plus the call row spread down to just above the tab bar. Call always sits under 0 and delete under # in their own row (never floating over the 7). Same side-to-side width, keys stay round, stage card size unchanged.
+
 **4.5.646**
 - Staged Phone: the whole dial pad (1–9, *0#, call/delete) now fits inside the stage above the tab bar. 4.5.645 sized the pad for the full phone height, but the card only shows the bottom part, so the keys came out huge and only 7–call showed. The pad is now sized to the part the card really shows. Keys keep one scale on both axes so they stay round, the columns keep the 4.5.645 side-to-side spread, the rows close up to fit, and the typed number sits just above the pad.
 

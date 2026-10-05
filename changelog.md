@@ -1,3 +1,15 @@
+**4.5.640**
+- Dial-pad lift now actually runs after the phone fill-scale (earlier builds had the lift code but it never ran). Dial pad sits about 110pt above the quick bar so 7-8-9 clear it; typed-number field nudged up slightly; dial scale 0.82.
+
+**4.5.639**
+- Lifted the dial pad above the quick bar and nudged the typed-number field up a little. Quick bar layout unchanged.
+
+**4.5.638**
+- Phone-fit tuning of the staged Phone layout.
+
+**4.5.637**
+- Phone-fit tuning of the staged Phone layout.
+
 **4.5.636**
 - Staged Phone lays out at the full display, then one width-fit scale is applied to the root after layout. The keypad stays round. The root is centered on the card so the extra height is cropped evenly. Other apps are not scaled.
 

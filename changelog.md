@@ -1,3 +1,6 @@
+**4.5.641**
+- Staged Phone dial keys are round again. The keypad is scaled as one piece (one uniform transform) instead of shrinking every part of each key, which cut the circles. It stays lifted above the quick bar so 7, 8 and 9 are clear. The typed number is lifted once instead of creeping up on every layout pass.
+
 **4.5.640**
 - Dial-pad lift now actually runs after the phone fill-scale (earlier builds had the lift code but it never ran). Dial pad sits about 110pt above the quick bar so 7-8-9 clear it; typed-number field nudged up slightly; dial scale 0.82.
 

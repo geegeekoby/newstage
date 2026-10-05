@@ -3751,6 +3751,58 @@ static const void *DSPhoneGridPieceKey = &DSPhoneGridPieceKey;
 static const CGFloat DSPhoneDialScale = 0.82;
 static const CGFloat DSPhoneDialBottomMargin = 110.0; // clear quick/tab bar so 7-9 sit above it
 static const CGFloat DSPhoneNumberDisplayLift = 22.0; // small upward nudge for the typed-number field
+// 4.5.641: the dial grid is scaled with ONE uniform transform and lifted by
+// moving its center. 4.5.640 rewrote the frame of every view inside every
+// dial button (circle, highlight, labels) to 0.82x; the circle layers keep
+// their own corner radius / path / image size, so the shrunk frames drew
+// broken, cut-off circles. A transform scales the rendered button as a whole.
+// Lift = {offset.x, offset.y, scale}. Applied = the center we last wrote, so
+// an Auto Layout reset (natural center) can be told apart from our own lift.
+static const void *DSPhoneGridLiftKey = &DSPhoneGridLiftKey;
+static const void *DSPhoneGridAppliedKey = &DSPhoneGridAppliedKey;
+// Typed-number strip: the y Phone laid out and the y we wrote, so repeated
+// passes lift it once instead of 22pt more every pass.
+static const void *DSPhoneLcdNaturalYKey = &DSPhoneLcdNaturalYKey;
+static const void *DSPhoneLcdWrittenYKey = &DSPhoneLcdWrittenYKey;
+
+static BOOL DSPhoneHasGridLift(UIView *view) {
+    return view && objc_getAssociatedObject(view, DSPhoneGridLiftKey) != nil;
+}
+
+// Apply (or re-apply) the stored lift on top of the natural center.
+static void DSPhoneApplyGridLift(UIView *view, CGPoint natural) {
+    NSValue *lift = objc_getAssociatedObject(view, DSPhoneGridLiftKey);
+    if (!lift) return;
+    CGRect l = lift.CGRectValue;
+    CGFloat scale = CGRectGetWidth(l);
+    if (scale < 0.3 || scale > 1.5) scale = 1.0;
+    CGPoint center = CGPointMake(natural.x + CGRectGetMinX(l), natural.y + CGRectGetMinY(l));
+    BOOL wasFrozen = DSPhoneLayoutFrozen;
+    DSPhoneLayoutFrozen = YES;
+    view.clipsToBounds = NO;
+    view.center = center;
+    view.transform = CGAffineTransformMakeScale(scale, scale);
+    DSPhoneLayoutFrozen = wasFrozen;
+    objc_setAssociatedObject(view, DSPhoneGridAppliedKey, [NSValue valueWithCGPoint:center], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+// Back to the natural center with identity transform, lift data cleared.
+static void DSPhoneClearGridLift(UIView *view) {
+    if (!view) return;
+    NSValue *lift = objc_getAssociatedObject(view, DSPhoneGridLiftKey);
+    NSValue *applied = objc_getAssociatedObject(view, DSPhoneGridAppliedKey);
+    BOOL wasFrozen = DSPhoneLayoutFrozen;
+    DSPhoneLayoutFrozen = YES;
+    CGPoint center = view.center;
+    view.transform = CGAffineTransformIdentity;
+    if (lift && applied && fabs(center.x - applied.CGPointValue.x) < 0.5 && fabs(center.y - applied.CGPointValue.y) < 0.5) {
+        CGRect l = lift.CGRectValue;
+        view.center = CGPointMake(center.x - CGRectGetMinX(l), center.y - CGRectGetMinY(l));
+    }
+    DSPhoneLayoutFrozen = wasFrozen;
+    objc_setAssociatedObject(view, DSPhoneGridLiftKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(view, DSPhoneGridAppliedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
 
 
 static void DSPhoneRestoreLifted(UIView *view, NSInteger depth) {
@@ -3948,49 +4000,28 @@ static void DSPhoneCollectKeyUnion(UIView *view, UIView *root, CGRect *unionRect
     for (UIView *subview in view.subviews) DSPhoneCollectKeyUnion(subview, root, unionRect, count, depth + 1);
 }
 
-static void DSPhoneRememberFrames(UIView *view, UIView *root, NSInteger depth) {
+// Tag the grid and everything in it so the header passes (PullClippedTop,
+// LiftNumberDisplay) never move a key. Frames are NOT touched: Phone's own
+// layout of each button (circle, labels) stays exactly as Phone drew it.
+static void DSPhoneMarkGridPieces(UIView *view, NSInteger depth) {
     if (!view || depth > 22 || DSPhoneIsTabBar(view)) return;
-    view.transform = CGAffineTransformIdentity;
     objc_setAssociatedObject(view, DSPhoneGridPieceKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(view, DSPhoneNaturalFrameKey, [NSValue valueWithCGRect:view.frame], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    if (root) {
-        CGRect inRoot = [view convertRect:view.bounds toView:root];
-        objc_setAssociatedObject(view, DSPhoneNaturalRootKey, [NSValue valueWithCGRect:inRoot], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-    for (UIView *subview in view.subviews) DSPhoneRememberFrames(subview, root, depth + 1);
+    for (UIView *subview in view.subviews) DSPhoneMarkGridPieces(subview, depth + 1);
 }
 
-// Scale every piece of the grid from the full-size rect captured this pass.
-// Origins scale with the buttons, so the gaps shrink by the same amount.
-static void DSPhoneWriteScaledGrid(UIView *view, UIView *root, CGRect source, CGFloat scale, CGFloat targetX, CGFloat targetY, NSInteger depth) {
-    if (!view || depth > 22 || DSPhoneIsTabBar(view)) return;
-    NSValue *stored = objc_getAssociatedObject(view, DSPhoneNaturalRootKey);
-    if (stored && view.superview) {
-        CGRect natural = stored.CGRectValue;
-        // The dialer view is taller than the buttons and holds Add Number.
-        // Scaling that box pushes the header above the card. Scale the keys
-        // and leave the header on the frame Phone just laid out.
-        BOOL containsHeader = CGRectGetMinY(natural) < CGRectGetMinY(source) - 24.0 &&
-            CGRectGetHeight(natural) > CGRectGetHeight(source) + 36.0;
-        BOOL aboveKeys = CGRectGetMaxY(natural) < CGRectGetMinY(source) - 8.0;
-        if (aboveKeys) return;
-        if (!containsHeader && CGRectIntersectsRect(natural, CGRectInset(source, -12.0, -12.0))) {
-            CGRect want = CGRectMake(targetX + (CGRectGetMinX(natural) - CGRectGetMinX(source)) * scale,
-                                      targetY + (CGRectGetMinY(natural) - CGRectGetMinY(source)) * scale,
-                                      CGRectGetWidth(natural) * scale,
-                                      CGRectGetHeight(natural) * scale);
-            view.clipsToBounds = NO;
-            view.transform = CGAffineTransformIdentity;
-            view.autoresizingMask = UIViewAutoresizingNone;
-            view.translatesAutoresizingMaskIntoConstraints = YES;
-            view.frame = [root convertRect:want toView:view.superview];
-        }
+// Square dial controls, collected so a grid that also holds the header can
+// be lifted key by key instead (each key still one uniform transform).
+static void DSPhoneCollectKeys(UIView *view, NSMutableArray<UIView *> *keys, NSInteger depth) {
+    if (!view || !keys || depth > 22 || DSPhoneIsTabBar(view)) return;
+    CGFloat width = CGRectGetWidth(view.bounds);
+    CGFloat height = CGRectGetHeight(view.bounds);
+    if ([view isKindOfClass:UIControl.class] && width >= 36.0 && height >= 36.0 && width <= 220.0 &&
+        height <= 220.0 && fabs(width - height) <= MAX(width, height) * 0.45) {
+        [keys addObject:view];
+        return;
     }
-    for (UIView *subview in view.subviews) {
-        DSPhoneWriteScaledGrid(subview, root, source, scale, targetX, targetY, depth + 1);
-    }
+    for (UIView *subview in view.subviews) DSPhoneCollectKeys(subview, keys, depth + 1);
 }
-
 
 // Nudge the typed-number / LCD strip up a little so it isn't cramped against the dial grid.
 static void DSPhoneLiftNumberDisplay(UIView *root) {
@@ -4010,12 +4041,22 @@ static void DSPhoneLiftNumberDisplay(UIView *root) {
             BOOL upper = CGRectGetMinY(inRoot) >= 8.0 && CGRectGetMaxY(inRoot) <= height * 0.42;
             if (wide && strip && upper) {
                 view.transform = CGAffineTransformIdentity;
-                view.autoresizingMask = UIViewAutoresizingNone;
-                view.translatesAutoresizingMaskIntoConstraints = YES;
                 CGRect frame = view.frame;
-                frame.origin.y -= DSPhoneNumberDisplayLift;
-                if (frame.origin.y < 4.0) frame.origin.y = 4.0;
-                view.frame = frame;
+                // Lift from the y Phone laid out, once. If the strip still
+                // sits where we put it last pass, use the stored natural y.
+                NSNumber *written = objc_getAssociatedObject(view, DSPhoneLcdWrittenYKey);
+                NSNumber *natural = objc_getAssociatedObject(view, DSPhoneLcdNaturalYKey);
+                CGFloat naturalY = frame.origin.y;
+                if (written && natural && fabs(frame.origin.y - written.doubleValue) < 0.5) naturalY = natural.doubleValue;
+                CGFloat wantY = MAX(4.0, naturalY - DSPhoneNumberDisplayLift);
+                objc_setAssociatedObject(view, DSPhoneLcdNaturalYKey, @(naturalY), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                objc_setAssociatedObject(view, DSPhoneLcdWrittenYKey, @(wantY), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                if (fabs(frame.origin.y - wantY) >= 0.5) {
+                    view.autoresizingMask = UIViewAutoresizingNone;
+                    view.translatesAutoresizingMaskIntoConstraints = YES;
+                    frame.origin.y = wantY;
+                    view.frame = frame;
+                }
             }
         }
         if (![view isKindOfClass:UIScrollView.class] && !DSPhoneIsTabBar(view)) {
@@ -4030,6 +4071,12 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
     if (!keypad.superview || !root) return;
     UIView *grid = DSFindButtonGrid(keypad);
     if (!grid) grid = keypad;
+    // Undo last pass's lift (grid and any per-key lift) before measuring, so
+    // the natural keys are measured and scaled exactly once.
+    NSMutableArray<UIView *> *keyViews = [NSMutableArray array];
+    DSPhoneCollectKeys(grid, keyViews, 0);
+    for (UIView *key in keyViews) DSPhoneClearGridLift(key);
+    DSPhoneClearGridLift(grid);
     grid.transform = CGAffineTransformIdentity;
     CGRect source = CGRectZero;
     NSInteger keys = 0;
@@ -4063,11 +4110,48 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
     CGFloat targetX = (stageW - visualW) / 2.0;
     CGFloat targetY = limit - visualH;
     if (targetY < 0.0) targetY = 0.0;
-    DSPhoneRememberFrames(grid, root, 0);
-    DSPhoneWriteScaledGrid(grid, root, source, scale, targetX, targetY, 0);
+    // Nothing between the grid and the card root may clip the lifted keys.
+    for (UIView *ancestor = grid.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
+        ancestor.clipsToBounds = NO;
+    }
+    CGRect gridInRoot = [grid convertRect:grid.bounds toView:root];
+    BOOL containsHeader = CGRectGetMinY(gridInRoot) < CGRectGetMinY(source) - 24.0 &&
+        CGRectGetHeight(gridInRoot) > sourceH + 36.0;
+    const char *mode = "grid";
+    if (!containsHeader && grid.superview) {
+        // One uniform scale on the whole grid. A point p in grid space lands
+        // at center + scale * (p - boundsMid), so pick the center that puts
+        // the key union's top-left at (targetX, targetY) in root space.
+        CGRect keysLocal = [root convertRect:source toView:grid];
+        CGPoint target = [root convertPoint:CGPointMake(targetX, targetY) toView:grid.superview];
+        CGPoint natural = grid.center;
+        CGPoint mid = CGPointMake(CGRectGetMidX(grid.bounds), CGRectGetMidY(grid.bounds));
+        CGPoint want = CGPointMake(target.x - scale * (CGRectGetMinX(keysLocal) - mid.x),
+                                   target.y - scale * (CGRectGetMinY(keysLocal) - mid.y));
+        CGRect lift = CGRectMake(want.x - natural.x, want.y - natural.y, scale, 0.0);
+        objc_setAssociatedObject(grid, DSPhoneGridLiftKey, [NSValue valueWithCGRect:lift], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        DSPhoneApplyGridLift(grid, natural);
+        DSPhoneMarkGridPieces(grid, 0);
+    } else {
+        // The grid also holds Add Number / the header: scaling it would push
+        // that above the card. Lift each key instead, same uniform scale.
+        mode = "keys";
+        for (UIView *key in keyViews) {
+            if (!key.superview) continue;
+            CGRect natRoot = [key convertRect:key.bounds toView:root];
+            CGPoint wantRoot = CGPointMake(targetX + (CGRectGetMidX(natRoot) - CGRectGetMinX(source)) * scale,
+                                           targetY + (CGRectGetMidY(natRoot) - CGRectGetMinY(source)) * scale);
+            CGPoint want = [root convertPoint:wantRoot toView:key.superview];
+            CGPoint natural = key.center;
+            CGRect lift = CGRectMake(want.x - natural.x, want.y - natural.y, scale, 0.0);
+            objc_setAssociatedObject(key, DSPhoneGridLiftKey, [NSValue valueWithCGRect:lift], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            DSPhoneApplyGridLift(key, natural);
+            DSPhoneMarkGridPieces(key, 0);
+        }
+    }
     DSPhoneLiftNumberDisplay(root);
-    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone grid scale=%.2f keys=%ld y=%.0f h=%.0f stage=%.0f root=%@ %s",
-                     scale, (long)keys, targetY, visualH, stageH,
+    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone grid %s scale=%.2f keys=%ld y=%.0f h=%.0f stage=%.0f root=%@ %s",
+                     mode, scale, (long)keys, targetY, visualH, stageH,
                      NSStringFromCGRect(root.frame),
                      object_getClassName(grid) ?: "?"],
                     scale, targetY, stageH);
@@ -4350,6 +4434,16 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
         %orig(frame);
         return;
     }
+    // Lifted dial grid: Phone lays it out at its natural frame. Take that
+    // frame with identity transform, then put the uniform scale + lift back.
+    if (DSIsMobilePhone() && !DSPhoneLayoutFrozen && DSPhoneHasGridLift(view)) {
+        DSPhoneLayoutFrozen = YES;
+        view.transform = CGAffineTransformIdentity;
+        %orig(frame);
+        DSPhoneLayoutFrozen = NO;
+        DSPhoneApplyGridLift(view, view.center);
+        return;
+    }
     CGRect beeperBefore = view.frame;
     CGRect beeperAsked = frame;
     // SpringBoard owns Beeper's card. Do not fit, shift, or hold this frame.
@@ -4407,6 +4501,20 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
         }
     }
     %orig;
+}
+
+- (void)setCenter:(CGPoint)center {
+    UIView *view = (UIView *)self;
+    // Auto Layout moves the lifted dial grid back to its natural center; keep
+    // the lift on top of whatever center Phone now wants.
+    if (DSIsMobilePhone() && !DSPhoneLayoutFrozen && DSPhoneHasGridLift(view)) {
+        DSPhoneLayoutFrozen = YES;
+        %orig(center);
+        DSPhoneLayoutFrozen = NO;
+        DSPhoneApplyGridLift(view, center);
+        return;
+    }
+    %orig(center);
 }
 
 - (UIEdgeInsets)safeAreaInsets {

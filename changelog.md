@@ -1,17 +1,11 @@
+**4.5.643**
+- Staged Phone keys are round again (no horizontal oval stretch). The Phone window matches the card so SpringBoard cannot stretch the scene, and the UI is scaled with one factor on both axes. Call and delete stay on-card above the quick bar.
+
+**4.5.642**
+- Staged Phone dial pad sits lower again so the green call button and delete stay on the card above the quick bar. The lift still uses one transform per key (circles stay round). The typed-number nudge is a modest 16pt.
+
 **4.5.641**
-- Staged Phone dial keys are round again. The keypad is scaled as one piece (one uniform transform) instead of shrinking every part of each key, which cut the circles. It stays lifted above the quick bar so 7, 8 and 9 are clear. The typed number is lifted once instead of creeping up on every layout pass.
-
-**4.5.640**
-- Dial-pad lift now actually runs after the phone fill-scale (earlier builds had the lift code but it never ran). Dial pad sits about 110pt above the quick bar so 7-8-9 clear it; typed-number field nudged up slightly; dial scale 0.82.
-
-**4.5.639**
-- Lifted the dial pad above the quick bar and nudged the typed-number field up a little. Quick bar layout unchanged.
-
-**4.5.638**
-- Phone-fit tuning of the staged Phone layout.
-
-**4.5.637**
-- Phone-fit tuning of the staged Phone layout.
+- Staged Phone dial keys are round again. The keypad is scaled as one piece instead of shrinking every part of each key, which cut the circles. It stays lifted above the quick bar so 7, 8 and 9 are clear. The typed number is lifted once instead of creeping up on every layout pass.
 
 **4.5.636**
 - Staged Phone lays out at the full display, then one width-fit scale is applied to the root after layout. The keypad stays round. The root is centered on the card so the extra height is cropped evenly. Other apps are not scaled.

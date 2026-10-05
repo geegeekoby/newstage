@@ -1,0 +1,28 @@
+DynamicStage 4.5.643 — round dial keys + call/delete on-card (2026-10-05 NZDT)
+
+Screenshot feedback on 4.5.641: layout/placement OK-ish, but dial keys and the
+green call button were horizontally stretched into ovals; also call/delete had
+been missing when the pad was lifted too high (110pt margin).
+
+Root cause of ovals:
+- Phone keeps real screen metrics and draws a full-phone (circular) dialer.
+- SpringBoard hosts that scene in a card-shaped host view (wider/shorter).
+- Filling the host stretches X≠Y → every circle becomes a wide oval, including
+  digit glyphs. App-side "card-aspect layout box + uniform scale" (4.5.636–641)
+  did not change the scene aspect, so the host still stretched.
+
+Fix (app/Tweak.xm DSPhoneScaleRootIntoCard only; still one scale on X and Y):
+- Set Phone's window to the card size so the scene aspect matches the host
+  (no SB stretch).
+- Lay the root out at the REAL device size (fullW×fullH) so Phone draws round keys.
+- Apply CGAffineTransformMakeScale(s,s) with s = cardW/fullW (width-fill; if that
+  leaves a vertical gap, use cardH/fullH). Bottom-align so keypad + tab bar stay
+  on-card; crop the top of the phone UI.
+- Dial pad lift kept transform-based (no per-subview frame rewrite):
+  DSPhoneDialScale 0.82, DSPhoneDialBottomMargin 56, DSPhoneNumberDisplayLift 16,
+  key union includes call/delete.
+
+Constants: scale 0.82 / margin 56 / displayLift 16 / device-aspect root fill
+Version: 4.5.643
+Deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.643_iphoneos-arm64.deb
+Sileo: https://geegeekoby.github.io/newstage/

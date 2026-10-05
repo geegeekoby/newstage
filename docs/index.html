@@ -9,8 +9,8 @@
       content="Sileo repository for Dynamic Stage, Stage Manager multitasking for rootless jailbroken iPhones."
     />
     <meta name="theme-color" content="#08080a" />
-    <link rel="icon" href="assets/icon.png" />
-    <link rel="apple-touch-icon" href="assets/icon.png" />
+    <link rel="icon" href="/assets/icon.png" />
+    <link rel="apple-touch-icon" href="/assets/icon.png" />
     <style>
       *,
       *::before,
@@ -256,7 +256,7 @@
   <body>
     <main>
       <header>
-        <img src="assets/icon.png" alt="Dynamic Stage icon" />
+        <img src="/assets/icon.png" alt="Dynamic Stage icon" />
         <div>
           <h1>Dynamic Stage</h1>
           <p>Stage Manager Reimagined for iPhone</p>
@@ -272,7 +272,7 @@
         <div class="actions">
           <a class="btn primary" id="add-sileo" href="#">Add to Sileo</a>
           <a class="btn" id="add-zebra" href="#">Zebra</a>
-          <a class="btn" id="download" href="depiction.json">Download .deb</a>
+          <a class="btn" id="download" href="/depiction.json">Download .deb</a>
         </div>
         <p class="note">
           Open this page on the iPhone itself for the buttons to work — they hand the URL
@@ -316,7 +316,8 @@
     </main>
 
     <script>
-      const url = new URL(".", location.href).href;
+      const base = location.origin;
+      const url = base + "/";
 
       document.getElementById("repo-url").textContent = url;
       document.getElementById("add-sileo").href = "sileo://source/" + url;
@@ -335,7 +336,7 @@
 
       // The index names the build, so the page follows whatever is published
       // instead of hardcoding a version and a filename that go stale.
-      fetch("Packages")
+      fetch("/Packages")
         .then((response) => (response.ok ? response.text() : Promise.reject()))
         .then((text) => {
           const field = (name) => (text.match(new RegExp("^" + name + ": (.+)$", "m")) || [])[1];
@@ -344,7 +345,7 @@
           if (version) document.getElementById("version").textContent = version;
           if (filename) {
             const link = document.getElementById("download");
-            link.href = filename;
+            link.href = "/" + filename;
             link.setAttribute("download", "");
           }
         })

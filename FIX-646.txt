@@ -1,0 +1,29 @@
+DynamicStage 4.5.646 — whole dial pad fits in the stage (2026-10-05 NZDT)
+
+Symptom (4.5.645): side-to-side fit perfect, but keys far too large; only
+7–9, *0#, green call visible (1–6 cut off above the card).
+
+Root cause: DSResizePhoneKeypad measured the fill band in the FULL-DEVICE root
+(y≈36 → tab bar). The root is width-filled and bottom-aligned in the card, so
+its upper ~half is clipped by the card window. The pad was scaled to fill a band
+mostly off-screen (~1.25x), so only the bottom rows landed in view.
+
+Fix (app/Tweak.xm, DSResizePhoneKeypad):
+- Visible band = card window converted into root space (accounts for the root
+  fill transform), minus a 44pt card-space status-bar strip and room for the
+  typed-number LCD, down to 8pt above the tab/quick bar.
+- Per-key placement, ONE uniform scale k per key (circles stay round):
+  k = min(sx, 1.06*sy), sy = bandH / padH. Falls back to k = sy if the bump
+  would poke above the band.
+- Column centers keep the 4.5.645 width spread (sx = availW/padW) — the
+  side-to-side fit the user approved. Rows compress to fit. Envelope is
+  bottom-aligned above the tabs.
+- Hidden controls and controls inside the LCD (Add Number) are excluded from
+  the pad union.
+- LCD (class name contains "LCD") is translated into view just above the pad,
+  never under the status-bar strip.
+- Fit log line: "app: phone pad fit646 k=… sx=… sy=… vis=… band=… padTop=…".
+
+Version: control + shared/DSConstants.h → 4.5.646
+Deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.646_iphoneos-arm64.deb
+Sileo: https://geegeekoby.github.io/newstage/

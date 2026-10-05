@@ -4112,154 +4112,206 @@ static void DSPhoneLiftNumberDisplay(UIView *root) {
     }
 }
 
-// Staged Phone only. Scale JUST the dial pad (digits + call/delete) to FILL
-// the band above the tab/quick bar. Root fill (DSPhoneScaleRootIntoCard) keeps
-// keys round at the card; this pass closes the floating-high gap. Mild
-// non-uniform stretch is allowed so the pad can fill width and height.
+// Typed-number strip (LCD). Outermost view whose class mentions "LCD", sized
+// like a strip, not inside the tab bar or a dial key.
+static UIView *DSPhoneFindLcdView(UIView *root) {
+    if (!root) return nil;
+    CGFloat width = CGRectGetWidth(root.bounds);
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:root];
+    NSUInteger index = 0;
+    while (index < queue.count) {
+        UIView *view = queue[index++];
+        if (DSPhoneIsTabBar(view)) continue;
+        if (view != root) {
+            NSString *name = NSStringFromClass(object_getClass(view));
+            if ([name rangeOfString:@"LCD"].location != NSNotFound) {
+                CGFloat w = CGRectGetWidth(view.bounds);
+                CGFloat h = CGRectGetHeight(view.bounds);
+                if (w >= width * 0.35 && h >= 20.0 && h <= 180.0) return view;
+            }
+        }
+        if (![view isKindOfClass:UIScrollView.class]) [queue addObjectsFromArray:view.subviews];
+    }
+    return nil;
+}
+
+static const void *DSPhoneLcdPlacedKey = &DSPhoneLcdPlacedKey;
+// Card-space strip the system status bar covers at the top of the stage.
+static const CGFloat DSPhoneStatusPad = 44.0;
+
+// Staged Phone only. 4.5.646: fit ALL of the dial pad (1–9, *0#, call/delete)
+// into the part of the root that is actually VISIBLE in the card.
+//
+// 4.5.645 measured the fill band in the full-device root (y≈36 → tab bar).
+// But the root is bottom-aligned in the card, so its top ~half is clipped:
+// the pad was scaled to ~1.25× and only 7–9 / *0# / call showed.
+//
+// Now: visible band = card window converted into root space, minus the
+// status-bar strip and room for the typed-number strip, down to just above
+// the tab/quick bar. Each key keeps ONE uniform scale (round circles) limited
+// by that band's height. Column centers keep the 4.5.645 side-to-side spread
+// (user: "fits side to side perfect"); rows compress to fit. Bottom-aligned
+// above the tabs. The LCD is moved into view just above the pad.
 static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
     if (!keypad.superview || !root) return;
     UIView *grid = DSFindButtonGrid(keypad);
     if (!grid) grid = keypad;
-    // Dialer may hold call/delete as siblings of the digit grid. Measure and
-    // lift those too so the filled band covers the full pad.
     UIView *dialer = DSFindClassView(root, @"PHHandsetDialerView");
     UIView *scope = dialer ?: keypad;
-    // Undo last pass's lift (grid and any per-key lift) before measuring, so
-    // the natural keys are measured and scaled exactly once.
-    NSMutableArray<UIView *> *keyViews = [NSMutableArray array];
-    DSPhoneCollectKeys(scope, keyViews, 0);
-    for (UIView *key in keyViews) DSPhoneClearGridLift(key);
+    UIView *lcd = DSPhoneFindLcdView(dialer ?: root);
+    // Undo last pass (grid + per-key lift, LCD shift) before measuring, so the
+    // natural keys are measured and scaled exactly once.
+    NSMutableArray<UIView *> *allKeys = [NSMutableArray array];
+    DSPhoneCollectKeys(scope, allKeys, 0);
+    for (UIView *key in allKeys) DSPhoneClearGridLift(key);
     DSPhoneClearGridLift(grid);
     grid.transform = CGAffineTransformIdentity;
+    if (lcd) lcd.transform = CGAffineTransformIdentity;
+    // Keys: visible controls, not inside the LCD (Add Number etc).
+    NSMutableArray<UIView *> *keyViews = [NSMutableArray array];
+    for (UIView *key in allKeys) {
+        if (!key.superview || key.hidden || key.alpha < 0.01) continue;
+        if (lcd && [key isDescendantOfView:lcd]) continue;
+        [keyViews addObject:key];
+    }
     CGRect source = CGRectZero;
     NSInteger keys = 0;
-    DSPhoneCollectKeyUnion(scope, root, &source, &keys, 0);
+    for (UIView *key in keyViews) {
+        CGRect rect = [key convertRect:key.bounds toView:root];
+        source = keys == 0 ? rect : CGRectUnion(source, rect);
+        keys++;
+    }
     if (keys < 9) {
+        // Fallback: pad pieces live in the grid only.
+        [keyViews removeAllObjects];
+        DSPhoneCollectKeys(grid, keyViews, 0);
         source = CGRectZero;
         keys = 0;
-        DSPhoneCollectKeyUnion(grid, root, &source, &keys, 0);
+        for (UIView *key in keyViews) {
+            CGRect rect = [key convertRect:key.bounds toView:root];
+            source = keys == 0 ? rect : CGRectUnion(source, rect);
+            keys++;
+        }
     }
-    if (keys < 9) source = [grid convertRect:grid.bounds toView:root];
+    if (keys < 9) return;
     CGFloat sourceW = CGRectGetWidth(source);
     CGFloat sourceH = CGRectGetHeight(source);
     if (sourceW < 40.0 || sourceH < 40.0) return;
-    // Root is the full-device layout box (before root fill scale). Measure the
-    // fill band in that space so the extra dial transform composes cleanly.
     CGFloat stageW = CGRectGetWidth(root.bounds);
     CGFloat stageH = CGRectGetHeight(root.bounds);
     if (stageW < 80.0 || stageH < 80.0) return;
-    CGFloat limit = stageH - MAX(DSPhoneDialBottomMargin, 6.0);
+
+    // What the card actually shows of the root, in root space.
+    CGRect visible = root.bounds;
+    UIWindow *window = root.window;
+    if (window) {
+        CGRect v = CGRectIntersection([root convertRect:window.bounds fromView:window], root.bounds);
+        if (!CGRectIsNull(v) && CGRectGetHeight(v) > 120.0 && CGRectGetWidth(v) > 80.0) visible = v;
+    }
+    CGFloat rootScale = sqrt(root.transform.a * root.transform.a + root.transform.c * root.transform.c);
+    if (rootScale < 0.2 || rootScale > 2.0) rootScale = 1.0;
+    CGFloat visTop = CGRectGetMinY(visible);
+    CGFloat visBottom = CGRectGetMaxY(visible);
+
+    CGFloat limit = visBottom - DSPhoneDialBottomMargin;
     UIView *tab = DSPhoneFindTabBar(root, 0);
     if (tab && tab != root && tab != keypad && ![keypad isDescendantOfView:tab]) {
         CGRect tabInRoot = [tab convertRect:tab.bounds toView:root];
-        if (CGRectGetHeight(tabInRoot) > 20.0 && CGRectGetMinY(tabInRoot) > stageH * 0.35 &&
-            CGRectGetMinY(tabInRoot) < stageH + 1.0) {
+        if (CGRectGetHeight(tabInRoot) > 20.0 && CGRectGetMinY(tabInRoot) > visTop + 120.0 &&
+            CGRectGetMinY(tabInRoot) < visBottom + 1.0) {
             limit = CGRectGetMinY(tabInRoot) - DSPhoneDialBottomMargin;
         }
     }
-    if (limit < 80.0) limit = stageH - MAX(DSPhoneDialBottomMargin, 6.0);
-    // Top of the fill band: below LCD / Add Number when we can see it, else a
-    // modest pad so the keys are not glued to the card roof.
-    CGFloat topBound = DSPhoneDialTopPad;
-    {
-        // Prefer the bottom of a wide short strip above the digit grid.
-        NSMutableArray<UIView *> *stack = [NSMutableArray arrayWithObject:root];
-        while (stack.count) {
-            UIView *view = stack.lastObject;
-            [stack removeLastObject];
-            if (view != root && !DSPhoneIsTabBar(view) &&
-                !objc_getAssociatedObject(view, DSPhoneGridPieceKey)) {
-                CGRect inRoot = [view convertRect:view.bounds toView:root];
-                BOOL wide = CGRectGetWidth(inRoot) >= stageW * 0.35;
-                BOOL strip = CGRectGetHeight(inRoot) >= 24.0 && CGRectGetHeight(inRoot) <= 100.0;
-                BOOL abovePad = CGRectGetMaxY(inRoot) <= CGRectGetMinY(source) + 8.0 &&
-                    CGRectGetMaxY(inRoot) > 8.0 && CGRectGetMinY(inRoot) < stageH * 0.5;
-                if (wide && strip && abovePad) {
-                    topBound = MAX(topBound, CGRectGetMaxY(inRoot) + 4.0);
-                }
-            }
-            if (![view isKindOfClass:UIScrollView.class] && !DSPhoneIsTabBar(view) &&
-                !objc_getAssociatedObject(view, DSPhoneGridPieceKey)) {
-                [stack addObjectsFromArray:view.subviews];
-            }
-        }
-    }
-    if (topBound > limit - 80.0) topBound = MAX(12.0, limit - MAX(sourceH * 0.55, 180.0));
-    CGFloat availW = MAX(40.0, stageW - 8.0);
+    // Top of the band: below the status-bar strip + room for the LCD.
+    CGFloat statusPad = DSPhoneStatusPad / rootScale;
+    CGFloat lcdH = 0.0;
+    if (lcd) lcdH = MIN(CGRectGetHeight(lcd.bounds), 72.0);
+    CGFloat lcdReserve = lcd ? (lcdH + 4.0) : 30.0;
+    CGFloat topBound = MAX(visTop, 0.0) + statusPad + lcdReserve;
+    if (limit - topBound < 180.0) topBound = MAX(visTop + 8.0, limit - 180.0);
+    CGFloat availW = MAX(40.0, CGRectGetWidth(visible) - 8.0);
     CGFloat availH = MAX(40.0, limit - topBound);
-    // FILL: scale to cover the band. Prefer near-uniform; allow mild stretch.
+
+    // Column spread (positions only) = 4.5.645 width fill.
     CGFloat sx = availW / sourceW;
-    CGFloat sy = availH / sourceH;
     if (sx < 0.45) sx = 0.45;
-    if (sy < 0.45) sy = 0.45;
     if (sx > 1.75) sx = 1.75;
+    // Row spread: whole pad height fits the visible band.
+    CGFloat sy = availH / sourceH;
+    if (sy < 0.35) sy = 0.35;
     if (sy > 1.75) sy = 1.75;
-    CGFloat lo = MIN(sx, sy);
-    CGFloat hi = MAX(sx, sy);
-    if (lo > 0.01 && hi / lo > DSPhoneDialMaxAspect) {
-        // Pull the larger scale down toward uniform * fill of the smaller axis,
-        // but keep enough stretch to eat most of the empty band.
-        CGFloat capped = lo * DSPhoneDialMaxAspect;
-        if (sx > sy) sx = capped;
-        else sy = capped;
+    // Key scale: uniform (round), a hair bigger than the row spread is OK —
+    // it only eats into the gaps between rows.
+    CGFloat k = MIN(sx, sy * 1.06);
+    if (k < 0.32) k = 0.32;
+
+    // Place every key; then shift the envelope so the bottom key sits on the
+    // band bottom (just above the tabs) and nothing pokes above the band.
+    CGFloat targetX = CGRectGetMidX(visible) - sourceW * sx / 2.0;
+    NSUInteger n = keyViews.count;
+    CGPoint *wants = (CGPoint *)calloc(MAX(n, (NSUInteger)1), sizeof(CGPoint));
+    CGFloat envTop = CGFLOAT_MAX, envBottom = -CGFLOAT_MAX;
+    for (NSUInteger i = 0; i < n; i++) {
+        UIView *key = keyViews[i];
+        CGRect natRoot = [key convertRect:key.bounds toView:root];
+        CGPoint c = CGPointMake(targetX + (CGRectGetMidX(natRoot) - CGRectGetMinX(source)) * sx,
+                                (CGRectGetMidY(natRoot) - CGRectGetMinY(source)) * sy);
+        wants[i] = c;
+        envTop = MIN(envTop, c.y - CGRectGetHeight(natRoot) * k / 2.0);
+        envBottom = MAX(envBottom, c.y + CGRectGetHeight(natRoot) * k / 2.0);
     }
-    CGFloat visualW = sourceW * sx;
-    CGFloat visualH = sourceH * sy;
-    CGFloat targetX = (stageW - visualW) / 2.0;
-    // Bottom-align into the band so call sits just above the tab/quick bar
-    // (not floating high with a black gap under the green button).
-    CGFloat targetY = limit - visualH;
-    if (targetY < topBound) targetY = topBound;
-    // Nothing between the grid (or dialer) and the card root may clip keys.
-    for (UIView *ancestor = grid.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
-        ancestor.clipsToBounds = NO;
+    CGFloat dy = limit - envBottom;
+    if (envTop + dy < topBound - 0.5) {
+        // Too tall with the key bump: drop to exact row spread.
+        k = MIN(sx, sy);
+        envTop = CGFLOAT_MAX; envBottom = -CGFLOAT_MAX;
+        for (NSUInteger i = 0; i < n; i++) {
+            UIView *key = keyViews[i];
+            CGFloat h = CGRectGetHeight(key.bounds);
+            envTop = MIN(envTop, wants[i].y - h * k / 2.0);
+            envBottom = MAX(envBottom, wants[i].y + h * k / 2.0);
+        }
+        dy = limit - envBottom;
     }
-    if (dialer) {
-        for (UIView *ancestor = dialer.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
+    CGFloat padTop = envTop + dy;
+
+    for (NSUInteger i = 0; i < n; i++) {
+        UIView *key = keyViews[i];
+        if (!key.superview) continue;
+        for (UIView *ancestor = key.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
             ancestor.clipsToBounds = NO;
         }
+        CGPoint wantRoot = CGPointMake(wants[i].x, wants[i].y + dy);
+        CGPoint want = [root convertPoint:wantRoot toView:key.superview];
+        CGPoint natural = key.center;
+        // Uniform k on X and Y: circles stay circles.
+        CGRect lift = CGRectMake(want.x - natural.x, want.y - natural.y, k, k);
+        objc_setAssociatedObject(key, DSPhoneGridLiftKey, [NSValue valueWithCGRect:lift], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        DSPhoneApplyGridLift(key, natural);
+        DSPhoneMarkGridPieces(key, 0);
     }
-    CGRect gridInRoot = [grid convertRect:grid.bounds toView:root];
-    BOOL containsHeader = CGRectGetMinY(gridInRoot) < CGRectGetMinY(source) - 24.0 &&
-        CGRectGetHeight(gridInRoot) > sourceH + 36.0;
-    BOOL extrasOutside = NO;
-    for (UIView *key in keyViews) {
-        if (key != grid && ![key isDescendantOfView:grid]) { extrasOutside = YES; break; }
-    }
-    const char *mode = "grid";
-    if (!containsHeader && !extrasOutside && grid.superview) {
-        // One transform on the whole grid. With scale(sx,sy) about center,
-        // p maps to center + (sx*(p.x-mid.x), sy*(p.y-mid.y)).
-        CGRect keysLocal = [root convertRect:source toView:grid];
-        CGPoint target = [root convertPoint:CGPointMake(targetX, targetY) toView:grid.superview];
-        CGPoint natural = grid.center;
-        CGPoint mid = CGPointMake(CGRectGetMidX(grid.bounds), CGRectGetMidY(grid.bounds));
-        CGPoint want = CGPointMake(target.x - sx * (CGRectGetMinX(keysLocal) - mid.x),
-                                   target.y - sy * (CGRectGetMinY(keysLocal) - mid.y));
-        CGRect lift = CGRectMake(want.x - natural.x, want.y - natural.y, sx, sy);
-        objc_setAssociatedObject(grid, DSPhoneGridLiftKey, [NSValue valueWithCGRect:lift], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        DSPhoneApplyGridLift(grid, natural);
-        DSPhoneMarkGridPieces(grid, 0);
-    } else {
-        mode = extrasOutside ? "pad" : "keys";
-        for (UIView *key in keyViews) {
-            if (!key.superview) continue;
-            CGRect natRoot = [key convertRect:key.bounds toView:root];
-            CGPoint wantRoot = CGPointMake(targetX + (CGRectGetMidX(natRoot) - CGRectGetMinX(source)) * sx,
-                                           targetY + (CGRectGetMidY(natRoot) - CGRectGetMinY(source)) * sy);
-            CGPoint want = [root convertPoint:wantRoot toView:key.superview];
-            CGPoint natural = key.center;
-            CGRect lift = CGRectMake(want.x - natural.x, want.y - natural.y, sx, sy);
-            objc_setAssociatedObject(key, DSPhoneGridLiftKey, [NSValue valueWithCGRect:lift], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            DSPhoneApplyGridLift(key, natural);
-            DSPhoneMarkGridPieces(key, 0);
+    free(wants);
+
+    // Typed number: just above the pad, never under the status bar strip.
+    if (lcd && lcd.superview) {
+        CGRect nat = [lcd convertRect:lcd.bounds toView:root];
+        CGFloat wantTop = padTop - 4.0 - CGRectGetHeight(nat);
+        CGFloat minTop = MAX(visTop, 0.0) + statusPad;
+        if (wantTop < minTop) wantTop = minTop;
+        CGFloat ty = wantTop - CGRectGetMinY(nat);
+        for (UIView *ancestor = lcd.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
+            ancestor.clipsToBounds = NO;
         }
+        lcd.transform = CGAffineTransformMakeTranslation(0.0, ty);
+        objc_setAssociatedObject(lcd, DSPhoneLcdPlacedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        DSPhoneMarkGridPieces(lcd, 0); // header passes leave it alone
+    } else {
+        DSPhoneLiftNumberDisplay(root);
     }
-    DSPhoneLiftNumberDisplay(root);
-    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone grid %s fill sx=%.2f sy=%.2f keys=%ld y=%.0f h=%.0f band=%.0f-%.0f stage=%.0f %s",
-                     mode, sx, sy, (long)keys, targetY, visualH, topBound, limit, stageH,
-                     object_getClassName(grid) ?: "?"],
-                    MIN(sx, sy), targetY, stageH);
+    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone pad fit646 k=%.2f sx=%.2f sy=%.2f keys=%ld vis=%.0f-%.0f band=%.0f-%.0f padTop=%.0f rootScale=%.2f lcd=%s",
+                     k, sx, sy, (long)keys, visTop, visBottom, topBound, limit, padTop, rootScale,
+                     lcd ? (object_getClassName(lcd) ?: "?") : "none"],
+                    k, padTop, stageH);
 }
 
 static void DSAdjustPhoneLayoutForStage(UIView *root) {

@@ -1,3 +1,6 @@
+**4.5.646**
+- Staged Phone: the whole dial pad (1–9, *0#, call/delete) now fits inside the stage above the tab bar. 4.5.645 sized the pad for the full phone height, but the card only shows the bottom part, so the keys came out huge and only 7–call showed. The pad is now sized to the part the card really shows. Keys keep one scale on both axes so they stay round, the columns keep the 4.5.645 side-to-side spread, the rows close up to fit, and the typed number sits just above the pad.
+
 **4.5.644**
 - Phone stage fit: stop wiping the root fill transform on every layout (that top-aligned the dialer and hid 7–call/tabs). Uniform device-aspect scale + bottom-align only; dial-grid lift skipped so keypad 1–call + tabs stay on-card like the reference shot; keys stay circular.
 

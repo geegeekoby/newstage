@@ -3662,11 +3662,13 @@ static void DSAdjustPhoneLayoutForStage(UIView *root);
 // shape: if the scene stays phone-aspect, the host stretches it and every
 // circle becomes a wide oval (4.5.636–641 fill).
 //
-// Fix (4.5.643): make Phone's window the card size (scene aspect = host
+// Fix (4.5.644): make Phone's window the card size (scene aspect = host
 // aspect, no stretch), lay the root out at the REAL device size so keys
-// stay circular, then apply ONE uniform scale (same X and Y). Width-fill
-// and bottom-align so the keypad + tab bar land in the card; the top of
-// the phone UI is cropped. SpringBoard's card frame is unchanged.
+// stay circular, then ONE uniform scale (same X and Y). Always bottom-align
+// when the scaled phone is taller than the card so keypad 1–call + tabs stay
+// visible; only status/top chrome may clip. Do NOT clear this transform in
+// layoutSubviews (that left an identity oversized root top-aligned → only
+// rows 1–6 visible). Extra dial-grid lift is skipped — root fill is enough.
 static const CGFloat DSPhoneMinLayoutHeight = 560.0; // kept for logs / fallbacks
 
 static void DSPhoneScaleRootIntoCard(UIView *root) {
@@ -3682,8 +3684,8 @@ static void DSPhoneScaleRootIntoCard(UIView *root) {
     CGFloat cardH = CGRectGetHeight(stage);
     if (fullW < 80.0 || fullH < 80.0 || cardW < 80.0 || cardH < 80.0) return;
     if (cardH > fullH - 40.0) return;
-    // Device-aspect layout + one scale. Prefer width-fill (covers the card
-    // horizontally); if that leaves a vertical gap, height-fill instead.
+    // Device-aspect layout + one uniform scale. Prefer width-fill; if that
+    // leaves a vertical gap, height-fill instead (still uniform X=Y).
     CGFloat layoutW = fullW;
     CGFloat layoutH = fullH;
     CGFloat scale = cardW / layoutW;
@@ -3704,6 +3706,7 @@ static void DSPhoneScaleRootIntoCard(UIView *root) {
         window.clipsToBounds = YES;
         window.layer.masksToBounds = YES;
 
+        // Identity only while rewriting bounds; fill scale goes back on below.
         root.transform = CGAffineTransformIdentity;
         if (fabs(CGRectGetWidth(root.bounds) - layoutW) > 0.5 ||
             fabs(CGRectGetHeight(root.bounds) - layoutH) > 0.5 ||
@@ -3711,15 +3714,27 @@ static void DSPhoneScaleRootIntoCard(UIView *root) {
             root.bounds = CGRectMake(0.0, 0.0, layoutW, layoutH);
         }
         CGFloat visualH = layoutH * scale;
-        // Bottom-align: keep keypad + tab bar on-card; crop the status/header.
+        CGFloat visualW = layoutW * scale;
+        // Bottom-align whenever content is taller than the card: tabs + call +
+        // keypad stay in view; status / nav / empty top chrome may clip.
+        // Never top-align an oversized root (that only shows rows 1–6).
         CGFloat centerX = cardW / 2.0;
-        CGFloat centerY = (visualH >= cardH - 0.5) ? (cardH - visualH / 2.0) : (cardH / 2.0);
+        CGFloat centerY;
+        if (visualH >= cardH - 0.5) {
+            centerY = cardH - visualH / 2.0; // bottom edge of content == card bottom
+        } else {
+            centerY = cardH / 2.0;
+        }
+        // If width-fill made us wider than the card, keep horizontally centered.
+        (void)visualW;
         root.center = CGPointMake(centerX, centerY);
         root.transform = CGAffineTransformMakeScale(scale, scale); // identical X/Y
-        root.clipsToBounds = YES;
-        root.layer.masksToBounds = YES;
-        DSPhoneWriteFit([NSString stringWithFormat:@"app: phone fill scale=%.2f layout=%.0fx%.0f card=%.0fx%.0f full=%.0fx%.0f bottomAlign=1",
-                         scale, layoutW, layoutH, cardW, cardH, fullW, fullH],
+        // Clip at the window (card), not by wiping content above the keypad.
+        root.clipsToBounds = NO;
+        root.layer.masksToBounds = NO;
+        DSPhoneWriteFit([NSString stringWithFormat:@"app: phone fill scale=%.2f layout=%.0fx%.0f card=%.0fx%.0f full=%.0fx%.0f bottomAlign=%d",
+                         scale, layoutW, layoutH, cardW, cardH, fullW, fullH,
+                         (visualH >= cardH - 0.5) ? 1 : 0],
                         scale, cardW, cardH);
     } @catch (NSException *exception) {
     }
@@ -3738,10 +3753,11 @@ static void DSPhoneScheduleScaleRootIntoCard(UIView *root) {
         DSPhoneScaleScheduled = NO;
         UIView *strongRoot = weakRoot;
         if (!strongRoot) return;
-        // Fill the stage card first, then lift the dial pad in layout
-        // coordinates (root.bounds). Adjust was previously dead code.
+        // 4.5.644: root fill alone fits keypad+call+tabs (uniform scale,
+        // bottom-align). Do not run DSAdjustPhoneLayoutForStage / dial-grid
+        // lift — root.bounds is still full-device height, so that path treated
+        // the phone as the stage and shoved / cropped 7–call.
         DSPhoneScaleRootIntoCard(strongRoot);
-        DSAdjustPhoneLayoutForStage(strongRoot);
     });
 }
 
@@ -3763,11 +3779,10 @@ static const void *DSPhoneNaturalRootKey = &DSPhoneNaturalRootKey;
 // out, so a keypad scale cannot slide "Add Number" above the card.
 static const void *DSPhoneGridPieceKey = &DSPhoneGridPieceKey;
 static const CGFloat DSPhoneDialScale = 0.82;
-static const CGFloat DSPhoneDialBottomMargin = 56.0; // gap above quick/tab bar; 110 shoved call/delete off-stage
-static const CGFloat DSPhoneNumberDisplayLift = 16.0; // modest nudge for the typed-number field
+static const CGFloat DSPhoneDialBottomMargin = 56.0; // unused while root-fill owns fit (4.5.644+)
+static const CGFloat DSPhoneNumberDisplayLift = 16.0; // unused while root-fill owns fit (4.5.644+)
 // 4.5.641+: dial grid uses ONE uniform transform (keeps circles intact).
-// 4.5.642/643: bottom margin 56 so delete + green call stay on-card; key union
-// covers call/delete. Root fill also uses one scale (see DSPhoneScaleRootIntoCard).
+// 4.5.644: dial-grid lift disabled; DSPhoneScaleRootIntoCard is the only fit.
 // Lift = {offset.x, offset.y, scale}. Applied = the center we last wrote, so
 // an Auto Layout reset (natural center) can be told apart from our own lift.
 static const void *DSPhoneGridLiftKey = &DSPhoneGridLiftKey;
@@ -4455,9 +4470,11 @@ static BOOL DSPhoneIsCardRoot(UIView *view) {
 
 static void DSPhoneClearPieceTransforms(UIView *view) {
     if (!DSPhoneIsCardRoot(view)) return;
+    // 4.5.644: only clear associated *piece* scales. Never set the card root
+    // transform to identity here — that undoes DSPhoneScaleRootIntoCard and
+    // leaves an oversized root top-aligned in the card (only dials 1–6 show).
     DSPhoneLayoutFrozen = YES;
     DSPhoneResetScaled(view, 0);
-    view.transform = CGAffineTransformIdentity;
     DSPhoneLayoutFrozen = NO;
 }
 

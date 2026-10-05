@@ -1,0 +1,7 @@
+DynamicStage 4.5.644 — full keypad visible (1–call + tabs), round keys (2026-10-05 NZDT)
+
+Symptom (4.5.643): only dials 1–6 visible; 7–9 / call / tabs missing vs reference.
+
+Root cause: ClearPieceTransforms wiped root fill transform every layout → oversized root top-aligned (only 1–6). Dial-grid lift also fought fill using full-device root.bounds as stage.
+
+Fix: keep root fill transform; uniform scale + bottom-align; skip dial-grid lift.

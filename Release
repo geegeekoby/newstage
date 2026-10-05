@@ -1,0 +1,15 @@
+Origin: Dynamic Stage (newstage)
+Label: Dynamic Stage
+Suite: stable
+Version: 1.0
+Codename: ios
+Architectures: iphoneos-arm64
+Components: main
+Description: Dynamic Stage test builds for Phone stage fit
+Date: Mon, 05 Oct 2026 08:50:29 +0000
+MD5Sum:
+ 5195eed62307243b01b0cf57c0f2c3d6 5534 Packages
+ bb003cedc06b1cd6d2d3e16e68511770 1059 Packages.gz
+SHA256:
+ 68bfdab56c81230fbfdb5e6698bef6164cdcc05c0bfc49cc251cddd018f98b01 5534 Packages
+ 5e722b41ce14c97a33862fbf93bb8fb1a2c960a2ec3a1e3f2cd4cd542a39884d 1059 Packages.gz

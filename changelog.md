@@ -1,3 +1,6 @@
+**4.5.644**
+- Phone stage fit: stop wiping the root fill transform on every layout (that top-aligned the dialer and hid 7–call/tabs). Uniform device-aspect scale + bottom-align only; dial-grid lift skipped so keypad 1–call + tabs stay on-card like the reference shot; keys stay circular.
+
 **4.5.643**
 - Staged Phone keys are round again (no horizontal oval stretch). The Phone window matches the card so SpringBoard cannot stretch the scene, and the UI is scaled with one factor on both axes. Call and delete stay on-card above the quick bar.
 

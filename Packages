@@ -1,0 +1,143 @@
+Package: com.recreated.dynamicstage
+Version: 4.5.636
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2652
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.636_iphoneos-arm64.deb
+Size: 477410
+MD5sum: f04ae546aa7fb4f4d449b260ce9fa08f
+SHA256: df4b929e033917a4192ded37973582bfcfa7734e946731bada19360a89ea8a53
+
+Package: com.recreated.dynamicstage
+Version: 4.5.637
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2652
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.637_iphoneos-arm64.deb
+Size: 476878
+MD5sum: f0a28c95dca0269f443961d5921ff38d
+SHA256: 1dcd6b0713a27854b1f76aa72269bee5c488970c20545be17faaca8936cecd57
+
+Package: com.recreated.dynamicstage
+Version: 4.5.638
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2684
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.638_iphoneos-arm64.deb
+Size: 476552
+MD5sum: bb1b8bfc6d048ed735d54ede1733c044
+SHA256: 2cdc3af242e2f892b581b6da878554915bc05492aa0aa69866293b9678c7bc52
+
+Package: com.recreated.dynamicstage
+Version: 4.5.639
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2684
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.639_iphoneos-arm64.deb
+Size: 477410
+MD5sum: fb70049d4d841d9d527fe93dc556216f
+SHA256: 46f510eee2bf8c86fec6f23e18ec221a45557eb96243e61bafdf9875ab3c1a9e
+
+Package: com.recreated.dynamicstage
+Version: 4.5.640
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2716
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.640_iphoneos-arm64.deb
+Size: 487456
+MD5sum: 78394b8e9ce337d606edaeaefd0c89ab
+SHA256: 29d794281762a31361b920b9b3fa9959080faa802c5f833c31eb25d787eeb3d0
+
+Package: com.recreated.dynamicstage
+Version: 4.5.641
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2748
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.641_iphoneos-arm64.deb
+Size: 487732
+MD5sum: 485524192e1d353102df56c08e0774f5
+SHA256: 8f86e99bdcc16e8bb4ec82cb8d571f676ada9e4fdbb3d796ae56bf5f5473acf2
+
+Package: com.recreated.dynamicstage
+Version: 4.5.642
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2748
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.642_iphoneos-arm64.deb
+Size: 488762
+MD5sum: 98a0dafd1d3bbe59b31e4b1a14722588
+SHA256: 73c177c9f1392a6473edb9aac53b2ae91b4c485e2c502a2874a8140713da2bb4
+
+Package: com.recreated.dynamicstage
+Version: 4.5.643
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2748
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.643_iphoneos-arm64.deb
+Size: 486756
+MD5sum: c7835749d187f00942bbcc78ba78e574
+SHA256: 806b5521affd18db444a8b0b1ed56990669a01ea2ef889214220ced66079f652
+
+Package: com.recreated.dynamicstage
+Version: 4.5.644
+Architecture: iphoneos-arm64
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 2684
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Section: Tweaks
+Description: Stage Manager Reimagined for iPhone
+Name: Dynamic Stage
+Author: Dynamic Stage Recreation
+Icon: file:///var/jb/Library/PreferenceLoader/Preferences/DynamicStage/icon@3x.png
+Filename: debs/com.recreated.dynamicstage_4.5.644_iphoneos-arm64.deb
+Size: 478990
+MD5sum: 9323de34cb4b6ba0aae16fe619d850e8
+SHA256: 1cedb91d655ed6472f38edb60ddb39f31d0eee9a66e0362ec01071ae7f5054e6

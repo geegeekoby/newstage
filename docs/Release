@@ -1,17 +1,17 @@
-Origin: Dynamic Stage
+Origin: Dynamic Stage (newstage)
 Label: Dynamic Stage
 Suite: stable
 Version: 1.0
 Codename: ios
 Architectures: iphoneos-arm64
 Components: main
-Description: Stage Manager Reimagined for iPhone, rebuilt for rootless jailbreaks
-Date: Mon, 05 Oct 2026 08:44:42 GMT
+Description: Dynamic Stage test builds for Phone stage fit
+Date: Mon, 05 Oct 2026 08:50:54 +0000
 MD5Sum:
- 3a3b3e7975f80ece1a0e50feafe1decd 6607 Packages
- 95637d6efd6a0e69bba9a173590eb696 1256 Packages.gz
- ecb3900f3cb40aad58f967780f510af2 1427 Packages.bz2
+ 5195eed62307243b01b0cf57c0f2c3d6 5534 Packages
+ a96df962d5cb4da11a2488f9265eae20 1059 Packages.gz
+ 3ff8c1404c149e748e2ed64a5cdd829f 1290 Packages.bz2
 SHA256:
- 1c1d5c79a967b15529d0b308f08b3e24431a10ff89d7fddf7d25867df013f561 6607 Packages
- 8917c40333d4c018e549bdb6f49aad5862bf99f4d7b9a8bd3cde20390596e1f5 1256 Packages.gz
- f8deb5a92e3eb170b12002b3ebcfe24426ab4d3c280df18d3faa6c874e8cfe0d 1427 Packages.bz2
+ 68bfdab56c81230fbfdb5e6698bef6164cdcc05c0bfc49cc251cddd018f98b01 5534 Packages
+ 359ef91efe737a5a75717ae06b036dbdc35f97af3366e21f292afe89d63867c1 1059 Packages.gz
+ 9b5302a622e747cdaf838b9c96618e2edc97128d6439a8562e98a458a8b433b6 1290 Packages.bz2

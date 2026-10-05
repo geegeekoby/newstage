@@ -1,0 +1,52 @@
+DynamicStage 4.5.648 — dial keys TAP again + compact pad (2026-10-05 NZDT)
+
+Symptoms (4.5.647): pad still looked very spaced out, and tapping the keys
+did nothing.
+
+WHY TAPS DID NOTHING (app/Tweak.xm)
+- DSResizePhoneKeypad moves every key separately (center + uniform scale
+  transform) inside its ORIGINAL superview (number pad / dialer containers).
+- UIKit hit-testing only goes down into a subview when the touch is inside
+  the PARENT's bounds. clipsToBounds = NO only affects drawing, not touches.
+- After the lift/spread, the outer columns, rows 1–3 and the call/delete row
+  sat outside their container's bounds → drawn, but every touch was rejected
+  before it reached the key (dead, visual-only buttons). The 4.5.646/647
+  "lift into the top gap" pushed even more keys outside their containers.
+
+TAP FIX
+- Each pass, every placed key is stored in a weak table on the card root
+  (DSPhoneHitKeysKey; rebuilt fresh every pass).
+- New DSPhoneRouteLiftedHit(): on the staged Phone root, after the normal
+  hitTest, if the touch lands inside a visible key (not hidden, alpha>0.02,
+  userInteractionEnabled on the key and all ancestors to the root, same
+  window), the touch goes to that key ([key hitTest:] or the key). The point
+  is converted through the key's transform, so the hit area is exactly the
+  drawn circle.
+- Hooked in UIView -hitTest (card root) AND UIWindow -hitTest (in case the
+  root class overrides hitTest). Tab bar hits, presented sheets/alerts and
+  anything outside the root keep their normal hit. Faded-out delete (alpha≈0)
+  is not tappable. Only com.apple.mobilephone while staged.
+
+SPACING FIX (DSResizePhoneKeypad)
+- Rows are no longer stretched to fill the band. One uniform key scale k
+  (round keys) = as large as fits 4 digit rows + call row with a tight
+  Phone-like gap (8–12% of key height), capped by width and 1.15.
+- Row pitch = k·key·(1+gap). Call row one pitch under *0# (call under 0,
+  delete under #).
+- Columns still spread side-to-side (sx = availW / natural span) but the gap
+  between neighbours is capped at 1.25 key widths so small height-limited
+  keys don't float far apart (the 646/647 "spaced out" look).
+- Top strip: 8pt corner + 32pt typed-number strip (was 14 + 36). Bottom
+  margin above tabs 6pt (was 8). Any leftover height is split evenly
+  above/below; the typed number sits right above 1-2-3.
+- Fallback (12 digits not identified): proportional, uniform k, rows packed.
+- Log: "app: phone pad fit648 grid=… k=… gap=… pitchY=… colPitch=… hit=N …"
+  in /var/tmp/com.recreated.dynamicstage.phone-fit (hit = keys routed).
+
+Unchanged: stage card size, root fill scale, other apps.
+Tuning knobs: DSPhoneColGapMax (1.25), DSPhoneRowGapMin/Max (0.08/0.12),
+DSPhoneNumberStrip (32).
+
+Version: control + shared/DSConstants.h + changelog.md → 4.5.648
+Deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.648_iphoneos-arm64.deb
+Sileo: https://geegeekoby.github.io/newstage/

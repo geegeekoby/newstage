@@ -3780,7 +3780,7 @@ static const void *DSPhoneNaturalRootKey = &DSPhoneNaturalRootKey;
 // out, so a keypad scale cannot slide "Add Number" above the card.
 static const void *DSPhoneGridPieceKey = &DSPhoneGridPieceKey;
 static const CGFloat DSPhoneDialScale = 1.0; // 4.5.645: fill uses computed sx/sy; this is unused floor bias
-static const CGFloat DSPhoneDialBottomMargin = 8.0; // sit call just above tab/quick bar
+static const CGFloat DSPhoneDialBottomMargin = 6.0; // sit call just above tab/quick bar
 static const CGFloat DSPhoneNumberDisplayLift = 10.0; // small LCD nudge only
 static const CGFloat DSPhoneDialTopPad = 36.0; // leave room for Add Number / LCD strip
 static const CGFloat DSPhoneDialMaxAspect = 1.14; // mild stretch cap (sx/sy)
@@ -4136,12 +4136,64 @@ static UIView *DSPhoneFindLcdView(UIView *root) {
 }
 
 static const void *DSPhoneLcdPlacedKey = &DSPhoneLcdPlacedKey;
-// 4.5.647: card-space strips at the top of the stage. The old 44pt status
-// strip + full LCD height (~110pt total) left a big empty black band above
-// 1-2-3. Now: a small corner pad + a modest typed-number strip only.
-static const CGFloat DSPhoneTopCornerPad = 14.0;   // rounded card corner
-static const CGFloat DSPhoneNumberStrip = 36.0;    // typed number / Add Number
-static const CGFloat DSPhoneCallRowGap = 1.0;      // call row pitch vs digit pitch
+// 4.5.648: card-space strips at the top of the stage (small corner pad +
+// typed-number strip). The pad is packed as a compact cluster below it.
+static const CGFloat DSPhoneTopCornerPad = 8.0;    // rounded card corner
+static const CGFloat DSPhoneNumberStrip = 32.0;    // typed number / Add Number
+static const CGFloat DSPhoneRowGapMin = 0.08;      // vertical gap / key height
+static const CGFloat DSPhoneRowGapMax = 0.12;      // tight, Phone-like rows
+static const CGFloat DSPhoneColGapMax = 1.25;      // horizontal gap cap / key width
+static const CGFloat DSPhoneKeyMaxScale = 1.15;    // never balloon the keys
+
+// 4.5.648 tap fix. Every key that DSResizePhoneKeypad moves is remembered on
+// the card root (weak table). UIKit's hitTest only descends into a subview if
+// the point is inside that PARENT's bounds — clipsToBounds = NO does not
+// change that. Lifting keys per-key put most of them (outer columns, rows
+// 1–3, call/delete) outside their number-pad / dialer container bounds, so
+// they were drawn but every tap was rejected before reaching the key. The
+// root and window hitTest hooks below route a touch that lands on a visible,
+// moved key straight to that key (point converted through its transform, so
+// the hit area IS the drawn circle).
+static const void *DSPhoneHitKeysKey = &DSPhoneHitKeysKey;
+
+static BOOL DSPhoneKeyCanTakeTouch(UIView *key, UIView *root) {
+    if (!key || !root || !key.window || key.window != root.window) return NO;
+    for (UIView *v = key; v; v = v.superview) {
+        if (v.hidden || v.alpha < 0.02 || !v.userInteractionEnabled) return NO;
+        if (v == root) return YES;
+    }
+    return NO; // not under the card root (another tab / removed)
+}
+
+static BOOL DSPhoneHitIsInTabBar(UIView *hit) {
+    for (UIView *v = hit; v; v = v.superview) {
+        if (DSPhoneIsTabBar(v)) return YES;
+        if ([v isKindOfClass:UIWindow.class]) break;
+    }
+    return NO;
+}
+
+// point is in root coordinates. Returns the key hit (or orig untouched).
+static UIView *DSPhoneRouteLiftedHit(UIView *root, CGPoint point, UIEvent *event, UIView *orig) {
+    if (!DSIsMobilePhone() || !DSStaged() || !root) return orig;
+    NSHashTable *keys = objc_getAssociatedObject(root, DSPhoneHitKeysKey);
+    if (!keys || keys.count == 0) return orig;
+    // A presented sheet / alert / other subtree above the dialer keeps its hit.
+    if (orig && orig != root && ![orig isDescendantOfView:root]) return orig;
+    if (orig && DSPhoneHitIsInTabBar(orig)) return orig;
+    @try {
+        for (UIView *key in keys.allObjects) {
+            if (!DSPhoneKeyCanTakeTouch(key, root)) continue;
+            if (orig && (orig == key || [orig isDescendantOfView:key])) return orig;
+            CGPoint p = [root convertPoint:point toView:key];
+            if (!CGRectContainsPoint(key.bounds, p)) continue;
+            UIView *hit = [key hitTest:p withEvent:event];
+            return hit ?: key;
+        }
+    } @catch (NSException *exception) {
+    }
+    return orig;
+}
 
 static BOOL DSPhoneKeyNameHas(UIView *view, NSString *needle) {
     if (!view || !needle.length) return NO;
@@ -4152,26 +4204,25 @@ static BOOL DSPhoneKeyNameHas(UIView *view, NSString *needle) {
     return NO;
 }
 
-// Staged Phone only. 4.5.647: dial pad LIFTED to fill the visible stage band.
+// Staged Phone only. 4.5.648: compact dial pad + working taps.
 //
-// 4.5.646 fitted the pad into the visible part of the root, but reserved a
-// 44pt status strip PLUS the full LCD height at the top and bottom-aligned
-// the keys, so ~110pt of empty black sat above 1-2-3. On some passes the
-// green call button (sometimes mid-fade / not in the measured set) was mapped
-// from a stale natural spot and floated over the 7 key.
+// 4.5.647 spread the rows to fill the whole band (rows pulled apart to
+// reach from the number strip down to the tabs) and the moved keys could not
+// be tapped (see DSPhoneRouteLiftedHit).
 //
 // Now:
-// - Band top = visible top + small corner pad + modest number strip.
-// - Digits (12 keys) are laid out on an explicit 3x4 grid built from their
-//   natural column/row centers. Column spread = availW / digit width (the
-//   side-to-side fit the user approved). Row spread fills the band height.
-// - A dedicated call row is ALWAYS reserved one digit-pitch under *0#.
-//   Call goes under 0 (center column); delete under # (right column).
-//   They can never be placed over the grid.
-// - One uniform scale k per key (round circles). Envelope fills the band from
-//   the top; any tiny slack is split so the pad sits slightly high.
-// - The LCD is centered in the number strip just above 1-2-3.
-// Falls back to the 4.5.646 placement if 12 digits cannot be identified.
+// - Digits (12 keys) on an explicit 3x4 grid from their natural column/row
+//   centers. Columns spread side-to-side (sx = availW / natural digit span)
+//   but the gap between keys is capped at 1.25 key widths.
+// - Key scale k is ONE uniform value (round keys): as large as the band
+//   allows with tight Phone-like rows (gap 8–12% of the key), never larger
+//   than sx (width) or 1.15.
+// - Row pitch = k * key * (1 + gap 8–12%) — rows are packed, not stretched. Call row
+//   one pitch under *0# (call under 0, delete under #).
+// - Any leftover height is split evenly above/below the cluster; the typed
+//   number sits right above 1-2-3.
+// - Every moved key is registered for hit routing.
+// Falls back to proportional placement if 12 digits cannot be identified.
 static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
     if (!keypad.superview || !root) return;
     UIView *grid = DSFindButtonGrid(keypad);
@@ -4311,61 +4362,68 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
         if (keyW < 20.0 || keyH < 20.0) gridOK = NO;
     }
 
-    CGFloat k = 1.0, sx = 1.0, sy = 1.0, padTop = topBound;
+    NSHashTable *hitKeys = [NSHashTable weakObjectsHashTable];
+    CGFloat k = 1.0, sx = 1.0, sy = 1.0, padTop = topBound, pitchY = 0.0, gapRatio = 0.0, colPitchLog = 0.0;
     NSInteger placed = 0;
     if (gridOK) {
-        CGFloat pitch = (rowY[3] - rowY[0]) / 3.0;
-        if (pitch < keyH * 0.9) pitch = keyH * 1.1;
+        CGFloat natColPitch = (colX[2] - colX[0]) / 2.0;
+        CGFloat natRowPitch = (rowY[3] - rowY[0]) / 3.0;
+        if (natRowPitch < keyH * 0.9) natRowPitch = keyH * 1.1;
+        gapRatio = natRowPitch / keyH - 1.0;
+        if (!(gapRatio >= DSPhoneRowGapMin)) gapRatio = DSPhoneRowGapMin;
+        if (gapRatio > DSPhoneRowGapMax) gapRatio = DSPhoneRowGapMax;
         CGFloat callH = keyH;
         for (NSNumber *ci in callIdx) callH = MAX(callH, CGRectGetHeight(nat[ci.unsignedIntegerValue]));
-        CGFloat callY = rowY[3] + pitch * DSPhoneCallRowGap; // natural units
-        CGFloat srcLeft = colX[0] - keyW / 2.0;
-        CGFloat srcW = (colX[2] - colX[0]) + keyW;
-        CGFloat srcTop = rowY[0] - keyH / 2.0;
-        CGFloat srcBottom = callY + callH / 2.0;
-        CGFloat srcH = srcBottom - srcTop;
+        if (callH > keyH * 1.25) callH = keyH * 1.25;
 
+        // Width: approved side-to-side spread of the column centers.
+        CGFloat srcW = (colX[2] - colX[0]) + keyW;
         sx = availW / srcW;
         if (sx < 0.45) sx = 0.45;
         if (sx > 1.75) sx = 1.75;
-        sy = availH / srcH;
-        if (sy < 0.35) sy = 0.35;
-        if (sy > 1.75) sy = 1.75;
-        k = MIN(sx, sy * 1.06);
+        // Height: 4 packed digit rows + call row must fit the band.
+        CGFloat unitH = 4.0 * keyH * (1.0 + gapRatio) + keyH * 0.5 + callH * 0.5;
+        CGFloat kH = availH / unitH;
+        k = MIN(kH, sx);
+        if (k > DSPhoneKeyMaxScale) k = DSPhoneKeyMaxScale;
+        // Never let neighbours touch side-to-side.
+        CGFloat kNoOverlap = (natColPitch * sx - 4.0) / keyW;
+        if (k > kNoOverlap) k = kNoOverlap;
         if (k < 0.32) k = 0.32;
-        // Envelope in band units: centers spread by sy, keys sized by k.
-        CGFloat envTopRel = (rowY[0] - srcTop) * sy - keyH * k / 2.0;
-        CGFloat envBotRel = (callY - srcTop) * sy + callH * k / 2.0;
-        if (envBotRel - envTopRel > availH + 0.5) {
-            k = MIN(sx, sy);
-            envTopRel = (rowY[0] - srcTop) * sy - keyH * k / 2.0;
-            envBotRel = (callY - srcTop) * sy + callH * k / 2.0;
-        }
-        CGFloat envH = envBotRel - envTopRel;
+        pitchY = k * keyH * (1.0 + gapRatio);
+        sy = pitchY / natRowPitch;
+        CGFloat envH = 4.0 * pitchY + k * keyH * 0.5 + k * callH * 0.5;
         CGFloat slack = MAX(0.0, availH - envH);
-        // Lift: pad starts at the band top (tiny slack split 30/70 so it
-        // reads as "high", never floating with a void above 1-2-3).
-        CGFloat dy = topBound + slack * 0.3 - envTopRel;
-        padTop = topBound + slack * 0.3;
-        CGFloat targetX = CGRectGetMidX(visible) - srcW * sx / 2.0;
-        CGFloat (^mapX)(CGFloat) = ^CGFloat(CGFloat x) { return targetX + (x - srcLeft) * sx; };
-        CGFloat (^mapY)(CGFloat) = ^CGFloat(CGFloat y) { return (y - srcTop) * sy + dy; };
+        padTop = topBound + slack * 0.5;
+        CGFloat row0 = padTop + k * keyH * 0.5;
+        CGFloat midX = CGRectGetMidX(visible);
+        // Side-to-side spread, but the gap between neighbours is capped at
+        // 1.25 key widths so small (height-limited) keys don't float far
+        // apart — the "very spaced out" look of 4.5.646/647.
+        CGFloat colPitch = natColPitch * sx;
+        CGFloat colPitchCap = k * keyW * (1.0 + DSPhoneColGapMax);
+        if (colPitch > colPitchCap) colPitch = colPitchCap;
+        if (colPitch < k * keyW + 4.0) colPitch = k * keyW + 4.0;
+        colPitchLog = colPitch;
+        CGFloat outX[3] = { midX - colPitch, midX, midX + colPitch };
+        CGFloat outY[4] = { row0, row0 + pitchY, row0 + 2.0 * pitchY, row0 + 3.0 * pitchY };
+        CGFloat callY = row0 + 4.0 * pitchY;
 
         NSMutableArray<UIView *> *views = [NSMutableArray array];
         NSMutableArray<NSValue *> *targets = [NSMutableArray array];
         for (NSUInteger p = 0; p < 12; p++) {
             [views addObject:keyViews[digits[p].unsignedIntegerValue]];
-            [targets addObject:[NSValue valueWithCGPoint:CGPointMake(mapX(colX[digitCol[p]]), mapY(rowY[digitRow[p]]))]];
+            [targets addObject:[NSValue valueWithCGPoint:CGPointMake(outX[digitCol[p]], outY[digitRow[p]])]];
         }
-        // Call under 0 (center column); extra calls (shouldn't happen) stack there too.
+        // Call under 0 (center column).
         for (NSNumber *ci in callIdx) {
             [views addObject:keyViews[ci.unsignedIntegerValue]];
-            [targets addObject:[NSValue valueWithCGPoint:CGPointMake(mapX(colX[1]), mapY(callY))]];
+            [targets addObject:[NSValue valueWithCGPoint:CGPointMake(outX[1], callY)]];
         }
         // Delete under # (right column).
         for (NSNumber *di in deleteIdx) {
             [views addObject:keyViews[di.unsignedIntegerValue]];
-            [targets addObject:[NSValue valueWithCGPoint:CGPointMake(mapX(colX[2]), mapY(callY))]];
+            [targets addObject:[NSValue valueWithCGPoint:CGPointMake(outX[2], callY)]];
         }
         for (NSUInteger i = 0; i < views.count; i++) {
             UIView *key = views[i];
@@ -4379,10 +4437,11 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
             objc_setAssociatedObject(key, DSPhoneGridLiftKey, [NSValue valueWithCGRect:lift], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             DSPhoneApplyGridLift(key, natural);
             DSPhoneMarkGridPieces(key, 0);
+            [hitKeys addObject:key];
             placed++;
         }
     } else {
-        // ---- Fallback: 4.5.646 proportional placement, top-aligned ----------
+        // ---- Fallback: proportional placement, uniform k, centered ---------
         CGRect source = CGRectZero;
         for (NSUInteger i = 0; i < n; i++) source = i == 0 ? nat[i] : CGRectUnion(source, nat[i]);
         CGFloat sourceW = CGRectGetWidth(source);
@@ -4391,13 +4450,17 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
         sx = MIN(1.75, MAX(0.45, availW / sourceW));
         sy = MIN(1.75, MAX(0.35, availH / sourceH));
         k = MAX(0.32, MIN(sx, sy));
+        sy = k; // packed rows: vertical spread = key scale
         CGFloat targetX = CGRectGetMidX(visible) - sourceW * sx / 2.0;
-        CGFloat envTop = CGFLOAT_MAX;
+        CGFloat envTop = CGFLOAT_MAX, envBot = -CGFLOAT_MAX;
         for (NSUInteger i = 0; i < n; i++) {
-            envTop = MIN(envTop, (CGRectGetMidY(nat[i]) - CGRectGetMinY(source)) * sy - CGRectGetHeight(nat[i]) * k / 2.0);
+            CGFloat cy = (CGRectGetMidY(nat[i]) - CGRectGetMinY(source)) * sy;
+            envTop = MIN(envTop, cy - CGRectGetHeight(nat[i]) * k / 2.0);
+            envBot = MAX(envBot, cy + CGRectGetHeight(nat[i]) * k / 2.0);
         }
-        CGFloat dy = topBound - envTop;
-        padTop = topBound;
+        CGFloat slack = MAX(0.0, availH - (envBot - envTop));
+        padTop = topBound + slack * 0.5;
+        CGFloat dy = padTop - envTop;
         for (NSUInteger i = 0; i < n; i++) {
             UIView *key = keyViews[i];
             if (!key.superview) continue;
@@ -4412,27 +4475,30 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
             objc_setAssociatedObject(key, DSPhoneGridLiftKey, [NSValue valueWithCGRect:lift], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             DSPhoneApplyGridLift(key, natural);
             DSPhoneMarkGridPieces(key, 0);
+            [hitKeys addObject:key];
             placed++;
         }
     }
     free(nat);
+    // Fresh table every pass: only keys at their current lifted spots route.
+    objc_setAssociatedObject(root, DSPhoneHitKeysKey, hitKeys, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    // Typed number: centered in the number strip just above 1-2-3.
+    // Typed number: right above 1-2-3 (moves with the cluster).
     if (lcd && lcd.superview) {
         CGRect natL = [lcd convertRect:lcd.bounds toView:root];
         CGFloat stripBottom = MAX(stripTop + 8.0, padTop - 2.0);
-        CGFloat stripH = stripBottom - stripTop;
+        CGFloat stripTopUse = MAX(stripTop, stripBottom - numberStrip * 1.3);
+        CGFloat stripH = stripBottom - stripTopUse;
         CGFloat lcdH = MAX(1.0, CGRectGetHeight(natL));
         // Shrink a tall LCD a little (uniform, never below 0.75) so the number
         // sits in the strip instead of over the top row.
         CGFloat ls = MIN(1.0, MAX(0.75, (stripH * 1.4) / lcdH));
-        CGFloat wantMidY = stripTop + stripH / 2.0;
+        CGFloat wantMidY = stripTopUse + stripH / 2.0;
         CGFloat ty = wantMidY - CGRectGetMidY(natL);
-        CGFloat tx = 0.0;
         for (UIView *ancestor = lcd.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
             ancestor.clipsToBounds = NO;
         }
-        CGAffineTransform t = CGAffineTransformMakeTranslation(tx, ty);
+        CGAffineTransform t = CGAffineTransformMakeTranslation(0.0, ty);
         t = CGAffineTransformScale(t, ls, ls);
         lcd.transform = t;
         objc_setAssociatedObject(lcd, DSPhoneLcdPlacedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -4440,8 +4506,9 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
     } else {
         DSPhoneLiftNumberDisplay(root);
     }
-    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone pad fit647 grid=%d k=%.2f sx=%.2f sy=%.2f keys=%ld placed=%ld vis=%.0f-%.0f band=%.0f-%.0f padTop=%.0f rootScale=%.2f lcd=%s",
-                     gridOK ? 1 : 0, k, sx, sy, (long)n, (long)placed, visTop, visBottom, topBound, limit, padTop, rootScale,
+    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone pad fit648 grid=%d k=%.2f sx=%.2f sy=%.2f gap=%.2f pitchY=%.0f colPitch=%.0f keys=%ld placed=%ld hit=%lu vis=%.0f-%.0f band=%.0f-%.0f padTop=%.0f rootScale=%.2f lcd=%s",
+                     gridOK ? 1 : 0, k, sx, sy, gapRatio, pitchY, colPitchLog, (long)n, (long)placed, (unsigned long)hitKeys.count,
+                     visTop, visBottom, topBound, limit, padTop, rootScale,
                      lcd ? (object_getClassName(lcd) ?: "?") : "none"],
                     k, padTop, stageH);
 }
@@ -4917,6 +4984,12 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    // 4.5.648: staged Phone card root — moved dial keys sit outside their
+    // container's bounds; route touches on them to the key itself.
+    if (DSIsMobilePhone() && DSStaged() && objc_getAssociatedObject((UIView *)self, DSPhoneHitKeysKey)) {
+        UIView *phoneHit = %orig;
+        return DSPhoneRouteLiftedHit((UIView *)self, point, event, phoneHit);
+    }
     if (DSMessagesKeepsOwnKeys() || !DSMessagesLocalKeysHidden) return %orig;
     UIView *view = (UIView *)self;
     if (DSStaged() && DSViewIsStageShell(view) && ![view isKindOfClass:UIWindow.class]) {
@@ -5002,6 +5075,18 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    // 4.5.648: staged Phone — same routing at the window, in case the card
+    // root's class overrides hitTest without calling super.
+    if (DSIsMobilePhone() && DSStaged()) {
+        UIView *phoneRoot = ((UIWindow *)self).rootViewController.view;
+        if (phoneRoot && phoneRoot.superview && objc_getAssociatedObject(phoneRoot, DSPhoneHitKeysKey)) {
+            UIView *phoneHit = %orig;
+            if (phoneHit && phoneHit != (UIView *)self && ![phoneHit isDescendantOfView:phoneRoot]) return phoneHit;
+            CGPoint inRoot = [(UIView *)self convertPoint:point toView:phoneRoot];
+            UIView *routed = DSPhoneRouteLiftedHit(phoneRoot, inRoot, event, (phoneHit == (UIView *)self) ? nil : phoneHit);
+            return routed ?: phoneHit;
+        }
+    }
     if (DSBeeperKeepsItsLayout() || DSMessagesKeepsOwnKeys()) return %orig;
     if (!DSStaged() || !DSWindowIsKeyboardChrome(self)) return %orig;
     UIView *hit = %orig;

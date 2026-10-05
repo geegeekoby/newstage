@@ -1,3 +1,6 @@
+**4.5.648**
+- Staged Phone: dial keys work again. The keys were moved one by one outside their number-pad/dialer containers, and iOS only passes a tap down to a view if it lands inside the parent's box, so the keys were drawn but every tap was dropped. Taps on a visible, moved key now go straight to that key (the hit area matches the drawn circle). The pad is also packed tighter: rows use a tight Phone-like gap instead of stretching to fill the height, keys are as large as the stage allows (still round), the columns still spread across the card but the gap between keys is capped so small keys no longer float far apart, call sits under 0 and delete under #, and the typed number sits just above 1-2-3. Stage card size unchanged.
+
 **4.5.647**
 - Staged Phone: dial pad lifted to fill the stage. 4.5.646 kept a tall status strip plus the full number-field height above the keys, so a big empty black band sat over 1-2-3. Now only a small corner pad and a modest typed-number strip stay at the top, and the 1–# grid plus the call row spread down to just above the tab bar. Call always sits under 0 and delete under # in their own row (never floating over the 7). Same side-to-side width, keys stay round, stage card size unchanged.
 

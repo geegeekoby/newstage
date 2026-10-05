@@ -1,0 +1,1020 @@
+build 4.5.613 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+[TRACE] SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+[TRACE] SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCrack.plist,AudioRecorder.dylib,dig3st.dylib,SNMessenger.plist,ShadowBuster.plist,Griddy.dylib,RocketPro.plist,TasksCrack.plist,Designer.dylib,Cephei-compat.dylib,SwiftgramPatch.dylib,DynamicStageApp.dylib,EmojiSkinPrefs.dylib,Bloom.dylib,0Antho.dylib,AlertControllerllld.dylib,NoRedirect.plist,PreferenceLoader.plist,replaced.dylib,DisableAppLibrary.plist,FilzaCrack.dylib,AudioRecorder.plist,dig3st.plist,SNMessenger.dylib,DynamicStage.dylib,FouadCrack.plist,PhotomathPlus.plist,Erika.dylib,SimpleActivationActions.dylib,DataManager.plist,AppStoreUpdatesTab.plist,GraphitePlugin.plist,SandyProxy.dylib,DavevanCrack.dylib,AppData.plist,Airaw.plist,0symbolab.dylib,CameraModes.dylib,PicsArt.dylib,CCSupport.plist,TeraBoxPremium.plist,Xinam1ne.dylib,LoopVideos.dylib,FouadCrack.dylib,DynamicStage.plist,PhotomathPlus.dylib,EmojiPort,Erika.plist,DataManager.dylib,SimpleActivationActions.plist,AppStoreUpdatesTab.dylib,GraphitePlugin.dylib,SandyProxy.plist,DavevanCrack.plist,CameraModes.plist,Airaw.dylib,0symbolab.plist,AppData.dylib,PicsArt.plist,Xinam1ne.plist,TeraBoxPremium.dylib,CCSupport.dylib,LoopVideos.plist,CepheiSpringBoard.plist,Rocket.dylib,1NebbsCrack.plist,0Snail.dylib,FacebookNoAds.plist,82Hack.dylib,LetMeDecline.dylib,LimneosCrack.dylib,SimPlus.dylib,RocketBootstrap.plist,ApolloCrack.dylib,CC18.dylib,NoYTPremium.dylib,LyricsTweak.dylib,SafariBlocker.plist,AudioRecorderUI.plist,CepheiSpringBoard.dylib,1NebbsCrack.dylib,Rocket.plist,0Snail.plist,FacebookNoAds.dylib,LetMeDecline.plist,82Hack.plist,LimneosCrack.plist,RocketBootstrap.dylib,SimPlus.plist,ApolloCrack.plist,CC18.plist,NoYTPremium.plist,LyricsTweak.plist,SafariBlocker.dylib,AudioRecorderUI.dylib,QuickAppsKill.dylib,RecordPause.dylib,EmojiPortPE.plist,PMP.plist,Photomator.dylib,YTShortsProgress.dylib,LendMyPhone.plist,iarrays_hack_.dylib,DeleteContact.plist,CalculatorConverter.dylib,appstoretroller.dylib,QuickAppsKill.plist,EmojiPortPE.dylib,RecordPause.plist,Photomator.plist,PMP.dylib,YTShortsProgress.plist,LendMyPhone.dylib,CalculatorConverter.plist,DeleteContact.dylib,iarrays_hack_.plist,appstoretroller.plist
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+[TRACE] SpringBoard: filter at boot ctor=[age=39s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=39s mapped bundle=com.apple.MobileSMS] libsPlist=[age=3106s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=3106s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }]
+SpringBoard: filter at boot ctor=[age=39s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=39s mapped bundle=com.apple.MobileSMS] libsPlist=[age=3106s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=3106s { Filter = { Bundles ...
+[TRACE] SpringBoard: stage window moved back to the foreground scene
+SpringBoard: stage window moved back to the foreground scene
+[CARD] reset geometry radius=44 mask=1 local={{5, 1012}, {420, 458}} screen={{5, 1012}, {420, 458}}
+[GEOM] place build 4.5.613 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[GEOM] place build 4.5.613 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TOUCH] screenY=291 top-half
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[TRACE] SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[REST] rejected restMaxY=2008, it is past the screen
+[REST]  slot=0 cardY=5 cardH=458 restMaxY=463
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.Spotlight frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: stayed up, boot guard cleared
+SpringBoard: stayed up, boot guard cleared
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=an app frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.mobilenotes frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.mobilenotes frame={{0, 0}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] arbiter on=0 src=com.apple.mobilenotes frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.mobilenotes frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: home gesture began, stage closed
+SpringBoard: home gesture began, stage closed
+[TRACE] SpringBoard: home gesture ended
+SpringBoard: home gesture ended
+[TRACE] SpringBoard: parked apps stopped following the home transition
+SpringBoard: parked apps stopped following the home transition
+[TRACE] app: com.apple.MobileSMS ctor ok
+app: com.apple.MobileSMS ctor ok
+[TRACE] app: com.apple.MobileSMS is listening for staged keys
+app: com.apple.MobileSMS is listening for staged keys
+[KEYS] hook search-cancel _cancelButtonPressed
+[TRACE] app: com.apple.MobileSMS is listening for staged keys
+app: com.apple.MobileSMS is listening for staged keys
+[TRACE] SpringBoard: home gesture began, stage closed
+SpringBoard: home gesture began, stage closed
+[TRACE] SpringBoard: home gesture ended
+SpringBoard: home gesture ended
+[TRACE] SpringBoard: parked apps stopped following the home transition
+SpringBoard: parked apps stopped following the home transition
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 288pt
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 301pt
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 288pt
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 301pt
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 288pt
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 301pt
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: home gesture began, stage closed
+SpringBoard: home gesture began, stage closed
+[TRACE] SpringBoard: home gesture ended
+SpringBoard: home gesture ended
+[TRACE] SpringBoard: parked apps stopped following the home transition
+SpringBoard: parked apps stopped following the home transition
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[GEOM] place build 4.5.613 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[GEOM] place build 4.5.613 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[TRACE] SpringBoard: stage window moved back to the foreground scene
+SpringBoard: stage window moved back to the foreground scene
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=1
+search field wait for key window: fr=0 win=1 key=1 att=1
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=1 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=1 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=2
+search field wait for key window: fr=0 win=1 key=1 att=2
+[TRACE] SpringBoard: search retry try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search retry try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field become first responder: fr=0 win=1 key=1 att=2
+search field become first responder: fr=0 win=1 key=1 att=2
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=3
+search field wait for key window: fr=0 win=1 key=1 att=3
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=3 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=3 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=4
+search field wait for key window: fr=0 win=1 key=1 att=4
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=4 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=4 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=5
+search field wait for key window: fr=0 win=1 key=1 att=5
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=5 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=5 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=6
+search field wait for key window: fr=0 win=1 key=1 att=6
+[TRACE] SpringBoard: search retry try=1 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search retry try=1 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field become first responder: fr=0 win=1 key=1 att=6
+search field become first responder: fr=0 win=1 key=1 att=6
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=7
+search field wait for key window: fr=0 win=1 key=1 att=7
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=7 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=7 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=8
+search field wait for key window: fr=0 win=1 key=1 att=8
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=8 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=8 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field begin editing: fr=0 win=1 key=1 att=0
+search field begin editing: fr=0 win=1 key=1 att=0
+[TRACE] SpringBoard: search retry try=2 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search retry try=2 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=0 drop=140 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=0 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=0 drop=140 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main*,fg-active/main
+[KEYS] uikit change frame={{0, 932}, {430, 243}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=0 lift=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 243}} staged=-1 search=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=0 lift=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0 (x2)
+[TRACE] search field restart: fr=0 win=1 key=1 att=0
+search field restart: fr=0 win=1 key=1 att=0
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=1
+search field wait for key window: fr=0 win=1 key=1 att=1
+[TRACE] arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=1 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=1 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=2
+search field wait for key window: fr=0 win=1 key=1 att=2
+[TRACE] SpringBoard: search retry try=3 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search retry try=3 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=3
+search field wait for key window: fr=0 win=1 key=1 att=3
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=3 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=3 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=4
+search field wait for key window: fr=0 win=1 key=1 att=4
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=4 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=4 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=5
+search field wait for key window: fr=0 win=1 key=1 att=5
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=5 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=5 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=6
+search field wait for key window: fr=0 win=1 key=1 att=6
+[TRACE] SpringBoard: search retry try=4 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search retry try=4 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=7
+search field wait for key window: fr=0 win=1 key=1 att=7
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=7 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=7 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field wait for key window: fr=0 win=1 key=1 att=8
+search field wait for key window: fr=0 win=1 key=1 att=8
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=8 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=8 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: moved the stage window onto the foreground scene
+SpringBoard: moved the stage window onto the foreground scene
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on its scene
+SpringBoard: taking key from SBHomeScreenWindow on its scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field begin editing: fr=0 win=1 key=1 att=0
+search field begin editing: fr=0 win=1 key=1 att=0
+[TRACE] SpringBoard: search missing try=5 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search missing try=5 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=0 drop=140 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=0 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=0 drop=140 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=0 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=0 drop=140 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x5)
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=0 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=0 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=0 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-140 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-140 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=0 lift=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=0 lift=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0 (x2)
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=0 lift=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0 (x5)
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+18:49:07.903 SpringBoard pid=26296 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+18:49:07.904 SpringBoard pid=26296 main | ready state=0 split=0 bottom=- top=- hover=-
+18:49:07.904 SpringBoard pid=26296 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+18:49:07.904 SpringBoard pid=26296 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+18:49:07.905 SpringBoard pid=26296 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+18:49:07.907 SpringBoard pid=26296 main | SpringBoard: filter at boot ctor=[age=39s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=39s mapped bundle=com.apple.MobileSMS] libsPlist=[age=3106s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios"...
+18:49:16.261 SpringBoard pid=26296 main | SpringBoard: stage window moved back to the foreground scene
+18:49:16.261 SpringBoard pid=26296 main | SpringBoard: stage on screen
+18:49:16.262 SpringBoard pid=26296 main | on screen state=2 split=0 bottom=- top=- hover=-
+18:49:16.262 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:49:16.263 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:49:16.263 SpringBoard pid=26296 main | SpringBoard: opened the top stage
+18:49:16.635 SpringBoard pid=26296 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:49:20.542 SpringBoard pid=26296 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:49:21.750 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+18:49:21.752 SpringBoard pid=26296 main | SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+18:49:23.034 SpringBoard pid=26296 main | SpringBoard: stayed up, boot guard cleared
+18:49:26.731 SpringBoard pid=26296 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:49:29.494 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 243}}
+18:49:29.501 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+18:49:32.259 SpringBoard pid=26296 bg | arbiter on=0 src=com.apple.mobilenotes frame={{0, 0}, {0, 0}}
+18:49:32.634 SpringBoard pid=26296 main | SpringBoard: home gesture began, stage closed
+18:49:32.803 SpringBoard pid=26296 main | SpringBoard: home gesture ended
+18:49:33.663 SpringBoard pid=26296 main | SpringBoard: parked apps stopped following the home transition
+18:49:34.582 MobileSMS pid=26319 main | app ctor reason=0 bundle=com.apple.MobileSMS
+18:49:34.583 SpringBoard pid=26296 main | app: com.apple.MobileSMS ctor ok
+18:49:35.132 SpringBoard pid=26296 main | app: com.apple.MobileSMS is listening for staged keys
+18:49:37.625 SpringBoard | app: com.apple.MobileSMS is listening for staged keys x2
+18:49:37.625 SpringBoard pid=26296 main | SpringBoard: home gesture began, stage closed
+18:49:37.869 SpringBoard pid=26296 main | SpringBoard: home gesture ended
+18:49:38.758 SpringBoard pid=26296 main | SpringBoard: parked apps stopped following the home transition
+18:49:38.855 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+18:49:38.855 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+18:49:38.859 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+18:49:38.859 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+18:49:38.865 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+18:49:38.865 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+18:49:38.866 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+18:49:38.866 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+18:49:39.682 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+18:49:39.686 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+18:49:39.687 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+18:49:39.687 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+18:49:39.714 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+18:49:39.714 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+18:49:39.715 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:39.715 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:40.224 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:40.225 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:41.845 SpringBoard | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} x2
+18:49:41.845 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+18:49:47.512 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+18:49:47.946 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+18:49:50.152 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+18:49:51.201 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+18:49:55.927 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+18:49:56.860 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:56.862 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:56.863 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:56.863 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:56.879 SpringBoard pid=26296 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+18:49:56.889 MobileSMS pid=26319 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:57.276 SpringBoard pid=26296 main | SpringBoard: home gesture began, stage closed
+18:49:57.303 MobileSMS pid=26319 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+18:49:57.497 SpringBoard pid=26296 main | SpringBoard: home gesture ended
+18:49:58.369 SpringBoard pid=26296 main | SpringBoard: parked apps stopped following the home transition
+18:50:00.503 SpringBoard pid=26296 main | SpringBoard: stage on screen
+18:50:00.503 SpringBoard pid=26296 main | on screen state=2 split=0 bottom=- top=- hover=-
+18:50:00.504 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:00.505 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:00.505 SpringBoard pid=26296 main | SpringBoard: opened the top stage
+18:50:00.775 SpringBoard pid=26296 main | SpringBoard: stage window moved back to the foreground scene
+18:50:00.819 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:00.819 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:00.819 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:03.837 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:03.845 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:03.845 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:03.846 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:03.847 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=1
+18:50:03.929 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=1 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:03.939 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:03.939 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:03.941 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:03.941 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=2
+18:50:04.013 SpringBoard pid=26296 main | SpringBoard: search retry try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.022 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.023 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.024 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.025 SpringBoard pid=26296 main | search field become first responder: fr=0 win=1 key=1 att=2
+18:50:04.025 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.032 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.032 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.034 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.034 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=3
+18:50:04.035 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=3 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.043 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.044 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.044 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.045 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=4
+18:50:04.117 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=4 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.125 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.125 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.126 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.127 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=5
+18:50:04.127 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=5 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.132 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.132 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.133 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.133 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=6
+18:50:04.196 SpringBoard pid=26296 main | SpringBoard: search retry try=1 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.203 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.204 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.205 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.205 SpringBoard pid=26296 main | search field become first responder: fr=0 win=1 key=1 att=6
+18:50:04.206 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.210 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.210 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.211 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.211 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=7
+18:50:04.216 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=7 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.220 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.220 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.221 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.221 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=8
+18:50:04.221 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=8 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.235 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.235 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.236 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.236 SpringBoard pid=26296 main | search field begin editing: fr=0 win=1 key=1 att=0
+18:50:04.380 SpringBoard pid=26296 main | SpringBoard: search retry try=2 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.391 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.391 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.425 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+18:50:04.433 SpringBoard pid=26296 main | SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+18:50:04.433 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.441 SpringBoard pid=26296 main | SpringBoard: UIKit willHide
+18:50:04.442 SpringBoard pid=26296 main | search field restart: fr=0 win=1 key=1 att=0
+18:50:04.442 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.445 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.445 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.445 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.445 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=1
+18:50:04.453 SpringBoard pid=26296 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+18:50:04.529 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=1 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.532 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.532 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.532 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.532 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=2
+18:50:04.612 SpringBoard pid=26296 main | SpringBoard: search retry try=3 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.618 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.618 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.619 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.620 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=2 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.624 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.625 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.625 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.626 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=3
+18:50:04.626 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=3 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.629 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.629 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.630 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.630 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=4
+18:50:04.710 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=4 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.719 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.719 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.721 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.721 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=5
+18:50:04.722 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=5 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.726 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.727 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.727 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.728 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=6
+18:50:04.788 SpringBoard pid=26296 main | SpringBoard: search retry try=4 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.797 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.797 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.799 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.799 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=6 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.804 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.805 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.806 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.806 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=7
+18:50:04.812 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=1 att=7 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.820 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.820 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:50:04.821 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.821 SpringBoard pid=26296 main | search field wait for key window: fr=0 win=1 key=1 att=8
+18:50:04.821 SpringBoard pid=26296 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBSystemApertureWindow winScene=fg-active fr=0 win=1 key=1 att=8 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:50:04.823 SpringBoard pid=26296 main | SpringBoard: moved the stage window onto the foreground scene
+18:50:04.823 SpringBoard pid=26296 main | SpringBoard: taking key from SBHomeScreenWindow on its scene
+18:50:04.824 SpringBoard pid=26296 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:04.824 SpringBoard pid=26296 main | search field begin editing: fr=0 win=1 key=1 att=0
+18:50:04.975 SpringBoard pid=26296 main | SpringBoard: search missing try=5 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:50:07.189 SpringBoard pid=26296 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+18:50:07.193 SpringBoard pid=26296 main | SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+18:50:07.942 SpringBoard | SpringBoard: UIKit willShow {{0, 631}, {430, 301}} x5
+18:50:07.942 SpringBoard pid=26296 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:50:07.944 SpringBoard pid=26296 main | SpringBoard: UIKit willHide
+
+--- crash ---
+Dynamic Stage crash log
+Build 4.5.613
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.613
+when: 1791179338
+signal: SIGTRAP
+session: 89A7EB77-7076-4C08-A0D2-91BB6BF9C4BF
+backtrace:
+  0xdb500001fd9cf214
+  0x90310001e039ffa8
+  0xc3640001068d3740
+  0x220800020da98648
+  0xc07000020da95150
+  0xd87980020da94f5c
+  0xa1028001e03260e0
+  0x0c120001bb0259dc
+  0xb1408001bb019754
+  0x1f578001bb02a37c
+  0x5c120001bb013f14
+  0xff7a8001a5310500
+  0xed2e0001a530d078
+  0x5e2f0001a5307634
+  0xb1048001bb00f4fc
+  0xeb1c0001bb012968
+--- recent stage lines ---
+app: com.apple.MobileSMS is listening for staged keys
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: tucking the open stage for home
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: tucking the open stage for home
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: restored the left stage, the other stays minimised
+SpringBoard: held a minimized stage scene update so another app can open
+app: com.apple.MobileSMS ctor ok
+app: com.apple.MobileSMS remote keyboard hooks are in
+app: com.apple.MobileSMS is listening for staged keys
+SpringBoard: tucking the open stage for home
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: restored the right stage, the other stays minimised
+SpringBoard: held a minimized stage scene update so another app can open
+=== end ===
+
+--- diagnostics ---

@@ -21,6 +21,8 @@
 
 @property (nonatomic, weak) id<DSAppPickerDelegate> delegate;
 @property (nonatomic, assign) BOOL darkMode;
+// Apps already on a stage, including ones minimized into a corner.
+@property (nonatomic, copy) NSSet<NSString *> *unavailableBundleIdentifiers;
 
 - (void)reloadContent;
 - (void)resetScrollPosition;

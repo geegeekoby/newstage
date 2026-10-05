@@ -1,0 +1,39 @@
+GitHub push blocked: no credentials on this box
+================================================
+Target: https://github.com/geegeekoby/newstage  (public, already has files on main)
+gh auth status: not logged in
+GH_TOKEN / GITHUB_TOKEN: unset
+No ~/.ssh keys, no gh hosts.yml
+
+What is ready locally
+- Staged tree (committed): /workspace/phone-stage-fit/github-push
+- Bundle: /workspace/phone-stage-fit/newstage-4.5.640.bundle
+- Deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.640_iphoneos-arm64.deb
+- Notes: /workspace/phone-stage-fit/DIAL-LIFT-640.txt
+
+Option A — PAT + push (recommended)
+1) Create a classic PAT with `repo` scope (or fine-grained write to geegeekoby/newstage).
+2) On any machine with the bundle or this tree:
+
+   cd /workspace/phone-stage-fit/github-push   # or clone the bundle below
+   git remote add origin https://github.com/geegeekoby/newstage.git
+   # Remote already has content; prefer merge/rebase, or force only if you want
+   # this tree to replace main entirely (user OK'd force for empty/new; this
+   # remote is NOT empty — confirm before force):
+   git push -u https://<TOKEN>@github.com/geegeekoby/newstage.git main
+   # OR replace remote history only after you confirm:
+   # git push --force https://<TOKEN>@github.com/geegeekoby/newstage.git main
+
+Option B — gh auth login on the box
+   gh auth login
+   cd /workspace/phone-stage-fit/github-push
+   git remote add origin https://github.com/geegeekoby/newstage.git
+   git push -u origin main
+
+Option C — from the bundle on your Mac / CI
+   git clone /path/to/newstage-4.5.640.bundle newstage-push
+   cd newstage-push
+   git remote add origin https://github.com/geegeekoby/newstage.git
+   git push -u origin main
+
+Do not invent or paste tokens into chat. After auth exists, ask the agent to push again.

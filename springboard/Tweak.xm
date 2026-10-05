@@ -5,9 +5,12 @@
 #import "DSPrivate.h"
 #import "DSConstants.h"
 #import "DSDiagnostics.h"
+#import "DSCrashLog.h"
 #import "DSBootstrap.h"
 #import "DSHomeReady.h"
 #import "DSKeyboardVisibility.h"
+#import "DSStageLayout.h"
+#import "DSStageContainerView.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -20,11 +23,13 @@
 //   2. When the home screen exists, Stage + Arbiter groups are initialised.
 //      That is the first moment a crash here could respring the phone, and it
 //      is after icons and windows are up.
-//   3. activate() builds the stage UI. If it returns, the launch guard is
-//      cleared immediately.
+//   3. activate() builds the stage UI. The launch guard stays raised for
+//      several seconds after that returns. A crash or a watchdog kill in
+//      that window leaves the guard raised, so the next SpringBoard start
+//      loads no stage hooks and the phone stays up.
 //
-// A crash between (2) and (3) completing trips the guard; the next SpringBoard
-// start loads only the Boot group so the device comes back.
+// A crash between (2) and the guard being cleared trips it; the next
+// SpringBoard start loads only the Boot group so the device comes back.
 //
 // Keyboard policy for iOS 16.5.1 on an iPhone: never steal a layer, never
 // refuse _canShowKeyboardLayer, never cycle presentation modes, never dlopen
@@ -35,8 +40,14 @@
 
 #pragma mark - Calling out of a hook
 
+// BeginFullInstall raises the on-disk guard before activate() returns. This
+// launch is allowed to run the stage. The next launch is not, unless the
+// delayed success mark clears that file. Checking the file here would switch
+// the stage off for the whole success window.
+static BOOL DSFullInstallLive = NO;
+
 static BOOL DSStageReady(void) {
-    return !DSKillSwitchPresent() && !DSLaunchGuardTripped();
+    return !DSKillSwitchPresent() && DSFullInstallLive;
 }
 
 static BOOL DSAsk(BOOL (^question)(DSStageManager *manager)) {
@@ -84,6 +95,27 @@ static void DSScheduleFullInstall(void) {
 
 %end
 
+// The app switcher updates every card's scene on each frame. Copying those
+// settings, and logging them, is what makes that scroll hitch. Only a scene
+// the stage is actually hosting needs the override path.
+static BOOL DSSceneUpdateMatters(NSString *identifier) {
+    if (!DSStageReady() || identifier.length == 0) return NO;
+    @try {
+        if ([[DSStageManager sharedManager] isHostingSceneIdentifier:identifier]) return YES;
+    } @catch (NSException *exception) {
+        return NO;
+    }
+    return [DSSceneHost sceneIdentifierHasOverride:identifier];
+}
+
+static BOOL DSSceneTraceAllowed(void) {
+    static CFAbsoluteTime last = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - last < 0.5) return NO;
+    last = now;
+    return YES;
+}
+
 static NSString *DSAnySceneIdentifier(id scene) {
     if (!scene) return nil;
     for (NSString *name in @[ @"identifier", @"sceneIdentifier" ]) {
@@ -117,15 +149,169 @@ static NSString *DSAnySceneIdentifier(id scene) {
         %orig;
         return;
     }
-    @try {
-        FBSMutableSceneSettings *mutableSettings = [settings mutableCopy];
-        if ([DSSceneHost applyOverridesToSettings:mutableSettings forScene:self]) {
-            %orig(mutableSettings, context, completion);
+    // The home transition updates every foreground scene. Applying that to an
+    // app the stage still hosts is the SIGTRAP. Leave the scene as it is and
+    // tell SpringBoard the update finished. A minimized app is the same case
+    // when another app is opened from the Home Screen.
+    NSString *incomingIdentifier = [self respondsToSelector:@selector(identifier)] ? self.identifier : nil;
+    if (!DSSceneUpdateMatters(incomingIdentifier)) {
+        %orig;
+        return;
+    }
+    // Opening a normal app stretches this scene to the phone and backgrounds
+    // it. That blacks the card and paints the app outside it. An on-screen
+    // stage keeps the size and foreground it already has.
+    if (incomingIdentifier.length > 0 &&
+        ![DSSceneHost homeGestureIsActive] &&
+        ![DSSceneHost sceneIdentifierStaysBackgrounded:incomingIdentifier] &&
+        DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager isHostingSceneIdentifier:incomingIdentifier];
+        })) {
+        CGRect incomingFrame = CGRectZero;
+        @try {
+            incomingFrame = settings.frame;
+        } @catch (NSException *exception) {
+        }
+        CGRect screen = UIScreen.mainScreen.bounds;
+        BOOL phoneSized = CGRectGetWidth(incomingFrame) > CGRectGetWidth(screen) - 30.0 &&
+                          CGRectGetHeight(incomingFrame) > CGRectGetHeight(screen) * 0.7;
+        // Opening another app stretches this scene back to the phone. That is
+        // the update to refuse. The tall split size is also this big, and the
+        // stage just asked for it. Refusing that one leaves the app at the
+        // half height, which is the black band under the old picture.
+        if (phoneSized &&
+            [DSSceneHost stageRequestedFrame:incomingFrame forSceneIdentifier:incomingIdentifier]) {
+            phoneSized = NO;
+        }
+        // Split just handed this app the phone. The full-screen frame has to
+        // land. Refusing it leaves the scene at the split size.
+        if (phoneSized && [DSSceneHost isHandingOffSceneIdentifier:incomingIdentifier]) {
+            phoneSized = NO;
+        }
+        // A card-sized update has to land even when its foreground flag reads
+        // off, or the app stays phone-sized and the card cuts off the bottom
+        // of the chat.
+        if (phoneSized) {
+            static CFAbsoluteTime DSLastKeptCardLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastKeptCardLog > 1.0) {
+                DSLastKeptCardLog = now;
+                DSDiagnosticsRecord(@"SpringBoard: kept the open stage inside its card while another app opened");
+            }
+            NSString *kept = [incomingIdentifier copy];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                DSTell(^(DSStageManager *manager) {
+                    [manager keepOnScreenStageInsideCardForSceneIdentifier:kept];
+                });
+            });
+            if (completion) {
+                void (^done)(BOOL) = (void (^)(BOOL))completion;
+                done(YES);
+            }
             return;
         }
+    }
+    if ([DSSceneHost homeGestureIsActive] ||
+        [DSSceneHost sceneIdentifierStaysBackgrounded:([self respondsToSelector:@selector(identifier)] ? self.identifier : nil)]) {
+        NSString *identifier = [self respondsToSelector:@selector(identifier)] ? self.identifier : nil;
+        BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:identifier] || DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager isHostingSceneIdentifier:identifier];
+        });
+        if (hosted) {
+            static CFAbsoluteTime DSLastHeldSettingsLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastHeldSettingsLog > 1.0) {
+                DSLastHeldSettingsLog = now;
+                DSDiagnosticsRecord(@"SpringBoard: held a minimized stage scene update so another app can open");
+            }
+            if (completion) {
+                void (^done)(BOOL) = (void (^)(BOOL))completion;
+                done(YES);
+            }
+            return;
+        }
+    }
+    // A video updates its scene constantly. Snapshotting or laying out the
+    // card from inside this call updates the scene again, and that re-entry
+    // is an assertion. A Messages conversation push is the same shape: the
+    // presentation lays out before this call returns.
+    [DSSceneHost beginSceneSettingsUpdate];
+    NSString *traceIdentifier = [self respondsToSelector:@selector(identifier)] ? self.identifier : nil;
+    CGRect traceFrame = CGRectZero;
+    BOOL traceForegroundKnown = NO;
+    BOOL traceForeground = [DSSceneHost readForegroundFlag:settings known:&traceForegroundKnown];
+    @try {
+        traceFrame = settings.frame;
     } @catch (NSException *exception) {
     }
-    %orig;
+    BOOL traceHosted = DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager isHostingSceneIdentifier:traceIdentifier];
+    });
+    BOOL traceCare = traceHosted ||
+        [traceIdentifier rangeOfString:@"MobileSMS"].location != NSNotFound ||
+        [traceIdentifier rangeOfString:@"keyboard" options:NSCaseInsensitiveSearch].location != NSNotFound;
+    if (traceCare && DSSceneTraceAllowed()) {
+        DSTraceFormat(@"scene update begin %@ fg=%d depth=%ld frame=%@",
+                      traceIdentifier ?: @"?",
+                      traceForegroundKnown ? traceForeground : -1,
+                      (long)[DSSceneHost sceneSettingsUpdateDepth],
+                      NSStringFromCGRect(traceFrame));
+    }
+    BOOL keepFront = traceHosted &&
+        ![DSSceneHost homeGestureIsActive] &&
+        ![DSSceneHost sceneIdentifierStaysBackgrounded:traceIdentifier];
+    @try {
+        if ([DSSceneHost sceneSettingsUpdateDepth] > 1) {
+            FBSMutableSceneSettings *mutableSettings = keepFront ? [settings mutableCopy] : nil;
+            if (mutableSettings) {
+                [DSSceneHost applyOverridesToSettings:mutableSettings forScene:self];
+                [DSSceneHost keepCommittedForegroundOfScene:self onSettings:mutableSettings];
+                %orig(mutableSettings, context, completion);
+            } else {
+                %orig;
+            }
+            return;
+        }
+        @try {
+            NSString *identifier = [self respondsToSelector:@selector(identifier)] ? self.identifier : nil;
+            BOOL hosted = DSAsk(^BOOL(DSStageManager *manager) {
+                return [manager isHostingSceneIdentifier:identifier];
+            });
+            if (hosted) {
+                BOOL known = NO;
+                BOOL foreground = [DSSceneHost readForegroundFlag:settings known:&known];
+                NSString *identCopy = [identifier copy];
+                BOOL covered = known && !foreground;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    DSTell(^(DSStageManager *manager) {
+                        [manager noteHostedSceneIdentifier:identCopy covered:covered];
+                    });
+                });
+            }
+        } @catch (NSException *exception) {
+        }
+        @try {
+            FBSMutableSceneSettings *mutableSettings = [settings mutableCopy];
+            BOOL overridden = mutableSettings && [DSSceneHost applyOverridesToSettings:mutableSettings forScene:self];
+            if (mutableSettings && keepFront) {
+                [DSSceneHost keepCommittedForegroundOfScene:self onSettings:mutableSettings];
+                overridden = YES;
+            }
+            if (overridden) {
+                %orig(mutableSettings, context, completion);
+                return;
+            }
+        } @catch (NSException *exception) {
+        }
+        %orig;
+    } @finally {
+        if (traceCare && DSSceneTraceAllowed()) {
+            DSTraceFormat(@"scene update end %@ depth=%ld",
+                          traceIdentifier ?: @"?",
+                          (long)[DSSceneHost sceneSettingsUpdateDepth]);
+        }
+        [DSSceneHost endSceneSettingsUpdate];
+    }
 }
 
 - (void)updateSettingsWithBlock:(void (^)(FBSMutableSceneSettings *settings))block {
@@ -133,15 +319,85 @@ static NSString *DSAnySceneIdentifier(id scene) {
         %orig;
         return;
     }
+    NSString *incomingIdentifier = [self respondsToSelector:@selector(identifier)] ? self.identifier : nil;
+    if (!DSSceneUpdateMatters(incomingIdentifier)) {
+        %orig;
+        return;
+    }
+    // Same hold as updateSettings:withTransitionContext:. Applying a home /
+    // minimized update to a hosted stage scene is the SIGTRAP. Do not %orig.
+    if ([DSSceneHost homeGestureIsActive] ||
+        [DSSceneHost sceneIdentifierStaysBackgrounded:incomingIdentifier]) {
+        BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:incomingIdentifier] || DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager isHostingSceneIdentifier:incomingIdentifier];
+        });
+        if (hosted) {
+            static CFAbsoluteTime DSLastHeldBlockLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastHeldBlockLog > 1.0) {
+                DSLastHeldBlockLog = now;
+                DSDiagnosticsRecord(@"SpringBoard: held a minimized stage scene update so another app can open");
+            }
+            return;
+        }
+    }
 
     __weak __typeof(self) weakSelf = self;
-    %orig(^(FBSMutableSceneSettings *settings) {
-        block(settings);
-        @try {
-            [DSSceneHost applyOverridesToSettings:settings forScene:(FBScene *)weakSelf];
-        } @catch (NSException *exception) {
-        }
-    });
+    [DSSceneHost beginSceneSettingsUpdate];
+    @try {
+        %orig(^(FBSMutableSceneSettings *settings) {
+            FBScene *scene = (FBScene *)weakSelf;
+            NSString *identifier = [scene respondsToSelector:@selector(identifier)] ? scene.identifier : nil;
+            BOOL hosted = DSAsk(^BOOL(DSStageManager *manager) {
+                return [manager isHostingSceneIdentifier:identifier];
+            });
+            if ((hosted || [identifier rangeOfString:@"MobileSMS"].location != NSNotFound) &&
+                DSSceneTraceAllowed()) {
+                DSTraceFormat(@"scene block %@ frame=%@", identifier ?: @"?", NSStringFromCGRect(settings.frame));
+            }
+            block(settings);
+            @try {
+                [DSSceneHost applyOverridesToSettings:settings forScene:(FBScene *)weakSelf];
+                // Foreground stays whatever the scene already committed. Writing
+                // YES here is a change the live app view rejects, and that
+                // rejection used to take the card size down with it.
+                if (hosted && ![DSSceneHost sceneIdentifierStaysBackgrounded:identifier]) {
+                    [DSSceneHost keepCommittedForegroundOfScene:scene onSettings:settings];
+                }
+                // Kept-card path parity: if the block stretched a hosted on-screen
+                // stage to phone size, put the card frame back and refit after
+                // this update returns (never start another write here).
+                if (hosted &&
+                    ![DSSceneHost homeGestureIsActive] &&
+                    ![DSSceneHost sceneIdentifierStaysBackgrounded:identifier]) {
+                    CGRect after = CGRectZero;
+                    @try { after = settings.frame; } @catch (NSException *e) {}
+                    CGRect screen = UIScreen.mainScreen.bounds;
+                    BOOL phoneSized = CGRectGetWidth(after) > CGRectGetWidth(screen) - 30.0 &&
+                                      CGRectGetHeight(after) > CGRectGetHeight(screen) * 0.7;
+                    if (phoneSized &&
+                        ![DSSceneHost stageRequestedFrame:after forSceneIdentifier:identifier] &&
+                        ![DSSceneHost isHandingOffSceneIdentifier:identifier]) {
+                        static CFAbsoluteTime DSLastKeptBlockLog = 0;
+                        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+                        if (now - DSLastKeptBlockLog > 1.0) {
+                            DSLastKeptBlockLog = now;
+                            DSDiagnosticsRecord(@"SpringBoard: kept the open stage inside its card while another app opened");
+                        }
+                        NSString *kept = [identifier copy];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            DSTell(^(DSStageManager *manager) {
+                                [manager keepOnScreenStageInsideCardForSceneIdentifier:kept];
+                            });
+                        });
+                    }
+                }
+            } @catch (NSException *exception) {
+            }
+        });
+    } @finally {
+        [DSSceneHost endSceneSettingsUpdate];
+    }
 }
 
 %end
@@ -184,13 +440,44 @@ static NSString *DSAnySceneIdentifier(id scene) {
 %hook SBAppViewController
 
 - (void)sceneHandle:(id)handle didUpdateSettingsWithDiff:(id)diff previousSettings:(id)previousSettings {
-    if ([DSSceneHost ownsAppViewController:self]) {
+        if ([DSSceneHost ownsAppViewController:self]) {
+        DSTrace(@"app-view settings update");
+        // SIGTRAP, not an exception: the home transition updates this host and
+        // the original method asserts. Holding the update is what keeps
+        // SpringBoard alive. The scene itself still changes underneath.
+        if ([DSSceneHost homeGestureIsActive] || [DSSceneHost appViewControllerStaysBackgrounded:self]) {
+            static CFAbsoluteTime DSLastHeldSceneLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastHeldSceneLog > 1.0) {
+                DSLastHeldSceneLog = now;
+                DSDiagnosticsRecord(@"SpringBoard: held a minimized app view update so another app can open");
+            }
+            return;
+        }
+        // The app view is already Live. Letting it apply a foreground change
+        // throws "out from underneath us" and the card goes black.
+        NSString *diffText = [diff description] ?: @"";
+        NSInteger displayMode = -1;
+        if ([self respondsToSelector:@selector(displayMode)]) {
+            displayMode = ((NSInteger (*)(id, SEL))objc_msgSend)(self, @selector(displayMode));
+        }
+        if (displayMode == 4 &&
+            [diffText rangeOfString:@"foreground" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            static CFAbsoluteTime DSLastLiveLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastLiveLog > 1.0) {
+                DSLastLiveLog = now;
+                DSDiagnosticsRecord(@"SpringBoard: left the live scene alone so a foreground change does not black the card");
+            }
+            return;
+        }
         @try {
             %orig;
         } @catch (NSException *exception) {
             DSDiagnosticsRecordFormat(@"SpringBoard: contained a scene update from the staged app (%@)",
                                       exception.reason ?: exception.name ?: @"?");
         }
+        DSTrace(@"app-view settings update done");
         return;
     }
     %orig;
@@ -209,12 +496,15 @@ static NSString *DSAnySceneIdentifier(id scene) {
         })) {
         return;
     }
+    DSTell(^(DSStageManager *manager) {
+        [manager noteHomeGestureBegan:gesture];
+    });
     %orig;
 }
 
 - (BOOL)shouldBeginGestureAtStartingPoint:(CGPoint)point velocity:(CGPoint)velocity bounds:(CGRect)bounds {
     if (DSAsk(^BOOL(DSStageManager *manager) {
-            return [manager shouldSuppressSystemGestureAtPoint:point];
+            return [manager shouldSuppressSystemGestureAtPoint:point velocity:velocity];
         })) {
         return NO;
     }
@@ -236,7 +526,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 - (BOOL)shouldBeginGestureAtStartingPoint:(CGPoint)point velocity:(CGPoint)velocity bounds:(CGRect)bounds {
     if (DSAsk(^BOOL(DSStageManager *manager) {
-            return [manager shouldSuppressSystemGestureAtPoint:point];
+            return [manager shouldSuppressSystemGestureAtPoint:point velocity:velocity];
         })) {
         return NO;
     }
@@ -245,10 +535,100 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 %end
 
+static NSInteger DSGrabberFrameDepth = 0;
+static const void *DSGrabberHiddenByStageKey = &DSGrabberHiddenByStageKey;
+
+// The pill follows the bottom of whatever scene is in front. A stage card is
+// that scene, so the pill was sitting on the card. It belongs on the phone.
+static CGRect DSPinnedHomeGrabberFrame(UIView *view, CGRect frame) {
+    if (CGRectGetHeight(frame) < 8.0 || CGRectGetHeight(frame) > 80.0) return frame;
+    UIView *superview = view.superview;
+    if (!superview) return frame;
+    CGRect screen = UIScreen.mainScreen.bounds;
+    CGRect onScreen = [superview convertRect:frame toView:nil];
+    if (CGRectGetHeight(onScreen) < 8.0 || CGRectGetHeight(onScreen) > 80.0) return frame;
+    if (CGRectGetMaxY(onScreen) >= CGRectGetMaxY(screen) - 20.0) return frame;
+    onScreen.origin.y = CGRectGetMaxY(screen) - CGRectGetHeight(onScreen);
+    return [superview convertRect:onScreen fromView:nil];
+}
+
+// A short superview clips a pill we try to park at the phone's bottom, which
+// leaves it painted on the card. Hide that one. A screen-sized superview can
+// hold the pill at the real bottom.
+static BOOL DSGrabberWouldBeClipped(UIView *view, CGRect frame) {
+    UIView *superview = view.superview;
+    if (!superview) return NO;
+    CGFloat screenHeight = CGRectGetHeight(UIScreen.mainScreen.bounds);
+    if (CGRectGetHeight(superview.bounds) >= screenHeight - 40.0) return NO;
+    return CGRectGetMaxY(frame) > CGRectGetHeight(superview.bounds) + 4.0 ||
+           CGRectGetMinY(frame) < -4.0;
+}
+
+static void DSNoteGrabberHidden(UIView *view, BOOL hidden) {
+    objc_setAssociatedObject(view, DSGrabberHiddenByStageKey, hidden ? @YES : nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+// Each app card in the system switcher has its own home pill, and that pill
+// moves with the card every frame. Pinning those pills to the bottom of the
+// phone fights that animation. Only the stage's own card needs it.
+static BOOL DSSystemSwitcherIsVisible(void) {
+    Class controllerClass = objc_getClass("SBMainSwitcherController");
+    if (!controllerClass || ![controllerClass respondsToSelector:@selector(sharedInstance)]) return NO;
+    id controller = ((id (*)(id, SEL))objc_msgSend)(controllerClass, @selector(sharedInstance));
+    SEL visible = @selector(isMainSwitcherVisible);
+    if (![controller respondsToSelector:visible]) return NO;
+    return ((BOOL (*)(id, SEL))objc_msgSend)(controller, visible);
+}
+
+static BOOL DSStageShouldMoveHomeGrabber(void) {
+    if (!DSStageReady()) return NO;
+    if ([DSSceneHost homeGestureIsActive]) return NO;
+    BOOL visible = NO;
+    @try {
+        visible = [DSStageManager sharedManager].isStageVisible;
+    } @catch (NSException *exception) {
+        return NO;
+    }
+    if (!visible) return NO;
+    return !DSSystemSwitcherIsVisible();
+}
+
 %hook SBHomeGrabberView
 
+- (void)setFrame:(CGRect)frame {
+    if (DSGrabberFrameDepth == 0 && DSStageShouldMoveHomeGrabber()) {
+        frame = DSPinnedHomeGrabberFrame(self, frame);
+    }
+    DSGrabberFrameDepth += 1;
+    %orig(frame);
+    DSGrabberFrameDepth -= 1;
+}
+
+- (void)layoutSubviews {
+    %orig;
+    if (!DSStageShouldMoveHomeGrabber()) return;
+    if (DSGrabberFrameDepth > 0) return;
+    CGRect fixed = DSPinnedHomeGrabberFrame(self, self.frame);
+    BOOL clipped = DSGrabberWouldBeClipped(self, fixed);
+    BOOL hide = clipped || DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager shouldHideSystemHomeAffordance];
+    });
+    if (hide) {
+        if (self.alpha > 0.01) DSNoteGrabberHidden(self, YES);
+        self.alpha = 0.0;
+        self.userInteractionEnabled = NO;
+        return;
+    }
+    if ([objc_getAssociatedObject(self, DSGrabberHiddenByStageKey) boolValue]) {
+        DSNoteGrabberHidden(self, NO);
+        self.alpha = 1.0;
+        self.userInteractionEnabled = YES;
+    }
+    if (!CGRectEqualToRect(fixed, self.frame)) self.frame = fixed;
+}
+
 - (void)setAlpha:(CGFloat)alpha {
-    if (DSAsk(^BOOL(DSStageManager *manager) {
+    if (DSStageShouldMoveHomeGrabber() && DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldHideSystemHomeAffordance];
         })) {
         %orig(0.0);
@@ -259,7 +639,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 - (void)didMoveToWindow {
     %orig;
-    if (DSAsk(^BOOL(DSStageManager *manager) {
+    if (DSStageShouldMoveHomeGrabber() && DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldHideSystemHomeAffordance];
         })) {
         self.alpha = 0.0;
@@ -342,9 +722,9 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 %end
 
-// The hosted keyboard view is what paints the keys inside the card. Leaving it
-// out keeps them on the remote-keyboard scene. This does not move that window,
-// hide a view, or assign the keyboard UI host.
+// 4.5.416 left this view out of every staged app so the keys stayed on the
+// remote keyboard, which is then raised above the stage. Messages still gets
+// the view, because that is the keyboard that is already working.
 %hook _UIRemoteKeyboards
 
 - (void)addHostedWindowView:(id)view fromPID:(int)pid forScene:(id)scene {
@@ -352,15 +732,16 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
     BOOL staged = identifier.length > 0 && DSAsk(^BOOL(DSStageManager *manager) {
         return [manager isHostingSceneIdentifier:identifier];
     });
-    if (!staged) {
+    BOOL messages = [identifier rangeOfString:@"MobileSMS"].location != NSNotFound;
+    if (!staged || messages) {
         %orig;
         return;
     }
-    static BOOL logged = NO;
-    if (!logged) {
-        logged = YES;
+    static NSString *loggedIdentifier = nil;
+    if (identifier.length && ![loggedIdentifier isEqualToString:identifier]) {
+        loggedIdentifier = [identifier copy];
         NSString *viewName = view ? NSStringFromClass([view class]) : @"nil";
-        DSDiagnosticsRecordFormat(@"SpringBoard: left %@ out of %@ so the keys stay on the remote keyboard",
+        DSDiagnosticsRecordFormat(@"SpringBoard: left %@ out of %@ so the keys stay on the raised keyboard",
                                   viewName, identifier);
     }
     (void)pid;
@@ -417,6 +798,8 @@ static void DSForwardHostedKeyboardText(NSString *text, BOOL isDelete) {
 
 %end
 
+static BOOL DSHostedAppOwnsKeyboard(void);
+
 static BOOL DSWindowIsKeyboard(UIWindow *window) {
     if (![window isKindOfClass:UIWindow.class]) return NO;
     NSString *name = NSStringFromClass(window.class);
@@ -434,7 +817,23 @@ static CGRect DSKeyBandInWindow(UIWindow *window) {
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     if (cachedValid && cachedWindow == window && (now - cachedAt) < 0.1) return cached;
     CGRect keys = DSKeyboardKeysInWindow(window);
+    CGRect onScreen = DSVisibleFullKeyboardFrameOnScreen();
+    if (CGRectIsNull(onScreen)) onScreen = DSVisibleKeyboardFrameOnScreen();
+    if (!CGRectIsNull(onScreen)) {
+        CGRect inWindow = CGRectOffset(onScreen,
+                                       -CGRectGetMinX(window.frame),
+                                       -CGRectGetMinY(window.frame));
+        // After the first letter a second keyboard view sits at y=932. That
+        // strip is below the keys the user can see, so the next tap is treated
+        // as above the keys and falls through.
+        if (CGRectIsNull(keys) || !CGRectIntersectsRect(keys, inWindow)) {
+            keys = inWindow;
+        }
+    }
     if (CGRectIsNull(keys)) {
+        // No key strip in the docked window. A guessed band would swallow the
+        // bottom of the card after the keyboard view has been hidden.
+        if (DSKeyboardWindowIsDocked(window)) return CGRectNull;
         CGRect bounds = window.bounds;
         CGFloat band = MIN(340.0, CGRectGetHeight(bounds));
         keys = CGRectMake(0.0, CGRectGetMaxY(bounds) - band, CGRectGetWidth(bounds), band);
@@ -448,65 +847,12 @@ static CGRect DSKeyBandInWindow(UIWindow *window) {
     return keys;
 }
 
-static BOOL DSNameIsKeyboardSurface(NSString *name) {
-    if (name.length == 0) return NO;
-    if ([name rangeOfString:@"TextEffects"].location != NSNotFound) return NO;
-    if ([name rangeOfString:@"Window"].location != NSNotFound) return NO;
-    return [name rangeOfString:@"UIKeyboard"].location != NSNotFound ||
-           [name rangeOfString:@"KeyboardLayout"].location != NSNotFound ||
-           [name rangeOfString:@"Keyboard"].location != NSNotFound;
-}
-
-// The key view itself, not the full-screen window it sits in. A host view that
-// fills the window is the cover over the card, so it is skipped.
-static UIView *DSFindKeyboardView(UIView *root, UIWindow *window, NSInteger depth, UIView **best, CGFloat *bestHeight) {
-    if (depth > 14 || ![root isKindOfClass:UIView.class] || root.hidden || root.alpha < 0.01) return nil;
-    NSString *name = NSStringFromClass(root.class);
-    if (root != (UIView *)window && DSNameIsKeyboardSurface(name) && !CGRectIsEmpty(root.bounds)) {
-        CGRect inWindow = [root convertRect:root.bounds toView:window];
-        CGFloat windowHeight = CGRectGetHeight(window.bounds);
-        CGFloat height = CGRectGetHeight(inWindow);
-        if (windowHeight > 1.0 &&
-            height >= kDSKeyboardPresentHeight &&
-            height <= windowHeight * 0.55 &&
-            CGRectGetMinY(inWindow) >= windowHeight * 0.30 &&
-            height > *bestHeight) {
-            *best = root;
-            *bestHeight = height;
-        }
-    }
-    for (UIView *subview in root.subviews) {
-        DSFindKeyboardView(subview, window, depth + 1, best, bestHeight);
-    }
-    return *best;
-}
-
-static UIView *DSKeyboardViewInWindow(UIWindow *window) {
-    static __weak UIWindow *cachedWindow = nil;
-    static __weak UIView *cachedView = nil;
-    static CFAbsoluteTime cachedAt = 0;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (cachedWindow == window && (now - cachedAt) < 0.1) return cachedView;
-    UIView *best = nil;
-    CGFloat bestHeight = 0;
-    DSFindKeyboardView(window, window, 0, &best, &bestHeight);
-    cachedWindow = window;
-    cachedView = best;
-    cachedAt = now;
-    return best;
-}
-
-// YES only when the point lands inside the keyboard view's own bounds.
 static BOOL DSPointInWindowIsOnKeys(UIWindow *window, CGPoint pointInWindow) {
     if (![window isKindOfClass:UIWindow.class]) return NO;
-    UIView *keyboardView = DSKeyboardViewInWindow(window);
-    if (!keyboardView) return CGRectContainsPoint(DSKeyBandInWindow(window), pointInWindow);
-    CGPoint inKeyboard = [window convertPoint:pointInWindow toView:keyboardView];
-    return CGRectContainsPoint(keyboardView.bounds, inKeyboard);
+    return CGRectContainsPoint(DSKeyBandInWindow(window), pointInWindow);
 }
 
 static BOOL DSViewNameIsKeyboardChrome(UIView *view) {
-    if (![view isKindOfClass:UIView.class]) return NO;
     NSString *name = NSStringFromClass(object_getClass(view));
     return [name rangeOfString:@"Keyboard"].location != NSNotFound ||
            [name rangeOfString:@"TextEffects"].location != NSNotFound ||
@@ -514,99 +860,173 @@ static BOOL DSViewNameIsKeyboardChrome(UIView *view) {
            [name rangeOfString:@"UIKB"].location != NSNotFound;
 }
 
-static void DSNoteGhostKeyboardIgnored(void) {
-    static BOOL noted = NO;
-    if (noted) return;
-    noted = YES;
-    DSDiagnosticsRecord(@"SpringBoard: a second keyboard window ignored a touch");
-}
-
-// YES when this touch is on a keyboard window that should not take it. A
-// second keyboard window stacked on the real one is ignored for every point,
-// including the key strip. The windows are not moved.
-static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
-    if (!DSExternalKeyboardCoversStage() || ![view isKindOfClass:UIView.class]) return NO;
-    UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
-    if (!window) return NO;
-    BOOL keyboardWindow = DSWindowIsKeyboard(window);
-    if (!keyboardWindow && !DSViewNameIsKeyboardChrome(view)) return NO;
-    if (keyboardWindow && !DSKeyboardWindowIsInteractive(window)) {
-        DSNoteGhostKeyboardIgnored();
+// Staged Messages is using SpringBoard's keyboard. A tap that already hit a
+// key has to stay there. The app picker search is not this keyboard.
+static BOOL DSMessagesSpringBoardKeyboardOwnsTouches(void) {
+    if (!DSIsMessagesKeyboardUp()) return NO;
+    __block BOOL search = NO;
+    DSAsk(^BOOL(DSStageManager *manager) {
+        search = manager.isPickerSearchActive;
         return YES;
-    }
-    CGPoint inWindow = (view == (UIView *)window) ? point : [view convertPoint:point toView:window];
-    if (DSPointInWindowIsOnKeys(window, inWindow)) return NO;
-    return YES;
+    });
+    return !search;
 }
 
-// Hit testing already lets the touch through. The keyboard still watches every
-// event in the process and treats a scroll on the card as a key. A touch stays
-// with the keyboard only when it is actually on the key strip.
-static BOOL DSScreenPointHitsKeys(CGPoint screenPoint) {
+// The keyboard rect UIKit is actually drawing. A parked host at y=932 is not
+// this rect. convertPoint:toView:nil stops at the window, so try the window
+// origin and the local point as well.
+static BOOL DSHitLandsOnVisibleKeys(UIView *view, CGPoint point) {
+    if (![view isKindOfClass:UIView.class]) return NO;
     static CGRect cached = {{0, 0}, {0, 0}};
+    static BOOL cachedValid = NO;
     static CFAbsoluteTime cachedAt = 0;
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (cachedAt == 0 || (now - cachedAt) > 0.1) {
-        CGRect screen = UIScreen.mainScreen.bounds;
-        CGRect keys = DSInteractiveKeyboardFrameOnScreen();
-        if (CGRectIsNull(keys)) keys = DSVisibleKeyboardFrameOnScreen();
-        BOOL plausible = !CGRectIsNull(keys) &&
-            CGRectGetHeight(keys) >= kDSKeyboardPresentHeight &&
-            CGRectGetHeight(keys) <= CGRectGetHeight(screen) * 0.5 &&
-            CGRectGetMinY(keys) >= CGRectGetHeight(screen) * 0.35;
-        if (!plausible) {
-            CGFloat band = 320.0;
-            keys = CGRectMake(0.0, CGRectGetMaxY(screen) - band, CGRectGetWidth(screen), band);
+    if (!cachedValid || (now - cachedAt) >= 0.05) {
+        CGRect visible = DSVisibleFullKeyboardFrameOnScreen();
+        if (CGRectIsNull(visible) || CGRectGetHeight(visible) < 160.0) {
+            visible = DSVisibleKeyboardFrameOnScreen();
         }
-        cached = CGRectInset(keys, -8.0, -12.0);
+        CGFloat screenH = CGRectGetHeight(UIScreen.mainScreen.bounds);
+        if (!CGRectIsNull(visible) && CGRectGetHeight(visible) >= 160.0 &&
+            CGRectGetMinY(visible) < screenH - 1.0) {
+            cached = CGRectInset(visible, -16.0, -20.0);
+            cachedValid = YES;
+        } else {
+            cached = CGRectNull;
+            cachedValid = NO;
+        }
         cachedAt = now;
     }
-    return CGRectContainsPoint(cached, screenPoint);
+    if (!cachedValid || CGRectIsNull(cached)) return NO;
+    UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+    if (!window) return CGRectContainsPoint(cached, point);
+    CGPoint inWindow = (view == (UIView *)window) ? point : [view convertPoint:point toView:window];
+    CGPoint onScreen = CGPointMake(inWindow.x + CGRectGetMinX(window.frame),
+                                   inWindow.y + CGRectGetMinY(window.frame));
+    if (CGRectContainsPoint(cached, onScreen)) return YES;
+    if (CGRectContainsPoint(cached, inWindow)) return YES;
+    return CGRectContainsPoint(cached, point);
 }
 
-static BOOL DSTouchShouldStayWithKeyboard(UITouch *touch) {
-    if (![touch isKindOfClass:UITouch.class]) return YES;
-    UIWindow *window = touch.window;
-    if (!window) return YES;
-    if (DSWindowIsKeyboard(window) && !DSKeyboardWindowIsInteractive(window)) return NO;
-    CGPoint local = [touch locationInView:window];
-    if (DSWindowIsKeyboard(window)) return DSPointInWindowIsOnKeys(window, local);
-    CGPoint screen = local;
-    if (@available(iOS 13.0, *)) {
-        id space = window.screen.coordinateSpace;
-        if (space) screen = [window convertPoint:local toCoordinateSpace:space];
+// YES when this touch is on the full-screen keyboard cover, above the keys,
+// and has to fall through to the card. The windows are not moved.
+static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
+    if (!DSKeyboardTouchPassthroughArmed()) return NO;
+    if (![view isKindOfClass:UIView.class]) return NO;
+    if (DSHitLandsOnVisibleKeys(view, point)) return NO;
+    // The app picker froze when every touch in the bottom half of the phone
+    // was kept. This band is only the keyboard, and only while staged Messages
+    // is the one using SpringBoard's keyboard. A key tap in that band stays.
+    if (DSMessagesSpringBoardKeyboardOwnsTouches()) {
+        UIWindow *kbWindow = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+        if (kbWindow && DSWindowIsKeyboard(kbWindow)) {
+            CGPoint inWindow = (view == (UIView *)kbWindow) ? point : [view convertPoint:point toView:kbWindow];
+            CGFloat screenH = CGRectGetHeight(UIScreen.mainScreen.bounds);
+            CGFloat screenY = inWindow.y + CGRectGetMinY(kbWindow.frame);
+            // 4.5.429 kept typing by leaving taps on the lower half of this
+            // keyboard. Picker search is not this keyboard.
+            if (screenY >= screenH * 0.5 && screenY <= screenH + 12.0) return NO;
+        }
     }
-    return DSScreenPointHitsKeys(screen);
-}
-
-static BOOL DSEventIsOnlyAboveKeys(UIEvent *event) {
-    if (!DSExternalKeyboardCoversStage() || ![event isKindOfClass:UIEvent.class] || event.allTouches.count == 0) {
+    UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+    if (!window) return NO;
+    // Aperture is not the keyboard. Keeping its touches is what made the keys
+    // look up and do nothing.
+    NSString *scene = nil;
+    if (@available(iOS 13.0, *)) {
+        scene = window.windowScene.session.persistentIdentifier;
+    }
+    if (scene.length &&
+        ([scene rangeOfString:@"SystemAperture"].location != NSNotFound ||
+         [scene rangeOfString:@"SuperHighLevel"].location != NSNotFound ||
+         [scene rangeOfString:@"Aperture"].location != NSNotFound)) {
         return NO;
     }
-    for (UITouch *touch in event.allTouches) {
-        if (DSTouchShouldStayWithKeyboard(touch)) return NO;
+    BOOL docked = DSKeyboardWindowIsDocked(window);
+    if (!docked && !DSExternalKeyboardCoversStage()) return NO;
+    if (!docked && !DSWindowIsKeyboard(window) && !DSViewNameIsKeyboardChrome(view)) return NO;
+    CGPoint inWindow = (view == (UIView *)window) ? point : [view convertPoint:point toView:window];
+    if (DSPointInWindowIsOnKeys(window, inWindow)) return NO;
+    // The keys the user can see. After the first letter the measured strip
+    // moves to y=932, so a tap on those keys was passed through.
+    CGRect screen = UIScreen.mainScreen.bounds;
+    CGPoint onScreen = [window convertPoint:inWindow toView:nil];
+    CGRect visible = DSVisibleFullKeyboardFrameOnScreen();
+    if (CGRectIsNull(visible)) visible = DSVisibleKeyboardFrameOnScreen();
+    if (!CGRectIsNull(visible) && CGRectGetHeight(visible) >= 160.0 &&
+        CGRectContainsPoint(CGRectInset(visible, -16.0, -20.0), onScreen)) {
+        return NO;
+    }
+    // The measured strip is often 75pt at the very bottom. The letters sit
+    // above that strip, on the docked keyboard. Anything in the bottom band
+    // of a keyboard that is already up belongs to the keys.
+    CGFloat band = 360.0;
+    if (!CGRectIsNull(visible) && CGRectGetHeight(visible) >= 160.0) {
+        band = MAX(band, CGRectGetHeight(screen) - CGRectGetMinY(visible) + 24.0);
+    }
+    BOOL keyboardUp = DSExternalKeyboardCoversStage() || DSKeyboardWindowIsDocked(window);
+    if (keyboardUp && CGRectGetHeight(screen) > 400.0 &&
+        onScreen.y >= CGRectGetHeight(screen) - band &&
+        onScreen.y <= CGRectGetHeight(screen) + 4.0) {
+        return NO;
+    }
+    // The same band in the window's own coordinates. A window whose frame is
+    // only the keyboard still receives the tap at a small local y.
+    CGFloat windowH = CGRectGetHeight(window.bounds);
+    if (keyboardUp && windowH > 80.0 && inWindow.y >= windowH - band &&
+        inWindow.y <= windowH + 4.0) {
+        return NO;
+    }
+    static NSInteger noted = 0;
+    if (noted < 4) {
+        noted += 1;
+        UIWindow *loggedWindow = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+        CGPoint inLogged = loggedWindow && view != (UIView *)loggedWindow
+            ? [view convertPoint:point toView:loggedWindow] : point;
+        CGPoint onLogged = loggedWindow
+            ? CGPointMake(inLogged.x + CGRectGetMinX(loggedWindow.frame),
+                          inLogged.y + CGRectGetMinY(loggedWindow.frame))
+            : point;
+        DSDiagnosticsRecordFormat(@"SpringBoard: a touch above the keys passed through local=%@ screen=%@ window=%@",
+                                  NSStringFromCGPoint(inLogged),
+                                  NSStringFromCGPoint(onLogged),
+                                  loggedWindow ? NSStringFromCGRect(loggedWindow.frame) : @"none");
     }
     return YES;
-}
-
-static void DSNoteCardTouchKeptOffKeys(void) {
-    static BOOL noted = NO;
-    if (noted) return;
-    noted = YES;
-    DSDiagnosticsRecord(@"SpringBoard: a touch on the card was kept off the keys");
 }
 
 %hook UIWindow
 
+- (void)setHidden:(BOOL)hidden {
+    %orig;
+}
+
 - (void)setWindowLevel:(CGFloat)level {
-    if (DSKeyboardWindowShouldStayAboveStage(self) && level < DSKeyboardWindowLevelAboveStage()) {
+    // 4.5.416 kept the keyboard above the stage after UIKit tried to drop it
+    // back to level 10. The frame and the scene are not changed here.
+    if ((DSKeyboardWindowIsDocked(self) || DSKeyboardWindowShouldPinLevel(self)) &&
+        level < DSKeyboardWindowLevelAboveStage()) {
         %orig(DSKeyboardWindowLevelAboveStage());
+        return;
+    }
+    %orig(level);
+}
+
+- (void)setFrame:(CGRect)frame {
+    // Stretching this window to the whole phone after the first letter puts a
+    // cover over the keys. The next tap misses them and the keyboard looks frozen.
+    if (DSHostedAppOwnsKeyboard() || DSKeyboardWindowIsDocked(self)) {
+        %orig;
         return;
     }
     %orig;
 }
 
 - (void)setWindowScene:(UIWindowScene *)scene {
+    if ([DSSceneHost sceneSettingsUpdateDepth] > 0) {
+        %orig;
+        return;
+    }
     id replacement = DSReplacementSceneForKeyboardWindow(self, scene);
     if ([replacement isKindOfClass:UIWindowScene.class]) {
         %orig((UIWindowScene *)replacement);
@@ -635,35 +1055,19 @@ static void DSNoteCardTouchKeptOffKeys(void) {
 
 %end
 
-// The keyboard window is the size of the screen. pointInside is what decides
-// whether that window owns the touch. Only one text-effects window owns it,
-// and only inside the keyboard view's bounds. Every other keyboard window
-// returns NO for the whole screen so the touch can reach the real keys or
-// the staged app. The window is not hidden.
-%hook UITextEffectsWindow
-
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    if (!DSExternalKeyboardCoversStage()) return %orig;
-    UIWindow *window = (UIWindow *)self;
-    if (!DSKeyboardWindowIsInteractive(window)) {
-        DSNoteGhostKeyboardIgnored();
-        return NO;
-    }
-    UIView *keyboardView = DSKeyboardViewInWindow(window);
-    if (!keyboardView) return %orig;
-    CGPoint inKeyboard = [window convertPoint:point toView:keyboardView];
-    if (CGRectContainsPoint(keyboardView.bounds, inKeyboard)) return YES;
-    DSNoteCardTouchKeptOffKeys();
-    return NO;
-}
-
-%end
-
 // UITextEffectsWindow and UIRemoteKeyboardWindow override hitTest on
 // UIAutoRotatingWindow, so the UIWindow hook never sees the touch.
 %hook UIAutoRotatingWindow
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    // This is the window the keys are in. Returning nil here dropped the tap
+    // after the first letter, in the search field and in the message box.
+    if (DSHitLandsOnVisibleKeys((UIView *)self, point)) return %orig;
+    if (DSMessagesSpringBoardKeyboardOwnsTouches() && DSWindowIsKeyboard((UIWindow *)self)) {
+        CGFloat screenH = CGRectGetHeight(UIScreen.mainScreen.bounds);
+        CGFloat screenY = point.y + CGRectGetMinY(((UIWindow *)self).frame);
+        if (screenY >= screenH * 0.5) return %orig;
+    }
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
     return %orig;
 }
@@ -672,19 +1076,63 @@ static void DSNoteCardTouchKeptOffKeys(void) {
 
 %hook UIView
 
+- (void)setHidden:(BOOL)hidden {
+    %orig;
+}
+
+- (void)setAlpha:(CGFloat)alpha {
+    %orig;
+}
+
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
+    if (DSKeyboardTouchPassthroughArmed() && DSViewNameIsKeyboardChrome((UIView *)self) &&
+        DSSpringBoardShouldPassTouch((UIView *)self, point)) {
+        return nil;
+    }
     return %orig;
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
+    if (DSKeyboardTouchPassthroughArmed() && DSViewNameIsKeyboardChrome((UIView *)self) &&
+        DSSpringBoardShouldPassTouch((UIView *)self, point)) {
+        return NO;
+    }
     return %orig;
 }
 
 %end
 
+static BOOL DSMessagesHostStaysOnScreen(void) {
+    if (!DSIsMessagesKeyboardUp()) return NO;
+    return DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager stagedKeyboardFieldIsEditing];
+    });
+}
+
+static BOOL DSHostedAppOwnsKeyboard(void) {
+    return DSAsk(^BOOL(DSStageManager *manager) {
+        if (!manager.isStageVisible || manager.isPickerSearchActive) return NO;
+        NSString *bundle = manager.stageBundleIdentifier;
+        // Search leaves the keyboard where UIKit put it. Rewriting Messages'
+        // host to a 243pt strip is what made the tap miss the keys.
+        if ([bundle isEqualToString:@"com.apple.MobileSMS"]) return NO;
+        return bundle.length > 0 && [manager isHostingBundleIdentifier:bundle];
+    });
+}
+
 %hook UIKeyboard
+
+- (void)setFrame:(CGRect)frame {
+    %orig(frame);
+}
+
+- (void)layoutSubviews {
+    %orig;
+    if (!DSHostedAppOwnsKeyboard()) return;
+    UIView *view = (UIView *)self;
+    CGRect docked = DSFrameDockingKeyboardToScreenBottom(view, view.frame);
+    if (!CGRectEqualToRect(docked, view.frame)) view.frame = docked;
+}
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
@@ -707,7 +1155,44 @@ static void DSNoteCardTouchKeptOffKeys(void) {
 
 %end
 
+static void DSPinContextLayerHost(UIView *view) {
+    if (![view isKindOfClass:UIView.class] || !view.superview || !view.window) return;
+    if (view.hidden || view.alpha < 0.01) return;
+    static BOOL busy = NO;
+    if (busy) return;
+    CGRect screen = [view convertRect:view.bounds toView:nil];
+    if (CGRectGetHeight(screen) < 160.0) return;
+    __block CGRect pinned = screen;
+    DSTell(^(DSStageManager *manager) {
+        pinned = [manager pinnedBeeperKeyboardFrameForProposed:screen];
+    });
+    if (CGRectEqualToRect(pinned, screen)) return;
+    CGRect local = [view.superview convertRect:pinned fromView:nil];
+    if (CGRectEqualToRect(local, view.frame)) return;
+    busy = YES;
+    view.frame = local;
+    busy = NO;
+}
+
+%hook _UIContextLayerHostView
+
+- (void)layoutSubviews {
+    %orig;
+    DSPinContextLayerHost((UIView *)self);
+}
+
+- (void)setFrame:(CGRect)frame {
+    %orig(frame);
+    DSPinContextLayerHost((UIView *)self);
+}
+
+%end
+
 %hook UIInputSetHostView
+
+- (void)setFrame:(CGRect)frame {
+    %orig(frame);
+}
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
@@ -721,116 +1206,205 @@ static void DSNoteCardTouchKeptOffKeys(void) {
 
 %end
 
-// This observer sees every event, including ones hit testing already gave to
-// the card, and it was starting a key from those.
-%hook _UIRemoteKeyboardsEventObserver
+// The system status bar is a window above the stage. While a card is on the
+// top half that bar stays invisible. A tap on its strip shows it, then it
+// hides again. The stage window is not raised over it.
+static __weak UIView *DSSystemStatusBar = nil;
+static BOOL DSStatusBarApplyBusy = NO;
 
-- (BOOL)_shouldTrackTouch:(UITouch *)touch {
-    if (DSExternalKeyboardCoversStage() && !DSTouchShouldStayWithKeyboard(touch)) {
-        DSNoteCardTouchKeptOffKeys();
-        return NO;
-    }
-    return %orig;
+static void DSApplySystemStatusBar(void) {
+    UIView *bar = DSSystemStatusBar;
+    if (![bar isKindOfClass:UIView.class] || DSStatusBarApplyBusy) return;
+    BOOL hide = DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager shouldHideSystemStatusBar];
+    });
+    DSStatusBarApplyBusy = YES;
+    CGFloat alpha = hide ? 0.0 : 1.0;
+    if (fabs(bar.alpha - alpha) > 0.01) bar.alpha = alpha;
+    DSStatusBarApplyBusy = NO;
 }
 
-- (void)_startTrackingForTouch:(UITouch *)touch {
-    if (DSExternalKeyboardCoversStage() && !DSTouchShouldStayWithKeyboard(touch)) {
-        DSNoteCardTouchKeptOffKeys();
-        return;
+static UIView *DSFindStatusBarView(UIView *view, NSInteger depth) {
+    if (!view || depth > 6) return nil;
+    if ([view isKindOfClass:objc_getClass("_UIStatusBar")]) return view;
+    for (UIView *subview in view.subviews) {
+        UIView *found = DSFindStatusBarView(subview, depth + 1);
+        if (found) return found;
     }
-    %orig;
+    return nil;
 }
 
-- (void)peekApplicationEvent:(UIEvent *)event {
-    if (DSEventIsOnlyAboveKeys(event)) {
-        DSNoteCardTouchKeptOffKeys();
+@interface DSStatusBarPeekTarget : NSObject <UIGestureRecognizerDelegate>
+@end
+
+@implementation DSStatusBarPeekTarget
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    (void)gestureRecognizer;
+    (void)touch;
+    return DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager shouldHideSystemStatusBar];
+    });
+}
+
+- (void)tapped:(UITapGestureRecognizer *)tap {
+    if (tap.state != UIGestureRecognizerStateEnded) return;
+    DSTell(^(DSStageManager *manager) {
+        [manager peekSystemStatusBar];
+    });
+}
+
+@end
+
+static void DSAttachStatusBarPeek(UIWindow *window) {
+    if (![window isKindOfClass:UIWindow.class]) return;
+    static const void *key = &key;
+    if (objc_getAssociatedObject(window, key)) return;
+    DSStatusBarPeekTarget *target = [[DSStatusBarPeekTarget alloc] init];
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:target action:@selector(tapped:)];
+    tap.cancelsTouchesInView = YES;
+    tap.delaysTouchesBegan = NO;
+    tap.delegate = target;
+    objc_setAssociatedObject(window, key, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [window addGestureRecognizer:tap];
+}
+
+static void DSCaptureSystemStatusBar(void) {
+    if (DSSystemStatusBar.window) return;
+    Class windowClass = objc_getClass("SBStatusBarWindow");
+    if (!windowClass) windowClass = objc_getClass("UIStatusBarWindow");
+    if (!windowClass) return;
+    for (UIWindow *window in UIApplication.sharedApplication.windows) {
+        if (![window isKindOfClass:windowClass]) continue;
+        UIView *bar = DSFindStatusBarView(window, 0);
+        if (!bar) continue;
+        DSSystemStatusBar = bar;
+        DSAttachStatusBarPeek(window);
+        break;
+    }
+}
+
+%hook _UIStatusBar
+
+- (void)didMoveToWindow {
+    %orig;
+    UIView *bar = (UIView *)self;
+    if (!bar.window) return;
+    DSSystemStatusBar = bar;
+    DSAttachStatusBarPeek(bar.window);
+    DSApplySystemStatusBar();
+}
+
+- (void)layoutSubviews {
+    %orig;
+    UIView *bar = (UIView *)self;
+    DSSystemStatusBar = bar;
+    if (bar.window) DSAttachStatusBarPeek(bar.window);
+    DSApplySystemStatusBar();
+}
+
+- (void)setAlpha:(CGFloat)alpha {
+    UIView *bar = (UIView *)self;
+    if (bar != DSSystemStatusBar) {
+        %orig(alpha);
         return;
     }
-    %orig;
+    if (!DSStatusBarApplyBusy && DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager shouldHideSystemStatusBar];
+        })) {
+        %orig(0.0);
+        return;
+    }
+    %orig(alpha);
 }
 
 %end
 
-%hook _UIRemoteKeyboards
-
-- (void)peekApplicationEvent:(UIEvent *)event {
-    if (DSEventIsOnlyAboveKeys(event)) {
-        DSNoteCardTouchKeptOffKeys();
-        return;
-    }
-    %orig;
-}
-
-%end
-
-%hook UIGestureRecognizer
-
-- (BOOL)shouldReceiveTouch:(UITouch *)touch {
-    if (DSExternalKeyboardCoversStage()) {
-        UIView *view = self.view;
-        UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
-        if ((DSWindowIsKeyboard(window) || DSViewNameIsKeyboardChrome(view)) &&
-            !DSTouchShouldStayWithKeyboard(touch)) {
-            DSNoteCardTouchKeptOffKeys();
-            return NO;
+// Staged Phone only. The scene view is the whole app. A full-screen frame is
+// replaced with the card, and the view is clipped so nothing draws outside it.
+// The scene presentation's own setFrame: is left alone. That call waits on the
+// app and SpringBoard does not return.
+static NSString *DSPhoneSceneBundle(id view) {
+    SEL application = @selector(application);
+    if ([view respondsToSelector:application]) {
+        id app = ((id (*)(id, SEL))objc_msgSend)(view, application);
+        if ([app respondsToSelector:@selector(bundleIdentifier)]) {
+            id bundle = [app bundleIdentifier];
+            if ([bundle isKindOfClass:NSString.class] && [(NSString *)bundle length] > 0) return bundle;
         }
     }
-    return %orig;
-}
-
-%end
-
-%hook UIKeyboard
-
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    if (DSExternalKeyboardCoversStage()) {
-        for (UITouch *touch in touches) {
-            if (!DSTouchShouldStayWithKeyboard(touch)) {
-                DSNoteCardTouchKeptOffKeys();
-                return;
+    SEL sceneHandle = @selector(sceneHandle);
+    if ([view respondsToSelector:sceneHandle]) {
+        id handle = ((id (*)(id, SEL))objc_msgSend)(view, sceneHandle);
+        if ([handle respondsToSelector:application]) {
+            id app = ((id (*)(id, SEL))objc_msgSend)(handle, application);
+            if ([app respondsToSelector:@selector(bundleIdentifier)]) {
+                id bundle = [app bundleIdentifier];
+                if ([bundle isKindOfClass:NSString.class]) return bundle;
             }
         }
     }
-    %orig;
+    return nil;
 }
 
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    if (DSExternalKeyboardCoversStage()) {
-        for (UITouch *touch in touches) {
-            if (!DSTouchShouldStayWithKeyboard(touch)) return;
+static BOOL DSPhoneSceneViewIsHosted(UIView *view) {
+    if (![view isKindOfClass:UIView.class]) return NO;
+    NSString *name = NSStringFromClass(object_getClass(view));
+    if ([name rangeOfString:@"Presentation"].location != NSNotFound) return NO;
+    if (![[DSPhoneSceneBundle(view) lowercaseString] isEqualToString:@"com.apple.mobilephone"]) return NO;
+    return DSAsk(^BOOL(DSStageManager *manager) {
+        return [manager isHostingBundleIdentifier:@"com.apple.mobilephone"];
+    });
+}
+
+static void DSClipPhoneSceneView(UIView *view) {
+    if (!DSPhoneSceneViewIsHosted(view)) return;
+    view.clipsToBounds = YES;
+    view.layer.masksToBounds = YES;
+    CGFloat radius = 44.0;
+    Class cardClass = objc_getClass("DSStageContainerView");
+    for (UIView *cursor = view.superview; cursor; cursor = cursor.superview) {
+        if (cardClass && [cursor isKindOfClass:cardClass]) {
+            radius = ((DSStageContainerView *)cursor).cornerRadius;
+            break;
         }
     }
+    if (radius > 1.0) {
+        view.layer.cornerRadius = radius;
+        if (@available(iOS 13.0, *)) view.layer.cornerCurve = kCACornerCurveContinuous;
+    }
+}
+
+static CGRect DSPhoneSceneFrame(UIView *view, CGRect frame) {
+    if (!DSPhoneSceneViewIsHosted(view)) return frame;
+    if ([DSSceneHost sceneSettingsUpdateDepth] > 0 || [DSSceneHost homeGestureIsActive]) return frame;
+    UIView *parent = view.superview;
+    if (!parent) return frame;
+    CGRect bounds = parent.bounds;
+    if (CGRectGetWidth(bounds) < 80.0 || CGRectGetHeight(bounds) < 80.0) return frame;
+    BOOL bigger = CGRectGetWidth(frame) > CGRectGetWidth(bounds) + 24.0 ||
+                  CGRectGetHeight(frame) > CGRectGetHeight(bounds) + 24.0;
+    if (!bigger) return frame;
+    return bounds;
+}
+
+%hook SBApplicationSceneView
+
+- (void)setFrame:(CGRect)frame {
+    UIView *view = (UIView *)self;
+    frame = DSPhoneSceneFrame(view, frame);
+    %orig(frame);
+    DSClipPhoneSceneView(view);
+}
+
+- (void)didMoveToWindow {
     %orig;
+    DSClipPhoneSceneView((UIView *)self);
 }
 
-%end
-
-%end
-
-#pragma mark - Medusa keyboard window
-
-// SBMedusaHostedKeyboardWindow is one of the extra windows at level 6000.
-// It never draws the keys the user taps. Hit testing stops on it. It is not
-// hidden, and its level is left alone: lowering it puts a real keyboard
-// under the stage, and hiding a keyboard window has taken the phone to safe
-// mode before.
-
-%group MedusaKeyboard
-
-%hook SBMedusaHostedKeyboardWindow
-
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    (void)point;
-    (void)event;
-    if (DSExternalKeyboardCoversStage()) return NO;
-    return %orig;
-}
-
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    (void)point;
-    (void)event;
-    if (DSExternalKeyboardCoversStage()) return nil;
-    return %orig;
+- (void)layoutSubviews {
+    %orig;
+    DSClipPhoneSceneView((UIView *)self);
 }
 
 %end
@@ -950,8 +1524,12 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     NSString *verdict = @"staged app keyboard is up";
     if (!onScreen) verdict = @"keyboard is down";
     else if (!staged) verdict = @"this keyboard is not from a staged app";
-    return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d",
-            verdict, source ?: @"?", onScreen, staged, springBoard != nil, uiBundle, layer];
+    NSString *dylib = @"no";
+    if (staged && source.length) {
+        dylib = [[DSStageManager sharedManager] hostedAppHasStageDylib:source] ? @"yes" : @"no";
+    }
+    return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d appDylib=%@",
+            verdict, source ?: @"?", onScreen, staged, springBoard != nil, uiBundle, layer, dylib];
 }
 
 %group Arbiter
@@ -982,6 +1560,19 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     } @catch (NSException *exception) {
     }
     (void)handler;
+    DSTraceFormat(@"arbiter on=%d src=%@ frame=%@", onScreen, source ?: @"?", NSStringFromCGRect(frame));
+    // A call deactivates the staged app and UIKit reports the keyboard down.
+    // That is not the user leaving the field. Dismissing here is the keys dying.
+    BOOL keepKeysDuringCall = NO;
+    if (!onScreen && DSPhoneCallIsActive() && DSStageReady()) {
+        keepKeysDuringCall = DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager stagedKeyboardFieldIsEditing] || [manager stagedTypingSessionActive];
+        });
+    }
+    // UIKit hides the window inside %orig. If the raise flag is still set,
+    // that hide is undone and the keys stay on screen after they have been
+    // dismissed.
+    if (!onScreen && !keepKeysDuringCall) DSAllowKeyboardToDismiss();
 
     %orig;
 
@@ -994,36 +1585,36 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
         DSHostAssignAttempts = 0;
     }
 
-    NSString *summary = nil;
-    @try {
-        if (information) summary = [DSKeyboardArbiterSummary(self, source, onScreen) copy];
-    } @catch (NSException *exception) {
-    }
     DSArbiterBusy = NO;
 
-    if (hostNote.length || summary.length || releaseHost) {
+    if (keepKeysDuringCall) {
+        releaseHost = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DSRevealSpringBoardKeyboard();
+            DSHoldKeyboardLevelAboveStage();
+            DSTell(^(DSStageManager *manager) {
+                [manager keepStagedKeyboardField];
+            });
+            DSDiagnosticsRecord(@"SpringBoard: kept the staged keyboard up during a call");
+        });
+    }
+    if (hostNote.length || releaseHost) {
         NSString *hostCopy = [hostNote copy];
-        NSString *summaryCopy = [summary copy];
         BOOL release = releaseHost;
         BOOL keyboardDown = !onScreen;
+        NSString *sourceCopy = [source copy];
         dispatch_async(dispatch_get_main_queue(), ^{
             if (keyboardDown) {
-                DSRestoreRemoteKeyboardPlacement();
+                __block BOOL restore = YES;
+                DSTell(^(DSStageManager *manager) {
+                    restore = [manager shouldRestoreKeyboardPlacementAfterDismiss:sourceCopy];
+                });
+                if (restore) DSRestoreRemoteKeyboardPlacement();
             }
             if (release) {
                 DSReleaseStagedKeyboardHost();
             }
-            if (hostCopy.length) {
-                DSTell(^(DSStageManager *manager) {
-                    [manager noteKeyboardDebugFromSpringBoard:hostCopy];
-                });
-            }
-            if (summaryCopy.length) {
-                NSString *shown = [NSString stringWithFormat:@"%@ | %@", summaryCopy, DSPresentedKeyboardWindowStatus()];
-                DSTell(^(DSStageManager *manager) {
-                    [manager noteKeyboardDebugFromSpringBoard:shown];
-                });
-            }
+            (void)hostCopy;
         });
     }
 
@@ -1134,6 +1725,7 @@ static void DSRegisterDarwinObservers(void) {
         BOOL hasWindow = (state & (1ULL << 35)) != 0;
         BOOL isDelete = (state & (1ULL << 36)) != 0;
         BOOL notStaged = (state & (1ULL << 37)) != 0;
+        BOOL heldStandIn = (state & (1ULL << 60)) != 0;
         BOOL listening = (state & (1ULL << 38)) != 0;
         BOOL loaded = (state & (1ULL << 39)) != 0;
         BOOL remote = (state & (1ULL << 48)) != 0;
@@ -1169,6 +1761,7 @@ static void DSRegisterDarwinObservers(void) {
                 case 4: pathName = @"skip-hosted-view"; break;
                 case 6: pathName = @"input-set"; break;
                 case 8: pathName = @"impl"; break;
+                case 9: pathName = @"handoff"; break;
                 case 15: pathName = @"class-missing"; break;
                 default: break;
             }
@@ -1192,14 +1785,39 @@ static void DSRegisterDarwinObservers(void) {
             } else if (notStaged) {
                 line = [NSString stringWithFormat:@"app: key arrived in %@ while it was not staged", bundle];
             } else {
-                line = [NSString stringWithFormat:@"app: key %@ -> %@ %@ fr=%d win=%d changed=%d",
+                line = [NSString stringWithFormat:@"app: key %@ -> %@ %@ fr=%d win=%d changed=%d hold=%d",
                         isDelete ? @"delete" : @"insert",
                         bundle,
                         className,
                         editing,
                         hasWindow,
-                        changed];
+                        changed,
+                        heldStandIn];
             }
+            [manager noteStagedKeyResult:line];
+        });
+    });
+
+    int phoneFitToken = NOTIFY_TOKEN_INVALID;
+    notify_register_dispatch("com.recreated.dynamicstage.phone.fit", &phoneFitToken, dispatch_get_main_queue(), ^(int token) {
+        uint64_t state = 0;
+        notify_get_state(token, &state);
+        uint32_t hash = (uint32_t)state;
+        CGFloat scale = (CGFloat)((state >> 32) & 0xff) / 100.0;
+        CGFloat content = (CGFloat)((state >> 40) & 0x3ff);
+        CGFloat limit = (CGFloat)((state >> 50) & 0x3ff);
+        DSTell(^(DSStageManager *manager) {
+            NSString *bundle = [manager bundleForKeyboardHash:hash];
+            NSString *written = nil;
+            for (NSString *path in @[ @"/var/tmp/com.recreated.dynamicstage.phone-fit",
+                                      @"/var/jb/tmp/com.recreated.dynamicstage.phone-fit" ]) {
+                written = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
+                if (written.length) break;
+            }
+            NSString *line = written.length
+                ? [written stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]
+                : [NSString stringWithFormat:@"app: %@ keypad scale=%.2f content=%.0f limit=%.0f",
+                   bundle, scale, content, limit];
             [manager noteStagedKeyResult:line];
         });
     });
@@ -1226,19 +1844,32 @@ static void DSInstallRemainingHooks(void) {
 
             DSRegisterDarwinObservers();
             %init(Stage);
+            [[NSNotificationCenter defaultCenter] addObserverForName:@"DSStageStatusBarRefresh"
+                                                                object:nil
+                                                                 queue:NSOperationQueue.mainQueue
+                                                            usingBlock:^(__unused NSNotification *note) {
+                DSCaptureSystemStatusBar();
+                DSApplySystemStatusBar();
+            }];
+            DSCaptureSystemStatusBar();
 
             Class arbiter = objc_getClass("_UIKeyboardArbiter");
             if (arbiter && class_getInstanceMethod(arbiter, @selector(updateKeyboardStatus:fromHandler:))) {
                 %init(Arbiter, _UIKeyboardArbiter = arbiter);
             }
 
-            Class medusaKeyboard = objc_getClass("SBMedusaHostedKeyboardWindow");
-            if (medusaKeyboard) {
-                %init(MedusaKeyboard);
-            }
-
             [[DSStageManager sharedManager] activate];
-            DSBootstrapMarkLaunchSucceeded();
+            // Hooks stay quiet while the window is built (the guard file is
+            // still raised, and this flag is what lets them run). The file
+            // stays raised until this process has stayed up, so a crash on
+            // the next turn does not install those hooks again.
+            DSFullInstallLive = YES;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                if (DSKillSwitchPresent() || !DSFullInstallLive) return;
+                DSBootstrapMarkLaunchSucceeded();
+                DSDiagnosticsRecord(@"SpringBoard: stayed up, boot guard cleared");
+            });
 
             DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed after home screen, corner pull will come from %@",
                                       systemPull ? @"the system edge gesture" : @"a window in the corner");
@@ -1283,12 +1914,14 @@ static void DSInstallRemainingHooks(void) {
 
 %ctor {
     @autoreleasepool {
+        // POSIX only until the guard is raised. A crash after this line leaves
+        // the file in place, and the next SpringBoard start returns here
+        // before any hook or signal handler exists.
         if (DSKillSwitchPresent()) return;
-        if (DSLaunchGuardTripped()) {
-            DSDiagnosticsRecord(@"SpringBoard: boot guard tripped, only the launch hook is installed");
-            return;
-        }
+        if (DSLaunchGuardTripped()) return;
+        if (!DSBootstrapBeginFullInstall()) return;
 
+        DSCrashLogInstallHandlers();
         @try {
             %init(Boot);
             // If applicationDidFinishLaunching already ran (late inject) or never

@@ -1,0 +1,59 @@
+Dynamic Stage 4.5.636 - Phone "fill the stage" fix (built 2026-10-05 ~8:32 PM NZDT)
+
+WHAT WAS WRONG
+  The previous build shrank the SpringBoard stage card to the iPhone's shape
+  whenever it hosted Phone (phoneAspectFitFrameInside), then scaled Phone by
+  MIN(cardW/fullW, cardH/fullH). The result was a smaller card with lots of
+  empty margin around Phone.
+
+WHAT CHANGED
+  springboard/DSStageManager.m  -> put back to the ORIGINAL Origin file
+      (blob 8492cb83, byte-for-byte). cardHostsMobilePhone: and
+      phoneAspectFitFrameInside: are gone, and so are all four call sites
+      (restingFrameForPrimaryCardState:, placedFrameForCard:state:, the
+      hosted-layout halfSize clamp, finishCornerRestore). The Phone card is
+      now the same fixedHalfFrame / splitPairFrame as every other app.
+      The stage size never changes.
+
+  app/Tweak.xm  -> only DSPhoneScaleRootIntoCard (Phone only) changed:
+      Other staged apps lay out at the card's size, so they fill it. Phone
+      keeps the real screen metrics, so it doesn't fit on its own. Now Phone's root view is
+      laid out in a box with the card's EXACT shape, tall enough for the
+      dialer, and that box is scaled by ONE uniform factor:
+
+        layoutH = MAX(cardH, MIN(fullH, 667))     // 667 = iPhone SE height
+        scale   = cardH / layoutH
+        layoutW = cardW / scale
+        root.bounds = (0, 0, layoutW, layoutH); root.transform = scale(scale, scale)
+        root centred on the card
+
+      layoutW*scale == cardW and layoutH*scale == cardH, so Phone covers the
+      card edge to edge: no side/top margins, nothing cropped, no stretch
+      (the same factor on X and Y).
+      Example 430x932 phone: card 420x458 -> layout 612x667, scale 0.69.
+      Example 393x852 phone: card 383x418 -> layout 611x667, scale 0.63.
+
+      DSPhoneFitTallContent stays a no-op (no non-uniform stretch).
+      Log line in /var/tmp/com.recreated.dynamicstage.phone-fit is now
+        "app: phone fill scale=.. layout=WxH card=WxH full=WxH"
+
+  Non-Phone apps: no change (every edit is behind DSIsMobilePhone()).
+
+WHY NOT PLAIN "MAX" COVER
+  With Phone laid out at the full 932pt height, a cover scale is about 0.98
+  on a ~458pt-tall card. That crops ~230pt off the top and bottom, which
+  hides the header and the tab bar. Laying Phone out in a card-shaped box
+  fills the card without cropping anything.
+
+TUNING
+  If the dial pad looks too small, raise the scale by lowering
+  DSPhoneMinLayoutHeight in Tweak.xm (e.g. 600). If the bottom of the pad
+  gets cut off, raise it (e.g. 740).
+
+FILES
+  /workspace/phone-stage-fit/DSStageManager.m   -> springboard/DSStageManager.m
+  /workspace/phone-stage-fit/Tweak.xm           -> app/Tweak.xm
+  /workspace/phone-stage-fit/Tweak.xm.diff      (vs original Origin blob e2f78955)
+  /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.636_iphoneos-arm64.deb
+  /workspace/phone-stage-fit/DynamicStage_4.5.636_phone-fill.deb (same file)
+  Previous (aspect-fit, rejected) files: /workspace/phone-stage-fit/prev-aspect-fit/

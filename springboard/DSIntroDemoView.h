@@ -4,7 +4,6 @@ typedef NS_ENUM(NSInteger, DSIntroDemo) {
     DSIntroDemoNone = 0,
     DSIntroDemoPull,
     DSIntroDemoPick,
-    DSIntroDemoSplit,
     DSIntroDemoFullscreen,
     DSIntroDemoPutAway,
 };

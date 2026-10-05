@@ -143,26 +143,23 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     _finger.layer.cornerRadius = fingerSide / 2.0;
 }
 
-// 0 = parked off the bottom edge, 1 = overlay resting height, 2 = split view.
+// 0 = parked off the bottom edge, 1 = overlay resting height.
 - (CGFloat)stageProgressForDemo:(DSIntroDemo)demo {
     switch (demo) {
         case DSIntroDemoPick: return 1.0;
-        case DSIntroDemoSplit: return 2.0;
         case DSIntroDemoFullscreen: return 1.0;
         case DSIntroDemoPutAway: return 1.0;
         default: return 0.0;
     }
 }
 
-// Overlay is a card inset on three sides; Split View goes edge to edge. Same
-// rule as the real stage, scaled down to the mock device.
+// The card is inset on three sides, scaled down to the mock device.
 - (CGRect)stageFrameForProgress:(CGFloat)progress {
     CGRect host = _hostApp.frame;
     CGFloat inset = CGRectGetWidth(host) * 0.023;
-    CGFloat split = MIN(MAX(progress - 1.0, 0.0), 1.0);
-    CGFloat sideInset = inset * (1.0 - split);
-    CGFloat height = CGRectGetHeight(host) * 0.5 - inset + inset * split;
-    CGFloat visible = MIN(progress, 1.0);
+    CGFloat sideInset = inset;
+    CGFloat height = CGRectGetHeight(host) * 0.5 - inset;
+    CGFloat visible = MIN(MAX(progress, 0.0), 1.0);
     CGFloat top = CGRectGetMaxY(host) - sideInset - height * visible;
     return CGRectMake(CGRectGetMinX(host) + sideInset,
                       top,
@@ -210,12 +207,8 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
                                      markSide,
                                      markSide);
 
-    // In split view the app behind gives up the bottom half.
-    CGFloat hostVisible = progress <= 1.0 ? 1.0 : 1.0 - (progress - 1.0) * 0.5;
     CGRect deviceInner = CGRectInset(_device.bounds, CGRectGetWidth(_device.bounds) * 0.045, CGRectGetWidth(_device.bounds) * 0.045);
-    CGRect hostFrame = deviceInner;
-    hostFrame.size.height = CGRectGetHeight(deviceInner) * hostVisible - (progress > 1.0 ? 3.0 : 0.0);
-    _hostApp.frame = hostFrame;
+    _hostApp.frame = deviceInner;
 }
 
 #pragma mark - Playback
@@ -263,7 +256,6 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     switch (_demo) {
         case DSIntroDemoPull: [self runPullCycle]; break;
         case DSIntroDemoPick: [self runPickCycle]; break;
-        case DSIntroDemoSplit: [self runSplitCycle]; break;
         case DSIntroDemoFullscreen: [self runFullscreenCycle]; break;
         case DSIntroDemoPutAway: [self runPutAwayCycle]; break;
         default: break;
@@ -350,33 +342,6 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     [UIView animateWithDuration:0.4 delay:3.5 options:0 animations:^{
         self->_stageApp.alpha = 0.0;
         for (UIView *cell in self->_stageCells) cell.alpha = 1.0;
-    } completion:nil];
-}
-
-- (void)runSplitCycle {
-    _stageApp.alpha = 1.0;
-    for (UIView *cell in _stageCells) cell.alpha = 0.0;
-    [self layoutStageForProgress:1.0 instant:YES];
-
-    CGPoint start = [self cornerFingerPoint];
-    _finger.center = CGPointMake(start.x, start.y - CGRectGetHeight(_hostApp.bounds) * 0.42);
-    _finger.transform = CGAffineTransformIdentity;
-
-    [UIView animateWithDuration:0.22 delay:0.3 options:0 animations:^{
-        self->_finger.alpha = 1.0;
-    } completion:nil];
-
-    [UIView animateWithDuration:0.8 delay:0.55 usingSpringWithDamping:0.86 initialSpringVelocity:0.0 options:0 animations:^{
-        self->_finger.center = CGPointMake(start.x, start.y - CGRectGetHeight(self->_hostApp.bounds) * 0.72);
-        [self layoutStageForProgress:2.0 instant:NO];
-    } completion:nil];
-
-    [UIView animateWithDuration:0.25 delay:1.45 options:0 animations:^{
-        self->_finger.alpha = 0.0;
-    } completion:nil];
-
-    [UIView animateWithDuration:0.6 delay:3.5 usingSpringWithDamping:0.88 initialSpringVelocity:0.0 options:0 animations:^{
-        [self layoutStageForProgress:1.0 instant:NO];
     } completion:nil];
 }
 

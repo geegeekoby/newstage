@@ -26,13 +26,21 @@ function baseURL(req) {
   return `${proto}://${host}`;
 }
 
-function packages(base) {
+function decorate(stanza, base) {
+  const body = String(stanza).trim().replace(/\n+$/, "");
   return (
-    index.stanza +
-    `Icon: ${base}/assets/icon.png\n` +
+    body +
+    `\nIcon: ${base}/assets/icon.png\n` +
     `Depiction: ${base}/depiction.json\n` +
     `SileoDepiction: ${base}/depiction.json\n`
   );
+}
+
+function packages(base) {
+  const list = Array.isArray(index.stanzas) && index.stanzas.length ? index.stanzas : [index.stanza];
+  // A blank line between stanzas is what makes each older build its own package
+  // entry. Sileo installs the newest and can downgrade to any of the others.
+  return list.map((stanza) => decorate(stanza, base)).join("\n\n") + "\n";
 }
 
 // Release has to carry the hash of the exact index bytes the client is about to
@@ -172,8 +180,7 @@ module.exports = (req, res) => {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   // Never cached: a package manager that was handed a stale index will not offer
-  // a version it does not know exists, and this repo ships one package whose
-  // index costs nothing to rebuild.
+  // a version it does not know exists. The index lists every archived build.
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
   switch (file) {

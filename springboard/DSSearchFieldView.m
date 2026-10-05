@@ -1,6 +1,7 @@
 #import "DSSearchFieldView.h"
 #import "DSConstants.h"
 #import "DSDiagnostics.h"
+#import "DSKeyboardVisibility.h"
 #import "DSStageWindow.h"
 
 @interface DSSearchFieldView () <UITextFieldDelegate>
@@ -33,7 +34,7 @@
         [self addSubview:_magnifier];
 
         _field = [[UITextField alloc] initWithFrame:CGRectZero];
-        _field.font = [UIFont systemFontOfSize:kDSTitleFontSize];
+        _field.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightRegular];
         _field.delegate = self;
         _field.returnKeyType = UIReturnKeySearch;
         _field.autocorrectionType = UITextAutocorrectionTypeNo;
@@ -150,6 +151,13 @@
     // Editing has to start on this same turn. Waiting lets SpringBoard take the
     // key window back before UIKit is asked for the keyboard.
     [self requestKeyWindowFromDelegate];
+    // Over a playing video the other window stays key on purpose. Waiting for
+    // it to resign just retries, and each retry flashes the video.
+    if (DSVideoIsPlayingOnScreen()) {
+        _keyWindowAttempts = 0;
+        [self logEditingDecision:@"begin editing over video"];
+        return YES;
+    }
     if (self.window && !DSWindowIsApplicationKey(self.window) && _keyWindowAttempts < 8) {
         _keyWindowAttempts++;
         __weak __typeof(self) weakSelf = self;

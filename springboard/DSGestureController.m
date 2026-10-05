@@ -44,14 +44,19 @@
 
 + (CGRect)triggerRect {
     CGRect bounds = UIScreen.mainScreen.bounds;
-    return CGRectMake(CGRectGetWidth(bounds) - kDSTriggerWidth,
-                      CGRectGetHeight(bounds) - kDSTriggerHeight,
-                      kDSTriggerWidth,
-                      kDSTriggerHeight);
+    return bounds;
 }
 
 + (BOOL)isPointInTriggerRect:(CGPoint)point {
-    return CGRectContainsPoint([self triggerRect], point);
+    CGRect bounds = UIScreen.mainScreen.bounds;
+    if (point.y < CGRectGetHeight(bounds) - 108.0) return NO;
+    CGFloat width = CGRectGetWidth(bounds);
+    BOOL left = point.x < 86.0;
+    BOOL right = point.x > width - 86.0;
+    if (!left && !right) return NO;
+    BOOL homeBar = point.y > CGRectGetHeight(bounds) - 28.0 && point.x > 56.0 && point.x < width - 56.0;
+    if (homeBar) return NO;
+    return YES;
 }
 
 - (void)install {
@@ -68,7 +73,8 @@
         }
     }
     _window = scene ? [[DSTriggerWindow alloc] initWithWindowScene:scene] : [[DSTriggerWindow alloc] initWithFrame:rect];
-    _window.frame = rect;
+    _window.frame = UIScreen.mainScreen.bounds;
+    (void)rect;
     _window.backgroundColor = UIColor.clearColor;
     _window.opaque = NO;
     _window.userInteractionEnabled = YES;
@@ -117,10 +123,13 @@
     switch (recognizer.state) {
         case UIGestureRecognizerStateBegan: {
             CGPoint start = [recognizer locationInView:nil];
-            // Only an upward pull out of the corner counts.
-            BOOL upward = velocity.y < -80.0 || translation.y < -6.0;
+            // Diagonal, up and to the side. A straight pull up does not open a stage,
+            // and a swipe left along the bottom does not either.
+            BOOL upward = velocity.y < -30.0 || translation.y < -2.0;
+            BOOL sideways = fabs(velocity.x) > 20.0 || fabs(translation.x) > 2.0;
+            BOOL flatLeft = velocity.y > -30.0 && translation.y > -8.0 && velocity.x < -80.0;
             BOOL allowed = [self.delegate gestureControllerShouldBegin:self atPoint:start];
-            if (!upward || !allowed) {
+            if (!upward || !sideways || flatLeft || !allowed) {
                 recognizer.enabled = NO;
                 recognizer.enabled = YES;
                 return;

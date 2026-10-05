@@ -1,8 +1,25 @@
 #import "DSAppPickerViewController.h"
 #import "DSAppCellContentView.h"
 #import "DSSearchFieldView.h"
-#import "DSDiagnostics.h"
 #import "DSPreferences.h"
+#import "DSStageManager.h"
+#import "DSStageDebug.h"
+#import "DSCrashLog.h"
+#import "DSDiagnostics.h"
+
+// A plain UIScrollView refuses to cancel a touch that started on a UIControl,
+// so a drag that begins on an app row never scrolls. This one lets the row
+// keep a tap and still gives a vertical drag to the scroll.
+@interface DSPickerScrollView : UIScrollView
+@end
+
+@implementation DSPickerScrollView
+
+- (BOOL)touchesShouldCancelInContentView:(UIView *)view {
+    return YES;
+}
+
+@end
 #import "DSConstants.h"
 #import <AudioToolbox/AudioToolbox.h>
 
@@ -15,6 +32,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 @implementation DSAppPickerViewController {
     UIScrollView *_scrollView;
+    UIScrollView *_recentStrip;
     DSSearchFieldView *_searchField;
     UILabel *_recentsHeader;
     UILabel *_libraryHeader;
@@ -29,8 +47,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     DSAppCellContentView *_heldCell;
     NSTimer *_holdTimer;
     UIImpactFeedbackGenerator *_feedback;
-
-    UILabel *_logNotice;
+    UIButton *_copyLogs;
 }
 
 - (void)viewDidLoad {
@@ -42,21 +59,40 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     _query = @"";
     _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
 
-    _scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
+    _scrollView = [[DSPickerScrollView alloc] initWithFrame:self.view.bounds];
     _scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _scrollView.showsVerticalScrollIndicator = NO;
     _scrollView.alwaysBounceVertical = YES;
     _scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
-    _scrollView.delaysContentTouches = NO;
+    _scrollView.delaysContentTouches = YES;
+    _scrollView.canCancelContentTouches = YES;
+    _scrollView.directionalLockEnabled = YES;
     _scrollView.delegate = self;
     if (@available(iOS 11.0, *)) _scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     [self.view addSubview:_scrollView];
+
+    _recentStrip = [[DSPickerScrollView alloc] initWithFrame:CGRectZero];
+    _recentStrip.showsHorizontalScrollIndicator = NO;
+    _recentStrip.showsVerticalScrollIndicator = NO;
+    _recentStrip.alwaysBounceHorizontal = YES;
+    _recentStrip.alwaysBounceVertical = NO;
+    _recentStrip.delaysContentTouches = YES;
+    _recentStrip.canCancelContentTouches = YES;
+    _recentStrip.clipsToBounds = NO;
+    _recentStrip.directionalLockEnabled = YES;
+    [_scrollView addSubview:_recentStrip];
 
     _searchField = [[DSSearchFieldView alloc] initWithFrame:CGRectZero];
     _searchField.delegate = self;
     [_scrollView addSubview:_searchField];
 
-    _recentsHeader = [self sectionHeaderWithText:@"Recently Opened"];
+    _copyLogs = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_copyLogs setTitle:@"Copy Logs" forState:UIControlStateNormal];
+    _copyLogs.titleLabel.font = [UIFont systemFontOfSize:15.0 weight:UIFontWeightSemibold];
+    [_copyLogs addTarget:self action:@selector(copyLogsTapped) forControlEvents:UIControlEventTouchUpInside];
+    [_scrollView addSubview:_copyLogs];
+
+    _recentsHeader = [self sectionHeaderWithText:@"Recent"];
     [_scrollView addSubview:_recentsHeader];
 
     _libraryHeader = [self sectionHeaderWithText:@"App Library"];
@@ -69,37 +105,32 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     _emptyLabel.hidden = YES;
     [_scrollView addSubview:_emptyLabel];
 
-    [self installLogNotice];
     [self reloadContent];
 }
 
-// The stage writes down what it did - which gesture opened it, whether the keyboard
-// could be taken out of the card, why an app did not appear - and until 1.5.0 that was
-// read back on a page inside Settings. The page is a plist now, with no code of its own
-// to read a file with, so the log is offered here instead: one line at the top of the
-// card, and a tap puts the whole thing on the clipboard.
-- (void)installLogNotice {
-    _logNotice = [[UILabel alloc] initWithFrame:CGRectZero];
-    _logNotice.text = @"Tap to copy the stage's log";
-    _logNotice.font = [UIFont systemFontOfSize:11.0];
-    _logNotice.textColor = [UIColor colorWithWhite:1.0 alpha:0.4];
-    _logNotice.userInteractionEnabled = YES;
-    [_logNotice addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
-                                                                            action:@selector(copyLog)]];
-    [_scrollView addSubview:_logNotice];
-}
-
-- (void)copyLog {
-    NSString *log = DSDiagnosticsRead();
-    UIPasteboard.generalPasteboard.string = log.length > 0 ? log : @"the stage has not written anything down yet";
-    _logNotice.text = log.length > 0 ? @"Copied - paste it wherever you are reporting this"
-                                     : @"Nothing has been written down yet";
-    [_feedback impactOccurred];
+- (void)copyLogsTapped {
+    @try {
+        NSMutableString *text = [NSMutableString string];
+        NSString *geometry = [[DSStageManager sharedManager] stageGeometryDebugSummary];
+        [text appendFormat:@"%@\n--- log ---\n%@\n--- trace ---\n%@\n--- crash ---\n%@\n--- diagnostics ---\n%@",
+         geometry ?: @"",
+         DSLogDump() ?: @"",
+         DSTraceRead() ?: @"",
+         DSCrashLogRead() ?: @"",
+         DSDiagnosticsRead() ?: @""];
+        UIPasteboard.generalPasteboard.string = text;
+        [_copyLogs setTitle:@"Copied" forState:UIControlStateNormal];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self->_copyLogs setTitle:@"Copy Logs" forState:UIControlStateNormal];
+        });
+    } @catch (NSException *exception) {
+        [_copyLogs setTitle:@"Copy failed" forState:UIControlStateNormal];
+    }
 }
 
 - (UILabel *)sectionHeaderWithText:(NSString *)text {
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
-    label.font = [UIFont systemFontOfSize:kDSHeaderFontSize weight:UIFontWeightRegular];
+    label.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightSemibold];
     label.text = text;
     return label;
 }
@@ -114,19 +145,21 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
         _recents = @[];
         _library = [library applicationsMatchingSearch:_query];
     } else {
-        // Pinned apps lead the grid, then the most recent stage apps fill it out.
+        // Recently opened apps lead. Pinned apps only fill slots that are still
+        // empty, so a new launch shows up instead of staying behind the defaults.
         NSMutableArray<DSAppEntry *> *grid = [NSMutableArray array];
         NSMutableSet<NSString *> *seen = [NSMutableSet set];
-        for (DSAppEntry *entry in [library pinnedApplications]) {
-            if ([seen containsObject:entry.bundleIdentifier]) continue;
-            [seen addObject:entry.bundleIdentifier];
-            [grid addObject:entry];
-        }
         NSInteger rows = MAX([DSPreferences sharedPreferences].pinnedRows, 1);
         NSInteger capacity = rows * 2;
         for (DSAppEntry *entry in [library recentApplicationsLimitedTo:capacity]) {
             if (grid.count >= (NSUInteger)capacity) break;
-            if ([seen containsObject:entry.bundleIdentifier]) continue;
+            if (entry.bundleIdentifier.length == 0 || [seen containsObject:entry.bundleIdentifier]) continue;
+            [seen addObject:entry.bundleIdentifier];
+            [grid addObject:entry];
+        }
+        for (DSAppEntry *entry in [library pinnedApplications]) {
+            if (grid.count >= (NSUInteger)capacity) break;
+            if (entry.bundleIdentifier.length == 0 || [seen containsObject:entry.bundleIdentifier]) continue;
             [seen addObject:entry.bundleIdentifier];
             [grid addObject:entry];
         }
@@ -159,19 +192,21 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 }
 
 - (void)rebuildCells {
-    [self reconcileCells:_recentCells toCount:_recents.count];
-    [self reconcileCells:_libraryCells toCount:_library.count];
+    [self reconcileCells:_recentCells toCount:_recents.count parent:_recentStrip chipStyle:YES];
+    [self reconcileCells:_libraryCells toCount:_library.count parent:_scrollView chipStyle:NO];
 
     DSAppLibrary *library = [DSAppLibrary sharedLibrary];
     [_recentCells enumerateObjectsUsingBlock:^(DSAppCellContentView *cell, NSUInteger index, BOOL *stop) {
         DSAppEntry *entry = self->_recents[index];
         cell.entry = entry;
         cell.showsNowPlaying = [library isNowPlayingApplication:entry.bundleIdentifier];
+        cell.unavailable = [self->_unavailableBundleIdentifiers containsObject:entry.bundleIdentifier];
     }];
     [_libraryCells enumerateObjectsUsingBlock:^(DSAppCellContentView *cell, NSUInteger index, BOOL *stop) {
         DSAppEntry *entry = self->_library[index];
         cell.entry = entry;
         cell.showsNowPlaying = [library isNowPlayingApplication:entry.bundleIdentifier];
+        cell.unavailable = [self->_unavailableBundleIdentifiers containsObject:entry.bundleIdentifier];
     }];
 
     _recentsHeader.hidden = _recents.count == 0;
@@ -182,7 +217,10 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
         : @"No apps are available on the stage. Check Application Behaviors in Settings.";
 }
 
-- (void)reconcileCells:(NSMutableArray<DSAppCellContentView *> *)cells toCount:(NSUInteger)count {
+- (void)reconcileCells:(NSMutableArray<DSAppCellContentView *> *)cells
+             toCount:(NSUInteger)count
+              parent:(UIView *)parent
+           chipStyle:(BOOL)chipStyle {
     while (cells.count > count) {
         [cells.lastObject removeFromSuperview];
         [cells removeLastObject];
@@ -193,8 +231,15 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
         [cell addTarget:self action:@selector(cellTapped:) forControlEvents:UIControlEventTouchUpInside];
         [cell addTarget:self action:@selector(cellTouchCancelled:)
        forControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchCancel | UIControlEventTouchDragExit];
-        [_scrollView addSubview:cell];
+        [parent addSubview:cell];
         [cells addObject:cell];
+    }
+    for (DSAppCellContentView *cell in cells) {
+        if (cell.superview != parent) {
+            [cell removeFromSuperview];
+            [parent addSubview:cell];
+        }
+        cell.chipStyle = chipStyle;
     }
 }
 
@@ -205,34 +250,32 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
     CGFloat width = CGRectGetWidth(self.view.bounds);
     CGFloat contentWidth = width - kDSContentInset * 2.0;
-    CGFloat y = kDSSearchFieldTop;
-
-    if (_logNotice) {
-        CGFloat height = [_logNotice sizeThatFits:CGSizeMake(contentWidth, CGFLOAT_MAX)].height;
-        _logNotice.frame = CGRectMake(kDSContentInset, y, contentWidth, height);
-        y += height + 8.0;
-    }
+    // The card's outer band is the drag rim. Search starts below it.
+    CGFloat y = kDSStageRimGrabBand + 8.0;
 
     _searchField.frame = CGRectMake(kDSContentInset, y, contentWidth, kDSSearchFieldHeight);
-    y += kDSSearchFieldHeight;
+    y += kDSSearchFieldHeight + 8.0;
+    _copyLogs.frame = CGRectMake(kDSContentInset, y, contentWidth, 36.0);
+    y += 36.0 + 8.0;
 
+    _recentStrip.hidden = _recentsHeader.hidden;
     if (!_recentsHeader.hidden) {
-        // The header text is centred in its own band rather than sitting on top
-        // of the section, which is what puts equal air above and below it.
         _recentsHeader.frame = CGRectMake(kDSContentInset, y, contentWidth, kDSSectionHeaderHeight);
         y += kDSSectionHeaderHeight;
-
-        CGFloat columnWidth = (contentWidth - kDSCellGap) / 2.0;
+        _recentStrip.frame = CGRectMake(0.0, y, width, kDSRecentStripHeight);
+        CGFloat chipGap = 4.0;
         [_recentCells enumerateObjectsUsingBlock:^(DSAppCellContentView *cell, NSUInteger index, BOOL *stop) {
-            NSUInteger column = index % 2;
-            NSUInteger row = index / 2;
-            cell.frame = CGRectMake(kDSContentInset + column * (columnWidth + kDSCellGap),
-                                    y + row * (kDSCellHeight + kDSCellGap),
-                                    columnWidth,
-                                    kDSCellHeight);
+            cell.frame = CGRectMake(kDSContentInset + index * (kDSRecentChipWidth + chipGap),
+                                    0.0,
+                                    kDSRecentChipWidth,
+                                    kDSRecentStripHeight);
         }];
-        NSUInteger rows = (_recents.count + 1) / 2;
-        if (rows > 0) y += rows * kDSCellHeight + (rows - 1) * kDSCellGap;
+        CGFloat stripWidth = kDSContentInset * 2.0;
+        if (_recentCells.count > 0) {
+            stripWidth = kDSContentInset + _recentCells.count * kDSRecentChipWidth + (_recentCells.count - 1) * chipGap + kDSContentInset;
+        }
+        _recentStrip.contentSize = CGSizeMake(MAX(stripWidth, width), kDSRecentStripHeight);
+        y += kDSRecentStripHeight;
     }
 
     if (!_libraryHeader.hidden) {
@@ -329,7 +372,17 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 #pragma mark - Selection and hold
 
+- (void)setUnavailableBundleIdentifiers:(NSSet<NSString *> *)unavailableBundleIdentifiers {
+    _unavailableBundleIdentifiers = [unavailableBundleIdentifiers copy];
+    for (NSArray<DSAppCellContentView *> *group in @[ _recentCells, _libraryCells ]) {
+        for (DSAppCellContentView *cell in group) {
+            cell.unavailable = [self->_unavailableBundleIdentifiers containsObject:cell.entry.bundleIdentifier];
+        }
+    }
+}
+
 - (void)cellTouchDown:(DSAppCellContentView *)cell {
+    if (cell.unavailable) return;
     [self cancelHold];
     _heldCell = cell;
     [_feedback prepare];
@@ -347,7 +400,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     BOOL committed = _holdTimer == nil && _heldCell == cell;
     [self cancelHold];
     if (committed) return;   // the hold already took the app fullscreen
-    if (!cell.entry) return;
+    if (!cell.entry || cell.unavailable) return;
     [self.delegate appPicker:self didSelectEntry:cell.entry fromView:cell];
 }
 
@@ -355,7 +408,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     DSAppCellContentView *cell = _heldCell;
     [_holdTimer invalidate];
     _holdTimer = nil;
-    if (!cell.entry) return;
+    if (!cell.entry || cell.unavailable) return;
 
     [_feedback impactOccurred];
     [cell setHoldProgress:0.0 animated:YES duration:0.2];

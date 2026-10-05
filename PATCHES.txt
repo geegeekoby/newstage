@@ -1,0 +1,25 @@
+CursorRepo - Phone stage aspect-fit build (source only)
+=======================================================
+
+Source: Origin uniqu3-nam3/CursorRepo, branch main (tree 3b44c45b).
+Every file except the two below matches the Origin git blob byte-for-byte
+(each one was checked against its blob SHA).
+
+Replaced with Phone aspect-fit patches:
+  springboard/DSStageManager.m
+    - New -cardHostsMobilePhone: and -phoneAspectFitFrameInside:.
+    - Resting/placed card frames, the hosted-scene size clamp and the corner
+      restore aspect-fit the card to the device shape (centred) when it hosts
+      com.apple.mobilephone. Other apps unchanged.
+    - Based on Origin blob 8492cb8305c86aaacd510a5b8cecf11188353168.
+  app/Tweak.xm
+    - DSPhoneScaleRootIntoCard: scale = MIN(cardW / fullW, cardH / fullH)
+      (uniform aspect-fit, was width-only).
+    - DSPhoneFitTallContent is now a no-op (no non-uniform stretch), and
+      DSAdjustPhoneLayoutForStage no longer calls it.
+    - Based on Origin blob e2f7895594b5d82de5d5ab5b1da50a5351fa9bc2.
+
+Left out to save space:
+  public/debs/*.deb and reference/**/*.deb (about 250 MB of built packages).
+  Rebuild them with `make package`, or copy them from the repo if you need
+  them. public/debs/ is not included here.

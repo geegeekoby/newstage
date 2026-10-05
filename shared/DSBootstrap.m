@@ -9,7 +9,10 @@
 
 static const char *kDSGuardPaths[] = {
     "/var/mobile/Library/Preferences/com.recreated.dynamicstage.launchguard",
+    "/var/jb/var/mobile/Library/Preferences/com.recreated.dynamicstage.launchguard",
     "/var/tmp/com.recreated.dynamicstage.launchguard",
+    "/var/jb/tmp/com.recreated.dynamicstage.launchguard",
+    "/var/jb/var/tmp/com.recreated.dynamicstage.launchguard",
 };
 
 static const char *kDSKillSwitchPaths[] = {
@@ -33,13 +36,14 @@ static void DSWriteCountAt(const char *path, int count) {
         unlink(path);
         return;
     }
-    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, 0644);
     if (fd < 0) return;
     char buffer[16];
     int len = snprintf(buffer, sizeof(buffer), "%d\n", count);
     if (len > 0) {
         ssize_t ignored __attribute__((unused)) = write(fd, buffer, (size_t)len);
     }
+    fsync(fd);
     close(fd);
 }
 
@@ -69,11 +73,17 @@ bool DSLaunchGuardTripped(void) {
     return DSLaunchGuardCount() >= kDSMaxUncleanLaunches;
 }
 
+static int DSBeganThisProcess = 0;
+
 bool DSBootstrapBeginFullInstall(void) {
     if (DSKillSwitchPresent()) return false;
+    // %ctor raises the guard before any hook. The later full install calls
+    // this again in the same process and must not count a second crash.
+    if (DSBeganThisProcess) return true;
     int count = DSLaunchGuardCount();
     if (count >= kDSMaxUncleanLaunches) return false;
     DSSetLaunchGuardCount(count + 1);
+    DSBeganThisProcess = 1;
     return true;
 }
 
@@ -85,8 +95,17 @@ bool DSBundleLooksLikeUserApplication(void) {
     NSString *path = NSBundle.mainBundle.bundlePath;
     if (path.length == 0) return false;
 
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
     if (DSIdentifierIsExcludedFromStage(identifier)) return false;
+    // The chat apps and Phone. Their container path is not always the App
+    // Store one, and bailing here is what left Beeper with no hooks.
+    if ([identifier isEqualToString:@"com.beeper.chat.ios"] ||
+        [identifier isEqualToString:@"com.apple.MobileSMS"] ||
+        [identifier isEqualToString:@"com.facebook.Messenger"] ||
+        [identifier isEqualToString:@"org.whispersystems.signal"] ||
+        [identifier isEqualToString:@"com.apple.mobilephone"]) {
+        return true;
+    }
 
     NSString *lower = path.lowercaseString;
     for (NSString *needle in @[ @"keyboardarbiter", @"springboard", @"preferencebundles",

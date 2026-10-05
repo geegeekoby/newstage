@@ -1,0 +1,41 @@
+Dynamic Stage build report
+Date: 2026-10-05 19:54:03 NZDT (PT / Pacific-Auckland)
+Result: SUCCESS
+
+Package: com.recreated.dynamicstage
+Version: 4.5.636
+Architecture: iphoneos-arm64
+Scheme: rootless (THEOS_PACKAGE_SCHEME=rootless)
+Target: iphone:clang:16.5:14.0
+ARCHS: arm64 arm64e
+
+Deb paths:
+  /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.636_iphoneos-arm64.deb  (477434 bytes)
+  /workspace/phone-stage-fit/DynamicStage_4.5.636_phone-aspect-fit.deb  (same file, clear name)
+  Source build output: /workspace/phone-stage-fit/CursorRepo/packages/com.recreated.dynamicstage_4.5.636_iphoneos-arm64.deb
+
+Patches included (already in CursorRepo before build; not modified during build):
+  springboard/DSStageManager.m  (Phone aspect-fit)
+  app/Tweak.xm                  (Phone aspect-fit)
+
+Toolchain:
+  THEOS=/tmp/theos
+  SDK: iPhoneOS16.5.sdk (installed via install-sdk)
+  clang: /tmp/theos/toolchain/linux/iphone/bin/clang (L1ghtmann iOSToolchain)
+
+Make summary:
+  make clean + make package FINALPACKAGE=1 → exit 0
+  Compiled springboard (DynamicStage) + app (DynamicStageApp) for arm64 and arm64e
+  Expected arm64e ABI linker warnings (pre-iOS-14 ptrauth) — patched by newabi.py
+  Compile steps logged: 70
+
+Post-stage / after-package hooks:
+newabi: building allemande (arm64e ABI converter)
+newabi: Library/MobileSubstrate/DynamicLibraries/DynamicStage.dylib -> new arm64e ABI
+newabi: Library/MobileSubstrate/DynamicLibraries/DynamicStageApp.dylib -> new arm64e ABI
+stage_app_payload: wrote /workspace/phone-stage-fit/CursorRepo/.theos/_/Library/Application Support/DynamicStage/DynamicStageApp.dylib and the Messages filter
+dm.pl: building package `com.recreated.dynamicstage:iphoneos-arm64' in `./packages/com.recreated.dynamicstage_4.5.636_iphoneos-arm64.deb'
+verify: 3 binaries, arm64 + new-ABI arm64e, signed
+
+Phone patches: not touched during this build.
+Full make log: /workspace/phone-stage-fit/make-package.log

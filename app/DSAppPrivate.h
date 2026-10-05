@@ -9,6 +9,18 @@
 
 // The window a keyboard is drawn in. keyboardScreenReferenceSize is the size the
 // keyboard lays itself out against. On this firmware that is the display, not the card.
+@interface UIKeyboardWindow : UIWindow
+@end
+
+@interface UIInputSetHostView : UIView
+@end
+
+@interface UIKeyboardLayerHostView : UIView
+@end
+
+@interface UIKeyboardRemoteControlView : UIView
+@end
+
 @interface UITextEffectsWindow : UIWindow
 - (CGRect)_boundsForInterfaceOrientation:(NSInteger)orientation;
 @property (nonatomic, readonly) CGSize keyboardScreenReferenceSize;

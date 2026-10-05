@@ -3,7 +3,7 @@
 <!--
 	Starting point for apps whose stage behaviour is known.
 
-	type 0 ("iPad") lets an app resize live, which is what Split View and
+	type 0 ("iPad") lets an app resize live, which a hosted stage and
 	backgrounding need; apps left out of this file default to type 1 ("iPhone")
 	and relaunch instead, because that is the safe behaviour for anything whose
 	layout has not been checked.

@@ -57,27 +57,24 @@ def main() -> None:
             + " or ".join(LIB_CANDIDATES)
         )
 
+    source_plist = os.path.join(ROOT, "app", "DynamicStageApp.plist")
+    if not os.path.isfile(source_plist):
+        raise SystemExit(f"missing {source_plist}")
+    with open(source_plist, encoding="utf-8") as handle:
+        filter_text = handle.read()
+    if "com.apple.MobileSMS" not in filter_text:
+        raise SystemExit("app filter is missing com.apple.MobileSMS")
+
     payload_dir = support_dir(staging)
     dst_dylib = os.path.join(payload_dir, "DynamicStageApp.dylib")
     dst_plist = os.path.join(payload_dir, "DynamicStageApp.plist")
     shutil.copy2(src_dylib, dst_dylib)
-    with open(dst_plist, "w", encoding="utf-8") as handle:
-        handle.write(
-            "{\n"
-            "    Filter = {\n"
-            "        Bundles = (\n"
-            '            "com.apple.UIKit",\n'
-            '            "com.facebook.Messenger",\n'
-            '            "org.whispersystems.signal",\n'
-            '            "com.beeper.chat.ios",\n'
-            "        );\n"
-            "    };\n"
-            "}\n"
-        )
-    # Same OpenStep filter SpringBoard's own plist uses. ElleKit loads that one.
+    # Copy the source filter as-is. Rewriting it here used to drop Messages,
+    # and ElleKit then never loaded this dylib into a conversation.
+    shutil.copy2(source_plist, dst_plist)
     libs_plist = os.path.join(os.path.dirname(src_dylib), "DynamicStageApp.plist")
-    shutil.copy2(dst_plist, libs_plist)
-    print(f"stage_app_payload: wrote {dst_dylib} and OpenStep plists")
+    shutil.copy2(source_plist, libs_plist)
+    print(f"stage_app_payload: wrote {dst_dylib} and the Messages filter")
 
 
 if __name__ == "__main__":

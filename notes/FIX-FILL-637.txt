@@ -1,0 +1,8 @@
+4.5.637 Phone fill tune (after user said 4.5.636 fill was better but quick bar small, dial pad needs room above it, still some side black)
+
+Changes vs 4.5.636 fill:
+- DSPhoneMinLayoutHeight 667 -> 560 (larger uniform scale into same card; ~0.82 vs ~0.69 on a ~458pt card)
+- DSPhoneDialScale 0.72 -> 0.88 (bigger keypad grid above tab/quick bar)
+- keypad availW inset 8 -> 4 (use more of card width)
+
+SpringBoard still untouched. Stage frame unchanged.

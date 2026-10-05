@@ -32,6 +32,10 @@
 // bits are the bundle hash. Bit 32 set means the keyboard should come up.
 #define kDSKeyboardRequestNotification "com.recreated.dynamicstage.keyboard.request"
 
+// SpringBoard tells Messages its keyboard view is actually on the screen.
+// Low 32 bits are the bundle hash. Bit 32 set means the keys are up.
+#define kDSKeyboardShownNotification "com.recreated.dynamicstage.keyboard.shown"
+
 // Keystrokes from that keyboard, written by SpringBoard and applied in the app.
 // /var/tmp is readable from a sandboxed app. Preferences is not.
 #define kDSKeyboardInputPath @"/var/tmp/com.recreated.dynamicstage.keyboard.input.plist"
@@ -60,6 +64,13 @@
 // Written by SpringBoard, read by the injected application dylib so it knows it
 // is being hosted before its first frame.
 #define kDSStageGeometryNotification "com.recreated.dynamicstage.geometry"
+
+// Card size for the app named by the geometry notification, then the peer.
+// Low 32 bits are the width in points, high 32 bits the height. A sandboxed
+// app can read this when it cannot read the preferences plist.
+#define kDSStageCardSizeNotification "com.recreated.dynamicstage.cardsize"
+#define kDSStageCardSizePeerNotification "com.recreated.dynamicstage.cardsize.peer"
+#define kDSStageCardPath @"/var/tmp/com.recreated.dynamicstage.card.plist"
 
 // Written by SpringBoard, read by the injected application dylib: tells an
 // application which geometry the stage wants it to use before its first frame.
@@ -110,6 +121,27 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 // previous boot's keyboard notes.
 #define kDSDiagnosticsSessionPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.session"
 
+// Stage keyboard snapshots (attach, keys up/down). Replaced on every SpringBoard start.
+#define kDSKeyboardStageLogPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard-stage.log"
+
+// Beeper keyboard and quick-bar detail. Both SpringBoard and the Beeper
+// process append it. The stage log is capped at a few hundred characters a
+// line, so the window list and the bar's superview chain live here instead.
+#define kDSBeeperDetailLogPath @"/var/tmp/com.recreated.dynamicstage.beeper-detail.log"
+
+// Kept across resprings. postinst deletes it, so a crash from the build that
+// was just replaced is not still sitting there after the next install.
+#define kDSBuildVersionString "4.5.640"
+
+// One line from the staged app, copied into the stage log. The app and
+// SpringBoard do not share that log, so a blocked keyboard hide was invisible.
+#define kDSKeyboardTraceNotification "com.recreated.dynamicstage.keyboard.trace"
+#define kDSKeyboardTracePath @"/var/tmp/com.recreated.dynamicstage.keyboard-trace"
+#define kDSCrashLogPath @"/var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log"
+
+// Single stage at runtime. Legacy dual-stack helpers in SpringBoard remain compiled
+// but are unreachable while this is 1 (no second card is ever created).
+
 // Preference keys ------------------------------------------------------------
 
 #define kDSPrefEnabled @"enabled"
@@ -157,7 +189,7 @@ typedef NS_ENUM(NSInteger, DSStageState) {
     DSStageStateClosed = 0,
     DSStageStateTracking,   // finger down, stage following the drag
     DSStageStateOverlay,    // stage floating above an untouched full screen app
-    DSStageStateSplit,      // host app resized to the top half
+    DSStageStateSplit,      // retired; nothing enters this state
     DSStageStateMinimized,  // stage dismissed, stage app still alive
 };
 
@@ -166,19 +198,10 @@ typedef NS_ENUM(NSInteger, DSStageState) {
 // captured on a 430x932pt device (iPhone 14 Pro Max, same as the target). Every
 // number below came out of a pixel trace of those frames:
 //
-//   * the stage always occupies the bottom half of the display, 466pt down;
-//   * floating over an app it is a card inset 10pt from the left, right and
-//     bottom edges, with a shadow line visible just outside each edge, so its
-//     top edge lands at 476pt;
-//   * in Split View the same card loses its side and bottom insets and goes
-//     edge to edge, keeping only the 10pt gap that separates it from the app
-//     above; the app above gets exactly the top half, with its bottom corners
-//     rounded to the display's own radius;
-//   * the floating card's corners are concentric with the display mask, i.e.
-//     the display radius less the inset; edge to edge they are the display's;
+//   * the stage is a floating card. The app behind stays full screen;
+//   * the card's corners are concentric with the display mask;
 //   * the app behind scales to 0.872 about the screen centre while the corner is
-//     being pulled, over black, then either springs back (overlay) or resizes
-//     into the top half (split).
+//     being pulled, over black, then springs back to full screen.
 
 // Below this, what is on the bottom edge of the display is an accessory bar or a
 // keyboard on its way out rather than a keyboard the card has to stay clear of.
@@ -199,7 +222,14 @@ static const CGFloat kDSStageInset = 10.0;
 static const CGFloat kDSKeyboardLiftGap = 36.0;
 static const CGFloat kDSStackSlotGap = 6.0;
 static const CGFloat kDSStackCardInset = 5.0;
+// Grab band outside the card, and the thicker band inside the edge that a
+// finger can still catch. The inside band is what you actually hit.
+static const CGFloat kDSStageOuterDragBand = 18.0;
+// The grab band is only the edge of the card. 64pt reached into the app
+// picker and stole its scroll.
+static const CGFloat kDSStageRimGrabBand = 18.0;
 static const NSInteger kDSMaxStackSlots = 2;
+static const CGFloat kDSOffscreenCardGap = 12.0;
 static const CGFloat kDSFallbackDisplayCornerRadius = 55.0;
 static const CGFloat kDSHostShrinkScale = 0.872;
 
@@ -224,18 +254,20 @@ static const CGFloat kDSSpringResponse = 0.42;
 // card on both sides; the search field is 56pt tall with a 16pt radius, section
 // headers occupy a 52pt band with the text centred in it, and the plates are
 // 45pt tall with 10pt between them and the same 16pt radius as the field.
-static const CGFloat kDSContentInset = 27.0;
+static const CGFloat kDSContentInset = 16.0;
 static const CGFloat kDSSearchFieldTop = 28.0;
-static const CGFloat kDSSearchFieldHeight = 56.0;
-static const CGFloat kDSSearchFieldRadius = 16.0;
-static const CGFloat kDSSearchGlyphInset = 18.0;
-static const CGFloat kDSSectionHeaderHeight = 52.0;
-static const CGFloat kDSCellHeight = 45.0;
-static const CGFloat kDSCellRadius = 16.0;
-static const CGFloat kDSCellGap = 10.0;
-static const CGFloat kDSCellIconSide = 34.0;
-static const CGFloat kDSCellIconInset = 7.0;
-static const CGFloat kDSCellTitleGap = 7.0;
+static const CGFloat kDSSearchFieldHeight = 40.0;
+static const CGFloat kDSSearchFieldRadius = 14.0;
+static const CGFloat kDSSearchGlyphInset = 12.0;
+static const CGFloat kDSSectionHeaderHeight = 22.0;
+static const CGFloat kDSCellHeight = 48.0;
+static const CGFloat kDSCellRadius = 14.0;
+static const CGFloat kDSCellGap = 8.0;
+static const CGFloat kDSCellIconSide = 26.0;
+static const CGFloat kDSCellIconInset = 10.0;
+static const CGFloat kDSCellTitleGap = 10.0;
+static const CGFloat kDSRecentChipWidth = 72.0;
+static const CGFloat kDSRecentStripHeight = 76.0;
 
 // Type sizes, derived from the ink height of the same frames.
 static const CGFloat kDSTitleFontSize = 20.0;

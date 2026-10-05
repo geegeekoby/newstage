@@ -15,7 +15,6 @@ CGRect DSStageRestingFrame(struct DSStageLayoutContext ctx, DSStageLayoutMode mo
 
     switch (mode) {
         case DSStageLayoutModeSplit:
-            return CGRectMake(0, top, w, h - top);
         case DSStageLayoutModeOverlay:
             return CGRectMake(kDSStageInset, top, w - kDSStageInset * 2.0, h - top - kDSStageInset);
         default:
@@ -68,6 +67,22 @@ CGRect DSStageStackSlotFrame(CGRect combinedCardFrame, NSInteger slot, NSInteger
                       combinedCardFrame.origin.y + height + gap,
                       combinedCardFrame.size.width,
                       height);
+}
+
+CGFloat DSStageStatusBarClearance(CGRect screen) {
+    CGFloat height = CGRectGetHeight(screen);
+    CGFloat width = CGRectGetWidth(screen);
+    // Dynamic Island (14 Pro, 14 Pro Max, and the taller Plus-class displays).
+    if (height >= 920.0 && width >= 420.0) return 59.0;
+    if (height >= 850.0 && width >= 392.0) return 59.0;
+    // Notch.
+    if (height >= 800.0) return 47.0;
+    return 20.0;
+}
+
+CGFloat DSStageHomeIndicatorClearance(CGRect screen) {
+    if (CGRectGetHeight(screen) >= 800.0) return 34.0;
+    return 0.0;
 }
 
 CGRect DSStageStackHalfScreenFrame(CGRect screen, NSInteger slot, CGFloat gap, CGFloat inset, CGFloat topInset, CGFloat bottomInset) {

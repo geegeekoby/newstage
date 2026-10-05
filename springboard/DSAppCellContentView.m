@@ -104,13 +104,15 @@
 
         _icon = [[UIImageView alloc] initWithFrame:CGRectZero];
         _icon.contentMode = UIViewContentModeScaleAspectFill;
-        _icon.layer.cornerRadius = kDSCellIconSide * 0.235;
+        _icon.layer.cornerRadius = 6.0;
         _icon.layer.cornerCurve = kCACornerCurveContinuous;
         _icon.clipsToBounds = YES;
         [self addSubview:_icon];
 
         _title = [[UILabel alloc] initWithFrame:CGRectZero];
-        _title.font = [UIFont systemFontOfSize:kDSTitleFontSize weight:UIFontWeightRegular];
+        _title.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightMedium];
+        _title.textAlignment = NSTextAlignmentLeft;
+        _title.numberOfLines = 1;
         _title.lineBreakMode = NSLineBreakByTruncatingTail;
         [self addSubview:_title];
 
@@ -129,25 +131,40 @@
     CGRect bounds = self.bounds;
     _plate.frame = bounds;
     _holdFill.frame = bounds;
-
-    CGFloat iconY = (CGRectGetHeight(bounds) - kDSCellIconSide) / 2.0;
-    _icon.frame = CGRectMake(kDSCellIconInset, iconY, kDSCellIconSide, kDSCellIconSide);
-
-    CGFloat waveformWidth = 14.0;
-    BOOL showsWaveform = !_waveform.hidden;
+    if (_chipStyle) {
+        CGFloat side = 32.0;
+        _icon.layer.cornerRadius = 8.0;
+        _icon.frame = CGRectMake((CGRectGetWidth(bounds) - side) / 2.0, 2.0, side, side);
+        _title.frame = CGRectMake(0.0, CGRectGetMaxY(_icon.frame) + 4.0, CGRectGetWidth(bounds), 28.0);
+        _waveform.frame = CGRectMake(CGRectGetMaxX(_icon.frame) - 10.0, CGRectGetMaxY(_icon.frame) - 8.0, 12.0, 10.0);
+        return;
+    }
+    CGFloat side = kDSCellIconSide;
+    _icon.layer.cornerRadius = 6.0;
+    CGFloat iconY = (CGRectGetHeight(bounds) - side) / 2.0;
+    _icon.frame = CGRectMake(kDSCellIconInset, iconY, side, side);
     CGFloat titleX = CGRectGetMaxX(_icon.frame) + kDSCellTitleGap;
-    CGFloat titleRight = CGRectGetWidth(bounds) - kDSCellIconInset - (showsWaveform ? waveformWidth + 6.0 : 2.0);
-    _title.frame = CGRectMake(titleX, 0, MAX(titleRight - titleX, 0), CGRectGetHeight(bounds));
+    BOOL showsWaveform = !_waveform.hidden;
+    CGFloat titleRight = CGRectGetWidth(bounds) - 12.0 - (showsWaveform ? 22.0 : 0.0);
+    _title.frame = CGRectMake(titleX, 0.0, MAX(titleRight - titleX, 0.0), CGRectGetHeight(bounds));
+    _waveform.frame = CGRectMake(CGRectGetWidth(bounds) - 26.0, (CGRectGetHeight(bounds) - 12.0) / 2.0, 14.0, 12.0);
+}
 
-    _waveform.frame = CGRectMake(CGRectGetWidth(bounds) - kDSCellIconInset - waveformWidth,
-                                 (CGRectGetHeight(bounds) - 12.0) / 2.0,
-                                 waveformWidth,
-                                 12.0);
+- (void)setChipStyle:(BOOL)chipStyle {
+    _chipStyle = chipStyle;
+    [self setDarkMode:_darkMode];
+    [self setNeedsLayout];
 }
 
 - (void)setEntry:(DSAppEntry *)entry {
     _entry = entry;
-    _icon.image = entry.icon;
+    UIImage *icon = entry.icon;
+    if (!icon && entry.bundleIdentifier.length > 0) {
+        icon = [[DSAppLibrary sharedLibrary] iconForBundleIdentifier:entry.bundleIdentifier];
+        entry.icon = icon;
+    }
+    _icon.image = icon;
+    _icon.backgroundColor = icon ? UIColor.clearColor : [UIColor colorWithWhite:1.0 alpha:0.12];
     _title.text = entry.displayName;
     [self setNeedsLayout];
 }
@@ -159,10 +176,26 @@
     [self setNeedsLayout];
 }
 
+- (void)setUnavailable:(BOOL)unavailable {
+    _unavailable = unavailable;
+    self.userInteractionEnabled = !unavailable;
+    self.alpha = unavailable ? 0.35 : 1.0;
+}
+
 - (void)setDarkMode:(BOOL)darkMode {
     _darkMode = darkMode;
-    _plate.backgroundColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.1]
-                                      : [UIColor colorWithWhite:0.0 alpha:0.07];
+    if (_chipStyle) {
+        _plate.backgroundColor = UIColor.clearColor;
+        _title.font = [UIFont systemFontOfSize:11.0 weight:UIFontWeightMedium];
+        _title.textAlignment = NSTextAlignmentCenter;
+        _title.numberOfLines = 2;
+    } else {
+        _plate.backgroundColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.08]
+                                          : [UIColor colorWithWhite:0.0 alpha:0.05];
+        _title.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightMedium];
+        _title.textAlignment = NSTextAlignmentLeft;
+        _title.numberOfLines = 1;
+    }
     _holdFill.backgroundColor = darkMode ? UIColor.whiteColor : UIColor.blackColor;
     _title.textColor = darkMode ? UIColor.whiteColor : UIColor.blackColor;
     _waveform.barColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.55]
@@ -171,11 +204,10 @@
 
 - (void)setHighlighted:(BOOL)highlighted {
     [super setHighlighted:highlighted];
+    if (_unavailable) return;
     [UIView animateWithDuration:highlighted ? 0.1 : 0.25 animations:^{
-        self->_plate.backgroundColor = highlighted
-            ? (self.darkMode ? [UIColor colorWithWhite:1.0 alpha:0.2] : [UIColor colorWithWhite:0.0 alpha:0.14])
-            : (self.darkMode ? [UIColor colorWithWhite:1.0 alpha:0.1] : [UIColor colorWithWhite:0.0 alpha:0.07]);
-        self->_icon.alpha = highlighted ? 0.85 : 1.0;
+        self->_icon.transform = highlighted ? CGAffineTransformMakeScale(0.92, 0.92) : CGAffineTransformIdentity;
+        self->_title.alpha = highlighted ? 0.7 : 1.0;
     }];
 }
 

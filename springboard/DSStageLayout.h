@@ -4,6 +4,10 @@
 // Pure geometry for the stage card. No UIKit, no SpringBoard — only the numbers
 // traced from the stock tweak's walkthrough on a 430×932pt display.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef NS_ENUM(NSInteger, DSStageLayoutMode) {
     DSStageLayoutModeClosed = 0,
     DSStageLayoutModeOverlay,
@@ -28,5 +32,15 @@ CGFloat DSStagePickerLiftForKeyboard(CGRect keyboardFrame, CGRect restingCardFra
 // Stack slot 0 = bottom card, slot 1 = top card (above slot 0). `count` is 1 or 2.
 CGRect DSStageStackSlotFrame(CGRect combinedCardFrame, NSInteger slot, NSInteger count, CGFloat gap);
 
+// Points the top card must stay below so it does not cover the status bar.
+// The stage window hides its own bar, so its safe area is 0 while SpringBoard's
+// bar is still on screen.
+CGFloat DSStageStatusBarClearance(CGRect screen);
+CGFloat DSStageHomeIndicatorClearance(CGRect screen);
+
 // Two stages: equal top and bottom halves of the display (slot 1 = top, slot 0 = bottom).
 CGRect DSStageStackHalfScreenFrame(CGRect screen, NSInteger slot, CGFloat gap, CGFloat inset, CGFloat topInset, CGFloat bottomInset);
+
+#ifdef __cplusplus
+}
+#endif

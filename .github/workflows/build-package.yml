@@ -1,0 +1,40 @@
+name: Build iOS package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "cursor/**"
+
+jobs:
+  package:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Theos
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: |
+          git clone --depth=1 https://github.com/theos/theos.git "$THEOS"
+          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+
+      - name: Build deb
+        run: make package FINALPACKAGE=1
+
+      - name: Verify package
+        run: python3 tools/verify_package.py packages/*.deb
+
+      - name: Update repo metadata
+        run: python3 tools/make_repo.py
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: dynamicstage-deb
+          path: |
+            packages/*.deb
+            public/debs/*.deb
+            api/package-index.json

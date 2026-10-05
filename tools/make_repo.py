@@ -21,7 +21,9 @@ from __future__ import annotations
 
 import argparse
 import email.utils
+from functools import cmp_to_key
 import glob
+import bz2
 import gzip
 import hashlib
 import json
@@ -61,9 +63,54 @@ CONTROL_FIELDS = [
 
 def newest_deb() -> str:
     debs = sorted(glob.glob(os.path.join(ROOT, "packages", "*.deb")), key=os.path.getmtime)
-    if not debs:
+    if debs:
+        return debs[-1]
+    archived = sorted(glob.glob(os.path.join(PUBLIC, "debs", "*.deb")), key=os.path.getmtime)
+    if not archived:
         raise SystemExit("no .deb in packages/ - run `make package FINALPACKAGE=1` first")
-    return debs[-1]
+    return archived[-1]
+
+
+def version_is_newer(left: str, right: str) -> bool:
+    if not right:
+        return True
+    if not left:
+        return False
+    return subprocess.run(
+        ["dpkg", "--compare-versions", left, "gt", right],
+        check=False,
+    ).returncode == 0
+
+
+def archived_debs() -> list[str]:
+    """Every package Sileo can offer, newest version first.
+
+    Older builds stay in public/debs. Listing each one is what lets Sileo
+    downgrade. A second file of the same package and version is skipped.
+    """
+    chosen: dict[tuple[str, str], str] = {}
+    versions: dict[str, str] = {}
+    for path in glob.glob(os.path.join(PUBLIC, "debs", "*.deb")):
+        try:
+            fields = control_fields(path)
+        except subprocess.CalledProcessError:
+            print("skipping unreadable deb", os.path.basename(path))
+            continue
+        version = fields.get("Version", "")
+        key = (fields.get("Package", ""), version)
+        current = chosen.get(key)
+        if current is None or os.path.getmtime(path) > os.path.getmtime(current):
+            chosen[key] = path
+            versions[path] = version
+
+    def compare(left: str, right: str) -> int:
+        if version_is_newer(versions[left], versions[right]):
+            return -1
+        if version_is_newer(versions[right], versions[left]):
+            return 1
+        return 0
+
+    return sorted(chosen.values(), key=cmp_to_key(compare))
 
 
 def control_fields(deb: str) -> dict:
@@ -188,7 +235,7 @@ def packages_stanza(fields: dict, deb_name: str, digests: dict, base_url: str | 
     return "\n".join(lines) + "\n"
 
 
-def write_release(stanza: str, gzipped: bytes):
+def write_release(stanza: str, gzipped: bytes, bzipped: bytes):
     """Release for the static, fixed-URL form of the repo.
 
     A package manager that finds no hash for the index it just downloaded may
@@ -198,14 +245,19 @@ def write_release(stanza: str, gzipped: bytes):
     api/repo.js composes Release and the index together per request, because the
     index names its own host and only the deployment knows what that is.
 
-    ``gzipped`` must be the exact bytes written to Packages.gz.
+    ``gzipped`` and ``bzipped`` must be the exact bytes written to Packages.gz
+    and Packages.bz2. Sileo tries the bz2 index first.
     """
     index_bytes = stanza.encode()
 
     def entries(algorithm):
         return "\n".join(
             f" {algorithm(payload).hexdigest()} {len(payload)} {name}"
-            for payload, name in ((index_bytes, "Packages"), (gzipped, "Packages.gz"))
+            for payload, name in (
+                (index_bytes, "Packages"),
+                (gzipped, "Packages.gz"),
+                (bzipped, "Packages.bz2"),
+            )
         )
 
     release = "\n".join(
@@ -240,23 +292,32 @@ def main():
     os.makedirs(os.path.join(PUBLIC, "assets"), exist_ok=True)
     os.makedirs(API, exist_ok=True)
 
-    # Sileo is only ever offered the newest build, but the older ones stay in the
-    # directory and stay downloadable by name: rolling back to a build that worked
-    # is otherwise a rebuild, and the version wanted is the one that is gone.
+    # The build just made is copied in with the older packages. Sileo is offered
+    # every one of them, newest first, so an older build can be installed again.
     deb_name = os.path.basename(deb)
     shutil.copy2(deb, os.path.join(PUBLIC, "debs", deb_name))
 
-    payload = open(deb, "rb").read()
-    digests = {
-        "size": len(payload),
-        "md5": hashlib.md5(payload).hexdigest(),
-        "sha1": hashlib.sha1(payload).hexdigest(),
-        "sha256": hashlib.sha256(payload).hexdigest(),
-    }
-
-    fields = control_fields(deb)
     write_repo_icon()
     write_banner()
+
+    records = []
+    for path in archived_debs():
+        fields = control_fields(path)
+        payload = open(path, "rb").read()
+        name = os.path.basename(path)
+        digests = {
+            "size": len(payload),
+            "md5": hashlib.md5(payload).hexdigest(),
+            "sha1": hashlib.sha1(payload).hexdigest(),
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }
+        records.append((fields, name, digests, packages_stanza(fields, name, digests, None)))
+
+    if not records:
+        raise SystemExit("no readable .deb files in public/debs")
+
+    fields, deb_name, digests, newest_stanza = records[0]
+    stanzas = [record[3] for record in records]
 
     changelog_path = os.path.join(ROOT, "changelog.md")
     changelog = ""
@@ -265,7 +326,8 @@ def main():
 
     # What the handler needs to compose a stanza with the host filled in.
     index = {
-        "stanza": packages_stanza(fields, deb_name, digests, None),
+        "stanza": newest_stanza,
+        "stanzas": stanzas,
         "package": fields.get("Package", ""),
         "name": fields.get("Name", ""),
         "version": fields.get("Version", ""),
@@ -273,6 +335,7 @@ def main():
         "author": fields.get("Author", ""),
         "size": digests["size"],
         "deb": deb_name,
+        "versions": [record[0].get("Version", "") for record in records],
         "changelog": changelog,
     }
     with open(os.path.join(API, "package-index.json"), "w") as handle:
@@ -280,25 +343,37 @@ def main():
         handle.write("\n")
 
     if args.url:
-        stanza = packages_stanza(fields, deb_name, digests, args.url)
+        # A blank line between stanzas is the record separator. One newline
+        # glues every build into a single entry, and Sileo then has nothing
+        # new to show.
+        stanza = "\n\n".join(
+            packages_stanza(record[0], record[1], record[2], args.url).rstrip("\n")
+            for record in records
+        ) + "\n"
         index_bytes = stanza.encode()
         gzipped = gzip.compress(index_bytes)
+        bzipped = bz2.compress(index_bytes)
         with open(os.path.join(PUBLIC, "Packages"), "w") as handle:
             handle.write(stanza)
         with open(os.path.join(PUBLIC, "Packages.gz"), "wb") as handle:
             handle.write(gzipped)
-        write_release(stanza, gzipped)
+        with open(os.path.join(PUBLIC, "Packages.bz2"), "wb") as handle:
+            handle.write(bzipped)
+        write_release(stanza, gzipped, bzipped)
         print("wrote static Packages for", args.url)
     else:
         # Left to api/repo.js. A file here would win over the rewrite that routes
         # these to the handler, and a Release whose hashes do not match the index
         # the handler serves is worse than no Release file.
-        for name in ("Packages", "Packages.gz", "Release"):
+        for name in ("Packages", "Packages.gz", "Packages.bz2", "Release"):
             stale = os.path.join(PUBLIC, name)
             if os.path.exists(stale):
                 os.remove(stale)
 
-    print(f"repository ready in {PUBLIC} ({deb_name}, {digests['size']} bytes)")
+    print(
+        f"repository ready in {PUBLIC} ({len(records)} packages, "
+        f"newest {deb_name}, {digests['size']} bytes)"
+    )
 
 
 if __name__ == "__main__":

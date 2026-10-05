@@ -1,0 +1,23 @@
+DynamicStage 4.5.640 — dial-pad lift actually runs
+
+Bug (why 4.5.639 looked unchanged)
+- DSAdjustPhoneLayoutForStage (keypad resize / bottom margin / number-field nudge)
+  existed but was never called. Only DSPhoneScheduleScaleRootIntoCard →
+  DSPhoneScaleRootIntoCard ran, so changing DSPhoneDialBottomMargin had zero effect.
+
+Fix
+- DSPhoneScheduleScaleRootIntoCard now calls DSPhoneScaleRootIntoCard then
+  DSAdjustPhoneLayoutForStage on the same deferred main-queue turn.
+- DSFitPhoneAfterLayout still goes through ScheduleScale, so it stays wired.
+- DSAdjustPhoneLayoutForStage no longer calls DSPhoneApplyCardFrame (that reset
+  transform/frame and would undo the fill scale). It only setNeedsLayout,
+  PullClippedTop, find keypad, and deferred DSResizePhoneKeypad — no layoutIfNeeded.
+
+New layout constants (layout pts on root.bounds)
+- DSPhoneDialBottomMargin: 56 → 110  (lift 7–9 clearly above quick/tab bar)
+- DSPhoneNumberDisplayLift: 14 → 22  (small nudge for typed-number field)
+- DSPhoneDialScale: 0.88 → 0.82     (slightly smaller pad so it fits above the bar)
+
+Package
+- Version 4.5.640
+- Deb: com.recreated.dynamicstage_4.5.640_iphoneos-arm64.deb

@@ -1,9 +1,8 @@
 #import <UIKit/UIKit.h>
 
-// A small tab on the right edge. Tapping it shows two squares, top and bottom.
-// An empty square starts a stage on that half. A staged app fills its square.
-// Holding a filled square, and only a filled square, sends that half back to
-// the app picker. A short tap still just shows that half.
+// A small tab on the right edge. Tapping it shows a New Stage button.
+// That button opens a stage on the top half of the screen. Dragging the
+// button and letting go opens a stage the same way.
 @interface DSStageShelfView : UIView
 
 @property (nonatomic, assign) BOOL darkMode;
@@ -11,6 +10,9 @@
 
 // half is 1 for the top of the screen and 0 for the bottom.
 @property (nonatomic, copy) void (^halfHandler)(NSInteger half);
+// A drag of the New Stage button. point is in screen coordinates.
+// Ended means the finger let go after a real drag. Cancelled means put it back.
+@property (nonatomic, copy) void (^slotDragHandler)(UIGestureRecognizerState state, CGPoint point);
 // Fired only after a hold on a square that currently shows an app.
 @property (nonatomic, copy) void (^halfHoldHandler)(NSInteger half);
 @property (nonatomic, copy) void (^willOpenHandler)(void);

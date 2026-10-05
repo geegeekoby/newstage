@@ -23,8 +23,8 @@ bool DSLaunchGuardTripped(void);
 // count. Returns false if the guard is already tripped (do not install).
 bool DSBootstrapBeginFullInstall(void);
 
-// Call once activate() has returned. A crash between Begin and this is what
-// trips the guard on the next SpringBoard start.
+// Call once SpringBoard has stayed up after activate(). A crash between Begin
+// and this trips the guard on the next SpringBoard start.
 void DSBootstrapMarkLaunchSucceeded(void);
 
 // Real App Store / sideloaded / /Applications bundles only. Daemons, SpringBoard,

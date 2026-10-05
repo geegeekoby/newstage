@@ -80,10 +80,17 @@ static UIWindowScene *DSForegroundWindowScene(void) {
     window.rootViewController = [[DSStageRootViewController alloc] init];
     window.backgroundColor = UIColor.clearColor;
     window.opaque = NO;
-    // Above the running application, below the status bar and system alerts.
-    window.windowLevel = UIWindowLevelStatusBar - 1.0;
+    // Below the SpringBoard keyboard host. That host sits at level 1000.
+    // 999 was close enough that raising the host, or a later level change,
+    // put this window on top of the keys.
+    window.windowLevel = 998.0;
     window.hidden = YES;
     return window;
+}
+
+- (void)setWindowLevel:(CGFloat)level {
+    if (level > 998.0) level = 998.0;
+    [super setWindowLevel:level];
 }
 
 - (BOOL)attachToForegroundSceneIfNeeded {

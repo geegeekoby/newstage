@@ -30,17 +30,59 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 
 // Frame in screen coordinates that the app should believe it occupies.
 @property (nonatomic, readonly) CGRect stageFrame;
+// When set, the scene uses the card's frame as given. Ordinary cards leave this
+// off so a card on the bottom half does not host the keyboard inside itself.
+@property (nonatomic, assign) BOOL matchCardFrame;
 - (void)setStageFrame:(CGRect)frame safeAreaInsets:(UIEdgeInsets)insets;
+// Stores the card size before the app view exists. The app is created at this
+// size, so its own bars land inside the card.
+- (void)noteLaunchFrame:(CGRect)frame;
+// The top app is laid out once at the tallest size this drag can reach.
+// The card is a window onto that layout. YES while that window is open.
+@property (nonatomic, readonly, getter=isRevealingTallContent) BOOL revealingTallContent;
 // Puts the hosted view in the card it is attached to. Does not resize the scene.
+// While a card is growing under the finger, the app is laid out once at the
+// tallest size. The card clips that layout, so more of it appears as the card
+// grows. A scene transaction on every move dropped Messages' keyboard.
+- (BOOL)beginRevealingTallContent:(CGRect)fullFrame;
+- (void)endRevealingTallContent:(CGRect)cardFrame;
+- (void)stopRevealingTallContent;
+// Split is closing and this app is about to fill the phone. The scene is
+// still the card until this write. Without it, Messages keeps the 426 by 460
+// layout after it looks full screen.
+- (void)handOffAtFullScreen;
 - (void)fitHostViewToCard;
+// Asks the hosted view to redraw after its card changes size. Does not set a
+// frame on the scene view. That call waits on the app and safe-modes SpringBoard.
+- (void)markHostNeedsLiveRedraw;
+// The card grew. The app was already laid out at the tall size, so this only
+// keeps the host there. It does not write scene settings.
+- (void)adoptGrowingCardFrame:(CGRect)frame;
+// Scene size, host size, and the picture inside the host. For the blank band.
+- (NSString *)growingContentDebugLine;
+// The app view re-pins the scene to the whole display after launch. Write the
+// card size again when the live scene is still larger than the card.
+// This does not start a scene transaction. A transaction here is what blanks
+// the card and, stacked up, what safe-modes SpringBoard.
+- (void)refitPresentedScene;
+// Same geometry write, for a card whose size is changing under a finger.
+- (void)applyCardFrameQuietly:(CGRect)frame;
 // How much of the bottom of the card the host view should extend past, so the
 // content view's bounds clip that band. Does not change the scene's size.
 - (void)setKeyboardClipHeight:(CGFloat)height;
 - (CGFloat)keyboardClipHeight;
+// Messages draws its keyboard below the card. The host has to stop clipping
+// that area or the keys are painted and then thrown away.
+- (void)setMessagesKeyboardVisible:(BOOL)visible;
+// An app whose scene was backgrounded while its card was parked comes back
+// black until it is asked to run again. Called when the card is shown.
+- (void)wakeIfBackgrounded;
 // The app view re-pins itself to the full display and the card stays black until
 // geometry is written again. Call this after the card has moved.
 - (void)refreshPresentedGeometry;
 - (void)setForeground:(BOOL)foreground;
+// A minimized card stays backgrounded. This never sets a scene foreground.
+- (void)setStaysBackgrounded:(BOOL)stays;
 
 // Hands the scene back to SpringBoard. `background` keeps the process alive so
 // notifications keep flowing; otherwise it is left suspended as usual.
@@ -59,10 +101,26 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // stage geometry.
 + (BOOL)applyOverridesToSettings:(FBSMutableSceneSettings *)settings forScene:(FBScene *)scene;
 
+// `foreground` on these settings is read with -isForeground. Calling -foreground
+// throws, and a failed read looks like "foreground off", which is what made the
+// card throw away the update that fits the scene to the card.
++ (BOOL)readForegroundFlag:(id)settings known:(BOOL *)known;
+// Puts the scene's already-committed foreground back onto a pending update so
+// the card size can land without backgrounding a scene that is on screen.
++ (void)keepCommittedForegroundOfScene:(FBScene *)scene onSettings:(FBSMutableSceneSettings *)settings;
+
 // An app view controller of the stage's own making is not part of SpringBoard's
 // scene layout, so settings churn makes it assert; the hook that contains that has
 // to know which ones are the stage's.
 + (BOOL)ownsAppViewController:(id)controller;
+// A minimized app's app view asserts if SpringBoard delivers a scene update while
+// another app is opening. The hook has to drop that update.
++ (BOOL)appViewControllerStaysBackgrounded:(id)controller;
++ (BOOL)sceneIdentifierStaysBackgrounded:(NSString *)identifier;
+// YES when this scene has stage geometry. The app switcher updates every
+// other scene constantly; those updates must not be copied.
++ (BOOL)hasAnySceneOverride;
++ (BOOL)sceneIdentifierHasOverride:(NSString *)identifier;
 
 // SpringBoard's scene manager for the built-in display. It owns where a hosted
 // app's keyboard goes, among other things.
@@ -74,9 +132,33 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 + (void)noteLiveScene:(FBScene *)scene;
 + (FBScene *)liveSceneForBundleIdentifier:(NSString *)bundleIdentifier;
 
-// Geometry-only override, used for the app that keeps the top half in Split
-// View: SpringBoard still hosts and animates it, the stage only dictates size.
-+ (void)registerGeometryOverrideForScene:(FBScene *)scene frame:(CGRect)frame insets:(UIEdgeInsets)insets;
-+ (void)removeGeometryOverrideForScene:(FBScene *)scene restoringFrame:(CGRect)frame insets:(UIEdgeInsets)insets;
+// The system home swipe is already a scene transition. Writing foreground or
+// starting another transaction in that window is a SIGTRAP.
++ (void)setHomeGestureActive:(BOOL)active;
++ (BOOL)homeGestureIsActive;
+// The corner pull runs inside SpringBoard's own gesture callback. A display
+// mode change or a new scene transaction from that callback is a SIGTRAP.
++ (void)beginSystemPullCallback;
++ (void)endSystemPullCallback;
++ (BOOL)systemPullCallbackIsActive;
+// Nonzero while an FBScene settings update is on the stack. Fitting a
+// presentation, or starting another update, from inside that call never returns.
++ (void)beginSceneSettingsUpdate;
++ (void)endSceneSettingsUpdate;
++ (NSInteger)sceneSettingsUpdateDepth;
+// A minimized app is still a live app view that refuses system lifecycle.
+// SpringBoard's home transition traps on that. While the swipe is in progress
+// the parked host follows the system, then the stage takes lifecycle back.
+- (void)setFollowsSystemHomeTransition:(BOOL)follows;
+// The app just left its card and became the real front app. Drop any stage
+// override for it so the home swipe cannot resize that scene.
++ (void)noteFullScreenHandoffOfBundleIdentifier:(NSString *)bundleIdentifier;
+// YES for a few seconds after that handoff. A later settings write must not
+// put the split size back.
++ (BOOL)isHandingOffSceneIdentifier:(NSString *)identifier;
+// YES when this frame is the size the stage just stored for that scene.
+// A nearly full-screen update from anywhere else is another app opening,
+// and that one is refused. The tall split size is this one, and it has to land.
++ (BOOL)stageRequestedFrame:(CGRect)frame forSceneIdentifier:(NSString *)identifier;
 
 @end

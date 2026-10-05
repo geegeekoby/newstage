@@ -2,7 +2,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = DynamicStage
 
-DynamicStage_FILES = $(wildcard *.xm) $(wildcard *.m) ../shared/DSPreferences.m ../shared/DSExclusions.m ../shared/DSDiagnostics.m ../shared/DSBootstrap.m
+DynamicStage_FILES = $(wildcard *.xm) $(wildcard *.m) ../shared/DSPreferences.m ../shared/DSExclusions.m ../shared/DSDiagnostics.m ../shared/DSStageDebug.m ../shared/DSBootstrap.m ../shared/DSCrashLog.m
 DynamicStage_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-function -I../shared
 DynamicStage_FRAMEWORKS = UIKit CoreGraphics QuartzCore AudioToolbox
 DynamicStage_PRIVATE_FRAMEWORKS = FrontBoard FrontBoardServices BaseBoard SpringBoardServices

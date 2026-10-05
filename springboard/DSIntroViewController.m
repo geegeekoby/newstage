@@ -168,15 +168,15 @@ static UIWindow *sIntroWindow;
         [DSIntroStep stepWithTitle:@"Dynamic Stage"
                               body:@"Stage Manager, reimagined for iPhone. Run a second app on top of the one you are already using."
                               demo:DSIntroDemoNone],
-        [DSIntroStep stepWithTitle:@"Pull from the corner"
-                              body:@"Swipe up from the bottom-right corner of any app. The stage follows your finger the whole way."
+        [DSIntroStep stepWithTitle:@"Open a stage"
+                              body:@"Tap New Stage on the right. Drag the card down into the bottom-right corner to minimise it. A diagonal swipe from that corner, or just to its left, brings it back to the half it was on."
                               demo:DSIntroDemoPull],
         [DSIntroStep stepWithTitle:@"Pick an app"
                               body:@"Recently opened apps sit at the top, your whole library below. Tap one and it loads right there on the stage."
                               demo:DSIntroDemoPick],
-        [DSIntroStep stepWithTitle:@"Float or split"
-                              body:@"Let go early and the stage floats over your app. Keep pulling and the app behind resizes into a true split view."
-                              demo:DSIntroDemoSplit],
+        [DSIntroStep stepWithTitle:@"It floats"
+                              body:@"Let go and the stage floats over the app you were already using. That app stays full screen."
+                              demo:DSIntroDemoPull],
         [DSIntroStep stepWithTitle:@"Hold for fullscreen"
                               body:@"Press and hold an app in the list instead of tapping it and it opens across the whole screen, no stage involved."
                               demo:DSIntroDemoFullscreen],

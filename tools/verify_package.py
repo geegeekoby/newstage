@@ -226,6 +226,28 @@ def check_macho(path, name, problems):
                 )
 
 
+def check_app_filter(root, problems):
+    """The in-app dylib has to name Messages or a conversation never loads it."""
+    found = []
+    for directory, _, files in os.walk(root):
+        for filename in files:
+            if filename != "DynamicStageApp.plist":
+                continue
+            path = os.path.join(directory, filename)
+            found.append(os.path.relpath(path, root))
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                text = handle.read()
+            for bundle in (
+                "com.apple.MobileSMS",
+                "com.facebook.Messenger",
+                "org.whispersystems.signal",
+            ):
+                if bundle not in text:
+                    problems.append(f"{found[-1]}: filter is missing {bundle}")
+    if not found:
+        problems.append("DynamicStageApp.plist is not in the package")
+
+
 def main():
     if len(sys.argv) != 2:
         print(__doc__)
@@ -255,6 +277,7 @@ def main():
                 check_macho(path, os.path.relpath(path, root), problems)
 
         check_preference_bundle(root, problems)
+        check_app_filter(root, problems)
 
         if not binaries:
             problems.append("no Mach-O binaries in the package at all")

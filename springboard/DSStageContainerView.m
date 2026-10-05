@@ -1,10 +1,50 @@
 #import "DSStageContainerView.h"
+#import "DSStageDebug.h"
 #import "DSConstants.h"
 #import <QuartzCore/QuartzCore.h>
 
 static const CGFloat kDSDragAffordanceHeight = 36.0;
+
+static void DSApplyRoundedClip(UIView *view, CGFloat radius) {
+    if (!view || radius < 1.0) return;
+    view.clipsToBounds = YES;
+    view.layer.masksToBounds = YES;
+    view.layer.cornerRadius = radius;
+    view.layer.cornerCurve = kCACornerCurveContinuous;
+    view.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner |
+                               kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+}
+
+// A continuous mask, the same curve as the rim. A circular path cut deeper
+// than that rim, so the card looked rounder than its outline.
+static void DSRebuildRoundedMask(UIView *view, CGFloat radius) {
+    if (!view) return;
+    CGRect bounds = view.bounds;
+    if (radius < 1.0 || CGRectGetWidth(bounds) < 2.0 || CGRectGetHeight(bounds) < 2.0) {
+        view.layer.mask = nil;
+        return;
+    }
+    CALayer *mask = view.layer.mask ?: [CALayer layer];
+    if ([mask isKindOfClass:CAShapeLayer.class]) {
+        mask = [CALayer layer];
+    }
+    mask.frame = bounds;
+    mask.backgroundColor = UIColor.blackColor.CGColor;
+    mask.cornerRadius = radius;
+    mask.cornerCurve = kCACornerCurveContinuous;
+    if (view.layer.mask != mask) view.layer.mask = mask;
+}
+
+static void DSRoundBlurFill(UIVisualEffectView *backdrop, CGFloat radius) {
+    DSApplyRoundedClip(backdrop, radius);
+    for (UIView *subview in backdrop.subviews) {
+        NSString *name = NSStringFromClass(subview.class);
+        if ([name rangeOfString:@"Backdrop"].location == NSNotFound) continue;
+        DSApplyRoundedClip(subview, radius);
+    }
+}
+
 static const CGFloat kDSGrabberWidth = 124.0;
-static const CGFloat kDSGrabberPillWidth = 40.0;
 static const CGFloat kDSGrabberPillHeight = 5.0;
 
 @implementation DSStageContainerView {
@@ -16,7 +56,6 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIView *_cornerGrip;
     UIView *_edgeGrip;
     UIButton *_stackAddButton;
-    UIButton *_minimizeButton;
     BOOL _applyingKeyboardBand;
     BOOL _clipsContents;
 }
@@ -26,6 +65,8 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _cornerRadius = kDSFallbackDisplayCornerRadius;
         _clipsContents = YES;
 
+        // The card clips its contents, which kills its own shadow, so the drop
+        // shadow lives on a sibling underneath.
         _shadowView = [[UIView alloc] initWithFrame:CGRectZero];
         _shadowView.backgroundColor = UIColor.clearColor;
         _shadowView.layer.shadowColor = UIColor.blackColor.CGColor;
@@ -35,8 +76,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _shadowView.layer.cornerCurve = kCACornerCurveContinuous;
         _shadowView.userInteractionEnabled = NO;
 
-        _backdrop = [[UIVisualEffectView alloc] initWithEffect:
-                     [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThickMaterialDark]];
+        _backdrop = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThickMaterialDark]];
         [self addSubview:_backdrop];
 
         _contentView = [[UIView alloc] initWithFrame:CGRectZero];
@@ -44,6 +84,11 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _contentView.clipsToBounds = YES;
         [self addSubview:_contentView];
 
+        // The card is dragged by this. It has to be a view of its own, sitting
+        // above the content: a drag that lands on the app grid belongs to the
+        // grid's own scrolling, and the card would never see it. Being visible is
+        // the other half of the job - there is otherwise nothing to say the card
+        // can be moved at all.
         _grabber = [[UIView alloc] initWithFrame:CGRectZero];
         _grabber.backgroundColor = UIColor.clearColor;
         [self addSubview:_grabber];
@@ -51,14 +96,29 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _grabberPill = [[UIView alloc] initWithFrame:CGRectZero];
         _grabberPill.layer.cornerRadius = kDSGrabberPillHeight / 2.0;
         _grabberPill.layer.cornerCurve = kCACornerCurveContinuous;
+        _grabberPill.hidden = YES;
         _grabberPill.userInteractionEnabled = NO;
         [_grabber addSubview:_grabberPill];
 
+        // The corner, for the same reason the grabber above is a view: a touch that
+        // lands on a hosted app is delivered to that app's own process, and a gesture
+        // recogniser on this side is never asked about it. While the card holds the app
+        // grid the corner could be a rectangle the recogniser tested the start of a drag
+        // against, because the grid is SpringBoard's own view. The moment the card held
+        // an app instead, taking hold of the corner stopped working at all.
+        //
+        // Only while an app is on the stage, though: there is no reason to hold back a
+        // piece of the app grid the grid could be using.
         _cornerGrip = [[UIView alloc] initWithFrame:CGRectZero];
         _cornerGrip.backgroundColor = UIColor.clearColor;
         _cornerGrip.userInteractionEnabled = NO;
         [self addSubview:_cornerGrip];
 
+        // The same thing, up the right-hand edge and well clear of the bottom of the
+        // display. The corner is a few points from the home gesture's own territory, and
+        // the phone hands those drags to the home gesture often enough to be worth a
+        // second place to start the same one - the log on the device caught the system
+        // taking a corner drag away mid-gesture and going home with it.
         _edgeGrip = [[UIView alloc] initWithFrame:CGRectZero];
         _edgeGrip.backgroundColor = UIColor.clearColor;
         _edgeGrip.userInteractionEnabled = NO;
@@ -66,33 +126,16 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
         _stackAddButton = [UIButton buttonWithType:UIButtonTypeSystem];
         if (@available(iOS 13.0, *)) {
-            [_stackAddButton setImage:[UIImage systemImageNamed:@"plus.circle.fill"]
-                             forState:UIControlStateNormal];
+            UIImage *plus = [UIImage systemImageNamed:@"plus.circle.fill"];
+            [_stackAddButton setImage:plus forState:UIControlStateNormal];
         } else {
             [_stackAddButton setTitle:@"+" forState:UIControlStateNormal];
         }
         _stackAddButton.tintColor = [UIColor colorWithWhite:1.0 alpha:0.85];
         _stackAddButton.hidden = YES;
         _stackAddButton.accessibilityLabel = @"Add stage";
-        [_stackAddButton addTarget:self
-                            action:@selector(stackAddTapped)
-                  forControlEvents:UIControlEventTouchUpInside];
+        [_stackAddButton addTarget:self action:@selector(stackAddTapped) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_stackAddButton];
-
-        _minimizeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        if (@available(iOS 13.0, *)) {
-            [_minimizeButton setImage:[UIImage systemImageNamed:@"minus.circle.fill"]
-                              forState:UIControlStateNormal];
-        } else {
-            [_minimizeButton setTitle:@"–" forState:UIControlStateNormal];
-        }
-        _minimizeButton.tintColor = [UIColor colorWithWhite:1.0 alpha:0.85];
-        _minimizeButton.hidden = YES;
-        _minimizeButton.accessibilityLabel = @"Minimize stage";
-        [_minimizeButton addTarget:self
-                            action:@selector(minimizeTapped)
-                  forControlEvents:UIControlEventTouchUpInside];
-        [self addSubview:_minimizeButton];
 
         self.backgroundColor = UIColor.clearColor;
         self.clipsToBounds = YES;
@@ -116,59 +159,52 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-
     CGRect bounds = self.bounds;
     CGFloat band = MIN(MAX(_keyboardBandHeight, 0.0), CGRectGetHeight(bounds));
     CGFloat appHeight = CGRectGetHeight(bounds) - band;
     BOOL pinHost = !_applyingKeyboardBand && _keyboardBandLayoutHandler != nil;
-
     if (band > 1.0) {
+        // Pin the host at the full card height before the content view shrinks.
+        // Otherwise autoresizing hands the app a shorter scene and it draws the
+        // keyboard up into the opening.
         if (pinHost) {
             _applyingKeyboardBand = YES;
             _keyboardBandLayoutHandler();
             _applyingKeyboardBand = NO;
         }
-
-        _backdrop.frame = CGRectMake(0, 0, CGRectGetWidth(bounds), MAX(appHeight, 0));
-
+        _backdrop.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
         self.clipsToBounds = NO;
         self.layer.masksToBounds = NO;
-
+        self.opaque = NO;
         _contentView.clipsToBounds = YES;
+        _contentView.opaque = NO;
         _contentView.layer.mask = nil;
-        _contentView.frame = CGRectMake(0, 0, CGRectGetWidth(bounds), MAX(appHeight, 0));
+        _contentView.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
         _contentView.layer.cornerRadius = _cornerRadius;
         _contentView.layer.cornerCurve = kCACornerCurveContinuous;
         _contentView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
-
-        self.layer.cornerRadius = 0;
-
+        self.layer.cornerRadius = 0.0;
         if (pinHost) {
             _applyingKeyboardBand = YES;
             _keyboardBandLayoutHandler();
             _applyingKeyboardBand = NO;
         }
-
     } else {
         _backdrop.frame = bounds;
-
+        // The keyboard is a SpringBoard window above this card. The card must
+        // not clip it. The app itself stays inside the content view.
         self.clipsToBounds = _clipsContents;
         self.layer.masksToBounds = _clipsContents;
-
+        // The hosted scene ignores a clip on this card. The content view has to
+        // carry the same continuous corner, or the app stays a square.
         _contentView.clipsToBounds = YES;
+        _contentView.layer.masksToBounds = YES;
         _contentView.layer.mask = nil;
-
-        if (_clipsContents) {
-            _contentView.layer.cornerRadius = 0;
-            self.layer.cornerRadius = _cornerRadius;
-        } else {
-            _contentView.layer.cornerRadius = _cornerRadius;
-            _contentView.layer.cornerCurve = kCACornerCurveContinuous;
-            self.layer.cornerRadius = 0;
-        }
-
+        _contentView.layer.cornerRadius = _cornerRadius;
+        _contentView.layer.cornerCurve = kCACornerCurveContinuous;
+        _contentView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner | kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+        self.layer.cornerRadius = _clipsContents ? _cornerRadius : 0.0;
         _contentView.frame = bounds;
-
         if (pinHost) {
             _applyingKeyboardBand = YES;
             _keyboardBandLayoutHandler();
@@ -177,15 +213,16 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     }
 
     _grabber.frame = CGRectMake((CGRectGetWidth(bounds) - kDSGrabberWidth) / 2.0,
-                                0,
+                                0.0,
                                 kDSGrabberWidth,
                                 kDSDragAffordanceHeight);
+    _grabberPill.hidden = YES;
+    _grabberPill.alpha = 0.0;
+    _grabberPill.frame = CGRectZero;
 
-    _grabberPill.frame = CGRectMake((kDSGrabberWidth - kDSGrabberPillWidth) / 2.0,
-                                    (kDSDragAffordanceHeight - kDSGrabberPillHeight) / 2.0 + 2.0,
-                                    kDSGrabberPillWidth,
-                                    kDSGrabberPillHeight);
-
+    // Narrower than the zone the pan recogniser will accept a drag from, because while
+    // an app is on the stage this is a piece of that app being held back: a thumb's
+    // worth is enough to take hold of the corner, and the rest stays the app's.
     CGRect grip = [self cornerGripRect];
     CGFloat gripWidth = MIN(88.0, CGRectGetWidth(grip));
     CGFloat gripHeight = MIN(56.0, CGRectGetHeight(grip));
@@ -202,31 +239,41 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                                        addSide,
                                        addSide);
     _stackAddButton.hidden = !_showsStackAddButton;
-
-    CGFloat minSide = 36.0;
-    _minimizeButton.frame = CGRectMake(8.0, 4.0, minSide, minSide);
-    _minimizeButton.hidden = !_showsMinimizeButton;
-
     [self bringSubviewToFront:_cornerGrip];
     [self bringSubviewToFront:_edgeGrip];
     [self bringSubviewToFront:_stackAddButton];
-    [self bringSubviewToFront:_minimizeButton];
     [self bringSubviewToFront:_grabber];
 
+    [self applyCardCornerClip];
     [self updateShadow];
+}
+
+// The keyboard is a separate window above the stage. Turning this clip off
+// left the picker as a square plate with the rounded outline floating outside it.
+- (void)applyCardCornerClip {
+    CGFloat radius = _cornerRadius;
+    if (radius < 20.0) radius = 20.0;
+    _cornerRadius = radius;
+    self.opaque = NO;
+    self.clipsToBounds = YES;
+    self.layer.masksToBounds = YES;
+    self.layer.cornerRadius = radius;
+    self.layer.cornerCurve = kCACornerCurveContinuous;
+    self.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner |
+                               kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+    DSApplyRoundedClip(_contentView, radius);
+    DSRebuildRoundedMask(_contentView, radius);
+    DSRoundBlurFill(_backdrop, radius);
+    DSRebuildRoundedMask(_backdrop, radius);
 }
 
 - (void)stackAddTapped {
     if (_stackAddHandler) _stackAddHandler();
 }
 
-- (void)minimizeTapped {
-    if (_minimizeHandler) _minimizeHandler();
-}
-
 - (void)setShowsMinimizeButton:(BOOL)showsMinimizeButton {
-    _showsMinimizeButton = showsMinimizeButton;
-    _minimizeButton.hidden = !showsMinimizeButton;
+    (void)showsMinimizeButton;
+    _showsMinimizeButton = NO;
 }
 
 - (void)setShowsStackAddButton:(BOOL)showsStackAddButton {
@@ -251,10 +298,13 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 - (void)updateShadow {
     CGRect frame = self.frame;
     if (_keyboardBandHeight > 1.0) {
-        frame.size.height = MAX(CGRectGetHeight(frame) - _keyboardBandHeight, 0);
+        frame.size.height = MAX(CGRectGetHeight(frame) - _keyboardBandHeight, 0.0);
     }
     _shadowView.frame = frame;
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
     _shadowView.layer.cornerRadius = _cornerRadius;
+    [CATransaction commit];
     _shadowView.alpha = self.alpha;
 }
 
@@ -276,8 +326,36 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
 - (void)setCornerRadius:(CGFloat)cornerRadius {
     _cornerRadius = cornerRadius;
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
     self.layer.cornerRadius = cornerRadius;
+    _contentView.layer.cornerRadius = cornerRadius;
+    _contentView.layer.cornerCurve = kCACornerCurveContinuous;
+    [CATransaction commit];
     [self updateShadow];
+    [self setNeedsLayout];
+}
+
+- (void)resetRoundedGeometry {
+    if (_cornerRadius < 20.0) _cornerRadius = 20.0;
+    _keyboardBandHeight = 0.0;
+    [self setClipsContents:YES];
+    self.layer.mask = nil;
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
+}
+
+- (void)stopMotion {
+    [self removeMotionFromView:self depth:0];
+    [_shadowView.layer removeAllAnimations];
+}
+
+- (void)removeMotionFromView:(UIView *)view depth:(NSInteger)depth {
+    if (!view || depth > 5) return;
+    [view.layer removeAllAnimations];
+    for (UIView *subview in view.subviews) {
+        [self removeMotionFromView:subview depth:depth + 1];
+    }
 }
 
 - (void)setDarkMode:(BOOL)darkMode {
@@ -288,23 +366,16 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     _grabberPill.backgroundColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.34]
                                             : [UIColor colorWithWhite:0.0 alpha:0.26];
     if (@available(iOS 13.0, *)) {
-        self.overrideUserInterfaceStyle = darkMode ? UIUserInterfaceStyleDark
-                                                   : UIUserInterfaceStyleLight;
+        self.overrideUserInterfaceStyle = darkMode ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
     }
 }
 
 - (void)setClipsContents:(BOOL)clips {
-    _clipsContents = clips;
-    self.clipsToBounds = clips;
-    self.layer.masksToBounds = clips;
-    self.opaque = NO;
-
-    _contentView.clipsToBounds = YES;
-
-    if (!clips) {
-        _contentView.layer.cornerRadius = _cornerRadius;
-        _contentView.layer.cornerCurve = kCACornerCurveContinuous;
-    }
+    // Callers pass NO while a keyboard is up. That window is not inside this
+    // card, and clearing the clip is what squared the fill after Beeper.
+    (void)clips;
+    _clipsContents = YES;
+    [self applyCardCornerClip];
 }
 
 - (void)setKeyboardBandHeight:(CGFloat)keyboardBandHeight {
@@ -317,20 +388,25 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (!self.userInteractionEnabled || self.hidden || self.alpha < 0.01) return nil;
+    if (![self pointInside:point withEvent:event]) return nil;
     if (_keyboardBandHeight > 1.0 &&
         point.y >= CGRectGetHeight(self.bounds) - _keyboardBandHeight) {
         return nil;
     }
-
+    // The outer band is the drag rim. A hosted scene that is still the size of
+    // the screen sits on top of that band and swallows the touch, so the rim
+    // never starts a drag. Claiming the band here keeps it above the app.
+    CGRect interior = CGRectInset(self.bounds, kDSStageRimGrabBand, kDSStageRimGrabBand);
+    if (CGRectGetWidth(interior) >= 40.0 && CGRectGetHeight(interior) >= 40.0 &&
+        !CGRectContainsPoint(interior, point)) {
+        return self;
+    }
     UIView *hit = [super hitTest:point withEvent:event];
     if (!_passThroughToHost) return hit;
     if (!hit) return nil;
-
     if (hit == _grabber || [hit isDescendantOfView:_grabber]) return hit;
-    if (hit == _cornerGrip || hit == _edgeGrip) return hit;
     if (hit == _stackAddButton || [hit isDescendantOfView:_stackAddButton]) return hit;
-    if (hit == _minimizeButton || [hit isDescendantOfView:_minimizeButton]) return hit;
-
     return nil;
 }
 
@@ -342,9 +418,14 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     return CGRectMake(0, 0, CGRectGetWidth(self.bounds), kDSDragAffordanceHeight);
 }
 
+// Deep enough and wide enough to be found with a thumb, and in the corner the
+// stage came out of so sending it back there is the same movement reversed.
 - (CGRect)cornerGripRect {
     CGRect bounds = self.bounds;
     CGFloat width = MIN(kDSTriggerWidth + 28.0, CGRectGetWidth(bounds));
+    // Deep, because a thumb reaching the bottom right corner of the card lands above it
+    // as often as on it: on the phone the drags that missed were starting twenty and
+    // thirty points high.
     CGFloat height = MIN(72.0, CGRectGetHeight(bounds));
     return CGRectMake(CGRectGetWidth(bounds) - width,
                       CGRectGetHeight(bounds) - height,
@@ -352,28 +433,40 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
                       height);
 }
 
+// The whole right side of the card, under the top buttons. A swipe that starts
+// here and moves inward leaves the app and brings the picker back.
 - (CGRect)edgeGripRect {
     CGRect bounds = self.bounds;
     CGFloat width = 44.0;
     CGFloat top = 46.0;
     if (top > CGRectGetHeight(bounds)) top = 0.0;
-    return CGRectMake(CGRectGetWidth(bounds) - width,
-                      top,
-                      width,
-                      CGRectGetHeight(bounds) - top);
+    return CGRectMake(CGRectGetWidth(bounds) - width, top, width, CGRectGetHeight(bounds) - top);
+}
+
+- (void)applyKeyboardShift {
+    // A transform rather than a new frame: the card's resting frame belongs to
+    // whichever state it is in, and the keyboard is only borrowing the space.
+    CGAffineTransform shift = CGAffineTransformMakeTranslation(_sideOffset, -_liftOffset);
+    self.transform = shift;
+    _shadowView.transform = shift;
+    if (_liftDidChangeHandler) _liftDidChangeHandler();
 }
 
 - (void)setLiftOffset:(CGFloat)offset {
-    CGAffineTransform lift = CGAffineTransformMakeTranslation(0.0, -offset);
-    self.transform = lift;
-    _shadowView.transform = lift;
     _liftOffset = offset;
+    [self applyKeyboardShift];
+}
+
+- (void)setSideOffset:(CGFloat)offset {
+    _sideOffset = offset;
+    [self applyKeyboardShift];
 }
 
 - (void)setHostingApp:(BOOL)hostingApp {
     _hostingApp = hostingApp;
-    _cornerGrip.userInteractionEnabled = hostingApp;
-    _edgeGrip.userInteractionEnabled = hostingApp;
+    _cornerGrip.userInteractionEnabled = NO;
+    _edgeGrip.userInteractionEnabled = NO;
+    (void)hostingApp;
 }
 
 @end

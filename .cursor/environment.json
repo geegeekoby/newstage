@@ -1,0 +1,3 @@
+{
+  "install": "set -euo pipefail; export THEOS=\"${THEOS:-/tmp/theos}\"; export PATH=\"$THEOS/bin:$PATH\"; if [ ! -d \"$THEOS/makefiles\" ]; then git clone --depth=1 https://github.com/theos/theos.git \"$THEOS\"; fi; if [ ! -f \"$THEOS/vendor/dm.pl/dm.pl\" ]; then (cd \"$THEOS\" && ./bin/update-theos); fi; if [ ! -x \"$THEOS/toolchain/linux/iphone/bin/clang\" ]; then sudo apt-get update && sudo apt-get install -y build-essential fakeroot dpkg-dev rsync curl perl zip git libxml2 libtinfo6; curl -sL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-x86_64.tar.xz | tar -xJ -C \"$THEOS/toolchain/\"; fi; if [ ! -d \"$THEOS/sdks/iPhoneOS16.5.sdk\" ]; then bash \"$THEOS/bin/install-sdk\" iPhoneOS16.5; fi; pip install -q pillow numpy"
+}

@@ -1,0 +1,71 @@
+Dynamic Stage 4.5.638 — safe-mode SIGTRAP fixes
+================================================
+
+Crash patterns from the log
+---------------------------
+1) Build 4.5.636 after staging Phone
+   Log: "fitting com.apple.mobilephone's scene to the card", Phone ctor/fit,
+   then SIGTRAP.
+   Cause: Phone layout mutated bounds+transform (and forced layoutIfNeeded)
+   during an active layout / scene-update cascade. @try cannot catch SIGTRAP.
+
+2) Build 4.5.613 (repeated) on home tuck / minimize
+   Log: "held a minimized stage scene update so another app can open", then
+   SIGTRAP. Same unsybolicated stack shape as (1).
+   Cause: FBScene updateSettingsWithBlock: returned early without logging
+   parity / complete hosted hold; keepOnScreenStage / stray-presentation walks
+   could still run while DSSceneWriteWouldTrap() was true.
+
+Code changes (crash pattern → fix)
+----------------------------------
+A) app/Tweak.xm — Phone layout re-entry
+   Pattern (1): layout / scene callback → layoutIfNeeded + mid-layout scale.
+   - DSAdjustPhoneLayoutForStage: removed layoutIfNeeded (setNeedsLayout only).
+   - DSResizePhoneKeypad deferred with dispatch_async(main) so it is not inside
+     the current layout/scene callback.
+   - DSPhoneApplyCardFrame / DSPhoneScaleRootIntoCard: early-return when
+     DSPhoneLayoutFrozen || DSClampingStage; mutations wrapped in @try/@catch.
+   - New DSPhoneScheduleScaleRootIntoCard + DSPhoneScaleScheduled coalesce:
+     layoutSubviews / viewDidLayoutSubviews schedule one scale apply per turn
+     instead of mutating bounds+transform mid-cascade.
+   Fill layout UNCHANGED: DSPhoneMinLayoutHeight=560, DSPhoneDialScale=0.88.
+   No SpringBoard phoneAspectFit / card shrink.
+
+B) springboard/Tweak.xm — FBScene hold complete
+   Pattern (2): home / minimized held update still unsafe on WithBlock path.
+   - updateSettingsWithBlock: same hosted check as updateSettings:withTransition-
+     Context:; when hosted + homeGesture / staysBackgrounded → return WITHOUT
+     %orig, with the same diagnostics log string.
+   - After block + applyOverrides: if a hosted on-screen stage was stretched to
+     phone size, schedule keepOnScreenStageInsideCardForSceneIdentifier (kept-
+     card path parity). Never start another scene write inside the block.
+
+C) springboard/DSSceneHost.m + DSStageManager.m — trap windows
+   Pattern (1)/(2): clip/stray/keep work during home or nested settings update.
+   - clipHostContentsToCard: if DSSceneWriteWouldTrap() return before the
+     window walk that hides presentations (mask frame still OK).
+   - hideStrayPresentationsOutsideCard: DSSceneWriteWouldTrap() instead of
+     depth-only; scheduleStrayPresentationSweep callbacks also check.
+   - layoutHostView: skip hideStrayPresentationsOutsideCard /
+     scheduleStrayPresentationSweep when DSSceneWriteWouldTrap().
+   - scheduleCardSizeFit: cardFitWaits budget 8 → 12 so deferred fit still runs
+     after a longer home gesture quiet window.
+   - keepOnScreenStageInsideCardForSceneIdentifier: if sceneSettingsUpdateDepth
+     > 0, dispatch_async and retry (homeGesture still returns immediately).
+
+D) Explicitly NOT done
+   - No reintroduction of SpringBoard card shrink (phoneAspectFit).
+   - Phone fill constants left at 560 / 0.88.
+
+Version / package
+-----------------
+- control + shared/DSConstants.h → 4.5.638
+- Package: com.recreated.dynamicstage_4.5.638_iphoneos-arm64.deb
+  (rootless, arm64 + new-ABI arm64e, signed — verify_package OK)
+
+Patched sources (also under /workspace/phone-stage-fit/)
+--------------------------------------------------------
+- CursorRepo/app/Tweak.xm                    → app-Tweak.xm
+- CursorRepo/springboard/Tweak.xm            → springboard-Tweak.xm
+- CursorRepo/springboard/DSSceneHost.m       → DSSceneHost.m
+- CursorRepo/springboard/DSStageManager.m    → DSStageManager.m

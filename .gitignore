@@ -5,3 +5,6 @@ agent-tools/
 research/
 tools/__pycache__/
 .vercel
+
+!packages/
+!packages/*.deb

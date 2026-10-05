@@ -1,0 +1,59 @@
+DynamicStage 4.5.649 — ALL dial keys tap + tight rows like the reference shot (2026-10-05 NZDT)
+
+Symptoms (4.5.648): 1–6, call and delete clicked; 7, 8, 9, *, 0, # did nothing.
+Rows 1↔2 and 2↔3 still looked spaced out vs the reference photo.
+
+ROOT CAUSE OF DEAD 7–9 / *0# (app/Tweak.xm, DSPhoneRouteLiftedHit)
+- 4.5.648's router only used its own geometry when UIKit's normal hit was NOT
+  already a key (or inside one). If UIKit's hit was any key, it was returned
+  unchanged ("orig is descendant of key → return orig", checked per key
+  before the point-in-key test).
+- Rows 1–6 were lifted completely ABOVE the number-pad container → UIKit
+  found no key there → router took over → worked.
+- Call/delete sit outside the number pad (dialer siblings) and were hit
+  natively → worked.
+- Rows 7–# were moved but still sat INSIDE the number-pad container's box, so
+  UIKit asked the pad, and the pad's answer there was not the key drawn under
+  the finger (its own button lookup / layout-time geometry → a different key).
+  The router saw "already a key" and passed that WRONG key through. Touch-up
+  then landed outside that key's box → no UIControlEventTouchUpInside → no digit.
+  (Same reason a hash-table ordering bug could also pass through a stale key.)
+
+TAP FIX
+- New DSPhoneKeyAtPoint(): matches the touch against every registered key's
+  DRAWN rect in root space (strict inside, else ≤4pt slop); overlaps resolve
+  to the nearest key center. Only visible, enabled keys under the card root.
+- DSPhoneRouteLiftedHit(): geometry ALWAYS wins inside the card root. UIKit's
+  hit is kept only if it is the very same key, a presented sheet/alert outside
+  the root, or the tab bar when the touch is only in a key's slop edge.
+- Root UIView -hitTest and UIWindow -hitTest hooks unchanged (both call it).
+- All 12 digits + call + delete are registered every pass (log: hit=N, routed=N).
+
+SPACING FIX (DSResizePhoneKeypad, grid path)
+- 648 measured gaps on the control BOX, which is taller than the circle Phone
+  draws, so "8–12%" still looked like a wide black band. Now spacing uses the
+  DRAWN key size (DSPhoneKeyDrawnSize: circleView / rounded subview / square
+  image ≥70% of the box, else the largest square in the box).
+- Row gap = 10% of drawn key height; *0# → call gap 16%.
+- Vertical key scale k: 4 rows + call row packed to fill the band (cap 1.15).
+- Columns like the reference: pitch = 27% of visible width (shot ≈26%),
+  drawn key width ≈80% of pitch (shot ≈79%), width/height capped at 1.3
+  (slightly wide, round-ish — the shot is ~2:1; 1.3 keeps digits from looking
+  stretched). Never narrower than round; neighbours never touch; cluster
+  always inside the visible width.
+- Call under 0 (same shape as digits), delete under # (unstretched icon).
+- Leftover height 35% above / 65% below so the pad hugs the typed number.
+- Example (393×852 layout, ~0.97 root fill, ~297pt band, 78pt circles):
+  k≈0.70, kx≈0.91 → keys ≈71×54pt, row pitch ≈60pt (gap ≈5pt),
+  col pitch ≈104pt, pad ≈72% of card width.
+- Log: "app: phone pad fit649 grid=… k=… kx=… drawn=WxH box=WxH … hit=… routed=…"
+  in /var/tmp/com.recreated.dynamicstage.phone-fit
+
+Tuning knobs (app/Tweak.xm): DSPhoneRowGap 0.10, DSPhoneCallGap 0.16,
+DSPhoneColPitchFrac 0.27, DSPhoneKeyWidthFrac 0.80, DSPhoneKeyMaxAspect 1.30
+(set 1.0 for perfectly round keys), DSPhoneHitSlop 4.
+
+Unchanged: stage card size, root fill scale, number strip, other apps.
+Version: control + shared/DSConstants.h + changelog.md → 4.5.649
+Deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.649_iphoneos-arm64.deb
+Sileo: https://geegeekoby.github.io/newstage/

@@ -1,0 +1,102 @@
+DynamicStage 4.5.653 - stability: no safe mode on calls from the staged Phone, the notch is back
+Based on 4.5.652. Package: com.recreated.dynamicstage_4.5.653_iphoneos-arm64.deb
+sha256 796a6d3914b3196f7c0fadc73c6d003fff105cd15177a52fc6cba92d9303ebda (536,930 bytes)
+
+WHAT THE LOG SHOWED (user attachment, 32 KB)
+Crash file (written by 4.5.650):
+  build: 4.5.650 / signal: SIGTRAP
+  recent stage lines, last ones before the crash:
+    SpringBoard: incall650 armed source=1 card={{5, 469}, {420, 458}}
+    SpringBoard: incall650 armed source=2 card={{5, 469}, {420, 458}}
+    SpringBoard: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+4.5.652 session (SpringBoard pid 2903), same scenario:
+  16:27:35.907 putting com.apple.mobilephone on stack slot 0
+  16:27:40.550 SpringBoard: incall650 armed source=1 card={{19, 19}, {392, 430}}
+  16:27:40.799 scene update begin sceneID:com.apple.mobilephone-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+  16:27:40.799 camera652 hosted scene sceneID:com.apple.mobilephone-default fg=1 occluded=0 deactivation=0x20 camera=0
+  16:27:40.799 app-view settings update
+  16:27:40.799 app-view settings update done
+  16:27:40.880 incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+  16:27:42.879 scene update begin sceneID:com.apple.mobilephone-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+  16:27:42.880 app-view settings update          <- last SpringBoard line; no "done"
+  (nothing more from SpringBoard; only MobileSMS's app dylib logs from 16:52 on)
+
+ROOT CAUSES
+1+2. Safe mode when calling from the staged Phone (both crashes in the log)
+  When you place a call, InCallService comes up as SpringBoard's main-layout app and
+  SpringBoard updates the Phone scene hosted in the card. Our SBAppViewController hook
+  (sceneHandle:didUpdateSettingsWithDiff:previousSettings:) logged "app-view settings
+  update", passed the update to SpringBoard's original method, and that method asserted
+  (SIGTRAP, which an @try cannot catch). The "done" line never came. It's the same
+  assertion class as the home-swipe SIGTRAP that this hook already holds updates for; the
+  call transition just wasn't covered.
+  Not the cause: DSInCallStage never modified a window. Both times it found the call UI in
+  the main layout (SBMainSwitcherWindow level 5), logged "cannot contain it" and disarmed.
+  652's camera arbiter wasn't involved either: it had no claim (camera=0) and nothing was
+  published. 651's rim strips don't run in a scene update.
+3. "The notch disappeared"
+  The crash came 10 s after the respring (hooks installed at 16:27:32.9, crash at 16:27:42.9).
+  The boot guard is only cleared after 15 s ("stayed up, boot guard cleared" never appears in
+  that session), so it stayed raised. kDSMaxUncleanLaunches is 1, so every later SpringBoard
+  start returned from %ctor before installing anything, silently, until a reinstall. With
+  SpringBoard's side gone there's no stage window and no right-edge shelf notch. The log
+  matches: no SpringBoard line after 16:27:42, while the Messages app dylib keeps logging
+  ("app ctor reason=0"). Nothing in 650-652 hides the Dynamic Island: there are no window
+  level changes (in-call containment never applied, 999 was never set), the 651 strips are
+  1.1% alpha inside the stage window, and 652 never published a layout element in this log.
+
+WHAT CHANGED
+- Call guard (springboard/DSInCallStage.m/.h, DSCallGuardActive):
+  - Active while a call screen is up (DSPhoneCallIsActive: InCallService window or
+    frontmost; the window walk is cached for 0.5 s), for 4 s after that changes, and for 25 s
+    after the staged Phone reports it started a call (the existing
+    com.recreated.dynamicstage.phone.outgoing signal from the call key or a new outgoing
+    TUCall). frontDisplayDidChange forces a re-read.
+  - While active, the owned SBAppViewController's settings-diff handler returns without
+    calling the original, exactly like the existing home-gesture hold. The scene still
+    changes underneath and the app view stays Live, which is the state it's in again after
+    the call. One rate-limited diagnostics line shows the held diff (truncated):
+    "SpringBoard: call653 held a staged app view update during a call: ...".
+  - Order in the hook: home gesture / minimized hold first, then the call hold, so there's
+    no extra work during the switcher swipe.
+- In-call containment (650) switched off: kDSInCallContainmentEnabled = NO. The signal
+  only arms the guard; nothing searches, scales or re-levels windows (the code is compiled
+  out).
+- Camera arbiter (652): no display-layout element while the call guard is active (treated
+  like a locked phone; the claim is kept and re-published after the call). The rest of 652
+  is unchanged.
+- Boot guard (springboard/Tweak.xm):
+  - Cleared after 8 s instead of 15 s.
+  - A start it does skip now resets it and leaves a diagnostics line ~20 s later, so the
+    next respring turns DynamicStage back on instead of it staying off until a reinstall. A
+    crash loop alternates on/off, never a SpringBoard loop.
+  - postinst still clears the guard on install, so installing 653 brings the notch back
+    immediately.
+- Version 4.5.653, changelog.
+Kept unchanged from 650-652: Phone dial pad, switcher-lag work, picker search keyboard, 651
+rim catchers and rim priority, 652 camera (app side and arbiter). All SIGTRAP hardening
+stays.
+
+CALL SCREEN IN THE STAGE: NOT IN THIS BUILD, AND WHY
+- On iOS 16 the call screen is InCallService as the main full-screen app
+  (SBMainSwitcherWindow, level 5). MobilePhone has no in-process call view, so "keep the call
+  UI in Phone's own scene" isn't possible.
+- Scaling SpringBoard's main switcher window affects every app, and 650-652 never found a
+  window they could safely contain.
+- Hosting InCallService's scene in a card would put one scene under two hosts: SpringBoard's
+  main layout and the stage. That's the same kind of conflicting scene update that just
+  caused the safe modes, and it can't be made safe without testing on a device.
+- So calls show full screen as normal; the staged Phone stays in its card and comes back
+  when the call screen closes.
+
+LIMITS
+- During a call (and 4 s after), the staged apps' app views ignore SpringBoard's diffs. If
+  you resize a card during a call, its picture may keep the old size until the call ends.
+- The camera's layout entry is off during calls, so a staged camera doesn't stream while a
+  call screen is up.
+- Not tested on a device. If a safe mode still happens on a call, the "call653" lines show
+  whether the guard was active and what diff was held.
+
+FILES (full copies in full-653/)
+springboard/Tweak.xm, springboard/DSInCallStage.h, springboard/DSInCallStage.m,
+springboard/DSCameraArbiter.m, shared/DSConstants.h, control, changelog.md

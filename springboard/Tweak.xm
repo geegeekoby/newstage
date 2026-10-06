@@ -137,6 +137,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 - (void)frontDisplayDidChange:(id)display {
     %orig;
+    DSCallGuardNoteFrontChange();
     DSTell(^(DSStageManager *manager) {
         [manager noteFrontApplicationWillChange];
     });
@@ -483,6 +484,24 @@ static NSString *DSAnySceneIdentifier(id scene) {
             if (now - DSLastHeldSceneLog > 1.0) {
                 DSLastHeldSceneLog = now;
                 DSDiagnosticsRecord(@"SpringBoard: held a minimized app view update so another app can open");
+            }
+            return;
+        }
+        // 4.5.653: a phone call. The call screen comes up as the main-layout
+        // app and SpringBoard re-describes the hosted scene; this original
+        // method then asserted (SIGTRAP, the safe mode when calling from the
+        // staged Phone). Held the same way as the home gesture: the scene
+        // still changes underneath and the app view stays Live, which is
+        // what it is again once the call screen has gone.
+        if (DSCallGuardActive()) {
+            static CFAbsoluteTime DSLastCallHoldLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastCallHoldLog > 2.0) {
+                DSLastCallHoldLog = now;
+                NSString *text = [diff description] ?: @"";
+                text = [[text componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+                if (text.length > 240) text = [text substringToIndex:240];
+                DSDiagnosticsRecordFormat(@"SpringBoard: call653 held a staged app view update during a call: %@", text);
             }
             return;
         }
@@ -2006,7 +2025,12 @@ static void DSInstallRemainingHooks(void) {
             // stays raised until this process has stayed up, so a crash on
             // the next turn does not install those hooks again.
             DSFullInstallLive = YES;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)),
+            // 4.5.653: 8 s, not 15. A crash 10 s after a respring (a call
+            // placed right away) used to leave the guard raised, and the next
+            // SpringBoard start then skipped the whole tweak: no stage, no
+            // edge notch, no log. A crash loop from the install itself still
+            // happens well inside 8 s.
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{
                 if (DSKillSwitchPresent() || !DSFullInstallLive) return;
                 DSBootstrapMarkLaunchSucceeded();
@@ -2060,7 +2084,18 @@ static void DSInstallRemainingHooks(void) {
         // the file in place, and the next SpringBoard start returns here
         // before any hook or signal handler exists.
         if (DSKillSwitchPresent()) return;
-        if (DSLaunchGuardTripped()) return;
+        if (DSLaunchGuardTripped()) {
+            // 4.5.653: stay off for this one start (that is the protection),
+            // then let the next respring try again instead of staying off
+            // until a reinstall. A real crash loop alternates on / off and
+            // never loops SpringBoard.
+            DSBootstrapMarkLaunchSucceeded();
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                DSDiagnosticsRecord(@"SpringBoard: DynamicStage stayed off for this start after a crash right after the last respring; respring once to turn it back on");
+            });
+            return;
+        }
         if (!DSBootstrapBeginFullInstall()) return;
 
         DSCrashLogInstallHandlers();

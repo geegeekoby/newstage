@@ -3,6 +3,7 @@
 #import "DSSceneHost.h"
 #import "DSDiagnostics.h"
 #import "DSConstants.h"
+#import "DSKeyboardVisibility.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -28,6 +29,58 @@ static const void *DSInCallSavedLevelKey = &DSInCallSavedLevelKey;
 static const void *DSInCallSavedBackgroundKey = &DSInCallSavedBackgroundKey;
 
 static NSString *const DSPhoneBundle = @"com.apple.mobilephone";
+// 4.5.653: scaling the call screen into the card stays off. The call UI is the
+// main-layout app (SBMainSwitcherWindow level 5); moving that window is not
+// safe, and the hosted Phone scene's update during that transition was the
+// SIGTRAP behind the safe modes. See DSCallGuardActive.
+static const BOOL kDSInCallContainmentEnabled = NO;
+
+// ---- 4.5.653 call guard -------------------------------------------------------
+static CFAbsoluteTime DSCallGuardArmedUntil = 0;
+static CFAbsoluteTime DSCallGuardCheckedAt = 0;
+static CFAbsoluteTime DSCallGuardFlipAt = 0;
+static BOOL DSCallGuardLastActive = NO;
+
+static void DSCallGuardLog(NSString *line) {
+    static CFAbsoluteTime last = 0;
+    static NSString *lastLine = nil;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if ([lastLine isEqualToString:line] && now - last < 5.0) return;
+    if (now - last < 0.5) return;
+    last = now;
+    lastLine = [line copy];
+    DSDiagnosticsRecordFormat(@"SpringBoard: call653 %@", line);
+}
+
+BOOL DSCallGuardActive(void) {
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - DSCallGuardCheckedAt > 0.5) {
+        DSCallGuardCheckedAt = now;
+        BOOL active = NO;
+        @try {
+            active = DSPhoneCallIsActive();
+        } @catch (NSException *exception) {
+            active = NO;
+        }
+        if (active != DSCallGuardLastActive) {
+            DSCallGuardLastActive = active;
+            DSCallGuardFlipAt = now;
+            DSCallGuardLog(active ? @"call screen is up, staged app views hold their updates"
+                                  : @"call screen is gone, staged app views update again in 4 s");
+        }
+    }
+    return now < DSCallGuardArmedUntil || DSCallGuardLastActive || now - DSCallGuardFlipAt < 4.0;
+}
+
+void DSCallGuardNoteFrontChange(void) {
+    DSCallGuardCheckedAt = 0;
+}
+
+static void DSCallGuardArm(NSInteger source) {
+    DSCallGuardArmedUntil = CFAbsoluteTimeGetCurrent() + 25.0;
+    DSCallGuardCheckedAt = 0;
+    DSCallGuardLog([NSString stringWithFormat:@"staged Phone started a call (source=%ld), guard armed for 25 s", (long)source]);
+}
 static const CGFloat DSInCallRaisedLevel = 999.0; // stage window 998, keyboard host 1000
 
 static void DSInCallRunPass(NSString *why, NSInteger generation);
@@ -416,9 +469,13 @@ void DSInCallStageInstall(void) {
             CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
             if (posted == 0 || fabs(now - (CFAbsoluteTime)posted) > 5.0) return; // stale
             if (source != 1 && source != 2) return;
+            DSCallGuardArm(source);
+            if (!kDSInCallContainmentEnabled) return;
             DSInCallArm(source);
         });
-        DSDiagnosticsRecord(@"SpringBoard: incall650 listening for calls started in the staged Phone");
+        DSDiagnosticsRecord(kDSInCallContainmentEnabled
+                                ? @"SpringBoard: incall650 listening for calls started in the staged Phone"
+                                : @"SpringBoard: call653 guard listening (call screen containment is off)");
     });
 }
 

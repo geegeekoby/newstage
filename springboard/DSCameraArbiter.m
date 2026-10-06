@@ -3,6 +3,7 @@
 #import "DSSceneHost.h"
 #import "DSConstants.h"
 #import "DSDiagnostics.h"
+#import "DSInCallStage.h"
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -464,7 +465,9 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
     @try {
         DSStageManager *manager = [DSStageManager sharedManager];
         NSArray<NSString *> *hosted = [manager hostedBundleIdentifiers];
-        BOOL locked = DSCameraDeviceLocked();
+        // 4.5.653: nothing in the display layout while a call screen comes
+        // up or is on screen; SpringBoard is rebuilding its own layout then.
+        BOOL locked = DSCameraDeviceLocked() || DSCallGuardActive();
         CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
         for (NSString *bundle in DSCameraClaims.allKeys) {
             DSCameraClaim *claim = DSCameraClaims[bundle];
@@ -480,7 +483,7 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
             }
             CGRect frame = locked ? CGRectNull : [manager stageCardScreenFrameForBundleIdentifier:bundle cornerRadius:NULL];
             if (CGRectIsNull(frame) || CGRectGetWidth(frame) < 40.0 || CGRectGetHeight(frame) < 40.0) {
-                DSCameraUnpublish(claim, locked ? @"phone locked" : @"card not visible");
+                DSCameraUnpublish(claim, locked ? @"phone locked or call screen up" : @"card not visible");
                 continue;
             }
             if (claim.assertion && DSCameraFramesClose(frame, claim.frame)) continue;

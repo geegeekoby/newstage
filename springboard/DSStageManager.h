@@ -96,6 +96,8 @@
 // Beeper's first keyboard, bottom-aligned. A taller proposed rect is the
 // quick bar growing. Any other rect is returned unchanged.
 - (CGRect)pinnedBeeperKeyboardFrameForProposed:(CGRect)proposed;
+// 4.5.652: bundles hosted on a card right now (primary, top, floating).
+- (NSArray<NSString *> *)hostedBundleIdentifiers;
 // True when this scene identifier belongs to an app on the stage.
 - (BOOL)isHostingSceneIdentifier:(NSString *)identifier;
 - (void)closeStageAnimated:(BOOL)animated;

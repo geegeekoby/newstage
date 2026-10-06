@@ -1,3 +1,4 @@
+#import "DSCameraArbiter.h"
 #import "DSStageManager.h"
 #import "DSStageLiftState.h"
 #import "DSStageWindow.h"
@@ -1979,6 +1980,15 @@ static void DSMakeKeyBesidePlayingVideo(UIWindow *window) {
     if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     if (_floatSceneHost.isHosting && [_floatSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     return NO;
+}
+
+// 4.5.652: every bundle on a card right now (primary, top, floating).
+- (NSArray<NSString *> *)hostedBundleIdentifiers {
+    NSMutableArray<NSString *> *bundles = [NSMutableArray array];
+    if (_sceneHost.isHosting && _sceneHost.bundleIdentifier.length) [bundles addObject:_sceneHost.bundleIdentifier];
+    if (_topSceneHost.isHosting && _topSceneHost.bundleIdentifier.length) [bundles addObject:_topSceneHost.bundleIdentifier];
+    if (_floatSceneHost.isHosting && _floatSceneHost.bundleIdentifier.length) [bundles addObject:_floatSceneHost.bundleIdentifier];
+    return bundles;
 }
 
 - (CGRect)stageCardScreenFrameForBundleIdentifier:(NSString *)bundleIdentifier cornerRadius:(CGFloat *)radius {
@@ -11058,6 +11068,8 @@ static NSInteger DSHomeGestureGeneration = 0;
 }
 
 - (void)noteDisplayDidTurnOff {
+    // 4.5.652: a locked phone takes the staged camera's card out of the layout.
+    [DSCameraArbiter refreshSoon];
     if (self.isStageVisible) [self minimizeAnimated:NO];
 }
 

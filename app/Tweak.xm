@@ -7325,10 +7325,17 @@ static void DSOnSpringBoardKeyboardShown(void) {
     DSTrace(@"app Messages keys are back in the card");
 }
 
+// 4.5.652: camera in a staged app (DSCameraStage.m).
+extern "C" void DSCameraStageInstall(void);
+
 static void DSInstallHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         %init(_ungrouped);
+        @try {
+            DSCameraStageInstall();
+        } @catch (NSException *exception) {
+        }
         DSInstallMessagesBehaviorHooks();
         DSInstallRemoteKeyboardHooks();
         DSInstallKeyboardBanishObserver();

@@ -1,3 +1,4 @@
+#import "DSCameraArbiter.h"
 #import "DSStageManager.h"
 #import "DSSceneHost.h"
 #import "DSPreferences.h"
@@ -279,6 +280,8 @@ static NSString *DSAnySceneIdentifier(id scene) {
                 return [manager isHostingSceneIdentifier:identifier];
             });
             if (hosted) {
+                // 4.5.652: the hosted scene's foreground state, logged on change.
+                [DSCameraArbiter noteHostedSceneSettings:settings identifier:identifier];
                 BOOL known = NO;
                 BOOL foreground = [DSSceneHost readForegroundFlag:settings known:&known];
                 NSString *identCopy = [identifier copy];
@@ -1993,6 +1996,11 @@ static void DSInstallRemainingHooks(void) {
             }
 
             [[DSStageManager sharedManager] activate];
+            // 4.5.652: camera in staged apps.
+            @try {
+                [DSCameraArbiter start];
+            } @catch (NSException *exception) {
+            }
             // Hooks stay quiet while the window is built (the guard file is
             // still raised, and this flag is what lets them run). The file
             // stays raised until this process has stayed up, so a crash on

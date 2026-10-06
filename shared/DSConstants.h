@@ -56,6 +56,24 @@
 // Bits 56-59: constructor reason (0 ok, 1 kill, 2 bundle, 3 excluded,
 // 4 not a user app, 5 prefs off, 6 exception).
 #define kDSKeyboardApplyNotification "com.recreated.dynamicstage.keyboard.apply"
+// 4.5.652: a staged app's camera. The app dylib posts this with the state
+// hash(bundle) | event << 32 | interruption reason << 40 | flags << 48, and
+// SpringBoard answers by publishing the card into the display layout the
+// camera server reads, while that app's capture session wants the camera.
+#define kDSCameraNotification "com.recreated.dynamicstage.camera652"
+#define kDSCameraEventStart 1
+#define kDSCameraEventStop 2
+#define kDSCameraEventInterrupted 3
+#define kDSCameraEventInterruptionEnded 4
+#define kDSCameraEventRuntimeError 5
+#define kDSCameraEventRetry 6
+#define kDSCameraEventHeartbeat 7
+#define kDSCameraFlagMultitaskSupported 0x01
+#define kDSCameraFlagMultitaskEnabled 0x02
+#define kDSCameraFlagAppActive 0x04
+#define kDSCameraFlagStaged 0x08
+#define kDSCameraFlagMultitaskRefused 0x10
+#define kDSCameraFlagRunning 0x20
 
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
@@ -131,7 +149,7 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 
 // Kept across resprings. postinst deletes it, so a crash from the build that
 // was just replaced is not still sitting there after the next install.
-#define kDSBuildVersionString "4.5.651"
+#define kDSBuildVersionString "4.5.652"
 
 // One line from the staged app, copied into the stage log. The app and
 // SpringBoard do not share that log, so a blocked keyboard hide was invisible.

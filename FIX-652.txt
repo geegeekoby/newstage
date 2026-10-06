@@ -1,0 +1,112 @@
+DynamicStage 4.5.652 - camera in staged apps
+Based on 4.5.651. Package: com.recreated.dynamicstage_4.5.652_iphoneos-arm64.deb
+sha256 b7406aa8c902b27a777d526b0225e84b98b75ff3e29ee4ae117201aec29d274c (542,500 bytes)
+
+PROBLEM
+A staged app's camera (its own camera, the UIImagePickerController camera, a QR or document
+scanner) shows a black preview.
+
+ROOT CAUSE (from code and iOS 16.5 SDK inspection; not reproduced on a device)
+- The camera server (cameracaptured / mediaserverd, CMCapture) decides whether a client may
+  stream by watching SpringBoard's published display layout. The SDK's CMCapture exports
+  FigCaptureDisplayLayoutMonitor / FigCaptureDisplayLayout for exactly this, and
+  FrontBoardServices has the FBSDisplayLayoutPublisher it listens to.
+- A stage card isn't a SpringBoard layout element. The app is hosted (SBAppViewController,
+  live mode) inside DynamicStage's own SpringBoard window, so the published layout lists only
+  the full-screen app (or the home screen). The camera server sees the staged app as not on
+  screen and interrupts its AVCaptureSession (VideoDeviceNotAvailableInBackground). If the card
+  were listed next to the full-screen app, the iPad multitasking rule would apply instead
+  (VideoDeviceNotAvailableWithMultipleForegroundApps) unless the session has
+  multitaskingCameraAccessEnabled. Either way the session never delivers a frame, so the
+  preview stays black.
+- No DynamicStage code touched the camera. The scene's foreground flag is deliberately never
+  written for a hosted app-view scene (that write is the known SpringBoard SIGTRAP), so
+  forcing "foreground" alone was not an option.
+- Drawing (hypothesis 4) was checked and ruled out as the cause: the preview layer is content
+  the camera server renders into the app's own layer tree, and the card's layer host shows it
+  like any video. The only thing that would freeze it is the "covered" still, and that appears
+  only when the hosted scene reads not-foreground. That state is now logged (see below).
+
+WHAT CHANGED
+1. App side (DynamicStageApp.dylib), new app/DSCameraStage.m, installed from DSInstallHooks:
+   - Hooks AVCaptureSession with the plain ObjC runtime, only once the class exists. A dyld
+     add-image callback catches AVFoundation/CameraUI loading late, e.g. with the picker.
+   - Only sessions with a video input count. Audio-only sessions are left alone.
+   - startRunning/stopRunning: tells SpringBoard over the notify
+     com.recreated.dynamicstage.camera652 (state = bundle hash | event | interruption reason |
+     flags). A 4 s heartbeat runs only while a session is running or interrupted. When the app
+     goes to the background, the claim is released.
+   - While staged: asks for multitasking camera access (setMultitaskingCameraAccessEnabled:YES,
+     iOS 16+, guarded). isMultitaskingCameraAccessSupported answers YES so apps that check it
+     turn it on themselves. The app can't switch it off while staged, and a refusal never
+     reaches the app as an exception. If a session hits a runtime error while the switch was
+     forced on hardware that doesn't support it, the switch is turned back off for that
+     process and the session is started once more (layout path only).
+   - AVCaptureSessionWasInterrupted: logs the reason. For in-background (1) or
+     multiple-foreground-apps (4) while staged, it starts the session once more 1.5 s later,
+     after SpringBoard has updated the layout, but only if AVFoundation hasn't resumed it on
+     its own (at most 2 tries per 20 s). Interruption-ended and runtime errors are logged too.
+2. SpringBoard side, new springboard/DSCameraArbiter.h/.m:
+   - Learns SpringBoard's main-display FBSDisplayLayoutPublisher, and the role and level it
+     gives a full-screen app element, from SpringBoard's own -addElement: calls. Before that,
+     it asks the window scene.
+   - While a hosted app has a camera claim AND its card is visible and unparked
+     (stageCardScreenFrameForBundleIdentifier) AND the phone is unlocked, it publishes an
+     SBSDisplayLayoutElement for that app: bundle id, UIApplicationElement=YES, the card frame,
+     fillsDisplayBounds=NO, and hasKeyboardFocus=NO (keyboard routing is untouched).
+   - The element is invalidated when: the camera stops, the app goes quiet for 12 s, the app
+     leaves the stage, the card is minimized, parked, hidden or closed, or the phone locks or
+     the display turns off. When the card moves, it is re-published. After a fresh
+     in-background or multiple-apps interruption it is re-sent, at most once every 3 s.
+   - Re-checks once a second only while a claim exists. Nothing runs while
+     systemTransitionBusy, homeGestureIsActive or a scene settings update is in progress
+     (deferred 0.4 s), so there is no per-frame work in the switcher.
+   - DSSceneHost applyOverridesToSettings: for a visible card whose app holds the camera, the
+     in-flight settings get occluded=NO and deactivationReasons=0. Foreground is still never
+     written. Skipped for minimized cards and during home/switcher gestures. No new scene
+     updates are initiated.
+   - DSStageManager: -hostedBundleIdentifiers (primary, top, floating), and the display-off
+     path asks the arbiter to re-check.
+3. Version 4.5.652 (control, DSConstants.h), changelog entry.
+All 650/651 hardening is unchanged: no layoutIfNeeded inside scene updates, guarded scene
+writes, nil checks and @try.
+
+LOGS (rate limited)
+- SpringBoard diagnostics, "SpringBoard: camera652 ...":
+  - "<bundle> start|stop|interrupted|... reason=N (name) staged= appActive= multitask=sup/en
+    [refused] running="
+  - "<bundle> card published to the display layout frame=... role= level= template=,
+    path=layout-element; layout now: ..."
+  - "... taken out of the display layout (<why>), path=layout-off"
+  - "hosted scene <id> fg= occluded= deactivation=0x.. camera=" (on change)
+  - "<scene> holds the camera: ... path=scene-front"
+  - "<hash> start from an app that is not on a card, full-screen camera left alone"
+- In the app (os_log / Console, "[DynamicStage] camera652 <bundle> ..."): startRunning (staged,
+  app state, multitask on/refused/unavailable, path), after-start running/interrupted,
+  interruption reason, retry/resume, runtime error, unforce, install.
+
+LIMITS
+- Coverage: the in-app part loads only into the apps in the DynamicStage filter (Messages,
+  Messenger, Signal, Beeper, Phone). Another app on a card gets no camera claim, so its camera
+  can still be black. To cover it, add its bundle id to app/DynamicStageApp.plist (the injection
+  list is deliberately not widened to every app in this build).
+- One camera at a time: while a staged app streams, the full-screen app's camera is paused
+  (interrupted by iOS, e.g. "video in use by another client" or "multiple foreground apps")
+  and resumes on its own when the staged camera stops or the card is minimized or closed.
+  FaceTime/full-screen camera apps aren't affected while no staged app is using the camera.
+- If the full-screen app grabs the camera after the staged one, iOS decides who keeps it. The
+  staged app then logs "video-in-use-by-another-app" and waits.
+- Multitasking camera access is real only where iOS supports it (iPad-class hardware). On an
+  iPhone the request may be refused (logged as "refused"). The display layout path is the main
+  fix there.
+- A minimized or parked card never gets the camera (by design). Neither does a locked phone.
+- The green camera dot and the camera permission (TCC) prompt are untouched; they come from
+  iOS as usual.
+- Not tested on a device. The camera652 lines show which path ran and the interruption reason
+  if a preview is still black.
+
+FILES (full copies in full-652/)
+app/DSCameraStage.m (new), app/Tweak.xm, springboard/DSCameraArbiter.h (new),
+springboard/DSCameraArbiter.m (new), springboard/DSSceneHost.m, springboard/Tweak.xm,
+springboard/DSStageManager.h, springboard/DSStageManager.m, shared/DSConstants.h, control,
+changelog.md

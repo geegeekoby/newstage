@@ -1,3 +1,4 @@
+#import "DSCameraArbiter.h"
 #import "DSSceneHost.h"
 #import "DSConstants.h"
 #import "DSPreferences.h"
@@ -2956,6 +2957,27 @@ static void DSSystemTransitionPoll(NSInteger generation) {
             if ([settings respondsToSelector:@selector(setForeground:)]) settings.foreground = NO;
             if ([settings respondsToSelector:@selector(setBackgrounded:)]) settings.backgrounded = NO;
             if ([settings respondsToSelector:@selector(setDeactivated:)]) settings.deactivated = NO;
+        } @catch (NSException *exception) {
+        }
+    }
+    // 4.5.652: a visible card whose app holds the camera is on screen and in
+    // front as far as its own scene is concerned: not occluded, nothing
+    // deactivating it. Foreground itself is never written here (see above),
+    // and nothing is written during the home / switcher gesture.
+    if (![override[@"staysBackgrounded"] boolValue] && ![self homeGestureIsActive] &&
+        ![self systemTransitionBusy] && [DSCameraArbiter sceneIdentifierHoldsCamera:identifier]) {
+        @try {
+            if ([settings respondsToSelector:@selector(setOccluded:)]) settings.occluded = NO;
+            SEL reasons = NSSelectorFromString(@"setDeactivationReasons:");
+            if ([settings respondsToSelector:reasons]) {
+                ((void (*)(id, SEL, unsigned long long))objc_msgSend)(settings, reasons, 0ULL);
+            }
+            static CFAbsoluteTime DSCameraSceneLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSCameraSceneLog > 3.0) {
+                DSCameraSceneLog = now;
+                DSDiagnosticsRecordFormat(@"SpringBoard: camera652 %@ holds the camera: scene kept unoccluded, no deactivation, path=scene-front", identifier);
+            }
         } @catch (NSException *exception) {
         }
     }

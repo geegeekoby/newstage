@@ -136,12 +136,22 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // starting another transaction in that window is a SIGTRAP.
 + (void)setHomeGestureActive:(BOOL)active;
 + (BOOL)homeGestureIsActive;
-// 4.5.650: YES while the home gesture / its quiet window runs, or while the
-// system app switcher is on screen (checked at most every 100ms). Per-frame
-// hooks use this to skip their work during the switcher swipe. Also tells
-// the staged apps (com.recreated.dynamicstage.systemgesture) so they hold
-// their own relayout work until it ends.
+// 4.5.657: YES while the home gesture / its quiet window runs, and from the
+// moment a home / switcher swipe begins with a stage app around until the
+// stage is next used (noteStageInUse). The app switcher itself is never
+// asked (4.5.650-656 polled SBMainSwitcherController every 0.1-0.3 s while
+// it was open); the stage's own state is the signal. The staged apps hear
+// only the gesture begin / end (com.recreated.dynamicstage.systemgesture).
 + (BOOL)systemTransitionBusy;
+// 4.5.657: a home / switcher swipe began with a stage app hosted or a card on
+// screen. Set from the home gesture begin only (one static write).
++ (void)noteSystemTookScreen;
+// 4.5.657: the user is using the stage again (opened it, pulled a card back,
+// touched a card). Clears the flag above and runs deferred work.
++ (void)noteStageInUse;
+// 4.5.657: runs the block now, or once the system transition is over and the
+// stage is next used. Replaces the 0.4 s re-poll loops during the switcher.
++ (void)performWhenSystemTransitionOver:(dispatch_block_t)block;
 // The corner pull runs inside SpringBoard's own gesture callback. A display
 // mode change or a new scene transaction from that callback is a SIGTRAP.
 + (void)beginSystemPullCallback;
@@ -168,3 +178,19 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 + (BOOL)stageRequestedFrame:(CGRect)frame forSceneIdentifier:(NSString *)identifier;
 
 @end
+
+// ---- 4.5.657: an app killed from the app switcher ----------------------------
+// The kill hooks only call DSSceneHostMarkBundleDied (data only: a set entry
+// and the dead scene's geometry overrides removed). Nothing in the stage UI
+// runs during the swipe. Hosting checks treat the bundle as gone at once, so a
+// relaunch of the same app is never given the card frame. The manager does the
+// real "stage app closed" handling on the next stage use.
+FOUNDATION_EXPORT void DSSceneHostMarkBundleDied(NSString *bundleIdentifier);
+FOUNDATION_EXPORT BOOL DSSceneHostBundleDiedPending(NSString *bundleIdentifier);
+FOUNDATION_EXPORT BOOL DSSceneHostAnyDiedPending(void);
+FOUNDATION_EXPORT NSArray<NSString *> *DSSceneHostTakeDiedBundles(void);
+FOUNDATION_EXPORT void DSSceneHostClearDied(NSString *bundleIdentifier);
+// Number of scene identifiers with stage geometry (no lock; a hint for the
+// FBScene hooks' first exit).
+FOUNDATION_EXPORT NSInteger DSSceneHostOverrideCount(void);
+

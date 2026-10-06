@@ -1,0 +1,217 @@
+DynamicStage 4.5.657 - keep DynamicStage out of the iOS app switcher
+=======================================================================
+
+User report: the app switcher still lags, most of all when swiping an app away
+(the flick-up kill gesture on a card).
+
+Approach: list everything in the tweak that can run while the switcher is
+entered, open, or has a card swiped away, in SpringBoard and in the injected
+apps. Remove what exists only for the switcher. Make everything else return
+on a plain flag/ivar read unless a stage card is actually on screen.
+
+New SpringBoard primitives (no locks, no syscalls, no stage-manager methods):
+  DSStageCardOnScreenFast()   an unparked stage card (or a corner pull) is on
+                              screen, main thread, not stepped aside for a
+                              call, no home gesture running. The swipe into
+                              the switcher parks every card first (tuck), so
+                              this is NO for the whole time the switcher is up.
+  DSStageVisibleFast()        same answer as -isStageVisible
+  DSStageGestureRelevantFast() stage visible or a card drag running
+  DSStageHasSceneHostFast()   the stage holds any app (5 pointer reads)
+  DSStageHasParkedCardFast()  a card is parked in a corner
+  DSSceneHostOverrideCount()  number of scenes with stage geometry
+  DSStageNoteBundleKilled()   data-only kill note (see section C)
+  -[DSStageManager noteStageUse] runs the deferred switcher work
+
+-----------------------------------------------------------------------------
+A. SpringBoard hooks / code paths that run around the switcher, and what
+   happened to each
+-----------------------------------------------------------------------------
+
+REMOVED
+ 1. Switcher visibility polling (DSSceneHost systemTransitionBusy /
+    DSReadSwitcherVisible / DSSystemTransitionPoll). Asked SBMainSwitcherController
+    (then SBMainSwitcherViewController) -isMainSwitcherVisible at most every
+    0.1 s from the hooks, plus a 0.3 s dispatch_after poll for as long as the
+    switcher stayed open, plus a Darwin notify_set_state/notify_post every 2 s
+    while it stayed open. REMOVED completely. "busy" is now the home gesture
+    and its 1.15 s quiet window, plus a static flag set when a home/switcher
+    swipe begins with a stage app around and cleared on the next stage use
+    (or as soon as a card is back on screen). The Darwin
+    com.recreated.dynamicstage.systemgesture state is posted on gesture begin
+    and end only.
+ 2. DSSystemSwitcherIsVisible() in the SBHomeGrabberView hooks (an
+    SBMainSwitcherController round trip from every switcher card's pill on
+    every frame). REMOVED.
+ 3. Per-call associated-object restore check in SBHomeGrabberView
+    -layoutSubviews (656) and the per-bar associated flag on _UIStatusBar.
+    REMOVED; replaced by weak NSHashTables of the pills/bars the stage actually
+    hid (empty almost always, so the check is a count read).
+ 4. UIWindow -setWindowScene: hook. Its helper
+    DSReplacementSceneForKeyboardWindow() has returned nil for many builds;
+    the hook only cost a call on every window SpringBoard moved between
+    scenes. REMOVED.
+ 5. FBSceneManager -destroyScene:withTransitionContext: and SBApplication
+    -applicationProcessDidExit:withContext: no longer call the stage manager
+    (noteSceneDestroyedForBundleIdentifier: ran synchronously inside the
+    swipe that kills the app: picker, shelf, corner icon, home affordance,
+    host teardown). That synchronous handling is REMOVED from the kill path;
+    see C.
+ 6. Phone-fit log read (Darwin com.recreated.dynamicstage.phone.fit) re-polled
+    every 0.4 s while "busy" (= for as long as the switcher was open). Poll
+    REMOVED; one deferred read runs on the next stage use.
+ 7. Camera arbiter refresh re-polled every 0.4 s while the switcher was open.
+    Poll REMOVED; it only waits out the home gesture itself (max 2.5 s +
+    1.15 s quiet). While the system has the screen a staged camera's layout
+    element is simply taken out ("home / switcher has the screen").
+
+NEUTRALIZED (hook kept, returns on a flag/ivar read when it is not a live
+stage card or the system has the screen)
+ 8. FBScene -updateSettings:withTransitionContext:completion: and
+    -updateSettingsWithBlock: (every switcher card's scene, every frame).
+    First line now: DSStageReady + "stage holds an app or any stage geometry
+    exists" (two static reads) -> %orig. Then the existing
+    DSSceneUpdateMatters (hosted-scene identifier test) -> %orig for every
+    non-stage scene. The SIGTRAP hold for hosted scenes during the home
+    gesture / parked state is unchanged. The covered/uncovered note to the
+    manager is skipped entirely while the system has the screen and no card
+    is on screen.
+ 9. SBAppViewController -sceneHandle:didUpdateSettingsWithDiff:previousSettings:
+    unchanged: only the stage's own app view controllers (weak hash-table
+    lookup) are touched; every switcher/layout app view returns %orig. Holds
+    for the home gesture, parked cards and the 653/656 call guard are kept.
+10. SBHomeGrabberView -setFrame:/-layoutSubviews/-setAlpha:/-didMoveToWindow
+    (every card's pill, every frame). Now only acts while a stage card is on
+    screen (DSStageCardOnScreenFast). Otherwise it only gives back a pill the
+    stage itself hid (hash-table count, normally 0).
+11. _UIStatusBar -didMoveToWindow/-layoutSubviews/-setAlpha:. With no card on
+    screen a bar returns right after %orig, unless it is a bar the stage hid
+    (then it gets its alpha back). Switcher cards' bars are no longer adopted
+    as "the system status bar". The peek-tap delegate also checks the card
+    flag first.
+12. SBApplicationSceneView -setFrame:/-didMoveToWindow/-layoutSubviews (every
+    switcher card). First test is now "stage holds an app" + "this view is in
+    the stage window" (one class check), before the cached Phone question;
+    the 14-level superview walk only runs for a view not yet in any window.
+13. _UIContextLayerHostView -layoutSubviews/-setFrame: (Beeper keyboard pin).
+    Returns unless a card is on screen, before the cached manager question.
+14. SBFluidSwitcherGestureManager -shouldBeginGestureAtStartingPoint:... and
+    -gestureRecognizer:shouldReceiveTouch:, SBSystemGestureManager
+    -shouldBeginGestureAtStartingPoint:... Return %orig unless the stage is
+    visible or a card drag is running (every YES path needs one of those, so
+    this is the same answer, just without the manager call). Kept because
+    they stop the home gesture from stealing a card drag / the terminate band.
+15. SBFluidSwitcherGestureManager -grabberTongueBeganPulling:... KEPT in
+    minimal form (see B). Corner pull only offered with a card parked in a
+    corner; noteHomeGestureBegan only when the stage holds an app or is on
+    screen; otherwise straight to %orig.
+16. SpringBoard -frontDisplayDidChange: (fires as the switcher closes onto an
+    app). Keeps the 656 call-guard note. The picker reload and recents write
+    (noteFrontApplicationWillChange) now only record the bundle; they run on
+    the next stage use (or at once, async, when a card is on screen).
+17. SBMainDisplaySceneManager -_applyStatusBarHidden:... returns %orig when
+    the stage holds no app (pointer reads) before asking the manager.
+18. SBApplicationInfo / FBApplicationInfo -isMedusaCapable (SpringBoard asks
+    this while building switcher layouts) returns %orig when the stage holds
+    no app, before the manager.
+19. SBWindowScene -_shouldAutorotate, SBLockScreenManager -_shouldAutoLock:
+    ivar read (DSStageVisibleFast) instead of a manager block.
+20. UIAutoRotatingWindow -hitTest: returns %orig unless the staged-keyboard
+    touch pass-through is armed (every branch already ended in %orig then).
+21. UIKeyboard -layoutSubviews (DSHostedAppOwnsKeyboard) needs a card on
+    screen before it asks the manager.
+22. FBSDisplayLayoutPublisher -addElement: swizzle (camera, 652; runs on every
+    layout publish, i.e. every switcher transition and every kill). Once the
+    main publisher and the app-element template are known it is one pointer
+    compare, then out (no associated-object lookup, no messages).
+
+LEFT AS IS (not switcher work, already cheap)
+23. UIWindow -setWindowLevel:/-pointInside:/-hitTest:/-_hitTestLocation...,
+    UIView -hitTest:/-pointInside:, UIKeyboard/UIKeyboardImpl/UIInputSetHostView
+    hit tests: touch-begin only, static-flag gated (DSKeyboardTouchPassthroughArmed,
+    656 in-call window pointer compare).
+24. UIKeyboardImpl input hooks, _UIRemoteKeyboards, _UIKeyboardArbiter:
+    keyboard only.
+25. SBBacklightController: screen off only.
+26. Boot group (SpringBoard -applicationDidFinishLaunching:) and %ctor.
+
+-----------------------------------------------------------------------------
+B. Home-swipe SIGTRAP protection (kept, minimal, why)
+-----------------------------------------------------------------------------
+The protection is DSAvoidSceneLifecycle(): while the home gesture runs (and
+1.15 s after) hosted scenes / the stage's own app views hold SpringBoard's
+updates, because applying them asserts in SBAppViewController (SIGTRAP, not
+catchable). The ONLY early signal for "a home/switcher swipe has begun" is
+SBFluidSwitcherGestureManager -grabberTongueBeganPulling:..., which fires once
+when the swipe off the bottom edge starts. Without it the hold would come too
+late and 652/653-style safe modes return. So that one hook stays. It no longer
+does anything when the stage holds no app and is not on screen, and it is not
+involved in card flicks inside the switcher. The hosted-scene holds in the
+FBScene and SBAppViewController hooks are unchanged.
+
+-----------------------------------------------------------------------------
+C. A staged app killed from the switcher (lazy handling)
+-----------------------------------------------------------------------------
+At kill time (FBSceneManager destroyScene / SBApplication processDidExit):
+  - nothing at all unless the stage holds an app;
+  - if the killed app is one of the stage's hosts: DSSceneHostMarkBundleDied()
+    = add to a set + remove that app's stage geometry overrides (dictionary
+    work under the existing lock). No UI, no scene write, no manager method.
+Until it is handled:
+  - isHostingSceneIdentifier:/isHostingBundleIdentifier:/hostedBundleIdentifiers
+    treat it as not hosted, so the same app relaunched full screen (switcher,
+    Home Screen) never gets the card frame or the hold;
+  - the dead host can not wake, activate, take a running assertion or register
+    geometry again (so the stage never relaunches it).
+Handled (the old noteSceneDestroyedForBundleIdentifier:) on the next stage
+use: shelf opened / slot tapped / slot dragged / slot held, corner pull on a
+parked card, own corner gesture, openStageAnimated, launching an app from the
+picker, tapping a card. If a card is on screen when the app dies (a crash
+while you look at the stage) it is handled right away (one check, no poll).
+Log line: "switcher657 <bundle> was closed outside the stage ...".
+
+-----------------------------------------------------------------------------
+D. Injected apps (Messages, Messenger, Signal, Beeper, Phone)
+-----------------------------------------------------------------------------
+No app-side code was changed.
+  - A killed app is SIGKILLed: none of its code runs during the swipe.
+  - UIScreen/UIWindow size hooks and the view hooks are gated on the staged
+    ivar; an unstaged app's UIWindow -setFrame: path only writes on change
+    (655). Nothing the tweak does makes iOS re-snapshot an unstaged app or
+    blocks snapshotting.
+  - A staged app (parked) is snapshotted by iOS at its card size, because
+    that is its scene size; the tweak writes no scene settings for it in the
+    switcher. Its switcher card can therefore look like the card-sized layout.
+    Unchanged (it would need a scene write during the switcher, which is the
+    SIGTRAP risk).
+  - DSStageContext probe (two notify_get_state reads every 0.35 s while
+    unstaged, 1.5 s staged) only runs while the app is running; kept.
+  - Staged Phone's systemgesture listener: now hears only gesture begin/end
+    (no more 2 s refreshes while the switcher is open).
+
+-----------------------------------------------------------------------------
+E. Behaviour changes
+-----------------------------------------------------------------------------
+  - A stage app swiped away in the switcher: its corner icon / shelf state
+    stays until you next use the stage, then the picker comes back as before.
+    Relaunching it full screen meanwhile works normally.
+  - The picker's recent-apps order updates on the next stage use instead of
+    on every front-app change.
+  - Home pill moving/hiding and status-bar hiding only happen while a stage
+    card is actually on screen (before: whenever the stage state was "open",
+    which also covered all cards parked in corners).
+  - The staged Phone no longer defers its relayout while the switcher is
+    merely open; it defers only during the home gesture (it is backgrounded
+    in the switcher anyway).
+  - A staged camera's layout element is taken out while the system has the
+    screen (home / switcher) and comes back on the next stage use.
+  - Corner pull, minimize-on-home-swipe (tuck), split, the call guard and
+    656's call-screen hiding behave as before.
+
+Kept: boot guard, launch guard clearing, kill switch, 653 call guard, 656
+step-aside (call screen), home-swipe SIGTRAP protection.
+
+Files changed: springboard/Tweak.xm, springboard/DSStageManager.m/.h,
+springboard/DSSceneHost.m/.h, springboard/DSCameraArbiter.m,
+shared/DSConstants.h, control, changelog.md (originals in bak657/, patched
+files in full-657/).

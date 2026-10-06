@@ -25,6 +25,7 @@
 #import <notify.h>
 #import <sys/stat.h>
 #import <stdio.h>
+#import <pthread.h>
 
 // Bumped when a hosted keyboard goes down so a late clip retry does not reopen it.
 static NSInteger DSHostedClipGeneration = 0;
@@ -594,6 +595,133 @@ static NSString *DSKeyboardTypeName(DSKeyboardType type) {
 
 static BOOL sSystemEdgePullAvailable;
 
+// ---- 4.5.657: ivar-level answers for SpringBoard hooks ------------------------
+// The shared manager never goes away; this is the pointer the C accessors read.
+static __unsafe_unretained DSStageManager *DSStageManagerFast = nil;
+static NSMutableArray<NSString *> *DSPendingOpenedBundles = nil;
+static BOOL DSPendingFrontQuery = NO;
+static BOOL DSDeathCheckScheduled = NO;
+
+static inline BOOL DSStageFastCardShown(DSStageContainerView *card, BOOL parked) {
+    return card != nil && !parked && !card.hidden && card.alpha > 0.05;
+}
+
+BOOL DSStageVisibleFast(void) {
+    DSStageManager *m = DSStageManagerFast;
+    if (!m || !m->_activated) return NO;
+    return m->_state == DSStageStateOverlay || m->_state == DSStageStateTracking;
+}
+
+BOOL DSStageGestureRelevantFast(void) {
+    DSStageManager *m = DSStageManagerFast;
+    if (!m || !m->_activated) return NO;
+    return m->_stageDragActive || m->_state == DSStageStateOverlay || m->_state == DSStageStateTracking;
+}
+
+BOOL DSStageHasSceneHostFast(void) {
+    DSStageManager *m = DSStageManagerFast;
+    if (!m || !m->_activated) return NO;
+    return m->_sceneHost != nil || m->_topSceneHost != nil || m->_floatSceneHost != nil ||
+           m->_stashedHost != nil || m->_stashedHost2 != nil;
+}
+
+BOOL DSStageHasParkedCardFast(void) {
+    DSStageManager *m = DSStageManagerFast;
+    if (!m || !m->_activated) return NO;
+    return m->_primaryParked || m->_secondParked;
+}
+
+BOOL DSStageCardOnScreenFast(void) {
+    // Views are read here; off the main thread the answer is "no card".
+    if (!pthread_main_np()) return NO;
+    DSStageManager *m = DSStageManagerFast;
+    if (!m || !m->_activated) return NO;
+    if (m->_state != DSStageStateOverlay && m->_state != DSStageStateTracking) return NO;
+    if (DSCallStepAsideActive()) return NO;
+    if ([DSSceneHost homeGestureIsActive]) return NO;
+    if (m->_state == DSStageStateTracking) return YES;
+    if (DSStageFastCardShown(m->_container, m->_primaryParked)) return YES;
+    if (DSStageFastCardShown(m->_topContainer, m->_secondParked)) return YES;
+    if (m->_floatActive && DSStageFastCardShown(m->_floatContainer, NO)) return YES;
+    return NO;
+}
+
+// Only a card on screen means the user is looking at the stage (not the
+// switcher, not the Home Screen): then the death is handled right away.
+// Otherwise it waits for the next stage use. One check per kill, no poll.
+static void DSStageScheduleDeathCheck(void) {
+    if (DSDeathCheckScheduled) return;
+    DSDeathCheckScheduled = YES;
+    double delay = DSStageCardOnScreenFast() ? 0.05 : 2.5;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DSDeathCheckScheduled = NO;
+        if (!DSSceneHostAnyDiedPending() || !DSStageCardOnScreenFast()) return;
+        @try {
+            [DSStageManagerFast noteStageUse];
+        } @catch (NSException *exception) {
+        }
+    });
+}
+
+static void DSStageNoteBundleKilledOnMain(NSString *bundle) {
+    DSStageManager *m = DSStageManagerFast;
+    if (!m || !m->_activated || bundle.length == 0) return;
+    BOOL ours = [m->_sceneHost.bundleIdentifier isEqualToString:bundle] ||
+                [m->_topSceneHost.bundleIdentifier isEqualToString:bundle] ||
+                [m->_floatSceneHost.bundleIdentifier isEqualToString:bundle];
+    if (!ours) return;
+    DSSceneHostMarkBundleDied(bundle);
+    DSStageScheduleDeathCheck();
+}
+
+void DSStageNoteBundleKilled(NSString *bundleIdentifier) {
+    if (bundleIdentifier.length == 0 || !DSStageHasSceneHostFast()) return;
+    if (NSThread.isMainThread) {
+        DSStageNoteBundleKilledOnMain(bundleIdentifier);
+        return;
+    }
+    NSString *bundle = [bundleIdentifier copy];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSStageNoteBundleKilledOnMain(bundle);
+    });
+}
+
+void DSStageNoteFrontDisplayChanged(id display) {
+    DSStageManager *m = DSStageManagerFast;
+    if (!m || !m->_activated) return;
+    NSString *bundle = nil;
+    @try {
+        if ([display respondsToSelector:@selector(bundleIdentifier)]) {
+            id value = ((id (*)(id, SEL))objc_msgSend)(display, @selector(bundleIdentifier));
+            if ([value isKindOfClass:NSString.class]) bundle = value;
+        }
+    } @catch (NSException *exception) {
+    }
+    if (bundle.length > 0) {
+        if (![bundle isEqualToString:@"com.apple.springboard"]) {
+            if (!DSPendingOpenedBundles) DSPendingOpenedBundles = [NSMutableArray array];
+            [DSPendingOpenedBundles removeObject:bundle];
+            [DSPendingOpenedBundles addObject:[bundle copy]];
+            if (DSPendingOpenedBundles.count > 12) [DSPendingOpenedBundles removeObjectAtIndex:0];
+        }
+    } else if (display) {
+        DSPendingFrontQuery = YES;
+    }
+    // Unchanged from before: a stage left open with the tweak switched off.
+    if (m->_state == DSStageStateOverlay && ![DSPreferences sharedPreferences].enabled) {
+        [m closeStageAnimated:NO];
+    }
+    // With a card on screen the user is on the stage: apply now (async).
+    if (DSStageCardOnScreenFast()) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @try {
+                [DSStageManagerFast noteStageUse];
+            } @catch (NSException *exception) {
+            }
+        });
+    }
+}
+
 + (instancetype)sharedManager {
     static DSStageManager *shared;
     static dispatch_once_t token;
@@ -605,6 +733,7 @@ static BOOL sSystemEdgePullAvailable;
 
 - (instancetype)init {
     if ((self = [super init])) {
+        DSStageManagerFast = self;
         _state = DSStageStateClosed;
         _searchSlot = -1;
         _stagedKeyboardSlot = -1;
@@ -774,16 +903,21 @@ static BOOL sSystemEdgePullAvailable;
     };
 
     _shelf = [[DSStageShelfView alloc] initWithFrame:root.bounds];
+    // 4.5.657: each of these is a stage use (deferred switcher work runs first).
     _shelf.willOpenHandler = ^{
+        [weakSelf noteStageUse];
         [weakSelf refreshShelf];
     };
     _shelf.halfHandler = ^(NSInteger half) {
+        [weakSelf noteStageUse];
         [weakSelf beginStageOnHalf:half];
     };
     _shelf.slotDragHandler = ^(UIGestureRecognizerState state, CGPoint point) {
+        if (state == UIGestureRecognizerStateBegan) [weakSelf noteStageUse];
         [weakSelf handleNewStageDrag:state atPoint:point];
     };
     _shelf.halfHoldHandler = ^(NSInteger half) {
+        [weakSelf noteStageUse];
         [weakSelf returnHalfToPicker:half];
     };
     [root addSubview:_shelf];
@@ -1977,6 +2111,7 @@ static void DSMakeKeyBesidePlayingVideo(UIWindow *window) {
 
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier {
     if (bundleIdentifier.length == 0) return NO;
+    if (DSSceneHostBundleDiedPending(bundleIdentifier)) return NO;
     if (_sceneHost.isHosting && [_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     if (_floatSceneHost.isHosting && [_floatSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
@@ -1989,6 +2124,11 @@ static void DSMakeKeyBesidePlayingVideo(UIWindow *window) {
     if (_sceneHost.isHosting && _sceneHost.bundleIdentifier.length) [bundles addObject:_sceneHost.bundleIdentifier];
     if (_topSceneHost.isHosting && _topSceneHost.bundleIdentifier.length) [bundles addObject:_topSceneHost.bundleIdentifier];
     if (_floatSceneHost.isHosting && _floatSceneHost.bundleIdentifier.length) [bundles addObject:_floatSceneHost.bundleIdentifier];
+    if (DSSceneHostAnyDiedPending()) {
+        for (NSString *bundle in [bundles copy]) {
+            if (DSSceneHostBundleDiedPending(bundle)) [bundles removeObject:bundle];
+        }
+    }
     return bundles;
 }
 
@@ -4072,6 +4212,7 @@ static NSUInteger DSSideParkGeneration = 0;
 
 - (void)setParked:(BOOL)parked forCard:(DSStageContainerView *)card {
     if (card == _floatContainer) return;
+    if (!parked) [DSSceneHost noteStageInUse];
     if (card == _topContainer) _secondParked = parked;
     else _primaryParked = parked;
     DSSceneHost *host = [self sceneHostForCard:card];
@@ -5808,6 +5949,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 - (BOOL)gestureControllerShouldBegin:(DSGestureController *)controller atPoint:(CGPoint)point {
     (void)controller;
     if (_systemPull || _state == DSStageStateTracking) return NO;
+    if ([self parkedCardForCornerPoint:point]) [self noteStageUse];
     _cornerRestoreCard = [self parkedCardForCornerPoint:point];
     return _cornerRestoreCard != nil;
 }
@@ -5834,6 +5976,10 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
     CGPoint translation = [gesture translationInView:nil];
     if ([self gestureMovesLeftAlongTheBottom:translation velocity:velocity]) return NO;
     DSStageContainerView *card = [self parkedCardForCornerPoint:start];
+    if (!card) return NO;
+    // 4.5.657: stage use. An app killed from the switcher is handled now.
+    [self noteStageUse];
+    card = [self parkedCardForCornerPoint:start];
     if (!card) return NO;
     _cornerRestoreCard = card;
     _cornerExitCard = nil;
@@ -6127,6 +6273,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 }
 
 - (void)restoreMinimizedStageAnimated:(BOOL)animated {
+    [DSSceneHost noteStageInUse];
     DSStageContainerView *card = _cornerRestoreCard ?: _container;
     _cornerRestoreCard = nil;
     NSInteger fingerHalf = [self primaryHalfSnappedForCardFrame:CGRectMake(_restoreFinger.x, _restoreFinger.y, 1.0, 1.0)];
@@ -6430,6 +6577,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
         DSDiagnosticsRecord(@"SpringBoard: asked to open the stage before it was ready");
         return;
     }
+    [self noteStageUse];
     if (_state == DSStageStateOverlay) {
         DSDiagnosticsRecord(@"SpringBoard: asked to open the stage, it is already open");
         return;
@@ -6718,19 +6866,25 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
 
 - (BOOL)isHostingSceneIdentifier:(NSString *)identifier {
     if (identifier.length == 0) return NO;
+    // 4.5.657: an app killed from the switcher is not hosted any more, even
+    // before the stage has handled it (a relaunch must not get card treatment).
+    BOOL died = DSSceneHostAnyDiedPending();
     NSString *bottom = _sceneHost.bundleIdentifier;
     NSString *top = _topSceneHost.bundleIdentifier;
     if (_sceneHost.isHosting && bottom.length &&
-        [identifier rangeOfString:bottom].location != NSNotFound) {
+        [identifier rangeOfString:bottom].location != NSNotFound &&
+        !(died && DSSceneHostBundleDiedPending(bottom))) {
         return YES;
     }
     if (_topSceneHost.isHosting && top.length &&
-        [identifier rangeOfString:top].location != NSNotFound) {
+        [identifier rangeOfString:top].location != NSNotFound &&
+        !(died && DSSceneHostBundleDiedPending(top))) {
         return YES;
     }
     NSString *hovering = _floatSceneHost.bundleIdentifier;
     if (_floatSceneHost.isHosting && hovering.length &&
-        [identifier rangeOfString:hovering].location != NSNotFound) {
+        [identifier rangeOfString:hovering].location != NSNotFound &&
+        !(died && DSSceneHostBundleDiedPending(hovering))) {
         return YES;
     }
     return NO;
@@ -6949,6 +7103,7 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
 }
 
 - (void)launchEntry:(DSAppEntry *)entry slot:(NSInteger)slot {
+    [self noteStageUse];
     if (entry.bundleIdentifier.length == 0) {
         DSDiagnosticsRecord(@"SpringBoard: a plate was tapped with no app behind it");
         return;
@@ -9126,6 +9281,7 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
 }
 
 - (void)handleStagePan:(UIPanGestureRecognizer *)recognizer {
+    if (recognizer.state == UIGestureRecognizerStateBegan) [DSSceneHost noteStageInUse];
     static BOOL dragging = NO;
     static CGPoint grabFraction = {0.5, 0.5};
     static CGPoint parkBias = {0, 0};
@@ -10762,6 +10918,7 @@ static const NSInteger kDSHeldPictureTag = 9151;
 
 - (void)handleCardWakeTap:(UITapGestureRecognizer *)recognizer {
     if (recognizer.state != UIGestureRecognizerStateEnded) return;
+    [self noteStageUse];
     DSStageContainerView *card = _container;
     if (recognizer.view == _floatContainer) card = _floatContainer;
     else if (recognizer.view == _topContainer) card = _topContainer;
@@ -11032,6 +11189,9 @@ static NSInteger DSHomeGestureGeneration = 0;
 }
 
 - (void)noteHomeGestureBegan:(UIPanGestureRecognizer *)gesture {
+    // 4.5.657: from here until the stage is next used the system owns the
+    // screen (home, switcher). Replaces asking the switcher if it is visible.
+    [DSSceneHost noteSystemTookScreen];
     DSHomeGestureGeneration += 1;
     NSInteger generation = DSHomeGestureGeneration;
     if (_stagedKeyboardSlot >= 0) {
@@ -11061,6 +11221,42 @@ static NSInteger DSHomeGestureGeneration = 0;
     if (_topSceneHost.isHosting && !_secondParked) [self holdPictureOfCard:_topContainer];
     if (_floatSceneHost.isHosting && _floatActive) [self holdPictureOfCard:_floatContainer];
     if (gesture) [gesture addTarget:self action:@selector(noteHomeGestureEnded:)];
+}
+
+// 4.5.657: everything that used to run inside the app switcher (an app swiped
+// away, the front app changing) is applied here, the next time the stage is
+// used, never during the swipe.
+- (void)noteStageUse {
+    [DSSceneHost noteStageInUse];
+    NSArray<NSString *> *dead = DSSceneHostTakeDiedBundles();
+    for (NSString *bundle in dead) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: switcher657 %@ was closed outside the stage (switcher or crash); handled now, on stage use",
+                                  bundle);
+        [self noteSceneDestroyedForBundleIdentifier:bundle];
+    }
+    BOOL reload = NO;
+    if (DSPendingFrontQuery) {
+        DSPendingFrontQuery = NO;
+        NSString *front = [self frontApplication].bundleIdentifier;
+        if (front.length > 0 && ![front isEqualToString:@"com.apple.springboard"]) {
+            if (!DSPendingOpenedBundles) DSPendingOpenedBundles = [NSMutableArray array];
+            [DSPendingOpenedBundles removeObject:front];
+            [DSPendingOpenedBundles addObject:front];
+        }
+    }
+    if (DSPendingOpenedBundles.count > 0) {
+        NSArray<NSString *> *opened = [DSPendingOpenedBundles copy];
+        [DSPendingOpenedBundles removeAllObjects];
+        DSPreferences *preferences = [DSPreferences sharedPreferences];
+        for (NSString *bundle in opened) [preferences noteApplicationOpened:bundle];
+        reload = YES;
+    }
+    if (reload) {
+        if (_picker && !_sceneHost.isHosting) [_picker reloadContent];
+        if (_topPicker && _topContainer && !_topContainer.hidden && !_topSceneHost.isHosting) {
+            [_topPicker reloadContent];
+        }
+    }
 }
 
 - (void)noteFrontApplicationWillChange {

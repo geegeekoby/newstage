@@ -103,4 +103,32 @@
 - (void)closeStageAnimated:(BOOL)animated;
 - (void)rotateStageBy:(NSInteger)quarterTurns;
 
+// 4.5.657: the user is using the stage (opened it, pulled a card out, picked an
+// app, touched a card). Runs the work that was kept out of the app switcher:
+// stage apps killed from the switcher, recent-app bookkeeping, and clears the
+// "system has the screen" state.
+- (void)noteStageUse;
+
 @end
+
+// ---- 4.5.657: ivar-level answers for SpringBoard hooks ------------------------
+// No locks, no syscalls, no stage manager methods. Hooks that run for every
+// switcher card (home pill, status bar, gesture, scene views) return on these.
+// YES when an unparked stage card (or a corner pull) is on screen right now,
+// the stage is not stepped aside for a call and no home gesture is running.
+FOUNDATION_EXPORT BOOL DSStageCardOnScreenFast(void);
+// Same answer as -isStageVisible (state Overlay or Tracking).
+FOUNDATION_EXPORT BOOL DSStageVisibleFast(void);
+// The stage could claim a system gesture (stage visible or a card drag).
+FOUNDATION_EXPORT BOOL DSStageGestureRelevantFast(void);
+// The stage holds any app (primary, top, floating or stashed host object).
+FOUNDATION_EXPORT BOOL DSStageHasSceneHostFast(void);
+// A card is parked in a corner (the only case a corner pull is adopted).
+FOUNDATION_EXPORT BOOL DSStageHasParkedCardFast(void);
+// An app was killed (switcher flick, crash). Data only; returns at once for an
+// app the stage does not hold. The stage handles it on its next use.
+FOUNDATION_EXPORT void DSStageNoteBundleKilled(NSString *bundleIdentifier);
+// SpringBoard's front display changed. Recorded for the picker's recents and
+// applied on the next stage use.
+FOUNDATION_EXPORT void DSStageNoteFrontDisplayChanged(id display);
+

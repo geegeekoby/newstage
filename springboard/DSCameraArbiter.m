@@ -170,6 +170,11 @@ static NSString *DSCameraLayoutSummary(void) {
 
 static id DSCameraAddElement(id self, SEL _cmd, id element) {
     id result = DSOrigAddElement ? DSOrigAddElement(self, _cmd, element) : nil;
+    // 4.5.657: SpringBoard publishes the display layout on every switcher
+    // transition and app kill. Once the main publisher and the app-element
+    // template are known there is nothing left to learn: one pointer compare,
+    // then out (no associated-object lookup, no messages).
+    if (self == DSCameraPublisher && DSCameraTemplateSeen) return result;
     @try {
         // 4.5.655: the publisher already known to be the main display's is not
         // asked for its display configuration again on every layout publish.
@@ -458,13 +463,18 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
     if (!DSCameraClaims) return;
     // Nothing during the home / switcher gesture or inside a scene update:
     // come back when it is over.
-    if ([DSSceneHost systemTransitionBusy] || [DSSceneHost homeGestureIsActive] ||
-        [DSSceneHost sceneSettingsUpdateDepth] > 0) {
+    // 4.5.657: retried only across the home gesture itself (at most its
+    // 2.5 s timeout + 1.15 s quiet) or a scene update, never for as long as
+    // the switcher stays open.
+    if ([DSSceneHost homeGestureIsActive] || [DSSceneHost sceneSettingsUpdateDepth] > 0) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [DSCameraArbiter refreshSoon];
         });
         return;
     }
+    // The system has the screen (home / switcher, every card parked): no card
+    // is visible, so a staged camera's element comes out of the layout.
+    BOOL systemOwns = [DSSceneHost systemTransitionBusy];
     @try {
         DSStageManager *manager = [DSStageManager sharedManager];
         NSArray<NSString *> *hosted = [manager hostedBundleIdentifiers];
@@ -484,9 +494,10 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
                 [DSCameraClaims removeObjectForKey:bundle];
                 continue;
             }
-            CGRect frame = locked ? CGRectNull : [manager stageCardScreenFrameForBundleIdentifier:bundle cornerRadius:NULL];
+            CGRect frame = (locked || systemOwns) ? CGRectNull : [manager stageCardScreenFrameForBundleIdentifier:bundle cornerRadius:NULL];
             if (CGRectIsNull(frame) || CGRectGetWidth(frame) < 40.0 || CGRectGetHeight(frame) < 40.0) {
-                DSCameraUnpublish(claim, locked ? @"phone locked or call screen up" : @"card not visible");
+                DSCameraUnpublish(claim, locked ? @"phone locked or call screen up" :
+                                         (systemOwns ? @"home / switcher has the screen" : @"card not visible"));
                 continue;
             }
             if (claim.assertion && DSCameraFramesClose(frame, claim.frame)) continue;

@@ -10,6 +10,8 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
+#import <os/lock.h>
+#import <pthread.h>
 
 // Local declaration only. SpringBoard already has the class; linking
 // AssertionServices is not required, and a normal message keeps ARC correct.
@@ -96,6 +98,74 @@ static NSLock *DSSceneOverridesLock(void) {
     });
     return lock;
 }
+
+// ---- 4.5.657: switcher-free kill handling and system-transition state -------
+// Updated under DSSceneOverridesLock wherever the overrides change.
+static volatile NSInteger DSSceneOverrideCountValue = 0;
+
+NSInteger DSSceneHostOverrideCount(void) {
+    return DSSceneOverrideCountValue;
+}
+
+static os_unfair_lock DSDiedLock = OS_UNFAIR_LOCK_INIT;
+static NSMutableOrderedSet<NSString *> *DSDiedBundles = nil;
+static volatile NSInteger DSDiedCount = 0;
+
+void DSSceneHostMarkBundleDied(NSString *bundleIdentifier) {
+    if (bundleIdentifier.length == 0) return;
+    NSString *bundle = [bundleIdentifier copy];
+    os_unfair_lock_lock(&DSDiedLock);
+    if (!DSDiedBundles) DSDiedBundles = [NSMutableOrderedSet orderedSet];
+    [DSDiedBundles addObject:bundle];
+    DSDiedCount = (NSInteger)DSDiedBundles.count;
+    os_unfair_lock_unlock(&DSDiedLock);
+    // Data only. The dead scene's stage geometry goes now, so the same app
+    // relaunched full screen (switcher, Home Screen) never gets the card frame.
+    [DSSceneOverridesLock() lock];
+    NSMutableDictionary *overrides = DSSceneOverrides();
+    if (overrides.count > 0) {
+        for (NSString *identifier in [overrides.allKeys copy]) {
+            if ([identifier rangeOfString:bundle].location != NSNotFound) [overrides removeObjectForKey:identifier];
+        }
+    }
+    DSSceneOverrideCountValue = (NSInteger)overrides.count;
+    [DSSceneOverridesLock() unlock];
+}
+
+BOOL DSSceneHostBundleDiedPending(NSString *bundleIdentifier) {
+    if (DSDiedCount == 0 || bundleIdentifier.length == 0) return NO;
+    os_unfair_lock_lock(&DSDiedLock);
+    BOOL died = [DSDiedBundles containsObject:bundleIdentifier];
+    os_unfair_lock_unlock(&DSDiedLock);
+    return died;
+}
+
+BOOL DSSceneHostAnyDiedPending(void) {
+    return DSDiedCount > 0;
+}
+
+NSArray<NSString *> *DSSceneHostTakeDiedBundles(void) {
+    if (DSDiedCount == 0) return @[];
+    os_unfair_lock_lock(&DSDiedLock);
+    NSArray<NSString *> *bundles = DSDiedBundles.array.copy ?: @[];
+    [DSDiedBundles removeAllObjects];
+    DSDiedCount = 0;
+    os_unfair_lock_unlock(&DSDiedLock);
+    return bundles;
+}
+
+void DSSceneHostClearDied(NSString *bundleIdentifier) {
+    if (DSDiedCount == 0 || bundleIdentifier.length == 0) return;
+    os_unfair_lock_lock(&DSDiedLock);
+    [DSDiedBundles removeObject:bundleIdentifier];
+    DSDiedCount = (NSInteger)DSDiedBundles.count;
+    os_unfair_lock_unlock(&DSDiedLock);
+}
+
+// Set when a home / switcher swipe begins with a stage app around, cleared
+// when the stage is next used. Replaces asking the switcher controller.
+static BOOL DSSystemOwnsScreen = NO;
+static NSMutableArray<dispatch_block_t> *DSAfterTransitionBlocks = nil;
 
 // Shared settings writer: prefers the block based API and falls back to the
 // mutable-copy + transition context form used on older builds.
@@ -363,6 +433,8 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 - (instancetype)initWithBundleIdentifier:(NSString *)bundleIdentifier {
     if ((self = [super init])) {
         _bundleIdentifier = [bundleIdentifier copy];
+        // 4.5.657: a new host for this app is a fresh launch onto the stage.
+        DSSceneHostClearDied(_bundleIdentifier);
         _foreground = YES;
         _contentScale = [DSPreferences sharedPreferences].scale;
     }
@@ -1044,6 +1116,8 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 // is outside SpringBoard's scene layout, and telling its scene it is foreground
 // behind SpringBoard's back is what makes it assert.
 - (void)registerGeometryOnlyOverride {
+    // 4.5.657: an app killed from the switcher gets no geometry back.
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
     NSString *identifier = [_scene respondsToSelector:@selector(identifier)] ? _scene.identifier : nil;
     if (identifier.length == 0) return;
     [DSSceneOverridesLock() lock];
@@ -1054,6 +1128,7 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     } mutableCopy];
     if (_staysBackgrounded) override[@"staysBackgrounded"] = @YES;
     DSSceneOverrides()[identifier] = override;
+    DSSceneOverrideCountValue = (NSInteger)DSSceneOverrides().count;
     [DSSceneOverridesLock() unlock];
     _registeredOverride = YES;
 }
@@ -1512,6 +1587,8 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 }
 
 - (void)activateHostedAppWhenMediaAllows {
+    // 4.5.657: killed from the switcher; never wake or relaunch it from here.
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
     if (DSSystemPullDepth > 0 || DSSceneSettingsUpdateDepth > 0) {
         if (_mediaActivateAttempts >= 8) return;
         _mediaActivateAttempts += 1;
@@ -1553,6 +1630,8 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 }
 
 - (void)wakeIfBackgrounded {
+    // 4.5.657: killed from the switcher; never wake or relaunch it from here.
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
     if (DSAvoidSceneLifecycle()) return;
     SBAppViewController *controller = _appViewController;
     if (!controller) return;
@@ -2446,6 +2525,8 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
 }
 
 - (void)holdRunningAssertion {
+    // 4.5.657: killed from the switcher; never wake or relaunch it from here.
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
     if (!_appViewController && !_scene && !_hostView) return;
     pid_t pid = [self hostedProcessIdentifier];
     if (_runningAssertion && (pid <= 0 || _runningAssertionPid == pid)) {
@@ -2560,10 +2641,12 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
 }
 
 - (void)registerOverride {
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
     NSString *identifier = [_scene respondsToSelector:@selector(identifier)] ? _scene.identifier : nil;
     if (identifier.length == 0) return;
     [DSSceneOverridesLock() lock];
     DSSceneOverrides()[identifier] = [self overrideDescription];
+    DSSceneOverrideCountValue = (NSInteger)DSSceneOverrides().count;
     [DSSceneOverridesLock() unlock];
     _registeredOverride = YES;
 }
@@ -2574,6 +2657,7 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
     if (identifier.length == 0) return;
     [DSSceneOverridesLock() lock];
     [DSSceneOverrides() removeObjectForKey:identifier];
+    DSSceneOverrideCountValue = (NSInteger)DSSceneOverrides().count;
     [DSSceneOverridesLock() unlock];
     _registeredOverride = NO;
 }
@@ -2752,83 +2836,89 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
 
 #pragma mark - Override application
 
-// ---- 4.5.650: system transition (home swipe / app switcher) -------------
-// The swipe up into the app switcher runs SpringBoard's own animation every
-// frame. Stage hooks that ran full work on each of those frames (scene view
-// clip/frame, context host pin, hosted scene bookkeeping, app relayout) were
-// the lag. They now ask this first.
-static BOOL DSSwitcherVisibleCached = NO;
-static CFAbsoluteTime DSSwitcherCheckedAt = 0;
+// ---- 4.5.657: system transition (home swipe / app switcher) -------------
+// 4.5.650-656 asked SBMainSwitcherController -isMainSwitcherVisible here (at
+// most every 0.1 s from the hooks, and every 0.3 s from a poll that ran for as
+// long as the switcher stayed open) and re-posted the Darwin state every 2 s.
+// All of that ran while the user was flicking cards away. The switcher is no
+// longer asked at all: "busy" is the home gesture / its quiet window, plus
+// DSSystemOwnsScreen, which the home gesture begin sets and the next stage use
+// clears. The Darwin state is posted on the gesture's begin and end only.
 static BOOL DSSysGesturePosted = NO;
-static CFAbsoluteTime DSSysGesturePostedAt = 0;
-static NSInteger DSSysGesturePollGeneration = 0;
 
-static BOOL DSReadSwitcherVisible(void) {
-    static const char *names[] = { "SBMainSwitcherController", "SBMainSwitcherViewController" };
-    for (int i = 0; i < 2; i++) {
-        Class controllerClass = objc_getClass(names[i]);
-        if (!controllerClass || ![controllerClass respondsToSelector:@selector(sharedInstance)]) continue;
-        @try {
-            id controller = ((id (*)(id, SEL))objc_msgSend)(controllerClass, @selector(sharedInstance));
-            if (!controller || ![controller respondsToSelector:@selector(isMainSwitcherVisible)]) continue;
-            return ((BOOL (*)(id, SEL))objc_msgSend)(controller, @selector(isMainSwitcherVisible));
-        } @catch (NSException *exception) {
-            return NO;
-        }
-    }
-    return NO;
-}
-
-// Darwin state = absolute time the transition began (0 = over). Refreshed
-// every 2s while it lasts; apps treat a value older than 4s as over.
+// Darwin state = absolute time the home gesture began (0 = over). Posted on a
+// change only; apps treat a value older than 4s as over.
 static void DSPostSystemGestureState(void) {
-    BOOL active = DSHomeGestureActive || DSSwitcherVisibleCached;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (active == DSSysGesturePosted && (!active || now - DSSysGesturePostedAt < 2.0)) return;
+    BOOL active = DSHomeGestureActive;
+    if (active == DSSysGesturePosted) return;
     DSSysGesturePosted = active;
-    DSSysGesturePostedAt = now;
     static int token = NOTIFY_TOKEN_INVALID;
     if (token == NOTIFY_TOKEN_INVALID) {
         notify_register_check("com.recreated.dynamicstage.systemgesture", &token);
     }
-    if (token != NOTIFY_TOKEN_INVALID) notify_set_state(token, active ? (uint64_t)now : 0);
+    if (token != NOTIFY_TOKEN_INVALID) notify_set_state(token, active ? (uint64_t)CFAbsoluteTimeGetCurrent() : 0);
     notify_post("com.recreated.dynamicstage.systemgesture");
 }
 
-// Only runs while a transition is active; stops by itself (no timer).
-static void DSSystemTransitionPoll(NSInteger generation) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (generation != DSSysGesturePollGeneration) return;
-        DSSwitcherVisibleCached = DSReadSwitcherVisible();
-        DSSwitcherCheckedAt = CFAbsoluteTimeGetCurrent();
-        DSPostSystemGestureState();
-        if (DSSwitcherVisibleCached || DSHomeGestureActive) DSSystemTransitionPoll(generation);
-    });
+static void DSRunAfterTransitionBlocks(void) {
+    if (DSAfterTransitionBlocks.count == 0 || DSSystemOwnsScreen) return;
+    if (DSAvoidSceneLifecycle()) {
+        // Only the gesture itself (at most its 2.5 s timeout) or its 1.15 s
+        // quiet window; never the switcher.
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            DSRunAfterTransitionBlocks();
+        });
+        return;
+    }
+    NSArray<dispatch_block_t> *blocks = [DSAfterTransitionBlocks copy];
+    [DSAfterTransitionBlocks removeAllObjects];
+    for (dispatch_block_t block in blocks) {
+        @try {
+            block();
+        } @catch (NSException *exception) {
+        }
+    }
 }
 
 + (BOOL)systemTransitionBusy {
     if (DSAvoidSceneLifecycle()) return YES;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (now - DSSwitcherCheckedAt > 0.1) {
-        DSSwitcherCheckedAt = now;
-        BOOL visible = DSReadSwitcherVisible();
-        if (visible != DSSwitcherVisibleCached) {
-            DSSwitcherVisibleCached = visible;
-            DSPostSystemGestureState();
-            if (visible) DSSystemTransitionPoll(++DSSysGesturePollGeneration);
-        }
+    // A card back on screen means the stage is in use again, whichever path
+    // brought it back (ivar reads only; NO whenever the switcher is up,
+    // because the swipe into it parks every card).
+    if (DSSystemOwnsScreen && pthread_main_np() && DSStageCardOnScreenFast()) [self noteStageInUse];
+    return DSSystemOwnsScreen;
+}
+
++ (void)noteSystemTookScreen {
+    DSSystemOwnsScreen = YES;
+}
+
++ (void)noteStageInUse {
+    if (!DSSystemOwnsScreen && DSAfterTransitionBlocks.count == 0) return;
+    DSSystemOwnsScreen = NO;
+    if (DSAfterTransitionBlocks.count == 0) return;
+    // Never inside the stage method that noted the use.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSRunAfterTransitionBlocks();
+    });
+}
+
++ (void)performWhenSystemTransitionOver:(dispatch_block_t)block {
+    if (!block) return;
+    if (!DSSystemOwnsScreen && !DSAvoidSceneLifecycle()) {
+        block();
+        return;
     }
-    return DSSwitcherVisibleCached;
+    if (!DSAfterTransitionBlocks) DSAfterTransitionBlocks = [NSMutableArray array];
+    if (DSAfterTransitionBlocks.count < 8) [DSAfterTransitionBlocks addObject:[block copy]];
+    if (!DSSystemOwnsScreen) DSRunAfterTransitionBlocks();
 }
 
 + (void)setHomeGestureActive:(BOOL)active {
     BOOL changed = DSHomeGestureActive != active;
     DSHomeGestureActive = active;
     if (!active) DSHomeGestureQuietUntil = CFAbsoluteTimeGetCurrent() + 1.15;
-    if (changed) {
-        DSPostSystemGestureState();
-        if (active) DSSystemTransitionPoll(++DSSysGesturePollGeneration);
-    }
+    if (changed) DSPostSystemGestureState();
 }
 
 + (BOOL)homeGestureIsActive {
@@ -2880,6 +2970,7 @@ static void DSSystemTransitionPoll(NSInteger generation) {
         if ([identifier rangeOfString:bundleIdentifier].location == NSNotFound) continue;
         [DSSceneOverrides() removeObjectForKey:identifier];
     }
+    DSSceneOverrideCountValue = (NSInteger)DSSceneOverrides().count;
     [DSSceneOverridesLock() unlock];
 }
 

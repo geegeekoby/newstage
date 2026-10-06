@@ -119,6 +119,9 @@ static void DSScheduleFullInstall(void) {
 // the stage is actually hosting needs the override path.
 static BOOL DSSceneUpdateMatters(NSString *identifier) {
     if (!DSStageReady() || identifier.length == 0) return NO;
+    // 4.5.657: nothing on the stage and no stage geometry anywhere: two static
+    // reads, then out (no manager call, no lock).
+    if (!DSStageHasSceneHostFast() && DSSceneHostOverrideCount() == 0) return NO;
     @try {
         if ([[DSStageManager sharedManager] isHostingSceneIdentifier:identifier]) return YES;
     } @catch (NSException *exception) {
@@ -154,10 +157,16 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 - (void)frontDisplayDidChange:(id)display {
     %orig;
+    // 4.5.656 call guard: kept as it was (one static write + async check).
     DSCallGuardNoteFrontChange();
-    DSTell(^(DSStageManager *manager) {
-        [manager noteFrontApplicationWillChange];
-    });
+    // 4.5.657: this fires as the switcher closes onto an app. The picker
+    // reload and the recents write it used to run here now wait for the next
+    // stage use; this only records the bundle (no manager call).
+    if (!DSStageReady()) return;
+    @try {
+        DSStageNoteFrontDisplayChanged(display);
+    } @catch (NSException *exception) {
+    }
 }
 
 %end
@@ -165,7 +174,9 @@ static NSString *DSAnySceneIdentifier(id scene) {
 %hook FBScene
 
 - (void)updateSettings:(FBSSceneSettings *)settings withTransitionContext:(id)context completion:(id)completion {
-    if (!DSStageReady()) {
+    // 4.5.657: every switcher card's scene goes through here each frame. With
+    // nothing on the stage and no stage geometry this is two static reads.
+    if (!DSStageReady() || (!DSStageHasSceneHostFast() && DSSceneHostOverrideCount() == 0)) {
         %orig;
         return;
     }
@@ -318,7 +329,11 @@ static NSString *DSAnySceneIdentifier(id scene) {
                 CFAbsoluteTime nowSent = CFAbsoluteTimeGetCurrent();
                 BOOL coverChanged = !previous || previous.boolValue != covered;
                 BOOL due = nowSent - [lastSent[coverKey] doubleValue] >= 0.5;
-                if (coverChanged || (due && ![DSSceneHost systemTransitionBusy])) {
+                // 4.5.657: nothing at all while the system has the screen
+                // (home / switcher) and no card is on screen.
+                BOOL systemOwns = [DSSceneHost systemTransitionBusy];
+                BOOL quiet = systemOwns && !DSStageCardOnScreenFast();
+                if (!quiet && (coverChanged || (due && !systemOwns))) {
                     lastCovered[coverKey] = @(covered);
                     lastSent[coverKey] = @(nowSent);
                     if (lastCovered.count > 16) {
@@ -359,7 +374,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
 }
 
 - (void)updateSettingsWithBlock:(void (^)(FBSMutableSceneSettings *settings))block {
-    if (!DSStageReady() || !block) {
+    if (!DSStageReady() || !block || (!DSStageHasSceneHostFast() && DSSceneHostOverrideCount() == 0)) {
         %orig;
         return;
     }
@@ -448,9 +463,14 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 %hook FBSceneManager
 
+// 4.5.657: swiping a card away in the app switcher destroys its scene and
+// kills its process inside the swipe. Both hooks used to run the stage's
+// "app closed" handling right there (picker, shelf, home affordance, host
+// teardown). Now: nothing unless the stage holds an app, and then only a
+// data-only note; the stage handles it on its next use.
 - (void)destroyScene:(NSString *)identifier withTransitionContext:(id)context {
-    if (identifier.length > 0) {
-        DSTell(^(DSStageManager *manager) {
+    if (identifier.length > 0 && DSStageReady() && DSStageHasSceneHostFast()) {
+        @try {
             NSString *bundleIdentifier = identifier;
             NSRange colon = [identifier rangeOfString:@":"];
             if (colon.location != NSNotFound) {
@@ -460,8 +480,9 @@ static NSString *DSAnySceneIdentifier(id scene) {
             if (dash.location != NSNotFound) {
                 bundleIdentifier = [bundleIdentifier substringToIndex:dash.location];
             }
-            [manager noteSceneDestroyedForBundleIdentifier:bundleIdentifier];
-        });
+            DSStageNoteBundleKilled(bundleIdentifier);
+        } @catch (NSException *exception) {
+        }
     }
     %orig;
 }
@@ -472,11 +493,11 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 - (void)applicationProcessDidExit:(id)process withContext:(id)context {
     %orig;
-    NSString *identifier = self.bundleIdentifier;
-    if (identifier.length == 0) return;
-    DSTell(^(DSStageManager *manager) {
-        [manager noteSceneDestroyedForBundleIdentifier:identifier];
-    });
+    if (!DSStageReady() || !DSStageHasSceneHostFast()) return;
+    @try {
+        DSStageNoteBundleKilled(self.bundleIdentifier);
+    } @catch (NSException *exception) {
+    }
 }
 
 %end
@@ -558,22 +579,38 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 %hook SBFluidSwitcherGestureManager
 
+// 4.5.657: the only switcher-class hook left, in its minimal form. It fires
+// once when a swipe off the bottom edge begins (not per frame, not for card
+// flicks inside the switcher). It is kept because it is the only early signal
+// for the home-swipe SIGTRAP protection: noteHomeGestureBegan raises the
+// scene-lifecycle hold before SpringBoard's home transition re-describes the
+// hosted scenes. It now does nothing unless the stage holds an app or is on
+// screen, and the corner pull is only offered with a card parked in a corner.
 - (void)grabberTongueBeganPulling:(id)tongue
                      withDistance:(double)distance
                       andVelocity:(double)velocity
                        andGesture:(UIPanGestureRecognizer *)gesture {
-    if (DSAsk(^BOOL(DSStageManager *manager) {
+    if (!DSStageReady()) {
+        %orig;
+        return;
+    }
+    if (DSStageHasParkedCardFast() && DSAsk(^BOOL(DSStageManager *manager) {
             return [manager adoptSystemEdgePull:gesture];
         })) {
         return;
     }
-    DSTell(^(DSStageManager *manager) {
-        [manager noteHomeGestureBegan:gesture];
-    });
+    if (DSStageHasSceneHostFast() || DSStageVisibleFast()) {
+        DSTell(^(DSStageManager *manager) {
+            [manager noteHomeGestureBegan:gesture];
+        });
+    }
     %orig;
 }
 
+// 4.5.657: every YES path of the suppression needs the stage visible or a card
+// drag in progress, so anything else returns %orig on an ivar read.
 - (BOOL)shouldBeginGestureAtStartingPoint:(CGPoint)point velocity:(CGPoint)velocity bounds:(CGRect)bounds {
+    if (!DSStageReady() || !DSStageGestureRelevantFast()) return %orig;
     if (DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldSuppressSystemGestureAtPoint:point velocity:velocity];
         })) {
@@ -583,6 +620,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)recognizer shouldReceiveTouch:(UITouch *)touch {
+    if (!DSStageReady() || !DSStageGestureRelevantFast()) return %orig;
     if (DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldSuppressSystemGestureAtPoint:[touch locationInView:nil]];
         })) {
@@ -596,6 +634,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
 %hook SBSystemGestureManager
 
 - (BOOL)shouldBeginGestureAtStartingPoint:(CGPoint)point velocity:(CGPoint)velocity bounds:(CGRect)bounds {
+    if (!DSStageReady() || !DSStageGestureRelevantFast()) return %orig;
     if (DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldSuppressSystemGestureAtPoint:point velocity:velocity];
         })) {
@@ -607,7 +646,10 @@ static NSString *DSAnySceneIdentifier(id scene) {
 %end
 
 static NSInteger DSGrabberFrameDepth = 0;
-static const void *DSGrabberHiddenByStageKey = &DSGrabberHiddenByStageKey;
+// 4.5.657: pills the stage hid, held weakly. Replaces an associated-object
+// lookup that 656 did on every layout of every pill (each switcher card has
+// one) whenever the stage was not moving pills.
+static NSHashTable<UIView *> *DSHiddenGrabbers = nil;
 
 // The pill follows the bottom of whatever scene is in front. A stage card is
 // that scene, so the pill was sitting on the card. It belongs on the phone.
@@ -636,39 +678,27 @@ static BOOL DSGrabberWouldBeClipped(UIView *view, CGRect frame) {
 }
 
 static void DSNoteGrabberHidden(UIView *view, BOOL hidden) {
-    objc_setAssociatedObject(view, DSGrabberHiddenByStageKey, hidden ? @YES : nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (!view) return;
+    if (hidden) {
+        if (!DSHiddenGrabbers) DSHiddenGrabbers = [NSHashTable weakObjectsHashTable];
+        [DSHiddenGrabbers addObject:view];
+    } else {
+        [DSHiddenGrabbers removeObject:view];
+    }
 }
 
-// Each app card in the system switcher has its own home pill, and that pill
-// moves with the card every frame. Pinning those pills to the bottom of the
-// phone fights that animation. Only the stage's own card needs it.
-static BOOL DSSystemSwitcherIsVisible(void) {
-    Class controllerClass = objc_getClass("SBMainSwitcherController");
-    if (!controllerClass || ![controllerClass respondsToSelector:@selector(sharedInstance)]) return NO;
-    id controller = ((id (*)(id, SEL))objc_msgSend)(controllerClass, @selector(sharedInstance));
-    SEL visible = @selector(isMainSwitcherVisible);
-    if (![controller respondsToSelector:visible]) return NO;
-    return ((BOOL (*)(id, SEL))objc_msgSend)(controller, visible);
+static BOOL DSGrabberHiddenByStage(UIView *view) {
+    return DSHiddenGrabbers.count > 0 && [DSHiddenGrabbers containsObject:view];
 }
 
-// 4.5.655: cheapest test first. With no stage on screen this is a static
-// flag, a 1 s cached file check and an ivar read, then out. The switcher test
-// uses SpringBoard's cached transition state before asking the controller.
+// 4.5.657: the pill is only touched while a stage card is actually on screen
+// (ivar reads; no manager call, no switcher query). The old test asked
+// SBMainSwitcherController -isMainSwitcherVisible and the switcher
+// transition state from every pill on every frame. A home / switcher swipe
+// parks every card first, so with the switcher open this is always NO.
 static BOOL DSStageShouldMoveHomeGrabber(void) {
     if (!DSStageReady()) return NO;
-    // 4.5.656: the call screen's home bar is the system's while the stage is
-    // stepped aside for it.
-    if (DSCallStepAsideActive()) return NO;
-    BOOL visible = NO;
-    @try {
-        visible = [DSStageManager sharedManager].isStageVisible;
-    } @catch (NSException *exception) {
-        return NO;
-    }
-    if (!visible) return NO;
-    if ([DSSceneHost homeGestureIsActive]) return NO;
-    if ([DSSceneHost systemTransitionBusy]) return NO;
-    return !DSSystemSwitcherIsVisible();
+    return DSStageCardOnScreenFast();
 }
 
 %hook SBHomeGrabberView
@@ -686,9 +716,8 @@ static BOOL DSStageShouldMoveHomeGrabber(void) {
     %orig;
     if (!DSStageShouldMoveHomeGrabber()) {
         // 4.5.656: a pill the stage hid is given back when the stage no longer
-        // moves pills (call screen, switcher, stage closed). It used to stay
-        // at alpha 0, which left the call screen without its home bar.
-        if (DSGrabberFrameDepth == 0 && [objc_getAssociatedObject(self, DSGrabberHiddenByStageKey) boolValue]) {
+        // moves pills (call screen, switcher, stage closed).
+        if (DSGrabberFrameDepth == 0 && DSGrabberHiddenByStage(self)) {
             DSNoteGrabberHidden(self, NO);
             self.alpha = 1.0;
             self.userInteractionEnabled = YES;
@@ -707,7 +736,7 @@ static BOOL DSStageShouldMoveHomeGrabber(void) {
         self.userInteractionEnabled = NO;
         return;
     }
-    if ([objc_getAssociatedObject(self, DSGrabberHiddenByStageKey) boolValue]) {
+    if (DSGrabberHiddenByStage(self)) {
         DSNoteGrabberHidden(self, NO);
         self.alpha = 1.0;
         self.userInteractionEnabled = YES;
@@ -739,6 +768,11 @@ static BOOL DSStageShouldMoveHomeGrabber(void) {
 %hook SBMainDisplaySceneManager
 
 - (void)_applyStatusBarHidden:(BOOL)hidden withAnimation:(NSInteger)animation toSceneWithIdentifier:(NSString *)identifier {
+    // 4.5.657: nothing staged, nothing to keep (pointer reads).
+    if (!DSStageReady() || !DSStageHasSceneHostFast()) {
+        %orig;
+        return;
+    }
     if (DSAsk(^BOOL(DSStageManager *manager) {
             NSString *stage = manager.stageBundleIdentifier;
             return stage.length > 0 && [identifier containsString:stage];
@@ -752,6 +786,9 @@ static BOOL DSStageShouldMoveHomeGrabber(void) {
 
 static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
     if (identifier.length == 0) return NO;
+    // 4.5.657: SpringBoard asks this for app layouts while the switcher
+    // builds its cards; nothing staged returns on pointer reads.
+    if (!DSStageReady() || !DSStageHasSceneHostFast()) return NO;
     return DSAsk(^BOOL(DSStageManager *manager) {
         if (![identifier isEqualToString:manager.stageBundleIdentifier]) return NO;
         return [[DSPreferences sharedPreferences] launchTypeForApplication:identifier] == DSLaunchTypePad;
@@ -783,7 +820,7 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 %hook SBWindowScene
 
 - (BOOL)_shouldAutorotate {
-    if (DSAsk(^BOOL(DSStageManager *manager) { return manager.isStageVisible; })) return NO;
+    if (DSStageReady() && DSStageVisibleFast()) return NO;
     return %orig;
 }
 
@@ -792,7 +829,7 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 %hook SBLockScreenManager
 
 - (BOOL)_shouldAutoLock {
-    if (DSAsk(^BOOL(DSStageManager *manager) { return manager.isStageVisible; })) return NO;
+    if (DSStageReady() && DSStageVisibleFast()) return NO;
     return %orig;
 }
 
@@ -1100,18 +1137,10 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
     %orig(level);
 }
 
-- (void)setWindowScene:(UIWindowScene *)scene {
-    if ([DSSceneHost sceneSettingsUpdateDepth] > 0) {
-        %orig;
-        return;
-    }
-    id replacement = DSReplacementSceneForKeyboardWindow(self, scene);
-    if ([replacement isKindOfClass:UIWindowScene.class]) {
-        %orig((UIWindowScene *)replacement);
-        return;
-    }
-    %orig;
-}
+// 4.5.657: the setWindowScene: hook is gone. Its helper
+// (DSReplacementSceneForKeyboardWindow) has returned nil since the keyboard
+// scene work was switched off, so it only cost a call on every window the
+// switcher moved between scenes.
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSInCallWindowPassesTouch((UIView *)self, point)) return NO;
@@ -1142,6 +1171,9 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSInCallWindowPassesTouch((UIView *)self, point)) return nil;
+    // 4.5.657: every branch below ends in %orig unless the staged keyboard
+    // pass-through is armed (static reads).
+    if (!DSKeyboardTouchPassthroughArmed()) return %orig;
     // This is the window the keys are in. Returning nil here dropped the tap
     // after the first letter, in the search field and in the message box.
     if (DSHitLandsOnVisibleKeys((UIView *)self, point)) return %orig;
@@ -1186,6 +1218,8 @@ static BOOL DSMessagesHostStaysOnScreen(void) {
 }
 
 static BOOL DSHostedAppOwnsKeyboard(void) {
+    // 4.5.657: only with a stage card on screen (ivar reads first).
+    if (!DSStageReady() || !DSStageCardOnScreenFast()) return NO;
     return DSAsk(^BOOL(DSStageManager *manager) {
         if (!manager.isStageVisible || manager.isPickerSearchActive) return NO;
         NSString *bundle = manager.stageBundleIdentifier;
@@ -1243,6 +1277,8 @@ static BOOL DSBeeperHostedCached(void) {
 static void DSPinContextLayerHost(UIView *view) {
     // 4.5.650: context hosts lay out every frame of the switcher swipe; the
     // pin only matters for a staged Beeper keyboard.
+    // 4.5.657: a card on screen first (ivar reads), before any manager call.
+    if (!DSStageReady() || !DSStageCardOnScreenFast()) return;
     if (!DSBeeperHostedCached() || [DSSceneHost systemTransitionBusy]) return;
     if (![view isKindOfClass:UIView.class] || !view.superview || !view.window) return;
     if (view.hidden || view.alpha < 0.01) return;
@@ -1295,16 +1331,23 @@ static void DSPinContextLayerHost(UIView *view) {
 // hides again. The stage window is not raised over it.
 static __weak UIView *DSSystemStatusBar = nil;
 static BOOL DSStatusBarApplyBusy = NO;
-static const void *DSStatusBarHiddenByStageKey = &DSStatusBarHiddenByStageKey;
+// 4.5.657: bars the stage hid, held weakly (was an associated object read on
+// every layout of every status bar, switcher cards included).
+static NSHashTable<UIView *> *DSHiddenStatusBars = nil;
 static void DSAttachStatusBarPeek(UIWindow *window);
 
 static BOOL DSStatusBarHiddenByStage(UIView *bar) {
-    return bar && [objc_getAssociatedObject(bar, DSStatusBarHiddenByStageKey) boolValue];
+    return bar && DSHiddenStatusBars.count > 0 && [DSHiddenStatusBars containsObject:bar];
 }
 
 static void DSNoteStatusBarHiddenByStage(UIView *bar, BOOL hidden) {
     if (!bar || DSStatusBarHiddenByStage(bar) == hidden) return;
-    objc_setAssociatedObject(bar, DSStatusBarHiddenByStageKey, hidden ? @YES : nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (hidden) {
+        if (!DSHiddenStatusBars) DSHiddenStatusBars = [NSHashTable weakObjectsHashTable];
+        [DSHiddenStatusBars addObject:bar];
+    } else {
+        [DSHiddenStatusBars removeObject:bar];
+    }
 }
 
 // 4.5.655 (switcher lag): every _UIStatusBar in SpringBoard runs this from
@@ -1317,7 +1360,8 @@ static void DSNoteStatusBarHiddenByStage(UIView *bar, BOOL hidden) {
 static void DSApplySystemStatusBar(void) {
     UIView *bar = DSSystemStatusBar;
     if (![bar isKindOfClass:UIView.class] || DSStatusBarApplyBusy) return;
-    BOOL hide = DSAsk(^BOOL(DSStageManager *manager) {
+    // 4.5.657: hiding needs a card on screen (ivar reads before the manager).
+    BOOL hide = DSStageCardOnScreenFast() && DSAsk(^BOOL(DSStageManager *manager) {
         return [manager shouldHideSystemStatusBar];
     });
     BOOL ours = DSStatusBarHiddenByStage(bar);
@@ -1352,6 +1396,7 @@ static UIView *DSFindStatusBarView(UIView *view, NSInteger depth) {
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
     (void)gestureRecognizer;
     (void)touch;
+    if (!DSStageCardOnScreenFast()) return NO;
     return DSAsk(^BOOL(DSStageManager *manager) {
         return [manager shouldHideSystemStatusBar];
     });
@@ -1398,11 +1443,15 @@ static void DSCaptureSystemStatusBar(void) {
 // after %orig. The peek tap is attached when a bar is actually hidden.
 %hook _UIStatusBar
 
+// 4.5.657: with no stage card on screen a bar returns right after %orig,
+// unless it is one the stage hid (then it is given back). Switcher cards'
+// bars are never adopted as "the system bar" any more.
 - (void)didMoveToWindow {
     %orig;
     if (!DSStageReady()) return;
     UIView *bar = (UIView *)self;
     if (!bar.window) return;
+    if (!DSStageCardOnScreenFast() && !DSStatusBarHiddenByStage(bar)) return;
     DSSystemStatusBar = bar;
     DSApplySystemStatusBar();
 }
@@ -1411,13 +1460,14 @@ static void DSCaptureSystemStatusBar(void) {
     %orig;
     if (!DSStageReady()) return;
     UIView *bar = (UIView *)self;
+    if (!DSStageCardOnScreenFast() && !DSStatusBarHiddenByStage(bar)) return;
     DSSystemStatusBar = bar;
     DSApplySystemStatusBar();
 }
 
 - (void)setAlpha:(CGFloat)alpha {
     UIView *bar = (UIView *)self;
-    if (bar != DSSystemStatusBar || DSStatusBarApplyBusy) {
+    if (bar != DSSystemStatusBar || DSStatusBarApplyBusy || !DSStageCardOnScreenFast()) {
         %orig(alpha);
         return;
     }
@@ -1494,10 +1544,23 @@ static BOOL DSViewIsInsideStage(UIView *view) {
     return NO;
 }
 
+// 4.5.657: every switcher card is an SBApplicationSceneView in SpringBoard's
+// switcher window. The first test is now "is this view in the stage window"
+// (one class check), before the cached manager question. The superview walk
+// only runs for a view that is not in any window yet.
+static BOOL DSSceneViewCouldBeStaged(UIView *view) {
+    if (!DSStageReady() || !DSStageHasSceneHostFast()) return NO;
+    static Class stageWindowClass = Nil;
+    if (!stageWindowClass) stageWindowClass = objc_getClass("DSStageWindow");
+    UIWindow *window = view.window;
+    if (window) return stageWindowClass != Nil && [window isKindOfClass:stageWindowClass];
+    return DSViewIsInsideStage(view);
+}
+
 static BOOL DSPhoneSceneViewIsHosted(UIView *view) {
-    if (!DSPhoneStagedCached()) return NO;
     if (![view isKindOfClass:UIView.class]) return NO;
-    if (view.window && !DSViewIsInsideStage(view)) return NO;
+    if (!DSSceneViewCouldBeStaged(view)) return NO;
+    if (!DSPhoneStagedCached()) return NO;
     const char *name = object_getClassName(view);
     if (name && strstr(name, "Presentation")) return NO;
     NSString *bundle = DSPhoneSceneBundle(view);
@@ -1857,7 +1920,15 @@ static void DSSchedulePhoneFitRead(int token) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(wait * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         DSPhoneFitReadScheduled = NO;
         if ([DSSceneHost systemTransitionBusy]) {
-            DSSchedulePhoneFitRead(token); // read once the transition is over
+            // 4.5.657: was a 0.4 s re-poll for as long as the switcher stayed
+            // open. Now one deferred read on the next stage use.
+            static BOOL deferred = NO;
+            if (deferred) return;
+            deferred = YES;
+            [DSSceneHost performWhenSystemTransitionOver:^{
+                deferred = NO;
+                DSSchedulePhoneFitRead(token);
+            }];
             return;
         }
         DSPhoneFitReadAt = CFAbsoluteTimeGetCurrent();

@@ -3,6 +3,7 @@
 #import "DSStageWindow.h"
 #import "DSStageContainerView.h"
 #import "DSAppPickerViewController.h"
+#import "DSSearchFieldView.h"
 #import "DSAppLibrary.h"
 #import "DSGestureController.h"
 #import "DSSceneHost.h"
@@ -500,6 +501,9 @@ static NSString *DSKeyboardTypeName(DSKeyboardType type) {
     // picker must not count as searching, or that card lifts before anyone types.
     NSInteger _searchSlot;
     NSInteger _pickerSearchEnsureGeneration;
+    CFAbsoluteTime _pickerSearchEnsureStartedAt;
+    CFAbsoluteTime _overlaySettlingSeenSince;
+    CFAbsoluteTime _overlaySettlingSeenLast;
     BOOL _ensuringPickerSearchKeyboard;
     // The hosted app's card while it is using the picker search keyboard.
     NSInteger _stagedKeyboardSlot;
@@ -1938,6 +1942,23 @@ static void DSMakeKeyBesidePlayingVideo(UIWindow *window) {
     if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     if (_floatSceneHost.isHosting && [_floatSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) return YES;
     return NO;
+}
+
+- (CGRect)stageCardScreenFrameForBundleIdentifier:(NSString *)bundleIdentifier cornerRadius:(CGFloat *)radius {
+    if (bundleIdentifier.length == 0 || !self.isStageVisible) return CGRectNull;
+    DSStageContainerView *card = nil;
+    if (_sceneHost.isHosting && !_primaryParked && [_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) {
+        card = _container;
+    } else if (_topSceneHost.isHosting && !_secondParked && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) {
+        card = _topContainer;
+    } else if (_floatSceneHost.isHosting && _floatActive && [_floatSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) {
+        card = _floatContainer;
+    }
+    if (!card || card.hidden || card.alpha < 0.05 || !card.window || card.window.hidden) return CGRectNull;
+    CGRect inWindow = [card convertRect:card.bounds toView:nil];
+    CGRect onScreen = [card.window convertRect:inWindow toWindow:nil];
+    if (radius) *radius = card.cornerRadius;
+    return onScreen;
 }
 
 // Beeper lays out its own keyboard and quick bar. Staging that keyboard, and
@@ -6692,9 +6713,20 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     }
     _searchSlot = slot;
     [self noteSearchKeyboardDebug:[self searchKeyboardDebugLine:@"search asked" attempt:0 picker:picker]];
-    [self takeKeyWindow];
-    if (_ensuringPickerSearchKeyboard) return;
+    // 4.5.650 SIGTRAP guard: no key-window change from inside a scene settings
+    // update or the home transition. The keyboard check below does it a
+    // moment later instead.
+    if ([DSSceneHost sceneSettingsUpdateDepth] == 0 && ![DSSceneHost homeGestureIsActive]) {
+        [self takeKeyWindow];
+    } else {
+        [self noteSearchKeyboardDebug:@"search key window deferred (scene update / home transition)"];
+    }
+    // A user tap newer than the running check restarts it (the old one stops
+    // on the generation change). Our own reassert / restart calls land here
+    // too; those must not restart it, or it never ends.
+    if (_ensuringPickerSearchKeyboard && DSSearchFieldLastUserTap() <= _pickerSearchEnsureStartedAt) return;
     _ensuringPickerSearchKeyboard = YES;
+    _pickerSearchEnsureStartedAt = CFAbsoluteTimeGetCurrent();
     NSInteger generation = ++_pickerSearchEnsureGeneration;
     [self ensurePickerSearchKeyboard:picker slot:slot generation:generation attempt:0];
 }
@@ -6711,7 +6743,8 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
                    dispatch_get_main_queue(), ^{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
-        if (generation != strongSelf->_pickerSearchEnsureGeneration || strongSelf->_searchSlot != slot) {
+        if (generation != strongSelf->_pickerSearchEnsureGeneration) return; // a newer check runs
+        if (strongSelf->_searchSlot != slot) {
             strongSelf->_ensuringPickerSearchKeyboard = NO;
             [strongSelf noteSearchKeyboardDebug:[NSString stringWithFormat:@"search ensure stopped gen=%ld slot=%ld nowSlot=%ld",
                                                  (long)generation, (long)slot, (long)strongSelf->_searchSlot]];
@@ -6723,10 +6756,22 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
             [strongSelf noteSearchKeyboardDebug:[strongSelf searchKeyboardDebugLine:@"search visible" attempt:attempt picker:picker]];
             return;
         }
-        if (attempt >= 5) {
+        if (attempt >= 7) {
             strongSelf->_ensuringPickerSearchKeyboard = NO;
             [strongSelf noteSearchKeyboardDebug:[strongSelf searchKeyboardDebugLine:@"search missing" attempt:attempt picker:picker]];
             return;
+        }
+        // 4.5.650: inside a scene update or the home transition (and its quiet
+        // window) a key-window change is the SIGTRAP and takeKeyWindow refuses
+        // anyway. Wait it out without using up an attempt (bounded).
+        if (([DSSceneHost sceneSettingsUpdateDepth] > 0 || [DSSceneHost homeGestureIsActive]) &&
+            CFAbsoluteTimeGetCurrent() - strongSelf->_pickerSearchEnsureStartedAt < 3.0) {
+            [strongSelf ensurePickerSearchKeyboard:picker slot:slot generation:generation attempt:attempt];
+            return;
+        }
+        if (!picker.view.window) {
+            strongSelf->_ensuringPickerSearchKeyboard = NO;
+            return; // picker closed
         }
         [strongSelf noteSearchKeyboardDebug:[strongSelf searchKeyboardDebugLine:@"search retry" attempt:attempt picker:picker]];
         [strongSelf takeKeyWindow];
@@ -6758,8 +6803,26 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     }
 }
 
+// 4.5.650: _overlaySettling is set by the present paths and cleared only by
+// the matching finish call, which returns early when a newer presentation
+// bumped the generation meanwhile. Then it stayed YES, the field waited
+// forever and no keyboard came up. The card has landed long before 0.6s of
+// continuous "settling", so clear it then.
 - (BOOL)appPickerShouldWaitBeforeSearchEditing:(DSAppPickerViewController *)picker {
-    return _overlaySettling;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (!_overlaySettling) {
+        _overlaySettlingSeenSince = 0;
+        return NO;
+    }
+    if (_overlaySettlingSeenSince == 0 || now - _overlaySettlingSeenLast > 0.4) _overlaySettlingSeenSince = now;
+    _overlaySettlingSeenLast = now;
+    if (now - _overlaySettlingSeenSince > 0.6) {
+        _overlaySettling = NO;
+        _overlaySettlingSeenSince = 0;
+        DSDiagnosticsRecord(@"SpringBoard: picker search: the present settle flag was stuck, cleared it so the keyboard can show");
+        return NO;
+    }
+    return YES;
 }
 
 #pragma mark - Launching onto the stage
@@ -10589,16 +10652,46 @@ static const NSInteger kDSHeldPictureTag = 9151;
     if (host.isHosting && ![self cardIsParked:card]) [host wakeIfBackgrounded];
 }
 
+static BOOL DSCardFrameRoughlyEqual(CGRect a, CGRect b) {
+    return fabs(CGRectGetMinX(a) - CGRectGetMinX(b)) < 0.75 && fabs(CGRectGetMinY(a) - CGRectGetMinY(b)) < 0.75 &&
+           fabs(CGRectGetWidth(a) - CGRectGetWidth(b)) < 0.75 && fabs(CGRectGetHeight(a) - CGRectGetHeight(b)) < 0.75;
+}
+
+// 4.5.650 (switcher lag): this ran on EVERY settings update of a hosted
+// scene. The app switcher updates scenes every frame of the swipe, so each
+// frame did a running assertion, a foreground override + settings push (a
+// scene write the app answers with a relayout) and a full placeCard
+// (layoutIfNeeded + geometry log). Now: re-assert at most once a second, or
+// right away when the parked set changed; never during the home / switcher
+// transition; placeCard only when the card is not already at its park frame.
 - (void)keepMinimizedCardsBackgrounded {
+    static CFAbsoluteTime lastAssert = 0;
+    static BOOL lastPrimary = NO;
+    static BOOL lastSecond = NO;
+    BOOL second = _secondParked && _topContainer != nil;
+    BOOL setChanged = lastPrimary != _primaryParked || lastSecond != second;
+    if (!_primaryParked && !second) {
+        lastPrimary = NO;
+        lastSecond = NO;
+        return;
+    }
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (!setChanged && now - lastAssert < 1.0) return;
+    if (!setChanged && [DSSceneHost systemTransitionBusy]) return;
+    lastAssert = now;
+    lastPrimary = _primaryParked;
+    lastSecond = second;
     if (_primaryParked) {
         [_sceneHost setStaysBackgrounded:YES];
         [_sceneHost setForeground:NO];
-        [self placeCard:_container atFrame:[self cornerParkFrameForCard:_container]];
+        CGRect park = [self cornerParkFrameForCard:_container];
+        if (setChanged || !DSCardFrameRoughlyEqual(_container.frame, park)) [self placeCard:_container atFrame:park];
     }
-    if (_secondParked && _topContainer) {
+    if (second) {
         [_topSceneHost setStaysBackgrounded:YES];
         [_topSceneHost setForeground:NO];
-        [self placeCard:_topContainer atFrame:[self cornerParkFrameForCard:_topContainer]];
+        CGRect park = [self cornerParkFrameForCard:_topContainer];
+        if (setChanged || !DSCardFrameRoughlyEqual(_topContainer.frame, park)) [self placeCard:_topContainer atFrame:park];
     }
 }
 

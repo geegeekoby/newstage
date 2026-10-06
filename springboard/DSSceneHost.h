@@ -136,6 +136,12 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // starting another transaction in that window is a SIGTRAP.
 + (void)setHomeGestureActive:(BOOL)active;
 + (BOOL)homeGestureIsActive;
+// 4.5.650: YES while the home gesture / its quiet window runs, or while the
+// system app switcher is on screen (checked at most every 100ms). Per-frame
+// hooks use this to skip their work during the switcher swipe. Also tells
+// the staged apps (com.recreated.dynamicstage.systemgesture) so they hold
+// their own relayout work until it ends.
++ (BOOL)systemTransitionBusy;
 // The corner pull runs inside SpringBoard's own gesture callback. A display
 // mode change or a new scene transaction from that callback is a SIGTRAP.
 + (void)beginSystemPullCallback;

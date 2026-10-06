@@ -11,6 +11,7 @@
 #import "DSKeyboardVisibility.h"
 #import "DSStageLayout.h"
 #import "DSStageContainerView.h"
+#import "DSInCallStage.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -282,11 +283,33 @@ static NSString *DSAnySceneIdentifier(id scene) {
                 BOOL foreground = [DSSceneHost readForegroundFlag:settings known:&known];
                 NSString *identCopy = [identifier copy];
                 BOOL covered = known && !foreground;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    DSTell(^(DSStageManager *manager) {
-                        [manager noteHostedSceneIdentifier:identCopy covered:covered];
+                // 4.5.650 (switcher lag): only a change of covered, or at
+                // most twice a second, and nothing while the home / switcher
+                // transition runs (that path returned early anyway).
+                static NSMutableDictionary<NSString *, NSNumber *> *lastCovered = nil;
+                static NSMutableDictionary<NSString *, NSNumber *> *lastSent = nil;
+                if (!lastCovered) {
+                    lastCovered = [NSMutableDictionary dictionary];
+                    lastSent = [NSMutableDictionary dictionary];
+                }
+                NSString *coverKey = identCopy ?: @"?";
+                NSNumber *previous = lastCovered[coverKey];
+                CFAbsoluteTime nowSent = CFAbsoluteTimeGetCurrent();
+                BOOL coverChanged = !previous || previous.boolValue != covered;
+                BOOL due = nowSent - [lastSent[coverKey] doubleValue] >= 0.5;
+                if (coverChanged || (due && ![DSSceneHost systemTransitionBusy])) {
+                    lastCovered[coverKey] = @(covered);
+                    lastSent[coverKey] = @(nowSent);
+                    if (lastCovered.count > 16) {
+                        [lastCovered removeAllObjects];
+                        [lastSent removeAllObjects];
+                    }
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        DSTell(^(DSStageManager *manager) {
+                            [manager noteHostedSceneIdentifier:identCopy covered:covered];
+                        });
                     });
-                });
+                }
             }
         } @catch (NSException *exception) {
         }
@@ -441,7 +464,13 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 - (void)sceneHandle:(id)handle didUpdateSettingsWithDiff:(id)diff previousSettings:(id)previousSettings {
         if ([DSSceneHost ownsAppViewController:self]) {
-        DSTrace(@"app-view settings update");
+        static CFAbsoluteTime DSLastAppViewTrace = 0;
+        CFAbsoluteTime traceNow = CFAbsoluteTimeGetCurrent();
+        BOOL traceThis = traceNow - DSLastAppViewTrace > 1.0;
+        if (traceThis) {
+            DSLastAppViewTrace = traceNow;
+            DSTrace(@"app-view settings update");
+        }
         // SIGTRAP, not an exception: the home transition updates this host and
         // the original method asserts. Holding the update is what keeps
         // SpringBoard alive. The scene itself still changes underneath.
@@ -456,11 +485,13 @@ static NSString *DSAnySceneIdentifier(id scene) {
         }
         // The app view is already Live. Letting it apply a foreground change
         // throws "out from underneath us" and the card goes black.
-        NSString *diffText = [diff description] ?: @"";
         NSInteger displayMode = -1;
         if ([self respondsToSelector:@selector(displayMode)]) {
             displayMode = ((NSInteger (*)(id, SEL))objc_msgSend)(self, @selector(displayMode));
         }
+        // 4.5.650: describing the diff (a large string) on every update was
+        // per-frame work during the switcher; only the Live mode needs it.
+        NSString *diffText = displayMode == 4 ? ([diff description] ?: @"") : @"";
         if (displayMode == 4 &&
             [diffText rangeOfString:@"foreground" options:NSCaseInsensitiveSearch].location != NSNotFound) {
             static CFAbsoluteTime DSLastLiveLog = 0;
@@ -477,7 +508,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
             DSDiagnosticsRecordFormat(@"SpringBoard: contained a scene update from the staged app (%@)",
                                       exception.reason ?: exception.name ?: @"?");
         }
-        DSTrace(@"app-view settings update done");
+        if (traceThis) DSTrace(@"app-view settings update done");
         return;
     }
     %orig;
@@ -1036,11 +1067,13 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSInCallWindowPassesTouch((UIView *)self, point)) return NO;
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return NO;
     return %orig;
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSInCallWindowPassesTouch((UIView *)self, point)) return nil;
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
     return %orig;
 }
@@ -1049,6 +1082,7 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
     (void)z;
     (void)scene;
     (void)serverWindow;
+    if (DSInCallWindowPassesTouch((UIView *)self, point)) return nil;
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
     return %orig;
 }
@@ -1060,6 +1094,7 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 %hook UIAutoRotatingWindow
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSInCallWindowPassesTouch((UIView *)self, point)) return nil;
     // This is the window the keys are in. Returning nil here dropped the tap
     // after the first letter, in the search field and in the message box.
     if (DSHitLandsOnVisibleKeys((UIView *)self, point)) return %orig;
@@ -1155,7 +1190,23 @@ static BOOL DSHostedAppOwnsKeyboard(void) {
 
 %end
 
+static BOOL DSBeeperHostedCached(void) {
+    static CFAbsoluteTime checkedAt = 0;
+    static BOOL hosted = NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - checkedAt > 0.25) {
+        checkedAt = now;
+        hosted = DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager isHostingBundleIdentifier:@"com.beeper.chat.ios"];
+        });
+    }
+    return hosted;
+}
+
 static void DSPinContextLayerHost(UIView *view) {
+    // 4.5.650: context hosts lay out every frame of the switcher swipe; the
+    // pin only matters for a staged Beeper keyboard.
+    if (!DSBeeperHostedCached() || [DSSceneHost systemTransitionBusy]) return;
     if (![view isKindOfClass:UIView.class] || !view.superview || !view.window) return;
     if (view.hidden || view.alpha < 0.01) return;
     static BOOL busy = NO;
@@ -1347,20 +1398,52 @@ static NSString *DSPhoneSceneBundle(id view) {
     return nil;
 }
 
+// 4.5.650 (switcher lag): every switcher card is an SBApplicationSceneView,
+// and setFrame / layoutSubviews run on each of them every frame of the
+// swipe. This check used to build the class name, look the bundle up and
+// lowercase it twice per call for every card - and the switcher's own Phone
+// card matched too, so its frame was clamped to its parent mid-animation.
+// Now: cached "is Phone staged at all" first, then only a scene view that is
+// inside the stage (its window is the stage window or an ancestor is a card).
+static BOOL DSPhoneStagedCached(void) {
+    static CFAbsoluteTime checkedAt = 0;
+    static BOOL staged = NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - checkedAt > 0.25) {
+        checkedAt = now;
+        staged = DSAsk(^BOOL(DSStageManager *manager) {
+            return [manager isHostingBundleIdentifier:@"com.apple.mobilephone"];
+        });
+    }
+    return staged;
+}
+
+static BOOL DSViewIsInsideStage(UIView *view) {
+    static Class cardClass = Nil;
+    static Class stageWindowClass = Nil;
+    if (!cardClass) cardClass = objc_getClass("DSStageContainerView");
+    if (!stageWindowClass) stageWindowClass = objc_getClass("DSStageWindow");
+    UIWindow *window = view.window;
+    if (window && stageWindowClass && [window isKindOfClass:stageWindowClass]) return YES;
+    NSInteger depth = 0;
+    for (UIView *cursor = view.superview; cursor && depth < 14; cursor = cursor.superview, depth++) {
+        if (cardClass && [cursor isKindOfClass:cardClass]) return YES;
+    }
+    return NO;
+}
+
 static BOOL DSPhoneSceneViewIsHosted(UIView *view) {
+    if (!DSPhoneStagedCached()) return NO;
     if (![view isKindOfClass:UIView.class]) return NO;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if ([name rangeOfString:@"Presentation"].location != NSNotFound) return NO;
-    if (![[DSPhoneSceneBundle(view) lowercaseString] isEqualToString:@"com.apple.mobilephone"]) return NO;
-    return DSAsk(^BOOL(DSStageManager *manager) {
-        return [manager isHostingBundleIdentifier:@"com.apple.mobilephone"];
-    });
+    if (view.window && !DSViewIsInsideStage(view)) return NO;
+    const char *name = object_getClassName(view);
+    if (name && strstr(name, "Presentation")) return NO;
+    NSString *bundle = DSPhoneSceneBundle(view);
+    return bundle && [bundle caseInsensitiveCompare:@"com.apple.mobilephone"] == NSOrderedSame;
 }
 
 static void DSClipPhoneSceneView(UIView *view) {
     if (!DSPhoneSceneViewIsHosted(view)) return;
-    view.clipsToBounds = YES;
-    view.layer.masksToBounds = YES;
     CGFloat radius = 44.0;
     Class cardClass = objc_getClass("DSStageContainerView");
     for (UIView *cursor = view.superview; cursor; cursor = cursor.superview) {
@@ -1369,9 +1452,13 @@ static void DSClipPhoneSceneView(UIView *view) {
             break;
         }
     }
-    if (radius > 1.0) {
-        view.layer.cornerRadius = radius;
-        if (@available(iOS 13.0, *)) view.layer.cornerCurve = kCACornerCurveContinuous;
+    // Write only what changed: these setters dirty the layer every frame.
+    CALayer *layer = view.layer;
+    if (!view.clipsToBounds) view.clipsToBounds = YES;
+    if (!layer.masksToBounds) layer.masksToBounds = YES;
+    if (radius > 1.0 && fabs(layer.cornerRadius - radius) > 0.01) {
+        layer.cornerRadius = radius;
+        if (@available(iOS 13.0, *)) layer.cornerCurve = kCACornerCurveContinuous;
     }
 }
 
@@ -1673,6 +1760,67 @@ static void DSOpenStage(CFNotificationCenterRef center, void *observer, CFString
     });
 }
 
+// 4.5.650: rate-limited reader for the app's phone-fit log (see the
+// phone.fit observer below).
+static NSString *DSLastLineOfFile(NSString *path) {
+    NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:path];
+    if (!handle) return nil;
+    NSString *line = nil;
+    @try {
+        unsigned long long size = [handle seekToEndOfFile];
+        unsigned long long start = size > 1536 ? size - 1536 : 0;
+        [handle seekToFileOffset:start];
+        NSData *data = [handle readDataToEndOfFile];
+        NSString *text = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        if (!text) text = [[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding];
+        NSArray<NSString *> *lines = [[text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]
+                                      componentsSeparatedByString:@"\n"];
+        line = lines.lastObject;
+    } @catch (NSException *exception) {
+        line = nil;
+    }
+    [handle closeFile];
+    return line;
+}
+
+static BOOL DSPhoneFitReadScheduled = NO;
+static CFAbsoluteTime DSPhoneFitReadAt = 0;
+
+static void DSSchedulePhoneFitRead(int token) {
+    if (DSPhoneFitReadScheduled) return;
+    DSPhoneFitReadScheduled = YES;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    double wait = 0.4 - (now - DSPhoneFitReadAt);
+    if (wait < 0.02) wait = 0.02;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(wait * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DSPhoneFitReadScheduled = NO;
+        if ([DSSceneHost systemTransitionBusy]) {
+            DSSchedulePhoneFitRead(token); // read once the transition is over
+            return;
+        }
+        DSPhoneFitReadAt = CFAbsoluteTimeGetCurrent();
+        uint64_t state = 0;
+        notify_get_state(token, &state);
+        uint32_t hash = (uint32_t)state;
+        CGFloat scale = (CGFloat)((state >> 32) & 0xff) / 100.0;
+        CGFloat content = (CGFloat)((state >> 40) & 0x3ff);
+        CGFloat limit = (CGFloat)((state >> 50) & 0x3ff);
+        DSTell(^(DSStageManager *manager) {
+            NSString *written = nil;
+            for (NSString *path in @[ @"/var/tmp/com.recreated.dynamicstage.phone-fit",
+                                      @"/var/jb/tmp/com.recreated.dynamicstage.phone-fit" ]) {
+                written = DSLastLineOfFile(path);
+                if (written.length) break;
+            }
+            NSString *line = written.length
+                ? written
+                : [NSString stringWithFormat:@"app: %@ keypad scale=%.2f content=%.0f limit=%.0f",
+                   [manager bundleForKeyboardHash:hash], scale, content, limit];
+            [manager noteStagedKeyResult:line];
+        });
+    });
+}
+
 static void DSRegisterDarwinObservers(void) {
     CFNotificationCenterRef center = CFNotificationCenterGetDarwinNotifyCenter();
     CFNotificationCenterAddObserver(center, NULL, DSPreferencesChanged,
@@ -1798,28 +1946,13 @@ static void DSRegisterDarwinObservers(void) {
         });
     });
 
+    // 4.5.650: the phone-fit file is a rolling log now. Show only its last
+    // line, read at most every 0.4s (one trailing read), never during the
+    // home / switcher transition. Reading it synchronously for every app
+    // line was main-thread file I/O while Phone relaid out.
     int phoneFitToken = NOTIFY_TOKEN_INVALID;
     notify_register_dispatch("com.recreated.dynamicstage.phone.fit", &phoneFitToken, dispatch_get_main_queue(), ^(int token) {
-        uint64_t state = 0;
-        notify_get_state(token, &state);
-        uint32_t hash = (uint32_t)state;
-        CGFloat scale = (CGFloat)((state >> 32) & 0xff) / 100.0;
-        CGFloat content = (CGFloat)((state >> 40) & 0x3ff);
-        CGFloat limit = (CGFloat)((state >> 50) & 0x3ff);
-        DSTell(^(DSStageManager *manager) {
-            NSString *bundle = [manager bundleForKeyboardHash:hash];
-            NSString *written = nil;
-            for (NSString *path in @[ @"/var/tmp/com.recreated.dynamicstage.phone-fit",
-                                      @"/var/jb/tmp/com.recreated.dynamicstage.phone-fit" ]) {
-                written = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
-                if (written.length) break;
-            }
-            NSString *line = written.length
-                ? [written stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]
-                : [NSString stringWithFormat:@"app: %@ keypad scale=%.2f content=%.0f limit=%.0f",
-                   bundle, scale, content, limit];
-            [manager noteStagedKeyResult:line];
-        });
+        DSSchedulePhoneFitRead(token);
     });
 }
 
@@ -1844,6 +1977,7 @@ static void DSInstallRemainingHooks(void) {
 
             DSRegisterDarwinObservers();
             %init(Stage);
+            DSInCallStageInstall();
             [[NSNotificationCenter defaultCenter] addObserverForName:@"DSStageStatusBarRefresh"
                                                                 object:nil
                                                                  queue:NSOperationQueue.mainQueue

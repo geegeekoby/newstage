@@ -8,6 +8,7 @@
 #import "DSStageContainerView.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
+#import <notify.h>
 
 // Local declaration only. SpringBoard already has the class; linking
 // AssertionServices is not required, and a normal message keeps ARC correct.
@@ -2750,9 +2751,83 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
 
 #pragma mark - Override application
 
+// ---- 4.5.650: system transition (home swipe / app switcher) -------------
+// The swipe up into the app switcher runs SpringBoard's own animation every
+// frame. Stage hooks that ran full work on each of those frames (scene view
+// clip/frame, context host pin, hosted scene bookkeeping, app relayout) were
+// the lag. They now ask this first.
+static BOOL DSSwitcherVisibleCached = NO;
+static CFAbsoluteTime DSSwitcherCheckedAt = 0;
+static BOOL DSSysGesturePosted = NO;
+static CFAbsoluteTime DSSysGesturePostedAt = 0;
+static NSInteger DSSysGesturePollGeneration = 0;
+
+static BOOL DSReadSwitcherVisible(void) {
+    static const char *names[] = { "SBMainSwitcherController", "SBMainSwitcherViewController" };
+    for (int i = 0; i < 2; i++) {
+        Class controllerClass = objc_getClass(names[i]);
+        if (!controllerClass || ![controllerClass respondsToSelector:@selector(sharedInstance)]) continue;
+        @try {
+            id controller = ((id (*)(id, SEL))objc_msgSend)(controllerClass, @selector(sharedInstance));
+            if (!controller || ![controller respondsToSelector:@selector(isMainSwitcherVisible)]) continue;
+            return ((BOOL (*)(id, SEL))objc_msgSend)(controller, @selector(isMainSwitcherVisible));
+        } @catch (NSException *exception) {
+            return NO;
+        }
+    }
+    return NO;
+}
+
+// Darwin state = absolute time the transition began (0 = over). Refreshed
+// every 2s while it lasts; apps treat a value older than 4s as over.
+static void DSPostSystemGestureState(void) {
+    BOOL active = DSHomeGestureActive || DSSwitcherVisibleCached;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (active == DSSysGesturePosted && (!active || now - DSSysGesturePostedAt < 2.0)) return;
+    DSSysGesturePosted = active;
+    DSSysGesturePostedAt = now;
+    static int token = NOTIFY_TOKEN_INVALID;
+    if (token == NOTIFY_TOKEN_INVALID) {
+        notify_register_check("com.recreated.dynamicstage.systemgesture", &token);
+    }
+    if (token != NOTIFY_TOKEN_INVALID) notify_set_state(token, active ? (uint64_t)now : 0);
+    notify_post("com.recreated.dynamicstage.systemgesture");
+}
+
+// Only runs while a transition is active; stops by itself (no timer).
+static void DSSystemTransitionPoll(NSInteger generation) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (generation != DSSysGesturePollGeneration) return;
+        DSSwitcherVisibleCached = DSReadSwitcherVisible();
+        DSSwitcherCheckedAt = CFAbsoluteTimeGetCurrent();
+        DSPostSystemGestureState();
+        if (DSSwitcherVisibleCached || DSHomeGestureActive) DSSystemTransitionPoll(generation);
+    });
+}
+
++ (BOOL)systemTransitionBusy {
+    if (DSAvoidSceneLifecycle()) return YES;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - DSSwitcherCheckedAt > 0.1) {
+        DSSwitcherCheckedAt = now;
+        BOOL visible = DSReadSwitcherVisible();
+        if (visible != DSSwitcherVisibleCached) {
+            DSSwitcherVisibleCached = visible;
+            DSPostSystemGestureState();
+            if (visible) DSSystemTransitionPoll(++DSSysGesturePollGeneration);
+        }
+    }
+    return DSSwitcherVisibleCached;
+}
+
 + (void)setHomeGestureActive:(BOOL)active {
+    BOOL changed = DSHomeGestureActive != active;
     DSHomeGestureActive = active;
     if (!active) DSHomeGestureQuietUntil = CFAbsoluteTimeGetCurrent() + 1.15;
+    if (changed) {
+        DSPostSystemGestureState();
+        if (active) DSSystemTransitionPoll(++DSSysGesturePollGeneration);
+    }
 }
 
 + (BOOL)homeGestureIsActive {

@@ -4,8 +4,19 @@
 #import "DSKeyboardVisibility.h"
 #import "DSStageWindow.h"
 
-@interface DSSearchFieldView () <UITextFieldDelegate>
+@interface DSSearchFieldView () <UITextFieldDelegate, UIGestureRecognizerDelegate>
 @end
+
+static CFAbsoluteTime DSSearchFieldLastTap = 0;
+
+CFAbsoluteTime DSSearchFieldLastUserTap(void) {
+    return DSSearchFieldLastTap;
+}
+
+// 4.5.650: the "wait while the card settles" retry used to run forever when
+// the settle flag stuck; it now gives up after this many tries (~0.7s) and
+// edits anyway.
+static const NSInteger kDSSearchSettleWaitLimit = 6;
 
 @implementation DSSearchFieldView {
     UIView *_plate;
@@ -13,6 +24,9 @@
     UIImageView *_magnifier;
     UIButton *_clearButton;
     NSInteger _keyWindowAttempts;
+    NSInteger _settleWaits;
+    NSInteger _retryGeneration;
+    CFAbsoluteTime _beganEditingAt;
     BOOL _suppressEndEditing;
 }
 
@@ -51,6 +65,17 @@
         }
         [_clearButton addTarget:self action:@selector(clearText) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_clearButton];
+
+        // 4.5.650: taps anywhere on the plate (magnifier, padding) focus the
+        // field, and a tap on a field that is already first responder but
+        // whose keyboard was taken away asks for the keyboard again. Neither
+        // case reached textFieldShouldBeginEditing before, so nothing showed.
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(plateTapped:)];
+        tap.cancelsTouchesInView = NO;
+        tap.delaysTouchesBegan = NO;
+        tap.delaysTouchesEnded = NO;
+        tap.delegate = self;
+        [self addGestureRecognizer:tap];
 
         self.darkMode = YES;
     }
@@ -111,6 +136,59 @@
     [self setNeedsLayout];
 }
 
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
+    shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)other {
+    return YES;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    // The clear button keeps its own tap.
+    return !(touch.view && (touch.view == _clearButton || [touch.view isDescendantOfView:_clearButton]));
+}
+
+- (void)plateTapped:(UITapGestureRecognizer *)tap {
+    if (tap.state != UIGestureRecognizerStateEnded || !self.window || self.hidden) return;
+    DSSearchFieldLastTap = CFAbsoluteTimeGetCurrent();
+    _keyWindowAttempts = 0;
+    _settleWaits = 0;
+    _retryGeneration++;
+    @try {
+        if (_field.isFirstResponder) {
+            // Just began editing on this same tap: the keyboard is on its way.
+            if (CFAbsoluteTimeGetCurrent() - _beganEditingAt < 0.35) return;
+            CGRect keys = DSVisibleKeyboardFrameOnScreen();
+            if (CGRectIsNull(keys) || CGRectGetHeight(keys) < kDSKeyboardPresentHeight) {
+                [self logEditingDecision:@"tap, editing but no keyboard"];
+                [self requestKeyWindowFromDelegate];
+                [_field reloadInputViews];
+            }
+            return;
+        }
+        // The text field's own tap may still be on its way; only start editing
+        // when it did not (tap on the magnifier / plate padding).
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) field = weakSelf;
+            if (!field || !field.window || field->_field.isFirstResponder) return;
+            [field logEditingDecision:@"tap on plate"];
+            [field->_field becomeFirstResponder];
+        });
+    } @catch (NSException *exception) {
+    }
+}
+
+- (void)retryBecomeFirstResponderAfter:(double)delay {
+    NSInteger generation = _retryGeneration;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) field = weakSelf;
+        if (!field || generation != field->_retryGeneration) return;
+        if (!field.window || field->_field.isFirstResponder) return;
+        [field->_field becomeFirstResponder];
+    });
+}
+
 - (void)requestKeyWindowFromDelegate {
     if ([self.delegate respondsToSelector:@selector(searchFieldNeedsKeyWindow:)]) {
         [self.delegate searchFieldNeedsKeyWindow:self];
@@ -133,18 +211,15 @@
 #pragma mark - UITextFieldDelegate
 
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
-    if ([self.delegate respondsToSelector:@selector(searchFieldShouldWaitBeforeEditing:)] &&
+    if (_settleWaits < kDSSearchSettleWaitLimit &&
+        [self.delegate respondsToSelector:@selector(searchFieldShouldWaitBeforeEditing:)] &&
         [self.delegate searchFieldShouldWaitBeforeEditing:self]) {
-        __weak __typeof(self) weakSelf = self;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.12 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            __strong __typeof(weakSelf) field = weakSelf;
-            if (!field) return;
-            [field->_field becomeFirstResponder];
-        });
+        _settleWaits++;
+        [self retryBecomeFirstResponderAfter:0.12];
         [self logEditingDecision:@"wait settling"];
         return NO;
     }
+    _settleWaits = 0;
 
     // One place decides the key window: the stage manager. A second makeKey here
     // used to run even when an app was hosted and the manager had refused.
@@ -155,22 +230,20 @@
     // it to resign just retries, and each retry flashes the video.
     if (DSVideoIsPlayingOnScreen()) {
         _keyWindowAttempts = 0;
+        _beganEditingAt = CFAbsoluteTimeGetCurrent();
         [self logEditingDecision:@"begin editing over video"];
         return YES;
     }
     if (self.window && !DSWindowIsApplicationKey(self.window) && _keyWindowAttempts < 8) {
         _keyWindowAttempts++;
-        __weak __typeof(self) weakSelf = self;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            __strong __typeof(weakSelf) field = weakSelf;
-            if (!field) return;
-            [field->_field becomeFirstResponder];
-        });
+        [self retryBecomeFirstResponderAfter:0.08];
         [self logEditingDecision:@"wait for key window"];
         return NO;
     }
+    // Out of key-window retries: edit anyway; the stage manager's keyboard
+    // check (makeKeyAndVisible + restart editing) brings the keys up.
     _keyWindowAttempts = 0;
+    _beganEditingAt = CFAbsoluteTimeGetCurrent();
     [self logEditingDecision:@"begin editing"];
     return YES;
 }

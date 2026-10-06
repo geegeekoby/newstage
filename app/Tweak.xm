@@ -2111,8 +2111,9 @@ static void DSKeepTranscriptBottom(UIView *view, NSInteger depth) {
 static BOOL DSPhoneLayoutFrozen = NO;
 static BOOL DSPhoneScaleScheduled = NO;
 static void DSPhoneApplyCardFrame(UIView *root);
-static void DSPhoneScaleRootIntoCard(UIView *root);
+static BOOL DSPhoneScaleRootIntoCard(UIView *root);
 static void DSPhoneScheduleScaleRootIntoCard(UIView *root);
+static void DSPhoneRequestPass(UIView *any, NSString *reason);
 
 %hook UIViewController
 
@@ -2191,7 +2192,7 @@ static void DSPhoneScheduleScaleRootIntoCard(UIView *root);
     // 5% width stretch from being cleared by that layout pass.
     // Schedule off this layout turn: mutating bounds+transform mid-layout is a
     // SIGTRAP (not catchable by @try).
-    if (DSIsMobilePhone()) DSPhoneScheduleScaleRootIntoCard(self.view);
+    if (DSIsMobilePhone()) DSPhoneRequestPass(self.view, @"vc-layout");
     refitDepth += 1;
     DSHideHomeChromeInView(window, 0);
     refitDepth -= 1;
@@ -3671,100 +3672,113 @@ static void DSAdjustPhoneLayoutForStage(UIView *root);
 // stay at the bottom of the card.
 static const CGFloat DSPhoneMinLayoutHeight = 560.0; // kept for logs / fallbacks
 
-static void DSPhoneScaleRootIntoCard(UIView *root) {
-    if (!DSIsMobilePhone() || !DSStaged() || !root || DSPhoneLayoutFrozen || DSClampingStage) return;
-    UIWindow *window = [root isKindOfClass:UIWindow.class] ? (UIWindow *)root : root.window;
-    if (![window isKindOfClass:UIWindow.class] || DSIsKeyboardWindow(window)) return;
-    if (window.rootViewController.view != root) return;
+// 4.5.650: returns YES when the window or root geometry had to be rewritten
+// (Phone then needs one layout at the new box before the pad is measured).
+// Idempotent: a pass that finds everything already in place writes nothing,
+// so repeated passes (layout, resume, tab switch) cannot fight Phone.
+static BOOL DSPhoneExpectedRootFill(CGFloat *outScale, CGFloat *outLayoutW, CGFloat *outLayoutH, CGFloat *outCardW, CGFloat *outCardH) {
     CGRect device = [DSStageContext sharedContext].deviceBounds;
     CGRect stage = DSStageBounds();
     CGFloat fullW = CGRectGetWidth(device);
     CGFloat fullH = CGRectGetHeight(device);
     CGFloat cardW = CGRectGetWidth(stage);
     CGFloat cardH = CGRectGetHeight(stage);
-    if (fullW < 80.0 || fullH < 80.0 || cardW < 80.0 || cardH < 80.0) return;
-    if (cardH > fullH - 40.0) return;
-    // Device-aspect layout + one uniform scale. Prefer width-fill; if that
-    // leaves a vertical gap, height-fill instead (still uniform X=Y).
-    CGFloat layoutW = fullW;
-    CGFloat layoutH = fullH;
-    CGFloat scale = cardW / layoutW;
-    if (layoutH * scale < cardH - 0.5) scale = cardH / layoutH;
-    if (scale < 0.2 || scale > 1.05) return;
+    if (fullW < 80.0 || fullH < 80.0 || cardW < 80.0 || cardH < 80.0) return NO;
+    if (cardH > fullH - 40.0) return NO; // stage not settled yet (still phone-sized)
+    CGFloat scale = cardW / fullW;
+    if (fullH * scale < cardH - 0.5) scale = cardH / fullH;
+    if (scale < 0.2 || scale > 1.05) return NO;
+    if (outScale) *outScale = scale;
+    if (outLayoutW) *outLayoutW = fullW;
+    if (outLayoutH) *outLayoutH = fullH;
+    if (outCardW) *outCardW = cardW;
+    if (outCardH) *outCardH = cardH;
+    return YES;
+}
+
+static BOOL DSPhoneScaleRootIntoCard(UIView *root) {
+    if (!DSIsMobilePhone() || !DSStaged() || !root || DSPhoneLayoutFrozen || DSClampingStage) return NO;
+    UIWindow *window = [root isKindOfClass:UIWindow.class] ? (UIWindow *)root : root.window;
+    if (![window isKindOfClass:UIWindow.class] || DSIsKeyboardWindow(window)) return NO;
+    if (window.rootViewController.view != root) return NO;
+    CGFloat scale = 1.0, layoutW = 0.0, layoutH = 0.0, cardW = 0.0, cardH = 0.0;
+    if (!DSPhoneExpectedRootFill(&scale, &layoutW, &layoutH, &cardW, &cardH)) return NO;
+    BOOL changed = NO;
     DSPhoneLayoutFrozen = YES;
     DSClampingStage = YES;
     @try {
         // Scene size must match the card or SB's host view stretches X/Y.
-        window.transform = CGAffineTransformIdentity;
         CGRect wantWindow = CGRectMake(0.0, 0.0, cardW, cardH);
+        if (!CGAffineTransformIsIdentity(window.transform)) {
+            window.transform = CGAffineTransformIdentity;
+            changed = YES;
+        }
         if (fabs(CGRectGetWidth(window.bounds) - cardW) > 0.5 ||
             fabs(CGRectGetHeight(window.bounds) - cardH) > 0.5 ||
             fabs(CGRectGetMinX(window.frame)) > 0.5 ||
             fabs(CGRectGetMinY(window.frame)) > 0.5) {
             window.frame = wantWindow;
+            changed = YES;
         }
-        window.clipsToBounds = YES;
-        window.layer.masksToBounds = YES;
+        if (!window.clipsToBounds) window.clipsToBounds = YES;
+        if (!window.layer.masksToBounds) window.layer.masksToBounds = YES;
 
-        // Identity only while rewriting bounds; fill scale goes back on below.
-        root.transform = CGAffineTransformIdentity;
-        if (fabs(CGRectGetWidth(root.bounds) - layoutW) > 0.5 ||
-            fabs(CGRectGetHeight(root.bounds) - layoutH) > 0.5 ||
-            fabs(CGRectGetMinX(root.bounds)) > 0.5 || fabs(CGRectGetMinY(root.bounds)) > 0.5) {
+        BOOL boundsWrong = fabs(CGRectGetWidth(root.bounds) - layoutW) > 0.5 ||
+                           fabs(CGRectGetHeight(root.bounds) - layoutH) > 0.5 ||
+                           fabs(CGRectGetMinX(root.bounds)) > 0.5 || fabs(CGRectGetMinY(root.bounds)) > 0.5;
+        if (boundsWrong) {
+            // Identity only while rewriting bounds; fill scale goes back on below.
+            root.transform = CGAffineTransformIdentity;
             root.bounds = CGRectMake(0.0, 0.0, layoutW, layoutH);
+            changed = YES;
         }
         CGFloat visualH = layoutH * scale;
-        CGFloat visualW = layoutW * scale;
         // Bottom-align whenever content is taller than the card: tabs + call +
         // keypad stay in view; status / nav / empty top chrome may clip.
-        // Never top-align an oversized root (that only shows rows 1–6).
-        CGFloat centerX = cardW / 2.0;
-        CGFloat centerY;
-        if (visualH >= cardH - 0.5) {
-            centerY = cardH - visualH / 2.0; // bottom edge of content == card bottom
-        } else {
-            centerY = cardH / 2.0;
+        CGFloat centerY = (visualH >= cardH - 0.5) ? (cardH - visualH / 2.0) : (cardH / 2.0);
+        CGPoint wantCenter = CGPointMake(cardW / 2.0, centerY);
+        CGAffineTransform wantT = CGAffineTransformMakeScale(scale, scale); // identical X/Y
+        if (fabs(root.center.x - wantCenter.x) > 0.25 || fabs(root.center.y - wantCenter.y) > 0.25) {
+            root.center = wantCenter;
+            changed = YES;
         }
-        // If width-fill made us wider than the card, keep horizontally centered.
-        (void)visualW;
-        root.center = CGPointMake(centerX, centerY);
-        root.transform = CGAffineTransformMakeScale(scale, scale); // identical X/Y
+        CGAffineTransform t = root.transform;
+        if (fabs(t.a - wantT.a) > 0.0005 || fabs(t.d - wantT.d) > 0.0005 ||
+            fabs(t.b) > 0.0005 || fabs(t.c) > 0.0005 || fabs(t.tx) > 0.25 || fabs(t.ty) > 0.25) {
+            root.transform = wantT;
+            changed = YES;
+        }
         // Clip at the window (card), not by wiping content above the keypad.
-        root.clipsToBounds = NO;
-        root.layer.masksToBounds = NO;
-        DSPhoneWriteFit([NSString stringWithFormat:@"app: phone fill scale=%.2f layout=%.0fx%.0f card=%.0fx%.0f full=%.0fx%.0f bottomAlign=%d",
-                         scale, layoutW, layoutH, cardW, cardH, fullW, fullH,
-                         (visualH >= cardH - 0.5) ? 1 : 0],
-                        scale, cardW, cardH);
+        if (root.clipsToBounds) root.clipsToBounds = NO;
+        if (root.layer.masksToBounds) root.layer.masksToBounds = NO;
+        if (changed) {
+            DSPhoneWriteFit([NSString stringWithFormat:@"app: phone fill650 scale=%.2f layout=%.0fx%.0f card=%.0fx%.0f bottomAlign=%d rewritten=1",
+                             scale, layoutW, layoutH, cardW, cardH, (visualH >= cardH - 0.5) ? 1 : 0],
+                            scale, cardW, cardH);
+        }
     } @catch (NSException *exception) {
     }
     DSClampingStage = NO;
     DSPhoneLayoutFrozen = NO;
+    return changed;
 }
 
-// Coalesce scale applies onto the next main turn so layoutSubviews / viewDidLayout
-// never mutate bounds+transform mid-cascade (SIGTRAP).
+// Every Phone relayout trigger funnels into DSPhoneRequestPass (4.5.650):
+// coalesced, debounced, deferred while SpringBoard's home / switcher gesture
+// runs, never run inside a layout callback. See DSPhoneRunPass.
 static void DSPhoneScheduleScaleRootIntoCard(UIView *root) {
-    if (!DSIsMobilePhone() || !DSStaged() || !root || DSPhoneLayoutFrozen || DSClampingStage) return;
-    if (DSPhoneScaleScheduled) return;
-    DSPhoneScaleScheduled = YES;
-    __weak UIView *weakRoot = root;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        DSPhoneScaleScheduled = NO;
-        UIView *strongRoot = weakRoot;
-        if (!strongRoot) return;
-        // 4.5.645: root fill keeps round keys + full pad on-card; then dial
-        // pad-only resize fills the band above the tab/quick bar (closes the
-        // floating-high gap). DSResizePhoneKeypad measures in root space and
-        // scales to FILL (not the old 0.82 shrink).
-        DSPhoneScaleRootIntoCard(strongRoot);
-        DSAdjustPhoneLayoutForStage(strongRoot);
-    });
+    DSPhoneRequestPass(root, @"schedule");
 }
 
 static void DSFitPhoneAfterLayout(UIView *view) {
-    if (!DSPhoneIsCardRoot(view)) return;
-    DSPhoneScheduleScaleRootIntoCard(view);
+    // 4.5.650: no DSPhoneLayoutFrozen check here. 4.5.649 dropped a root
+    // relayout that happened while our own pass held the freeze flag
+    // (DSPhoneIsCardRoot returned NO), and nothing re-ran the fit afterwards.
+    // The request is async, so it can never run inside our own pass.
+    if (!DSIsMobilePhone() || !view || !DSStaged()) return;
+    UIWindow *window = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+    if (!window || window.rootViewController.view != view || DSIsKeyboardWindow(window)) return;
+    DSPhoneRequestPass(view, @"root-layout");
 }
 
 static const void *DSPhoneScaledKey = &DSPhoneScaledKey;
@@ -4219,14 +4233,18 @@ static UIView *DSPhoneKeyAtPoint(UIView *root, CGPoint point, BOOL *strict) {
 static NSUInteger DSPhoneRoutedTaps = 0;
 
 // point is in root coordinates. Returns the key under the finger, else orig.
+static void DSPhoneNoteKeyTouched(UIView *key);
+static void DSPhoneNoteHitTable(UIView *root);
 static UIView *DSPhoneRouteLiftedHit(UIView *root, CGPoint point, UIEvent *event, UIView *orig) {
     if (!DSIsMobilePhone() || !DSStaged() || !root) return orig;
+    DSPhoneNoteHitTable(root);
     // A presented sheet / alert / other subtree above the card root keeps its hit.
     if (orig && orig != root && ![orig isDescendantOfView:root]) return orig;
     @try {
         BOOL strict = NO;
         UIView *key = DSPhoneKeyAtPoint(root, point, &strict);
         if (!key) return orig;
+        DSPhoneNoteKeyTouched(key);
         // Keys sit above the tab bar; only a slop-edge touch lets the tab bar win.
         if (!strict && orig && DSPhoneHitIsInTabBar(orig)) return orig;
         // The normal hit is already this exact key — keep it.
@@ -4244,12 +4262,32 @@ static UIView *DSPhoneRouteLiftedHit(UIView *root, CGPoint point, UIEvent *event
 // found (circleView, a rounded subview or a square image), else the largest
 // square that fits the control. Phone's controls are often taller than the
 // circle they draw.
-static CGSize DSPhoneKeyDrawnSize(UIView *key) {
+//
+// 4.5.650: the measurement is the main source of "sometimes different".
+// circleView / the rounded subview's cornerRadius are created or set in the
+// key's own layoutSubviews, so a pass that runs before the keys have laid
+// out (first open, coming back to the Keypad tab, resume) finds nothing and
+// falls back to the control box, which is taller than the circle: the pad
+// came out with different key sizes and row gaps from one open to the next.
+// Now a real measurement is remembered as a ratio of the control box and
+// reused whenever the art is not measurable yet (source "cached"); only a
+// pass with neither falls back, and that pass schedules a re-measure.
+static const int DSPhoneDrawnFallback = 0;
+static const int DSPhoneDrawnMeasured = 1;
+static const int DSPhoneDrawnCached = 2;
+static CGFloat DSPhoneDrawnRatioW = 0.0; // drawn width / control width
+static CGFloat DSPhoneDrawnRatioH = 0.0; // drawn height / control height
+
+static CGSize DSPhoneKeyDrawnSizeEx(UIView *key, int *source) {
+    if (source) *source = DSPhoneDrawnFallback;
     CGSize b = key.bounds.size;
     CGFloat side = MIN(b.width, b.height);
     CGSize fallback = CGSizeMake(side, side);
     if (side < 8.0) return b;
-    if (key.layer.cornerRadius >= side * 0.3) return b; // the control IS the shape
+    if (key.layer.cornerRadius >= side * 0.3) { // the control IS the shape
+        if (source) *source = DSPhoneDrawnMeasured;
+        return b;
+    }
     CGSize best = CGSizeZero;
     @try {
         if ([key respondsToSelector:NSSelectorFromString(@"circleView")]) {
@@ -4276,8 +4314,19 @@ static CGSize DSPhoneKeyDrawnSize(UIView *key) {
             [queue addObjectsFromArray:v.subviews];
         }
     }
-    if (best.width <= 0.0) return fallback;
-    return CGSizeMake(MIN(best.width, b.width), MIN(best.height, b.height));
+    if (best.width > 0.0) {
+        if (source) *source = DSPhoneDrawnMeasured;
+        return CGSizeMake(MIN(best.width, b.width), MIN(best.height, b.height));
+    }
+    if (DSPhoneDrawnRatioW > 0.05 && DSPhoneDrawnRatioH > 0.05) {
+        if (source) *source = DSPhoneDrawnCached;
+        return CGSizeMake(b.width * DSPhoneDrawnRatioW, b.height * DSPhoneDrawnRatioH);
+    }
+    return fallback;
+}
+
+static CGSize DSPhoneKeyDrawnSize(UIView *key) {
+    return DSPhoneKeyDrawnSizeEx(key, NULL);
 }
 
 static BOOL DSPhoneKeyNameHas(UIView *view, NSString *needle) {
@@ -4289,53 +4338,97 @@ static BOOL DSPhoneKeyNameHas(UIView *view, NSString *needle) {
     return NO;
 }
 
-// Staged Phone only. 4.5.649: compact dial pad (reference-shot spacing) +
-// every key tappable.
-//
-// - Digits (12 keys) on an explicit 3x4 grid from their natural column/row
-//   centers. Spacing is measured on the DRAWN key art (DSPhoneKeyDrawnSize),
-//   not the control box, so the row gap really is ~10% of the visible key.
-// - Vertical key scale k: 4 digit rows + call row packed tight (row gap 10%,
-//   call gap 16%) filling the band, capped at 1.15.
-// - Columns: pitch ~27% of the visible width (like the reference shot),
-//   key drawn ~80% of the pitch, width/height capped at 1.3 (slightly wide,
-//   round-ish); never narrower than round, never touching.
-// - Call under 0 (same shape as the digits), delete under # (unstretched).
-// - Leftover height: 35% above, 65% below — cluster hugs the typed number.
-// - Every moved key is registered for hit routing (DSPhoneRouteLiftedHit).
-// Falls back to proportional placement if 12 digits cannot be identified.
-static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
-    if (!keypad.superview || !root) return;
+static BOOL DSPhoneKeyIsCallOrDelete(UIView *key) {
+    return DSPhoneKeyNameHas(key, @"Delete") || DSPhoneKeyNameHas(key, @"Backspace") || DSPhoneKeyNameHas(key, @"Call");
+}
+
+// A hidden ancestor between the key and the card root means the key belongs
+// to a state / tab that is not on screen. Not under the root at all: same.
+static BOOL DSPhoneAncestorHidden(UIView *key, UIView *root) {
+    for (UIView *v = key.superview; v; v = v.superview) {
+        if (v == root) return NO;
+        if (v.hidden) return YES;
+    }
+    return YES;
+}
+
+// 4.5.650: digit identity is sticky. The 12 digits used to be "the 12
+// top-most remaining controls" on every pass, measured right after the lift
+// was undone. Two things made that flip between passes:
+//  - any other control of key-ish size above the pad (Add Number outside the
+//    LCD, a control of another tab under a hidden container) became "digit 1"
+//    and pushed the real keys one slot along -> grid sanity failed -> the
+//    fallback proportional layout (very different spacing), or keys in the
+//    wrong rows;
+//  - a key whose center Phone had moved without going through our setCenter
+//    hook could not be put back to its natural spot, so the sort mixed lifted
+//    and natural positions.
+// Now digits are only controls of the dominant key size, and once a good
+// 3x4 grid is found each key remembers its slot (row*3+col) and later passes
+// reuse it as long as all 12 are still there.
+static const void *DSPhoneDigitSlotKey = &DSPhoneDigitSlotKey;
+static const void *DSPhoneCallKeyFlag = &DSPhoneCallKeyFlag;
+static const void *DSPhonePadContainerKey = &DSPhonePadContainerKey;
+static NSString *DSPhoneLastSignature = nil;
+static NSUInteger DSPhonePassCount = 0;
+static __weak UIView *DSPhoneCallKeyView = nil;
+
+static CGFloat DSPhoneMedian(NSMutableArray<NSNumber *> *values) {
+    if (values.count == 0) return 0.0;
+    [values sortUsingSelector:@selector(compare:)];
+    return values[values.count / 2].doubleValue;
+}
+
+static void DSPhoneMarkPadContainer(UIView *view) {
+    if (view) objc_setAssociatedObject(view, DSPhonePadContainerKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+// Staged Phone only. 4.5.649 look (tight rows, call under 0, delete under #,
+// ~72% width, key aspect cap 1.3) with 4.5.650 consistency fixes:
+// stable drawn-size measurement, sticky digit slots, effective visibility,
+// hit table rebuilt from exactly the keys placed on this pass.
+// Returns the drawn-size source (fallback / measured / cached), -1 if no pass.
+static int DSResizePhoneKeypad(UIView *keypad, UIView *root, NSString *reason, NSUInteger triggers) {
+    if (!keypad.superview || !root) return -1;
     UIView *grid = DSFindButtonGrid(keypad);
     if (!grid) grid = keypad;
     UIView *dialer = DSFindClassView(root, @"PHHandsetDialerView");
     UIView *scope = dialer ?: keypad;
     UIView *lcd = DSPhoneFindLcdView(dialer ?: root);
+    DSPhoneMarkPadContainer(keypad);
+    DSPhoneMarkPadContainer(grid);
+    DSPhoneMarkPadContainer(dialer);
     // Undo last pass (grid + per-key lift, LCD shift) before measuring, so the
     // natural keys are measured and scaled exactly once.
     NSMutableArray<UIView *> *allKeys = [NSMutableArray array];
     DSPhoneCollectKeys(scope, allKeys, 0);
     for (UIView *key in allKeys) DSPhoneClearGridLift(key);
     DSPhoneClearGridLift(grid);
-    grid.transform = CGAffineTransformIdentity;
-    if (lcd) lcd.transform = CGAffineTransformIdentity;
-    // Keys: not hidden, not inside the LCD (Add Number etc). Transparent
-    // (fading-in) controls are still PLACED so the call button can never be
-    // left behind at a stale spot over the grid.
+    if (!CGAffineTransformIsIdentity(grid.transform)) grid.transform = CGAffineTransformIdentity;
+    if (lcd && !CGAffineTransformIsIdentity(lcd.transform)) lcd.transform = CGAffineTransformIdentity;
+    // Keys: under the root with no hidden ancestor, not inside the LCD. Call
+    // and delete are placed even while hidden/transparent so they appear in
+    // the right spot (and are routed) the moment Phone shows them.
     NSMutableArray<UIView *> *keyViews = [NSMutableArray array];
     for (UIView *key in allKeys) {
-        if (!key.superview || key.hidden) continue;
+        if (!key.superview) continue;
         if (lcd && [key isDescendantOfView:lcd]) continue;
+        if (DSPhoneAncestorHidden(key, root)) continue;
+        if (key.hidden && !DSPhoneKeyIsCallOrDelete(key)) continue;
         [keyViews addObject:key];
     }
     if (keyViews.count < 9) {
         [keyViews removeAllObjects];
         DSPhoneCollectKeys(grid, keyViews, 0);
     }
-    if (keyViews.count < 9) return;
+    if (keyViews.count < 9) {
+        DSPhoneWriteFit([NSString stringWithFormat:@"app: phone pad fit650 pass=%lu reason=%@ skip=too-few-keys keys=%lu",
+                         (unsigned long)DSPhonePassCount, reason ?: @"?", (unsigned long)keyViews.count], 0, 0, 0);
+        return -1;
+    }
     CGFloat stageW = CGRectGetWidth(root.bounds);
     CGFloat stageH = CGRectGetHeight(root.bounds);
-    if (stageW < 80.0 || stageH < 80.0) return;
+    if (stageW < 80.0 || stageH < 80.0) return -1;
 
     // What the card actually shows of the root, in root space.
     CGRect visible = root.bounds;
@@ -4351,7 +4444,7 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
 
     CGFloat limit = visBottom - DSPhoneDialBottomMargin;
     UIView *tab = DSPhoneFindTabBar(root, 0);
-    if (tab && tab != root && tab != keypad && ![keypad isDescendantOfView:tab]) {
+    if (tab && tab != root && tab != keypad && ![keypad isDescendantOfView:tab] && !tab.hidden) {
         CGRect tabInRoot = [tab convertRect:tab.bounds toView:root];
         if (CGRectGetHeight(tabInRoot) > 20.0 && CGRectGetMinY(tabInRoot) > visTop + 120.0 &&
             CGRectGetMinY(tabInRoot) < visBottom + 1.0) {
@@ -4383,19 +4476,113 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
         else if (DSPhoneKeyNameHas(key, @"Call")) [callIdx addObject:@(i)];
         else [rest addObject:@(i)];
     }
-    // Digits = the 12 top-most remaining keys (natural layout: 1–# above call).
-    [rest sortUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
-        CGFloat ya = CGRectGetMidY(nat[a.unsignedIntegerValue]);
-        CGFloat yb = CGRectGetMidY(nat[b.unsignedIntegerValue]);
-        if (fabs(ya - yb) > 0.5) return ya < yb ? NSOrderedAscending : NSOrderedDescending;
-        CGFloat xa = CGRectGetMidX(nat[a.unsignedIntegerValue]);
-        CGFloat xb = CGRectGetMidX(nat[b.unsignedIntegerValue]);
-        return xa < xb ? NSOrderedAscending : (xa > xb ? NSOrderedDescending : NSOrderedSame);
-    }];
-    BOOL gridOK = rest.count >= 12;
-    NSArray<NSNumber *> *digits = gridOK ? [rest subarrayWithRange:NSMakeRange(0, 12)] : @[];
+
+    // Sticky slots from an earlier good pass.
+    NSUInteger slotIdx[12];
+    for (NSInteger s = 0; s < 12; s++) slotIdx[s] = NSNotFound;
+    NSInteger stickyCount = 0;
+    BOOL stickyClean = YES;
+    for (NSNumber *ri in rest) {
+        NSNumber *slot = objc_getAssociatedObject(keyViews[ri.unsignedIntegerValue], DSPhoneDigitSlotKey);
+        if (!slot) continue;
+        NSInteger s = slot.integerValue;
+        if (s >= 0 && s < 12 && slotIdx[s] == NSNotFound) {
+            slotIdx[s] = ri.unsignedIntegerValue;
+            stickyCount++;
+        } else {
+            stickyClean = NO;
+        }
+    }
+    BOOL sticky = stickyClean && stickyCount == 12;
+
+    CGFloat colX[3] = {0, 0, 0};
+    CGFloat rowY[4] = {0, 0, 0, 0};
+    NSInteger digitCol[12] = {0};
+    NSInteger digitRow[12] = {0};
+    NSMutableArray<NSNumber *> *digits = [NSMutableArray array];
     NSMutableArray<NSNumber *> *extras = [NSMutableArray array];
-    if (gridOK) [extras addObjectsFromArray:[rest subarrayWithRange:NSMakeRange(12, rest.count - 12)]];
+    CGFloat keyW = 0.0, keyH = 0.0;
+    BOOL gridOK = NO;
+    if (sticky) {
+        for (NSInteger s = 0; s < 12; s++) [digits addObject:@(slotIdx[s])];
+        for (NSNumber *ri in rest) if (![digits containsObject:ri]) [extras addObject:ri];
+        CGFloat sumY[4] = {0, 0, 0, 0};
+        for (NSInteger s = 0; s < 12; s++) {
+            CGRect rr = nat[slotIdx[s]];
+            digitRow[s] = s / 3;
+            digitCol[s] = s % 3;
+            colX[s % 3] += CGRectGetMidX(rr) / 4.0;
+            sumY[s / 3] += CGRectGetMidY(rr) / 3.0;
+            keyW = MAX(keyW, CGRectGetWidth(rr));
+            keyH = MAX(keyH, CGRectGetHeight(rr));
+        }
+        for (NSInteger r = 0; r < 4; r++) rowY[r] = sumY[r];
+        gridOK = keyW >= 20.0 && keyH >= 20.0;
+    } else {
+        // Digits are the controls of the dominant key size.
+        NSMutableArray<NSNumber *> *ws = [NSMutableArray array];
+        NSMutableArray<NSNumber *> *hs = [NSMutableArray array];
+        for (NSNumber *ri in rest) {
+            [ws addObject:@(CGRectGetWidth(nat[ri.unsignedIntegerValue]))];
+            [hs addObject:@(CGRectGetHeight(nat[ri.unsignedIntegerValue]))];
+        }
+        CGFloat mw = DSPhoneMedian(ws), mh = DSPhoneMedian(hs);
+        NSMutableArray<NSNumber *> *cands = [NSMutableArray array];
+        for (NSNumber *ri in rest) {
+            CGRect r = nat[ri.unsignedIntegerValue];
+            if (mw > 1.0 && mh > 1.0 && fabs(CGRectGetWidth(r) - mw) <= mw * 0.22 && fabs(CGRectGetHeight(r) - mh) <= mh * 0.22) {
+                [cands addObject:ri];
+            }
+        }
+        if (cands.count < 12) cands = [rest mutableCopy];
+        [cands sortUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
+            CGFloat ya = CGRectGetMidY(nat[a.unsignedIntegerValue]);
+            CGFloat yb = CGRectGetMidY(nat[b.unsignedIntegerValue]);
+            if (fabs(ya - yb) > 0.5) return ya < yb ? NSOrderedAscending : NSOrderedDescending;
+            CGFloat xa = CGRectGetMidX(nat[a.unsignedIntegerValue]);
+            CGFloat xb = CGRectGetMidX(nat[b.unsignedIntegerValue]);
+            return xa < xb ? NSOrderedAscending : (xa > xb ? NSOrderedDescending : NSOrderedSame);
+        }];
+        gridOK = cands.count >= 12;
+        if (gridOK) {
+            [digits addObjectsFromArray:[cands subarrayWithRange:NSMakeRange(0, 12)]];
+            for (NSNumber *ri in rest) if (![digits containsObject:ri]) [extras addObject:ri];
+            for (NSInteger r = 0; r < 4 && gridOK; r++) {
+                NSArray<NSNumber *> *row = [[digits subarrayWithRange:NSMakeRange(r * 3, 3)] sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
+                    CGFloat xa = CGRectGetMidX(nat[a.unsignedIntegerValue]);
+                    CGFloat xb = CGRectGetMidX(nat[b.unsignedIntegerValue]);
+                    return xa < xb ? NSOrderedAscending : (xa > xb ? NSOrderedDescending : NSOrderedSame);
+                }];
+                CGFloat sumY = 0.0;
+                for (NSInteger c = 0; c < 3; c++) {
+                    NSUInteger idx = row[c].unsignedIntegerValue;
+                    CGRect rr = nat[idx];
+                    colX[c] += CGRectGetMidX(rr) / 4.0;
+                    sumY += CGRectGetMidY(rr);
+                    keyW = MAX(keyW, CGRectGetWidth(rr));
+                    keyH = MAX(keyH, CGRectGetHeight(rr));
+                    NSUInteger pos = [digits indexOfObject:row[c]];
+                    digitCol[pos] = c;
+                    digitRow[pos] = r;
+                }
+                rowY[r] = sumY / 3.0;
+            }
+            // Sanity: 3 distinct columns, 4 descending rows, real pitch.
+            if (!(colX[1] - colX[0] > keyW * 0.5 && colX[2] - colX[1] > keyW * 0.5)) gridOK = NO;
+            if (!(rowY[1] > rowY[0] && rowY[2] > rowY[1] && rowY[3] > rowY[2])) gridOK = NO;
+            if (keyW < 20.0 || keyH < 20.0) gridOK = NO;
+        } else {
+            [extras addObjectsFromArray:rest];
+        }
+        // Remember the slots of a good grid; forget stale ones otherwise.
+        for (NSNumber *ri in rest) objc_setAssociatedObject(keyViews[ri.unsignedIntegerValue], DSPhoneDigitSlotKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (gridOK) {
+            for (NSUInteger p = 0; p < 12; p++) {
+                objc_setAssociatedObject(keyViews[digits[p].unsignedIntegerValue], DSPhoneDigitSlotKey,
+                                         @(digitRow[p] * 3 + digitCol[p]), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            }
+        }
+    }
     // Unnamed extras: largest = call, the rest = delete side.
     if (gridOK && callIdx.count == 0 && extras.count) {
         NSUInteger best = 0;
@@ -4408,55 +4595,52 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
         [callIdx addObject:extras[best]];
         [extras removeObjectAtIndex:best];
     }
-    [deleteIdx addObjectsFromArray:extras];
-
-    // Rows of 3 (sorted by y), columns by x inside each row.
-    CGFloat colX[3] = {0, 0, 0};
-    CGFloat rowY[4] = {0, 0, 0, 0};
-    NSInteger digitCol[12] = {0};
-    NSInteger digitRow[12] = {0};
-    CGFloat keyW = 0.0, keyH = 0.0;
+    if (gridOK) [deleteIdx addObjectsFromArray:extras];
+    for (UIView *key in keyViews) objc_setAssociatedObject(key, DSPhoneCallKeyFlag, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    DSPhoneCallKeyView = nil;
     if (gridOK) {
-        for (NSInteger r = 0; r < 4 && gridOK; r++) {
-            NSArray<NSNumber *> *row = [[digits subarrayWithRange:NSMakeRange(r * 3, 3)] sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
-                CGFloat xa = CGRectGetMidX(nat[a.unsignedIntegerValue]);
-                CGFloat xb = CGRectGetMidX(nat[b.unsignedIntegerValue]);
-                return xa < xb ? NSOrderedAscending : (xa > xb ? NSOrderedDescending : NSOrderedSame);
-            }];
-            CGFloat sumY = 0.0;
-            for (NSInteger c = 0; c < 3; c++) {
-                NSUInteger idx = row[c].unsignedIntegerValue;
-                CGRect rr = nat[idx];
-                colX[c] += CGRectGetMidX(rr) / 4.0;
-                sumY += CGRectGetMidY(rr);
-                keyW = MAX(keyW, CGRectGetWidth(rr));
-                keyH = MAX(keyH, CGRectGetHeight(rr));
-                NSUInteger pos = [digits indexOfObject:row[c]];
-                digitCol[pos] = c;
-                digitRow[pos] = r;
-            }
-            rowY[r] = sumY / 3.0;
+        for (NSNumber *ci in callIdx) {
+            objc_setAssociatedObject(keyViews[ci.unsignedIntegerValue], DSPhoneCallKeyFlag, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            DSPhoneCallKeyView = keyViews[ci.unsignedIntegerValue];
         }
-        // Sanity: 3 distinct columns, 4 descending rows, real pitch.
-        if (!(colX[1] - colX[0] > keyW * 0.5 && colX[2] - colX[1] > keyW * 0.5)) gridOK = NO;
-        if (!(rowY[1] > rowY[0] && rowY[2] > rowY[1] && rowY[3] > rowY[2])) gridOK = NO;
-        if (keyW < 20.0 || keyH < 20.0) gridOK = NO;
     }
 
     NSHashTable *hitKeys = [NSHashTable weakObjectsHashTable];
     CGFloat k = 1.0, sx = 1.0, sy = 1.0, padTop = topBound, pitchY = 0.0, gapRatio = 0.0, colPitchLog = 0.0;
     CGFloat kxLog = 0.0, drawnWLog = 0.0, drawnHLog = 0.0;
     NSInteger placed = 0;
+    int drawnSource = DSPhoneDrawnFallback;
     if (gridOK) {
-        // 4.5.649: pack on the DRAWN key (circle art), not the control box.
+        // Pack on the DRAWN key (circle art), not the control box.
         CGFloat drawnW = 0.0, drawnH = 0.0;
+        CGFloat measuredW = 0.0, measuredH = 0.0, otherW = 0.0, otherH = 0.0;
+        int bestSource = DSPhoneDrawnFallback;
         for (NSUInteger p = 0; p < 12; p++) {
             UIView *key = keyViews[digits[p].unsignedIntegerValue];
-            CGSize d = DSPhoneKeyDrawnSize(key);
-            drawnW = MAX(drawnW, d.width);
-            drawnH = MAX(drawnH, d.height);
+            int src = DSPhoneDrawnFallback;
+            CGSize d = DSPhoneKeyDrawnSizeEx(key, &src);
+            if (src == DSPhoneDrawnMeasured) {
+                measuredW = MAX(measuredW, d.width);
+                measuredH = MAX(measuredH, d.height);
+                bestSource = DSPhoneDrawnMeasured;
+            } else {
+                otherW = MAX(otherW, d.width);
+                otherH = MAX(otherH, d.height);
+                if (src == DSPhoneDrawnCached && bestSource == DSPhoneDrawnFallback) bestSource = DSPhoneDrawnCached;
+            }
         }
-        if (drawnW < 16.0 || drawnH < 16.0) { drawnW = MIN(keyW, keyH); drawnH = drawnW; }
+        if (bestSource == DSPhoneDrawnMeasured) {
+            drawnW = measuredW; drawnH = measuredH;
+            // Remember as a ratio of the control box for later passes.
+            if (keyW > 1.0 && keyH > 1.0) {
+                DSPhoneDrawnRatioW = MIN(1.0, drawnW / keyW);
+                DSPhoneDrawnRatioH = MIN(1.0, drawnH / keyH);
+            }
+        } else {
+            drawnW = otherW; drawnH = otherH;
+        }
+        drawnSource = bestSource;
+        if (drawnW < 16.0 || drawnH < 16.0) { drawnW = MIN(keyW, keyH); drawnH = drawnW; drawnSource = DSPhoneDrawnFallback; }
         drawnWLog = drawnW;
         drawnHLog = drawnH;
         CGFloat callDrawnH = drawnH;
@@ -4465,38 +4649,32 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
             if (d.height > 8.0) callDrawnH = MAX(callDrawnH, d.height);
         }
         if (callDrawnH > drawnH * 1.25) callDrawnH = drawnH * 1.25;
-        // Control box vs drawn art (centered): extra box height above/below.
         CGFloat natColPitch = (colX[2] - colX[0]) / 2.0;
         CGFloat natRowPitch = (rowY[3] - rowY[0]) / 3.0;
         if (natRowPitch < 1.0) natRowPitch = keyH;
+        if (natColPitch < 1.0) natColPitch = keyW * 1.2;
         gapRatio = DSPhoneRowGap;
 
         // Width: spread available for the columns.
         CGFloat srcW = (colX[2] - colX[0]) + keyW;
-        sx = availW / srcW;
+        sx = availW / MAX(1.0, srcW);
         if (sx < 0.45) sx = 0.45;
         if (sx > 1.75) sx = 1.75;
 
-        // Vertical key scale ky (= k): 4 tight digit rows + call row fill the
-        // band, never larger than DSPhoneKeyMaxScale.
-        //   row pitch = ky*drawnH*(1+gap); call center sits
-        //   ky*(drawnH/2 + callGap*drawnH + callH/2) under the *0# center.
+        // Vertical key scale k: 4 tight digit rows + call row fill the band.
         CGFloat unitH = 3.0 * drawnH * (1.0 + gapRatio) + drawnH + drawnH * DSPhoneCallGap + callDrawnH;
         k = availH / unitH;
         if (k > DSPhoneKeyMaxScale) k = DSPhoneKeyMaxScale;
         if (k < 0.32) k = 0.32;
 
-        // Columns like the reference shot: pitch ~27% of the visible width
-        // (never wider than the natural spread), drawn key ~80% of the pitch,
-        // width/height at most 1.3 (slightly wide, round-ish).
+        // Columns like the reference shot: pitch ~27% of the visible width,
+        // drawn key ~80% of the pitch, width/height at most 1.3.
         CGFloat colPitch = MIN(natColPitch * sx, availW * DSPhoneColPitchFrac);
         CGFloat kx = (colPitch * DSPhoneKeyWidthFrac) / drawnW;
         CGFloat kxMax = k * DSPhoneKeyMaxAspect * (drawnH / drawnW);
-        if (kx > kxMax) kx = kxMax;          // drawn aspect ≤ 1.3
+        if (kx > kxMax) kx = kxMax;
         CGFloat kxMin = k * (drawnH / drawnW);
-        if (kx < kxMin) kx = kxMin;          // never narrower than round
-        // Keep a visible gap between neighbours, and the whole cluster inside
-        // the visible width. If round keys are too wide, shrink both scales.
+        if (kx < kxMin) kx = kxMin;
         if (colPitch < kx * drawnW + 6.0) colPitch = kx * drawnW + 6.0;
         CGFloat clusterW = 2.0 * colPitch + kx * drawnW;
         if (clusterW > availW && clusterW > 1.0) {
@@ -4513,8 +4691,6 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
         CGFloat callPitch = k * (drawnH * 0.5 + drawnH * DSPhoneCallGap + callDrawnH * 0.5);
         CGFloat envH = 3.0 * pitchY + k * drawnH * 0.5 + callPitch + k * callDrawnH * 0.5;
         CGFloat slack = MAX(0.0, availH - envH);
-        // Leftover height: a little above, the rest below (cluster hugs the
-        // typed number instead of floating mid-card).
         padTop = topBound + slack * 0.35;
         CGFloat row0 = padTop + k * drawnH * 0.5;
         CGFloat midX = CGRectGetMidX(visible);
@@ -4530,14 +4706,12 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
             [targets addObject:[NSValue valueWithCGPoint:CGPointMake(outX[digitCol[p]], outY[digitRow[p]])]];
             [scales addObject:[NSValue valueWithCGSize:CGSizeMake(kx, k)]];
         }
-        // Call under 0 (center column), same shape as the digits.
-        for (NSNumber *ci in callIdx) {
+        for (NSNumber *ci in callIdx) { // call under 0
             [views addObject:keyViews[ci.unsignedIntegerValue]];
             [targets addObject:[NSValue valueWithCGPoint:CGPointMake(outX[1], callY)]];
             [scales addObject:[NSValue valueWithCGSize:CGSizeMake(kx, k)]];
         }
-        // Delete under # (right column); icon kept unstretched.
-        for (NSNumber *di in deleteIdx) {
+        for (NSNumber *di in deleteIdx) { // delete under #, unstretched
             [views addObject:keyViews[di.unsignedIntegerValue]];
             [targets addObject:[NSValue valueWithCGPoint:CGPointMake(outX[2], callY)]];
             [scales addObject:[NSValue valueWithCGSize:CGSizeMake(k, k)]];
@@ -4546,7 +4720,7 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
             UIView *key = views[i];
             if (!key.superview) continue;
             for (UIView *ancestor = key.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
-                ancestor.clipsToBounds = NO;
+                if (ancestor.clipsToBounds) ancestor.clipsToBounds = NO;
             }
             CGPoint want = [root convertPoint:targets[i].CGPointValue toView:key.superview];
             CGPoint natural = key.center;
@@ -4564,11 +4738,11 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
         for (NSUInteger i = 0; i < n; i++) source = i == 0 ? nat[i] : CGRectUnion(source, nat[i]);
         CGFloat sourceW = CGRectGetWidth(source);
         CGFloat sourceH = CGRectGetHeight(source);
-        if (sourceW < 40.0 || sourceH < 40.0) { free(nat); return; }
+        if (sourceW < 40.0 || sourceH < 40.0) { free(nat); return -1; }
         sx = MIN(1.75, MAX(0.45, availW / sourceW));
         sy = MIN(1.75, MAX(0.35, availH / sourceH));
         k = MAX(0.32, MIN(sx, sy));
-        sy = k; // packed rows: vertical spread = key scale
+        sy = k;
         CGFloat targetX = CGRectGetMidX(visible) - sourceW * sx / 2.0;
         CGFloat envTop = CGFLOAT_MAX, envBot = -CGFLOAT_MAX;
         for (NSUInteger i = 0; i < n; i++) {
@@ -4583,7 +4757,7 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
             UIView *key = keyViews[i];
             if (!key.superview) continue;
             for (UIView *ancestor = key.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
-                ancestor.clipsToBounds = NO;
+                if (ancestor.clipsToBounds) ancestor.clipsToBounds = NO;
             }
             CGPoint wantRoot = CGPointMake(targetX + (CGRectGetMidX(nat[i]) - CGRectGetMinX(source)) * sx,
                                            (CGRectGetMidY(nat[i]) - CGRectGetMinY(source)) * sy + dy);
@@ -4598,77 +4772,344 @@ static void DSResizePhoneKeypad(UIView *keypad, UIView *root) {
         }
     }
     free(nat);
-    // Fresh table every pass: only keys at their current lifted spots route.
+    // Fresh table every pass: exactly the keys placed now (hit list can never
+    // lag behind the drawn pad).
     objc_setAssociatedObject(root, DSPhoneHitKeysKey, hitKeys, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     // Typed number: right above 1-2-3 (moves with the cluster).
     if (lcd && lcd.superview) {
+        DSPhoneMarkPadContainer(lcd);
         CGRect natL = [lcd convertRect:lcd.bounds toView:root];
         CGFloat stripBottom = MAX(stripTop + 8.0, padTop - 2.0);
         CGFloat stripTopUse = MAX(stripTop, stripBottom - numberStrip * 1.3);
         CGFloat stripH = stripBottom - stripTopUse;
         CGFloat lcdH = MAX(1.0, CGRectGetHeight(natL));
-        // Shrink a tall LCD a little (uniform, never below 0.75) so the number
-        // sits in the strip instead of over the top row.
         CGFloat ls = MIN(1.0, MAX(0.75, (stripH * 1.4) / lcdH));
         CGFloat wantMidY = stripTopUse + stripH / 2.0;
         CGFloat ty = wantMidY - CGRectGetMidY(natL);
         for (UIView *ancestor = lcd.superview; ancestor && ancestor != root; ancestor = ancestor.superview) {
-            ancestor.clipsToBounds = NO;
+            if (ancestor.clipsToBounds) ancestor.clipsToBounds = NO;
         }
         CGAffineTransform t = CGAffineTransformMakeTranslation(0.0, ty);
         t = CGAffineTransformScale(t, ls, ls);
         lcd.transform = t;
         objc_setAssociatedObject(lcd, DSPhoneLcdPlacedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        DSPhoneMarkGridPieces(lcd, 0); // header passes leave it alone
+        DSPhoneMarkGridPieces(lcd, 0);
     } else {
         DSPhoneLiftNumberDisplay(root);
     }
-    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone pad fit649 grid=%d k=%.2f kx=%.2f drawn=%.0fx%.0f box=%.0fx%.0f sx=%.2f sy=%.2f gap=%.2f pitchY=%.0f colPitch=%.0f keys=%ld placed=%ld hit=%lu routed=%lu vis=%.0f-%.0f band=%.0f-%.0f padTop=%.0f rootScale=%.2f lcd=%s",
-                     gridOK ? 1 : 0, k, kxLog, drawnWLog, drawnHLog, keyW, keyH, sx, sy, gapRatio, pitchY, colPitchLog, (long)n, (long)placed, (unsigned long)hitKeys.count, (unsigned long)DSPhoneRoutedTaps,
-                     visTop, visBottom, topBound, limit, padTop, rootScale,
+    static const char *sourceNames[] = { "fallback", "measured", "cached" };
+    const char *srcName = (drawnSource >= 0 && drawnSource <= 2) ? sourceNames[drawnSource] : "?";
+    NSString *signature = [NSString stringWithFormat:@"%d|%d|%.1f|%.1f|%.1f|%.1f|%.2f|%.2f|%.1f|%ld",
+                           gridOK ? 1 : 0, drawnSource, visTop, visBottom, topBound, limit, k, kxLog, colPitchLog, (long)placed];
+    BOOL same = DSPhoneLastSignature && [DSPhoneLastSignature isEqualToString:signature];
+    DSPhoneLastSignature = signature;
+    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone pad fit650 pass=%lu reason=%@ trig=%lu same=%d grid=%d sticky=%d drawn=%s %.0fx%.0f box=%.0fx%.0f k=%.2f kx=%.2f pitchY=%.0f colPitch=%.0f keys=%ld placed=%ld call=%lu del=%lu hit=%lu routed=%lu vis=%.0f-%.0f band=%.0f-%.0f rootScale=%.2f lcd=%s",
+                     (unsigned long)DSPhonePassCount, reason ?: @"?", (unsigned long)triggers, same ? 1 : 0,
+                     gridOK ? 1 : 0, sticky ? 1 : 0, srcName, drawnWLog, drawnHLog, keyW, keyH, k, kxLog, pitchY, colPitchLog,
+                     (long)n, (long)placed, (unsigned long)callIdx.count, (unsigned long)deleteIdx.count,
+                     (unsigned long)hitKeys.count, (unsigned long)DSPhoneRoutedTaps,
+                     visTop, visBottom, topBound, limit, rootScale,
                      lcd ? (object_getClassName(lcd) ?: "?") : "none"],
                     k, padTop, stageH);
+    (void)sx; (void)sy;
+    return gridOK ? drawnSource : DSPhoneDrawnFallback;
 }
 
-static void DSAdjustPhoneLayoutForStage(UIView *root) {
-    if (!DSIsMobilePhone() || !DSStaged() || !root || !root.superview || DSPhoneLayoutFrozen || DSClampingStage) return;
-    // Runs after DSPhoneScaleRootIntoCard. Root.bounds stays the full-device
-    // layout box; do not call DSPhoneApplyCardFrame here (would undo fill).
-    if (CGRectGetWidth(root.bounds) < 80.0 || CGRectGetHeight(root.bounds) < 80.0) return;
+// ---- 4.5.650 pass scheduler ------------------------------------------------
+// Root causes of the 4.5.649 inconsistency on this side:
+//  1. Triggers were dropped. The root relayout hook bailed while our own pass
+//     held DSPhoneLayoutFrozen, and only the card root's layoutSubviews /
+//     viewDidLayoutSubviews ever started a pass. Phone relayouts that do not
+//     touch the root (typing the first digit shows delete / Add Number,
+//     returning to the Keypad tab, the dialer re-added to the window, resume
+//     from minimize) left the pad and the hit list as they were.
+//  2. The keypad resize ran one turn after a pass that always called
+//     setNeedsLayout on every root subview, so Phone's own layout and our
+//     placement raced in either order, and every pass caused another layout.
+//  3. A pass could run before the stage card size was final (scale/visible
+//     rect computed for a phone-sized root) and nothing re-ran it.
+// Now: one coalesced request path, debounced (>=80ms apart), never inside a
+// layout callback, deferred while SpringBoard's home/switcher gesture runs,
+// setNeedsLayout only when the root geometry really changed, a re-check when
+// the card is not settled, and short settle passes after open/resume/tab.
+static BOOL DSPhoneScaleScheduled2 = NO;
+static CFAbsoluteTime DSPhoneLastPassAt = 0;
+static NSString *DSPhonePendingReason = nil;
+static NSUInteger DSPhonePendingTriggers = 0;
+static BOOL DSPhonePassDeferredForGesture = NO;
+static __weak UIView *DSPhonePassRoot = nil;
+static __weak UIView *DSPhoneKeypadCache = nil;
+static NSInteger DSPhoneSettleGeneration = 0;
+static NSInteger DSPhoneUnsettledRetries = 0;
+static NSInteger DSPhoneDrawnRetries = 0;
+static int DSPhoneSysGestureToken = NOTIFY_TOKEN_INVALID;
+static const CFTimeInterval DSPhonePassMinInterval = 0.08;
+static void DSPhoneRunPass(void);
+static void DSPhoneEnsureObservers(void);
+
+// SpringBoard posts com.recreated.dynamicstage.systemgesture with the
+// absolute time the home / switcher gesture began, 0 when it ended. A stale
+// value (SpringBoard died mid-gesture) stops counting after 4s.
+static BOOL DSPhoneSystemGestureActive(void) {
+    if (DSPhoneSysGestureToken == NOTIFY_TOKEN_INVALID) return NO;
+    uint64_t state = 0;
+    if (notify_get_state(DSPhoneSysGestureToken, &state) != NOTIFY_STATUS_OK || state == 0) return NO;
+    CFAbsoluteTime began = (CFAbsoluteTime)state;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    return now - began >= -1.0 && now - began < 4.0;
+}
+
+static UIView *DSPhoneResolveRoot(UIView *any) {
+    if (!any) return DSPhonePassRoot;
+    UIWindow *window = [any isKindOfClass:UIWindow.class] ? (UIWindow *)any : any.window;
+    if (!window || DSIsKeyboardWindow(window)) return DSPhonePassRoot;
+    UIView *root = window.rootViewController.view;
+    return root ?: DSPhonePassRoot;
+}
+
+static void DSPhoneRequestPass(UIView *any, NSString *reason) {
+    if (!DSIsMobilePhone() || !DSStaged()) return;
+    DSPhoneEnsureObservers();
+    UIView *root = DSPhoneResolveRoot(any);
+    if (root) DSPhonePassRoot = root;
+    DSPhonePendingTriggers++;
+    if (reason.length) {
+        if (!DSPhonePendingReason) DSPhonePendingReason = reason;
+        else if ([DSPhonePendingReason rangeOfString:reason].location == NSNotFound && DSPhonePendingReason.length < 72) {
+            DSPhonePendingReason = [DSPhonePendingReason stringByAppendingFormat:@"+%@", reason];
+        }
+    }
+    if (DSPhoneScaleScheduled2) return;
+    if (DSPhoneSystemGestureActive()) {
+        DSPhonePassDeferredForGesture = YES; // one pass when the gesture ends
+        return;
+    }
+    DSPhoneScaleScheduled2 = YES;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    // Phone's own relayouts (pad-layout) are capped at ~4 passes a second so
+    // a relayout that our placement itself causes can never become a loop.
+    double minInterval = [reason isEqualToString:@"pad-layout"] ? 0.25 : DSPhonePassMinInterval;
+    double wait = minInterval - (now - DSPhoneLastPassAt);
+    dispatch_block_t run = ^{
+        DSPhoneScaleScheduled2 = NO;
+        @try {
+            DSPhoneRunPass();
+        } @catch (NSException *exception) {
+        }
+    };
+    if (wait > 0.004) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(wait * NSEC_PER_SEC)), dispatch_get_main_queue(), run);
+    } else {
+        dispatch_async(dispatch_get_main_queue(), run);
+    }
+}
+
+static void DSPhoneRequestPassAfter(NSString *reason, double delay) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DSPhoneRequestPass(nil, reason);
+    });
+}
+
+static UIView *DSPhoneKeypadForRoot(UIView *root) {
+    UIView *cached = DSPhoneKeypadCache;
+    if (cached && cached.superview && cached.window && cached.window == root.window && [cached isDescendantOfView:root]) return cached;
+    UIView *found = DSFindPhoneKeypadView(root);
+    if (found && found != root) DSPhoneKeypadCache = found;
+    return found;
+}
+
+static void DSPhoneRunPass(void) {
+    UIView *root = DSPhonePassRoot;
+    NSString *reason = DSPhonePendingReason ?: @"?";
+    NSUInteger triggers = DSPhonePendingTriggers;
+    DSPhonePendingReason = nil;
+    DSPhonePendingTriggers = 0;
+    if (!DSIsMobilePhone() || !DSStaged()) return;
+    if (!root || !root.superview || !root.window) return;
+    if (DSPhoneLayoutFrozen || DSClampingStage) { // cannot happen on a fresh turn; never drop it
+        DSPhoneRequestPassAfter(@"retry-frozen", 0.05);
+        return;
+    }
+    if (DSPhoneSystemGestureActive()) {
+        DSPhonePassDeferredForGesture = YES;
+        return;
+    }
+    DSPhoneLastPassAt = CFAbsoluteTimeGetCurrent();
+    DSPhonePassCount++;
+    BOOL changed = DSPhoneScaleRootIntoCard(root);
+    CGFloat expected = 0.0;
+    BOOL settled = DSPhoneExpectedRootFill(&expected, NULL, NULL, NULL, NULL);
+    CGFloat actual = sqrt(root.transform.a * root.transform.a + root.transform.c * root.transform.c);
+    if (!settled || fabs(actual - expected) > 0.01) {
+        // Card size not final yet (or the fill could not be applied): measuring
+        // now is what produced a differently sized pad on some opens.
+        if (DSPhoneUnsettledRetries < 12) {
+            DSPhoneUnsettledRetries++;
+            DSPhoneRequestPassAfter(@"retry-unsettled", 0.15);
+        }
+        DSPhoneWriteFit([NSString stringWithFormat:@"app: phone pad fit650 pass=%lu reason=%@ skip=card-not-settled expected=%.2f actual=%.2f retry=%ld",
+                         (unsigned long)DSPhonePassCount, reason, expected, actual, (long)DSPhoneUnsettledRetries], 0, 0, 0);
+        return;
+    }
+    DSPhoneUnsettledRetries = 0;
+    UIView *keypad = nil;
     DSPhoneLayoutFrozen = YES;
     DSClampingStage = YES;
-    UIView *keypad = nil;
     @try {
-        // setNeedsLayout only. Forcing an immediate layout pass here runs while
-        // conversation/layout is still on the stack and is a SIGTRAP (not catchable by @try).
-        for (UIView *subview in root.subviews) {
-            [subview setNeedsLayout];
+        if (changed) {
+            // setNeedsLayout only, and only when the box changed. Forcing a
+            // layout here is the SIGTRAP; doing it every pass was a loop.
+            for (UIView *subview in root.subviews) [subview setNeedsLayout];
         }
         DSPhonePullClippedTop(root);
-        keypad = DSFindPhoneKeypadView(root);
+        keypad = DSPhoneKeypadForRoot(root);
     } @catch (NSException *exception) {
         keypad = nil;
     }
     DSClampingStage = NO;
     DSPhoneLayoutFrozen = NO;
-    if (!keypad || keypad == root) return;
-    // Defer keypad resize off this layout/scene callback turn.
-    __weak UIView *weakKeypad = keypad;
-    __weak UIView *weakRoot = root;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIView *strongKeypad = weakKeypad;
-        UIView *strongRoot = weakRoot;
-        if (!strongKeypad || !strongRoot || !strongKeypad.superview || !strongRoot.superview) return;
-        if (!DSIsMobilePhone() || !DSStaged() || DSPhoneLayoutFrozen || DSClampingStage) return;
+    if (!keypad || keypad == root) return; // other tab: nothing to place
+    void (^resize)(void) = ^{
+        if (!keypad.superview || !root.superview || !DSIsMobilePhone() || !DSStaged()) return;
+        if (DSPhoneLayoutFrozen || DSClampingStage) return;
+        int source = -1;
         DSPhoneLayoutFrozen = YES;
         DSClampingStage = YES;
         @try {
-            DSResizePhoneKeypad(strongKeypad, strongRoot);
+            source = DSResizePhoneKeypad(keypad, root, reason, triggers);
         } @catch (NSException *exception) {
+            source = -1;
         }
         DSClampingStage = NO;
         DSPhoneLayoutFrozen = NO;
+        BOOL isSettle = [reason rangeOfString:@"settle"].location != NSNotFound;
+        if (source == DSPhoneDrawnFallback && DSPhoneDrawnRetries < 4) {
+            // Key art not laid out yet: measure again shortly.
+            DSPhoneDrawnRetries++;
+            DSPhoneRequestPassAfter(@"settle-drawn", 0.25);
+        } else if (source == DSPhoneDrawnMeasured) {
+            DSPhoneDrawnRetries = 0;
+        }
+        BOOL wantsSettle = DSPhonePassCount <= 2 ||
+            [reason rangeOfString:@"active"].location != NSNotFound ||
+            [reason rangeOfString:@"foreground"].location != NSNotFound ||
+            [reason rangeOfString:@"dialer"].location != NSNotFound ||
+            [reason rangeOfString:@"sysgesture"].location != NSNotFound ||
+            [reason rangeOfString:@"stage"].location != NSNotFound;
+        if (wantsSettle && !isSettle) {
+            NSInteger generation = ++DSPhoneSettleGeneration;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                if (generation != DSPhoneSettleGeneration) return;
+                DSPhoneRequestPass(nil, @"settle");
+            });
+        }
+    };
+    if (changed) {
+        // Let Phone lay out at the new box first (one turn), then place.
+        dispatch_async(dispatch_get_main_queue(), resize);
+    } else {
+        resize();
+    }
+}
+
+// Kept for the old call sites: same pass, explicit reason.
+static void DSAdjustPhoneLayoutForStage(UIView *root) {
+    DSPhoneRequestPass(root, @"adjust");
+}
+
+// ---- 4.5.650 in-call routing: tell SpringBoard a call started HERE ---------
+// SpringBoard only fits the call screen into the stage when this signal came
+// from the staged Phone app in the last few seconds. Sources: 1 = the staged
+// call key was tapped, 2 = TelephonyUtilities reported a new outgoing call
+// while the staged Phone was the last thing touched (<6s), which also covers
+// Recents / Favorites / Contacts rows inside the staged Phone.
+static CFAbsoluteTime DSPhoneLastStagedTouch = 0;
+
+static void DSPhonePostOutgoing(NSUInteger source, int status) {
+    if (!DSIsMobilePhone() || !DSStaged()) return;
+    static CFAbsoluteTime lastPost = 0;
+    static NSUInteger lastSource = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (source == lastSource && now - lastPost < 0.8) return;
+    lastPost = now;
+    lastSource = source;
+    static int token = NOTIFY_TOKEN_INVALID;
+    if (token == NOTIFY_TOKEN_INVALID) notify_register_check("com.recreated.dynamicstage.phone.outgoing", &token);
+    uint64_t state = (((uint64_t)now) << 4) | (uint64_t)(source & 0xf);
+    if (token != NOTIFY_TOKEN_INVALID) notify_set_state(token, state);
+    notify_post("com.recreated.dynamicstage.phone.outgoing");
+    DSPhoneWriteFit([NSString stringWithFormat:@"app: incall650 armed SpringBoard source=%@ status=%d touchAgo=%.1fs",
+                     source == 1 ? @"call-key" : @"outgoing-call", status, now - DSPhoneLastStagedTouch], 0, 0, 0);
+}
+
+static void DSPhoneNoteCallStatus(id call) {
+    if (!call || !DSIsMobilePhone() || !DSStaged()) return;
+    SEL outgoingSel = NSSelectorFromString(@"isOutgoing");
+    if (![call respondsToSelector:outgoingSel]) return;
+    BOOL outgoing = ((BOOL (*)(id, SEL))objc_msgSend)(call, outgoingSel);
+    int status = -1;
+    SEL statusSel = NSSelectorFromString(@"status");
+    if ([call respondsToSelector:statusSel]) status = ((int (*)(id, SEL))objc_msgSend)(call, statusSel);
+    if (!outgoing) return; // incoming calls are never routed into the stage
+    if (status == 5 || status == 6 || status == 0) return; // disconnecting / disconnected / idle
+    NSString *identifier = nil;
+    for (NSString *name in @[ @"uniqueProxyIdentifier", @"callUUID" ]) {
+        SEL sel = NSSelectorFromString(name);
+        if (![call respondsToSelector:sel]) continue;
+        id value = ((id (*)(id, SEL))objc_msgSend)(call, sel);
+        if ([value isKindOfClass:NSString.class] && [(NSString *)value length]) { identifier = value; break; }
+    }
+    if (!identifier) identifier = [NSString stringWithFormat:@"%p", call];
+    static NSMutableArray<NSString *> *seen = nil;
+    if (!seen) seen = [NSMutableArray array];
+    if ([seen containsObject:identifier]) return;
+    [seen addObject:identifier];
+    if (seen.count > 24) [seen removeObjectAtIndex:0];
+    CFAbsoluteTime ago = CFAbsoluteTimeGetCurrent() - DSPhoneLastStagedTouch;
+    if (DSPhoneLastStagedTouch <= 0 || ago > 6.0) {
+        DSPhoneWriteFit([NSString stringWithFormat:@"app: incall650 not armed: outgoing call status=%d but the staged Phone was last touched %.1fs ago (call started elsewhere)",
+                         status, DSPhoneLastStagedTouch > 0 ? ago : -1.0], 0, 0, 0);
+        return;
+    }
+    DSPhonePostOutgoing(2, status);
+}
+
+static void DSPhoneEnsureObservers(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        notify_register_dispatch("com.recreated.dynamicstage.systemgesture", &DSPhoneSysGestureToken,
+                                 dispatch_get_main_queue(), ^(int token) {
+            (void)token;
+            if (DSPhoneSystemGestureActive()) return;
+            if (DSPhonePassDeferredForGesture) {
+                DSPhonePassDeferredForGesture = NO;
+                DSPhoneRequestPass(nil, @"sysgesture-end");
+            }
+        });
+        NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
+        NSOperationQueue *main = NSOperationQueue.mainQueue;
+        NSDictionary<NSString *, NSString *> *resume = @{
+            UIApplicationDidBecomeActiveNotification : @"active",
+            UIApplicationWillEnterForegroundNotification : @"foreground",
+            @"UISceneDidActivateNotification" : @"scene-active",
+            UIKeyboardDidHideNotification : @"keyboard-hide",
+        };
+        [resume enumerateKeysAndObjectsUsingBlock:^(NSString *name, NSString *why, BOOL *stop) {
+            [center addObserverForName:name object:nil queue:main usingBlock:^(NSNotification *note) {
+                (void)note;
+                DSPhoneRequestPass(nil, why);
+            }];
+        }];
+        for (NSString *name in @[ @"TUCallCenterCallStatusChangedNotification",
+                                  @"TUCallCenterVideoCallStatusChangedNotification" ]) {
+            [center addObserverForName:name object:nil queue:main usingBlock:^(NSNotification *note) {
+                @try {
+                    DSPhoneNoteCallStatus(note.object);
+                } @catch (NSException *exception) {
+                }
+            }];
+        }
     });
 }
 
@@ -4696,16 +5137,52 @@ static UIView *DSPhoneFindTabBar(UIView *view, NSInteger depth) {
     return nil;
 }
 
+// 4.5.650: /var/tmp/com.recreated.dynamicstage.phone-fit is a rolling log
+// (append, trimmed at 96KB) so passes can be compared: pass number, reason,
+// measured / cached / fallback drawn size, hit count, in-call routing.
+// SpringBoard shows only the last line. Rate limited: identical lines are
+// dropped and at most ~6 lines a second are written (no logging storm while
+// Phone relays out during an animation).
+static void DSPhoneAppendLog(const char *path, const char *text) {
+    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd < 0) return;
+    struct stat info;
+    if (fstat(fd, &info) == 0 && info.st_size > 96 * 1024) {
+        ftruncate(fd, 0);
+    }
+    ssize_t wrote = write(fd, text, strlen(text));
+    (void)wrote;
+    close(fd);
+}
+
 static void DSPhoneWriteFit(NSString *line, CGFloat scale, CGFloat box, CGFloat band) {
     if (line.length == 0) return;
     static NSString *last = nil;
     if ([last isEqualToString:line]) return;
+    static CFAbsoluteTime windowStart = 0;
+    static NSInteger windowCount = 0;
+    static NSInteger dropped = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - windowStart > 1.0) {
+        windowStart = now;
+        windowCount = 0;
+    }
+    BOOL important = [line rangeOfString:@"incall650"].location != NSNotFound;
+    if (!important && windowCount >= 6) {
+        dropped++;
+        return;
+    }
+    windowCount++;
     last = line;
+    NSString *stamped = dropped > 0
+        ? [NSString stringWithFormat:@"%.3f (+%ld dropped) %@", fmod(now, 100000.0), (long)dropped, line]
+        : [NSString stringWithFormat:@"%.3f %@", fmod(now, 100000.0), line];
+    dropped = 0;
     DSTrace(line);
-    const char *text = [[line stringByAppendingString:@"\n"] UTF8String];
+    const char *text = [[stamped stringByAppendingString:@"\n"] UTF8String];
     if (text) {
-        DSWriteFile("/var/tmp/com.recreated.dynamicstage.phone-fit", text);
-        DSWriteFile("/var/jb/tmp/com.recreated.dynamicstage.phone-fit", text);
+        DSPhoneAppendLog("/var/tmp/com.recreated.dynamicstage.phone-fit", text);
+        DSPhoneAppendLog("/var/jb/tmp/com.recreated.dynamicstage.phone-fit", text);
     }
     uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
     NSUInteger scaleBits = (NSUInteger)lround(scale * 100.0);
@@ -4723,6 +5200,24 @@ static void DSPhoneWriteFit(NSString *line, CGFloat scale, CGFloat box, CGFloat 
     }
     if (token != NOTIFY_TOKEN_INVALID) notify_set_state(token, state);
     notify_post("com.recreated.dynamicstage.phone.fit");
+}
+
+// Hit routing bookkeeping (4.5.650).
+static void DSPhoneNoteKeyTouched(UIView *key) {
+    if (!key || !objc_getAssociatedObject(key, DSPhoneCallKeyFlag)) return;
+    DSPhonePostOutgoing(1, -1);
+}
+
+// An empty / dead hit table means the pad was rebuilt since the last pass:
+// re-run the fit so taps route again.
+static void DSPhoneNoteHitTable(UIView *root) {
+    NSHashTable *keys = objc_getAssociatedObject(root, DSPhoneHitKeysKey);
+    if (keys && keys.allObjects.count > 0) return;
+    static CFAbsoluteTime last = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - last < 0.5) return;
+    last = now;
+    DSPhoneRequestPass(root, @"hit-stale");
 }
 
 // The digits and Add Number are short labels. A tall spacer under them is the
@@ -4898,6 +5393,11 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
     DSPhoneClearPieceTransforms(view);
     %orig;
     DSFitPhoneAfterLayout(view);
+    // 4.5.650: Phone relayouts that never touch the card root (number typed,
+    // delete / Add Number shown, dialer re-laid out) re-run the fit too.
+    if (DSIsMobilePhone() && objc_getAssociatedObject(view, DSPhonePadContainerKey) && DSStaged()) {
+        DSPhoneRequestPass(view, @"pad-layout");
+    }
     if (DSIsMobilePhone() && !DSPhoneLayoutFrozen && objc_getAssociatedObject(view, DSPhoneScaleKey)) {
         DSPhoneReapply(view);
     }
@@ -5066,6 +5566,13 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
+    // 4.5.650: back on the Keypad tab / dialer re-added -> re-fit + settle.
+    if (DSIsMobilePhone() && ((UIView *)self).window && DSStaged()) {
+        const char *name = object_getClassName(self);
+        if (name && (strstr(name, "DialerView") || strstr(name, "NumberPad"))) {
+            DSPhoneRequestPass((UIView *)self, @"dialer-window");
+        }
+    }
 }
 
 - (void)didMoveToSuperview {
@@ -5196,6 +5703,7 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
     // 4.5.648: staged Phone — same routing at the window, in case the card
     // root's class overrides hitTest without calling super.
     if (DSIsMobilePhone() && DSStaged()) {
+        DSPhoneLastStagedTouch = CFAbsoluteTimeGetCurrent();
         UIView *phoneRoot = ((UIWindow *)self).rootViewController.view;
         if (phoneRoot && phoneRoot.superview && objc_getAssociatedObject(phoneRoot, DSPhoneHitKeysKey)) {
             UIView *phoneHit = %orig;

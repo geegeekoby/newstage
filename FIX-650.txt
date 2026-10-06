@@ -1,0 +1,181 @@
+DynamicStage 4.5.650 - fix notes
+================================
+Package: com.recreated.dynamicstage_4.5.650_iphoneos-arm64.deb (rootless, arm64 + new-ABI arm64e)
+Changed: app/Tweak.xm, springboard/Tweak.xm, springboard/DSInCallStage.h/.m (new),
+         springboard/DSSceneHost.h/.m, springboard/DSStageManager.h/.m,
+         springboard/DSSearchFieldView.h/.m, shared/DSConstants.h, control, changelog.md
+
+1) Staged Phone dial pad sometimes inconsistent (layout and/or taps)
+--------------------------------------------------------------------
+Root causes
+ a. The drawn key size depended on timing. The circle view and its corner radius
+    are set lazily in each key's own layoutSubviews. A pass that ran before the
+    keys laid out fell back to the taller control box, so some opens got
+    different key sizes and row gaps.
+ b. Triggers were dropped. The root-layout hook bailed while our own pass held
+    the freeze flag, and only the root and view controller layout ever started
+    a pass. Phone relayouts that don't touch the root never re-fit the pad or
+    refreshed the hit list: typing the first digit (delete / Add Number appear),
+    going back to the Keypad tab, the dialer being re-added, and resume.
+ c. Racing passes. Every pass called setNeedsLayout on all root subviews and
+    then resized a turn later, so Phone's own layout and our placement ran in
+    either order (and each pass caused another layout).
+ d. A pass could run before the stage card size was final, and nothing re-ran it.
+ e. "12 top-most keys" as digits could include an extra control or mix lifted
+    and natural positions, which gave grid=0 fallback or wrong rows.
+ f. A hidden call or delete key was not placed or routed until a later pass.
+Fix (app/Tweak.xm)
+ - One coalesced request path, DSPhoneRequestPass(view, reason). It is
+   debounced (80 ms; 250 ms for Phone's own pad relayouts, so it can never
+   loop), never runs inside a layout callback, and is deferred while
+   SpringBoard's home or switcher gesture is active.
+ - Triggers: root layout (also while frozen), VC layout, pad-container layout,
+   the dialer moving to a window, did-become-active / will-enter-foreground /
+   scene activate / keyboard hide, the end of the system gesture, and a stale
+   hit table.
+ - DSPhoneScaleRootIntoCard is idempotent: it writes only when the values
+   differ and returns "changed". setNeedsLayout happens only when the
+   geometry changed.
+ - Card-settled check: if the root fill doesn't match the card yet, it retries
+   (up to 12 x 0.15 s).
+ - Key shape: measured, else the cached drawn ratio, else fallback (logged).
+   The fallback re-measures up to 4 x 0.25 s.
+ - The digit set is filtered by the dominant (median) key size. Sticky digit
+   slots keep each key's row and column across passes.
+ - Call and delete are always placed (even while hidden). The hit table is
+   rebuilt from exactly the placed keys on every pass.
+ - Same 4.5.649 look: tight rows, call under 0, delete under #, width ~72%,
+   key aspect cap 1.3.
+ - Log: /var/tmp/com.recreated.dynamicstage.phone-fit (also /var/jb/tmp) is
+   now a rolling append log (trimmed at 96 KB, timestamped, identical lines
+   dropped, at most ~6 lines/s). Each "fit650" line has: pass number, reason
+   (and trigger count), same=1 when the result was identical to the last
+   pass, grid, sticky, drawn=measured|cached|fallback with size, box, k/kx,
+   pitches, keys/placed, call/del, hit (keys in the hit table), routed (taps
+   routed), and rootScale. Skipped passes log skip=card-not-settled.
+   SpringBoard shows only the last line.
+
+2) In-call UI inside the stage card (call started from the staged Phone only)
+---------------------------------------------------------------------------
+How it works
+ - App side (staged Phone only): tapping the staged call key, or
+   TelephonyUtilities reporting a NEW OUTGOING call within 6 s of a touch on
+   the staged Phone (this covers Recents / Favorites / Contacts rows), posts
+   com.recreated.dynamicstage.phone.outgoing. The state is time<<4 | source
+   (1 = call key, 2 = outgoing call). Incoming calls are ignored. The post is
+   rate limited.
+ - SpringBoard (DSInCallStage.m): the signal is accepted only if it's fresh
+   (<5 s) and Phone is in a visible, unparked stage card. It arms for 12 s
+   (call key) or 20 s (outgoing call) and sweeps at 0.12-19 s
+   (generation-guarded, dispatch_after only, no timers). Each sweep looks
+   through visible windows (skipping the stage, keyboard and text-effects
+   windows; depth 16, 800 views) for a scene view whose scene is
+   InCallService.
+ - If that view is full-screen, its topmost screen-sized ancestor is scaled
+   with a transform to fit the Phone card's screen rect (centred), with the
+   card's corner radius. The window is raised to level 999 (above the stage
+   at 998, below the keyboard host at 1000). The card itself is never
+   resized.
+ - Touches outside the card go through that window (UIWindow /
+   UIAutoRotatingWindow hit-test hooks), so the stage and the Home Screen
+   keep working.
+ - While contained, a 0.5 s watch follows card moves and restores all saved
+   values (transform, radius, masks, window level, background) when the call
+   UI goes away, the card is minimized or closed, or the home gesture starts.
+ - SIGTRAP guards: no layoutIfNeeded, no scene writes at all (view and window
+   properties only), retry when a scene settings update is on the stack,
+   nil checks, @try around everything.
+Limits
+ - Incoming calls and calls started outside the stage are never touched.
+ - A banner-style call UI (not full screen) is left alone. If the call UI is
+   in the main app layout (window level < 10) on some builds, it isn't
+   contained; that is logged ("cannot contain it").
+ - Once the call UI is closed, reopening it later from the status bar pill
+   shows it full screen (it is only contained right after it was started from
+   the stage).
+ - The card frame is followed every 0.5 s, so dragging the card during a call
+   lags slightly.
+ - Logged as "incall650 ..." in the diagnostics and the phone-fit log.
+
+3) Lag when swiping up from the home bar into the app switcher
+--------------------------------------------------------------
+Root causes
+ a. The FBScene updateSettings hook dispatched noteHostedSceneIdentifier on
+    EVERY settings update of a hosted scene, and the switcher updates scenes
+    every frame. That always ran keepMinimizedCardsBackgrounded: a running
+    assertion, setForeground:NO (override + settings push, i.e. a scene write
+    the app answers with a relayout) and a full placeCard (layoutIfNeeded +
+    geometry log) per frame.
+ b. The SBApplicationSceneView setFrame / layoutSubviews hooks run on every
+    switcher card every frame. Each call built the class name, looked up the
+    bundle and lowercased it twice, and the switcher's own Phone card matched
+    as "staged". Its frame was clamped to its parent and its layer re-written
+    mid-animation.
+ c. The _UIContextLayerHostView hooks converted rects and asked the stage
+    manager on every layout, even with no Beeper staged.
+ d. The SBAppViewController hook built [diff description] (a big string) and
+    traced on every update.
+ e. Every app phone-fit line made SpringBoard read the whole file on the main
+    thread. Combined with (a), each per-frame relayout of the staged app wrote
+    the file and posted a notify.
+Fix
+ - New +[DSSceneHost systemTransitionBusy]: home gesture / quiet window, or
+   switcher visible (checked at most every 100 ms). It also publishes
+   com.recreated.dynamicstage.systemgesture to apps (state = start time,
+   0 = over; refreshed every 2 s; a 0.3 s poll runs only while active).
+ - The noteHosted dispatch happens only when "covered" changes, or at most
+   twice a second and never during the transition.
+ - keepMinimizedCardsBackgrounded re-asserts at most once a second (right
+   away when the parked set changes), never during the transition, and calls
+   placeCard only when the card isn't already at its park frame.
+ - Phone scene view: a cached "Phone staged?" check comes first, then only a
+   scene view inside the stage (stage window or a card ancestor). Layer
+   properties are written only when they change. Switcher cards are no longer
+   touched.
+ - Context host pin: early exit unless Beeper is staged, and never during the
+   transition.
+ - App-view hook: describes the diff only in Live mode; traces at most once a
+   second.
+ - phone.fit reader: last line only (tail read), at most every 0.4 s with one
+   trailing read, deferred during the transition.
+ - App side: Phone passes are deferred while the system gesture is active,
+   with one pass after it ends. Pad-relayout passes are capped at 4/s, and the
+   logging is rate limited. The 650 re-apply logic adds no per-frame work: a
+   request while one is pending is just a counter increment.
+
+4) Keyboard sometimes doesn't show in the stage app-picker search bar
+--------------------------------------------------------------------
+Root causes
+ a. _overlaySettling could get stuck at YES. The present paths set it and
+    only the matching finish call clears it, but that call returns early when
+    a newer presentation bumped the generation meanwhile. While it was stuck,
+    textFieldShouldBeginEditing returned NO and retried every 0.12 s forever:
+    no keyboard (plus a perpetual retry).
+ b. If the field was still first responder but its keyboard had been taken
+    away (SpringBoard reclaimed the key window, home gesture, the picker
+    re-opened with the old responder), a tap never reached
+    shouldBeginEditing, so the key window wasn't requested again.
+ c. Taps on the magnifier or the plate padding hit the container view, not
+    the text field, so nothing happened.
+ d. While a check was running, a new tap didn't restart it, and an old check
+    that saw a generation change cleared the "running" flag for the new one.
+ e. takeKeyWindow refuses during the home quiet window (1.15 s), so a tap
+    right after a home swipe used up all 5 retries without ever making the
+    window key.
+Fix
+ - appPickerShouldWaitBeforeSearchEditing clears a settle flag that has been
+   seen continuously for more than 0.6 s (and logs it). The field also gives
+   up waiting after 6 tries (~0.7 s).
+ - A tap recognizer on the whole search plate (doesn't cancel touches,
+   recognizes simultaneously, ignores the clear button). If the field isn't
+   editing, it becomes first responder. If it is editing (for more than
+   0.35 s) and no keyboard is on screen, it asks for the key window again,
+   restarts the keyboard check and reloads input views.
+ - A user tap newer than the running check restarts it. Our own
+   reassert/restart calls can't restart it, so it always ends. A stale check
+   no longer clears the flag.
+ - SIGTRAP guard: no key-window change inside a scene settings update or the
+   home transition. The check waits that out (up to 3 s) without using up
+   attempts, and then does makeKeyAndVisible + reassert / restart editing
+   (7 attempts at 0.16 s). It stops if the picker closed. Field retries are
+   generation-guarded (no parallel chains).

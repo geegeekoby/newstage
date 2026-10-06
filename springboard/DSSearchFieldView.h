@@ -12,6 +12,17 @@
 - (BOOL)searchFieldShouldWaitBeforeEditing:(DSSearchFieldView *)field;
 @end
 
+// 4.5.650: absolute time of the last user tap on any stage search field
+// (0 = never). The stage manager restarts its keyboard check for a tap that
+// is newer than the check already running.
+#ifdef __cplusplus
+extern "C" {
+#endif
+CFAbsoluteTime DSSearchFieldLastUserTap(void);
+#ifdef __cplusplus
+}
+#endif
+
 // The stage's search field: translucent plate, leading magnifier, trailing clear
 // button once there is text.
 @interface DSSearchFieldView : UIView

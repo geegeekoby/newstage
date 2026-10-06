@@ -90,6 +90,9 @@
 - (NSString *)bundleForKeyboardHash:(uint32_t)hash;
 // True when either stage card is currently hosting this bundle.
 - (BOOL)isHostingBundleIdentifier:(NSString *)bundleIdentifier;
+// 4.5.650: screen rect of the visible, unparked card hosting this bundle
+// (CGRectNull when there is none). Used to show the call screen in the card.
+- (CGRect)stageCardScreenFrameForBundleIdentifier:(NSString *)bundleIdentifier cornerRadius:(CGFloat *)radius;
 // Beeper's first keyboard, bottom-aligned. A taller proposed rect is the
 // quick bar growing. Any other rect is returned unchanged.
 - (CGRect)pinnedBeeperKeyboardFrameForProposed:(CGRect)proposed;

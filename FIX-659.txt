@@ -1,0 +1,86 @@
+DynamicStage 4.5.659 - SIGTRAP on corner restore after a home swipe with two stages
+==================================================================================
+Base: 4.5.658 (all camera658 logging kept).
+
+CRASH (from "Camera debug.txt", newstage repo, crash section)
+  build: 4.5.657   when: 1791271444 (Tue Oct 6 20:24:04 NZDT)   signal: SIGTRAP
+  Recent stage lines, oldest first. The last three runs before the crash:
+    SpringBoard: tucking the open stage for home
+    SpringBoard: home sends the two stages to opposite corners
+    SpringBoard: org.whispersystems.signal will follow the home transition
+    SpringBoard: home gesture began, stage minimized
+    ... (three home swipes in a row; "home gesture ended" and
+         "parked apps stopped following the home transition" each appear twice)
+    SpringBoard: held a minimized app view update so another app can open
+    SpringBoard: corner pull picked up from the system gesture
+    SpringBoard: restored the right stage, the other stays minimised
+    SpringBoard: held a minimized stage scene update so another app can open   (x2)
+    SpringBoard: org.whispersystems.signal had been put in the background off the stage and was woken
+    SpringBoard: kept the open stage inside its card while another app opened
+    === end ===  (SIGTRAP)
+- The 4.5.650 crash in "New debug.txt" has the same system-library frames (same boot, so
+  the same addresses), and it also follows "corner pull picked up from the system
+  gesture". So it is the same crash site, and older than 4.5.657.
+- No "switcher657 ... closed outside the stage" line in the ring, so the 657 lazy-kill
+  path is not involved. Signal was not killed; it was parked and handed to the home
+  transition.
+
+ROOT CAUSE
+1. With two stages, a home swipe parks both cards in opposite corners. The parked card's
+   app (Signal here, the second stage's app) is set to follow the system home transition:
+   automatesLifecycle YES on its SBAppViewController, so iOS drives its lifecycle during
+   the swipe. 0.85 s after the swipe ends it is handed back (automatesLifecycle NO, a
+   property only). iOS finishes its side of that hand-back after the flip.
+2. The minimize-on-home-swipe hold (homeGestureIsActive, the 1.15 s quiet window, and the
+   stays-backgrounded hold) only covers the gesture itself. A corner pull right after the
+   swipe is stage use: it clears "system owns the screen" and the restore clears
+   stays-backgrounded on the card coming back. Then finishCornerRestoreOfCard ->
+   setForeground:YES / wakeIfBackgrounded -> activateHostedAppWhenMediaAllows did
+   _setCurrentMode:2 + setDisplayMode:4 + _activateApp on Signal's app view ("... was
+   woken"), while the hand-back was still settling. Nothing in the wake path knew this
+   app view had just been iOS's.
+3. iOS answered that activation with a full-screen scene update for Signal. The FBScene
+   hook classed it as "another app opened" and refused it: completion(YES) without
+   %orig ("kept the open stage inside its card while another app opened"). An
+   activation whose own scene update is refused is left half-applied, and SpringBoard
+   asserts on it: the SIGTRAP. (The FIX comments already name changing an app view's mode
+   on the way back from a home transition as a SIGTRAP; the wake path still did it.)
+
+WHAT CHANGED (springboard/DSSceneHost.m/.h, springboard/Tweak.xm)
+- DSSceneHost keeps _systemHomeSettleUntil. It is set to 3.0 s after an app view stops
+  following the home transition, and it counts as settling while it follows.
+- activateHostedAppWhenMediaAllows: while settling, the wake waits instead of running.
+  The retries are merged into one (all three restore paths ask at once), capped at about
+  20 tries, then dropped with a log line (tapping the card wakes it as before). After the
+  wait it activates, lays the host view out and logs "woken after ... settled".
+- Within 4 s of a hand-back, an app view that is already Live (displayMode 4) keeps its
+  mode: activation only, no _setCurrentMode / setDisplayMode. Every other wake is
+  unchanged.
+- An activation made right after a hand-back marks that app as "stage activating" for
+  1.5 s. In the FBScene updateSettings:withTransitionContext: hook, a phone-sized update
+  for that scene is no longer refused. It goes the normal path, where the card geometry
+  override is written over the phone frame and the update is applied (%orig). The
+  "kept inside its card" refusal stays for every other app opening.
+- wakeIfBackgrounded doesn't log "was woken" for a wake that is only queued.
+- Unchanged: the 4.5.657 switcher no-op (nothing new runs in the switcher; the new checks
+  are ivar and time reads inside the existing wake path only), the call guard (call653),
+  the boot guard, 4.5.656's call-screen hiding, and all 4.5.658 camera658 logging.
+
+NEW LOG LINES ("SpringBoard: home659 ...")
+  held the wake of <app> until its home-transition hand-back settles (following=N, X s left)
+  <app> woken after its home-transition hand-back settled
+  <app> wake dropped, its home-transition hand-back did not settle
+  <app> already live after the home hand-back, activation only (no mode change)
+  <app> app view mode N -> live after the home hand-back
+  let the stage's own activation update of <scene> land at card size (not refused)
+
+TEST
+Two stages open. Swipe home two or three times quickly, then pull a minimized stage back
+from its corner straight away. Repeat with the other corner. Expected: no safe mode. The
+restored card shows its last picture for up to about 3 s, then goes live. The log shows
+"home659 held the wake ..." then "home659 ... woken after ... settled". If it still
+crashes, send the crash section and the 20 lines before it.
+
+FILES
+shared/DSConstants.h (4.5.659), springboard/DSSceneHost.m, springboard/DSSceneHost.h,
+springboard/Tweak.xm, control, changelog.md.

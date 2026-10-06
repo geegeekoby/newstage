@@ -219,6 +219,22 @@ static NSString *DSAnySceneIdentifier(id scene) {
         if (phoneSized && [DSSceneHost isHandingOffSceneIdentifier:incomingIdentifier]) {
             phoneSized = NO;
         }
+        // 4.5.659: this update is the answer to the stage's own activation of
+        // the app view after a home-transition hand-back. Refusing it (done
+        // without %orig) left SpringBoard's activation half applied: the
+        // SIGTRAP right after "... was woken" / "kept the open stage inside
+        // its card" in the 4.5.657 crash log. It lands below, with the card
+        // geometry written over the phone frame.
+        if (phoneSized && [DSSceneHost isStageActivatingSceneIdentifier:incomingIdentifier]) {
+            phoneSized = NO;
+            static CFAbsoluteTime DSLastActivationPassLog = 0;
+            CFAbsoluteTime passNow = CFAbsoluteTimeGetCurrent();
+            if (passNow - DSLastActivationPassLog > 1.0) {
+                DSLastActivationPassLog = passNow;
+                DSDiagnosticsRecordFormat(@"SpringBoard: home659 let the stage's own activation update of %@ land at card size (not refused)",
+                                          incomingIdentifier);
+            }
+        }
         // A card-sized update has to land even when its foreground flag reads
         // off, or the app stays phone-sized and the card cuts off the bottom
         // of the chat.

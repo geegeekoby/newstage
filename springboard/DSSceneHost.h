@@ -179,6 +179,10 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // YES for a few seconds after that handoff. A later settings write must not
 // put the split size back.
 + (BOOL)isHandingOffSceneIdentifier:(NSString *)identifier;
+// 4.5.659: YES for ~1.5 s after the stage activated this scene's app view
+// right after a home-transition hand-back. That activation's own scene update
+// lands (card geometry applied) instead of being refused.
++ (BOOL)isStageActivatingSceneIdentifier:(NSString *)identifier;
 // YES when this frame is the size the stage just stored for that scene.
 // A nearly full-screen update from anywhere else is another app opening,
 // and that one is refused. The tall split size is this one, and it has to land.

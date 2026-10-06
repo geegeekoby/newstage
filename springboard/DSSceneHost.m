@@ -74,6 +74,11 @@ static NSString *DSHandedOffBundle = nil;
 static CFAbsoluteTime DSHandedOffUntil = 0;
 
 static NSInteger DSSystemPullDepth = 0;
+// 4.5.659: the app the stage itself is activating after a home-transition
+// hand-back, and until when. Its activation's own scene update is not
+// refused by the "kept inside its card" path (see Tweak.xm).
+static NSString *DSActivatingBundle = nil;
+static CFAbsoluteTime DSActivatingUntil = 0;
 // How many FBScene settings updates are on the stack. A presentation frame
 // written from inside one waits on the update that is waiting on the frame.
 static NSInteger DSSceneSettingsUpdateDepth = 0;
@@ -411,6 +416,11 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     BOOL _foreground;
     BOOL _staysBackgrounded;
     BOOL _followsSystemHome;
+    // 4.5.659: when this app view stopped following the system home
+    // transition. Its lifecycle is still SpringBoard's until this has settled.
+    CFAbsoluteTime _systemHomeSettleUntil;
+    BOOL _wakeRetryScheduled;
+    NSInteger _wakeSettleAttempts;
     BOOL _registeredOverride;
     // Keeps RunningBoard from suspending a hosted app once its card is off screen.
     id _runningAssertion;
@@ -1591,9 +1601,58 @@ typedef BOOL (^DSSceneHostAttempt)(void);
                       CGRectGetHeight(_stageFrame) * scale);
 }
 
+// 4.5.659: an app view handed to the system home transition (a parked card
+// while home is swiped) is driven by SpringBoard's own lifecycle until that
+// hand-back has settled. Changing its mode or activating it inside that
+// window, while SpringBoard is still finishing the transition, is the SIGTRAP
+// of the 4.5.657 crash log (two stages, corner restore, "was woken").
+- (BOOL)systemHomeLifecycleSettling {
+    if (_followsSystemHome) return YES;
+    return CFAbsoluteTimeGetCurrent() < _systemHomeSettleUntil;
+}
+
 - (void)activateHostedAppWhenMediaAllows {
     // 4.5.657: killed from the switcher; never wake or relaunch it from here.
     if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
+    // 4.5.659: still SpringBoard's lifecycle (home hand-back settling). Wait,
+    // once, coalesced: several stage paths ask for the same wake at once.
+    if ([self systemHomeLifecycleSettling]) {
+        if (_wakeRetryScheduled) return;
+        // About 5 s of following home plus the settle window, then give up;
+        // tapping the card wakes it again.
+        if (_wakeSettleAttempts >= 20) {
+            _wakeSettleAttempts = 0;
+            DSDiagnosticsRecordFormat(@"SpringBoard: home659 %@ wake dropped, its home-transition hand-back did not settle", _bundleIdentifier);
+            return;
+        }
+        _wakeSettleAttempts += 1;
+        _wakeRetryScheduled = YES;
+        static CFAbsoluteTime DSLastSettleLog = 0;
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (now - DSLastSettleLog > 1.0) {
+            DSLastSettleLog = now;
+            DSDiagnosticsRecordFormat(@"SpringBoard: home659 held the wake of %@ until its home-transition hand-back settles (following=%d, %.2fs left)",
+                                      _bundleIdentifier, _followsSystemHome,
+                                      _followsSystemHome ? -1.0 : MAX(0.0, _systemHomeSettleUntil - now));
+        }
+        CFAbsoluteTime wait = _followsSystemHome ? 0.4 : MAX(0.1, _systemHomeSettleUntil - now + 0.05);
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(wait * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) return;
+            strongSelf->_wakeRetryScheduled = NO;
+            if (!strongSelf->_appViewController || DSSceneHostBundleDiedPending(strongSelf->_bundleIdentifier)) return;
+            BOOL settled = ![strongSelf systemHomeLifecycleSettling];
+            [strongSelf activateHostedAppWhenMediaAllows];
+            if (settled) {
+                [strongSelf layoutHostView];
+                DSDiagnosticsRecordFormat(@"SpringBoard: home659 %@ woken after its home-transition hand-back settled",
+                                          strongSelf->_bundleIdentifier);
+            }
+        });
+        return;
+    }
+    _wakeSettleAttempts = 0;
     if (DSSystemPullDepth > 0 || DSSceneSettingsUpdateDepth > 0) {
         if (_mediaActivateAttempts >= 8) return;
         _mediaActivateAttempts += 1;
@@ -1621,12 +1680,33 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     }
     _mediaActivateAttempts = 0;
     @try {
-        if ([controller respondsToSelector:@selector(_setCurrentMode:)]) [controller _setCurrentMode:2];
-        if ([controller respondsToSelector:@selector(setDisplayMode:animationFactory:completion:)]) {
-            [controller setDisplayMode:4 animationFactory:nil completion:nil];
+        // 4.5.659: right after a home-transition hand-back, an app view that
+        // is already Live keeps its mode. Setting the mode again then is a
+        // mode change SpringBoard asserts on if its transition is still
+        // finishing; only the activation itself is needed. Every other wake
+        // is unchanged.
+        NSInteger currentMode = -1;
+        if ([controller respondsToSelector:@selector(displayMode)]) {
+            currentMode = ((NSInteger (*)(id, SEL))objc_msgSend)(controller, @selector(displayMode));
+        }
+        BOOL recentHandBack = _systemHomeSettleUntil > 0 && CFAbsoluteTimeGetCurrent() < _systemHomeSettleUntil + 4.0;
+        if (!(recentHandBack && currentMode == 4)) {
+            if ([controller respondsToSelector:@selector(_setCurrentMode:)]) [controller _setCurrentMode:2];
+            if ([controller respondsToSelector:@selector(setDisplayMode:animationFactory:completion:)]) {
+                [controller setDisplayMode:4 animationFactory:nil completion:nil];
+            }
+            if (recentHandBack) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: home659 %@ app view mode %ld -> live after the home hand-back", _bundleIdentifier, (long)currentMode);
+            }
+        } else {
+            DSDiagnosticsRecordFormat(@"SpringBoard: home659 %@ already live after the home hand-back, activation only (no mode change)", _bundleIdentifier);
         }
         SEL activate = NSSelectorFromString(@"_activateApp");
         if ([controller respondsToSelector:activate]) {
+            if (recentHandBack) {
+                DSActivatingBundle = [_bundleIdentifier copy];
+                DSActivatingUntil = CFAbsoluteTimeGetCurrent() + 1.5;
+            }
             ((void (*)(id, SEL))objc_msgSend)(controller, activate);
         }
     } @catch (NSException *exception) {
@@ -1653,6 +1733,12 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     } @catch (NSException *exception) {
     }
     if (foreground && [self appViewIsShowingContent]) return;
+    // 4.5.659: the wake waits for the home hand-back (see above); say so
+    // instead of logging a wake that has not happened yet.
+    if ([self systemHomeLifecycleSettling]) {
+        [self activateHostedAppWhenMediaAllows];
+        return;
+    }
     [self activateHostedAppWhenMediaAllows];
     [self layoutHostView];
     DSDiagnosticsRecordFormat(@"SpringBoard: %@ had been put in the background off the stage and was woken",
@@ -2650,6 +2736,9 @@ static long long DSHostReadLong(id target, NSString *name, long long fallback) {
 - (void)setFollowsSystemHomeTransition:(BOOL)follows {
     if (!_appViewController || _followsSystemHome == follows) return;
     _followsSystemHome = follows;
+    // 4.5.659: SpringBoard finishes its side of the hand-back after the
+    // property flips. No stage wake / mode change inside this window.
+    if (!follows) _systemHomeSettleUntil = CFAbsoluteTimeGetCurrent() + 3.0;
     SBAppViewController *controller = _appViewController;
     @try {
         // Property only. Changing the app view's mode on the way back runs in
@@ -3037,6 +3126,12 @@ static void DSRunAfterTransitionBlocks(void) {
     }
     DSSceneOverrideCountValue = (NSInteger)DSSceneOverrides().count;
     [DSSceneOverridesLock() unlock];
+}
+
++ (BOOL)isStageActivatingSceneIdentifier:(NSString *)identifier {
+    if (identifier.length == 0 || DSActivatingBundle.length == 0) return NO;
+    if (CFAbsoluteTimeGetCurrent() >= DSActivatingUntil) return NO;
+    return [identifier rangeOfString:DSActivatingBundle].location != NSNotFound;
 }
 
 + (BOOL)isHandingOffSceneIdentifier:(NSString *)identifier {

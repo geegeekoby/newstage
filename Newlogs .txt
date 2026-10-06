@@ -1,0 +1,1019 @@
+build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+[TRACE] SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+[TRACE] SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+[TRACE] SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+[TRACE] SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCrack.plist,AudioRecorder.dylib,dig3st.dylib,SNMessenger.plist,ShadowBuster.plist,Griddy.dylib,RocketPro.plist,TasksCrack.plist,Designer.dylib,Cephei-compat.dylib,SwiftgramPatch.dylib,DynamicStageApp.dylib,EmojiSkinPrefs.dylib,Bloom.dylib,0Antho.dylib,AlertControllerllld.dylib,NoRedirect.plist,PreferenceLoader.plist,replaced.dylib,DisableAppLibrary.plist,FilzaCrack.dylib,AudioRecorder.plist,dig3st.plist,SNMessenger.dylib,DynamicStage.dylib,FouadCrack.plist,PhotomathPlus.plist,Erika.dylib,SimpleActivationActions.dylib,DataManager.plist,AppStoreUpdatesTab.plist,GraphitePlugin.plist,SandyProxy.dylib,DavevanCrack.dylib,AppData.plist,Airaw.plist,0symbolab.dylib,CameraModes.dylib,PicsArt.dylib,CCSupport.plist,TeraBoxPremium.plist,Xinam1ne.dylib,LoopVideos.dylib,FouadCrack.dylib,DynamicStage.plist,PhotomathPlus.dylib,EmojiPort,Erika.plist,DataManager.dylib,SimpleActivationActions.plist,AppStoreUpdatesTab.dylib,GraphitePlugin.dylib,SandyProxy.plist,DavevanCrack.plist,CameraModes.plist,Airaw.dylib,0symbolab.plist,AppData.dylib,PicsArt.plist,Xinam1ne.plist,TeraBoxPremium.dylib,CCSupport.dylib,LoopVideos.plist,CepheiSpringBoard.plist,Rocket.dylib,1NebbsCrack.plist,0Snail.dylib,FacebookNoAds.plist,82Hack.dylib,LetMeDecline.dylib,LimneosCrack.dylib,SimPlus.dylib,RocketBootstrap.plist,ApolloCrack.dylib,CC18.dylib,NoYTPremium.dylib,LyricsTweak.dylib,SafariBlocker.plist,AudioRecorderUI.plist,CepheiSpringBoard.dylib,1NebbsCrack.dylib,Rocket.plist,0Snail.plist,FacebookNoAds.dylib,LetMeDecline.plist,82Hack.plist,LimneosCrack.plist,RocketBootstrap.dylib,SimPlus.plist,ApolloCrack.plist,CC18.plist,NoYTPremium.plist,LyricsTweak.plist,SafariBlocker.dylib,AudioRecorderUI.dylib,QuickAppsKill.dylib,RecordPause.dylib,EmojiPortPE.plist,PMP.plist,Photomator.dylib,YTShortsProgress.dylib,LendMyPhone.plist,iarrays_hack_.dylib,DeleteContact.plist,CalculatorConverter.dylib,appstoretroller.dylib,QuickAppsKill.plist,EmojiPortPE.dylib,RecordPause.plist,Photomator.plist,PMP.dylib,YTShortsProgress.plist,LendMyPhone.dylib,CalculatorConverter.plist,DeleteContact.dylib,iarrays_hack_.plist,appstoretroller.plist
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+[TRACE] SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=7s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=7s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }]
+SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=7s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=7s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mo...
+[TRACE] SpringBoard: stage window moved back to the foreground scene
+SpringBoard: stage window moved back to the foreground scene
+[CARD] reset geometry radius=44 mask=1 local={{5, 1012}, {420, 458}} screen={{5, 1012}, {420, 458}}
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: putting com.apple.MobileSMS on stack slot 0
+SpringBoard: putting com.apple.MobileSMS on stack slot 0
+[TRACE] launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+[TRACE] SpringBoard: creating app view for com.apple.MobileSMS
+SpringBoard: creating app view for com.apple.MobileSMS
+[TRACE] SpringBoard: created app view for com.apple.MobileSMS
+SpringBoard: created app view for com.apple.MobileSMS
+[TRACE] scene transaction com.apple.MobileSMS actions=1
+[TRACE] SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+[TRACE] SpringBoard: com.apple.MobileSMS stays running in the background
+SpringBoard: com.apple.MobileSMS stays running in the background
+[TRACE] SpringBoard: camera658 com.apple.MobileSMS on a card: injected app, a 'camera hook loaded' line should follow
+SpringBoard: camera658 com.apple.MobileSMS on a card: injected app, a 'camera hook loaded' line should follow
+[TRACE] SpringBoard: com.apple.MobileSMS is on stack slot 0
+SpringBoard: com.apple.MobileSMS is on stack slot 0
+[TRACE] hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+[KEYBOARD LOG] attach com.apple.MobileSMS slot 0 stack=1 prim=1
+[TRACE] layoutHost Messages frame={{0, 0}, {430, 932}}
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[REST] com.apple.MobileSMS slot=0 cardY=5 cardH=458 restMaxY=463
+[TRACE] SpringBoard: kept the open stage inside its card while another app opened
+SpringBoard: kept the open stage inside its card while another app opened
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: fitting com.apple.MobileSMS's scene to the card
+SpringBoard: fitting com.apple.MobileSMS's scene to the card
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {430, 932}}
+[TRACE] app-view settings update
+[TRACE] app-view settings update done
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] hideStray split=0 depth=0
+[TRACE] app: com.apple.MobileSMS ctor ok
+app: com.apple.MobileSMS ctor ok
+[TRACE] scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {420, 458}}
+[TRACE] SpringBoard: camera660 com.apple.MobileSMS pid=19454 reporting camera events to SpringBoard
+SpringBoard: camera660 com.apple.MobileSMS pid=19454 reporting camera events to SpringBoard
+[TRACE] SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+[TRACE] app: com.apple.MobileSMS remote keyboard hooks are in
+app: com.apple.MobileSMS remote keyboard hooks are in
+[KEYS] hook search-cancel _cancelButtonPressed
+[TRACE] app: com.apple.MobileSMS is listening for staged keys
+app: com.apple.MobileSMS is listening for staged keys
+[TRACE] hideStray split=0 depth=0
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+[TRACE] SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+[TRACE] SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: stayed up, boot guard cleared
+SpringBoard: stayed up, boot guard cleared
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 377}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=377 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] app kb com.apple.MobileSMS hosted=1 frame={{0, 458}, {420, 81}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=458 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: rim651 system gesture held at 430,472 (rim)
+SpringBoard: rim651 system gesture held at 430,472 (rim)
+[GEOM] place build 4.5.660 split=0 float=0 half=0 slots=2
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{5, 5}, {420, 458}}
+topRim {{-31, -31}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{5, 5}, {420, 458}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[GEOM] place build 4.5.660 split=0 float=0 half=0 slots=2
+card {{5, 469}, {420, 458}}
+shell {{-31, 433}, {492, 530}}
+outline {{4, 468}, {422, 460}}
+topCard {{5, 5}, {420, 458}}
+topRim {{-31, -31}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 469}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 469}, {420, 458}} outline={{4, 468}, {422, 460}} shell={{-31, 433}, {492, 530}} host={{5, 469}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{5, 5}, {420, 458}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: com.apple.MobileSMS stays running in the background
+SpringBoard: com.apple.MobileSMS stays running in the background
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: opened another stage
+SpringBoard: opened another stage
+[TRACE] SpringBoard: search asked try=0 slot=1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=0 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search asked try=0 slot=1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=0 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] search field begin editing: fr=0 win=1 key=1 att=0
+search field begin editing: fr=0 win=1 key=1 att=0
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=1 drop=140 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=1 host=1/0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=1 drop=140 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[LIFT] side park top=1 bottom=0 third=0 lower=-469 upper=0 float=0
+[TRACE] SpringBoard: search visible try=0 slot=1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: search visible try=0 slot=1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main,fg-active/main*
+[LIFT] upper drop lift=-140 had=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] lower applied lift=0 had=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] side park top=0 bottom=0 third=0 lower=0 upper=0 float=0
+[LIFT] search slot=1 lift=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=1 lift=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0 (x2)
+[KEYS] note src=com.apple.springboard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[GEOM] place build 4.5.660 split=0 float=0 half=0 slots=2
+card {{5, 469}, {420, 458}}
+shell {{-31, 433}, {492, 530}}
+outline {{4, 468}, {422, 460}}
+topCard {{5, 5}, {420, 458}}
+topRim {{-31, -31}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 469}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 469}, {420, 458}} outline={{4, 468}, {422, 460}} shell={{-31, 433}, {492, 530}} host={{5, 469}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{5, 5}, {420, 458}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: putting com.facebook.Messenger on stack slot 1
+SpringBoard: putting com.facebook.Messenger on stack slot 1
+[TRACE] launch com.facebook.Messenger state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+[TRACE] SpringBoard: com.facebook.Messenger got its default entity with a scene handle provider
+SpringBoard: com.facebook.Messenger got its default entity with a scene handle provider
+[TRACE] SpringBoard: creating app view for com.facebook.Messenger
+SpringBoard: creating app view for com.facebook.Messenger
+[TRACE] SpringBoard: created app view for com.facebook.Messenger
+SpringBoard: created app view for com.facebook.Messenger
+[TRACE] scene transaction com.facebook.Messenger actions=1
+[TRACE] SpringBoard: com.facebook.Messenger's scene came from SpringBoard's own app view
+SpringBoard: com.facebook.Messenger's scene came from SpringBoard's own app view
+[TRACE] SpringBoard: camera658 com.facebook.Messenger on a card: injected app, a 'camera hook loaded' line should follow
+SpringBoard: camera658 com.facebook.Messenger on a card: injected app, a 'camera hook loaded' line should follow
+[TRACE] SpringBoard: com.facebook.Messenger is on stack slot 1
+SpringBoard: com.facebook.Messenger is on stack slot 1
+[TRACE] hosted com.facebook.Messenger state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+[KEYBOARD LOG] attach com.facebook.Messenger slot 1 stack=2 prim=0
+[GEOM] place build 4.5.660 split=0 float=0 half=0 slots=2
+card {{5, 469}, {420, 458}}
+shell {{-31, 433}, {492, 530}}
+outline {{4, 468}, {422, 460}}
+topCard {{5, 5}, {420, 458}}
+topRim {{-31, -31}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 469}, {420, 458}}
+topHost {{5, 5}, {420, 458}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=com.facebook.Messenger slot2=-
+
+[GEOM-DBG] card={{5, 469}, {420, 458}} outline={{4, 468}, {422, 460}} shell={{-31, 433}, {492, 530}} host={{5, 469}, {420, 458}} topHost={{5, 5}, {420, 458}} topCard={{5, 5}, {420, 458}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: com.facebook.Messenger stays running in the background
+SpringBoard: com.facebook.Messenger stays running in the background
+[REST] com.facebook.Messenger slot=1 cardY=5 cardH=458 restMaxY=463
+[TRACE] SpringBoard: kept the open stage inside its card while another app opened
+SpringBoard: kept the open stage inside its card while another app opened
+[TRACE] SpringBoard: fitting com.facebook.Messenger's scene to the card
+SpringBoard: fitting com.facebook.Messenger's scene to the card
+[TRACE] force geometry com.facebook.Messenger depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.facebook.Messenger-default frame={{0, 0}, {430, 932}}
+[TRACE] app-view settings update
+[TRACE] app-view settings update done
+[TRACE] SpringBoard: com.facebook.Messenger stays running in the background
+SpringBoard: com.facebook.Messenger stays running in the background
+[TRACE] SpringBoard: camera660 com.facebook.Messenger on a card: asked it to report its camera hooks (a 'camera660 com.facebook.Messenger hello' line should follow)
+SpringBoard: camera660 com.facebook.Messenger on a card: asked it to report its camera hooks (a 'camera660 com.facebook.Messenger hello' line should follow)
+[TRACE] SpringBoard: com.facebook.Messenger after two seconds - hosting the app, scene present, view in the card
+SpringBoard: com.facebook.Messenger after two seconds - hosting the app, scene present, view in the card
+[TRACE] arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[TRACE] arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=301
+[TRACE] keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+[TRACE] keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+[TRACE] raise keyboard video=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 689}, {430, 243}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=689 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: com.facebook.Messenger put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: com.facebook.Messenger put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+[TRACE] keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+[TRACE] raise keyboard video=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 644}, {430, 288}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=644 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+[LIFT] upper drop lift=-95 had=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[LIFT] lower applied lift=0 had=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0 (x2)
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[LIFT] stack slot=0 need=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: lifted stack slot 0 by 0 companion 0
+SpringBoard: lifted stack slot 0 by 0 companion 0
+[TRACE] keyboard note on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.facebook.Messenger on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+[KEYS] note src=com.facebook.Messenger frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[TRACE] arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.apple.MobileSMS h=346
+[TRACE] keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+[TRACE] keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+[TRACE] raise keyboard video=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 644}, {430, 288}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=644 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+[TRACE] keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+[TRACE] keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+[TRACE] raise keyboard video=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 689}, {430, 243}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=689 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0 (x2)
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[KEYS] note src=com.facebook.Messenger frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 631}, {430, 301}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.facebook.Messenger frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.facebook.Messenger req=- lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] stack slot=0 need=0 lower=primary slot=0 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] raise keyboard video=0 depth=0
+[TRACE] raise keyboard video=0 depth=0
+[TRACE] SpringBoard: rim651 system gesture held at 0,210 (rim)
+SpringBoard: rim651 system gesture held at 0,210 (rim)
+[TRACE] SpringBoard: a touch above the keys passed through local={0.16666666666666666, 210.33333333333331} screen={0.16666666666666666, 210.33333333333331} window={{0, 0}, {430, 932}}
+SpringBoard: a touch above the keys passed through local={0.16666666666666666, 210.33333333333331} screen={0.16666666666666666, 210.33333333333331} window={{0, 0}, {430, 932}}
+[TRACE] SpringBoard: a touch above the keys passed through local={0.16666666666666666, 210.33333333333331} screen={0.16666666666666666, 210.33333333333331} window={{0, 0}, {430, 932}}
+SpringBoard: a touch above the keys passed through local={0.16666666666666666, 210.33333333333331} screen={0.16666666666666666, 210.33333333333331} window={{0, 0}, {430, 932}}
+[TRACE] SpringBoard: rim651 hit top-outer-left at 0,210 -> DSStageRimHitView
+SpringBoard: rim651 hit top-outer-left at 0,210 -> DSStageRimHitView
+[TOUCH] screenY=227 top-half
+[TRACE] SpringBoard: rim651 drag began at 0,227 won by top-rim-pan
+SpringBoard: rim651 drag began at 0,227 won by top-rim-pan
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=2
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{106.33332824707031, 700.66665649414062}, {420, 458}}
+topRim {{70.333328247070312, 664.66665649414062}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{106.33332824707031, 700.66665649414062}, {420, 458}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=com.facebook.Messenger slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{106.33332824707031, 700.66665649414062}, {420, 458}} topCard={{106.33332824707031, 700.66665649414062}, {420, 458}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=2
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{5, 469}, {420, 458}}
+topRim {{-31, 433}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{5, 469}, {420, 458}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=com.facebook.Messenger slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{5, 469}, {420, 458}} topCard={{5, 469}, {420, 458}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: swapped the two stages between top and bottom
+SpringBoard: swapped the two stages between top and bottom
+[TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+[TRACE] scene block sceneID:com.facebook.Messenger-default frame={{0, 0}, {420, 458}}
+[TRACE] app-view settings update
+[TRACE] app-view settings update done
+[KEYS] note src=an app frame={{0, 0}, {0, 0}} lower=second slot=1 placed={{5, 469}, {420, 458}} bottom=927 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: rim651 system gesture held at 0,627 (rim)
+SpringBoard: rim651 system gesture held at 0,627 (rim)
+[TOUCH] screenY=632 bottom-half
+[TRACE] scene block sceneID:com.facebook.Messenger-default frame={{0, 0}, {420, 458}}
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=1
+slot0=com.apple.MobileSMS slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] SpringBoard: rim651 system gesture held at 0,280 (rim)
+SpringBoard: rim651 system gesture held at 0,280 (rim)
+[TRACE] SpringBoard: rim651 hit main-outer-left at 0,280 -> DSStageDragShellView
+SpringBoard: rim651 hit main-outer-left at 0,280 -> DSStageDragShellView
+[TOUCH] screenY=292 top-half
+[TRACE] SpringBoard: rim651 drag began at 6,292 won by main-shell-pan
+SpringBoard: rim651 drag began at 6,292 won by main-shell-pan
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {420, 458}}
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {420, 458}}
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+[TRACE] app: com.apple.MobileSMS ctor ok
+app: com.apple.MobileSMS ctor ok
+[TRACE] app: com.apple.MobileSMS remote keyboard hooks are in
+app: com.apple.MobileSMS remote keyboard hooks are in
+[KEYS] hook search-cancel _cancelButtonPressed
+[TRACE] app: com.apple.MobileSMS is listening for staged keys
+app: com.apple.MobileSMS is listening for staged keys
+[TRACE] SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[GEOM] place build 4.5.660 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+01:46:44.583 SpringBoard pid=19429 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+01:46:44.583 SpringBoard pid=19429 main | ready state=0 split=0 bottom=- top=- hover=-
+01:46:44.583 SpringBoard pid=19429 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+01:46:44.591 SpringBoard pid=19429 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+01:46:44.592 SpringBoard pid=19429 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+01:46:44.592 SpringBoard pid=19429 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+01:46:44.593 SpringBoard pid=19429 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+01:46:44.594 SpringBoard pid=19429 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=7s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=7s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebo...
+01:46:46.087 SpringBoard pid=19429 main | SpringBoard: stage window moved back to the foreground scene
+01:46:46.087 SpringBoard pid=19429 main | SpringBoard: stage on screen
+01:46:46.087 SpringBoard pid=19429 main | on screen state=2 split=0 bottom=- top=- hover=-
+01:46:46.087 SpringBoard pid=19429 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+01:46:46.088 SpringBoard pid=19429 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:46:46.088 SpringBoard pid=19429 main | SpringBoard: opened the top stage
+01:46:46.460 SpringBoard pid=19429 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:46:47.941 SpringBoard pid=19429 main | SpringBoard: putting com.apple.MobileSMS on stack slot 0
+01:46:47.941 SpringBoard pid=19429 main | launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+01:46:47.941 SpringBoard pid=19429 main | SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+01:46:47.941 SpringBoard pid=19429 main | SpringBoard: creating app view for com.apple.MobileSMS
+01:46:47.941 SpringBoard pid=19429 main | SpringBoard: created app view for com.apple.MobileSMS
+01:46:47.944 SpringBoard pid=19429 main | scene transaction com.apple.MobileSMS actions=1
+01:46:47.948 SpringBoard pid=19429 main | SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+01:46:47.957 SpringBoard pid=19429 main | SpringBoard: com.apple.MobileSMS stays running in the background
+01:46:47.957 SpringBoard pid=19429 main | SpringBoard: camera658 com.apple.MobileSMS on a card: injected app, a 'camera hook loaded' line should follow
+01:46:47.957 SpringBoard pid=19429 main | SpringBoard: com.apple.MobileSMS is on stack slot 0
+01:46:47.957 SpringBoard pid=19429 main | hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+01:46:47.957 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {430, 932}}
+01:46:47.978 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.978 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.978 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.978 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.986 SpringBoard pid=19429 main | SpringBoard: kept the open stage inside its card while another app opened
+01:46:47.986 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.986 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.986 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.986 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.986 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.986 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.986 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.986 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.987 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.987 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.987 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.987 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:47.991 SpringBoard pid=19429 main | SpringBoard: fitting com.apple.MobileSMS's scene to the card
+01:46:47.991 SpringBoard pid=19429 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+01:46:47.991 SpringBoard pid=19429 main | scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {430, 932}}
+01:46:47.991 SpringBoard pid=19429 main | app-view settings update
+01:46:47.992 SpringBoard pid=19429 main | app-view settings update done
+01:46:47.992 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:47.992 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:48.276 MobileSMS pid=19454 main | app ctor reason=0 bundle=com.apple.MobileSMS
+01:46:48.276 SpringBoard | hideStray split=0 depth=0 x2
+01:46:48.276 SpringBoard pid=19429 main | app: com.apple.MobileSMS ctor ok
+01:46:48.601 SpringBoard pid=19429 main | scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {420, 458}}
+01:46:48.658 MobileSMS pid=19454 main | camera658 app capture hooks in, multitask switch present
+01:46:48.659 SpringBoard pid=19429 main | SpringBoard: camera660 com.apple.MobileSMS pid=19454 reporting camera events to SpringBoard
+01:46:48.660 SpringBoard pid=19429 main | SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+01:46:48.660 SpringBoard pid=19429 main | app: com.apple.MobileSMS remote keyboard hooks are in
+01:46:48.667 SpringBoard pid=19429 main | app: com.apple.MobileSMS is listening for staged keys
+01:46:48.685 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:48.687 MobileSMS pid=19454 main | app left _UIVisualEffectBackdropView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:49.478 SpringBoard | hideStray split=0 depth=0 x2
+01:46:49.478 SpringBoard pid=19429 main | SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+01:46:49.480 SpringBoard pid=19429 main | SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+01:46:49.481 SpringBoard pid=19429 main | SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+01:46:49.629 MobileSMS pid=19454 main | app willAppear CKNavigationController
+01:46:49.629 MobileSMS pid=19454 main | app willAppear CKChatController
+01:46:49.631 MobileSMS pid=19454 main | app left UITextEffectsWindow at {{0, 0}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+01:46:49.634 MobileSMS pid=19454 main | app left UIInputSetContainerView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:49.634 MobileSMS pid=19454 main | app left UIInputSetHostView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:49.636 MobileSMS pid=19454 main | app left _UIRemoteKeyboardPlaceholderView at {{0, 0}, {430, 932}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:49.638 MobileSMS pid=19454 main | app left UIKeyboardDockView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:49.638 MobileSMS pid=19454 main | app left UIKeyboardDockItemButton at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:49.640 MobileSMS pid=19454 main | app input window laid out
+01:46:49.662 MobileSMS | app input window laid out x4
+01:46:49.662 MobileSMS pid=19454 main | app left UIInputSetContainerView at {{0, 4000}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+01:46:49.662 MobileSMS pid=19454 main | app left _UIReplicantView at {{0, 0}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+01:46:49.662 MobileSMS pid=19454 main | app left UIView at {{420, 0}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+01:46:49.662 MobileSMS pid=19454 main | app input window laid out
+01:46:49.673 MobileSMS pid=19454 main | app willAppear CKTranscriptCollectionViewController
+01:46:49.686 SpringBoard pid=19429 main | SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+01:46:49.996 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:50.269 SpringBoard pid=19429 main | SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0
+01:46:50.442 MobileSMS pid=19454 main | app input window laid out
+01:46:50.460 MobileSMS | app input window laid out x4
+01:46:50.460 MobileSMS pid=19454 main | app willAppear CKFunCameraViewController
+01:46:50.460 MobileSMS pid=19454 main | app willAppear MSMessageExtensionBrowserViewController
+01:46:50.461 MobileSMS pid=19454 main | app left UIView at {{0, 458}, {420, 458}}. cause=the piece under the field is 458pt, and pulling its bottom up to 0 puts it above the field
+01:46:50.553 SpringBoard pid=19429 main | SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+01:46:50.557 MobileSMS pid=19454 main | app input window laid out
+01:46:50.559 MobileSMS pid=19454 main | app left UIRemoteKeyboardWindow at {{0, 0}, {420, 458}}. cause=it lives in UIRemoteKeyboardWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+01:46:50.564 MobileSMS pid=19454 main | app input window laid out
+01:46:50.565 MobileSMS pid=19454 main | app willAppear _MSMessageExtensionRemoteViewController
+01:46:50.572 MobileSMS pid=19454 main | app input window laid out
+01:46:50.988 MobileSMS pid=19454 main | app left UIDictationLayoutView at {{0, 0}, {414, 226}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:50.989 MobileSMS pid=19454 main | app left UIKeyboardDicationBackground at {{0, 0}, {414, 226}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:50.989 MobileSMS pid=19454 main | app left UIKeyboardDicationBackgroundGradientView at {{0, 0}, {414, 226}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+01:46:50.991 MobileSMS pid=19454 main | app input window laid out
+01:46:52.643 SpringBoard pid=19429 main | SpringBoard: stayed up, boot guard cleared
+01:46:55.403 MobileSMS pid=19454 main | app input window laid out
+01:46:55.414 MobileSMS | app input window laid out x4
+01:46:55.414 MobileSMS pid=19454 main | app willAppear CKMessagesController
+01:46:55.415 MobileSMS pid=19454 main | app willAppear CKNavigationController
+01:46:55.415 MobileSMS | app willAppear CKNavigationController x2
+01:46:55.415 MobileSMS pid=19454 main | app willAppear CKChatController
+01:46:55.418 MobileSMS pid=19454 main | app willAppear CKTranscriptCollectionViewController
+01:46:55.422 MobileSMS pid=19454 main | app input window laid out
+01:46:55.444 MobileSMS | app input window laid out x6
+01:46:55.444 MobileSMS pid=19454 main | app willAppear CKNavbarCanvasViewController
+01:46:56.729 MobileSMS pid=19454 main | app input window laid out
+01:46:56.750 MobileSMS | app input window laid out x2
+01:46:56.750 MobileSMS pid=19454 main | app willAppear CKConversationListCollectionViewController
+01:46:56.757 MobileSMS pid=19454 main | app willAppear CKSearchViewController
+01:46:56.767 MobileSMS pid=19454 main | app input window laid out
+01:46:57.491 SpringBoard pid=19429 main | SpringBoard: rim651 system gesture held at 430,472 (rim)
+01:46:58.698 SpringBoard pid=19429 main | SpringBoard: com.apple.MobileSMS stays running in the background
+01:46:58.705 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:58.705 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:58.705 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:46:58.705 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:46:58.705 SpringBoard pid=19429 main | SpringBoard: opened another stage
+01:47:00.212 SpringBoard pid=19429 main | SpringBoard: search asked try=0 slot=1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=0 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:47:00.213 SpringBoard pid=19429 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+01:47:00.216 SpringBoard pid=19429 main | SpringBoard: takeKey ok try=- slot=1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:47:00.216 SpringBoard pid=19429 main | search field begin editing: fr=0 win=1 key=1 att=0
+01:47:00.259 SpringBoard pid=19429 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+01:47:00.271 SpringBoard pid=19429 main | SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+01:47:00.293 MobileSMS | app input window laid out x3
+01:47:00.293 MobileSMS pid=19454 main | app input window laid out
+01:47:00.384 SpringBoard pid=19429 main | SpringBoard: search visible try=0 slot=1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main,fg-active/main*
+01:47:01.674 SpringBoard pid=19429 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+01:47:01.677 SpringBoard pid=19429 main | SpringBoard: UIKit willHide
+01:47:02.506 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:02.507 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:02.507 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:02.508 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:02.656 SpringBoard pid=19429 main | SpringBoard: putting com.facebook.Messenger on stack slot 1
+01:47:02.656 SpringBoard pid=19429 main | launch com.facebook.Messenger state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+01:47:02.656 SpringBoard pid=19429 main | SpringBoard: com.facebook.Messenger got its default entity with a scene handle provider
+01:47:02.656 SpringBoard pid=19429 main | SpringBoard: creating app view for com.facebook.Messenger
+01:47:02.656 SpringBoard pid=19429 main | SpringBoard: created app view for com.facebook.Messenger
+01:47:02.660 SpringBoard pid=19429 main | scene transaction com.facebook.Messenger actions=1
+01:47:02.662 SpringBoard pid=19429 main | SpringBoard: com.facebook.Messenger's scene came from SpringBoard's own app view
+01:47:02.663 SpringBoard pid=19429 main | SpringBoard: camera658 com.facebook.Messenger on a card: injected app, a 'camera hook loaded' line should follow
+01:47:02.663 SpringBoard pid=19429 main | SpringBoard: com.facebook.Messenger is on stack slot 1
+01:47:02.663 SpringBoard pid=19429 main | hosted com.facebook.Messenger state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+01:47:02.665 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:02.665 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:02.665 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:02.665 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:02.665 SpringBoard pid=19429 main | SpringBoard: com.facebook.Messenger stays running in the background
+01:47:02.674 SpringBoard pid=19429 main | SpringBoard: kept the open stage inside its card while another app opened
+01:47:02.706 SpringBoard pid=19429 main | SpringBoard: fitting com.facebook.Messenger's scene to the card
+01:47:02.706 SpringBoard pid=19429 main | force geometry com.facebook.Messenger depth=0 frame={{0, 0}, {420, 458}}
+01:47:02.706 SpringBoard pid=19429 main | scene block sceneID:com.facebook.Messenger-default frame={{0, 0}, {430, 932}}
+01:47:02.706 SpringBoard pid=19429 main | app-view settings update
+01:47:02.706 SpringBoard pid=19429 main | app-view settings update done
+01:47:03.286 SpringBoard pid=19429 main | SpringBoard: com.facebook.Messenger stays running in the background
+01:47:04.233 SpringBoard pid=19429 main | SpringBoard: camera660 com.facebook.Messenger on a card: asked it to report its camera hooks (a 'camera660 com.facebook.Messenger hello' line should follow)
+01:47:05.288 SpringBoard pid=19429 main | SpringBoard: com.facebook.Messenger after two seconds - hosting the app, scene present, view in the card
+01:47:05.331 SpringBoard pid=19429 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+01:47:05.333 MobileSMS | app input window laid out x2
+01:47:05.333 MobileSMS pid=19454 main | app input window laid out
+01:47:05.336 SpringBoard pid=19429 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+01:47:05.349 SpringBoard pid=19429 main | keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+01:47:05.349 SpringBoard pid=19429 main | keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+01:47:05.349 SpringBoard pid=19429 main | raise keyboard video=0 depth=0
+01:47:05.356 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:05.357 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:05.358 SpringBoard pid=19429 main | SpringBoard: com.facebook.Messenger put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+01:47:05.367 SpringBoard pid=19429 main | raise keyboard video=0 depth=0
+01:47:05.369 SpringBoard | raise keyboard video=0 depth=0 x2
+01:47:05.369 SpringBoard pid=19429 main | keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+01:47:05.369 SpringBoard pid=19429 main | keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+01:47:05.369 SpringBoard pid=19429 main | raise keyboard video=0 depth=0
+01:47:05.370 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:05.370 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:05.522 SpringBoard pid=19429 bg | arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+01:47:05.524 SpringBoard pid=19429 main | raise keyboard video=0 depth=0
+01:47:05.547 SpringBoard | raise keyboard video=0 depth=0 x5
+01:47:05.547 SpringBoard pid=19429 main | SpringBoard: lifted stack slot 0 by 0 companion 0
+01:47:05.551 SpringBoard pid=19429 main | keyboard note on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+01:47:05.551 SpringBoard pid=19429 main | keyboard com.facebook.Messenger on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+01:47:05.551 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:05.551 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:08.039 SpringBoard pid=19429 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+01:47:08.042 MobileSMS | app input window laid out x4
+01:47:08.043 MobileSMS pid=19454 main | app input window laid out
+01:47:08.048 SpringBoard pid=19429 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+01:47:08.056 SpringBoard pid=19429 main | keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+01:47:08.057 SpringBoard pid=19429 main | keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+01:47:08.057 SpringBoard pid=19429 main | raise keyboard video=0 depth=0
+01:47:08.062 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:08.062 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:08.066 SpringBoard pid=19429 bg | arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+01:47:08.067 SpringBoard pid=19429 main | keyboard note on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+01:47:08.067 SpringBoard pid=19429 main | keyboard com.facebook.Messenger on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.facebook.Messenger hover=-
+01:47:08.067 SpringBoard pid=19429 main | raise keyboard video=0 depth=0
+01:47:08.069 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:08.069 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:08.076 SpringBoard pid=19429 main | raise keyboard video=0 depth=0
+01:47:08.617 SpringBoard | raise keyboard video=0 depth=0 x9
+01:47:08.617 SpringBoard pid=19429 main | SpringBoard: rim651 system gesture held at 0,210 (rim)
+01:47:08.624 SpringBoard pid=19429 main | SpringBoard: a touch above the keys passed through local={0.16666666666666666, 210.33333333333331} screen={0.16666666666666666, 210.33333333333331} window={{0, 0}, {430, 932}}
+01:47:08.628 SpringBoard | SpringBoard: a touch above the keys passed through local={0.16666666666666666, 210.33333333333331} screen={0.16666666666666666, 210.33333333333331} window={{0, 0}, {430, 932}} x2
+01:47:08.628 SpringBoard pid=19429 main | SpringBoard: rim651 hit top-outer-left at 0,210 -> DSStageRimHitView
+01:47:08.682 SpringBoard pid=19429 main | SpringBoard: rim651 drag began at 0,227 won by top-rim-pan
+01:47:09.246 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:09.247 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:09.247 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:09.247 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:09.258 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:09.259 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:09.259 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:09.260 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:09.263 SpringBoard pid=19429 main | SpringBoard: swapped the two stages between top and bottom
+01:47:09.336 SpringBoard pid=19429 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+01:47:09.342 SpringBoard pid=19429 main | scene block sceneID:com.facebook.Messenger-default frame={{0, 0}, {420, 458}}
+01:47:09.343 SpringBoard pid=19429 main | app-view settings update
+01:47:09.343 SpringBoard pid=19429 main | app-view settings update done
+01:47:10.009 SpringBoard pid=19429 main | SpringBoard: rim651 system gesture held at 0,627 (rim)
+01:47:10.797 SpringBoard pid=19429 main | scene block sceneID:com.facebook.Messenger-default frame={{0, 0}, {420, 458}}
+01:47:10.801 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:10.802 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:10.802 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:10.802 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:10.806 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:10.807 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:11.159 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:11.161 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:11.227 SpringBoard pid=19429 main | SpringBoard: rim651 system gesture held at 0,280 (rim)
+01:47:11.233 SpringBoard pid=19429 main | SpringBoard: rim651 hit main-outer-left at 0,280 -> DSStageDragShellView
+01:47:11.327 SpringBoard pid=19429 main | SpringBoard: rim651 drag began at 6,292 won by main-shell-pan
+01:47:11.651 SpringBoard pid=19429 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+01:47:11.652 SpringBoard pid=19429 main | scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {420, 458}}
+01:47:11.653 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:11.653 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:12.330 SpringBoard pid=19429 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+01:47:12.331 SpringBoard pid=19429 main | scene block sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A frame={{0, 0}, {420, 458}}
+01:47:12.333 SpringBoard pid=19429 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+01:47:12.333 SpringBoard pid=19429 main | hideStray split=0 depth=0
+01:47:12.762 SpringBoard pid=19429 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+01:47:12.763 SpringBoard pid=19429 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:47:12.771 MobileSMS | app input window laid out x4
+01:47:12.771 MobileSMS pid=19454 main | app restored the phone layout
+01:47:12.785 SpringBoard pid=19429 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+01:47:31.610 MobileSMS pid=19470 main | app ctor reason=0 bundle=com.apple.MobileSMS
+01:47:31.611 SpringBoard pid=19429 main | app: com.apple.MobileSMS ctor ok
+01:47:31.961 MobileSMS pid=19470 main | camera658 app capture hooks in, multitask switch present
+01:47:31.963 SpringBoard pid=19429 main | app: com.apple.MobileSMS remote keyboard hooks are in
+01:47:31.968 SpringBoard pid=19429 main | app: com.apple.MobileSMS is listening for staged keys
+01:47:33.261 SpringBoard pid=19429 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+01:47:34.802 SpringBoard pid=19429 main | SpringBoard: stage on screen
+01:47:34.802 SpringBoard pid=19429 main | on screen state=2 split=0 bottom=- top=- hover=-
+01:47:34.803 SpringBoard pid=19429 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+01:47:34.804 SpringBoard pid=19429 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:47:34.804 SpringBoard pid=19429 main | SpringBoard: opened the top stage
+01:47:35.195 SpringBoard pid=19429 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+
+--- crash ---
+
+--- diagnostics ---

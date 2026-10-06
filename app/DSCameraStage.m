@@ -38,6 +38,11 @@
 
 void DSCameraStageInstall(void);
 void DSCameraStageDidBecomeStaged(void);
+// 4.5.662: camera chrome on a short stage card.
+BOOL DSCameraStageNeedsTallLayout(void);
+void DSCameraStageNoteCameraUI(BOOL visible);
+void DSCameraStageApplyLayoutFit(void);
+static void DSCam662NoteSessionChanged(void);
 
 static atomic_bool DSCameraInstalled = false;
 static atomic_bool DSCameraCheckPending = false;
@@ -466,6 +471,7 @@ static void DSCameraStartHeartbeat(void) {
                 DSCameraLog(@"idle", @"no session is running any more, released the camera claim");
                 dispatch_async(dispatch_get_main_queue(), ^{
                     DSCameraStopHeartbeat();
+                    DSCam662NoteSessionChanged();
                 });
             });
         });
@@ -492,6 +498,163 @@ static BOOL DSCameraSessionUsesVideo(id session) {
     } @catch (NSException *exception) {
         return YES;
     }
+}
+
+static BOOL DSCameraAnySessionLive(void);
+
+#pragma mark - 4.5.662 tall camera layout (fit chrome into the card)
+
+// A stage card is ~half the phone tall. Camera UIs (Beeper, Signal, Messenger,
+// Messages) lay out shutter / flip / gallery for a full phone. The app dylib
+// then clamped any phone-tall root back to the card and set clipsToBounds, so
+// the bottom chrome was cut off ("missing buttons"). While the camera is open
+// we keep real phone metrics (like Phone) and scale the root to FIT the card
+// so every control stays visible. The card size itself never grows.
+
+static atomic_int DSCameraUIVisible = 0;
+static const void *DSCam662ScaledKey = &DSCam662ScaledKey;
+static const void *DSCam662ScaleKey = &DSCam662ScaleKey;
+static BOOL DSCam662Applying = NO;
+static BOOL DSCam662FitQueued = NO;
+
+static BOOL DSCameraIsMobilePhoneBundle(void) {
+    NSString *bundle = NSBundle.mainBundle.bundleIdentifier ?: @"";
+    return [bundle isEqualToString:@"com.apple.mobilephone"];
+}
+
+BOOL DSCameraStageNeedsTallLayout(void) {
+    if (!DSCameraStaged()) return NO;
+    if (DSCameraIsMobilePhoneBundle()) return NO; // Phone has its own fill path
+    if (atomic_load(&DSCameraUIVisible) > 0) return YES;
+    // Any live capture (video checked at startRunning); audio-only is rare here.
+    return DSCameraAnySessionLive();
+}
+
+static void DSCam662RestoreRoot(UIView *root) {
+    if (!root) return;
+    if (!objc_getAssociatedObject(root, DSCam662ScaledKey)) return;
+    @try {
+        root.transform = CGAffineTransformIdentity;
+        objc_setAssociatedObject(root, DSCam662ScaledKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(root, DSCam662ScaleKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        DSCameraLog(@"layout662", @"restored root after camera chrome closed");
+    } @catch (NSException *exception) {
+    }
+}
+
+static UIWindow *DSCam662KeyWindow(void) {
+    UIWindow *best = nil;
+    @try {
+        for (UIWindow *window in UIApplication.sharedApplication.windows) {
+            if (![window isKindOfClass:UIWindow.class] || window.hidden) continue;
+            NSString *name = NSStringFromClass(object_getClass(window));
+            if ([name containsString:@"Keyboard"] || [name containsString:@"TextEffects"]) continue;
+            if (window.windowLevel >= UIWindowLevelStatusBar) continue;
+            if (!best || window.isKeyWindow || window.windowLevel > best.windowLevel) best = window;
+        }
+    } @catch (NSException *exception) {
+        return nil;
+    }
+    return best;
+}
+
+void DSCameraStageApplyLayoutFit(void) {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ DSCameraStageApplyLayoutFit(); });
+        return;
+    }
+    if (DSCam662Applying) return;
+    if (!DSCameraStageNeedsTallLayout()) {
+        UIWindow *window = DSCam662KeyWindow();
+        UIView *root = window.rootViewController.view;
+        DSCam662RestoreRoot(root);
+        return;
+    }
+    UIWindow *window = DSCam662KeyWindow();
+    if (!window) return;
+    UIView *root = window.rootViewController.view;
+    if (![root isKindOfClass:UIView.class]) return;
+
+    CGRect device = [DSStageContext sharedContext].deviceBounds;
+    CGRect stage = [DSStageContext sharedContext].stageBounds;
+    CGFloat layoutW = CGRectGetWidth(device);
+    CGFloat layoutH = CGRectGetHeight(device);
+    CGFloat cardW = CGRectGetWidth(stage);
+    CGFloat cardH = CGRectGetHeight(stage);
+    if (layoutW < 80.0 || layoutH < 80.0 || cardW < 80.0 || cardH < 80.0) return;
+    // Card still phone-sized (stage not settled): nothing to fit yet.
+    if (cardH > layoutH - 40.0) return;
+
+    // FIT (min), not fill (max): every camera control must stay inside the card.
+    CGFloat scale = MIN(cardW / layoutW, cardH / layoutH);
+    if (scale < 0.2 || scale > 1.05) return;
+
+    DSCam662Applying = YES;
+    @try {
+        CGRect wantWindow = CGRectMake(0.0, 0.0, cardW, cardH);
+        if (!CGAffineTransformIsIdentity(window.transform)) window.transform = CGAffineTransformIdentity;
+        if (fabs(CGRectGetWidth(window.bounds) - cardW) > 0.5 ||
+            fabs(CGRectGetHeight(window.bounds) - cardH) > 0.5 ||
+            fabs(CGRectGetMinX(window.frame)) > 0.5 ||
+            fabs(CGRectGetMinY(window.frame)) > 0.5) {
+            window.frame = wantWindow;
+        }
+        if (!window.clipsToBounds) window.clipsToBounds = YES;
+        if (!window.layer.masksToBounds) window.layer.masksToBounds = YES;
+
+        BOOL boundsWrong = fabs(CGRectGetWidth(root.bounds) - layoutW) > 0.5 ||
+                           fabs(CGRectGetHeight(root.bounds) - layoutH) > 0.5;
+        if (boundsWrong) {
+            root.transform = CGAffineTransformIdentity;
+            root.bounds = CGRectMake(0.0, 0.0, layoutW, layoutH);
+        }
+        CGPoint wantCenter = CGPointMake(cardW / 2.0, cardH / 2.0);
+        CGAffineTransform wantT = CGAffineTransformMakeScale(scale, scale);
+        if (fabs(root.center.x - wantCenter.x) > 0.25 || fabs(root.center.y - wantCenter.y) > 0.25) {
+            root.center = wantCenter;
+        }
+        CGAffineTransform t = root.transform;
+        if (fabs(t.a - wantT.a) > 0.0005 || fabs(t.d - wantT.d) > 0.0005 ||
+            fabs(t.b) > 0.0005 || fabs(t.c) > 0.0005 || fabs(t.tx) > 0.25 || fabs(t.ty) > 0.25) {
+            root.transform = wantT;
+        }
+        if (root.clipsToBounds) root.clipsToBounds = NO;
+        if (root.layer.masksToBounds) root.layer.masksToBounds = NO;
+        objc_setAssociatedObject(root, DSCam662ScaledKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(root, DSCam662ScaleKey, @(scale), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        static CFAbsoluteTime lastLog = 0;
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (now - lastLog > 2.0) {
+            lastLog = now;
+            DSCameraLog(@"layout662", @"fit camera chrome scale=%.2f layout=%.0fx%.0f card=%.0fx%.0f",
+                        scale, layoutW, layoutH, cardW, cardH);
+        }
+    } @catch (NSException *exception) {
+    }
+    DSCam662Applying = NO;
+}
+
+static void DSCam662RequestFit(void) {
+    if (DSCam662FitQueued) return;
+    DSCam662FitQueued = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSCam662FitQueued = NO;
+        DSCameraStageApplyLayoutFit();
+    });
+}
+
+void DSCameraStageNoteCameraUI(BOOL visible) {
+    if (visible) {
+        atomic_fetch_add(&DSCameraUIVisible, 1);
+    } else {
+        int prev = atomic_fetch_sub(&DSCameraUIVisible, 1);
+        if (prev <= 1) atomic_store(&DSCameraUIVisible, 0);
+    }
+    DSCam662RequestFit();
+}
+
+static void DSCam662NoteSessionChanged(void) {
+    DSCam662RequestFit();
 }
 
 #pragma mark - Hooks
@@ -529,6 +692,7 @@ static void DSCameraStartRunning(id self, SEL _cmd) {
     DSCameraPost(kDSCameraEventAfterStart, 0, DSCameraFlagsForSession(self, refused));
     DSCam660Event(kDSCamera660EvStartReturned, 0, self, refused);
     DSCameraStartHeartbeat();
+    DSCam662NoteSessionChanged();
 }
 
 static void DSCameraStopRunning(id self, SEL _cmd) {
@@ -542,6 +706,7 @@ static void DSCameraStopRunning(id self, SEL _cmd) {
         DSCameraPost(kDSCameraEventStop, 0, DSCameraFlagsForSession(nil, NO));
         DSCam660Event(kDSCamera660EvStop, 0, self, NO);
         DSCameraLog(@"stop", @"stopRunning, camera released");
+        DSCam662NoteSessionChanged();
     }
 }
 

@@ -1,0 +1,72 @@
+DynamicStage 4.5.662 - incomplete in-stage camera UI (missing buttons), especially Beeper
+=======================================================================================
+Base: 4.5.661 (all camera presence / arbiter / logging kept). Built on the box with Theos;
+NOT yet tested on a device.
+
+EVIDENCE (user after 4.5.661; Progress.txt Beeper hosting)
+- User: "some apps like beeper it doesnt show they full camera like some buttons are
+  miossing but some apps are alg but not 100@ funtion"
+- Progress.txt: Beeper on a card is fitted to frame {{0,0},{420,458}} (half-phone tall).
+  Camera UIs (shutter / flip / gallery / mode) are designed for a full phone (~430×932).
+
+ROOT CAUSE (verified in sources, not guessed from the preview path)
+1. Staged non-Phone apps are told the screen is the card (DSStageBounds → ~420×458).
+2. UIView -setBounds: and DSFittedStageFrame clamp any phone-tall root back to the card
+   height and set clipsToBounds=YES (Phone is explicitly exempt because it uses
+   DSPhoneScaleRootIntoCard instead).
+3. Result: camera chrome that needs full-phone height is crushed or clipped → missing
+   bottom buttons. Beeper shows it worst; other apps are "mostly OK" for the same reason.
+4. 4.5.661 fixed the black preview (display-layout presence). It did not change this
+   layout clamp. DSIsBeeper() in Tweak.xm is stubbed to NO, so Beeper takes the same
+   clamp path as Signal/Messenger/Messages.
+
+WHAT CHANGED
+app/DSCameraStage.m
+  - DSCameraStageNeedsTallLayout(): staged + (camera VC visible OR live capture session),
+    never for Phone.
+  - DSCameraStageNoteCameraUI(YES/NO): refcount from camera-named view controllers.
+  - DSCameraStageApplyLayoutFit(): window stays card-sized; root lays out at device size
+    and is scaled with FIT (min of W/H) and centered so every control stays inside the
+    card. clipsToBounds off on the root, on on the window. Restores when camera closes.
+  - Session start / stop / idle heartbeat request a fit refresh.
+  - New log: camera658 layout662 fit camera chrome scale=… (also camera660 channel via
+    DSCameraLog → camera658 app layout662 …).
+
+app/Tweak.xm
+  - DSCameraKeepsRealScreen() / DSNameLooksLikeCameraUI().
+  - UIScreen / UIApplication frame hooks: while camera tall layout is active, return real
+    phone metrics (same idea as Phone).
+  - DSFittedStageFrame and UIView -setBounds: skip the tall-root clamp while camera is
+    open (mirror the Phone exemption).
+  - UIViewController viewWillAppear / viewDidDisappear note camera UI; root layoutSubviews
+    and viewDidLayoutSubviews re-apply the fit asynchronously (never mid-layout).
+
+shared/DSConstants.h, control, changelog.md → 4.5.662.
+
+UNCHANGED
+SpringBoard camera arbiter / presence (661), call / boot / home guards, 656 call-screen
+hiding, 657 switcher no-op, 659 home/wake, Phone dial-pad fill-scale, stage card size.
+
+RISKS
+- While the camera is open the whole staged app uses phone metrics + a fitted root scale.
+  Closing the camera returns to card metrics; a brief reflow of the chat behind is
+  possible.
+- VC name matching ("Camera", "Capture", …) can false-positive; the refcount and the
+  live-session check limit how long tall layout stays on. If a camera VC uses an
+  unmatched class name, tall layout still engages once startRunning fires.
+- Messages' extension camera process is still not injected; this fixes chrome inside
+  injected apps (Beeper / Signal / Messenger / MobileSMS host). Extension chrome may
+  still be incomplete.
+- FIT scale makes the preview slightly letterboxed inside the card (by design: all
+  buttons visible beats a filled preview with clipped chrome).
+
+TEST
+1. Install 4.5.662, force-quit Beeper / Signal / Messenger / Messages, respring.
+2. Beeper from the stage picker: open the camera ~10 s. Confirm shutter / flip / gallery
+   (and any mode row) are all visible inside the card. Card size must not grow.
+3. Same for Signal and Messenger; try Messages' in-app camera too.
+4. Close the camera: chat layout should return to the normal card. Open camera again.
+5. Upload the log; look for "layout662 fit camera chrome scale=…" and no new SIGTRAP.
+
+verify: 3 binaries, arm64 + new-ABI arm64e, signed
+deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.662_iphoneos-arm64.deb

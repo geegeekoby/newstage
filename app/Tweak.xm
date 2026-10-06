@@ -1552,22 +1552,56 @@ static BOOL DSPhoneKeepsRealScreen(void) {
     return DSIsMobilePhone();
 }
 
+// 4.5.662: while a staged app's camera UI is open, keep real phone metrics and
+// scale the root to FIT the card (see DSCameraStageApplyLayoutFit). Without
+// this the tall-root clamp + clipsToBounds cut off shutter / flip / gallery.
+extern "C" BOOL DSCameraStageNeedsTallLayout(void);
+extern "C" void DSCameraStageNoteCameraUI(BOOL visible);
+extern "C" void DSCameraStageApplyLayoutFit(void);
+
+static BOOL DSCameraKeepsRealScreen(void) {
+    if (DSIsMobilePhone() || !DSStaged()) return NO;
+    @try {
+        return DSCameraStageNeedsTallLayout();
+    } @catch (NSException *exception) {
+        return NO;
+    }
+}
+
+static BOOL DSNameLooksLikeCameraUI(NSString *name) {
+    if (name.length == 0) return NO;
+    if ([name rangeOfString:@"Camera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"Capture" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"ImagePicker" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"UIImagePicker"].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"QRCode" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"QRScanner" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"Barcode" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"AVCam" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"FunCamera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"MediaCapture" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"PhotoCapture" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"VideoCall" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"CallCamera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    return NO;
+}
+
 %hook UIScreen
 
 - (CGRect)bounds {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return %orig;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged() && self == UIScreen.mainScreen) return DSStageBounds();
     return %orig;
 }
 
 - (CGRect)_referenceBounds {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return %orig;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged() && self == UIScreen.mainScreen) return DSStageBounds();
     return %orig;
 }
 
 - (CGRect)applicationFrame {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return %orig;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged() && self == UIScreen.mainScreen) return DSStageBounds();
     return %orig;
 }
@@ -1576,7 +1610,7 @@ static BOOL DSPhoneKeepsRealScreen(void) {
 // view. Messages keeps laying out against the phone unless these agree.
 - (CGRect)nativeBounds {
     CGRect native = %orig;
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return native;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return native;
     if (DSIsReadingHardwareDisplay() || !DSStaged() || self != UIScreen.mainScreen) return native;
     CGRect stage = DSStageBounds();
     if (CGRectGetWidth(stage) < 80.0 || CGRectGetHeight(stage) < 80.0) return native;
@@ -1588,13 +1622,13 @@ static BOOL DSPhoneKeepsRealScreen(void) {
 }
 
 - (CGRect)_unjailedReferenceBounds {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return %orig;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged() && self == UIScreen.mainScreen) return DSStageBounds();
     return %orig;
 }
 
 - (CGRect)_unjailedBounds {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return %orig;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged() && self == UIScreen.mainScreen) return DSStageBounds();
     return %orig;
 }
@@ -1608,7 +1642,7 @@ static BOOL DSPhoneKeepsRealScreen(void) {
 - (CGRect)_applicationFrameForInterfaceOrientation:(NSInteger)orientation
                               usingStatusbarHeight:(CGFloat)height
                                    ignoreStatusBar:(BOOL)ignore {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return %orig;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged()) return DSStageBounds();
     return %orig;
 }
@@ -1616,7 +1650,7 @@ static BOOL DSPhoneKeepsRealScreen(void) {
 - (CGRect)_applicationFrameWithoutOverscanForInterfaceOrientation:(NSInteger)orientation
                                              usingStatusbarHeight:(CGFloat)height
                                                   ignoreStatusBar:(BOOL)ignore {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen()) return %orig;
+    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged()) return DSStageBounds();
     return %orig;
 }
@@ -1886,6 +1920,11 @@ static CGRect DSFittedStageFrame(UIView *view, CGRect frame) {
         UIWindow *owning = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
         if (!owning || !DSIsKeyboardWindow(owning)) return frame;
     }
+    // 4.5.662: camera chrome needs phone-tall frames; the root scale fits them.
+    if (DSCameraKeepsRealScreen()) {
+        UIWindow *owning = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+        if (!owning || !DSIsKeyboardWindow(owning)) return frame;
+    }
     // The reply field is placed by the reparent below. Fitting it here pulls
     // it back to the phone, or stretches a tall input view over the thread.
     if (DSViewIsCompatibilityInputView(view)) return frame;
@@ -2134,6 +2173,11 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
 
 - (void)viewWillAppear:(BOOL)animated {
     NSString *name = NSStringFromClass(self.class);
+    if (DSStaged() && DSNameLooksLikeCameraUI(name) && !DSIsMobilePhone()) {
+        DSTraceFormat(@"app willAppear cameraUI %@", name);
+        DSCameraStageNoteCameraUI(YES);
+        DSCameraStageApplyLayoutFit();
+    }
     if (DSStaged() &&
         ([name rangeOfString:@"Chat"].location != NSNotFound ||
          [name rangeOfString:@"Transcript"].location != NSNotFound ||
@@ -2177,6 +2221,15 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
     %orig;
 }
 
+- (void)viewDidDisappear:(BOOL)animated {
+    NSString *name = NSStringFromClass(self.class);
+    if (DSStaged() && DSNameLooksLikeCameraUI(name) && !DSIsMobilePhone()) {
+        DSCameraStageNoteCameraUI(NO);
+        DSCameraStageApplyLayoutFit();
+    }
+    %orig;
+}
+
 - (void)viewDidLayoutSubviews {
     %orig;
     if (!DSStaged()) return;
@@ -2193,6 +2246,10 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
     // Schedule off this layout turn: mutating bounds+transform mid-layout is a
     // SIGTRAP (not catchable by @try).
     if (DSIsMobilePhone()) DSPhoneRequestPass(self.view, @"vc-layout");
+    // 4.5.662: re-apply camera fit after the root lays out (async, not mid-layout).
+    if (DSCameraKeepsRealScreen()) {
+        dispatch_async(dispatch_get_main_queue(), ^{ DSCameraStageApplyLayoutFit(); });
+    }
     refitDepth += 1;
     DSHideHomeChromeInView(window, 0);
     refitDepth -= 1;
@@ -5401,6 +5458,11 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
     if (DSIsMobilePhone() && !DSPhoneLayoutFrozen && objc_getAssociatedObject(view, DSPhoneScaleKey)) {
         DSPhoneReapply(view);
     }
+    // 4.5.662: keep camera chrome fit after UIKit clears transforms on layout.
+    if (DSCameraKeepsRealScreen() && view.window &&
+        view.window.rootViewController.view == view) {
+        dispatch_async(dispatch_get_main_queue(), ^{ DSCameraStageApplyLayoutFit(); });
+    }
 }
 
 - (void)setFrame:(CGRect)frame {
@@ -5527,6 +5589,16 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
         UIWindow *owning = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
         if (!DSIsKeyboardWindow(owning)) {
             %orig(bounds);
+            return;
+        }
+    }
+    // 4.5.662: do not clamp the camera root back to the card (that was the
+    // missing shutter / flip / gallery). Fit scale runs after.
+    if (DSCameraKeepsRealScreen() && DSStaged()) {
+        UIWindow *owning = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
+        if (!DSIsKeyboardWindow(owning)) {
+            %orig(bounds);
+            DSCameraStageApplyLayoutFit();
             return;
         }
     }

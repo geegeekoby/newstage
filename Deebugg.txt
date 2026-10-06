@@ -1,0 +1,123 @@
+16:27:32.906 SpringBoard pid=2903 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+16:27:32.906 SpringBoard pid=2903 main | ready state=0 split=0 bottom=- top=- hover=-
+16:27:32.907 SpringBoard pid=2903 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+16:27:32.914 SpringBoard pid=2903 main | SpringBoard: camera652 arbiter listening
+16:27:32.914 SpringBoard pid=2903 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+16:27:32.916 SpringBoard pid=2903 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+16:27:32.917 SpringBoard pid=2903 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=11s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=11s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.face...
+16:27:35.011 SpringBoard pid=2903 main | SpringBoard: stage window moved back to the foreground scene
+16:27:35.012 SpringBoard pid=2903 main | SpringBoard: stage on screen
+16:27:35.012 SpringBoard pid=2903 main | on screen state=2 split=0 bottom=- top=- hover=-
+16:27:35.012 SpringBoard pid=2903 main | SpringBoard: taking key from SBCoverSheetWindow on this scene
+16:27:35.013 SpringBoard pid=2903 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+16:27:35.013 SpringBoard pid=2903 main | SpringBoard: opened the top stage
+16:27:35.388 SpringBoard pid=2903 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+16:27:35.389 SpringBoard pid=2903 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+16:27:35.907 SpringBoard pid=2903 main | SpringBoard: putting com.apple.mobilephone on stack slot 0
+16:27:35.907 SpringBoard pid=2903 main | launch com.apple.mobilephone state=2 split=0 bottom=- top=- hover=-
+16:27:35.908 SpringBoard pid=2903 main | SpringBoard: com.apple.mobilephone got its default entity with a scene handle provider
+16:27:35.908 SpringBoard pid=2903 main | SpringBoard: creating app view for com.apple.mobilephone
+16:27:35.908 SpringBoard pid=2903 main | SpringBoard: created app view for com.apple.mobilephone
+16:27:35.914 SpringBoard pid=2903 main | scene transaction com.apple.mobilephone actions=1
+16:27:35.916 SpringBoard pid=2903 main | SpringBoard: com.apple.mobilephone's scene came from SpringBoard's own app view
+16:27:35.918 SpringBoard pid=2903 main | SpringBoard: com.apple.mobilephone is on stack slot 0
+16:27:35.918 SpringBoard pid=2903 main | hosted com.apple.mobilephone state=2 split=0 bottom=com.apple.mobilephone top=- hover=-
+16:27:35.940 SpringBoard pid=2903 main | SpringBoard: com.apple.mobilephone stays running in the background
+16:27:35.951 SpringBoard pid=2903 main | SpringBoard: kept the open stage inside its card while another app opened
+16:27:35.959 SpringBoard pid=2903 main | SpringBoard: fitting com.apple.mobilephone's scene to the card
+16:27:35.960 SpringBoard pid=2903 main | force geometry com.apple.mobilephone depth=0 frame={{0, 0}, {420, 458}}
+16:27:35.960 SpringBoard pid=2903 main | scene block sceneID:com.apple.mobilephone-default frame={{0, 0}, {430, 932}}
+16:27:35.960 SpringBoard pid=2903 main | app-view settings update
+16:27:35.960 SpringBoard pid=2903 main | app-view settings update done
+16:27:36.261 SpringBoard pid=2903 main | app: com.apple.mobilephone ctor ok
+16:27:36.540 SpringBoard pid=2903 main | SpringBoard: com.apple.mobilephone stays running in the background
+16:27:36.660 SpringBoard pid=2903 main | scene block sceneID:com.apple.mobilephone-default frame={{0, 0}, {420, 458}}
+16:27:36.674 SpringBoard pid=2903 main | app: com.apple.mobilephone remote keyboard hooks are in
+16:27:36.676 SpringBoard pid=2903 main | app: com.apple.mobilephone is listening for staged keys
+16:27:36.685 SpringBoard pid=2903 main | app: com.apple.mobilephone remote keyboard via window-class, message field stays
+16:27:36.716 SpringBoard pid=2903 main | app: com.apple.mobilephone remote keyboard via input-set, message field stays
+16:27:36.736 SpringBoard pid=2903 main | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+16:27:37.973 SpringBoard | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it x3
+16:27:37.973 SpringBoard pid=2903 main | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+16:27:38.524 SpringBoard | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it x2
+16:27:38.524 SpringBoard pid=2903 main | SpringBoard: com.apple.mobilephone after two seconds - hosting the app, scene present, view in the card
+16:27:38.792 SpringBoard pid=2903 main | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+16:27:40.010 SpringBoard | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it x3
+16:27:40.010 SpringBoard pid=2903 main | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+16:27:40.550 SpringBoard | 47778.324 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it x2
+16:27:40.550 SpringBoard pid=2903 main | SpringBoard: incall650 armed source=1 card={{19, 19}, {392, 430}}
+16:27:40.724 SpringBoard pid=2903 main | SpringBoard: incall650 armed source=2 card={{19, 19}, {392, 430}}
+16:27:40.799 SpringBoard pid=2903 main | scene update begin sceneID:com.apple.mobilephone-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+16:27:40.799 SpringBoard pid=2903 main | SpringBoard: camera652 hosted scene sceneID:com.apple.mobilephone-default fg=1 occluded=0 deactivation=0x20 camera=0
+16:27:40.799 SpringBoard pid=2903 main | app-view settings update
+16:27:40.799 SpringBoard pid=2903 main | app-view settings update done
+16:27:40.880 SpringBoard pid=2903 main | 50060.724 sb: incall650 armed source=2 card={{19, 19}, {392, 430}}
+16:27:40.880 SpringBoard pid=2903 main | SpringBoard: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+16:27:41.287 SpringBoard pid=2903 main | 50060.881 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+16:27:42.512 SpringBoard | 50060.881 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it x3
+16:27:42.512 SpringBoard pid=2903 main | 50060.881 sb: incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow), cannot contain it
+16:27:42.879 SpringBoard pid=2903 main | scene update begin sceneID:com.apple.mobilephone-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+16:27:42.880 SpringBoard pid=2903 main | app-view settings update
+16:52:10.943 MobileSMS pid=2999 main | app ctor reason=0 bundle=com.apple.MobileSMS
+16:52:12.029 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:52:12.029 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:52:12.032 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:52:12.033 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:52:12.042 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:52:12.042 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:52:12.042 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:52:12.042 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:52:12.844 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+16:52:12.844 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+16:52:12.885 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+16:52:12.886 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+16:52:12.886 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:12.886 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:13.390 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:13.391 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:22.332 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:22.333 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:22.334 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:22.335 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:22.364 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:52:22.525 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:57:49.949 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:57:49.949 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:57:49.950 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:57:49.951 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+16:57:49.952 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:49.952 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:49.952 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:49.952 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:49.953 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:49.953 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:49.954 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:49.954 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+16:57:50.294 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:57:50.294 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:57:50.814 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:57:50.816 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:07.427 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:07.427 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:07.427 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:07.428 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:21.751 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:21.751 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:21.752 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:21.752 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:30.017 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+16:58:30.018 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+16:58:30.023 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+16:58:30.024 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+16:58:33.521 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 525}, {430, 407}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.522 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 525}, {430, 407}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.522 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 525}, {430, 407}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.522 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 525}, {430, 407}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.922 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.923 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.923 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.924 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:33.946 MobileSMS pid=2999 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:34.112 MobileSMS pid=2999 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+16:58:37.286 MobileSMS pid=3083 main | app ctor reason=0 bundle=com.apple.MobileSMS
+16:58:47.060 MobileSMS pid=3088 main | app ctor reason=0 bundle=com.apple.MobileSMS

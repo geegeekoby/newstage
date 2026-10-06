@@ -20,14 +20,20 @@
 extern "C" {
 #endif
 void DSInCallStageInstall(void);
-// 4.5.653 call guard. YES while a phone call is up (InCallService on screen
-// or frontmost), for 4 s after that changes, and for 25 s after the staged
-// Phone app reports that it started a call. Cheap: the window walk behind it
-// is cached for half a second.
+// 4.5.653 call guard (narrowed in 4.5.656). YES while a phone call is up
+// (InCallService frontmost or a call window on screen), for 4 s after that
+// changes, and, after the staged Phone reports a call, from 1.5 s after the
+// call key until the call screen has been seen (25 s at most). The first
+// 1.5 s are left alone: that is iOS switching to the call screen. Cheap: the
+// window walk behind it is cached for half a second.
 BOOL DSCallGuardActive(void);
 // The front app changed (SpringBoard's frontDisplayDidChange): re-read the
 // call state on the next ask.
 void DSCallGuardNoteFrontChange(void);
+// 4.5.656: SBAppViewController hook held one staged app view update (log count).
+void DSCallGuardNoteHeldUpdate(void);
+// 4.5.656: YES while the stage windows are hidden so a call screen shows.
+BOOL DSCallStepAsideActive(void);
 // YES for a touch outside the card on the window that holds the contained
 // call UI, so the stage and Home Screen under it keep working.
 BOOL DSInCallWindowPassesTouch(UIView *view, CGPoint point);

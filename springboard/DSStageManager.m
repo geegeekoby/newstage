@@ -19,6 +19,7 @@
 #import "DSStageLayout.h"
 #import "DSStageShelfView.h"
 #import "DSStageDragShellView.h"
+#import "DSInCallStage.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -5511,6 +5512,8 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 }
 
 - (BOOL)shouldHideSystemHomeAffordance {
+    // 4.5.656: the stage is hidden for a call screen; its home bar is the system's.
+    if (DSCallStepAsideActive()) return NO;
     // Only while a live app owns the stage: with the picker up the recordings
     // still show the system home bar.
     return self.hasHostedApp && _state == DSStageStateOverlay;
@@ -5533,6 +5536,8 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 }
 
 - (BOOL)shouldHideSystemStatusBar {
+    // 4.5.656: the call screen keeps the status bar while the stage is aside.
+    if (DSCallStepAsideActive()) return NO;
     return [self stageOccupiesTop] && !_statusBarPeeking;
 }
 
@@ -5660,6 +5665,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 }
 
 - (BOOL)shouldSuppressSystemGestureAtPoint:(CGPoint)point {
+    if (DSCallStepAsideActive()) return NO;
     // A left swipe from the phone's right corner is not a stage gesture and not
     // a system one either. Letting it through is what blanks the stage.
     if (_stageDragActive && [self pointIsTerminateBand:point]) return YES;
@@ -5668,6 +5674,8 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 }
 
 - (BOOL)shouldSuppressSystemGestureAtPoint:(CGPoint)point velocity:(CGPoint)velocity {
+    // 4.5.656: the hidden stage never takes a system gesture from the call screen.
+    if (DSCallStepAsideActive()) return NO;
     if (_stageDragActive && [self pointIsTerminateBand:point]) return YES;
     if (self.isStageVisible && [self pointIsHomeBar:point]) return NO;
     (void)velocity;
@@ -5817,6 +5825,8 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 // that drag, so exactly one thing happens per pull.
 - (BOOL)adoptSystemEdgePull:(UIPanGestureRecognizer *)gesture {
     if (!_activated) return NO;
+    // 4.5.656: no stage pull over the call screen; the edge stays the system's.
+    if (DSCallStepAsideActive()) return NO;
     if (!gesture || _systemPull) return NO;
     if (CFAbsoluteTimeGetCurrent() < _ignoreSystemPullUntil) return NO;
     CGPoint start = [gesture locationInView:nil];

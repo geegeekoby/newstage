@@ -65,7 +65,66 @@ static UIWindowScene *DSForegroundWindowScene(void) {
     return nil;
 }
 
-@implementation DSStageWindow
+// 4.5.656 call step-aside state (main thread only).
+static BOOL DSStageWindowsAside = NO;
+
+static NSHashTable *DSStageWindowRegistry(void) {
+    static NSHashTable *windows;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        windows = [NSHashTable weakObjectsHashTable];
+    });
+    return windows;
+}
+
+@implementation DSStageWindow {
+    // Whether the stage wants this window shown once the call screen has gone.
+    BOOL _shownBeforeCall;
+}
+
++ (BOOL)callAside {
+    return DSStageWindowsAside;
+}
+
++ (void)setCallAside:(BOOL)aside {
+    if (DSStageWindowsAside == aside) return;
+    DSStageWindowsAside = aside;
+    for (DSStageWindow *window in DSStageWindowRegistry().allObjects) {
+        [window ds_applyCallAside:aside];
+    }
+}
+
+// Hidden, not moved: a hidden window is neither drawn nor hit by the window
+// server, so the card, its rim strips and the hosted app cannot cover or take
+// a touch from the call screen. Hiding a hosted app view is what minimize and
+// the home swipe already do; no scene settings are written here.
+- (void)ds_applyCallAside:(BOOL)aside {
+    if (aside) {
+        _shownBeforeCall = ![super isHidden];
+        if (_shownBeforeCall) [super setHidden:YES];
+    } else if (_shownBeforeCall) {
+        [super setHidden:NO];
+    }
+}
+
+// While the call screen is up, a request to show the stage is remembered for
+// later instead of putting the window back over the call.
+- (void)setHidden:(BOOL)hidden {
+    if (DSStageWindowsAside) {
+        _shownBeforeCall = !hidden;
+        if (hidden && ![super isHidden]) [super setHidden:YES];
+        return;
+    }
+    [super setHidden:hidden];
+}
+
+- (void)makeKeyAndVisible {
+    if (DSStageWindowsAside) {
+        _shownBeforeCall = YES;
+        return;
+    }
+    [super makeKeyAndVisible];
+}
 
 + (instancetype)stageWindow {
     DSStageWindow *window = nil;
@@ -85,6 +144,8 @@ static UIWindowScene *DSForegroundWindowScene(void) {
     // put this window on top of the keys.
     window.windowLevel = 998.0;
     window.hidden = YES;
+    [DSStageWindowRegistry() addObject:window];
+    if (DSStageWindowsAside) [window ds_applyCallAside:YES];
     return window;
 }
 
@@ -117,6 +178,7 @@ static UIWindowScene *DSForegroundWindowScene(void) {
 // had no owner for would leave the device looking frozen, and the stage simply
 // not receiving a touch is the far cheaper failure.
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSStageWindowsAside) return nil; // 4.5.656: the call screen gets every touch
     if (!self.touchTest || !self.touchTest(point)) return nil;
     return [super hitTest:point withEvent:event];
 }

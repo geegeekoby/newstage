@@ -35,11 +35,35 @@ static NSString *const DSPhoneBundle = @"com.apple.mobilephone";
 // SIGTRAP behind the safe modes. See DSCallGuardActive.
 static const BOOL kDSInCallContainmentEnabled = NO;
 
-// ---- 4.5.653 call guard -------------------------------------------------------
+// ---- 4.5.653 call guard, narrowed in 4.5.656 ----------------------------------
+// 4.5.653 held every update to the staged app view from the moment the staged
+// Phone's call key was tapped, for 25 s. That covered iOS's own switch to the
+// call screen as well. The 4.5.652 log of the crash shows the order: call key
+// 40.55, the Phone scene's deactivation update 40.80 (applied fine), call
+// screen up in the main layout 40.88, then the update that asserted 42.88,
+// two seconds after the call screen was already in front. 4.5.656 lets the
+// updates of that transition through and holds once the call screen is in
+// front (or a call window is up), for 4 s after it goes, and, if the call
+// screen is never seen, from 1.5 s after the call key until the arm runs out.
 static CFAbsoluteTime DSCallGuardArmedUntil = 0;
+static CFAbsoluteTime DSCallGuardArmedAt = 0;
 static CFAbsoluteTime DSCallGuardCheckedAt = 0;
 static CFAbsoluteTime DSCallGuardFlipAt = 0;
 static BOOL DSCallGuardLastActive = NO;
+static const CFAbsoluteTime kDSCallArmSeconds = 25.0;
+static const CFAbsoluteTime kDSCallHoldDelay = 1.5;
+
+// 4.5.656 step-aside state.
+static NSString *const DSInCallServiceBundle = @"com.apple.InCallService";
+static BOOL DSCallScreenFront = NO;            // InCallService is the front app
+static BOOL DSCallScreenSeenSinceArm = NO;
+static CFAbsoluteTime DSCallScreenGoneAt = 0;
+static BOOL DSCallAside = NO;
+static CFAbsoluteTime DSCallAsideSince = 0;
+static NSInteger DSCallAsideGeneration = 0;
+static NSInteger DSCallHeldCount = 0;
+static const CFAbsoluteTime kDSCallAsideWaitSeconds = 10.0;
+static void DSCallAsideEvaluate(NSString *why);
 
 static void DSCallGuardLog(NSString *line) {
     static CFAbsoluteTime last = 0;
@@ -52,35 +76,185 @@ static void DSCallGuardLog(NSString *line) {
     DSDiagnosticsRecordFormat(@"SpringBoard: call653 %@", line);
 }
 
+// Rate limited: one line per distinct text every 3 s, at most 8 a second.
+static void DSCall656Log(NSString *line) {
+    if (line.length == 0) return;
+    static NSMutableDictionary<NSString *, NSNumber *> *lastByLine = nil;
+    static CFAbsoluteTime windowStart = 0;
+    static NSInteger count = 0;
+    if (!lastByLine) lastByLine = [NSMutableDictionary dictionary];
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    NSNumber *last = lastByLine[line];
+    if (last && now - last.doubleValue < 3.0) return;
+    if (now - windowStart > 1.0) {
+        windowStart = now;
+        count = 0;
+    }
+    if (++count > 8) return;
+    if (lastByLine.count > 32) [lastByLine removeAllObjects];
+    lastByLine[line] = @(now);
+    DSDiagnosticsRecordFormat(@"SpringBoard: call656 %@", line);
+}
+
+static BOOL DSReadCallScreenFront(void) {
+    @try {
+        id springBoard = [UIApplication sharedApplication];
+        SEL frontSelector = @selector(_accessibilityFrontMostApplication);
+        if (![springBoard respondsToSelector:frontSelector]) return NO;
+        id front = ((id (*)(id, SEL))objc_msgSend)(springBoard, frontSelector);
+        NSString *bundle = [front respondsToSelector:@selector(bundleIdentifier)] ? [front bundleIdentifier] : nil;
+        return [bundle isEqualToString:DSInCallServiceBundle];
+    } @catch (NSException *exception) {
+        return NO;
+    }
+}
+
+static void DSNoteCallScreenFront(BOOL front, CFAbsoluteTime now) {
+    if (front == DSCallScreenFront) return;
+    DSCallScreenFront = front;
+    if (front) {
+        if (now < DSCallGuardArmedUntil) DSCallScreenSeenSinceArm = YES;
+        DSCall656Log(@"call screen (InCallService) is in front");
+    } else {
+        DSCallScreenGoneAt = now;
+        DSCall656Log(@"call screen left the front");
+        // The call screen came and went: the arm has done its job. The 4 s
+        // after-call hold below still applies.
+        if (DSCallScreenSeenSinceArm) DSCallGuardArmedUntil = 0;
+    }
+}
+
+static void DSCallGuardRefresh(CFAbsoluteTime now) {
+    if (now - DSCallGuardCheckedAt <= 0.5) return;
+    DSCallGuardCheckedAt = now;
+    BOOL active = NO;
+    BOOL front = NO;
+    @try {
+        front = DSReadCallScreenFront();
+        active = front || DSPhoneCallIsActive();
+    } @catch (NSException *exception) {
+        active = NO;
+    }
+    DSNoteCallScreenFront(front, now);
+    if (active != DSCallGuardLastActive) {
+        DSCallGuardLastActive = active;
+        DSCallGuardFlipAt = now;
+        DSCallGuardLog(active ? @"call screen is up, staged app views hold their updates"
+                              : @"call screen is gone, staged app views update again in 4 s");
+    }
+}
+
 BOOL DSCallGuardActive(void) {
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (now - DSCallGuardCheckedAt > 0.5) {
-        DSCallGuardCheckedAt = now;
-        BOOL active = NO;
-        @try {
-            active = DSPhoneCallIsActive();
-        } @catch (NSException *exception) {
-            active = NO;
-        }
-        if (active != DSCallGuardLastActive) {
-            DSCallGuardLastActive = active;
-            DSCallGuardFlipAt = now;
-            DSCallGuardLog(active ? @"call screen is up, staged app views hold their updates"
-                                  : @"call screen is gone, staged app views update again in 4 s");
-        }
+    DSCallGuardRefresh(now);
+    if (DSCallGuardLastActive) return YES;
+    if (DSCallGuardFlipAt > 0 && now - DSCallGuardFlipAt < 4.0) return YES;
+    // Armed by the staged Phone but no call screen seen yet: let the first
+    // 1.5 s through (iOS's switch to the call screen), hold after that.
+    return now < DSCallGuardArmedUntil && now - DSCallGuardArmedAt >= kDSCallHoldDelay;
+}
+
+void DSCallGuardNoteHeldUpdate(void) {
+    DSCallHeldCount += 1;
+    if (DSCallHeldCount == 1 || DSCallHeldCount % 20 == 0) {
+        DSCall656Log([NSString stringWithFormat:@"held %ld staged app view update(s) during this call", (long)DSCallHeldCount]);
     }
-    return now < DSCallGuardArmedUntil || DSCallGuardLastActive || now - DSCallGuardFlipAt < 4.0;
 }
 
 void DSCallGuardNoteFrontChange(void) {
     DSCallGuardCheckedAt = 0;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DSCallAsideEvaluate(@"front-change");
+    });
 }
 
 static void DSCallGuardArm(NSInteger source) {
-    DSCallGuardArmedUntil = CFAbsoluteTimeGetCurrent() + 25.0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    DSCallGuardArmedAt = now;
+    DSCallGuardArmedUntil = now + kDSCallArmSeconds;
     DSCallGuardCheckedAt = 0;
+    DSCallScreenSeenSinceArm = DSCallScreenFront;
+    DSCallHeldCount = 0;
     DSCallGuardLog([NSString stringWithFormat:@"staged Phone started a call (source=%ld), guard armed for 25 s", (long)source]);
+    DSCall656Log([NSString stringWithFormat:@"staged Phone started a call (source=%ld): stage steps aside for the call screen, staged app view updates pass for %.1f s",
+                  (long)source, kDSCallHoldDelay]);
+    DSCallAsideEvaluate(@"call-key");
 }
+
+// ---- 4.5.656 step aside -----------------------------------------------------
+// The stage window is level 998; the call screen is InCallService in the main
+// app layout (SBMainSwitcherWindow, level 5). A visible card covered it and
+// took its touches. While a call screen is coming (armed by the staged Phone)
+// or is the front app, the stage windows are hidden. No scene is written, no
+// card is minimized or moved, so there is nothing to assert on. When the call
+// screen has gone the windows come back as they were.
+BOOL DSCallStepAsideActive(void) {
+    return DSCallAside;
+}
+
+static void DSCallAsideSchedule(NSInteger generation, double delay) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (generation != DSCallAsideGeneration) return;
+        DSCallAsideEvaluate(@"watch");
+    });
+}
+
+static void DSCallAsideSet(BOOL aside, NSString *why) {
+    if (aside == DSCallAside) return;
+    DSCallAside = aside;
+    DSCallAsideSince = CFAbsoluteTimeGetCurrent();
+    @try {
+        Class windowClass = objc_getClass("DSStageWindow");
+        if (windowClass && [windowClass respondsToSelector:@selector(setCallAside:)]) {
+            ((void (*)(id, SEL, BOOL))objc_msgSend)(windowClass, @selector(setCallAside:), aside);
+        }
+    } @catch (NSException *exception) {
+    }
+    // The status bar and home bar go back to the system while the stage is
+    // aside, and come back under the stage's rules afterwards.
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"DSStageStatusBarRefresh" object:nil];
+    DSCall656Log(aside ? [NSString stringWithFormat:@"stage hidden so the call screen shows (%@)", why ?: @"?"]
+                       : [NSString stringWithFormat:@"stage back after the call screen (%@)", why ?: @"?"]);
+}
+
+static void DSCallAsideEvaluate(NSString *why) {
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DSCallAsideEvaluate(why);
+        });
+        return;
+    }
+    @try {
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        DSCallGuardCheckedAt = 0;
+        DSCallGuardRefresh(now);
+        BOOL armed = now < DSCallGuardArmedUntil;
+        BOOL waiting = armed && !DSCallScreenSeenSinceArm && now - DSCallGuardArmedAt < kDSCallAsideWaitSeconds;
+        if (armed && !DSCallScreenSeenSinceArm && !waiting) {
+            DSCall656Log(@"the call screen did not come to the front within 10 s");
+        }
+        // A short grace after the call screen leaves, so a flicker between the
+        // outgoing and the connected screen does not bring the card back.
+        BOOL grace = DSCallAside && DSCallScreenGoneAt > 0 && now - DSCallScreenGoneAt < 0.8;
+        BOOL want = DSCallScreenFront || waiting || grace;
+        if (want && !DSCallAside) {
+            DSCallAsideSet(YES, DSCallScreenFront ? @"call screen in front" : why);
+        } else if (!want && DSCallAside) {
+            // Never in the middle of a scene update (the SIGTRAP path).
+            if ([DSSceneHost sceneSettingsUpdateDepth] > 0) {
+                DSCallAsideSchedule(DSCallAsideGeneration, 0.15);
+                return;
+            }
+            DSCallAsideSet(NO, why);
+        }
+        if (DSCallAside || waiting) {
+            NSInteger generation = ++DSCallAsideGeneration;
+            DSCallAsideSchedule(generation, 0.5);
+        }
+    } @catch (NSException *exception) {
+    }
+}
+
 static const CGFloat DSInCallRaisedLevel = 999.0; // stage window 998, keyboard host 1000
 
 static void DSInCallRunPass(NSString *why, NSInteger generation);

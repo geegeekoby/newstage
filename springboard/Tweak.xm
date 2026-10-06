@@ -511,6 +511,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
         // still changes underneath and the app view stays Live, which is
         // what it is again once the call screen has gone.
         if (DSCallGuardActive()) {
+            DSCallGuardNoteHeldUpdate();
             static CFAbsoluteTime DSLastCallHoldLog = 0;
             CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
             if (now - DSLastCallHoldLog > 2.0) {
@@ -655,6 +656,9 @@ static BOOL DSSystemSwitcherIsVisible(void) {
 // uses SpringBoard's cached transition state before asking the controller.
 static BOOL DSStageShouldMoveHomeGrabber(void) {
     if (!DSStageReady()) return NO;
+    // 4.5.656: the call screen's home bar is the system's while the stage is
+    // stepped aside for it.
+    if (DSCallStepAsideActive()) return NO;
     BOOL visible = NO;
     @try {
         visible = [DSStageManager sharedManager].isStageVisible;
@@ -680,7 +684,17 @@ static BOOL DSStageShouldMoveHomeGrabber(void) {
 
 - (void)layoutSubviews {
     %orig;
-    if (!DSStageShouldMoveHomeGrabber()) return;
+    if (!DSStageShouldMoveHomeGrabber()) {
+        // 4.5.656: a pill the stage hid is given back when the stage no longer
+        // moves pills (call screen, switcher, stage closed). It used to stay
+        // at alpha 0, which left the call screen without its home bar.
+        if (DSGrabberFrameDepth == 0 && [objc_getAssociatedObject(self, DSGrabberHiddenByStageKey) boolValue]) {
+            DSNoteGrabberHidden(self, NO);
+            self.alpha = 1.0;
+            self.userInteractionEnabled = YES;
+        }
+        return;
+    }
     if (DSGrabberFrameDepth > 0) return;
     CGRect fixed = DSPinnedHomeGrabberFrame(self, self.frame);
     BOOL clipped = DSGrabberWouldBeClipped(self, fixed);

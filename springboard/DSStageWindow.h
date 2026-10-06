@@ -18,6 +18,13 @@ UIWindow *DSCompetingKeyWindow(UIWindow *window);
 // Returns YES when the window had to move onto the foreground scene.
 - (BOOL)attachToForegroundSceneIfNeeded;
 
+// 4.5.656: a call screen is coming up or is in front. Every stage window is
+// hidden (and claims no touch), so iOS's call screen (InCallService, main app
+// layout, level 5) is seen and used. Nothing is moved, minimized or written to
+// a scene. NO shows the window again if the stage wanted it shown.
++ (void)setCallAside:(BOOL)aside;
++ (BOOL)callAside;
+
 @end
 
 @interface DSStageRootViewController : UIViewController

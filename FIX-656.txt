@@ -1,0 +1,111 @@
+DynamicStage 4.5.656 - call screen does not appear for calls from the staged Phone (based on 4.5.655)
+=====================================================================================================
+Deb: com.recreated.dynamicstage_4.5.656_iphoneos-arm64.deb
+sha256 5d1cb0c0d35adc394817a0e832de531304b1f1da55de756382732cb6a178f36b, 543,652 bytes
+Static analysis, the 4.5.652 crash log (Deebugg.txt / "New debug.txt" in the repo), and a clean build.
+NOT tested on a device.
+
+ROOT CAUSE (evidence)
+---------------------
+1. The stage covers the call screen.
+   springboard/DSStageWindow.m +stageWindow: the stage window is level 998 (setWindowLevel caps
+   it at 998). The 652 log shows where iOS puts the call screen:
+     "incall650 call UI is in the main app layout (level 5 SBMainSwitcherWindow)"
+   That is far below the stage. Nothing hid the stage when a call screen came up.
+   Since 653 there is no in-call containment (kDSInCallContainmentEnabled = NO), so the open
+   card(s), the edge notch and the card rim strips (651, hitTestsAsOpaque) stayed drawn over
+   the call screen and took its touches. With two stages, the cards cover nearly the whole
+   screen. The stage also kept hiding the system status bar (shouldHideSystemStatusBar), kept
+   the home pill at alpha 0 (shouldHideSystemHomeAffordance / SBHomeGrabberView hooks; a hidden
+   pill was never given back while the stage stopped moving pills), and could suppress system
+   gestures over the card (shouldSuppressSystemGestureAtPoint) on top of the call screen.
+
+2. The 653 call guard covered iOS's own switch to the call screen.
+   springboard/DSInCallStage.m DSCallGuardArm() + DSCallGuardActive(): from the staged call key
+   (com.recreated.dynamicstage.phone.outgoing, source 1/2), every
+   -[SBAppViewController sceneHandle:didUpdateSettingsWithDiff:previousSettings:] update for the
+   staged Phone was dropped for 25 s (springboard/Tweak.xm, %hook SBAppViewController). The 652
+   log shows the order:
+     40.55  call key ("incall650 armed source=1")
+     40.80  Phone scene update fg=1 deactivation=0x20 -> applied, no crash
+     40.88  call screen already up in the main layout
+     42.88  "app-view settings update" -> SIGTRAP (the crash 653 fixed)
+   653 also dropped the 40.80 transition update. That update is part of iOS bringing the call
+   screen up, and it never crashed. Only the later update (2 s after the call screen was in
+   front) crashed.
+
+Checked, not the cause:
+- The 650 notify path only arms the guard; containment stays off.
+- The 652 camera element is off during calls, and Phone does not use the camera.
+- The app-side Phone hooks only post the notify and never swallow the call key.
+- The 655 status-bar and no-op-hook changes do not touch InCallService. The status bar issue
+  above predates 655.
+
+WHAT CHANGED
+------------
+springboard/DSInCallStage.m (+ .h):
+- Step aside: DSCallAsideEvaluate() / DSCallStepAsideActive(). It hides every DSStageWindow
+  (the stage, the corner-pull window and stage keyboard host windows) when:
+    (a) the staged Phone reports a call, while the call screen is still coming (at most 10 s), or
+    (b) InCallService is the front app (any full-screen call screen while the stage is open).
+  It restores after the call screen leaves the front (0.8 s grace), never in the middle of a
+  scene update (sceneSettingsUpdateDepth > 0 retries in 0.15 s). It re-checks every 0.5 s while
+  active and on every frontDisplayDidChange. No minimize, no card move or resize, no scene
+  settings write.
+- Narrower guard. DSCallGuardActive() now holds when:
+    - InCallService is front or a call window is up (same window check as 653),
+    - or within 4 s after that ends,
+    - or 1.5 s or more after the staged call key, if the call screen was never seen
+      (up to 25 s; the arm ends early once the call screen has come and gone).
+  The first 1.5 s after the call key pass through, as in 652. The 42.88-type update (call
+  screen already in front) is still held.
+- "call656" log lines: rate-limited (one line per distinct text every 3 s, at most 8 a second).
+  Logged events: call started (source), stage hidden (why), call screen in front / left the
+  front, held update count (1st, then every 20th), stage back (why), call screen did not come
+  to the front within 10 s.
+springboard/DSStageWindow.m (+ .h):
+- +setCallAside: hides each registered stage window and remembers whether it was shown.
+  While aside, -setHidden:NO and -makeKeyAndVisible are remembered instead of showing the
+  window, and -hitTest returns nil. When aside ends, the window is shown again only if it was
+  shown, or was asked to be.
+springboard/DSStageManager.m:
+- shouldHideSystemStatusBar, shouldHideSystemHomeAffordance, both
+  shouldSuppressSystemGestureAtPoint methods and adoptSystemEdgePull return NO while aside.
+  A status bar refresh is posted on each aside change.
+springboard/Tweak.xm:
+- The SBAppViewController call hold counts held updates (DSCallGuardNoteHeldUpdate).
+- DSStageShouldMoveHomeGrabber returns NO while aside.
+- SBHomeGrabberView -layoutSubviews gives a pill the stage hid back (alpha 1, touches on)
+  whenever the stage no longer moves pills.
+control, shared/DSConstants.h: 4.5.656. changelog.md: entry added.
+Kept: the SBAppViewController hold (home swipe, staysBackgrounded, call), the boot guard
+(8 s, re-arm), crash hardening, and containment off.
+
+WHAT THE USER WILL SEE
+----------------------
+Tap call (or a Recents / Favorites / Contacts row) in the staged Phone:
+- The stage card(s) and the edge notch disappear at once, and iOS's normal full-screen call
+  screen comes up (calling..., then the ongoing call screen) with its status bar, home bar
+  and buttons all working.
+- End the call: once the call screen leaves, the stage comes back where it was (same cards,
+  same sizes, Phone still in its card).
+- Swipe the call screen away to keep talking: the stage comes back while the call continues
+  (green pill). Tap the pill and the stage hides again while the call screen is in front.
+- An incoming call shown full screen while a stage is open behaves the same way. Call
+  banners are left alone.
+- For about 4 s after the call screen goes, the staged Phone's view may lag behind its app
+  (the 653 hold). It updates again after that.
+
+LIMITS / RISKS
+--------------
+- Not device-tested. Hiding the stage window does not write scene settings itself. If iOS
+  sends the staged Phone scene a settings update because its view is hidden, the hold
+  catches it only from 1.5 s after the call key or once the call screen is in front.
+  Minimize and the home swipe already hide hosted app views the same way without crashing.
+- The 1.5 s pass window rests on the single 652 timeline. If a SIGTRAP comes back right at the
+  call key, the "call656" lines and the crash log will show it. The fix then is a longer
+  hold window, which can be set without bringing the call screen problem back, because the
+  stage is now hidden.
+- A staged app's own keyboard (SpringBoard keyboard window, level 1000) is not part of this.
+  Phone's keypad is not that keyboard.
+Backups of the 655 files: bak656/. Full patched files: full-656/.

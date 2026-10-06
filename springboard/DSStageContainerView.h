@@ -65,6 +65,9 @@
 @property (nonatomic, copy) void (^stackAddHandler)(void);
 - (CGRect)stackAddButtonRect;
 
+// 4.5.651: name used by the rim catchers in the log ("main", "top", "float").
+@property (nonatomic, copy) NSString *rimCatcherName;
+
 @property (nonatomic, assign) BOOL showsMinimizeButton;
 @property (nonatomic, copy) void (^minimizeHandler)(void);
 

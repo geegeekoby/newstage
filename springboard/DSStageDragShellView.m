@@ -1,10 +1,14 @@
 #import "DSStageDragShellView.h"
 #import "DSStageContainerView.h"
+#import "DSRimCatcherView.h"
+#import "DSConstants.h"
 
 @implementation DSStageDragShellView {
     CAShapeLayer *_outlineLayer;
     CAShapeLayer *_pulseLayer;
     CGFloat _outlineSide;
+    NSArray<DSRimCatcherView *> *_catchers;
+    CGRect _catcherAvoid;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -24,8 +28,29 @@
         _pulseLayer.lineWidth = 1.5;
         _pulseLayer.opacity = 0.0;
         [self.layer addSublayer:_pulseLayer];
+        // 4.5.651: the band just outside the card wins the touch over the app
+        // drawn under the stage (see DSRimCatcherView.h).
+        _catchers = DSMakeRimCatchers(self, @"main-outer", self);
+        _catcherAvoid = CGRectNull;
     }
     return self;
+}
+
+- (void)layoutRimCatchers {
+    if (!_cardView || _cardView.superview != self || _cardView.hidden) {
+        DSLayoutRimCatchers(_catchers, self, CGRectZero, CGRectZero, CGFLOAT_MAX, NO);
+        return;
+    }
+    // frame includes the card's lift / side translation.
+    CGRect card = _cardView.frame;
+    CGFloat cut = CGFLOAT_MAX;
+    if (_cardView.keyboardBandHeight > 1.0) cut = CGRectGetMaxY(card) - _cardView.keyboardBandHeight;
+    DSLayoutRimCatchersAvoiding(_catchers, self, CGRectInset(card, -kDSRimOuterCatch, -kDSRimOuterCatch), card, cut, YES, _catcherAvoid);
+}
+
+- (void)setRimCatcherAvoidRect:(CGRect)windowRect {
+    _catcherAvoid = windowRect;
+    [self layoutRimCatchers];
 }
 
 static UIBezierPath *DSShellBottomRim(CGRect rect, CGFloat radius) {
@@ -81,6 +106,7 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
     _pulseLayer.frame = self.bounds;
     _pulseLayer.path = half.CGPath;
     [CATransaction commit];
+    [self layoutRimCatchers];
 }
 
 - (void)layoutSubviews {
@@ -129,6 +155,7 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
     CATransform3D shift = CATransform3DMakeTranslation(side, -offset, 0.0);
     _outlineLayer.transform = shift;
     _pulseLayer.transform = shift;
+    [self layoutRimCatchers];
 }
 
 - (CGRect)outlineFrame {
@@ -143,6 +170,7 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
     _pulseLayer.path = nil;
     _pulseLayer.opacity = 0.0;
     [CATransaction commit];
+    DSLayoutRimCatchers(_catchers, self, CGRectZero, CGRectZero, CGFLOAT_MAX, NO);
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
@@ -167,6 +195,13 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
     if (!self.userInteractionEnabled || self.hidden || self.alpha < 0.01) return nil;
     if (![self pointInside:point withEvent:event]) return nil;
 
+    // 4.5.651: the rim strips first (they are what the window server routed
+    // this touch to SpringBoard for).
+    for (DSRimCatcherView *strip in _catchers) {
+        if (strip.hidden) continue;
+        UIView *hit = [strip hitTest:[self convertPoint:point toView:strip] withEvent:event];
+        if (hit) return hit;
+    }
     if (_cardView && CGRectContainsPoint(_cardView.frame, point)) {
         CGPoint inCard = [self convertPoint:point toView:_cardView];
         return [_cardView hitTest:inCard withEvent:event];

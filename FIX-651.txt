@@ -1,0 +1,111 @@
+DynamicStage 4.5.651 - drag rim always wins the touch
+=====================================================
+Package: com.recreated.dynamicstage_4.5.651_iphoneos-arm64.deb (based on 4.5.650; all 650 fixes kept)
+Changed: springboard/DSRimCatcherView.h/.m (new), springboard/DSStageDragShellView.h/.m,
+         springboard/DSStageContainerView.h/.m, springboard/DSStageManager.m,
+         springboard/DSInCallStage.m, shared/DSConstants.h, control, changelog.md
+
+Symptom
+-------
+The drag rim around a stage card was hard to grab with some apps in the card,
+and over the normal full-screen app outside the stage. On the Home Screen it was
+mostly fine.
+
+Root cause
+----------
+iOS decides which PROCESS gets a touch in the window server, before
+SpringBoard's UIKit hit test, the stage window's touchTest or the rim's pan
+recognizers ever run. The window server looks at the layers on screen under
+the finger. The rim band was see-through: a clear UIView (the drag shell and
+the top/float rim views) with only the 3pt outline drawn. A clear SpringBoard
+view doesn't count there, so:
+ - Outside the card, the touch went to the full-screen app drawn under the
+   stage. SpringBoard never saw it, so the rim pan couldn't win no matter what
+   its gesture settings were.
+ - Just inside the card edge, the hosted app's own scene layer is on top. The
+   touch went straight to that app's process. The card's UIKit "claim the
+   18pt band" hitTest (4.5.4xx) never ran for those touches.
+ - Only a touch right on the drawn 3pt outline landed on a SpringBoard layer.
+   That is why it worked "sometimes", and always over the Home Screen
+   (SpringBoard draws everything there).
+Games / Metal apps are the same case (their layer simply wins).
+Gesture priority inside SpringBoard was secondary. The rim pan already begins
+after 2pt and doesn't wait for other gestures. System edge gestures were only
+held for touches inside the card, not on the rim.
+
+Fix
+---
+1. DSRimCatcherView: invisible strips that the window server treats as solid.
+   They have a 1.1% alpha fill (imperceptible), plus layer hitTestsAsOpaque
+   where the iOS build has it. They're laid over the rim band:
+   - outer ring, 16pt outside the card edge: in the main card's drag shell
+     and in the split / floating cards' rim views;
+   - inner ring, 14pt inside the card edge: inside every card, above the
+     hosted app view, grips and buttons.
+   A strip doesn't do gesture work itself. Its hitTest hands the touch to the
+   view whose recognizers already own the rim (drag shell, rim view, or the
+   card itself, exactly as the old band check did), so the existing drag /
+   resize / park logic is unchanged. A visible card control under the point
+   (the + button) keeps its tap.
+   The strips sit inside the area the stage window already claims (touchTest:
+   card + 36-44pt), so every touch the window server sends to SpringBoard
+   there is handled. None is swallowed.
+2. Hit-test order: the drag shell and the card check their strips before
+   anything else (before the card's hosted scene view).
+3. Gesture priority in the stage window: other recognizers that get the same
+   rim touch (picker scroll, taps, status peek) now wait for the rim pan to
+   fail (gestureRecognizer:shouldBeRequiredToFailByGestureRecognizer:). The
+   rim pan never waits for anyone.
+4. System gestures (SBSystemGestureManager / SBFluidSwitcherGestureManager
+   shouldBegin / shouldReceiveTouch hooks) are held when they start on the
+   16pt outer rim ring of a visible card. Before, this only applied inside the
+   card.
+5. Split cards: a card's outer strips never cover the other split card's
+   interior (that stays the other app's touch). The strips re-lay whenever the
+   stage geometry changes (placeCard, rim placement, keyboard lift/slide).
+6. 650 in-call screen: it's now scaled into the card inset by the 14pt inner
+   rim band. The call window is above the stage (999 > 998), so a full-card
+   call screen would have covered the inner rim; touches on the band now
+   reach the rim.
+7. Log (rate limited, at most 4 lines / 2s, deduped), "SpringBoard: rim651 ..."
+   in diagnostics:
+   - "hit <card>-<inner|outer>-<side> at x,y -> <path>": a strip caught the
+     touch. path = DSStageDragShellView / DSStageRimHitView /
+     DSStageContainerView (whose pans take it) or card-control.
+   - "drag began at x,y won by <main-shell-pan|top-rim-pan|float-rim-pan|
+     top-card-pan|float-card-pan|card-pan>"
+   - "system gesture held at x,y (rim)"
+
+Not touched / safety
+--------------------
+- Touches outside the rim aren't taken: strips cover only 16pt outside and 14pt
+  inside the edge. The rest of the card is the app's, and the rest of the
+  screen is the full-screen app's.
+- Home bar (bottom centre 28pt) is cut out of every strip and never claimed.
+  The system gesture hold skips the very top edge (y < 10: Notification /
+  Control Center) and the bottom 22pt (home, switcher, corner pull).
+- Keyboard: SpringBoard's keyboard window (level 1000) stays above the stage.
+  Strips are cut above a card's keyboard band.
+- No new windows, no window level changes, no scene writes, no layoutIfNeeded:
+  the SIGTRAP hardening is unchanged.
+- No per-frame work in the switcher: the strips are laid out only when the
+  stage geometry changes. The system gesture hold returns early while
+  +[DSSceneHost systemTransitionBusy] is set (home / switcher transition).
+
+Limits
+------
+- Not tested on a device here (this build environment has no phone). The
+  log lines above show which path won on the device.
+- The 14pt inside the card edge now belongs to the rim. An app's own edge
+  gesture that has to start in that strip (e.g. a back swipe starting right at
+  the card's left edge) or a tap on a control within 14pt of the card edge is
+  now a rim touch. Starting a little further in works as before.
+- Windows that are above the stage stay above it on purpose: keyboard,
+  alerts, banners, PiP, Dynamic Island / status bar, and the call screen
+  inside the card.
+- The 16pt outer ring takes that strip from the full-screen app around the
+  card while the stage is visible (that is the rim).
+- If a later iOS build stops counting near-zero-alpha layers as solid and has
+  no hitTestsAsOpaque, the outer band falls back to the old behaviour (outline
+  line + Home Screen); the "hit ..." log lines would then be missing for
+  touches over apps.

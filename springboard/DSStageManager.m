@@ -4,6 +4,7 @@
 #import "DSStageContainerView.h"
 #import "DSAppPickerViewController.h"
 #import "DSSearchFieldView.h"
+#import "DSRimCatcherView.h"
 #import "DSAppLibrary.h"
 #import "DSGestureController.h"
 #import "DSSceneHost.h"
@@ -84,12 +85,40 @@ static BOOL DSRectIsDisplayKeyboard(CGRect keyboard, CGRect screen) {
 // what makes a new stage drag from anywhere inside it.
 @interface DSStageRimHitView : UIView
 @property (nonatomic, assign) CGFloat hitBand;
+// 4.5.651: how far the view's frame reaches past the card on each side (the
+// card is inset(bounds, frameBand)), the window-server catchers around the
+// card edge, and a window rect they must leave alone.
+@property (nonatomic, assign) CGFloat frameBand;
+@property (nonatomic, strong) NSArray<DSRimCatcherView *> *catchers;
+@property (nonatomic, assign) CGRect catcherAvoid;
+- (void)layoutRimCatchers;
 // The rim is wider than the gap between the two stages. Points that land on the
 // other card belong to that card, or a grab on the lower stage drags the upper one.
 @property (nonatomic, copy) BOOL (^rejectsWindowPoint)(CGPoint windowPoint);
 @end
 
 @implementation DSStageRimHitView
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    if ((self = [super initWithFrame:frame])) {
+        _frameBand = kDSStageOuterDragBand + 18.0;
+        _catcherAvoid = CGRectNull;
+        _catchers = DSMakeRimCatchers(self, @"rim-outer", self);
+    }
+    return self;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    [self layoutRimCatchers];
+}
+
+- (void)layoutRimCatchers {
+    CGRect card = CGRectInset(self.bounds, self.frameBand, self.frameBand);
+    BOOL usable = !self.hidden && CGRectGetWidth(card) > 40.0 && CGRectGetHeight(card) > 40.0;
+    DSLayoutRimCatchersAvoiding(self.catchers, self, CGRectInset(card, -kDSRimOuterCatch, -kDSRimOuterCatch), card,
+                                CGFLOAT_MAX, usable, self.catcherAvoid);
+}
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     (void)event;
@@ -105,6 +134,13 @@ static BOOL DSRectIsDisplayKeyboard(CGRect keyboard, CGRect screen) {
 }
 
 @end
+
+static void DSNameRimCatchers(NSArray<DSRimCatcherView *> *strips, NSString *name) {
+    static NSString *sides[] = { @"top", @"bottom", @"left", @"right" };
+    for (NSUInteger i = 0; i < strips.count && i < 4; i++) {
+        strips[i].catcherName = [NSString stringWithFormat:@"%@-%@", name, sides[i]];
+    }
+}
 
 // Fraction of the screen height the finger has to travel for the pull to reach
 // the stage's resting size. Releasing past the cancel threshold always lands
@@ -672,6 +708,7 @@ static BOOL sSystemEdgePullAvailable;
     [_dragShell addSubview:_container];
     [root addSubview:_dragShell];
     _dragShell.hidden = YES;
+    _container.rimCatcherName = @"main-inner";
 
     _picker = [[DSAppPickerViewController alloc] init];
     _picker.delegate = self;
@@ -3374,6 +3411,24 @@ static BOOL DSTopKeyboardWaitPosted = NO;
     return [self offscreenLiftForCard:above];
 }
 
+// 4.5.651: the outer rim strips of the two split cards must not cover each
+// other's interior (that is the other app's touch). Cheap; runs only when the
+// stage geometry changes, never per frame of the switcher.
+- (void)refreshRimCatchers {
+    BOOL split = _stackSlotCount >= kDSMaxStackSlots && _topContainer && !_topContainer.hidden;
+    CGRect avoidForMain = split ? CGRectInset([self visualScreenFrameForCard:_topContainer], kDSStageRimGrabBand, kDSStageRimGrabBand) : CGRectNull;
+    CGRect avoidForTop = split ? CGRectInset([self visualScreenFrameForCard:_container], kDSStageRimGrabBand, kDSStageRimGrabBand) : CGRectNull;
+    if (_dragShell) [_dragShell setRimCatcherAvoidRect:avoidForMain];
+    if ([_topRim isKindOfClass:DSStageRimHitView.class]) {
+        DSStageRimHitView *rim = (DSStageRimHitView *)_topRim;
+        rim.catcherAvoid = avoidForTop;
+        [rim layoutRimCatchers];
+    }
+    if ([_floatRim isKindOfClass:DSStageRimHitView.class]) {
+        [(DSStageRimHitView *)_floatRim layoutRimCatchers];
+    }
+}
+
 - (void)syncLiftChrome {
     if (_topRim) {
         CGFloat offset = _topContainer ? _topContainer.liftOffset : 0.0;
@@ -3387,6 +3442,7 @@ static BOOL DSTopKeyboardWaitPosted = NO;
     if (_floatRim && _floatContainer) {
         _floatRim.transform = CGAffineTransformMakeTranslation(_floatContainer.sideOffset, -_floatContainer.liftOffset);
     }
+    [self refreshRimCatchers];
 }
 
 // Split is open and the hovering third stage is still its own card.
@@ -3963,6 +4019,8 @@ static NSUInteger DSSideParkGeneration = 0;
         return CGRectContainsPoint(other, windowPoint);
     };
     _topRim = topRim;
+    _topContainer.rimCatcherName = @"top-inner";
+    DSNameRimCatchers(topRim.catchers, @"top-outer");
     _topRim.backgroundColor = UIColor.clearColor;
     _topRimLayer = [CAShapeLayer layer];
     _topRimLayer.fillColor = UIColor.clearColor.CGColor;
@@ -4732,6 +4790,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
     _topRimPulseLayer.frame = _topRim.bounds;
     _topRimPulseLayer.path = half.CGPath;
     [CATransaction commit];
+    [self refreshRimCatchers];
 }
 
 - (void)setTopRimHalf:(NSInteger)half {
@@ -4797,6 +4856,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
         }
         [self applyCombinedGeometryFix];
     }
+    [self refreshRimCatchers];
     [self noteStageGeometry:@"place"];
 }
 
@@ -5617,6 +5677,33 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
     }
     if (_floatActive && _floatContainer && !_floatContainer.hidden) {
         if (CGRectContainsPoint([self visualScreenFrameForCard:_floatContainer], point)) return YES;
+    }
+    if ([self pointIsOnRimCatchRing:point]) {
+        DSRimLog([NSString stringWithFormat:@"system gesture held at %.0f,%.0f (rim)", point.x, point.y]);
+        return YES;
+    }
+    return NO;
+}
+
+// 4.5.651: the band just outside a visible card (kDSRimOuterCatch). A system
+// edge gesture that starts there is a rim grab. Never the very top edge
+// (Notification / Control Center), the bottom edge (home, switcher, corner
+// pull) or while the home / switcher transition runs.
+- (BOOL)pointIsOnRimCatchRing:(CGPoint)point {
+    if (!self.isStageVisible || !_container.window) return NO;
+    CGRect screen = [self screenBounds];
+    if (point.y < 10.0 || point.y > CGRectGetHeight(screen) - 22.0) return NO;
+    if ([DSSceneHost systemTransitionBusy]) return NO;
+    NSMutableArray<DSStageContainerView *> *cards = [NSMutableArray arrayWithCapacity:3];
+    if (_dragShell && !_dragShell.hidden && !_container.hidden && !_primaryParked) [cards addObject:_container];
+    if (_stackSlotCount >= kDSMaxStackSlots && _topContainer && !_topContainer.hidden && !_secondParked) [cards addObject:_topContainer];
+    if (_floatActive && _floatContainer && !_floatContainer.hidden) [cards addObject:_floatContainer];
+    for (DSStageContainerView *card in cards) {
+        CGRect frame = [self visualScreenFrameForCard:card];
+        if (CGRectContainsPoint(CGRectInset(frame, -kDSRimOuterCatch, -kDSRimOuterCatch), point) &&
+            !CGRectContainsPoint(frame, point)) {
+            return YES;
+        }
     }
     return NO;
 }
@@ -8097,6 +8184,7 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
     [CATransaction setDisableActions:YES];
     DSFitRimBorder(_floatRimLayer, _floatRim.bounds, band, radius);
     [CATransaction commit];
+    [self refreshRimCatchers];
 }
 
 - (DSStageContainerView *)frontStageCard {
@@ -8192,6 +8280,8 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
     DSStageRimHitView *floatRim = [[DSStageRimHitView alloc] initWithFrame:CGRectZero];
     floatRim.hitBand = kDSStageOuterDragBand + 18.0;
     _floatRim = floatRim;
+    _floatContainer.rimCatcherName = @"float-inner";
+    DSNameRimCatchers(floatRim.catchers, @"float-outer");
     _floatRim.backgroundColor = UIColor.clearColor;
     _floatRim.hidden = YES;
     _floatRimLayer = [CAShapeLayer layer];
@@ -8987,6 +9077,20 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
     return YES;
 }
 
+// 4.5.651: a touch that started on the rim belongs to the stage drag. Any
+// other recogniser in the stage window that got the same touch (picker
+// scroll, taps, the status peek) waits for the rim pan to fail; the rim pan
+// itself never waits for anyone. System gestures are held separately
+// (shouldSuppressSystemGestureAtPoint).
+- (BOOL)isStagePanRecognizer:(UIGestureRecognizer *)recognizer {
+    return [recognizer isKindOfClass:DSQuickPanGestureRecognizer.class] && [self cardForStagePan:recognizer] != nil;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)recognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)other {
+    if (![self isStagePanRecognizer:recognizer] || [self isStagePanRecognizer:other]) return NO;
+    return other.view && other.view.window == _window;
+}
+
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)recognizer shouldReceiveTouch:(UITouch *)touch {
     DSStageContainerView *card = [self cardForStagePan:recognizer];
     if (!card || card.hidden) return YES;
@@ -9021,6 +9125,12 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
     CGPoint screenPoint = [recognizer locationInView:nil];
     if (recognizer.state == UIGestureRecognizerStateBegan) {
         DSLog("[TOUCH] screenY=%.0f %@", screenPoint.y, screenPoint.y > 466.0 ? @"bottom-half" : @"top-half");
+        NSString *via = recognizer.view == _dragShell ? @"main-shell-pan" :
+                        (recognizer.view == _topRim ? @"top-rim-pan" :
+                         (recognizer.view == _floatRim ? @"float-rim-pan" :
+                          (recognizer.view == _topContainer ? @"top-card-pan" :
+                           (recognizer.view == _floatContainer ? @"float-card-pan" : @"card-pan"))));
+        DSRimLog([NSString stringWithFormat:@"drag began at %.0f,%.0f won by %@", screenPoint.x, screenPoint.y, via]);
     }
     DSStageState layoutState = DSStageStateOverlay;
     CGRect screen = [self screenBounds];

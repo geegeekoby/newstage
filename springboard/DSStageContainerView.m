@@ -1,4 +1,5 @@
 #import "DSStageContainerView.h"
+#import "DSRimCatcherView.h"
 #import "DSStageDebug.h"
 #import "DSConstants.h"
 #import <QuartzCore/QuartzCore.h>
@@ -58,6 +59,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     UIButton *_stackAddButton;
     BOOL _applyingKeyboardBand;
     BOOL _clipsContents;
+    NSArray<DSRimCatcherView *> *_rimCatchers;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -144,8 +146,32 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         self.layer.cornerRadius = _cornerRadius;
 
         self.darkMode = YES;
+
+        // 4.5.651: the band just inside the card edge wins the touch over the
+        // hosted app's own layer (see DSRimCatcherView.h). The strips hand
+        // the touch to this card, exactly like the old band check below, so
+        // the card's own pans (or the drag shell's) take it.
+        _rimCatchers = DSMakeRimCatchers(self, @"card-inner", self);
+        for (DSRimCatcherView *strip in _rimCatchers) strip.controlsView = self;
     }
     return self;
+}
+
+- (void)layoutRimCatchers {
+    CGRect bounds = self.bounds;
+    CGFloat cut = _keyboardBandHeight > 1.0 ? CGRectGetHeight(bounds) - _keyboardBandHeight : CGFLOAT_MAX;
+    DSLayoutRimCatchers(_rimCatchers, self, bounds, CGRectInset(bounds, kDSRimInnerCatch, kDSRimInnerCatch), cut, !self.hidden);
+}
+
+- (NSString *)rimCatcherName {
+    return _rimCatchers.firstObject.catcherName;
+}
+
+- (void)setRimCatcherName:(NSString *)name {
+    static NSString *sides[] = { @"top", @"bottom", @"left", @"right" };
+    for (NSUInteger i = 0; i < _rimCatchers.count && i < 4; i++) {
+        _rimCatchers[i].catcherName = [NSString stringWithFormat:@"%@-%@", name, sides[i]];
+    }
 }
 
 - (void)willMoveToSuperview:(UIView *)superview {
@@ -243,6 +269,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     [self bringSubviewToFront:_edgeGrip];
     [self bringSubviewToFront:_stackAddButton];
     [self bringSubviewToFront:_grabber];
+    [self layoutRimCatchers];
 
     [self applyCardCornerClip];
     [self updateShadow];
@@ -394,12 +421,23 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         point.y >= CGRectGetHeight(self.bounds) - _keyboardBandHeight) {
         return nil;
     }
+    // 4.5.651: the rim strips first (window-server catchers).
+    for (DSRimCatcherView *strip in _rimCatchers) {
+        if (strip.hidden) continue;
+        UIView *hit = [strip hitTest:[self convertPoint:point toView:strip] withEvent:event];
+        if (hit) return hit;
+    }
     // The outer band is the drag rim. A hosted scene that is still the size of
     // the screen sits on top of that band and swallows the touch, so the rim
     // never starts a drag. Claiming the band here keeps it above the app.
     CGRect interior = CGRectInset(self.bounds, kDSStageRimGrabBand, kDSStageRimGrabBand);
     if (CGRectGetWidth(interior) >= 40.0 && CGRectGetHeight(interior) >= 40.0 &&
         !CGRectContainsPoint(interior, point)) {
+        // The + button reaches into the band; it keeps its tap.
+        if (!_stackAddButton.hidden && _stackAddButton.userInteractionEnabled &&
+            CGRectContainsPoint(_stackAddButton.frame, point)) {
+            return _stackAddButton;
+        }
         return self;
     }
     UIView *hit = [super hitTest:point withEvent:event];

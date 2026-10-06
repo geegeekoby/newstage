@@ -2,6 +2,7 @@
 #import "DSStageManager.h"
 #import "DSSceneHost.h"
 #import "DSDiagnostics.h"
+#import "DSConstants.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -73,6 +74,11 @@ static CGRect DSInCallCurrentCard(CGFloat *radius) {
         rect = CGRectNull;
     }
     if (CGRectIsNull(rect) || CGRectGetWidth(rect) < 80.0 || CGRectGetHeight(rect) < 120.0) return CGRectNull;
+    // 4.5.651: keep the card's inner rim band free. The call window sits above
+    // the stage (999 > 998), so a call screen covering the card edge would
+    // take the rim's touches; inset by the band, those reach the rim.
+    rect = CGRectInset(rect, kDSRimInnerCatch, kDSRimInnerCatch);
+    if (radius) *radius = MAX(0.0, *radius - kDSRimInnerCatch);
     return rect;
 }
 

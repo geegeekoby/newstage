@@ -24,5 +24,8 @@
 // Moves the stroke onto the card without laying out the hosted scene.
 // Laying that scene out from a keyboard shift is the SIGTRAP.
 - (void)refreshOutline;
+// 4.5.651: window rect the outer rim strips must leave alone (the other split
+// card's interior); CGRectNull for none. Re-lays the strips.
+- (void)setRimCatcherAvoidRect:(CGRect)windowRect;
 
 @end

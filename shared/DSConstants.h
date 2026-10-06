@@ -131,7 +131,7 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 
 // Kept across resprings. postinst deletes it, so a crash from the build that
 // was just replaced is not still sitting there after the next install.
-#define kDSBuildVersionString "4.5.650"
+#define kDSBuildVersionString "4.5.651"
 
 // One line from the staged app, copied into the stage log. The app and
 // SpringBoard do not share that log, so a blocked keyboard hide was invisible.
@@ -228,6 +228,11 @@ static const CGFloat kDSStageOuterDragBand = 18.0;
 // The grab band is only the edge of the card. 64pt reached into the app
 // picker and stole its scroll.
 static const CGFloat kDSStageRimGrabBand = 18.0;
+// 4.5.651: the part of the rim that wins the touch over ANY app under or in
+// the card (see DSRimCatcherView): this far outside the card edge, and this
+// far inside it (kept below kDSStageRimGrabBand so the stage pans accept it).
+static const CGFloat kDSRimOuterCatch = 16.0;
+static const CGFloat kDSRimInnerCatch = 14.0;
 static const NSInteger kDSMaxStackSlots = 2;
 static const CGFloat kDSOffscreenCardGap = 12.0;
 static const CGFloat kDSFallbackDisplayCornerRadius = 55.0;

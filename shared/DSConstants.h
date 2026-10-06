@@ -81,6 +81,59 @@
 #define kDSCameraFlagRunning 0x20
 #define kDSCameraFlagInterrupted 0x40
 
+// 4.5.660: diagnostics only. Every camera event inside an injected app also
+// goes to SpringBoard on a per-app channel, because a third-party app's
+// sandbox stops it writing the copied log itself, and the shared
+// kDSCameraNotification state above keeps only the latest post.
+//  - Ring: "<prefix>.<hash %08x>.<k>", k = seq % kDSCamera660Slots. Each slot's
+//    state is seq (bits 0-15, never 0) | event << 16 | reason << 24 |
+//    flags << 32 (16 bits) | extra << 48 (16 bits).
+//  - Doorbell: "<prefix>.<hash %08x>", state = pid << 16 | latest seq, then
+//    posted. SpringBoard reads the slots between the last seq it logged and
+//    that one.
+//  - Ping: "<prefix>.ping.<hash %08x>", posted by SpringBoard after it puts
+//    the app on a card. The app answers with a Hello (its camera hook state),
+//    so an app that was already running when it was staged is still heard.
+#define kDSCamera660Prefix "com.recreated.dynamicstage.camera660"
+#define kDSCamera660Slots 8
+#define kDSCamera660EvHello 1
+#define kDSCamera660EvHooksIn 2
+#define kDSCamera660EvStartCalled 3
+#define kDSCamera660EvStartReturned 4
+#define kDSCamera660EvState 5
+#define kDSCamera660EvInterrupted 6
+#define kDSCamera660EvInterruptionEnded 7
+#define kDSCamera660EvRuntimeError 8
+#define kDSCamera660EvMultitaskOn 9
+#define kDSCamera660EvMultitaskRefused 10
+#define kDSCamera660EvRetry 11
+#define kDSCamera660EvRetryCap 12
+#define kDSCamera660EvStop 13
+#define kDSCamera660EvUnforce 14
+#define kDSCamera660EvAppState 15
+// Hello causes (reason byte).
+#define kDSCamera660HelloLaunch 1
+#define kDSCamera660HelloStaged 2
+#define kDSCamera660HelloPing 3
+// Flags (16 bits). The low 7 are the kDSCameraFlag* bits above.
+#define kDSCamera660FlagHooksIn 0x0080
+#define kDSCamera660FlagPreviewAttached 0x0100
+#define kDSCamera660FlagPreviewInTree 0x0200
+#define kDSCamera660FlagPreviewActive 0x0400
+#define kDSCamera660FlagVideoInput 0x0800
+#define kDSCamera660FlagPreviewHasSize 0x1000
+#define kDSCamera660FlagAppBackground 0x2000
+#define kDSCamera660FlagPreviewHidden 0x4000
+#define kDSCamera660FlagSessionKnown 0x8000
+
+static inline const char *DSCamera660Name(uint32_t hash, int slot, char *buffer, size_t size) {
+    // slot >= 0: ring slot, -1: doorbell, -2: ping.
+    if (slot >= 0) snprintf(buffer, size, "%s.%08x.%d", kDSCamera660Prefix, hash, slot);
+    else if (slot == -2) snprintf(buffer, size, "%s.ping.%08x", kDSCamera660Prefix, hash);
+    else snprintf(buffer, size, "%s.%08x", kDSCamera660Prefix, hash);
+    return buffer;
+}
+
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
 #define kDSRotateNotificationPrefix @"com.recreated.dynamicstage.rotate"
@@ -155,7 +208,7 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 
 // Kept across resprings. postinst deletes it, so a crash from the build that
 // was just replaced is not still sitting there after the next install.
-#define kDSBuildVersionString "4.5.659"
+#define kDSBuildVersionString "4.5.660"
 
 // One line from the staged app, copied into the stage log. The app and
 // SpringBoard do not share that log, so a blocked keyboard hide was invisible.

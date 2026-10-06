@@ -7327,6 +7327,8 @@ static void DSOnSpringBoardKeyboardShown(void) {
 
 // 4.5.652: camera in a staged app (DSCameraStage.m).
 extern "C" void DSCameraStageInstall(void);
+// 4.5.660: re-announces the camera hook state to SpringBoard once staged.
+extern "C" void DSCameraStageDidBecomeStaged(void);
 
 static void DSInstallHooks(void) {
     static dispatch_once_t token;
@@ -7365,6 +7367,12 @@ static void DSStartObserving(void) {
     DSStageContext *context = [DSStageContext sharedContext];
     context.stagedHandler = ^{
         DSInstallHooks();
+        // 4.5.660: diagnostics only (one delayed Hello, skipped during the
+        // home / switcher gesture).
+        @try {
+            DSCameraStageDidBecomeStaged();
+        } @catch (NSException *exception) {
+        }
     };
     [context startObserving];
 }

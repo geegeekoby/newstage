@@ -40,9 +40,10 @@ static NSSet<NSString *> *DSCameraPublished;
 
 #pragma mark - Logging
 
-// One line per key every two seconds at most, 60 a minute overall.
-static void DSCameraRecord(NSString *key, NSString *format, ...) NS_FORMAT_FUNCTION(2, 3);
-static void DSCameraRecord(NSString *key, NSString *format, ...) {
+// One line per key every `gap` seconds at most, 90 a minute overall (shared
+// by the camera658 and camera660 lines). Main thread.
+static void DSCameraRecordV(NSString *tag, CFTimeInterval gap, NSString *key, NSString *format, va_list args) NS_FORMAT_FUNCTION(4, 0);
+static void DSCameraRecordV(NSString *tag, CFTimeInterval gap, NSString *key, NSString *format, va_list args) {
     static NSMutableDictionary<NSString *, NSNumber *> *last;
     static CFAbsoluteTime windowStart = 0;
     static NSInteger windowCount = 0;
@@ -52,17 +53,31 @@ static void DSCameraRecord(NSString *key, NSString *format, ...) {
         windowStart = now;
         windowCount = 0;
     }
-    if (windowCount >= 60) return;
-    NSString *slot = key ?: @"?";
-    if (now - [last[slot] doubleValue] < 2.0) return;
+    if (windowCount >= 90) return;
+    NSString *slot = [NSString stringWithFormat:@"%@/%@", tag ?: @"?", key ?: @"?"];
+    if (now - [last[slot] doubleValue] < gap) return;
     last[slot] = @(now);
-    if (last.count > 64) [last removeAllObjects];
+    if (last.count > 96) [last removeAllObjects];
     windowCount += 1;
+    NSString *text = [[NSString alloc] initWithFormat:format arguments:args];
+    DSDiagnosticsRecord([NSString stringWithFormat:@"SpringBoard: %@ %@", tag ?: @"camera", text]);
+}
+
+static void DSCameraRecord(NSString *key, NSString *format, ...) NS_FORMAT_FUNCTION(2, 3);
+static void DSCameraRecord(NSString *key, NSString *format, ...) {
     va_list args;
     va_start(args, format);
-    NSString *text = [[NSString alloc] initWithFormat:format arguments:args];
+    DSCameraRecordV(@"camera658", 2.0, key, format, args);
     va_end(args);
-    DSDiagnosticsRecord([@"SpringBoard: camera658 " stringByAppendingString:text]);
+}
+
+// 4.5.660 lines: one per key per second.
+static void DSCamera660Record(NSString *key, NSString *format, ...) NS_FORMAT_FUNCTION(2, 3);
+static void DSCamera660Record(NSString *key, NSString *format, ...) {
+    va_list args;
+    va_start(args, format);
+    DSCameraRecordV(@"camera660", 1.0, key, format, args);
+    va_end(args);
 }
 
 static const char *DSCameraReasonName(NSInteger reason) {
@@ -207,9 +222,11 @@ static NSString *DSCameraLayoutPresence(NSString *bundle) {
 // "visibility" there is FrontBoard saying the app is on screen; the camera
 // server's background check follows it. Queried off the main thread (it is
 // an XPC round trip) and logged back on it.
-static void DSCameraLogRunningBoard(NSString *bundle, pid_t pid, NSString *why) {
+// 4.5.660: written as camera660, one per bundle and event class.
+static void DSCameraLogRunningBoard(NSString *bundle, pid_t pid, NSString *why, NSString *cls) {
+    NSString *key = [NSString stringWithFormat:@"rbs.%@.%@", bundle, cls ?: @"-"];
     if (pid <= 0) {
-        DSCameraRecord([@"rbs." stringByAppendingString:bundle], @"%@ runningboard: no pid (%@)", bundle, why);
+        DSCamera660Record(key, @"%@ runningboard: no pid (%@)", bundle, why);
         return;
     }
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
@@ -250,7 +267,7 @@ static void DSCameraLogRunningBoard(NSString *bundle, pid_t pid, NSString *why) 
             text = [NSString stringWithFormat:@"threw %@", exception.name ?: @"?"];
         }
         dispatch_async(dispatch_get_main_queue(), ^{
-            DSCameraRecord([@"rbs." stringByAppendingString:bundle], @"%@ runningboard pid=%d %@ (%@)", bundle, pid, text, why);
+            DSCamera660Record(key, @"%@ runningboard pid=%d %@ (%@)", bundle, pid, text, why);
         });
     });
 }
@@ -258,15 +275,21 @@ static void DSCameraLogRunningBoard(NSString *bundle, pid_t pid, NSString *why) 
 // The whole picture for one staged camera app, at the moment an event came
 // in: arbiter, layout, card, scene, SpringBoard and RunningBoard state.
 // Read only. Skipped while home / switcher has the screen (4.5.657 no-op).
-static void DSCameraLogStatus(NSString *bundle, NSString *why, BOOL force) {
+// 4.5.660: written as camera660. The floor is per bundle and event class
+// (start / interrupt / other, 1 s), so a start and the interruption right
+// behind it both get their status line.
+static void DSCameraLogStatus(NSString *bundle, NSString *why, BOOL force, NSString *cls) {
     static NSMutableDictionary<NSString *, NSNumber *> *lastStatus;
     if (!lastStatus) lastStatus = [NSMutableDictionary dictionary];
+    if (bundle.length == 0) return;
     if ([DSSceneHost homeGestureIsActive] || [DSSceneHost systemTransitionBusy]) return;
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    NSString *statusKey = [NSString stringWithFormat:@"%@.%@", bundle, cls ?: @"-"];
     if (!force && now - [lastStatus[bundle] doubleValue] < 12.0) return;
-    if (now - [lastStatus[bundle] doubleValue] < 1.5) return;
+    if (now - [lastStatus[statusKey] doubleValue] < 1.0) return;
+    lastStatus[statusKey] = @(now);
     lastStatus[bundle] = @(now);
-    if (lastStatus.count > 16) [lastStatus removeAllObjects];
+    if (lastStatus.count > 48) [lastStatus removeAllObjects];
     DSCameraClaim *claim = DSCameraClaims[bundle];
     DSStageManager *manager = [DSStageManager sharedManager];
     NSString *hostState = @"?";
@@ -276,11 +299,11 @@ static void DSCameraLogStatus(NSString *bundle, NSString *why, BOOL force) {
         pid = [manager hostedProcessIdentifierForBundleIdentifier:bundle];
     } @catch (NSException *exception) {
     }
-    DSCameraRecord([@"status." stringByAppendingString:bundle],
+    DSCamera660Record([NSString stringWithFormat:@"status.%@", statusKey],
                    @"%@ status (%@): claim=%d published=%d publisher=%d template=%d %@ locked=%d callGuard=%d | %@",
                    bundle, why, claim != nil, claim.assertion != nil, DSCameraPublisher != nil, DSCameraTemplateSeen,
                    DSCameraLayoutPresence(bundle), DSCameraDeviceLocked(), DSCallGuardActive(), hostState);
-    DSCameraLogRunningBoard(bundle, pid, why);
+    DSCameraLogRunningBoard(bundle, pid, why, cls);
 }
 
 #pragma mark - Publisher hook
@@ -457,6 +480,292 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
            fabs(CGRectGetWidth(a) - CGRectGetWidth(b)) < 2.0 && fabs(CGRectGetHeight(a) - CGRectGetHeight(b)) < 2.0;
 }
 
+#pragma mark - 4.5.660 per-app camera events (diagnostics only)
+
+// The injected app writes each camera event into a ring of notify states and
+// rings a per-app doorbell (kDSCamera660Prefix in DSConstants.h). This side
+// reads the new slots and writes "camera660 <bundle> ..." lines. Read only:
+// nothing here claims, publishes or touches a scene. During the home gesture
+// or while the system has the screen (4.5.657 switcher no-op) the doorbell
+// only sets a flag; the slots are read once the transition is over.
+
+@interface DSCamera660Watch : NSObject {
+@public
+    int _slots[kDSCamera660Slots];
+}
+@property (nonatomic, copy) NSString *bundle;
+@property (nonatomic) uint32_t bundleHash;
+@property (nonatomic) int doorbell;
+@property (nonatomic) uint32_t pid;
+@property (nonatomic) uint16_t lastSeq;
+@end
+
+@implementation DSCamera660Watch
+@end
+
+static NSMutableDictionary<NSNumber *, DSCamera660Watch *> *DSCam660Watches;
+static BOOL DSCam660DrainQueued;
+static CFAbsoluteTime DSCam660DrainQueuedAt;
+static NSMutableSet<NSNumber *> *DSCam660DirtyHashes;
+
+static const char *DSCam660EventName(NSUInteger event) {
+    switch (event) {
+        case kDSCamera660EvHello: return "hello";
+        case kDSCamera660EvHooksIn: return "capture hooks in";
+        case kDSCamera660EvStartCalled: return "startRunning called";
+        case kDSCamera660EvStartReturned: return "startRunning returned";
+        case kDSCamera660EvState: return "state";
+        case kDSCamera660EvInterrupted: return "interrupted";
+        case kDSCamera660EvInterruptionEnded: return "interruption ended";
+        case kDSCamera660EvRuntimeError: return "runtime error";
+        case kDSCamera660EvMultitaskOn: return "multitask access enabled";
+        case kDSCamera660EvMultitaskRefused: return "multitask access refused";
+        case kDSCamera660EvRetry: return "retry startRunning";
+        case kDSCamera660EvRetryCap: return "retry cap reached";
+        case kDSCamera660EvStop: return "stopped";
+        case kDSCamera660EvUnforce: return "multitask access switched back off";
+        case kDSCamera660EvAppState: return "app state";
+        default: return "?";
+    }
+}
+
+static const char *DSCam660AppStateName(NSInteger state) {
+    switch (state) {
+        case 1: return "active";
+        case 2: return "inactive";
+        case 3: return "background";
+        default: return "?";
+    }
+}
+
+static NSString *DSCam660FlagText(uint32_t flags, uint32_t extra, BOOL withSession) {
+    NSString *base = [NSString stringWithFormat:@"staged=%d appActive=%d bg=%d hooks=%d running=%d interrupted=%d multitask=%d/%d%@",
+                      (flags & kDSCameraFlagStaged) != 0, (flags & kDSCameraFlagAppActive) != 0,
+                      (flags & kDSCamera660FlagAppBackground) != 0, (flags & kDSCamera660FlagHooksIn) != 0,
+                      (flags & kDSCameraFlagRunning) != 0, (flags & kDSCameraFlagInterrupted) != 0,
+                      (flags & kDSCameraFlagMultitaskSupported) != 0, (flags & kDSCameraFlagMultitaskEnabled) != 0,
+                      (flags & kDSCameraFlagMultitaskRefused) ? @" refused" : @""];
+    if (!withSession) return base;
+    if (!(flags & kDSCamera660FlagSessionKnown)) return [base stringByAppendingString:@" session=none"];
+    NSString *preview = (flags & kDSCamera660FlagPreviewAttached)
+        ? [NSString stringWithFormat:@"attached inTree=%d active=%d sized=%d hidden=%d",
+           (flags & kDSCamera660FlagPreviewInTree) != 0, (flags & kDSCamera660FlagPreviewActive) != 0,
+           (flags & kDSCamera660FlagPreviewHasSize) != 0, (flags & kDSCamera660FlagPreviewHidden) != 0]
+        : @"none";
+    return [NSString stringWithFormat:@"%@ videoInput=%d connections=%u outputs=%u preview=%@",
+            base, (flags & kDSCamera660FlagVideoInput) != 0, extra & 0xff, (extra >> 8) & 0xff, preview];
+}
+
+static NSString *DSCam660Detail(NSUInteger event, NSInteger reason, uint32_t extra) {
+    switch (event) {
+        case kDSCamera660EvHello: {
+            const char *cause = reason == kDSCamera660HelloLaunch ? "after launch"
+                : (reason == kDSCamera660HelloStaged ? "app saw it is staged" : (reason == kDSCamera660HelloPing ? "answer to the on-card ping" : "?"));
+            return [NSString stringWithFormat:@"(%s) sessions=%u multitaskSwitch=%s", cause, extra & 0xff,
+                    ((extra >> 8) & 1) ? "present" : "absent"];
+        }
+        case kDSCamera660EvHooksIn:
+            return [NSString stringWithFormat:@"multitask switch %s", reason ? "present" : "absent"];
+        case kDSCamera660EvStartCalled: {
+            const char *path = reason == 1 ? "multitask+layout" : (reason == 2 ? "layout (multitask refused)" : (reason == 3 ? "layout (multitask unavailable)" : "none (not staged)"));
+            return [NSString stringWithFormat:@"path=%s", path];
+        }
+        case kDSCamera660EvInterrupted:
+        case kDSCamera660EvRetry:
+        case kDSCamera660EvRetryCap:
+            return [NSString stringWithFormat:@"reason=%ld (%s)", (long)reason, DSCameraReasonName(reason)];
+        case kDSCamera660EvRuntimeError:
+            return [NSString stringWithFormat:@"code=%d", (int)(int16_t)(uint16_t)extra];
+        case kDSCamera660EvMultitaskRefused:
+            return reason == 2 ? @"(setter threw)" : (reason == 1 ? @"(blocked after an earlier error)" : @"(switch not offered)");
+        case kDSCamera660EvStop:
+            return reason == 1 ? @"(no session running any more)" : @"(stopRunning)";
+        case kDSCamera660EvAppState:
+            return [NSString stringWithFormat:@"-> %s", DSCam660AppStateName(reason)];
+        default:
+            return @"";
+    }
+}
+
+static void DSCam660LogEntry(DSCamera660Watch *watch, uint64_t state, BOOL hosted, BOOL deferred) {
+    NSUInteger event = (NSUInteger)((state >> 16) & 0xff);
+    NSInteger reason = (NSInteger)((state >> 24) & 0xff);
+    uint32_t flags = (uint32_t)((state >> 32) & 0xffff);
+    uint32_t extra = (uint32_t)((state >> 48) & 0xffff);
+    NSString *bundle = watch.bundle;
+    if (!hosted) {
+        // A full-screen camera is none of the stage's business; only the
+        // events that say "a camera started / failed" are noted, once a while.
+        if (event != kDSCamera660EvStartCalled && event != kDSCamera660EvInterrupted &&
+            event != kDSCamera660EvRuntimeError) return;
+    }
+    BOOL withSession = event != kDSCamera660EvHello && event != kDSCamera660EvHooksIn;
+    NSString *key = [NSString stringWithFormat:@"%@.%lu.%ld%@", bundle, (unsigned long)event, (long)reason, hosted ? @"" : @".off"];
+    DSCamera660Record(key, @"%@ %s %@ | %@%@%@", bundle, DSCam660EventName(event), DSCam660Detail(event, reason, extra),
+                      DSCam660FlagText(flags, extra, withSession),
+                      hosted ? @"" : @" (not on a card, full-screen camera left alone)",
+                      deferred ? @" (read after the home / switcher gesture)" : @"");
+    if (!hosted) return;
+    NSString *cls = nil;
+    if (event == kDSCamera660EvStartCalled || event == kDSCamera660EvStartReturned || event == kDSCamera660EvRetry) cls = @"start";
+    else if (event == kDSCamera660EvInterrupted || event == kDSCamera660EvRuntimeError) cls = @"interrupt";
+    else if (event == kDSCamera660EvInterruptionEnded) cls = @"other";
+    if (!cls) return;
+    NSString *why = [NSString stringWithFormat:@"%s%@%@", DSCam660EventName(event),
+                     DSCam660Detail(event, reason, extra).length ? @" " : @"", DSCam660Detail(event, reason, extra)];
+    NSString *statusBundle = [bundle copy];
+    // After the arbiter's own refresh (0.05 s), so a fresh publish shows.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DSCameraLogStatus(statusBundle, why, YES, cls);
+    });
+}
+
+static void DSCam660DrainWatch(DSCamera660Watch *watch, NSArray<NSString *> *hostedBundles, BOOL deferred) {
+    if (!watch || watch.doorbell == NOTIFY_TOKEN_INVALID) return;
+    uint64_t bell = 0;
+    if (notify_get_state(watch.doorbell, &bell) != NOTIFY_STATUS_OK || bell == 0) return;
+    uint32_t pid = (uint32_t)(bell >> 16);
+    uint16_t latest = (uint16_t)(bell & 0xffff);
+    BOOL hosted = [hostedBundles containsObject:watch.bundle];
+    if (pid != watch.pid) {
+        // A new process of this app: it cleared its slots and counts from 1.
+        watch.pid = pid;
+        watch.lastSeq = 0;
+        if (hosted) {
+            DSCamera660Record([@"pid." stringByAppendingString:watch.bundle], @"%@ pid=%u reporting camera events to SpringBoard", watch.bundle, pid);
+        }
+    }
+    uint16_t since = watch.lastSeq;
+    uint16_t pending = (uint16_t)(latest - since);
+    if (pending == 0 || pending >= 0x8000) return;
+    uint64_t found[kDSCamera660Slots];
+    uint16_t order[kDSCamera660Slots];
+    int count = 0;
+    for (int k = 0; k < kDSCamera660Slots; k++) {
+        int token = watch->_slots[k];
+        if (token == NOTIFY_TOKEN_INVALID) continue;
+        uint64_t state = 0;
+        if (notify_get_state(token, &state) != NOTIFY_STATUS_OK || state == 0) continue;
+        uint16_t seq = (uint16_t)(state & 0xffff);
+        uint16_t after = (uint16_t)(seq - since);
+        uint16_t upTo = (uint16_t)(latest - seq);
+        if (after == 0 || after >= 0x8000 || upTo >= 0x8000) continue;
+        found[count] = state;
+        order[count] = after;
+        count += 1;
+    }
+    // Oldest first.
+    for (int i = 1; i < count; i++) {
+        for (int j = i; j > 0 && order[j - 1] > order[j]; j--) {
+            uint16_t o = order[j]; order[j] = order[j - 1]; order[j - 1] = o;
+            uint64_t f = found[j]; found[j] = found[j - 1]; found[j - 1] = f;
+        }
+    }
+    if (hosted && pending > count) {
+        DSCamera660Record([@"lost." stringByAppendingString:watch.bundle], @"%@ %d camera event(s) overwritten before SpringBoard read them",
+                          watch.bundle, (int)(pending - count));
+    }
+    for (int i = 0; i < count; i++) {
+        DSCam660LogEntry(watch, found[i], hosted, deferred);
+    }
+    watch.lastSeq = latest;
+}
+
+static void DSCam660DrainDirty(BOOL deferred) {
+    if (DSCam660DirtyHashes.count == 0) return;
+    NSArray<NSNumber *> *hashes = DSCam660DirtyHashes.allObjects;
+    [DSCam660DirtyHashes removeAllObjects];
+    NSArray<NSString *> *hosted = nil;
+    @try {
+        hosted = [[DSStageManager sharedManager] hostedBundleIdentifiers] ?: @[];
+    } @catch (NSException *exception) {
+        hosted = @[];
+    }
+    for (NSNumber *hash in hashes) {
+        @try {
+            DSCam660DrainWatch(DSCam660Watches[hash], hosted, deferred);
+        } @catch (NSException *exception) {
+        }
+    }
+}
+
+static void DSCam660Doorbell(uint32_t hash) {
+    if (!DSCam660DirtyHashes) DSCam660DirtyHashes = [NSMutableSet set];
+    [DSCam660DirtyHashes addObject:@(hash)];
+    if ([DSSceneHost homeGestureIsActive] || [DSSceneHost systemTransitionBusy]) {
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (DSCam660DrainQueued && now - DSCam660DrainQueuedAt < 30.0) return;
+        DSCam660DrainQueued = YES;
+        DSCam660DrainQueuedAt = now;
+        [DSSceneHost performWhenSystemTransitionOver:^{
+            DSCam660DrainQueued = NO;
+            DSCam660DrainDirty(YES);
+        }];
+        return;
+    }
+    DSCam660DrainDirty(NO);
+}
+
+// Main thread. Cheap after the first call per bundle.
+static void DSCam660WatchBundle(NSString *bundle) {
+    if (bundle.length == 0) return;
+    if (!DSCam660Watches) DSCam660Watches = [NSMutableDictionary dictionary];
+    uint32_t hash = DSIdentifierHash(bundle);
+    if (hash == 0 || DSCam660Watches[@(hash)] || DSCam660Watches.count >= 24) return;
+    DSCamera660Watch *watch = [DSCamera660Watch new];
+    watch.bundle = bundle;
+    watch.bundleHash = hash;
+    char name[160];
+    for (int k = 0; k < kDSCamera660Slots; k++) {
+        watch->_slots[k] = NOTIFY_TOKEN_INVALID;
+        if (notify_register_check(DSCamera660Name(hash, k, name, sizeof(name)), &watch->_slots[k]) != NOTIFY_STATUS_OK) {
+            watch->_slots[k] = NOTIFY_TOKEN_INVALID;
+        }
+    }
+    int token = NOTIFY_TOKEN_INVALID;
+    if (notify_register_dispatch(DSCamera660Name(hash, -1, name, sizeof(name)), &token, dispatch_get_main_queue(), ^(int t) {
+            (void)t;
+            DSCam660Doorbell(hash);
+        }) != NOTIFY_STATUS_OK) {
+        token = NOTIFY_TOKEN_INVALID;
+    }
+    watch.doorbell = token;
+    // Whatever is already there (an app that was running before this
+    // SpringBoard started) is history: start after it.
+    uint64_t bell = 0;
+    if (token != NOTIFY_TOKEN_INVALID && notify_get_state(token, &bell) == NOTIFY_STATUS_OK && bell != 0) {
+        watch.pid = (uint32_t)(bell >> 16);
+        watch.lastSeq = (uint16_t)(bell & 0xffff);
+    }
+    DSCam660Watches[@(hash)] = watch;
+}
+
+// After an app goes on a card: ask it for its camera hook state (it answers
+// with a Hello). 1.5 s late so its stage context has flipped; never during
+// the home / switcher gesture; at most once every 3 s per app.
+static void DSCam660PingSoon(NSString *bundle) {
+    static NSMutableDictionary<NSString *, NSNumber *> *lastPing;
+    if (!lastPing) lastPing = [NSMutableDictionary dictionary];
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - [lastPing[bundle] doubleValue] < 3.0) return;
+    lastPing[bundle] = @(now);
+    if (lastPing.count > 32) [lastPing removeAllObjects];
+    NSString *copy = [bundle copy];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [DSSceneHost performWhenSystemTransitionOver:^{
+            @try {
+                if (![[[DSStageManager sharedManager] hostedBundleIdentifiers] containsObject:copy]) return;
+            } @catch (NSException *exception) {
+                return;
+            }
+            char name[160];
+            notify_post(DSCamera660Name(DSIdentifierHash(copy), -2, name, sizeof(name)));
+            DSCamera660Record([@"ping." stringByAppendingString:copy],
+                              @"%@ on a card: asked it to report its camera hooks (a 'camera660 %@ hello' line should follow)", copy, copy);
+        }];
+    });
+}
+
 @implementation DSCameraArbiter
 
 + (void)start {
@@ -471,11 +780,21 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
             [DSCameraArbiter handleState:state];
         });
         DSDiagnosticsRecord(@"SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)");
+        // 4.5.660: the per-app camera event channels.
+        for (NSString *bundle in DSCameraInjectedBundles()) DSCam660WatchBundle(bundle);
+        DSDiagnosticsRecordFormat(@"SpringBoard: camera660 listening for in-app camera events from %lu apps", (unsigned long)DSCam660Watches.count);
     });
 }
 
 + (void)noteStagedBundle:(NSString *)bundle {
     if (bundle.length == 0) return;
+    // 4.5.660: hear this app's camera events, and ask it for its hook state
+    // now that it is on a card (an already-running app never sent one).
+    @try {
+        DSCam660WatchBundle(bundle);
+        if ([DSCameraInjectedBundles() containsObject:bundle]) DSCam660PingSoon(bundle);
+    } @catch (NSException *exception) {
+    }
     static NSMutableDictionary<NSString *, NSNumber *> *lastNote;
     if (!lastNote) lastNote = [NSMutableDictionary dictionary];
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
@@ -533,7 +852,7 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
     if (event == kDSCameraEventAfterStart) {
         DSCameraRecord([@"after." stringByAppendingString:bundle], @"%@ startRunning returned %@",
                        bundle, flagText);
-        DSCameraLogStatus(bundle, @"after startRunning", YES);
+        DSCameraLogStatus(bundle, @"after startRunning", YES, @"start");
         return;
     }
     if (event != kDSCameraEventHeartbeat) {
@@ -586,8 +905,10 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
     NSString *statusBundle = [bundle copy];
     NSString *why = [NSString stringWithFormat:@"%s reason=%ld (%s)", DSCameraEventName(event), (long)reason, DSCameraReasonName(reason)];
     BOOL force = event != kDSCameraEventHeartbeat;
+    NSString *cls = (event == kDSCameraEventStart || event == kDSCameraEventRetry) ? @"start"
+        : (event == kDSCameraEventInterrupted ? @"interrupt" : @"other");
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        DSCameraLogStatus(statusBundle, why, force);
+        DSCameraLogStatus(statusBundle, why, force, cls);
     });
 }
 

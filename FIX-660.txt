@@ -1,0 +1,95 @@
+DynamicStage 4.5.660 - camera diagnostics only (in-app camera events reach the log)
+==================================================================================
+Base: 4.5.659 (tree verified identical to full-659/ + full-658/ before starting; no
+partial 660 edits were present). No functional camera or stage change.
+
+WHY 659'S LOG HAD NO CAMERA LINES (Progress.txt)
+1. An app already running before it went on a card never sent its Hello while on
+   the card: the Hello goes 1.5 s after the app's own launch, and SpringBoard drops a
+   Hello from an app that is not on a card. So no "camera hook loaded" line.
+2. Signal / Beeper / Messenger cannot write the copied log (sandbox), so their
+   app-side camera658 lines never appear. Only SpringBoard and MobileSMS lines did.
+
+WHAT CHANGED
+shared/DSConstants.h
+  - kDSBuildVersionString 4.5.660; kDSCamera660* names, events, flags and the
+    DSCamera660Name() helper.
+app/DSCameraStage.m (inside the injected apps)
+  - Per-app event ring over Darwin notify: 8 slots
+    "com.recreated.dynamicstage.camera660.<hash>.<k>" (state = seq | event<<16 |
+    reason<<24 | flags16<<32 | extra16<<48) and a doorbell
+    "com.recreated.dynamicstage.camera660.<hash>" (state = pid<<16 | latest seq).
+    Slots are cleared once per process, so SpringBoard never replays old events.
+  - Events: hello (cause: after launch / app saw it is staged / answer to ping),
+    capture hooks in, startRunning called (path), startRunning returned, state
+    (heartbeat, max every 8 s), interrupted + AVCaptureSessionInterruptionReasonKey,
+    interruption ended, runtime error + code, multitask access enabled / refused,
+    retry, retry cap, stop, multitask switched back off, app state change (only
+    while the app has a capture session).
+  - Each event carries staged / appActive / background / hooks / running /
+    interrupted / multitask flags, and (read only) preview layer state: a
+    connection with an AVCaptureVideoPreviewLayer, layer in a layer tree, layer has
+    a size, hidden/transparent, connection enabled+active, video input present,
+    plus connection and output counts.
+  - Listens on "com.recreated.dynamicstage.camera660.ping.<hash>" and answers with
+    a Hello (plus the old camera652-channel Hello -> camera658 "camera hook loaded").
+  - DSCameraStageDidBecomeStaged(): one Hello 1 s after the stage context flips to
+    staged. Skipped while SpringBoard's systemgesture state says the home / switcher
+    gesture is running (retried up to 4 x 1 s).
+  - Rate limits: per event kind 0.25 s (Hello 2 s per cause, State 8 s), 60 events
+    a minute. All existing camera652/658 posts and behaviour are unchanged.
+app/Tweak.xm
+  - stagedHandler also calls DSCameraStageDidBecomeStaged() (after DSInstallHooks).
+springboard/DSCameraArbiter.m
+  - Watches the 5 injected bundles at arbiter start (and any bundle put on a card):
+    8 check tokens + 1 doorbell each. Doorbell reads the new slots (between last
+    logged seq and the doorbell's seq; new pid resets), oldest first, and writes
+    "SpringBoard: camera660 <bundle> <event> ... | flags" lines. Overwritten events
+    are counted in a "camera event(s) overwritten" line.
+  - During the home gesture or while the system has the screen (657 no-op) the
+    doorbell only marks the app dirty; one performWhenSystemTransitionOver block
+    reads it afterwards (lines tagged "(read after the home / switcher gesture)").
+  - noteStagedBundle (app view put on a card) pings the app 1.5 s later via
+    performWhenSystemTransitionOver, max once per 3 s per app.
+  - On start called / returned / retry / interrupted / runtime error / ended:
+    status line (claim, published, publisher, inLayout, layoutApps, locked,
+    callGuard, card, stageFg, runAssertion, scene fg/occluded/backgrounded,
+    fbProcess, sbState) and the RunningBoard line (task, visible, endowments), now
+    tagged camera660, floor 1 s per bundle and class (start / interrupt / other).
+  - Events from an app that is not on a card: only start / interrupted / runtime
+    error are noted, marked "(not on a card, full-screen camera left alone)".
+  - camera658 lines (arbiter, claims, publish, hello, scene) unchanged; the shared
+    log limiter is now 90 lines a minute across camera658 + camera660.
+UNCHANGED: boot guard, call guard (call653), 656 call-screen hiding, 657 switcher
+no-op, 659 home/wake fix, the 652 arbiter's claim / publish logic.
+
+EXPECTED LINES (Signal on a card over the home screen, open Signal's camera ~10 s)
+  SpringBoard: camera658 org.whispersystems.signal on a card: injected app, a 'camera hook loaded' line should follow
+  SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+  SpringBoard: camera660 org.whispersystems.signal pid=NNNN reporting camera events to SpringBoard
+  SpringBoard: camera660 org.whispersystems.signal hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=0|1 running=0 interrupted=0 multitask=0/0
+  SpringBoard: camera658 org.whispersystems.signal camera hook loaded (AVFoundation hooks in|waiting for AVFoundation) ...
+  (opening the camera)
+  SpringBoard: camera660 org.whispersystems.signal capture hooks in multitask switch present | staged=1 ... hooks=1 ...   (only if AVFoundation loads now)
+  SpringBoard: camera660 org.whispersystems.signal multitask access enabled|refused ...
+  SpringBoard: camera660 org.whispersystems.signal startRunning called path=multitask+layout|layout (...) | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=1/1 videoInput=1 connections=N outputs=N preview=attached inTree=1 active=1 sized=1 hidden=0
+  SpringBoard: camera660 org.whispersystems.signal startRunning returned | ... running=? interrupted=? ... preview=...
+  SpringBoard: camera660 org.whispersystems.signal status (startRunning called path=...): claim=1 published=0|1 publisher=1 template=1 inLayout=0|1 layoutApps=N locked=0 callGuard=0 | card=primary pid=... stageFg=1 ... scene fg=1 occluded=0 ...
+  SpringBoard: camera660 org.whispersystems.signal runningboard pid=NNNN task=4 (4=running) visible=0|1 endowments=[...] (startRunning called ...)
+  SpringBoard: camera660 org.whispersystems.signal interrupted reason=1 (in-background) | ...   (if iOS cuts it off; reason 4 = multiple-foreground-apps)
+  SpringBoard: camera660 org.whispersystems.signal status (interrupted reason=...) ... / runningboard ...
+  SpringBoard: camera660 org.whispersystems.signal retry startRunning reason=... / interruption ended / state | ... (every 8 s while running)
+  SpringBoard: camera660 org.whispersystems.signal stopped (stopRunning) | ...
+READING IT
+  - no camera660 lines for the app after the ping line: the app's dylib is not loaded
+    or notify is blocked in that app.
+  - hello but no "startRunning called" when the camera opens: that camera does not use
+    AVCaptureSession in this process (e.g. an extension / another process).
+  - running=1 interrupted=0 and preview=attached inTree=1 sized=1 hidden=0 but black:
+    frames are not reaching the layer (render / hosting side).
+  - interrupted reason=1 with RunningBoard visible=0: the camera server sees the app as
+    background; reason=4: multiple foreground apps.
+
+TEST
+Install 4.5.660, respring. Put Signal in a stage over the home screen, open Signal's
+camera ~10 s. Repeat with a full-screen app behind the stage. Upload the log.

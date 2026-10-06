@@ -3045,9 +3045,17 @@ static void DSRunAfterTransitionBlocks(void) {
 
 + (void)noteSystemTookScreen {
     DSSystemOwnsScreen = YES;
+    // 4.5.661: the camera presence elements come out of the display layout.
+    // Queued, never from inside the gesture callback; the arbiter waits for
+    // the gesture to end before it touches the layout.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [DSCameraArbiter refreshSoon];
+    });
 }
 
 + (void)noteStageInUse {
+    // 4.5.661: re-add the camera presence elements lazily (coalesced, 50 ms).
+    [DSCameraArbiter refreshSoon];
     if (!DSSystemOwnsScreen && DSAfterTransitionBlocks.count == 0) return;
     DSSystemOwnsScreen = NO;
     if (DSAfterTransitionBlocks.count == 0) return;

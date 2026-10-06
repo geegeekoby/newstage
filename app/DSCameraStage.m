@@ -241,9 +241,36 @@ static BOOL DSCam660SetupLocked(void) {
     return DSCam660Doorbell != NOTIFY_TOKEN_INVALID;
 }
 
+// 4.5.661: camera permission (AVCaptureDevice authorizationStatusForMediaType:
+// video), carried in bits 12-14 of every event: 0 AVFoundation not loaded yet,
+// 1 + status (1 not determined, 2 restricted, 3 denied, 4 authorized). Read at
+// most every 2 s; never loads AVFoundation itself.
+static uint32_t DSCam661Authorization(void) {
+    static atomic_uint cached = 0;
+    static _Atomic(double) readAt = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - atomic_load(&readAt) < 2.0) return atomic_load(&cached);
+    uint32_t value = 0;
+    Class device = objc_getClass("AVCaptureDevice");
+    SEL selector = @selector(authorizationStatusForMediaType:);
+    if (device && [device respondsToSelector:selector]) {
+        @try {
+            NSInteger status = ((NSInteger (*)(id, SEL, id))objc_msgSend)(device, selector, @"vide");
+            value = (status >= 0 && status <= 3) ? (uint32_t)status + 1 : 0;
+        } @catch (NSException *exception) {
+            value = 0;
+        }
+    }
+    atomic_store(&cached, value);
+    atomic_store(&readAt, now);
+    return value;
+}
+
 // Rate limited: per event kind (0.25 s; Hello 2 s; State 8 s) and 60 a
 // minute overall. A few notify calls, no file access, any thread.
+// 4.5.661: seq is 12 bits (bits 0-11), the permission status bits 12-14.
 static void DSCam660Emit(int event, int reason, uint32_t flags, uint32_t extra) {
+    uint32_t authorization = DSCam661Authorization();
     static CFAbsoluteTime last[32];
     static CFAbsoluteTime windowStart = 0;
     static int windowCount = 0;
@@ -263,10 +290,11 @@ static void DSCam660Emit(int event, int reason, uint32_t flags, uint32_t extra) 
     }
     last[index] = now;
     windowCount += 1;
-    DSCam660Seq = (uint16_t)(DSCam660Seq + 1);
+    DSCam660Seq = (uint16_t)((DSCam660Seq + 1) & 0x0fff);
     if (DSCam660Seq == 0) DSCam660Seq = 1;
     uint16_t seq = DSCam660Seq;
     uint64_t state = (uint64_t)seq;
+    state |= ((uint64_t)(authorization & 0x7)) << 12;
     state |= ((uint64_t)(event & 0xff)) << 16;
     state |= ((uint64_t)(reason & 0xff)) << 24;
     state |= ((uint64_t)(flags & 0xffff)) << 32;

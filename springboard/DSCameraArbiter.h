@@ -25,5 +25,9 @@
 // 4.5.658: logs, when an app goes onto a card, whether it is one of the apps
 // with the camera hooks. Main thread.
 + (void)noteStagedBundle:(NSString *)bundle;
+// 4.5.661: takes every element out of the display layout now (the staged
+// Phone started a call). Main thread. The refresh keeps them out while the
+// call guard / call step-aside is on.
++ (void)withdrawAllForReason:(NSString *)why;
 
 @end

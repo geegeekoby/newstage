@@ -1,0 +1,122 @@
+DynamicStage 4.5.661 - functional camera attempt: proactive display-layout presence
+=================================================================================
+Base: 4.5.660 (all camera660 logging kept). Built on the box with Theos; NOT yet
+tested on a device.
+
+EVIDENCE (Newlogs .txt, 4.5.660, 01:46-01:47 NZDT Oct 7)
+- Messages on a card: hooks in, staged=1 appActive=1, answered the ping, sessions=0.
+  01:46:50.460 CKFunCameraViewController + MSMessageExtensionBrowserViewController,
+  01:46:50.565 _MSMessageExtensionRemoteViewController; until 01:46:55 no startRunning,
+  no interruption, no status/RunningBoard line. The capture session is not in
+  MobileSMS: the Messages camera runs in a separate Messages extension process that
+  the tweak is not loaded into, so the 652 arbiter (which only claims after an
+  app-side camera event) never put the card in the display layout.
+- Messenger: ping sent, no reply (process predates the 660 install, or not injected).
+- No sign of a permission problem in the log, but 660 did not log authorization, so
+  661 now logs it on every app-side camera line.
+
+INFERENCE
+The camera server only streams to a client it counts as on screen (FBSDisplayLayout /
+RunningBoard visibility). A stage card is not in the main display layout unless the
+arbiter publishes an element for it, and the arbiter only did that after an in-app
+camera event, which extension processes and non-injected / pre-install processes
+never send. So the camera's owner was "not on screen" -> black preview.
+
+WHAT CHANGED
+springboard/DSCameraArbiter.m
+ 1. Presence: in -refresh, every hosted bundle whose card has a usable on-screen frame
+    (stageCardScreenFrameForBundleIdentifier: returns CGRectNull when the stage is
+    minimized/closed, the card is parked or hidden, alpha < 0.05, or its window is
+    hidden) gets a claim with presence=YES and is published into the main display
+    layout through the publisher learned from addElement: (same 652 publish path),
+    with no camera event needed.
+ 2. Withdrawal: presence is cleared (element removed) when: phone locked; call guard
+    active; call step-aside (656) active; the system has the screen (home / switcher,
+    DSSceneHost systemTransitionBusy); the card is hidden / parked / minimized /
+    closed; the app leaves the stage; the full-screen front app is itself shown by the
+    green dot as using the camera (so it is not cut off as "multiple foreground
+    apps"); or the kill file /var/mobile/.dynamicstage-no-camera-presence exists
+    (checked at most every 5 s). Like 652, refresh never touches the layout while the
+    home gesture is active or inside a scene-settings update; it retries 0.4 s later.
+    The 1 s timer only runs while a claim exists and stops when every card is hidden
+    or the system owns the screen (657: nothing runs in the switcher).
+    A capture stop or a 12 s silence no longer removes a visible card's presence.
+ 3. Extensions: new hook on -[SBSensorActivityDataProvider _handleNewDomainData:]
+    (green-dot attribution). Original called first, unchanged; the data is read on a
+    utility queue (reflection only, type checked, @try), results applied on main.
+    A camera user that is neither on a card nor the front app, while a card is
+    visible, gets its own element at its host card's frame. Host found by
+    RunningBoard host pid (RBSProcessHandle hostProcess / identity.hostIdentifier)
+    == card pid, else bundle prefix, else "the only visible card". Withdrawn when the
+    green dot drops it or its host card goes.
+ 4. Logging: camera661 sensor on/off lines, presence in/out lines, a sensor-data
+    shape line (once per 10 min) if the green-dot data can't be read. Status lines
+    gain presence= and sensorCamera=[..]. camera660 app lines gain auth=...
+ 5. Presence / extension claims are NOT in DSCameraPublished (the set DSSceneHost uses
+    to adjust the card's scene settings): only real app-side camera claims are, as in
+    652. So presence never writes scene settings.
+ 6. +withdrawAllForReason: removes every element immediately (main thread only).
+ 7. Camera660 doorbell / slot sequence is now 12 bits (kDSCamera660SeqMask) to make
+    room for the permission bits.
+springboard/DSCameraArbiter.h
+    + (void)withdrawAllForReason:(NSString *)why;
+springboard/DSInCallStage.m
+    When the staged Phone's call key notification arrives (fresh, source 1/2), calls
+    [DSCameraArbiter withdrawAllForReason:@"staged Phone started a call"] in @try
+    before DSCallGuardArm, so elements are out before iOS switches to the call screen.
+springboard/DSSceneHost.m
+    +noteSystemTookScreen queues [DSCameraArbiter refreshSoon] (async, never from
+    inside the gesture callback); +noteStageInUse calls refreshSoon (coalesced 50 ms)
+    so presence returns when the stage is used again.
+app/DSCameraStage.m
+    DSCam661Authorization(): AVCaptureDevice authorizationStatusForMediaType:@"vide"
+    (AVMediaTypeVideo) via objc_getClass (never loads AVFoundation), cached 2 s, in
+    bits 12-14 of every camera660 event (0 unknown, 1+status). Seq is 12 bits.
+shared/DSConstants.h
+    kDSBuildVersionString "4.5.661"; kDSCamera660SeqMask 0x0fff; slot layout comment.
+control: Version 4.5.661.  changelog.md: 4.5.661 entry.
+
+UNCHANGED
+Boot guard, call guard (call653), 656 call-screen hiding, 657 switcher no-op, 659
+home/wake fix, home-swipe hold, the kill switch, the SIGTRAP scene-update protections,
+all camera658/camera660 logging. No app switcher change, no per-frame work, no scene
+settings writes during transitions.
+
+RISKS
+- A staged card is now listed as an on-screen app in SpringBoard's main display
+  layout whenever it is visible. SpringBoard / other daemons may treat it as a second
+  foreground app: possible side effects on the full-screen app behind (its own
+  camera reporting "multiple foreground apps" before the green dot shows it, audio /
+  idle-timer / notification banner decisions). Kill file switches it off:
+  /var/mobile/.dynamicstage-no-camera-presence (create an empty file with Filza).
+- Withdrawal during the home gesture is deferred to the end of the gesture (as in
+  652) to avoid touching the layout mid-transition, so the element can stay listed
+  for up to ~2.5 s of a home swipe.
+- The extension path depends on the private SBSensorActivityDataProvider data shape;
+  if unreadable, a "camera661 sensor data ..." shape line is logged and extensions are
+  not covered. It only reacts once the green dot shows the extension, so the
+  extension's camera may need a moment (or a reopen) to start streaming.
+- If the camera server judges visibility by something other than the display layout
+  (e.g. a RunningBoard visibility endowment only), it will still be black; the
+  sensor / presence / auth lines will show that.
+
+TEST
+1. Install 4.5.661 from Sileo, respring.
+2. Force-quit Signal, Messenger and Messages in the switcher first (so they load the
+   new dylib), then launch Signal from the stage picker.
+3. Signal on a card over the home screen: open Signal's camera ~10 s.
+4. Same with a full-screen app behind the stage.
+5. Messages on a card: open the Messages camera ~10 s.
+6. Upload the log to newstage.
+
+LINES TO LOOK FOR (each prefixed "SpringBoard: ")
+  camera661 sensor attribution on ...      (or "... not found ...")
+  camera661 presence on ...
+  camera661 presence <bundle> in the display layout (...)
+  camera661 presence <bundle> out of the display layout (<reason>)
+  camera661 sensor <bundle> pid=N camera on (<role>) front=... staged=[...]
+  camera661 sensor <bundle> pid=N camera off
+  camera661 sensor data ...                (shape line if unreadable)
+  camera660 <bundle> ... auth=authorized|denied|not-determined|restricted
+  camera660 <bundle> status (...): ... presence=.. ... sensorCamera=[...]
+  camera660 <bundle> interrupted reason=1|4 ...

@@ -86,8 +86,9 @@
 // sandbox stops it writing the copied log itself, and the shared
 // kDSCameraNotification state above keeps only the latest post.
 //  - Ring: "<prefix>.<hash %08x>.<k>", k = seq % kDSCamera660Slots. Each slot's
-//    state is seq (bits 0-15, never 0) | event << 16 | reason << 24 |
-//    flags << 32 (16 bits) | extra << 48 (16 bits).
+//    state is seq (bits 0-11, never 0; 4.5.661) | camera permission << 12
+//    (3 bits: 0 unknown, 1 + AVAuthorizationStatus) | event << 16 |
+//    reason << 24 | flags << 32 (16 bits) | extra << 48 (16 bits).
 //  - Doorbell: "<prefix>.<hash %08x>", state = pid << 16 | latest seq, then
 //    posted. SpringBoard reads the slots between the last seq it logged and
 //    that one.
@@ -96,6 +97,7 @@
 //    so an app that was already running when it was staged is still heard.
 #define kDSCamera660Prefix "com.recreated.dynamicstage.camera660"
 #define kDSCamera660Slots 8
+#define kDSCamera660SeqMask 0x0fff
 #define kDSCamera660EvHello 1
 #define kDSCamera660EvHooksIn 2
 #define kDSCamera660EvStartCalled 3
@@ -208,7 +210,7 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 
 // Kept across resprings. postinst deletes it, so a crash from the build that
 // was just replaced is not still sitting there after the next install.
-#define kDSBuildVersionString "4.5.660"
+#define kDSBuildVersionString "4.5.661"
 
 // One line from the staged app, copied into the stage log. The app and
 // SpringBoard do not share that log, so a blocked keyboard hide was invisible.

@@ -9,6 +9,8 @@
 #import <objc/message.h>
 #import <notify.h>
 #import <os/lock.h>
+#import <stdatomic.h>
+#import <unistd.h>
 
 @interface DSCameraClaim : NSObject
 @property (nonatomic, copy) NSString *bundle;
@@ -17,6 +19,13 @@
 @property (nonatomic) CGRect frame;
 @property (nonatomic) NSInteger lastReason;
 @property (nonatomic) CFAbsoluteTime lastResend;
+// 4.5.661: published because the card is visible (no camera event needed).
+@property (nonatomic) BOOL presence;
+// 4.5.661: a camera-using process that is not itself on a card (an extension
+// such as the Messages camera); its element takes this staged host's card frame.
+@property (nonatomic, copy) NSString *hostBundle;
+@property (nonatomic, copy) NSString *hostPath;
+@property (nonatomic) BOOL presenceLogged;
 @end
 
 @implementation DSCameraClaim
@@ -37,6 +46,13 @@ static id (*DSOrigAddElement)(id, SEL, id);
 
 static os_unfair_lock DSCameraPublishedLock = OS_UNFAIR_LOCK_INIT;
 static NSSet<NSString *> *DSCameraPublished;
+
+// 4.5.661: green-dot attribution (SBSensorActivityDataProvider), main thread.
+// bundle -> pid of every process the system shows as using the camera, and
+// for each the pid of its host process when RunningBoard names one.
+static NSDictionary<NSString *, NSNumber *> *DSCam661SensorCamera;
+static NSDictionary<NSString *, NSNumber *> *DSCam661SensorHostPid;
+static BOOL DSCam661SensorHooked = NO;
 
 #pragma mark - Logging
 
@@ -300,9 +316,10 @@ static void DSCameraLogStatus(NSString *bundle, NSString *why, BOOL force, NSStr
     } @catch (NSException *exception) {
     }
     DSCamera660Record([NSString stringWithFormat:@"status.%@", statusKey],
-                   @"%@ status (%@): claim=%d published=%d publisher=%d template=%d %@ locked=%d callGuard=%d | %@",
-                   bundle, why, claim != nil, claim.assertion != nil, DSCameraPublisher != nil, DSCameraTemplateSeen,
-                   DSCameraLayoutPresence(bundle), DSCameraDeviceLocked(), DSCallGuardActive(), hostState);
+                   @"%@ status (%@): claim=%d presence=%d published=%d publisher=%d template=%d %@ locked=%d callGuard=%d sensorCamera=[%@] | %@",
+                   bundle, why, claim != nil, claim.presence, claim.assertion != nil, DSCameraPublisher != nil, DSCameraTemplateSeen,
+                   DSCameraLayoutPresence(bundle), DSCameraDeviceLocked(), DSCallGuardActive(),
+                   [DSCam661SensorCamera.allKeys componentsJoinedByString:@","] ?: @"", hostState);
     DSCameraLogRunningBoard(bundle, pid, why, cls);
 }
 
@@ -389,7 +406,10 @@ static id DSCameraFindPublisher(void) {
 static void DSCameraUpdatePublishedSet(void) {
     NSMutableSet *set = [NSMutableSet set];
     for (DSCameraClaim *claim in DSCameraClaims.allValues) {
-        if (claim.assertion) [set addObject:claim.bundle];
+        // 4.5.661: only a claim from an app-side camera event. A presence or
+        // extension element never makes DSSceneHost write scene settings
+        // (occluded / deactivation reasons) for the card.
+        if (claim.assertion && claim.lastHeard > 0 && !claim.hostBundle) [set addObject:claim.bundle];
     }
     os_unfair_lock_lock(&DSCameraPublishedLock);
     DSCameraPublished = [set copy];
@@ -587,7 +607,20 @@ static NSString *DSCam660Detail(NSUInteger event, NSInteger reason, uint32_t ext
     }
 }
 
+// 4.5.661: AVCaptureDevice authorizationStatusForMediaType:video in the app.
+static const char *DSCam661AuthName(uint32_t value) {
+    switch (value) {
+        case 0: return "unknown(AVFoundation not loaded)";
+        case 1: return "not-determined";
+        case 2: return "restricted";
+        case 3: return "denied";
+        case 4: return "authorized";
+        default: return "?";
+    }
+}
+
 static void DSCam660LogEntry(DSCamera660Watch *watch, uint64_t state, BOOL hosted, BOOL deferred) {
+    uint32_t authorization = (uint32_t)((state >> 12) & 0x7);
     NSUInteger event = (NSUInteger)((state >> 16) & 0xff);
     NSInteger reason = (NSInteger)((state >> 24) & 0xff);
     uint32_t flags = (uint32_t)((state >> 32) & 0xffff);
@@ -601,8 +634,8 @@ static void DSCam660LogEntry(DSCamera660Watch *watch, uint64_t state, BOOL hoste
     }
     BOOL withSession = event != kDSCamera660EvHello && event != kDSCamera660EvHooksIn;
     NSString *key = [NSString stringWithFormat:@"%@.%lu.%ld%@", bundle, (unsigned long)event, (long)reason, hosted ? @"" : @".off"];
-    DSCamera660Record(key, @"%@ %s %@ | %@%@%@", bundle, DSCam660EventName(event), DSCam660Detail(event, reason, extra),
-                      DSCam660FlagText(flags, extra, withSession),
+    DSCamera660Record(key, @"%@ %s %@ | %@ auth=%s%@%@", bundle, DSCam660EventName(event), DSCam660Detail(event, reason, extra),
+                      DSCam660FlagText(flags, extra, withSession), DSCam661AuthName(authorization),
                       hosted ? @"" : @" (not on a card, full-screen camera left alone)",
                       deferred ? @" (read after the home / switcher gesture)" : @"");
     if (!hosted) return;
@@ -625,7 +658,8 @@ static void DSCam660DrainWatch(DSCamera660Watch *watch, NSArray<NSString *> *hos
     uint64_t bell = 0;
     if (notify_get_state(watch.doorbell, &bell) != NOTIFY_STATUS_OK || bell == 0) return;
     uint32_t pid = (uint32_t)(bell >> 16);
-    uint16_t latest = (uint16_t)(bell & 0xffff);
+    // 4.5.661: 12-bit sequence (bits 12-14 of a slot carry the permission).
+    uint16_t latest = (uint16_t)(bell & kDSCamera660SeqMask);
     BOOL hosted = [hostedBundles containsObject:watch.bundle];
     if (pid != watch.pid) {
         // A new process of this app: it cleared its slots and counts from 1.
@@ -635,9 +669,9 @@ static void DSCam660DrainWatch(DSCamera660Watch *watch, NSArray<NSString *> *hos
             DSCamera660Record([@"pid." stringByAppendingString:watch.bundle], @"%@ pid=%u reporting camera events to SpringBoard", watch.bundle, pid);
         }
     }
-    uint16_t since = watch.lastSeq;
-    uint16_t pending = (uint16_t)(latest - since);
-    if (pending == 0 || pending >= 0x8000) return;
+    uint16_t since = watch.lastSeq & kDSCamera660SeqMask;
+    uint16_t pending = (uint16_t)((latest - since) & kDSCamera660SeqMask);
+    if (pending == 0 || pending >= 0x0800) return;
     uint64_t found[kDSCamera660Slots];
     uint16_t order[kDSCamera660Slots];
     int count = 0;
@@ -646,10 +680,10 @@ static void DSCam660DrainWatch(DSCamera660Watch *watch, NSArray<NSString *> *hos
         if (token == NOTIFY_TOKEN_INVALID) continue;
         uint64_t state = 0;
         if (notify_get_state(token, &state) != NOTIFY_STATUS_OK || state == 0) continue;
-        uint16_t seq = (uint16_t)(state & 0xffff);
-        uint16_t after = (uint16_t)(seq - since);
-        uint16_t upTo = (uint16_t)(latest - seq);
-        if (after == 0 || after >= 0x8000 || upTo >= 0x8000) continue;
+        uint16_t seq = (uint16_t)(state & kDSCamera660SeqMask);
+        uint16_t after = (uint16_t)((seq - since) & kDSCamera660SeqMask);
+        uint16_t upTo = (uint16_t)((latest - seq) & kDSCamera660SeqMask);
+        if (seq == 0 || after == 0 || after >= 0x0800 || upTo >= 0x0800) continue;
         found[count] = state;
         order[count] = after;
         count += 1;
@@ -735,7 +769,7 @@ static void DSCam660WatchBundle(NSString *bundle) {
     uint64_t bell = 0;
     if (token != NOTIFY_TOKEN_INVALID && notify_get_state(token, &bell) == NOTIFY_STATUS_OK && bell != 0) {
         watch.pid = (uint32_t)(bell >> 16);
-        watch.lastSeq = (uint16_t)(bell & 0xffff);
+        watch.lastSeq = (uint16_t)(bell & kDSCamera660SeqMask);
     }
     DSCam660Watches[@(hash)] = watch;
 }
@@ -766,6 +800,346 @@ static void DSCam660PingSoon(NSString *bundle) {
     });
 }
 
+#pragma mark - 4.5.661 green-dot attribution (SBSensorActivityDataProvider)
+
+// SpringBoard learns which process is using the camera (the green dot) through
+// -[SBSensorActivityDataProvider _handleNewDomainData:]. The hook calls the
+// original first and unchanged, then reads the data on a utility queue (read
+// only, every access guarded and type checked) and logs a "camera661 sensor"
+// line when the set of camera users changes. The shape of the data is private,
+// so the reader tries the known names and, when it cannot classify an entry,
+// logs the data's shape once so the next build can read it.
+
+static void (*DSOrigHandleNewDomainData)(id, SEL, id);
+
+static void DSCamera661Record(NSString *key, NSString *format, ...) NS_FORMAT_FUNCTION(2, 3);
+static void DSCamera661Record(NSString *key, NSString *format, ...) {
+    va_list args;
+    va_start(args, format);
+    DSCameraRecordV(@"camera661", 1.0, key, format, args);
+    va_end(args);
+}
+
+static id DSCam661Object(id target, NSString *name) {
+    if (!target || name.length == 0) return nil;
+    SEL selector = NSSelectorFromString(name);
+    @try {
+        if (![target respondsToSelector:selector]) return nil;
+        NSMethodSignature *signature = [target methodSignatureForSelector:selector];
+        if (!signature || signature.numberOfArguments != 2 || signature.methodReturnType[0] != '@') return nil;
+        return ((id (*)(id, SEL))objc_msgSend)(target, selector);
+    } @catch (NSException *exception) {
+        return nil;
+    }
+}
+
+static BOOL DSCam661Integer(id target, NSString *name, long long *value) {
+    if (!target || name.length == 0) return NO;
+    SEL selector = NSSelectorFromString(name);
+    @try {
+        if (![target respondsToSelector:selector]) return NO;
+        NSMethodSignature *signature = [target methodSignatureForSelector:selector];
+        if (!signature || signature.numberOfArguments != 2) return NO;
+        switch (signature.methodReturnType[0]) {
+            case 'q': case 'Q': case 'l': case 'L':
+                *value = ((long long (*)(id, SEL))objc_msgSend)(target, selector); return YES;
+            case 'i': case 'I':
+                *value = ((int (*)(id, SEL))objc_msgSend)(target, selector); return YES;
+            case 's': case 'S':
+                *value = ((short (*)(id, SEL))objc_msgSend)(target, selector); return YES;
+            case 'c': case 'C': case 'B':
+                *value = ((unsigned char (*)(id, SEL))objc_msgSend)(target, selector); return YES;
+            default:
+                return NO;
+        }
+    } @catch (NSException *exception) {
+        return NO;
+    }
+}
+
+static NSArray *DSCam661Items(id value) {
+    if ([value isKindOfClass:NSSet.class]) return [(NSSet *)value allObjects];
+    if ([value isKindOfClass:NSArray.class]) return value;
+    if ([value isKindOfClass:NSOrderedSet.class]) return [(NSOrderedSet *)value array];
+    if ([value isKindOfClass:NSDictionary.class]) return [(NSDictionary *)value allValues];
+    return nil;
+}
+
+static NSArray *DSCam661Flatten(NSArray *items) {
+    NSMutableArray *flat = [NSMutableArray array];
+    for (id item in items) {
+        NSArray *inner = DSCam661Items(item);
+        if (inner) [flat addObjectsFromArray:inner];
+        else [flat addObject:item];
+        if (flat.count > 32) break;
+    }
+    return flat;
+}
+
+static NSString *DSCam661BundleOf(id attribution, long long *pid) {
+    NSMutableArray *candidates = [NSMutableArray arrayWithObject:attribution];
+    for (NSString *name in @[ @"attributedEntity", @"activeEntity", @"entity", @"client", @"clientAttribution", @"attribution" ]) {
+        id entity = DSCam661Object(attribution, name);
+        if (entity) [candidates addObject:entity];
+    }
+    for (id entity in [candidates copy]) {
+        id identity = DSCam661Object(entity, @"executableIdentity");
+        if (identity) [candidates addObject:identity];
+    }
+    NSString *bundle = nil;
+    for (id candidate in candidates) {
+        for (NSString *name in @[ @"bundleIdentifier", @"bundleID", @"executableIdentifier", @"clientBundleIdentifier",
+                                  @"applicationBundleIdentifier", @"displayIdentifier" ]) {
+            id value = DSCam661Object(candidate, name);
+            if ([value isKindOfClass:NSString.class] && [(NSString *)value rangeOfString:@"."].location != NSNotFound) {
+                bundle = value;
+                break;
+            }
+        }
+        if (bundle) break;
+    }
+    if (pid) {
+        *pid = 0;
+        for (id candidate in candidates) {
+            long long value = 0;
+            if ((DSCam661Integer(candidate, @"pid", &value) || DSCam661Integer(candidate, @"processIdentifier", &value)) && value > 0) {
+                *pid = value;
+                break;
+            }
+        }
+    }
+    return bundle;
+}
+
+// RunningBoard's host process for an extension (XPC round trip; utility queue).
+static pid_t DSCam661HostPidOf(pid_t pid) {
+    if (pid <= 0) return 0;
+    @try {
+        Class identifierClass = objc_getClass("RBSProcessIdentifier");
+        Class handleClass = objc_getClass("RBSProcessHandle");
+        SEL withPid = NSSelectorFromString(@"identifierWithPid:");
+        SEL forIdentifier = NSSelectorFromString(@"handleForIdentifier:error:");
+        if (!identifierClass || !handleClass || ![identifierClass respondsToSelector:withPid] ||
+            ![handleClass respondsToSelector:forIdentifier]) return 0;
+        id identifier = ((id (*)(id, SEL, int))objc_msgSend)(identifierClass, withPid, pid);
+        NSError *error = nil;
+        id handle = identifier ? ((id (*)(id, SEL, id, NSError **))objc_msgSend)(handleClass, forIdentifier, identifier, &error) : nil;
+        id host = DSCam661Object(handle, @"hostProcess");
+        long long hostPid = 0;
+        if (host && DSCam661Integer(host, @"pid", &hostPid) && hostPid > 0) return (pid_t)hostPid;
+        id identity = DSCam661Object(handle, @"identity");
+        id hostIdentifier = DSCam661Object(identity, @"hostIdentifier");
+        if (hostIdentifier && DSCam661Integer(hostIdentifier, @"pid", &hostPid) && hostPid > 0) return (pid_t)hostPid;
+    } @catch (NSException *exception) {
+    }
+    return 0;
+}
+
+static NSString *DSCam661FrontBundle(void) {
+    @try {
+        id app = UIApplication.sharedApplication;
+        SEL selector = NSSelectorFromString(@"_accessibilityFrontMostApplication");
+        if (![app respondsToSelector:selector]) return nil;
+        id front = ((id (*)(id, SEL))objc_msgSend)(app, selector);
+        id bundle = DSCam661Object(front, @"bundleIdentifier");
+        return [bundle isKindOfClass:NSString.class] && [(NSString *)bundle length] ? bundle : nil;
+    } @catch (NSException *exception) {
+        return nil;
+    }
+}
+
+// Main thread.
+static void DSCam661NoteSensor(NSDictionary<NSString *, NSNumber *> *camera, NSDictionary<NSString *, NSNumber *> *hostPids) {
+    NSDictionary *old = DSCam661SensorCamera ?: @{};
+    if ([old isEqualToDictionary:camera]) {
+        DSCam661SensorHostPid = hostPids;
+        return;
+    }
+    NSArray<NSString *> *hosted = @[];
+    @try {
+        hosted = [[DSStageManager sharedManager] hostedBundleIdentifiers] ?: @[];
+    } @catch (NSException *exception) {
+    }
+    NSString *front = DSCam661FrontBundle();
+    for (NSString *bundle in camera) {
+        if (old[bundle]) continue;
+        int hostPid = [hostPids[bundle] intValue];
+        NSString *role = [hosted containsObject:bundle] ? @"staged card"
+            : ([bundle isEqualToString:front] ? @"full-screen front app"
+               : (hostPid > 0 ? [NSString stringWithFormat:@"hosted by pid %d", hostPid] : @"not on a card, not the front app"));
+        DSCamera661Record([NSString stringWithFormat:@"sensor.on.%@", bundle], @"sensor %@ pid=%d camera on (%@) front=%@ staged=[%@]",
+                          bundle, [camera[bundle] intValue], role, front ?: @"home screen", [hosted componentsJoinedByString:@","]);
+    }
+    for (NSString *bundle in old) {
+        if (camera[bundle]) continue;
+        DSCamera661Record([NSString stringWithFormat:@"sensor.off.%@", bundle], @"sensor %@ pid=%d camera off", bundle, [old[bundle] intValue]);
+    }
+    DSCam661SensorCamera = [camera copy];
+    DSCam661SensorHostPid = [hostPids copy];
+    [DSCameraArbiter refreshSoon];
+}
+
+static void DSCam661ReadSensorData(id data) {
+    NSMutableDictionary<NSString *, NSNumber *> *camera = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSNumber *> *hostPids = [NSMutableDictionary dictionary];
+    NSInteger seen = 0;
+    NSInteger unclassified = 0;
+    id sample = nil;
+    @try {
+        // Per-sensor collections first, then a mixed list classified one by one.
+        NSArray *cameraItems = nil;
+        for (NSString *name in @[ @"cameraAttributions", @"cameraActivityAttributions", @"activeCameraAttributions",
+                                  @"cameraAndMicrophoneAttributions" ]) {
+            cameraItems = DSCam661Items(DSCam661Object(data, name));
+            if (cameraItems) break;
+        }
+        NSArray *items = cameraItems ? DSCam661Flatten(cameraItems) : nil;
+        BOOL perSensor = items != nil;
+        if (!items) items = DSCam661Items(data);
+        if (!items) {
+            for (NSString *name in @[ @"activityAttributions", @"activeAttributions", @"attributions", @"sensorActivityAttributions",
+                                      @"currentAttributions", @"allAttributions", @"sensorActivities", @"activities" ]) {
+                items = DSCam661Items(DSCam661Object(data, name));
+                if (items) break;
+            }
+        }
+        items = DSCam661Flatten(items ?: @[]);
+        for (id item in items) {
+            seen += 1;
+            if (!sample) sample = item;
+            NSString *text = [[item description] lowercaseString] ?: @"";
+            if (text.length > 800) text = [text substringToIndex:800];
+            BOOL isCamera = perSensor && ![text containsString:@"microphone"];
+            if (!perSensor) {
+                if ([text containsString:@"camera"]) isCamera = YES;
+                else if (![text containsString:@"microphone"] && ![text containsString:@"location"]) unclassified += 1;
+            }
+            if (!isCamera) continue;
+            long long pid = 0;
+            NSString *bundle = DSCam661BundleOf(item, &pid);
+            if (bundle.length == 0) {
+                unclassified += 1;
+                continue;
+            }
+            camera[bundle] = @(pid);
+            pid_t host = DSCam661HostPidOf((pid_t)pid);
+            if (host > 0 && host != (pid_t)pid) hostPids[bundle] = @(host);
+        }
+    } @catch (NSException *exception) {
+    }
+    // The shape, once every 10 minutes, when something could not be read.
+    static _Atomic(double) shapeLoggedAt = 0;
+    NSString *shape = nil;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if ((unclassified > 0 || (seen == 0 && data && !DSCam661Items(data))) && now - atomic_load(&shapeLoggedAt) > 600.0) {
+        atomic_store(&shapeLoggedAt, now);
+        NSString *text = [(sample ?: data) description] ?: @"?";
+        if (text.length > 260) text = [text substringToIndex:260];
+        shape = [NSString stringWithFormat:@"sensor data %@ items=%ld unclassified=%ld first=%@ desc=%@",
+                 NSStringFromClass([data class]) ?: @"nil", (long)seen, (long)unclassified,
+                 sample ? NSStringFromClass([sample class]) : @"-", text];
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (shape) DSCamera661Record(@"sensor.shape", @"%@", shape);
+        DSCam661NoteSensor(camera, hostPids);
+    });
+}
+
+static void DSCam661HandleNewDomainData(id self, SEL _cmd, id data) {
+    if (DSOrigHandleNewDomainData) DSOrigHandleNewDomainData(self, _cmd, data);
+    if (!data) return;
+    id retained = data;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        @try {
+            DSCam661ReadSensorData(retained);
+        } @catch (NSException *exception) {
+        }
+    });
+}
+
+static void DSCam661InstallSensorHook(void) {
+    Class cls = objc_getClass("SBSensorActivityDataProvider");
+    SEL selector = NSSelectorFromString(@"_handleNewDomainData:");
+    Method method = cls ? class_getInstanceMethod(cls, selector) : NULL;
+    const char *types = method ? method_getTypeEncoding(method) : NULL;
+    // void return, one object argument; anything else is left alone.
+    if (!method || method_getNumberOfArguments(method) != 3 || !types || types[0] != 'v') {
+        DSDiagnosticsRecord(@"SpringBoard: camera661 sensor: SBSensorActivityDataProvider _handleNewDomainData: not found, no green-dot attribution");
+        return;
+    }
+    char argument[8] = {0};
+    method_getArgumentType(method, 2, argument, sizeof(argument));
+    if (argument[0] != '@') {
+        DSDiagnosticsRecord(@"SpringBoard: camera661 sensor: _handleNewDomainData: takes no object, attribution off");
+        return;
+    }
+    DSOrigHandleNewDomainData = (void (*)(id, SEL, id))method_setImplementation(method, (IMP)DSCam661HandleNewDomainData);
+    DSCam661SensorHooked = YES;
+    DSDiagnosticsRecord(@"SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)");
+}
+
+#pragma mark - 4.5.661 presence
+
+// Drop this file to stop presence / extension publishing without reinstalling
+// (camera-event claims from 4.5.652 still work).
+#define kDSCam661PresenceOffPath "/var/mobile/.dynamicstage-no-camera-presence"
+
+static BOOL DSCam661PresenceDisabled(void) {
+    static CFAbsoluteTime checkedAt = 0;
+    static BOOL disabled = NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - checkedAt > 5.0) {
+        checkedAt = now;
+        disabled = access(kDSCam661PresenceOffPath, F_OK) == 0;
+    }
+    return disabled;
+}
+
+static BOOL DSCam661FrameUsable(CGRect frame) {
+    return !CGRectIsNull(frame) && CGRectGetWidth(frame) >= 40.0 && CGRectGetHeight(frame) >= 40.0;
+}
+
+// Which staged card an extension's camera belongs to.
+static NSString *DSCam661HostFor(NSString *bundle, NSDictionary<NSString *, NSValue *> *visible, NSString **path) {
+    DSStageManager *manager = [DSStageManager sharedManager];
+    int hostPid = [DSCam661SensorHostPid[bundle] intValue];
+    if (hostPid > 0) {
+        for (NSString *candidate in visible) {
+            if ([manager hostedProcessIdentifierForBundleIdentifier:candidate] == hostPid) {
+                if (path) *path = @"runningboard host pid";
+                return candidate;
+            }
+        }
+    }
+    for (NSString *candidate in visible) {
+        if ([bundle hasPrefix:[candidate stringByAppendingString:@"."]]) {
+            if (path) *path = @"bundle prefix";
+            return candidate;
+        }
+    }
+    if (visible.count == 1) {
+        if (path) *path = @"the only visible card";
+        return visible.allKeys.firstObject;
+    }
+    return nil;
+}
+
+static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString *why) {
+    if (claim.presenceLogged == published) return;
+    claim.presenceLogged = published;
+    NSString *key = [NSString stringWithFormat:@"presence.%@.%d", claim.bundle ?: @"?", published];
+    if (published) {
+        NSString *what = claim.hostBundle
+            ? [NSString stringWithFormat:@"camera extension on %@'s card (%@)", claim.hostBundle, claim.hostPath ?: @"?"]
+            : (claim.lastHeard > 0 ? @"camera running on the card" : @"card visible");
+        DSCamera661Record(key, @"presence %@ in the display layout (%@) frame=%@ role=%lld level=%lld; layout now: %@",
+                          claim.bundle, what, NSStringFromCGRect(claim.frame), DSCameraTemplateRole, DSCameraTemplateLevel,
+                          DSCameraLayoutSummary());
+    } else {
+        DSCamera661Record(key, @"presence %@ out of the display layout (%@)", claim.bundle, why ?: @"?");
+    }
+}
+
 @implementation DSCameraArbiter
 
 + (void)start {
@@ -783,7 +1157,28 @@ static void DSCam660PingSoon(NSString *bundle) {
         // 4.5.660: the per-app camera event channels.
         for (NSString *bundle in DSCameraInjectedBundles()) DSCam660WatchBundle(bundle);
         DSDiagnosticsRecordFormat(@"SpringBoard: camera660 listening for in-app camera events from %lu apps", (unsigned long)DSCam660Watches.count);
+        // 4.5.661: green-dot attribution, and presence publishing.
+        @try {
+            DSCam661InstallSensorHook();
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event%@",
+                                  DSCam661PresenceDisabled() ? @" (switched off by " kDSCam661PresenceOffPath @")" : @"");
     });
+}
+
++ (void)withdrawAllForReason:(NSString *)why {
+    if (!NSThread.isMainThread || !DSCameraClaims) return;
+    @try {
+        for (NSString *bundle in DSCameraClaims.allKeys) {
+            DSCameraClaim *claim = DSCameraClaims[bundle];
+            DSCameraUnpublish(claim, why);
+            DSCam661NotePresence(claim, NO, why);
+            if (claim.lastHeard <= 0) [DSCameraClaims removeObjectForKey:bundle];
+        }
+    } @catch (NSException *exception) {
+    }
+    DSCameraUpdatePublishedSet();
 }
 
 + (void)noteStagedBundle:(NSString *)bundle {
@@ -795,6 +1190,8 @@ static void DSCam660PingSoon(NSString *bundle) {
         if ([DSCameraInjectedBundles() containsObject:bundle]) DSCam660PingSoon(bundle);
     } @catch (NSException *exception) {
     }
+    // 4.5.661: the new card's presence element.
+    [self refreshSoon];
     static NSMutableDictionary<NSString *, NSNumber *> *lastNote;
     if (!lastNote) lastNote = [NSMutableDictionary dictionary];
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
@@ -892,8 +1289,12 @@ static void DSCam660PingSoon(NSString *bundle) {
         }
         case kDSCameraEventStop:
             if (claim) {
-                DSCameraUnpublish(claim, @"capture stopped");
-                [DSCameraClaims removeObjectForKey:bundle];
+                // 4.5.661: a visible card keeps its presence element.
+                claim.lastHeard = 0;
+                if (!claim.presence) {
+                    DSCameraUnpublish(claim, @"capture stopped");
+                    [DSCameraClaims removeObjectForKey:bundle];
+                }
             }
             break;
         default:
@@ -953,37 +1354,127 @@ static void DSCam660PingSoon(NSString *bundle) {
         NSArray<NSString *> *hosted = [manager hostedBundleIdentifiers];
         // 4.5.653: nothing in the display layout while a call screen comes
         // up or is on screen; SpringBoard is rebuilding its own layout then.
-        BOOL locked = DSCameraDeviceLocked() || DSCallGuardActive();
+        // 4.5.661: also while the stage steps aside for a call screen (656),
+        // from the moment the staged Phone's call key is tapped.
+        BOOL locked = DSCameraDeviceLocked() || DSCallGuardActive() || DSCallStepAsideActive();
         CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+
+        // 4.5.661 presence: every visible, unparked, unminimized card is in
+        // the display layout, camera event or not, so a camera that starts in
+        // the staged app (or in an extension it hosts, which never reports to
+        // the stage) finds the app on screen. Not while locked, in a call,
+        // during home / switcher, or while the full-screen app is itself using
+        // the camera (it would be interrupted as "multiple foreground apps").
+        BOOL presenceOff = DSCam661PresenceDisabled();
+        // The front app is only asked for while the green dot shows a camera user.
+        NSString *front = DSCam661SensorCamera.count ? DSCam661FrontBundle() : nil;
+        NSString *frontCamera = (front && ![hosted containsObject:front] && DSCam661SensorCamera[front]) ? front : nil;
+        NSString *presenceWhy = locked ? @"phone locked or call screen up"
+            : (systemOwns ? @"home / switcher has the screen"
+               : (frontCamera ? [NSString stringWithFormat:@"full-screen %@ is using the camera", frontCamera]
+                  : (presenceOff ? @"presence switched off by file" : @"card hidden, parked, minimized or closed")));
+        NSMutableDictionary<NSString *, NSValue *> *visible = [NSMutableDictionary dictionary];
+        if (!locked && !systemOwns) {
+            for (NSString *bundle in hosted) {
+                CGRect frame = [manager stageCardScreenFrameForBundleIdentifier:bundle cornerRadius:NULL];
+                if (DSCam661FrameUsable(frame)) visible[bundle] = [NSValue valueWithCGRect:frame];
+            }
+        }
+        BOOL presenceAllowed = !presenceOff && !locked && !systemOwns && !frontCamera;
+        for (NSString *bundle in hosted) {
+            DSCameraClaim *claim = DSCameraClaims[bundle];
+            BOOL eligible = presenceAllowed && visible[bundle] != nil;
+            if (eligible && !claim) {
+                claim = [DSCameraClaim new];
+                claim.bundle = bundle;
+                claim.frame = CGRectNull;
+                DSCameraClaims[bundle] = claim;
+            }
+            claim.presence = eligible;
+        }
+        // 4.5.661 extensions: a process the green dot shows using the camera
+        // that is neither on a card nor the full-screen app, while a card is
+        // visible (the Messages camera extension behind
+        // _MSMessageExtensionRemoteViewController), gets an element of its own
+        // at its host card's frame, in case the camera server judges the
+        // extension by its own bundle rather than its host's.
+        for (NSString *bundle in DSCam661SensorCamera) {
+            if ([hosted containsObject:bundle] || [bundle isEqualToString:front] ||
+                [bundle isEqualToString:@"com.apple.springboard"]) continue;
+            DSCameraClaim *claim = DSCameraClaims[bundle];
+            NSString *path = nil;
+            NSString *host = (presenceOff || locked || systemOwns) ? nil : DSCam661HostFor(bundle, visible, &path);
+            if (!host) {
+                if (claim.hostBundle) claim.presence = NO;
+                continue;
+            }
+            if (!claim) {
+                claim = [DSCameraClaim new];
+                claim.bundle = bundle;
+                claim.frame = CGRectNull;
+                DSCameraClaims[bundle] = claim;
+            }
+            if (!claim.hostBundle || ![claim.hostBundle isEqualToString:host]) {
+                claim.hostBundle = host;
+                claim.hostPath = path;
+            }
+            claim.presence = YES;
+        }
+
         for (NSString *bundle in DSCameraClaims.allKeys) {
             DSCameraClaim *claim = DSCameraClaims[bundle];
-            if (![hosted containsObject:bundle]) {
+            BOOL extension = claim.hostBundle != nil;
+            if (extension) {
+                if (!DSCam661SensorCamera[bundle] || ![hosted containsObject:claim.hostBundle]) claim.presence = NO;
+            } else if (![hosted containsObject:bundle]) {
                 DSCameraUnpublish(claim, @"app left the stage");
+                DSCam661NotePresence(claim, NO, @"app left the stage");
                 [DSCameraClaims removeObjectForKey:bundle];
                 continue;
             }
-            if (now - claim.lastHeard > 12.0) {
-                DSCameraUnpublish(claim, @"app stopped reporting its camera");
+            if (claim.lastHeard > 0 && now - claim.lastHeard > 12.0) {
+                claim.lastHeard = 0;
+                if (!claim.presence) {
+                    DSCameraUnpublish(claim, @"app stopped reporting its camera");
+                    DSCam661NotePresence(claim, NO, @"app stopped reporting its camera");
+                    [DSCameraClaims removeObjectForKey:bundle];
+                    continue;
+                }
+            }
+            if (claim.lastHeard <= 0 && !claim.presence) {
+                NSString *why = extension ? @"extension camera off or its card gone" : presenceWhy;
+                DSCameraUnpublish(claim, why);
+                DSCam661NotePresence(claim, NO, why);
                 [DSCameraClaims removeObjectForKey:bundle];
                 continue;
             }
-            CGRect frame = (locked || systemOwns) ? CGRectNull : [manager stageCardScreenFrameForBundleIdentifier:bundle cornerRadius:NULL];
-            if (CGRectIsNull(frame) || CGRectGetWidth(frame) < 40.0 || CGRectGetHeight(frame) < 40.0) {
-                DSCameraUnpublish(claim, locked ? @"phone locked or call screen up" :
-                                         (systemOwns ? @"home / switcher has the screen" : @"card not visible"));
+            NSString *frameBundle = extension ? claim.hostBundle : bundle;
+            CGRect frame = CGRectNull;
+            if (!locked && !systemOwns) {
+                NSValue *known = visible[frameBundle];
+                frame = known ? known.CGRectValue : [manager stageCardScreenFrameForBundleIdentifier:frameBundle cornerRadius:NULL];
+            }
+            if (!DSCam661FrameUsable(frame)) {
+                NSString *why = locked ? @"phone locked or call screen up" :
+                                (systemOwns ? @"home / switcher has the screen" : @"card not visible");
+                DSCameraUnpublish(claim, why);
+                DSCam661NotePresence(claim, NO, why);
                 continue;
             }
             if (claim.assertion && DSCameraFramesClose(frame, claim.frame)) continue;
             DSCameraUnpublish(claim, @"card moved");
-            DSCameraPublish(claim, frame);
+            if (DSCameraPublish(claim, frame)) DSCam661NotePresence(claim, YES, nil);
         }
     } @catch (NSException *exception) {
         DSCameraRecord(@"refreshthrew", @"refresh threw %@", exception.name ?: @"?");
     }
     DSCameraUpdatePublishedSet();
     if (DSCameraClaims.count > 0 && !DSCameraTimer) {
-        // Once a second while a staged camera is live: card moved, minimized,
-        // closed, locked. Never per frame.
+        // Once a second while a staged camera is live or a card is visible
+        // (4.5.661 presence): card moved, minimized, closed, locked. Never per
+        // frame. With every card hidden or the system holding the screen the
+        // presence claims are gone and the timer stops (657: nothing runs in
+        // the switcher); the next stage use restarts it.
         DSCameraTimer = [NSTimer scheduledTimerWithTimeInterval:1.0
                                                          target:self
                                                        selector:@selector(timerFired:)

@@ -4,6 +4,7 @@
 #import "DSDiagnostics.h"
 #import "DSConstants.h"
 #import "DSKeyboardVisibility.h"
+#import "DSCameraArbiter.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -643,6 +644,12 @@ void DSInCallStageInstall(void) {
             CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
             if (posted == 0 || fabs(now - (CFAbsoluteTime)posted) > 5.0) return; // stale
             if (source != 1 && source != 2) return;
+            // 4.5.661: the camera presence elements leave the display layout
+            // before iOS starts switching to the call screen.
+            @try {
+                [DSCameraArbiter withdrawAllForReason:@"staged Phone started a call"];
+            } @catch (NSException *exception) {
+            }
             DSCallGuardArm(source);
             if (!kDSInCallContainmentEnabled) return;
             DSInCallArm(source);

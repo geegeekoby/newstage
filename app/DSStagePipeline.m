@@ -87,6 +87,19 @@ static void DSEnsureStageWindow(void) {
     gDSStageWindow.userInteractionEnabled = NO;
 }
 
+// 4.5.655: write a layer property only when it differs. This runs from every
+// UIWindow setFrame: in every injected app, staged or not, and the plain writes
+// (cornerRadius 0, identity transform) dirtied the window layer each time.
+static void DSSetWindowCorner(UIWindow *window, CGFloat radius, BOOL masks) {
+    CALayer *layer = window.layer;
+    if (fabs(layer.cornerRadius - radius) > 0.01) layer.cornerRadius = radius;
+    if (masks && !layer.masksToBounds) layer.masksToBounds = YES;
+}
+
+static void DSSetWindowIdentity(UIWindow *window) {
+    if (!CGAffineTransformIsIdentity(window.transform)) window.transform = CGAffineTransformIdentity;
+}
+
 static void DSApplyTransformsToWindow(UIWindow *window, DSAppProfile profile) {
     if (DSIsSystemOverlay(window)) return;
     if (DSIsStageWindow(window)) return;
@@ -95,27 +108,25 @@ static void DSApplyTransformsToWindow(UIWindow *window, DSAppProfile profile) {
     switch (profile) {
         case DSProfileBeeper:
             if (DSIsStagedCardWindow(window)) {
-                window.layer.cornerRadius = 16.0;
-                window.layer.masksToBounds = YES;
-                window.transform = CGAffineTransformIdentity;
+                DSSetWindowCorner(window, 16.0, YES);
+                DSSetWindowIdentity(window);
             } else {
-                window.layer.cornerRadius = 0.0;
-                window.transform = CGAffineTransformIdentity;
+                DSSetWindowCorner(window, 0.0, NO);
+                DSSetWindowIdentity(window);
             }
             break;
         case DSProfileMessages:
-            window.layer.cornerRadius = DSIsStagedCardWindow(window) ? 16.0 : 0.0;
-            window.transform = CGAffineTransformIdentity;
+            DSSetWindowCorner(window, DSIsStagedCardWindow(window) ? 16.0 : 0.0, NO);
+            DSSetWindowIdentity(window);
             break;
         case DSProfileGeneric:
         default:
             if (DSIsStagedCardWindow(window)) {
-                window.layer.cornerRadius = 18.0;
-                window.layer.masksToBounds = YES;
-                window.transform = CGAffineTransformIdentity;
+                DSSetWindowCorner(window, 18.0, YES);
+                DSSetWindowIdentity(window);
             } else {
-                window.layer.cornerRadius = 0.0;
-                window.transform = CGAffineTransformIdentity;
+                DSSetWindowCorner(window, 0.0, NO);
+                DSSetWindowIdentity(window);
             }
             break;
     }

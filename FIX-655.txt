@@ -1,0 +1,134 @@
+DynamicStage 4.5.655 - iOS app switcher lag (based on 4.5.654)
+==============================================================
+Deb: com.recreated.dynamicstage_4.5.655_iphoneos-arm64.deb
+sha256 a7b41e75aa43e6ef8dab15c4b449f3168e8f9908408d4cb55a07b600e9bc4950, 540,492 bytes
+Static analysis plus build only. NOT tested on a device, and no on-device profile.
+
+ROOT CAUSES (with evidence)
+---------------------------
+1. Kill-switch syscalls in per-card, per-frame SpringBoard hooks, even with no stage.
+   springboard/Tweak.xm DSStageReady() returned !DSKillSwitchPresent() && DSFullInstallLive.
+   shared/DSBootstrap.m DSKillSwitchPresent() makes 3 access() syscalls on each call
+   (/var/mobile/.dynamicstage-disabled, /var/jb/var/mobile/..., /var/tmp/...).
+   DSStageReady is the first thing in DSAsk() and DSTell() and in these hooks:
+   - SBHomeGrabberView -setFrame:, -layoutSubviews, -setAlpha:, -didMoveToWindow
+     (DSStageShouldMoveHomeGrabber). Each switcher card has its own home pill that
+     moves every frame, so that is about 2-4 calls x 3 syscalls per card per frame.
+   - _UIStatusBar -layoutSubviews, -didMoveToWindow, -setAlpha: (DSApplySystemStatusBar
+     -> DSAsk) for every status bar in SpringBoard.
+   - FBScene -updateSettings:withTransitionContext:completion: and
+     -updateSettingsWithBlock: (DSStageReady + DSSceneUpdateMatters, which calls it again).
+   - UIWindow -setFrame: (DSHostedAppOwnsKeyboard -> DSAsk) for every SpringBoard window.
+   - SBApplicationInfo/FBApplicationInfo -isMedusaCapable, SBWindowScene
+     -_shouldAutorotate, and the fluid switcher gesture hooks (per touch / per query).
+   Rough estimate: with 3-4 cards at 60-120 Hz that is thousands of path lookups per
+   second on SpringBoard's main thread during the swipe.
+
+2. The status bar hook fought SpringBoard's status bar fades.
+   springboard/Tweak.xm %hook _UIStatusBar -layoutSubviews made every laid-out
+   _UIStatusBar the "system" bar, then DSApplySystemStatusBar() set alpha to 1.0 whenever
+   it was not 1.0, even with no stage. During the switcher transition, SpringBoard fades
+   its status bars (Home Screen, switcher, Control Center), and the hook kept setting
+   them back to visible. That adds alpha writes, commits and extra visible layers.
+   DSAttachStatusBarPeek() also added a tap recognizer to every window holding one.
+
+3. Hooks that only called the original method (trampoline overhead on SpringBoard's
+   hottest setters): UIView -setAlpha: and -setHidden: (the switcher sets these on many
+   views every frame), UIWindow -setHidden:, UIKeyboard -setFrame:, and
+   UIInputSetHostView -setFrame:. UIWindow -setFrame: called %orig on both branches,
+   but first ran DSHostedAppOwnsKeyboard() (see cause 1).
+   The per-call cost here is small. These were removed because they did no work.
+
+Smaller, app side (Messages, Messenger, Signal, Beeper, Phone):
+4. app/DSStageContext.m -refresh read the shared state plist
+   (dictionaryWithContentsOfFile) on the main thread on every call, including the
+   0.35 s unstaged probe. The result is only used when notifyd has no state, and it
+   almost always has one. Now the file is read only in that case, which gives the same
+   result.
+5. app/DSStagePipeline.m DSApplyTransformsToWindow() (from every UIWindow -setFrame:,
+   staged or not) wrote cornerRadius = 0 and transform = identity on every window
+   frame change. It now writes only when the value differs (same end state).
+6. springboard/DSCameraArbiter.m DSCameraAddElement() (652 FBSDisplayLayoutPublisher
+   -addElement: swizzle) asked the publisher for its display configuration on every
+   layout publish. The known main publisher now skips that check. This was minor:
+   a few objc messages per publish, not per frame.
+
+HOOKS THAT RUN DURING THE SWIPE / WHILE THE SWITCHER IS OPEN (after 655)
+-------------------------------------------------------------------------
+Per card per frame (can run per frame):
+- SBHomeGrabberView setFrame/layoutSubviews/setAlpha/didMoveToWindow: static flag + 1 s
+  cached kill switch + isStageVisible ivar, then return when no stage is visible.
+  With a stage: homeGestureIsActive, systemTransitionBusy (0.1 s cache), then the
+  switcher controller query. No syscalls.
+- SBApplicationSceneView setFrame/layoutSubviews/didMoveToWindow: DSPhoneStagedCached
+  (0.25 s cache) then return unless Phone is staged. Unchanged.
+- _UIContextLayerHostView layoutSubviews/setFrame: DSBeeperHostedCached (0.25 s) +
+  systemTransitionBusy. Unchanged (650).
+- _UIStatusBar layoutSubviews/setAlpha: cached ready check + one DSAsk. A bar is only
+  written to when the stage hides it or gives back an alpha it took.
+Per scene update (not per frame unless an app is updating its scene):
+- FBScene updateSettings...: cached ready check, identifier, isHostingSceneIdentifier,
+  override lookup (NSLock), then %orig for every non-stage scene.
+- SBAppViewController sceneHandle:didUpdateSettingsWithDiff: weak hash-table lookup
+  (ownsAppViewController), then %orig for non-stage views. Call guard (653) only on owned
+  views, with a 0.5 s cached call state. Unchanged.
+Per touch only: SBFluidSwitcherGestureManager / SBSystemGestureManager, UIWindow /
+  UIView / keyboard hitTest + pointInside (gated by DSKeyboardTouchPassthroughArmed, an
+  ivar/flag check), DSRimCatcherView hitTest.
+Per layout publish: FBSDisplayLayoutPublisher addElement: (associated object + pointer
+  compare).
+Timers during the swipe: DSSceneHost systemTransitionBusy poll every 0.3 s, and only
+  while the transition is active. It posts com.recreated.dynamicstage.systemgesture
+  on change and at most every 2 s (only the staged Phone listens). Diagnostics watchdog:
+  a 0.5 s utility-queue timer that writes "alive" at most every 3 s, off the main
+  thread. Trace / diagnostics lines in the scene paths are rate-limited (0.5-1 s), and
+  only for stage scenes.
+
+CHECKED, NOT A CAUSE
+--------------------
+- systemTransitionBusy (springboard/DSSceneHost.m): cheap. One flag check plus a
+  switcher query cached for 0.1 s. It is polled every 0.3 s only while active, not per
+  frame.
+- Rim catchers (651, DSRimCatcherView.m): a 1.1% black fill with hitTestsAsOpaque, but
+  DSLayoutRimCatchers hides them whenever their card is hidden or closed. With no stage
+  visible they are hidden and not composited.
+- Stage window (DSStageWindow, level 998, clear) stays up for the edge notch. When closed
+  or minimized, the cards and the drag shell are hidden (hideParkedCardsCompletely), and
+  so are the stash holder and _notchBlur. The shelf _panel blur is at alpha 0, which the
+  render server skips. Card shadow views have no shadowPath, but they live inside hidden
+  cards. Only the small solid notch tab is drawn over the switcher.
+- Call guard (653), boot guard (8 s, re-arm), crash hardening, %ctor and full-install
+  kill-switch reads: unchanged. They still read the file directly.
+- App size hooks in unstaged apps: UIScreen/UIWindow size hooks test DSStaged() (an
+  ivar) first. stageBounds returns deviceBounds without notifyd when unstaged (654).
+  UIView setFrame/setBounds/layoutSubviews helpers return on !DSStaged() or a cached
+  bundle check. During the swipe only the foreground app runs (switcher cards are
+  snapshots).
+
+WHAT CHANGED
+------------
+springboard/Tweak.xm:
+- DSKillSwitchCached(): 1 s TTL. DSStageReady() = DSFullInstallLive && !cached.
+- DSStageShouldMoveHomeGrabber(): no-stage exit first, then homeGestureIsActive, then
+  systemTransitionBusy, then the switcher controller.
+- DSApplySystemStatusBar(): only hides (alpha 0, marks the bar) or restores a bar the stage
+  marked. It never forces alpha on other bars. The peek tap is attached only when hiding.
+  The _UIStatusBar hooks return right after %orig when the stage is off. setAlpha marks
+  a bar it zeroes.
+- Removed the no-op hooks: UIWindow setHidden/setFrame, UIView setHidden/setAlpha,
+  UIKeyboard setFrame, UIInputSetHostView setFrame.
+springboard/DSCameraArbiter.m: the known main publisher skips the display check.
+app/DSStageContext.m: the state plist is read only when notifyd has no state.
+app/DSStagePipeline.m: window cornerRadius/transform are written only on change.
+control, shared/DSConstants.h: 4.5.655. changelog.md: entry added.
+
+LIMITS / HONEST NOTES
+---------------------
+- The cost numbers are static estimates and were not measured on a device. Part of the
+  switcher lag can be iOS itself. To compare: create /var/mobile/.dynamicstage-disabled,
+  respring, and try the switcher; then remove the file and respring again.
+- The kill switch now takes up to 1 s to stop the stage hooks in a running SpringBoard.
+  It still blocks all hooks at the next SpringBoard start, as before.
+- Behaviour change: status bars the stage never hid are no longer forced to alpha 1.
+  If a bar stays hidden after a stage closes, report it with the log.
+Backups of the 654 files: bak655/. Full patched files: full-655/.

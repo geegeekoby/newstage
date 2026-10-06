@@ -48,8 +48,25 @@
 // the stage off for the whole success window.
 static BOOL DSFullInstallLive = NO;
 
+// 4.5.655 (switcher lag): DSKillSwitchPresent() is three access() syscalls.
+// DSStageReady runs at the top of DSAsk / DSTell and of the home pill, status
+// bar and FBScene hooks, which SpringBoard calls for every switcher card on
+// every frame of the swipe, with or without a stage on screen. The file is an
+// emergency off switch, so reading it at most once a second is enough. The
+// %ctor, the full install and the boot guard still read the file directly.
+static BOOL DSKillSwitchCached(void) {
+    static CFAbsoluteTime checkedAt = 0;
+    static BOOL present = NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - checkedAt > 1.0 || now < checkedAt) {
+        present = DSKillSwitchPresent() ? YES : NO;
+        checkedAt = now;
+    }
+    return present;
+}
+
 static BOOL DSStageReady(void) {
-    return !DSKillSwitchPresent() && DSFullInstallLive;
+    return DSFullInstallLive && !DSKillSwitchCached();
 }
 
 static BOOL DSAsk(BOOL (^question)(DSStageManager *manager)) {
@@ -633,9 +650,11 @@ static BOOL DSSystemSwitcherIsVisible(void) {
     return ((BOOL (*)(id, SEL))objc_msgSend)(controller, visible);
 }
 
+// 4.5.655: cheapest test first. With no stage on screen this is a static
+// flag, a 1 s cached file check and an ivar read, then out. The switcher test
+// uses SpringBoard's cached transition state before asking the controller.
 static BOOL DSStageShouldMoveHomeGrabber(void) {
     if (!DSStageReady()) return NO;
-    if ([DSSceneHost homeGestureIsActive]) return NO;
     BOOL visible = NO;
     @try {
         visible = [DSStageManager sharedManager].isStageVisible;
@@ -643,6 +662,8 @@ static BOOL DSStageShouldMoveHomeGrabber(void) {
         return NO;
     }
     if (!visible) return NO;
+    if ([DSSceneHost homeGestureIsActive]) return NO;
+    if ([DSSceneHost systemTransitionBusy]) return NO;
     return !DSSystemSwitcherIsVisible();
 }
 
@@ -1050,9 +1071,9 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 
 %hook UIWindow
 
-- (void)setHidden:(BOOL)hidden {
-    %orig;
-}
+// 4.5.655: the pass-through setHidden: hook is gone. The setFrame: hook below
+// is gone too: both of its branches called %orig, but it first asked the stage
+// manager (kill-switch syscalls included) on every window frame change.
 
 - (void)setWindowLevel:(CGFloat)level {
     // 4.5.416 kept the keyboard above the stage after UIKit tried to drop it
@@ -1063,16 +1084,6 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
         return;
     }
     %orig(level);
-}
-
-- (void)setFrame:(CGRect)frame {
-    // Stretching this window to the whole phone after the first letter puts a
-    // cover over the keys. The next tap misses them and the keyboard looks frozen.
-    if (DSHostedAppOwnsKeyboard() || DSKeyboardWindowIsDocked(self)) {
-        %orig;
-        return;
-    }
-    %orig;
 }
 
 - (void)setWindowScene:(UIWindowScene *)scene {
@@ -1131,15 +1142,9 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 
 %end
 
+// 4.5.655: no setHidden: / setAlpha: hooks on UIView in SpringBoard. They only
+// called %orig, and the switcher sets alpha / hidden on its views every frame.
 %hook UIView
-
-- (void)setHidden:(BOOL)hidden {
-    %orig;
-}
-
-- (void)setAlpha:(CGFloat)alpha {
-    %orig;
-}
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSKeyboardTouchPassthroughArmed() && DSViewNameIsKeyboardChrome((UIView *)self) &&
@@ -1178,10 +1183,6 @@ static BOOL DSHostedAppOwnsKeyboard(void) {
 }
 
 %hook UIKeyboard
-
-- (void)setFrame:(CGRect)frame {
-    %orig(frame);
-}
 
 - (void)layoutSubviews {
     %orig;
@@ -1263,10 +1264,6 @@ static void DSPinContextLayerHost(UIView *view) {
 
 %hook UIInputSetHostView
 
-- (void)setFrame:(CGRect)frame {
-    %orig(frame);
-}
-
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSSpringBoardShouldPassTouch((UIView *)self, point)) return nil;
     return %orig;
@@ -1284,16 +1281,42 @@ static void DSPinContextLayerHost(UIView *view) {
 // hides again. The stage window is not raised over it.
 static __weak UIView *DSSystemStatusBar = nil;
 static BOOL DSStatusBarApplyBusy = NO;
+static const void *DSStatusBarHiddenByStageKey = &DSStatusBarHiddenByStageKey;
+static void DSAttachStatusBarPeek(UIWindow *window);
 
+static BOOL DSStatusBarHiddenByStage(UIView *bar) {
+    return bar && [objc_getAssociatedObject(bar, DSStatusBarHiddenByStageKey) boolValue];
+}
+
+static void DSNoteStatusBarHiddenByStage(UIView *bar, BOOL hidden) {
+    if (!bar || DSStatusBarHiddenByStage(bar) == hidden) return;
+    objc_setAssociatedObject(bar, DSStatusBarHiddenByStageKey, hidden ? @YES : nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+// 4.5.655 (switcher lag): every _UIStatusBar in SpringBoard runs this from
+// layoutSubviews (Home Screen, switcher, Control Center...). It used to force
+// alpha 1.0 back onto any bar that SpringBoard had faded, including during the
+// switcher transition, and attach a tap recognizer to every window holding one.
+// Now a bar is only touched to hide it while a card covers the top, and only a
+// bar the stage hid is given its alpha back. Bars the stage never hid are left
+// to SpringBoard.
 static void DSApplySystemStatusBar(void) {
     UIView *bar = DSSystemStatusBar;
     if (![bar isKindOfClass:UIView.class] || DSStatusBarApplyBusy) return;
     BOOL hide = DSAsk(^BOOL(DSStageManager *manager) {
         return [manager shouldHideSystemStatusBar];
     });
+    BOOL ours = DSStatusBarHiddenByStage(bar);
+    if (!hide && !ours) return;
     DSStatusBarApplyBusy = YES;
-    CGFloat alpha = hide ? 0.0 : 1.0;
-    if (fabs(bar.alpha - alpha) > 0.01) bar.alpha = alpha;
+    if (hide) {
+        if (bar.window) DSAttachStatusBarPeek(bar.window);
+        DSNoteStatusBarHiddenByStage(bar, YES);
+        if (bar.alpha > 0.01) bar.alpha = 0.0;
+    } else {
+        DSNoteStatusBarHiddenByStage(bar, NO);
+        if (bar.alpha < 0.99) bar.alpha = 1.0;
+    }
     DSStatusBarApplyBusy = NO;
 }
 
@@ -1357,34 +1380,37 @@ static void DSCaptureSystemStatusBar(void) {
     }
 }
 
+// 4.5.655: with the stage off (kill switch, boot guard) these return right
+// after %orig. The peek tap is attached when a bar is actually hidden.
 %hook _UIStatusBar
 
 - (void)didMoveToWindow {
     %orig;
+    if (!DSStageReady()) return;
     UIView *bar = (UIView *)self;
     if (!bar.window) return;
     DSSystemStatusBar = bar;
-    DSAttachStatusBarPeek(bar.window);
     DSApplySystemStatusBar();
 }
 
 - (void)layoutSubviews {
     %orig;
+    if (!DSStageReady()) return;
     UIView *bar = (UIView *)self;
     DSSystemStatusBar = bar;
-    if (bar.window) DSAttachStatusBarPeek(bar.window);
     DSApplySystemStatusBar();
 }
 
 - (void)setAlpha:(CGFloat)alpha {
     UIView *bar = (UIView *)self;
-    if (bar != DSSystemStatusBar) {
+    if (bar != DSSystemStatusBar || DSStatusBarApplyBusy) {
         %orig(alpha);
         return;
     }
-    if (!DSStatusBarApplyBusy && DSAsk(^BOOL(DSStageManager *manager) {
+    if (DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldHideSystemStatusBar];
         })) {
+        DSNoteStatusBarHiddenByStage(bar, YES);
         %orig(0.0);
         return;
     }

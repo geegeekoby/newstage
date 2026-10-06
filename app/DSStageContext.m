@@ -216,7 +216,11 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
     BOOL namedByNotify = DSNotifyRead(_stateToken, identifier, &primaryKnown) ||
                          DSNotifyRead(_peerToken, identifier, &peerKnown);
     BOOL notifyKnown = primaryKnown || peerKnown;
-    NSDictionary *fileState = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
+    // 4.5.655: the file is only consulted when notifyd had no state for us
+    // (both uses below are behind !notifyKnown). Reading it anyway meant a
+    // plist read on the main thread of every injected app every 0.35 s while
+    // unstaged, including the app being swiped into the switcher.
+    NSDictionary *fileState = notifyKnown ? nil : [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
     BOOL fileKnown = fileState != nil;
     BOOL isUs = namedByNotify;
     // Notify wins. A stale file must not put the card size back after

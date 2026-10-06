@@ -171,7 +171,10 @@ static NSString *DSCameraLayoutSummary(void) {
 static id DSCameraAddElement(id self, SEL _cmd, id element) {
     id result = DSOrigAddElement ? DSOrigAddElement(self, _cmd, element) : nil;
     @try {
-        if (element && !objc_getAssociatedObject(element, DSCameraOwnElementKey) && DSCameraPublisherIsMain(self)) {
+        // 4.5.655: the publisher already known to be the main display's is not
+        // asked for its display configuration again on every layout publish.
+        if (element && !objc_getAssociatedObject(element, DSCameraOwnElementKey) &&
+            (self == DSCameraPublisher || DSCameraPublisherIsMain(self))) {
             BOOL hadPublisher = DSCameraPublisher != nil;
             DSCameraPublisher = self;
             if (DSCameraSend(element, @selector(isUIApplicationElement)) &&

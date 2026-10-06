@@ -2118,6 +2118,36 @@ static void DSMakeKeyBesidePlayingVideo(UIWindow *window) {
     return NO;
 }
 
+// 4.5.658: camera diagnostics, read only.
+- (DSSceneHost *)cameraHostForBundleIdentifier:(NSString *)bundleIdentifier slot:(NSString **)slot {
+    if (bundleIdentifier.length == 0) return nil;
+    if (_sceneHost.isHosting && [_sceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) {
+        if (slot) *slot = _primaryParked ? @"primary(parked)" : @"primary";
+        return _sceneHost;
+    }
+    if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) {
+        if (slot) *slot = _secondParked ? @"top(parked)" : @"top";
+        return _topSceneHost;
+    }
+    if (_floatSceneHost.isHosting && [_floatSceneHost.bundleIdentifier isEqualToString:bundleIdentifier]) {
+        if (slot) *slot = @"float";
+        return _floatSceneHost;
+    }
+    return nil;
+}
+
+- (NSString *)cameraStateSummaryForBundleIdentifier:(NSString *)bundleIdentifier {
+    NSString *slot = nil;
+    DSSceneHost *host = [self cameraHostForBundleIdentifier:bundleIdentifier slot:&slot];
+    if (!host) return @"card=none";
+    return [NSString stringWithFormat:@"card=%@ %@", slot ?: @"?", [host cameraStateSummary] ?: @""];
+}
+
+- (pid_t)hostedProcessIdentifierForBundleIdentifier:(NSString *)bundleIdentifier {
+    DSSceneHost *host = [self cameraHostForBundleIdentifier:bundleIdentifier slot:NULL];
+    return host ? [host hostedProcessIdentifier] : 0;
+}
+
 // 4.5.652: every bundle on a card right now (primary, top, floating).
 - (NSArray<NSString *> *)hostedBundleIdentifiers {
     NSMutableArray<NSString *> *bundles = [NSMutableArray array];

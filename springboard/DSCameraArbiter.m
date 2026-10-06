@@ -62,7 +62,7 @@ static void DSCameraRecord(NSString *key, NSString *format, ...) {
     va_start(args, format);
     NSString *text = [[NSString alloc] initWithFormat:format arguments:args];
     va_end(args);
-    DSDiagnosticsRecord([@"SpringBoard: camera652 " stringByAppendingString:text]);
+    DSDiagnosticsRecord([@"SpringBoard: camera658 " stringByAppendingString:text]);
 }
 
 static const char *DSCameraReasonName(NSInteger reason) {
@@ -86,6 +86,8 @@ static const char *DSCameraEventName(NSUInteger event) {
         case kDSCameraEventRuntimeError: return "runtime-error";
         case kDSCameraEventRetry: return "retry";
         case kDSCameraEventHeartbeat: return "heartbeat";
+        case kDSCameraEventHello: return "hello";
+        case kDSCameraEventAfterStart: return "after-start";
         default: return "?";
     }
 }
@@ -166,6 +168,121 @@ static NSString *DSCameraLayoutSummary(void) {
     }
 }
 
+#pragma mark - 4.5.658 diagnostics
+
+// The bundles app/DynamicStageApp.plist injects the app dylib (and with it
+// the capture hooks) into. Any other app on a card gets no camera handling.
+static NSArray<NSString *> *DSCameraInjectedBundles(void) {
+    return @[ @"com.apple.MobileSMS", @"com.facebook.Messenger", @"org.whispersystems.signal",
+              @"com.beeper.chat.ios", @"com.apple.mobilephone" ];
+}
+
+// Whether the bundle has an element in the main display layout right now,
+// and how many application elements the layout holds (more than one app is
+// what the camera server calls "multiple foreground apps").
+static NSString *DSCameraLayoutPresence(NSString *bundle) {
+    id publisher = DSCameraPublisher;
+    if (!publisher || ![publisher respondsToSelector:@selector(currentLayout)]) return @"inLayout=? (publisher unknown)";
+    @try {
+        id layout = [publisher performSelector:@selector(currentLayout)];
+        NSArray *elements = [layout respondsToSelector:@selector(elements)] ? [layout performSelector:@selector(elements)] : nil;
+        BOOL present = NO;
+        NSInteger apps = 0;
+        for (id element in elements) {
+            if (DSCameraSend(element, @selector(isUIApplicationElement))) apps += 1;
+            NSString *identifier = [element respondsToSelector:@selector(identifier)] ? [element performSelector:@selector(identifier)] : nil;
+            NSString *owner = [element respondsToSelector:@selector(bundleIdentifier)] ? [element performSelector:@selector(bundleIdentifier)] : nil;
+            if (([identifier isKindOfClass:NSString.class] && [identifier isEqualToString:bundle]) ||
+                ([owner isKindOfClass:NSString.class] && [owner isEqualToString:bundle])) {
+                present = YES;
+            }
+        }
+        return [NSString stringWithFormat:@"inLayout=%d layoutApps=%ld", present, (long)apps];
+    } @catch (NSException *exception) {
+        return @"inLayout=? (unreadable)";
+    }
+}
+
+// RunningBoard's view of the process: task state and endowment namespaces.
+// "visibility" there is FrontBoard saying the app is on screen; the camera
+// server's background check follows it. Queried off the main thread (it is
+// an XPC round trip) and logged back on it.
+static void DSCameraLogRunningBoard(NSString *bundle, pid_t pid, NSString *why) {
+    if (pid <= 0) {
+        DSCameraRecord([@"rbs." stringByAppendingString:bundle], @"%@ runningboard: no pid (%@)", bundle, why);
+        return;
+    }
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        NSString *text = nil;
+        @try {
+            Class identifierClass = objc_getClass("RBSProcessIdentifier");
+            Class handleClass = objc_getClass("RBSProcessHandle");
+            SEL withPid = NSSelectorFromString(@"identifierWithPid:");
+            SEL forIdentifier = NSSelectorFromString(@"handleForIdentifier:error:");
+            if (!identifierClass || !handleClass || ![identifierClass respondsToSelector:withPid] ||
+                ![handleClass respondsToSelector:forIdentifier]) {
+                text = @"RBS classes missing";
+            } else {
+                id identifier = ((id (*)(id, SEL, int))objc_msgSend)(identifierClass, withPid, pid);
+                NSError *error = nil;
+                id handle = identifier ? ((id (*)(id, SEL, id, NSError **))objc_msgSend)(handleClass, forIdentifier, identifier, &error) : nil;
+                id state = [handle respondsToSelector:@selector(currentState)] ? [handle performSelector:@selector(currentState)] : nil;
+                if (!state) {
+                    text = [NSString stringWithFormat:@"no state (%@)", error.localizedDescription ?: @"no handle"];
+                } else {
+                    long long task = DSCameraSendLong(state, NSSelectorFromString(@"taskState"), -1);
+                    NSSet *namespaces = [state respondsToSelector:NSSelectorFromString(@"endowmentNamespaces")]
+                        ? ((id (*)(id, SEL))objc_msgSend)(state, NSSelectorFromString(@"endowmentNamespaces"))
+                        : nil;
+                    BOOL visible = NO;
+                    NSMutableArray *names = [NSMutableArray array];
+                    for (id name in namespaces) {
+                        if (![name isKindOfClass:NSString.class]) continue;
+                        if ([name rangeOfString:@"visibility"].location != NSNotFound) visible = YES;
+                        [names addObject:name];
+                    }
+                    [names sortUsingSelector:@selector(compare:)];
+                    text = [NSString stringWithFormat:@"task=%lld (4=running) visible=%d endowments=[%@]", task, visible,
+                            [names componentsJoinedByString:@","]];
+                }
+            }
+        } @catch (NSException *exception) {
+            text = [NSString stringWithFormat:@"threw %@", exception.name ?: @"?"];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DSCameraRecord([@"rbs." stringByAppendingString:bundle], @"%@ runningboard pid=%d %@ (%@)", bundle, pid, text, why);
+        });
+    });
+}
+
+// The whole picture for one staged camera app, at the moment an event came
+// in: arbiter, layout, card, scene, SpringBoard and RunningBoard state.
+// Read only. Skipped while home / switcher has the screen (4.5.657 no-op).
+static void DSCameraLogStatus(NSString *bundle, NSString *why, BOOL force) {
+    static NSMutableDictionary<NSString *, NSNumber *> *lastStatus;
+    if (!lastStatus) lastStatus = [NSMutableDictionary dictionary];
+    if ([DSSceneHost homeGestureIsActive] || [DSSceneHost systemTransitionBusy]) return;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (!force && now - [lastStatus[bundle] doubleValue] < 12.0) return;
+    if (now - [lastStatus[bundle] doubleValue] < 1.5) return;
+    lastStatus[bundle] = @(now);
+    if (lastStatus.count > 16) [lastStatus removeAllObjects];
+    DSCameraClaim *claim = DSCameraClaims[bundle];
+    DSStageManager *manager = [DSStageManager sharedManager];
+    NSString *hostState = @"?";
+    pid_t pid = 0;
+    @try {
+        hostState = [manager cameraStateSummaryForBundleIdentifier:bundle] ?: @"?";
+        pid = [manager hostedProcessIdentifierForBundleIdentifier:bundle];
+    } @catch (NSException *exception) {
+    }
+    DSCameraRecord([@"status." stringByAppendingString:bundle],
+                   @"%@ status (%@): claim=%d published=%d publisher=%d template=%d %@ locked=%d callGuard=%d | %@",
+                   bundle, why, claim != nil, claim.assertion != nil, DSCameraPublisher != nil, DSCameraTemplateSeen,
+                   DSCameraLayoutPresence(bundle), DSCameraDeviceLocked(), DSCallGuardActive(), hostState);
+    DSCameraLogRunningBoard(bundle, pid, why);
+}
+
 #pragma mark - Publisher hook
 
 static id DSCameraAddElement(id self, SEL _cmd, id element) {
@@ -201,7 +318,7 @@ static void DSCameraInstallPublisherHook(void) {
     Class cls = objc_getClass("FBSDisplayLayoutPublisher");
     Method method = cls ? class_getInstanceMethod(cls, @selector(addElement:)) : NULL;
     if (!method) {
-        DSDiagnosticsRecord(@"SpringBoard: camera652 no FBSDisplayLayoutPublisher addElement:, layout path off");
+        DSDiagnosticsRecord(@"SpringBoard: camera658 no FBSDisplayLayoutPublisher addElement:, layout path off");
         return;
     }
     DSOrigAddElement = (id (*)(id, SEL, id))method_setImplementation(method, (IMP)DSCameraAddElement);
@@ -353,8 +470,23 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
             if (notify_get_state(t, &state) != NOTIFY_STATUS_OK) return;
             [DSCameraArbiter handleState:state];
         });
-        DSDiagnosticsRecord(@"SpringBoard: camera652 arbiter listening");
+        DSDiagnosticsRecord(@"SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)");
     });
+}
+
++ (void)noteStagedBundle:(NSString *)bundle {
+    if (bundle.length == 0) return;
+    static NSMutableDictionary<NSString *, NSNumber *> *lastNote;
+    if (!lastNote) lastNote = [NSMutableDictionary dictionary];
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - [lastNote[bundle] doubleValue] < 30.0) return;
+    lastNote[bundle] = @(now);
+    if (lastNote.count > 32) [lastNote removeAllObjects];
+    if ([DSCameraInjectedBundles() containsObject:bundle]) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: camera658 %@ on a card: injected app, a 'camera hook loaded' line should follow", bundle);
+    } else {
+        DSDiagnosticsRecordFormat(@"SpringBoard: camera658 %@ on a card: NOT an injected app, DynamicStage has no camera handling inside it (only Messages, Messenger, Signal, Beeper, Phone)", bundle);
+    }
 }
 
 + (void)handleState:(uint64_t)state {
@@ -380,18 +512,30 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
             [DSCameraClaims removeObjectForKey:stale.bundle];
             DSCameraUpdatePublishedSet();
         }
-        if (event != kDSCameraEventHeartbeat) {
+        if (event != kDSCameraEventHeartbeat && event != kDSCameraEventHello && event != kDSCameraEventAfterStart) {
             DSCameraRecord([NSString stringWithFormat:@"off.%08x", hash],
                            @"%08x %s from an app that is not on a card, full-screen camera left alone", hash,
                            DSCameraEventName(event));
         }
         return;
     }
-    NSString *flagText = [NSString stringWithFormat:@"staged=%d appActive=%d multitask=%d/%d%@ running=%d",
+    NSString *flagText = [NSString stringWithFormat:@"staged=%d appActive=%d multitask=%d/%d%@ running=%d interrupted=%d",
                           (flags & kDSCameraFlagStaged) != 0, (flags & kDSCameraFlagAppActive) != 0,
                           (flags & kDSCameraFlagMultitaskSupported) != 0, (flags & kDSCameraFlagMultitaskEnabled) != 0,
                           (flags & kDSCameraFlagMultitaskRefused) ? @" refused" : @"",
-                          (flags & kDSCameraFlagRunning) != 0];
+                          (flags & kDSCameraFlagRunning) != 0, (flags & kDSCameraFlagInterrupted) != 0];
+    // 4.5.658: the hooks announcing themselves; nothing to claim.
+    if (event == kDSCameraEventHello) {
+        DSCameraRecord([@"hello." stringByAppendingString:bundle], @"%@ camera hook loaded (AVFoundation hooks %@) %@",
+                       bundle, reason ? @"in" : @"waiting for AVFoundation", flagText);
+        return;
+    }
+    if (event == kDSCameraEventAfterStart) {
+        DSCameraRecord([@"after." stringByAppendingString:bundle], @"%@ startRunning returned %@",
+                       bundle, flagText);
+        DSCameraLogStatus(bundle, @"after startRunning", YES);
+        return;
+    }
     if (event != kDSCameraEventHeartbeat) {
         DSCameraRecord([NSString stringWithFormat:@"ev.%@.%lu.%ld", bundle, (unsigned long)event, (long)reason],
                        @"%@ %s reason=%ld (%s) %@", bundle, DSCameraEventName(event), (long)reason,
@@ -437,6 +581,14 @@ static BOOL DSCameraFramesClose(CGRect a, CGRect b) {
             break;
     }
     [self refreshSoon];
+    // 4.5.658: full state on every real event, every 12 s on heartbeats.
+    // After the refresh, so a fresh claim's publish is in it.
+    NSString *statusBundle = [bundle copy];
+    NSString *why = [NSString stringWithFormat:@"%s reason=%ld (%s)", DSCameraEventName(event), (long)reason, DSCameraReasonName(reason)];
+    BOOL force = event != kDSCameraEventHeartbeat;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DSCameraLogStatus(statusBundle, why, force);
+    });
 }
 
 + (void)refreshSoon {

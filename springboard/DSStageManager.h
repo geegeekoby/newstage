@@ -98,6 +98,10 @@
 - (CGRect)pinnedBeeperKeyboardFrameForProposed:(CGRect)proposed;
 // 4.5.652: bundles hosted on a card right now (primary, top, floating).
 - (NSArray<NSString *> *)hostedBundleIdentifiers;
+// 4.5.658: camera log helpers. Which card hosts the bundle (primary, top,
+// float, parked) plus the host's own state line; and the hosted pid.
+- (NSString *)cameraStateSummaryForBundleIdentifier:(NSString *)bundleIdentifier;
+- (pid_t)hostedProcessIdentifierForBundleIdentifier:(NSString *)bundleIdentifier;
 // True when this scene identifier belongs to an app on the stage.
 - (BOOL)isHostingSceneIdentifier:(NSString *)identifier;
 - (void)closeStageAnimated:(BOOL)animated;

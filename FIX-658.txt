@@ -1,0 +1,138 @@
+DynamicStage 4.5.658 - camera in staged apps: DIAGNOSTIC BUILD (no behaviour change)
+====================================================================================
+
+REPORT
+"Camera still not working in staged apps" on 4.5.657, after the 4.5.652 camera work.
+We don't know which app or what is on screen (we assume a black preview).
+
+EVIDENCE: "Camera debug.txt" (uploaded 23:41 NZDT, build 4.5.657, 7032 lines)
+- The only camera test in it: Messages on a stage card (slot 0, from 23:33:28). Its camera
+  button was opened, then closed about 2.5 s later:
+    23:33:28.779 SpringBoard: com.apple.MobileSMS is on stack slot 0
+    23:33:32.052 MobileSMS | app willAppear CKFunCameraViewController
+    23:33:32.052 MobileSMS | app willAppear MSMessageExtensionBrowserViewController
+    23:33:32.190 MobileSMS | app willAppear _MSMessageExtensionRemoteViewController
+    23:33:34.553 MobileSMS | app willAppear CKMessagesController   (camera closed)
+- No camera event ever reached SpringBoard. In the whole log there are 0 start,
+  interrupted, retry, heartbeat, "card published", "holds the camera" or "refused" lines.
+  The arbiter was running ("SpringBoard: camera652 arbiter listening").
+- The only app camera lines are 65 x "camera652 fff66709 stop ..." (fff66709 =
+  com.apple.MobileSMS) and 12 x "camera652 171456a8 stop ..." (171456a8 =
+  com.apple.mobilephone), all "from an app that is not on a card". These don't come from
+  a camera: the app-side hook posts "stop" every time Messages or Phone goes to the
+  background. They do show the hooks are installed in Messages and Phone.
+- Signal and Messenger on cards: "hosted scene ... fg=1 occluded=0 deactivation=0x0
+  camera=0". The scene is foreground and not occluded, but there was never a claim.
+- So the 4.5.652 path (claim, then layout element) never ran in this test. The display
+  layout element was never added because no start event ever came.
+- Likely reason: in Messages on iOS 16 the camera button's capture runs in a Messages
+  app extension process. That's the _MSMessageExtensionRemoteViewController (a remote
+  view of an extension) appearing together with CKFunCameraViewController. That process
+  isn't among the injected bundles, so no AVCaptureSession hook sees startRunning.
+  Not proven: 4.5.657 had no app-side camera line in the copied log. 4.5.658 now writes
+  those lines ("camera658 app ...").
+- Separate: the log's crash section has a SIGTRAP on 4.5.657 at 20:24 NZDT during
+  home-gesture / two-stage handling ("org.whispersystems.signal will follow the home
+  transition", "... had been put in the background off the stage and was woken").
+  It isn't camera-related and isn't touched here.
+
+EVIDENCE CHECKED BEFORE THE LOG ARRIVED
+- Older uploads (Deebugg.txt, "New debug.txt", 17:20) are a 4.5.650 call test with no
+  camera lines.
+- Whether 4.5.657 broke 4.5.652: it did not.
+  * The addElement: early return only fires once the main publisher AND the app-element
+    template are both known. Before that, every call still learns from the element.
+  * The "home / switcher has the screen" unpublish depends on systemTransitionBusy. That
+    flag is set when the home gesture starts and cleared on stage use or once a card is
+    back on screen. It does not remove the element while a card is shown normally.
+- Coverage (certain, from app/DynamicStageApp.plist): the camera hooks live in
+  DynamicStageApp.dylib, which goes only into com.apple.MobileSMS, com.facebook.Messenger,
+  org.whispersystems.signal, com.beeper.chat.ios and com.apple.mobilephone.
+  * Inside any other app (Instagram, WhatsApp, Snapchat, Safari, or a photo picker opened
+    by one of them), nothing tells SpringBoard a capture session started. No claim is
+    made, the card is never put in the display layout, and NOTHING is logged.
+  * If the user tested one of those apps, 4.5.652 never ran.
+- Mechanism (likely, not yet proven on device): staged apps are hosted in SpringBoard's
+  own SBAppViewController. Writing foreground into that scene is the SIGTRAP path, so
+  the stage never does it.
+  * On iPhone, AVFoundation turns down multitasking camera access, so 4.5.652 depends on
+    its display layout element alone. The camera server checks two things:
+    a) is the client in the foreground (FrontBoard's visibility endowment in RunningBoard)?
+       If not: interruption reason 1.
+    b) how many apps are in the display layout? More than one: reason 4.
+  * Over another full-screen app, adding the card's element makes two app elements, which
+    causes reason 4. Neither multitasking camera access nor that layout element exists for
+    iPhone, so a staged camera over a full-screen app may simply not be possible on iPhone.
+    Over the home screen the element can help, but only if (a) also holds.
+  * Which one fails can't be told without a device log. The 4.5.657 log didn't record
+    RunningBoard state or whether the element was really in the layout.
+
+DECISION
+The two possible functional fixes can't be checked from here and both are risky:
+- Injecting the camera hooks into every app.
+- Forcing the hosted process to foreground/visible. The only thing that grants FrontBoard
+  visibility is the scene's foreground flag, which is the SIGTRAP path. No BKS/RBS
+  assertion is known to grant camera-foreground. The existing running assertion
+  (flags 1|2|4) does not.
+Hooking mediaserverd's own client-state check isn't possible from SpringBoard.
+So 4.5.658 ships logging only. It shows definitively which of the cases above it is.
+
+WHAT CHANGED (logging only, all lines start "SpringBoard: camera658")
+1. Any app going onto a card (once per app per 30 s):
+     "<bundle> on a card: injected app, a 'camera hook loaded' line should follow"
+     "<bundle> on a card: NOT an injected app, DynamicStage has no camera handling inside it ..."
+2. Injected app, 1.5 s after its hooks load:
+     "<bundle> camera hook loaded (AVFoundation hooks in|waiting for AVFoundation) staged=.. appActive=.."
+3. Every camera event, now with interrupted= in the flags:
+     "<bundle> start|interrupted|interruption-ended|runtime-error|retry reason=N (name) staged= appActive= multitask=s/e [refused] running= interrupted="
+   New: "<bundle> startRunning returned staged=.. running=.. interrupted=.."
+4. 0.3 s after every event and every 12 s on heartbeats:
+     "<bundle> status (<event> reason=N): claim= published= publisher= template= inLayout= layoutApps= locked= callGuard= | card=primary|top|float pid= host=appview stageFg= staysBg= followsHome= runAssertion=valid|none scene fg= occluded= backgrounded= deactivation=0x.. fbProcess fg= visibility= sbState fg= visibility= task= running="
+     "<bundle> runningboard pid=N task=T (4=running) visible=0|1 endowments=[...] (<why>)"
+5. Card element publish / unpublish lines as before, now camera658.
+6. Heartbeat flags used to always read running=0; they now carry the real session state.
+7. The app-side camera lines (hooks installed / waiting for AVFoundation, startRunning,
+   after startRunning, interrupted with reason, retry, refused, runtime error) now also go
+   to the stage trace. They appear in the copied log as
+   "<App> pid=N ... | camera658 app ...", not only in Console as before.
+Nothing new runs during the home gesture or app switcher (status is skipped while
+systemTransitionBusy / homeGestureIsActive). The RunningBoard query runs off the main
+thread. The 4.5.657 switcher no-op, call guard and boot guard are unchanged.
+
+FILES
+shared/DSConstants.h (version, kDSCameraEventHello / AfterStart, kDSCameraFlagInterrupted),
+app/DSCameraStage.m, springboard/DSCameraArbiter.m/.h, springboard/DSSceneHost.m/.h,
+springboard/DSStageManager.m/.h, control, changelog.md.
+
+WHAT THE USER SHOULD DO
+1. Install 4.5.658 and respring.
+2. Test A: put Signal on a stage card over the HOME SCREEN. Open Signal's own in-app
+   camera (the camera icon next to the message field), not the Messages camera, and
+   leave it open 10 s. Signal runs its capture session in its own process, so this tests
+   the layout path itself.
+   Test A2: repeat with Messages' camera button, also left open 10 s.
+3. Test B: the same, with a full-screen app behind the card.
+4. Test C: the app where the camera actually failed (name it), on a card, camera open 10 s.
+5. Send the DynamicStage debug log (the same one as earlier uploads), or at least every
+   line containing "camera658", plus:
+   - which app was used in each test and what was on screen (black preview, frozen
+     frame, error, app closed);
+   - for test C, the "on a card:" line for that app.
+
+HOW TO READ THE ANSWER
+- Messages camera: "camera658 app capture hooks in" in MobileSMS but no "camera658 app
+  startRunning" when CKFunCameraViewController appears confirms the capture runs in an
+  extension. The next step is the extension, not the layout.
+- "NOT an injected app" for the failing app: coverage gap. The fix is to bring the camera
+  hooks into that app (a small camera-only dylib with a wider filter).
+- Injected app with no "camera hook loaded": the dylib or hooks didn't load.
+- "interrupted reason=1 (in-background)" with RunningBoard visible=0: FrontBoard doesn't
+  count the staged app as visible, and the layout element can't fix that.
+- reason=1 with visible=1 and inLayout=1: the camera server is using something else.
+- "interrupted reason=4 (multiple-foreground-apps)" with layoutApps>=2: the iPhone rule
+  allows only one app in the layout to use the camera, and the card's element makes two.
+  Test B is expected to show this.
+- published=0 or inLayout=0 while the card is visible: the arbiter failed. The status line
+  says whether the publisher is unknown, the template was never seen, or the device was
+  locked or the call guard was up.
+- runAssertion=none or sbState running=0: the process isn't being kept running.

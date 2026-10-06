@@ -739,6 +739,11 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         [self noteSceneSource:@"SpringBoard's own app view"];
         [self holdRunningAssertion];
         [self reportHostingOutcome];
+        // 4.5.658: camera coverage, written once per app going on a card.
+        @try {
+            [DSCameraArbiter noteStagedBundle:_bundleIdentifier];
+        } @catch (NSException *exception) {
+        }
         return YES;
     } @catch (NSException *exception) {
         DSDiagnosticsRecordFormat(@"SpringBoard: asking for an app view for %@ threw %@ - %@",
@@ -2460,6 +2465,66 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
     [self layoutHostView];
 }
 
+static long long DSHostReadLong(id target, NSString *name, long long fallback) {
+    SEL selector = NSSelectorFromString(name);
+    if (!target || ![target respondsToSelector:selector]) return fallback;
+    @try {
+        NSMethodSignature *signature = [target methodSignatureForSelector:selector];
+        const char *type = signature.methodReturnType;
+        if (!type) return fallback;
+        if (type[0] == 'B' || type[0] == 'c' || type[0] == 'C') {
+            return ((BOOL (*)(id, SEL))objc_msgSend)(target, selector) ? 1 : 0;
+        }
+        if (strchr("iIlLqQsS", type[0])) return ((long long (*)(id, SEL))objc_msgSend)(target, selector);
+    } @catch (NSException *exception) {
+    }
+    return fallback;
+}
+
+- (NSString *)cameraStateSummary {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    @try {
+        pid_t pid = [self hostedProcessIdentifier];
+        [parts addObject:[NSString stringWithFormat:@"pid=%d", pid]];
+        [parts addObject:[NSString stringWithFormat:@"host=%@", _appViewController ? @"appview" : (_ownSceneIdentifier ? @"own-scene" : (_scene ? @"raw" : @"none"))]];
+        [parts addObject:[NSString stringWithFormat:@"stageFg=%d staysBg=%d followsHome=%d", _foreground, _staysBackgrounded, _followsSystemHome]];
+        BOOL assertionValid = NO;
+        if (_runningAssertion) {
+            assertionValid = DSHostReadLong(_runningAssertion, @"valid", 1) != 0;
+        }
+        [parts addObject:[NSString stringWithFormat:@"runAssertion=%@",
+                          _runningAssertion ? (assertionValid ? (_runningAssertionPid == pid || _runningAssertionPid == 0 ? @"valid" : @"valid-other-pid") : @"invalid") : @"none"]];
+        FBScene *scene = [self hostedScene];
+        id settings = [scene respondsToSelector:@selector(settings)] ? scene.settings : nil;
+        if (settings) {
+            [parts addObject:[NSString stringWithFormat:@"scene fg=%lld occluded=%lld backgrounded=%lld deactivation=0x%llx",
+                              DSHostReadLong(settings, @"isForeground", -1), DSHostReadLong(settings, @"isOccluded", -1),
+                              DSHostReadLong(settings, @"isBackgrounded", -1), DSHostReadLong(settings, @"deactivationReasons", -1)]];
+        } else {
+            [parts addObject:@"scene=none"];
+        }
+        id process = [scene respondsToSelector:@selector(clientProcess)] ? scene.clientProcess : nil;
+        if (process) {
+            [parts addObject:[NSString stringWithFormat:@"fbProcess fg=%lld visibility=%lld",
+                              DSHostReadLong(process, @"isForeground", -1), DSHostReadLong(process, @"visibility", -1)]];
+        }
+        SBApplication *application = [self application];
+        id processState = [application respondsToSelector:@selector(processState)]
+            ? ((id (*)(id, SEL))objc_msgSend)(application, @selector(processState))
+            : nil;
+        if (processState) {
+            [parts addObject:[NSString stringWithFormat:@"sbState fg=%lld visibility=%lld task=%lld running=%lld",
+                              DSHostReadLong(processState, @"isForeground", -1), DSHostReadLong(processState, @"visibility", -1),
+                              DSHostReadLong(processState, @"taskState", -1), DSHostReadLong(processState, @"isRunning", -1)]];
+        } else {
+            [parts addObject:@"sbState=none"];
+        }
+    } @catch (NSException *exception) {
+        [parts addObject:[NSString stringWithFormat:@"threw %@", exception.name ?: @"?"]];
+    }
+    return [parts componentsJoinedByString:@" "];
+}
+
 - (pid_t)hostedProcessIdentifier {
     SBApplication *application = [self application];
     if ([application respondsToSelector:@selector(pid)]) {
@@ -3067,7 +3132,7 @@ static void DSRunAfterTransitionBlocks(void) {
             CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
             if (now - DSCameraSceneLog > 3.0) {
                 DSCameraSceneLog = now;
-                DSDiagnosticsRecordFormat(@"SpringBoard: camera652 %@ holds the camera: scene kept unoccluded, no deactivation, path=scene-front", identifier);
+                DSDiagnosticsRecordFormat(@"SpringBoard: camera658 %@ holds the camera: scene kept unoccluded, no deactivation, path=scene-front", identifier);
             }
         } @catch (NSException *exception) {
         }

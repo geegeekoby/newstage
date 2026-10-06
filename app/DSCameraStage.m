@@ -32,6 +32,7 @@
 #import <stdatomic.h>
 #import "DSConstants.h"
 #import "DSStageContext.h"
+#import "DSDiagnostics.h"
 
 void DSCameraStageInstall(void);
 
@@ -127,6 +128,9 @@ static void DSCameraLog(NSString *kind, NSString *format, ...) {
     NSString *text = [[NSString alloc] initWithFormat:format arguments:args];
     va_end(args);
     NSLog(@"[DynamicStage] camera652 %@ %@", NSBundle.mainBundle.bundleIdentifier ?: @"?", text);
+    // 4.5.658: the same line in the stage trace, so it shows up in the log the
+    // user copies (as "<App> pid=.. | camera658 app ..."), not only in Console.
+    DSTrace([@"camera658 app " stringByAppendingString:text]);
 }
 
 static BOOL DSCameraCall(id session, SEL selector, BOOL *ok) {
@@ -141,9 +145,25 @@ static BOOL DSCameraCall(id session, SEL selector, BOOL *ok) {
     }
 }
 
+// 4.5.658: heartbeats and app-state posts used to pass no session, so their
+// flags always said running=0 / multitask=0/0. The first live session the
+// app has is used instead.
+static id DSCameraFirstSession(void) {
+    id found = nil;
+    @synchronized(DSCameraSessions()) {
+        for (id session in DSCameraSessions().allObjects) {
+            found = session;
+            BOOL ok = NO;
+            if (DSCameraCall(session, @selector(isRunning), &ok) && ok) break;
+        }
+    }
+    return found;
+}
+
 static uint32_t DSCameraFlagsForSession(id session, BOOL refused) {
     uint32_t flags = 0;
     BOOL ok = NO;
+    if (!session) session = DSCameraFirstSession();
     BOOL supported = DSOrigMultitaskSupported && session ? DSOrigMultitaskSupported(session, @selector(isMultitaskingCameraAccessSupported)) : NO;
     BOOL enabled = DSOrigMultitaskEnabled && session ? DSOrigMultitaskEnabled(session, @selector(isMultitaskingCameraAccessEnabled)) : NO;
     if (supported) flags |= kDSCameraFlagMultitaskSupported;
@@ -152,6 +172,8 @@ static uint32_t DSCameraFlagsForSession(id session, BOOL refused) {
     if (DSCameraStaged()) flags |= kDSCameraFlagStaged;
     if (refused) flags |= kDSCameraFlagMultitaskRefused;
     if (DSCameraCall(session, @selector(isRunning), &ok) && ok) flags |= kDSCameraFlagRunning;
+    ok = NO;
+    if (DSCameraCall(session, @selector(isInterrupted), &ok) && ok) flags |= kDSCameraFlagInterrupted;
     return flags;
 }
 
@@ -291,6 +313,8 @@ static void DSCameraStartRunning(id self, SEL _cmd) {
     BOOL running = DSCameraCall(self, @selector(isRunning), &ok);
     BOOL interrupted = DSCameraCall(self, @selector(isInterrupted), &ok);
     DSCameraLog(@"started", @"after startRunning running=%d interrupted=%d staged=%d", running, interrupted, staged);
+    // 4.5.658: what startRunning itself achieved, for SpringBoard's log.
+    DSCameraPost(kDSCameraEventAfterStart, 0, DSCameraFlagsForSession(self, refused));
     DSCameraStartHeartbeat();
 }
 
@@ -470,6 +494,16 @@ static void DSCameraObserveSessions(void) {
 
 #pragma mark - Install
 
+// 4.5.658: tells SpringBoard the camera hooks exist in this app, so its log
+// can tell "not one of the injected apps" from "injected, hooks in". Sent
+// 1.5 s late so the stage context and SpringBoard's card are both settled;
+// SpringBoard ignores it for an app that is not on a card.
+static void DSCameraPostHelloSoon(NSInteger hooksIn) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), DSCameraQueue(), ^{
+        DSCameraPost(kDSCameraEventHello, hooksIn, DSCameraFlagsForSession(nil, NO));
+    });
+}
+
 static void DSCameraTryInstall(void) {
     if (atomic_load(&DSCameraInstalled)) return;
     Class session = objc_getClass("AVCaptureSession");
@@ -491,6 +525,7 @@ static void DSCameraTryInstall(void) {
         DSCameraObserveSessions();
         DSCameraLog(@"install", @"capture hooks in, multitask switch %s",
                     DSOrigSetMultitaskEnabled ? "present" : "absent (before iOS 16)");
+        DSCameraPostHelloSoon(1);
     } @catch (NSException *exception) {
         NSLog(@"[DynamicStage] camera652 install threw %@", exception.name);
     }
@@ -514,6 +549,8 @@ void DSCameraStageInstall(void) {
         if (!atomic_load(&DSCameraInstalled)) {
             // AVFoundation often arrives later, with the camera screen.
             _dyld_register_func_for_add_image(DSCameraImageAdded);
+            DSCameraPostHelloSoon(0);
+            DSCameraLog(@"wait", @"camera hooks waiting for AVFoundation to load");
         }
     });
 }

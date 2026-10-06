@@ -22,5 +22,8 @@
 + (BOOL)sceneIdentifierHoldsCamera:(NSString *)identifier;
 // Rate limited log of a hosted scene's foreground state, from the FBScene hook.
 + (void)noteHostedSceneSettings:(id)settings identifier:(NSString *)identifier;
+// 4.5.658: logs, when an app goes onto a card, whether it is one of the apps
+// with the camera hooks. Main thread.
++ (void)noteStagedBundle:(NSString *)bundle;
 
 @end

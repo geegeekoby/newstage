@@ -68,12 +68,18 @@
 #define kDSCameraEventRuntimeError 5
 #define kDSCameraEventRetry 6
 #define kDSCameraEventHeartbeat 7
+// 4.5.658: diagnostics. Hello: the camera hooks are in this app (reason 1)
+// or waiting for AVFoundation (reason 0). AfterStart: the result of
+// startRunning itself (Running / Interrupted flags).
+#define kDSCameraEventHello 8
+#define kDSCameraEventAfterStart 9
 #define kDSCameraFlagMultitaskSupported 0x01
 #define kDSCameraFlagMultitaskEnabled 0x02
 #define kDSCameraFlagAppActive 0x04
 #define kDSCameraFlagStaged 0x08
 #define kDSCameraFlagMultitaskRefused 0x10
 #define kDSCameraFlagRunning 0x20
+#define kDSCameraFlagInterrupted 0x40
 
 // Rotating the app on the stage without rotating the device. Suffixed with
 // .left, .right or .reset.
@@ -149,7 +155,7 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 
 // Kept across resprings. postinst deletes it, so a crash from the build that
 // was just replaced is not still sitting there after the next install.
-#define kDSBuildVersionString "4.5.657"
+#define kDSBuildVersionString "4.5.658"
 
 // One line from the staged app, copied into the stage log. The app and
 // SpringBoard do not share that log, so a blocked keyboard hide was invisible.

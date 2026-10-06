@@ -93,6 +93,13 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // The scene now showing on the stage, whichever way it was come by.
 - (FBScene *)hostedScene;
 
+// 4.5.658: one line describing the hosted process for the camera log: pid,
+// how it is hosted, the stage's own foreground flag, the running assertion,
+// the scene settings FrontBoard holds and SpringBoard's process state. Read
+// only; main thread.
+- (NSString *)cameraStateSummary;
+- (pid_t)hostedProcessIdentifier;
+
 // Called once the host view is in the card, so SpringBoard's app view learns it has
 // finished moving in.
 - (void)noteHostViewAttached;

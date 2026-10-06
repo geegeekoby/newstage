@@ -9,6 +9,27 @@
 static BOOL DSHardwareRead = NO;
 static CGFloat DSGeometryGrownHeight = 0;
 
+// 4.5.654: the bundle identifier never changes inside a process. The size
+// getters below used to ask NSBundle for it on every call.
+static NSString *DSContextBundleID(void) {
+    static NSString *identifier = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        identifier = [NSBundle.mainBundle.bundleIdentifier copy];
+    });
+    return identifier;
+}
+
+// 4.5.654: how long the card size read from notifyd is trusted before
+// -stageBounds asks notifyd again. Every notify_get_state is a synchronous
+// round trip to notifyd. The geometry hooks (UIScreen / UIWindow bounds, the
+// UIView frame fit) call -stageBounds many times per layout, so a staged app
+// was making 2 (first slot) or 3 (second slot) blocking notifyd calls per
+// query, and with two stages both apps did it at once. Fresh reads still
+// happen on every geometry / peer notification, every _sceneBoundsDidChange,
+// the 1.5 s probe, and at least every 0.25 s while the app is laying out.
+static const CFAbsoluteTime kDSNotedCardMaxAge = 0.25;
+
 BOOL DSIsReadingHardwareDisplay(void) {
     return DSHardwareRead;
 }
@@ -38,6 +59,13 @@ static CGRect DSCardRectFromState(NSDictionary *state, NSString *identifier) {
     int _peerToken;
     int _cardToken;
     int _cardPeerToken;
+    // 4.5.654: last card size read from notifyd, and when (main thread only).
+    CGRect _notedCard;
+    CFAbsoluteTime _notedAt;
+    // 4.5.654: a layout pass is already queued (main thread only). The
+    // geometry and peer notifications arrive as a pair, and each used to
+    // queue its own full layoutIfNeeded of every window.
+    BOOL _geometryPending;
 }
 
 + (instancetype)sharedContext {
@@ -177,7 +205,7 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
 
 - (void)refresh {
     DSPreferences *preferences = [DSPreferences sharedPreferences];
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+    NSString *identifier = DSContextBundleID();
     BOOL wasStaged = _staged;
 
     // Either hosted app counts. The geometry notification carries one of them and
@@ -204,6 +232,8 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
     _staged = isUs && preferences.enabled;
 
     if (!_staged) {
+        _notedCard = CGRectZero;
+        _notedAt = 0;
         _quarterTurns = 0;
         _padMode = NO;
         _stageBounds = self.deviceBounds;
@@ -223,7 +253,7 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
     // The notify state is updated with the file. Prefer it: a sandboxed app
     // often cannot read the file, and a stale file must not put the half
     // height back over the tall one.
-    CGRect published = [self cardRectFromNotifyForIdentifier:identifier];
+    CGRect published = [self noteCardFromNotify];
     if (CGRectIsEmpty(published)) published = [self publishedCardBounds];
     CGRect bounds = CGRectIsEmpty(published) ? [self sceneBounds] : published;
     BOOL sizeChanged = fabs(CGRectGetWidth(bounds) - CGRectGetWidth(_stageBounds)) > 1.0 ||
@@ -256,8 +286,19 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
     return CGRectMake(0.0, 0.0, width, height);
 }
 
+// 4.5.654: read the card size from notifyd now and remember it. Only the
+// main thread keeps the cache; another thread just gets the read.
+- (CGRect)noteCardFromNotify {
+    CGRect card = [self cardRectFromNotifyForIdentifier:DSContextBundleID()];
+    if (NSThread.isMainThread) {
+        _notedCard = card;
+        _notedAt = CFAbsoluteTimeGetCurrent();
+    }
+    return card;
+}
+
 - (CGRect)publishedCardBounds {
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
+    NSString *identifier = DSContextBundleID();
     CGRect rect = DSCardRectFromState([NSDictionary dictionaryWithContentsOfFile:kDSStageCardPath], identifier);
     if (CGRectIsEmpty(rect)) {
         rect = DSCardRectFromState([NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath], identifier);
@@ -281,8 +322,13 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
         // The notify state is the size SpringBoard just published. The plist
         // is not read here: a transcript asks for this on every bubble, and
         // that read is a sandbox denial that never returns to the run loop.
-        NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
-        CGRect noted = [self cardRectFromNotifyForIdentifier:identifier];
+        // 4.5.654: nor is notifyd asked on every call. The size read at most
+        // 0.25 s ago (or by the last notification / scene resize) is used.
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        CGRect noted = _notedCard;
+        if (_notedAt <= 0 || now < _notedAt || now - _notedAt >= kDSNotedCardMaxAge) {
+            noted = [self noteCardFromNotify];
+        }
         if (CGRectGetWidth(noted) >= 80.0 && CGRectGetHeight(noted) >= 80.0) {
             BOOL changed = fabs(CGRectGetWidth(noted) - CGRectGetWidth(_stageBounds)) > 1.0 ||
                            fabs(CGRectGetHeight(noted) - CGRectGetHeight(_stageBounds)) > 1.0;
@@ -388,7 +434,15 @@ static void DSGrowFilledDescendants(UIView *view, CGFloat previousHeight, CGFloa
 }
 
 - (void)applyGeometryChange {
+    // 4.5.654: one queued pass at a time. The pass reads the current stage
+    // when it runs, so a second request before it runs adds nothing.
+    BOOL main = NSThread.isMainThread;
+    if (main) {
+        if (_geometryPending) return;
+        _geometryPending = YES;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
+        if (main) self->_geometryPending = NO;
         if (!self.staged || DSApplyingGeometry > 0) return;
         CGRect stage = self.stageBounds;
         CGFloat stageW = CGRectGetWidth(stage);

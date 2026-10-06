@@ -1,0 +1,95 @@
+DynamicStage 4.5.654: less lag in staged apps (two stages, Beeper especially)
+============================================================================
+
+Based on 4.5.653 (commit 09f66f7). Before patching, the source tree was
+confirmed byte-identical to the published 653 sources. Only
+app/DSStageContext.m changes in code. Version is bumped in control,
+shared/DSConstants.h (kDSBuildVersionString) and changelog.md. Every piece
+of 650-653 crash hardening is unchanged: call guard, held app-view diffs,
+boot guard 8 s + re-arm, home/minimized holds, and the camera layout entry
+staying out during calls.
+
+ROOT CAUSE
+----------
+app/DSStageContext.m, -[DSStageContext stageBounds]
+
+Each geometry hook in the in-app dylib (app/Tweak.xm) returns
+DSStageBounds() -> -[DSStageContext stageBounds]:
+  UIScreen -bounds, -_referenceBounds, -applicationFrame, -nativeBounds,
+  -_unjailedReferenceBounds, -_unjailedBounds; UIApplication
+  -_applicationFrameFor...; UIWindow -_referenceBounds, -_sceneBounds,
+  -_boundsForInterfaceOrientation:; and the UIView -setFrame: hook via
+  DSFittedStageFrame (for most views not inside a scroll view).
+
+On the main thread, while the app was staged, every call to stageBounds ran
+-cardRectFromNotifyForIdentifier:. That is DSNotifyNamesUs on the primary
+token, then the peer token if the primary did not name this app, then
+notify_get_state on the card-size token. In Apple's Libnotify
+(notify_client.c), notify_get_state is a synchronous MIG round trip to
+notifyd (_notify_server_get_state_3), with no client-side cache. So each size
+lookup was:
+  - 2 blocking notifyd round trips for the app in the first stage slot
+  - 3 for the app in the second slot (primary miss, peer hit, peer size)
+The code's own comment admits the call rate ("a transcript asks for this on
+every bubble"). With two stages, both apps (plus SpringBoard) hit the same
+notifyd process from their main threads at once, so each call also waits
+longer. Beeper gets no exemption: DSIsBeeper() in app/Tweak.xm is
+hard-coded to NO, so Beeper takes all of these hooks like any other app.
+
+Secondary: SpringBoard always posts com.recreated.dynamicstage.geometry and
+.geometry.peer as a pair, then the pair again 0.6 s later. Each staged app
+listens for both, and each handler ran -refresh plus -applyGeometryChange,
+which queues a forced layoutIfNeeded of every window. That meant four full
+layout passes per SpringBoard update, even for an update about the other
+card (for example, tapping a text field in the other stage).
+
+WHAT CHANGED (app/DSStageContext.m)
+-----------------------------------
+1. Card-size cache. New instance variables _notedCard / _notedAt hold the
+   size last read from notifyd (main thread only). The new
+   -noteCardFromNotify reads notifyd and updates the cache. -refresh uses it,
+   so every geometry / peer notification, every _sceneBoundsDidChange (the
+   hook refreshes before and after), the 1.5 s probe and the start-up
+   re-reads all refresh the cache. -stageBounds uses the cached value and
+   asks notifyd again only when it is older than 0.25 s (kDSNotedCardMaxAge).
+   If that re-read shows a new size, it still updates the stage and calls
+   -applyGeometryChange, the same as before. The cache is cleared when the
+   app leaves the stage. Off the main thread the behaviour is unchanged (last
+   known value). Net result: at most about 4 x (2-3) notifyd calls per second
+   from stageBounds, instead of 2-3 per size lookup.
+2. Static bundle-ID cache (DSContextBundleID) replaces
+   NSBundle.mainBundle.bundleIdentifier in -refresh, -stageBounds and
+   -publishedCardBounds.
+3. Coalesced layout pass. -applyGeometryChange now sets _geometryPending
+   when it queues its main-queue block and returns early if a pass is
+   already queued. The block clears the flag first, then reads the current
+   stage, so the pair of notifications produces one pass with the same
+   result. Calls from other threads are not coalesced (unchanged).
+
+CHECKED AND NOT AT FAULT
+------------------------
+- SpringBoard Beeper keyboard pin (DSPinContextLayerHost): uses a cached
+  0.25 s lookup and a cheap frame check.
+- FBScene settings hook (650): the covered note is limited to at most twice
+  a second per scene.
+- Timers: the 652 camera arbiter timer (1 s) and app heartbeat (4 s) run
+  only while a staged camera is live. The diagnostics watchdog runs on a
+  background queue every 0.5 s. There are no CADisplayLinks.
+- 650 Phone fit and Phone hooks run in Phone only. 651 rim strips re-lay out
+  on events only. Hot-path logging is rate-limited or turned off.
+
+POSSIBLE NON-TWEAK / UNPROVEN FACTORS (not changed)
+---------------------------------------------------
+- Two live app scenes on the GPU and in RAM at once.
+- Each card keeps a UIVisualEffectView blur backdrop (with a mask) under the
+  app, and a shadow view without a shadowPath.
+- Rounded clipping on large hosted views.
+- Beeper's own rendering.
+
+LIMITS
+------
+- Not tested on a device.
+- A card resize that SpringBoard publishes without a notification is picked
+  up within 0.25 s (before: on the next size lookup). SpringBoard always
+  posts after it publishes, and the scene resize path refreshes directly, so
+  this should not be visible.

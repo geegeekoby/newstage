@@ -1,0 +1,69 @@
+DynamicStage 4.5.663 - shutter / take-picture button still missing after 4.5.662
+================================================================================
+Base: 4.5.662. Built on the box with Theos; NOT yet tested on a device.
+
+EVIDENCE (user after 4.5.662)
+- User: "the cliik button to the pictue is missing in most apps"
+- 4.5.662 already tried to keep camera chrome on-card with FIT scale + center,
+  only on the key window. That was not enough.
+
+ROOT CAUSE
+1. Stage card is ~420×458. Camera UIs lay out shutter / flip / gallery for a
+   full phone (~430×932).
+2. 4.5.662 scaled with FIT (min of W/H) and centered the key window's root.
+   Phone's dial pad (which successfully keeps bottom controls on the same
+   short card) uses FILL (max) + bottom-align instead — the shutter end of a
+   phone-tall layout stays on the card; top chrome may clip.
+3. Signal / Messenger / Beeper often host the camera UI in a secondary window.
+   662 only fitted the key window, so those overlays stayed phone-tall and
+   were clipped by the card / host clipsToBounds.
+4. Camera-open detection often missed (VC names without "Camera"); FIT never
+   engaged until late / not at all. A live AVCaptureVideoPreviewLayer was
+   ignored.
+5. Full phone home-indicator safe-area inset pushed the shutter below the
+   card bottom even when a transform was applied.
+6. UIKit cleared the root transform on the next layout; 662's single async
+   reapply lost the race (Phone fixed the same race in 4.5.650).
+
+WHAT CHANGED
+app/DSCameraStage.m
+  - FILL scale (same formula as DSPhoneExpectedRootFill) + bottom-align.
+  - Apply to EVERY non-keyboard UIWindow in the staged app (not only key).
+  - DSCameraHasPreviewLayer(): preview layer counts as camera-open.
+  - Clear clipsToBounds on tall direct children of the scaled root.
+  - Settle re-apply ~80ms later so UIKit cannot leave the transform cleared.
+  - Log: camera658 layout663 fill camera chrome scale=… windows=N bottomAlign=1
+
+app/Tweak.xm
+  - Broader DSNameLooksLikeCameraUI (MediaPicker, AttachmentPicker, CamVC,
+    Shutter, CKPhoto, …) and UIImagePickerController class check.
+  - Cap bottom safeAreaInsets to 8pt while camera tall layout is active.
+  - Re-apply FILL after root setFrame / layoutSubviews / setBounds (unchanged
+    clamp skip from 662).
+
+shared/DSConstants.h, control, changelog.md → 4.5.663.
+
+UNCHANGED
+SpringBoard camera arbiter / presence (661), call / boot / home guards, 656
+call-screen hiding, 657 switcher no-op, 659 home/wake, Phone dial-pad path,
+stage card size.
+
+RISKS
+- FILL + bottom-align may clip a little top chrome (close / flash) so the
+  shutter stays visible — intentional, same tradeoff as Phone.
+- Scaling every window while the camera is open can briefly reflow chat
+  chrome behind a modal; closing the camera restores card metrics.
+- Messages' extension camera process is still not injected.
+- Broader VC name matching can false-positive; live session / preview layer
+  and the refcount limit how long tall layout stays on.
+
+TEST
+1. Install 4.5.663, force-quit Beeper / Signal / Messenger / Messages, respring.
+2. Open each from the stage picker; open the camera. Confirm the shutter /
+   take-picture button is visible AND tappable inside the card. Card size
+   must not grow.
+3. Same over the home screen and over a full-screen app.
+4. Upload the log; look for "layout663 fill camera chrome" and no new SIGTRAP.
+
+verify: 3 binaries, arm64 + new-ABI arm64e, signed
+deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.663_iphoneos-arm64.deb

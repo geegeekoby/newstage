@@ -1,0 +1,72 @@
+DynamicStage 4.5.672 - the empty band under Beeper's message bar while typing
+(user on 4.5.671: "that made no difference" / "its not about the card lifting its about the gap between the
+quick bar making a margin when typing"; screenshots IMG_4444 / IMG_4445 in uploads671, log Quickbar.txt)
+
+1) 4.5.671 REVERTED
+The keys671 card-position change is OFF by default; the card moves are 4.5.670's again (single top card drops
+onto the keys, bottom card lifts until it clears them, split / third stage / picker search unchanged). The code
+stays in for testing only: /var/mobile/.dynamicstage-keys671-on turns it back on. The 4.5.671 result proves the
+band does not depend on the card's position.
+
+2) WHAT MAKES BEEPER PAD ITS MESSAGE BAR
+Band, measured from the screenshots (pixel statistics, card coordinates in pt): IMG_4445 (no keyboard) composer
+at the card bottom c386..458; IMG_4444 (keyboard up) composer elements c342..366 and an empty, uniform band
+c376..c458 = ~82pt. Beeper moved its own bar up ~76-82pt inside an unchanged 420x458 scene.
+
+Everything SpringBoard can tell a staged app was checked; none of it changes when the keyboard shows:
+- Scene frame: always {{0,0},{420,458}} ("force geometry com.beeper.chat.ios frame={{0, 0}, {420, 458}}",
+  every time, before/after the keyboard). DSSceneHost writes frame + safeAreaInsetsPortrait + portrait
+  orientation only from card layout (setStageFrame:safeAreaInsets:UIEdgeInsetsZero), never from keyboard code.
+- extendHostedSceneForKeyboard: is a no-op (removed long ago); keyboardBandHeight / keyboardClipHeight are reset
+  to 0 on the keyboard paths and are SpringBoard-side clipping only.
+- stageSafeAreaInsets (the overlap inset): returns zero for a single card (only two stacked cards).
+- "[KEYS] kept quick bar 346pt, ignored 243pt/288pt": an internal SpringBoard value that only decides how far
+  the CARD moves; it is never sent to the app.
+- No code writes a keyboard frame, keyboard intersection, peripheral/bottom inset or deviceOrientation change
+  into a staged app's scene, and SpringBoard does not post keyboard notes into another process.
+Arithmetic against the KEYS frames: 346-288=58, 346-301=45 (predictive bar), 45+34 (home indicator)=79,
+and Messages' own docked bar (iOS reports it in the app as "kb show y=377 h=81") all lie near 80, but none of
+those values is passed to Beeper by SpringBoard. With the scene at y 0..458 and the keys at y 586..932 on the
+display, standard UIKit math gives Beeper zero overlap; the ~80pt comes from Beeper's own avoidance code.
+
+Where Beeper's keyboard information comes from: Beeper OWNS its keyboard ("arbiter on=1
+src=com.beeper.chat.ios", "uikit change had no owner bundle=com.beeper.chat.ios"): the keys are laid out and
+drawn by UIKit inside Beeper's process; SpringBoard only displays that keyboard's layer at the bottom of the
+phone. So Beeper's UIKeyboardWill/DidShow/ChangeFrame notes (and any keyboardLayoutGuide / RN keyboard module
+reading) are generated inside Beeper from Beeper's own keyboard, and Beeper pads its composer from them.
+Messages / Messenger / Signal show no band because DynamicStage's app dylib swallows exactly those notes inside
+the app (app/Tweak.xm NSNotificationCenter hook: staged + keyboard note -> not delivered). In Beeper the dylib is
+not running: "relay668 com.beeper.chat.ios on a card 7s and no ctor or mapped marker in its container:
+DynamicStageApp.dylib is NOT running in this app", although Beeper is in DynamicStageApp.plist's filter and
+TweakInject is otherwise working (line 40 of the log).
+
+ROOT CAUSE: Beeper's own keyboard avoidance, from keyboard notes produced inside Beeper's process, with no
+DynamicStage app dylib in Beeper to swallow them. Confidence: high that SpringBoard sends Beeper nothing that
+changes with the keyboard (checked in code and in the log), and high that the band is Beeper's own padding.
+The exact formula Beeper uses to arrive at ~80 instead of 0 is NOT known (it is inside Beeper; it cannot be
+observed without code running in Beeper).
+
+3) CAN SPRINGBOARD REMOVE IT?  No, not reliably, and 4.5.672 does not pretend to.
+The notes Beeper reacts to are created and delivered inside Beeper's process by its own UIKit; SpringBoard
+never sees or forwards them, so there is no SpringBoard-side value to zero. The only SpringBoard levers that
+reach Beeper are its scene settings (frame / safe area / orientation), and those are already the card values
+and already stable; changing them (e.g. shrinking or moving the scene) would change the card size or position,
+which is ruled out, and 4.5.671 showed the position makes no difference. A visual SpringBoard workaround
+(shifting / cropping the hosted picture by a guessed 80pt) would cut off Beeper's header and break whenever
+Beeper's padding differs, so it was not shipped.
+The fix that works: get DynamicStageApp.dylib running in Beeper (check tweak-injection blocking / jailbreak
+hiding / per-app "disable tweaks" for Beeper, then force-quit Beeper). Once the dylib loads, Beeper takes the
+same path as Messenger and Signal (DSIsBeeper() returns NO, its keyboard notes are swallowed while staged) and
+the band is gone. Confirmation: a "relay668 com.beeper.chat.ios app dylib marker: ... running" line.
+
+4) NEW LOG LINE (diagnostics only, nothing written)
+"keys672 <bundle> keyboard up {{0, 586}, {430, 346}} slot=0 card=... lift=...; scene frame={{0, 0}, {420, 458}}
+safeArea={...} orientation=1 (stage wants frame=... safeArea=...); has NO DynamicStage app dylib: ..." or
+"...; has the app dylib: ... (no band)". Once per keyboard session (at most every 4 s per app). It shows the
+scene values Beeper actually has while the keyboard is up; if they ever differ from what the stage wants, that
+is a new lead.
+
+RISKS
+- None functional: 671's behaviour is off (opt-in file only), keys672 only reads the scene settings and logs.
+- Unchanged: Messages / Messenger / Signal / Phone keyboards, the 664 fix, picker search, dial pad, crash guards
+  665/668/670, presence670 publisher, Messages camera Fit/Fill. No app-switcher hooks. Card size fixed.

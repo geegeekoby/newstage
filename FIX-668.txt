@@ -1,0 +1,89 @@
+DynamicStage 4.5.668 - fixes for the 4.5.667 log (Newestlog.txt, IMG_4439, IMG_4440)
+==================================================================================
+
+KEY LOG LINES (4.5.667)
+- "build 4.5.667 split=0 float=0 half=1 slots=1"
+- "relay667 com.beeper.chat.ios watching /private/var/mobile/Containers/Data/Application/E0E43FC6-.../tmp/com.recreated.dynamicstage.app-trace.log"
+  and never "app trace file found": Beeper never wrote its trace file. No Beeper ctor / hello / layout667
+  line has ever reached any log (Apple arm64e apps do log).
+- "camera661 sensor data STUIDataAccessStatusDomainData items=0 unclassified=0 ... attributions: <STListData ...>
+  { <STUIDataAccessAttribution ...> { type = camera; state = active; ..." : the green dot WAS on, but the
+  reader got 0 items (it could not read iOS 16's STListData), so no "sensor <bundle> camera on" line ever.
+- Crash: build 4.5.667 SIGTRAP 16:50:32 NZDT. frame 2 = 0x...b1c0 = the BLRAA return in our hook
+  _logos_method$Stage$SBAppViewController$sceneHandle$didUpdateSettingsWithDiff$previousSettings$
+  (Tweak.xm "owned app view" %orig). 4.5.663 safe-mode log: same function (0x...97a0). The trap is in
+  SpringBoard's original -[SBAppViewController sceneHandle:didUpdateSettingsWithDiff:previousSettings:].
+  Every one of these crashes is preceded by "kept the open stage inside its card while another app opened".
+
+ROOT CAUSES
+1. SIGTRAP: the FBScene updateSettings hook still REFUSED SpringBoard's phone-size update of a hosted app
+   (completion done(YES) with no %orig) outside the 659/665 exemptions. SpringBoard then believes the
+   update landed while the scene never got it; its next settings diff for that app view does not match
+   and the original app-view handler asserts. Not the 661/667 display-layout republish, not the camera fit
+   (the trap frame is the app-view settings handler, not the arbiter or the camera code).
+2. Beeper: DynamicStageApp.dylib is not running inside Beeper (no ctor / trace / hello ever, from any
+   build, while the filter plist does list com.beeper.chat.ios and the arm64 slice is valid and signed).
+   Most likely Beeper is excluded from injection on the phone (jailbreak-hiding / tweak-blocking for that
+   app). Cannot be proven from the box; 668 adds markers that prove it either way. So the 667 in-app camera
+   fit never ran.
+3. SpringBoard could not see who used the camera: STListData not unwrapped (items=0).
+4. Messages: 667 FIT the whole phone-size extension layout (scale 0.49) -> narrow centred column.
+
+CHANGES
+- springboard/Tweak.xm FBScene updateSettings:withTransitionContext:completion: the refusal is gone. A
+  phone-size update of an on-screen hosted scene always lands: card geometry written over it, committed
+  foreground kept (normal path), card refit at 0 s and 1.3 s. Log: "home668 kept the open stage inside its
+  card while another app opened (<scene>'s phone-size update lands at card size, not refused)".
+- springboard/Tweak.xm SBAppViewController sceneHandle:didUpdateSettingsWithDiff: Live-mode hold also on
+  a real foreground flip (previousSettings vs scene.settings via readForegroundFlag), plus
+  "appview668 <scene> mode=.. flip=.. update: <diff>" (<= 2/s) into the recent-lines ring the crash log
+  prints, so any future trap names the diff.
+- springboard/DSCameraArbiter.m: green-dot reader unwraps STListData (objects/allObjects/...), walks two
+  levels (attribution -> attributedEntity -> executableIdentity) for the bundle, only "state = active".
+  New sbcam668: while the dot shows a staged, visible, non-Apple app with NO live app dylib using the
+  camera (and no keyboard, not locked / call), SpringBoard puts that card's scene at the phone size.
+  Unchanged while home / switcher owns the screen. Kill switch: /var/tmp/com.recreated.dynamicstage.nosbcam
+  (or /var/jb/tmp/...).
+- springboard/DSSceneHost.m/.h: setCameraTall:why: / isCameraTall. logicalFrame = phone size while on;
+  layoutHostView shows the phone-size host at scale cardW/phoneW, bottom-aligned, card clips the top.
+  Size delivered with the normal card-resize transaction + geometry write (DSSceneWriteWouldTrap guarded).
+  Log: "sbcam668 <bundle> phone-size camera layout ON/OFF (<why>): scene WxH shown at xS, card WxH,
+  visible part y=a..b of the app".
+- springboard/DSStageManager.m/.h: visibleHostForBundleIdentifier, setCameraTall:forBundleIdentifier:why:,
+  cameraTallForBundleIdentifier:, cameraTallBundleIdentifiers, stagedKeyboardIsUp.
+- springboard/DSAppTraceRelay.m: reads the app's container markers; "relay668 <bundle> app dylib marker:
+  ..." or "relay668 <bundle> on a card Ns and no ctor or mapped marker in its container:
+  DynamicStageApp.dylib is NOT running in this app ...". Liveness (marker pid alive / trace lines) gates
+  sbcam668 so apps that do have the dylib keep the app-side 667 fit.
+- app/Tweak.xm: image-mapped constructor and %ctor write "mapped"/"ctor" markers (bundle, pid, build,
+  reason) to $TMPDIR, <container>/tmp and <container>/Library/Caches (plain C, before anything else).
+- app/DSCameraStage.m (Messages remote camera): FILL width - scale = cardW/430 (~0.977), extension still
+  laid out at 430x932, bottom-aligned (30 pt home-indicator strip cropped), top of preview cropped.
+  The extension's own close is in the cropped band, so a stage "Done" pill (top right of the card)
+  dismisses the camera screen (presentingViewController dismiss). Log: "layout668 ... FILL width
+  scale=... bottom-aligned: layout y=a..b on the card", "layout668 ... stage Done tapped ...".
+- Version 4.5.668 (DSConstants.h, control, changelog.md).
+
+KEPT: 664 keyboard fix, 665 home-swipe fix, 666 tap routing, Phone dial pad, boot / call / home-swipe /
+SIGTRAP guards, zero app-switcher hooks, fixed stage card size (only the hosted scene inside the card
+changes size while sbcam668 is on; the card itself does not move or resize).
+
+RISKS
+- Messages: the width fill shows roughly the bottom half of the phone camera layout (lower preview, mode
+  row, shutter row, flip). A uniform scale cannot show the whole phone-tall layout at full card width; the
+  extension's own top bar (close, flash) is cropped and replaced by the stage Done.
+- sbcam668 depends on the green-dot attribution naming the app; if it does not, nothing changes (logs say).
+  Beeper's scene is the phone size while its camera runs: a keyboard turns it off; text/UI outside the
+  camera screen while the camera is still running (rare) would also be shown at phone layout.
+- Crash fix: refused updates now land (card frame + kept foreground). If some app still blacks for a
+  moment while another app opens from Home, the 0 s / 1.3 s refit restores it.
+
+TEST
+1. Messages on a card -> camera: preview fills the card width, shutter row at the bottom, "Done" top right;
+   take a photo; Done closes it. Log: layout668 ... FILL width.
+2. Beeper on a card -> camera: within ~1 s the whole Beeper camera (shutter at the bottom) fits the card
+   width. Log: "sensor com.beeper.chat.ios ... camera on", "sbcam668 ... ON", relay668 marker line.
+   Close the camera -> "sbcam668 ... OFF", Beeper back at card size.
+3. Drag a card while a camera is on and right after closing it; open another app from Home with a card
+   up; home-swipe / corner pull: no safe mode. Look for home668 / appview668 lines.
+4. Keyboard in Messages / Beeper, Phone dial pad, picker search: unchanged.

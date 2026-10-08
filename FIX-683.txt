@@ -1,0 +1,92 @@
+DynamicStage 4.5.683 - Beeper uses its own keyboard inside the card
+====================================================================
+deb: com.recreated.dynamicstage_4.5.683_iphoneos-arm64.deb
+sha256: 10de3062257267c5f62c64641d3f00d4313b1dd3eccec396c5d6142167e2ed13
+
+WHY 680-682 BOUNCED
+Since 4.5.674, keys674 answered NO to -[_UISceneLayerHostContainerView _canShowKeyboardLayer] for
+Beeper, so Beeper's own keyboard layer was never drawn in its card. SpringBoard showed the keys
+at the bottom of the phone instead. Beeper still lays out for its own keyboard in its own
+process: it moves the bar up at once and leaves its keyboard area empty (black). 680-682 then
+moved the card's window from SpringBoard to chase the bar. That is two processes animating
+against each other, which gave the band and the bounce.
+
+WHAT 683 DOES (allowlisted apps without the app dylib = Beeper; "683 mode")
+1. keys674 keeps UIKit's answer (YES), so the card draws Beeper's OWN keyboard layer. The 674
+   problem doesn't come back: in the old 420x458 card scene that layer sat at screen y 586..932,
+   outside the scene. In the always-full-screen 430x931 scene (680) it sits at scene y ~585..931,
+   which is the bottom of the scene, like on a real phone.
+2. The card's window onto the scene is PINNED to the scene bottom: app y 462..931 at x0.9767,
+   all the time, keyboard up or down. On keyboard show/hide NOTHING on SpringBoard's side moves:
+   no window move, no card drop or lift, no SpringBoard keyboard raise. Beeper animates its own
+   keyboard up inside the card with the bar riding on top, in one process with one animation and
+   Beeper's own timing. With nothing to race, there is nothing to bounce. Justification:
+   - 680-682 logs: every SpringBoard-side move started from a cross-process signal (keys674 ask
+     / arbiter on=1, 3 ms apart) and the recording showed Beeper's in-process move winning.
+   - 683 removes the SpringBoard side of the race instead of re-timing it.
+   - The cost: with the keyboard down, the 34 pt home-indicator strip (Beeper's own background)
+     shows under the bar (33 pt on the card). A pin that changes 897 -> 931 on keyboard show
+     would bring back a 34 pt cross-process move.
+3. No second keyboard:
+   - While Beeper's own keyboard is up, SpringBoard's bottom-of-phone copy of its keys is
+     hidden. That copy is the tall _UIContextLayerHostView strip in SpringBoard's keyboard
+     window, the one 4.5.65x already pins for Beeper. It is hidden from the existing
+     _UIContextLayerHostView hook and by sweeps at 0/50/150/400/1000 ms after arbiter on=1.
+   - It is shown again 0.6 s after arbiter on=0, or when another app takes the keyboard.
+   - The stage ignores Beeper's keyboard notes in this mode (keyboardOnScreen, UIKit
+     will-change, noteKeyboardFrame), so the 664/670 machinery doesn't lift/drop the card or
+     raise SpringBoard's keyboard window.
+   - SpringBoard never opens its own stand-in text field for an app without the dylib (that path
+     is _stagedKeyboardSlot, only for hosted-keyboard requests from the dylib), so SpringBoard's
+     own keyboard is never shown for Beeper.
+   - UIKit's _UIRemoteKeyboards addHostedWindowView:fromPID:forScene: for Beeper's scene is no
+     longer left out in this mode. It never appeared in any saved log, so it is likely unused;
+     it is logged if it runs.
+4. All 680-682 region chasing (instant show, spring, corrections, keys674 trigger, revert) is
+   skipped in 683 mode, logged as "skipped".
+5. Taps: the in-card keyboard is Beeper's own layer inside its scene host. The render server
+   gives a touch to the process that owns the layer under the finger (as for the rest of
+   Beeper's card), so key taps go straight to Beeper.
+
+WHAT THE USER SHOULD SEE WHEN TAPPING THE MESSAGE BOX
+Card (fixed size, not moving): Beeper's chat with its bar near the bottom, a ~33 pt strip under
+it. Tap the box and Beeper's own keyboard slides up from the card's bottom edge inside the card,
+with the bar riding on top of it, like on a real iPhone. The keyboard takes ~338 pt of the
+458 pt card, the bar sits above it, and ~70 pt of chat stays visible. No keys at the bottom of
+the phone, no black band, no bounce. Dismiss: the keyboard slides back down inside the card.
+
+OFF SWITCH
+  /var/mobile/.dynamicstage-phonesize683-off     -> exactly 4.5.682 (re-read every 2 s)
+  /var/mobile/.dynamicstage-phonesize683-keephost -> test: keep SpringBoard's bottom copy visible
+  (680-off and 675-off still turn the whole phone-size path off)
+
+LOG LINES (prefix "SpringBoard: phonesize683")
+  phonesize683 build 4.5.683 is ON: allowlisted apps without the app dylib use their OWN keyboard inside the card ...
+  phonesize683 com.beeper.chat.ios window pinned to the scene bottom: card shows app y 462..931 of 430x931 at x0.9767, always ...
+  keys674 com.beeper.chat.ios (...): phonesize683 keeps UIKit's answer (YES): the app's own keyboard layer is drawn inside its card
+  phonesize683 com.beeper.chat.ios keyboard up (arbiter on=1 height 243 at T): the app's own keyboard shows inside the card; the stage does not lift, drop or move anything; SpringBoard's bottom-of-phone copy is hidden
+  phonesize683 com.beeper.chat.ios hid SpringBoard's bottom-of-phone copy of the keys: _UIContextLayerHostView {{0, 586}, {430, 346}} in <window> (layout|sweep)
+  phonesize683 com.beeper.chat.ios census +400ms SpringBoard keyboard windows: WINDOW ... | .view ... HIDDEN(683) ...
+  phonesize683 com.beeper.chat.ios census +400ms card host (the app's keyboard layer should be in here): ...
+  phonesize683 com.beeper.chat.ios keyboard on=1 ... left to the app: no stage lift/drop, no SpringBoard key raise ...
+  phonesize683 keyboard note {{0, 586}, {430, 346}} from com.beeper.chat.ios ignored ...
+  phonesize683 com.beeper.chat.ios keyboard down (arbiter on=0 at T): the app animates its own keyboard away inside the card ...
+  phonesize683 SpringBoard's key copies shown again (1 view): com.beeper.chat.ios keyboard session ended (arbiter on=0)
+  phonesize683 ... 680-682 window move ... skipped / keyboard top ... ignored
+
+RISKS
+- The main unknown: whether iOS draws Beeper's keyboard layer in the card host and in
+  SpringBoard's keyboard window at the same time. If the in-card copy doesn't render, the user
+  sees no keyboard: create the -keephost file or the -off file. The two census lines show
+  exactly what is in the card host and SpringBoard's keyboard windows, which settles it.
+- If SpringBoard's bottom copy is not a _UIContextLayerHostView strip, it stays visible (two
+  keyboards); the census lines show what to target.
+- If the card sits in the bottom half, SpringBoard's keyboard window (above the stage) may still
+  catch taps where it overlaps the in-card keys. A single top card is unaffected.
+- With the keyboard up, only ~70 pt of chat is visible on the card (the keyboard is phone-sized).
+- Messages, Phone and every app with the dylib: unchanged (683 never applies to them).
+
+UNCHANGED
+No new hooks (keys674, arbiter, _UIRemoteKeyboards, _UIContextLayerHostView hooks already
+existed), the 4.5.673 Messages camera and Messages keyboard, zero app-switcher hooks, the stage
+card size, the scene never resized for tap/keyboard.

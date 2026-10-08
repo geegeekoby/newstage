@@ -1,0 +1,84 @@
+DynamicStage 4.5.684 - phonesize684: safe area = keyboard, Beeper's bar never moves
+===================================================================================
+deb: com.recreated.dynamicstage_4.5.684_iphoneos-arm64.deb
+sha256: bbd0f9cd85f7164274c26f760790436365db63f7eeb8d82897a632d1efa5c0b6
+Plan: PLAN-684.txt (tomt000 not opened; own code, logs and FIX history only)
+
+WHY 680-683 FAILED
+- Beeper (no app dylib on NathanLR) gets nothing back from the keyboard arbiter. The only things
+  SpringBoard can steer are its scene settings: frame, safe area and orientation.
+- 680-682: in the 430x931 scene Beeper moved its bar 897 -> 586 inside its own process, and the
+  card's window chased it from SpringBoard: two processes racing, hence the bounce.
+- 683: keys inside the card; the user reports it doesn't work. Now opt-in only.
+
+WHAT 684 DOES (allowlisted apps without the dylib = Beeper)
+1. Same always-full-screen scene {{0,0},{430,931}} at x0.9767, but safe area {T, 0, K, 0}:
+     K = 931 - 586 = 345  (Beeper's 346 pt keyboard at the screen bottom, top 586)
+     T = ceil(586 - cardH/fit) = 117 on a 420x458 card (Beeper's top on the card's top edge)
+   Keys down: Beeper rests its bar above the K inset   -> bar bottom 586.
+   Keys up:   Beeper puts its bar on the keyboard top  -> bar bottom 586. Same y, nothing to move.
+   (675/680: Beeper put the bar ON the keyboard top, not keyboard + safe area, and followed the
+   34 pt inset with the keys down; the 677 log reads the safe area back on the scene.)
+2. The card's window is FIXED at app y 117..586, keyboard up or down. phoneSize682MoveBarBottomTo,
+   the 681 spring, the 682 instant move, the keys674 trigger and its revert are all skipped
+   ("phonesize684 ... skipped" lines).
+3. keys674 answers NO again, so Beeper's keys show full size at the bottom of the phone
+   (SpringBoard's keyboard host, as in 674-682); taps go straight to Beeper.
+4. K is learned: during a typing session, the stage's keyboard top that was up the longest (at
+   least 150 ms) sets K = 931 - top (clamped 200..500). A changed K, tune file or off file is
+   written only once the keys have been down 1.2 s (retried while the stage still holds keys, a
+   scene update runs or a card is dragged), with the same guarded geometry write and app-view hold
+   as a card resize. Learned values last until a respring.
+5. Card resize: T is recomputed in the existing resize write; the pin stays 931-K.
+
+WHAT THE USER SHOULD SEE
+Beeper's card: the header at the top, the bar on the bottom edge. Tap the message box: the keys
+come up full size at the bottom of the phone, outside the card; the card and Beeper's bar don't
+move at all. Hide: the keys go down; nothing in the card moves. Below the bar Beeper has a
+345 pt empty strip and above the header a 117 pt strip; both are off the card.
+
+OFF SWITCH / TUNE (re-read every 2 s)
+  /var/mobile/.dynamicstage-phonesize684-off   -> exact 4.5.682 (applied at the next card open or
+                                                  1.2 s after the keys go down)
+  /var/mobile/.dynamicstage-phonesize675-off   -> 4.5.674 (card-size scene, keys at the phone bottom)
+  /var/mobile/.dynamicstage-phonesize683-on    -> 4.5.683 mode (keys inside the card), opt-in
+  /var/mobile/.dynamicstage-phonesize684-tune  -> key=value lines:
+      bottom=100..600|auto   K override (auto: learned, default 345)
+      top=0..400|auto        top inset (auto: the card's top edge, 117)
+      mode=safe|short        short: scene 430x(931-K) ending at the keyboard top, no bottom inset
+      Recipes: bar sits ~N pt too low with keys up  -> bottom=345+N
+               bar sits ~N pt too high              -> bottom=345-N
+               header cut / gap at the top          -> top=<value>
+               try the no-overlap variant           -> mode=short
+
+LOG LINES (prefix "SpringBoard: phonesize684")
+  phonesize684 build 4.5.684 is ON: allowlisted apps without the app dylib get safe area = keyboard ...
+  phonesize684 tune file absent, defaults: (no settings) | in use: bottom=auto (learned, default 345) top=auto (card top) mode=safe ...
+  phonesize684 com.beeper.chat.ios scene 430x931 safeArea {117, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+  phonesize684 com.beeper.chat.ios arbiter on=1 height 243 at T: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+  phonesize684 com.beeper.chat.ios keyboard top 586 (keyboard note t+..ms): window fixed at app y 117..586, no move; matches the bar bottom 586 (K=345): the app's bar should not move
+  phonesize684 com.beeper.chat.ios keyboard down (arbiter on=0 at T): window fixed, no move; settled keyboard top 586 (... ms) -> learned K 345 (was none; in use 345)
+  phonesize684 com.beeper.chat.ios geometry change with the keys down (...): 684 K=345 top=auto -> scene ... K=300 ...
+  phonesize684 com.beeper.chat.ios 680/681/682 move to bar .. (..) skipped (684 fixed window at app y 117..586)
+  phonesize684 com.beeper.chat.ios keys674 layer ask at T: keys stay at the phone bottom; window fixed, no 682 trigger
+  phonesize683 build 4.5.684 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+
+RISKS
+- If Beeper stacks the safe area and the keyboard (it didn't in 675/680), the bar would sit 345 pt
+  above the keys with the keyboard up: use the off file.
+- Two-step keyboard (301 then 346, ~8-25 ms apart): the bar may dip a few pt for a frame.
+- Other keyboard heights (emoji, no suggestion bar): the first time the bar can move by the
+  difference; K is re-learned and applied with the keys down. A one-off 586->631 flicker isn't
+  learned (the longest-held top wins).
+- 345 pt of Beeper's own background under the bar and 117 pt above the header are off-card; any
+  Beeper UI drawn there (e.g. a panel sized to the safe area) won't be seen.
+- A bottom-half card is still lifted above the keys by the stage (the whole card moves, the bar
+  doesn't move inside it).
+- Not tested on a phone.
+
+UNCHANGED
+No new hooks (Tweak.xm and DSKeys674.m byte-identical to 683; the keys674, arbiter and
+_UIContextLayerHostView hooks already existed). The 4.5.673 Messages camera, Messages and every app
+with the dylib, zero app-switcher hooks, the stage card size never changes.
+Build: Theos /tmp/theos, 41 usual arm64e ABI warnings, "verify: 3 binaries, arm64 + new-ABI arm64e,
+signed". dSYMs: dsym684/. Diff: springboard-684.diff. Backup of 683 sources: bak684/.

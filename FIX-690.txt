@@ -1,0 +1,52 @@
+DynamicStage 4.5.690 - Beeper top bar recreated on the card (SpringBoard-side picture)
+
+User (689 good): "now all you have to do is move top bar of beeper down a little bit .. even if you
+recreate it ... dont change how keyboard or anything works... just the top bar"
+
+Uploads: newstage origin/main = 48ab94a (our 689). No new upload, so there was no 688 crash log to decode.
+
+Constraint kept: the 684/689 geometry is byte for byte the same. The diff vs 689 is additions only in
+springboard/DSSceneHost.m (plus the version bump). The host view placement code in layoutHostView is untouched,
+and nothing writes to the scene settings. Tweak.xm, DSKeys674.m and DSStageManager.m are unchanged.
+
+What 690 adds (DSSceneHost.m):
+- DSPhoneSize690StripView: a clipping view inserted into the card's contentView just above the host
+  view, frame (0, place_y, cardWidth, ceil(strip_height*fit)), filled with the card background colour.
+- Inside it a _UIPortalView with sourceView = the card's host view. matchesPosition, matchesTransform,
+  matchesAlpha, hidesSourceView and forwardsClientHitTesting are all NO (the 673 camera recipe).
+  bounds = scene 430x931, transform = scale(fit), center = (cardW/2, (931/2 - strip_top)*fit), so app
+  y strip_top..strip_top+strip_height shows at card y place_y.. at the same x0.977 and x position as the card.
+- Made and laid out from layoutHostView's phone-size branch only, after the host is placed, wrapped in
+  @try. It's only made with the 684 geometry (not with the 685/687/688-geo opt-ins), when the strip is
+  above the card's visible top (117), and on the main thread. It's removed when the card stops being
+  phone-size, is minimized, is let go or torn down, or when off/on=0/the latch applies.
+- Touch: forward (default) sets setAllowsHitTesting:YES on the portal, so the window server can route a
+  tap through the portal to Beeper's real top bar. The strip is filled and its UIKit hitTest returns self,
+  so a tap that is not routed is kept by SpringBoard (never reaches the chat under the strip) and logged:
+  "phonesize690 ... touch on the recreated top bar reached SpringBoard at strip x,y (app x,y)".
+  block: portal hit testing off, the strip keeps all taps. pass: clear background, no interaction, taps go
+  to the content under the strip.
+- Logs: phonesize690 tune ..., top-bar strip made/updated (app y range, card y range, scale, the card's
+  own unchanged range), no top-bar strip (reason), strip removed (reason), crash latch lines.
+
+Files:
+- Tune: /var/mobile/.dynamicstage-phonesize690-tune
+    strip_top=59      app y where the strip starts (0..400)
+    strip_height=68   app pt (10..200)
+    place_y=0         card y of the strip's top (-50..300; e.g. 10 = 10 pt lower on the card)
+    on=1|0
+    touch=forward|block|pass
+- Off: /var/mobile/.dynamicstage-phonesize690-off = no strip = exact 4.5.689.
+- Latch: /var/mobile/.dynamicstage-phonesize690-trying (15 s), -crashed (delete it to allow the strip again).
+
+Taps: unverified on device. The 4.5.673 camera work found that portal mirrors don't get touches, because
+the window server routes by context at the touch position. The CAPortalLayer allowsHitTesting route is the
+one remaining possibility. If it doesn't work, the log will show the touch reached SpringBoard, and the
+buttons are dead but safe (nothing under them is triggered).
+
+Risks: the portal of a live layer-host subtree (the 673 camera did the same, so it's known to work on
+iOS 16). The blur in the top bar may look slightly different inside the portal. The strip covers the first
+~66 pt of the card (app y 117..185 of the real content). The crash latch auto-disables the strip after a
+SpringBoard crash within 15 s.
+
+Build: Theos, "verify: 3 binaries, arm64 + new-ABI arm64e, signed", 41 warnings (as usual).

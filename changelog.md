@@ -1,3 +1,12 @@
+**4.5.690**
+- Beeper's top bar is recreated at the top of the card. It's a picture only, drawn by SpringBoard. The card's geometry is exactly 4.5.689/684 (scene 430x931, safe area, card shows app y 117..586 at x0.977, keys674 and the keyboard path all unchanged), and nothing is written to Beeper's scene.
+- How: a strip view at the card top holds a _UIPortalView of the card's own host view (the same live pixels, the way the 4.5.673 camera mirrors its top bar). It's clipped to app y 59..127 and drawn at x0.977, full width, over the first ~66 pt of the card. It only exists in phone-size mode with the default 684 geometry.
+- Touches (touch= in the tune file): forward (the default) turns on the portal's own hit testing, so a tap on the strip may reach Beeper's real top bar. If it doesn't, SpringBoard keeps the tap (it never lands on the chat under the strip) and logs it ("phonesize690 ... touch on the recreated top bar reached SpringBoard"). block: the strip keeps every tap. pass: picture only, so taps go to whatever is under the strip.
+- Tune: /var/mobile/.dynamicstage-phonesize690-tune takes strip_top= (59), strip_height= (68), place_y= (0), on=1|0 and touch=forward|block|pass. It's re-read within 2 s and applied on the next card layout.
+- Off: /var/mobile/.dynamicstage-phonesize690-off removes the strip (exact 4.5.689).
+- Crash latch: /var/mobile/.dynamicstage-phonesize690-trying is written before the first strip and removed after 15 s. If SpringBoard comes back with it still there, the strip stays off via /var/mobile/.dynamicstage-phonesize690-crashed. Delete that file to allow the strip again.
+- No new hooks. Only DSSceneHost.m changed (plus the version). Tweak.xm, DSKeys674.m and DSStageManager.m are unchanged since 684.
+
 **4.5.689**
 - Fix: 4.5.688 crashed SpringBoard into safe mode when staging Beeper. No crash log was uploaded; the prime suspect is 688's default mode=statusbar, the only new code that ran by default (it raised the Beeper scene's status bar height through UIApplicationSceneSettings setDefaultStatusBarHeight:forOrientation:).
 - Default is now mode=684: exact 4.5.684 geometry (known good on this phone). With mode=684 no status bar code runs at all (not even a selector check).

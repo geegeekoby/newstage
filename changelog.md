@@ -1,3 +1,11 @@
+**4.5.691**
+- Content no longer hidden under the recreated top bar (when Beeper respects the safe area). Only the top safe-area inset of Beeper's card scene goes up, from 118 to the strip's bottom edge in app coordinates (186 by default). It's written through the same validated 684 geometry write (keys down, card at rest) that already writes {118,0,345,0}. Frame 430x931, bottom inset 345, bar line 586, keys674, the card mapping and the x0.977 edge-to-edge fill are unchanged, and there are no status-bar writes.
+- Why the chat bar can't move: Beeper puts the bar on the keyboard top (586) with the keys up, and on the bottom inset (931-345 = 586) with them down. Neither uses the top inset. Beeper's top bar ignored the 118 top inset (it stayed at 59..127), so it won't move either, and the 690 strip still lines up.
+- Tune /var/mobile/.dynamicstage-phonesize691-tune: top_inset=auto|off|N (20..480; auto = strip bottom). The 690 strip keys (strip_top, strip_height, place_y, on, touch) work here too and override the 690 tune file. New: strip=slim (app y 59..119, drops the empty blur band under the buttons) or strip=full (59..127, the default).
+- Off: /var/mobile/.dynamicstage-phonesize691-off = exact 4.5.690 (top inset back to 118, 691 tune file ignored).
+- Crash latch: /var/mobile/.dynamicstage-phonesize691-trying is written before the first raised-inset write and removed after 15 s. If SpringBoard comes back with it still there, /var/mobile/.dynamicstage-phonesize691-crashed keeps the raised inset off. Delete that file to allow it again.
+- No new hooks. Only DSSceneHost.m changed (plus the version).
+
 **4.5.690**
 - Beeper's top bar is recreated at the top of the card. It's a picture only, drawn by SpringBoard. The card's geometry is exactly 4.5.689/684 (scene 430x931, safe area, card shows app y 117..586 at x0.977, keys674 and the keyboard path all unchanged), and nothing is written to Beeper's scene.
 - How: a strip view at the card top holds a _UIPortalView of the card's own host view (the same live pixels, the way the 4.5.673 camera mirrors its top bar). It's clipped to app y 59..127 and drawn at x0.977, full width, over the first ~66 pt of the card. It only exists in phone-size mode with the default 684 geometry.

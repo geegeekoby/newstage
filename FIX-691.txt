@@ -1,0 +1,60 @@
+DynamicStage 4.5.691 - content below the recreated top bar (top safe-area inset only)
+
+User on 690: "thats way better but the inside contents are cut off by the top bar maybe shift them into
+view or fit everything nicely". The 690 strip (app y 59..127 at card y 0..67) covers app y ~118..186 of the
+real content.
+
+Uploads: newstage origin/main = 22c3ca2 (our 690). No new upload.
+
+Evidence (uploads685 photo + log, 684 geometry): the log shows the scene safe area {118,0,345,0}, and the
+card shows app y ~117..586. Beeper's top bar sat at 59..127, ignoring the 118 top inset (only its 10 pt
+bottom band showed at the card top). The main-screen grid's first row starts about 30 pt below the bar
+(app y ~158), so content is laid out from the bar, not from 118 + bar height. That 118 is above the
+content's top (127), so a view below the bar sees no top safe area at all (scroll view safe area = overlap).
+With a top inset of 186, any Beeper view that respects its safe area (automatic scroll insets or safe-area
+padding) gets ~59 pt of top inset, which is exactly the strip.
+
+Options evaluated:
+(a) raise only the top inset to the strip's bottom: chosen as the default (top_inset=auto -> 186).
+    Same validated 684 write path (DSApplyGeometry: finite, 0..2000, setter only if it responds), only
+    with the keys down and the card at rest, the same timing as 684. Frame, bottom inset 345 and bar line
+    586 are unchanged, so it's safe for the chat bar: Beeper puts the bar on the keyboard top (keys up) or
+    on the bottom inset (keys down), never on the top inset. The safe area height goes from 468 to 400 pt.
+    It's not proven that Beeper honours it. If it doesn't, nothing changes (it looks like 690) and option
+    (b) is the fallback.
+(b) slimmer strip: strip=slim = app y 59..119 (60 pt). It drops the empty blur band 119..127 that the 684
+    photo showed under the buttons, saving ~8 pt. Any strip_top / strip_height works too.
+(c) other SpringBoard-only options without scaling: the card shows a fixed 469 pt of app height ending at
+    586. Bar + content = 68 + 459 pt > 469, so something has to go. Mirroring content lower would cover the
+    real bottom (the chat bar must stay the live, touchable view). Not shipped: no lossless visual option
+    exists. A translucent strip was rejected as unreadable.
+
+Code (DSSceneHost.m only, plus the version):
+- DSPhoneSize691Off / DSPhoneSize691CurrentTune (top_inset) / latch (DSPhoneSize691Latched,
+  DSPhoneSize691MarkTrying).
+- The 690 tune reader also reads the 691 tune file (after the 690 file, so it wins, unless 691 is off).
+  New key strip=slim|full.
+- ivars _ps691Mode/_ps691Value/_ps691StripH/_ps691PlaceY, set in phoneSize684Configure and the
+  apply-at-rest step (a change there triggers the normal 684 geometry write).
+- phoneSize684Insets: only in the default 684 geometry (not 685/687/688-geo, and only when the 684 tune's
+  top is auto), top = ceil(684 auto top + place_y/fit + strip_height) (= 118 + 68 = 186), or the fixed value,
+  clamped to pin-100. Bottom stays phone height - pin.
+- auto requires the strip to be on (not 690-off / on=0 / 690 latch). A fixed top_inset=N works without
+  the strip.
+- Logs: phonesize691 tune ..., phonesize691 <app> top inset A -> B, the 684 summary ", 691: top inset raised
+  to 186 ...", and the latch lines.
+
+Files:
+- Tune: /var/mobile/.dynamicstage-phonesize691-tune
+    top_inset=auto | off | 20..480
+    strip=slim | full
+    strip_top=, strip_height=, place_y=, on=1|0, touch=forward|block|pass  (override the 690 tune)
+- Off: /var/mobile/.dynamicstage-phonesize691-off = exact 4.5.690.
+- Latch: /var/mobile/.dynamicstage-phonesize691-trying (15 s), -crashed (delete it to allow again).
+
+Applies at the next card open, or 1 s after the keyboard goes down with the card at rest (684 timing).
+
+Build note: the box had restarted and /tmp/theos and make were gone. I reinstalled the build tools:
+the apt packages, Theos master and its vendor submodules downloaded as tarballs at their pinned commits
+(no git clone), the L1ghtmann iOS toolchain and the iPhoneOS16.5 SDK. The build gave "verify: 3 binaries,
+arm64 + new-ABI arm64e, signed" with the usual 41 warnings.

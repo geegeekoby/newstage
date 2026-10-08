@@ -6,12 +6,12 @@ Codename: ios
 Architectures: iphoneos-arm64
 Components: main
 Description: Stage Manager Reimagined for iPhone, rebuilt for rootless jailbreaks
-Date: Thu, 08 Oct 2026 14:04:55 GMT
+Date: Thu, 08 Oct 2026 14:51:55 GMT
 MD5Sum:
- e94aa92b4178997a6e9accdd49360fe1 34691 Packages
- 55fceb4e5e48abdbdb7706e92745e90c 4868 Packages.gz
- 081842531481d3dd1c0417ebde707222 4661 Packages.bz2
+ ec154acd98ccd59696ac2ec8c15c7f46 35517 Packages
+ 26784f49305c1f9bc290542126058532 4976 Packages.gz
+ cd2938ae0fff6a78e854685c4231ed63 4763 Packages.bz2
 SHA256:
- 00d1d569bcf816468036e64de932116b2339bff7ebe0b9b0102a5f3ae8afe076 34691 Packages
- 2c2578e20b5ed0c8958cc44043bfb64142fbc76feac125b2f70e4b7a370aa977 4868 Packages.gz
- d19d21b7969ff7d1e2f9fc9cd09894c6faf169135adf8c7c384c474cb81b7b0b 4661 Packages.bz2
+ 999cebce8fcde0fa4bdbf8e0fd0992f94f8434870bb66678df4dc9fc6c73b80f 35517 Packages
+ 2d6df3cdc85bb07edeec83df8995fe2126ba45233919c1a5d9bde6eebb6bfab2 4976 Packages.gz
+ ee594769cde5e5e0b03d00df4618ee7c0487dc3f523bcb1e43c897b94584a7dc 4763 Packages.bz2

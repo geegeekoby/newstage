@@ -1,0 +1,145 @@
+DynamicStage 4.5.678 - Beeper first-tap fix (phonesize678 A + B, C opt-in)
+========================================================================
+
+1. IS THE STALE-KEYBOARD-FRAME CAUSE SUPPORTED?
+-----------------------------------------------
+Checked against the 4.5.675 session log (uploads677/Fixer.txt, the same first-tap
+glitch, with full timing) and the code.
+
+SUPPORTED: Beeper's keyboard shows, and Beeper lays out for it, while its scene
+is still 420x458; the phone-size scene comes later.
+  01:59:51.508  keys674: Beeper's card scene host asked whether it can show the
+                app's keyboard layer   <- the app ALREADY has its keyboard
+  01:59:51.511  arbiter on=1 src=com.beeper.chat.ios {430, 243}   (676's early signal)
+  01:59:51.516  keys672 keyboard up {{0,631},{430,301}} ... scene frame={{0,0},{420,458}}
+  01:59:51.520  arbiter on=1 {430, 288}
+  01:59:51.606  phonesize675 ON ... scene size sent 430x931 (lands at Beeper after that)
+  -> The grow comes 90-100 ms after Beeper's keyboard. Even 676/677's arbiter
+     on=1 switch comes 3 ms after the keyboard layer already exists. UIKit
+     posts UIKeyboardWillShow in Beeper's own process at keyboard creation, so
+     Beeper's keyboard handling always ran against the 420x458 scene.
+
+NOT SUPPORTED: "on the first keystroke the keyboard height changes 301 -> 346
+and UIKit posts a fresh frame".
+  - The keyboard was already full size (with the suggestion bar) BEFORE the
+    switch: 243 -> 288 at .511/.520 in session 1, straight to 288 in session
+    2 (02:00:05.005). 288 + 58 = 346 is the stage's "keys {{0,586},{430,346}}".
+  - While typing there is NO arbiter status at all (nothing between 01:59:51.520
+    and the on=0 at 02:00:03.083, or between 02:00:05.005 and 02:09:40.015).
+    Every keyboard frame change of the app reaches the arbiter (we saw 243 -> 288
+    within 9 ms), so the keyboard frame did not change on the first key.
+  => What fixes Beeper on the first key is Beeper's OWN relayout on the text
+     change (the composer re-measures and re-applies its keyboard offset with
+     the current geometry), not a new keyboard notification.
+
+Most likely stale state (the arithmetic fits the symptom): in the 420x458 scene
+(origin 0) the keyboard top in screen space (586/631) is BELOW the window, so
+Beeper's keyboard overlap is ~0. After the grow the composer sits at the bottom
+of the 931 scene (y ~847..897), far below the card's visible part (y 117..586).
+That is "scrolled down, message bar out of sight". The hypothesis's "huge
+inset (931-157)" would put the composer near y~157, which is inside the
+visible part, so that variant does not match the symptom; the "stale against
+the small scene" part does.
+
+Why the 676 nudge did not help: 931 -> 930 plus 1 pt of bottom safe area changes
+neither the keyboard's size nor the composer's width, so nothing in Beeper
+re-measures. The 675 grow itself (420 -> 430 width) did not help because it
+lands DURING the keyboard's show animation, when Beeper's keyboard handler
+still uses the values from its will-show.
+
+2. WHAT 4.5.678 DOES
+--------------------
+A. Width nudge (default ON; replaces the 676 height nudge)
+   - When the phone-size scene reads back (0.3 s after the write; up to 3
+     re-reads), the scene goes 430x931 -> 428x931 for 0.12 s and back. The safe
+     area is unchanged. Again 0.5 s later, after the keyboard animation.
+   - The app's in-process keyboard follows the scene width, so its frame
+     changes and UIKit posts will/did-change-frame. All views, including the
+     composer's text view, re-measure at the final size: the closest
+     SpringBoard-side equivalent of "type a key".
+   - Same guarded geometry-only writes as the 675/676 switch (content
+     reference size + scene frame; deferred while a write would trap or a card
+     drag settles; restarts the 1 s app-view hold).
+   - Off: /var/mobile/.dynamicstage-phonesize678-width-off (back to the 676
+     height nudge). /var/mobile/.dynamicstage-phonesize676-nudge-off = no nudge.
+
+B. Pre-grow on a composer touch (default ON)
+   - A plain UIGestureRecognizer subclass on each card that never recognises
+     (no delegate, cancelsTouchesInView=NO, delaysTouchesBegan/Ended=NO, can't
+     prevent or be waited on). It reports touch-down, a move over 12 pt and the
+     end, and drops out at once for touches it doesn't act on. No hooks, no
+     private selectors. (SpringBoard does get touches inside a hosted card:
+     the card's existing wake tap and the 4.5.651 pan fix rely on that.)
+   - Trigger: one finger, inside the rim, in the bottom 76 pt of the card,
+     not in a 44 pt bottom corner (resize), no card drag (or drag settling
+     0.6 s), no keyboard up yet, allowlisted app (Beeper by default) on a
+     visible card, not minimized/rotated/search/camera, no app dylib, 675 not
+     off. Each skip is logged with its reason (every 5 s at most).
+   - At touch-down the scene grows to 430x931 / {59,0,34,0} with the same
+     setPhoneSize675 write, so all 675 guards apply. Beeper lays out at the
+     phone size before its keyboard exists, and its keyboard then shows in the
+     final scene, exactly the state in which 675 was right.
+   - Mapping while the finger is down: "tap-safe". The app's top is on the
+     card's top, so the touched point moves at most ~10 pt inside the app (the
+     420 -> 430 / x0.977 change) and the tap still lands. A bottom-anchored
+     jump would move the touch ~440 pt in the app's coordinates, which can
+     fail its tap if the touch is remapped mid-press. The card's current
+     picture is held over it (snapshot, takes no touches; the touch already
+     belongs to Beeper), max 1.2 s.
+   - Finger lifts: bottom-anchored (app y 897 = 931 - home inset on the card
+     bottom, so the composer is where it was), hold released.
+   - Keyboard arrives (arbiter on=1 early switch or the note): mapping only ->
+     the 675 keyboard mapping (y 117..586). One A nudge 0.6 s later as a safety
+     net, in case the keyboard beat the scene write.
+   - Undone (back to card size): touch moved > 12 pt (scroll/drag), or no
+     keyboard 1.5 s after the finger lifts (4 s cap from touch-down).
+   - Off: /var/mobile/.dynamicstage-phonesize678-pregrow-off.
+     Variant: /var/mobile/.dynamicstage-phonesize678-anchor-at-down
+     (bottom-anchored at touch-down, no tap-safe phase, no hold).
+
+C. Always phone-size (OFF by default)
+   - /var/mobile/.dynamicstage-phonesize678-always: an allowlisted app goes
+     phone-size 2.5 s after its card hosts it (or on the first touch),
+     bottom-anchored while the keyboard is down (keyboard down = stay, re-anchor),
+     and the keyboard mapping while it is up. The card still shows only the
+     bottom 469 pt of the app, so the header is off-card while it is on.
+
+Safety: no new hooks at all (Tweak.xm unchanged from 677; the binary has no
+handlerRequestedFocus). The touch observer is created where the cards' existing
+wake taps are. All new entry points are type-checked and in @try. Scene writes
+only go through the existing guarded 675 path.
+
+3. CONFIDENCE
+-------------
+- Cause (keyboard shown in the 420x458 scene, Beeper's layout stale until its
+  own relayout): high. It's in the timestamps.
+- B fixes it when the scene write reaches Beeper before its keyboard (touch-down
+  -> touch-up is ~80-150 ms; the write goes at touch-down): medium-high. Main
+  risks: (1) the picture hold snapshot may not show remote content, so the
+  card would blank for the press; (2) SpringBoard might not see the touch, in
+  which case no "phonesize678 touch-down" line appears and B does nothing.
+- A on its own (if B misses): medium. A width change makes the keyboard and
+  the composer re-measure; whether Beeper then re-reads its keyboard offset
+  isn't provable from SpringBoard.
+- C (opt-in): high for the first-tap bug (the keyboard always shows in the final
+  scene), at the cost of the header being off-card.
+
+4. LOG LINES (all "SpringBoard: phonesize678 ...")
+--------------------------------------------------
+  com.beeper.chat.ios touch-down t+0ms at card point (x, y) of {420, 458}, in the bottom 76 pt (composer zone): pre-growing to the phone size before the keyboard
+  phonesize675 com.beeper.chat.ios ON (phonesize678 pre-grow: touch-down at card y=..) t+..ms: scene 430x931 ...
+  com.beeper.chat.ios pre-grown t+..ms: mapping tap-safe (...); card picture held until the finger lifts
+  com.beeper.chat.ios pre-grown scene landed t+..ms, no keyboard yet: no nudge
+  com.beeper.chat.ios mapping .. -> 897 t+..ms (finger lifted): bottom-anchored (...)
+  com.beeper.chat.ios finger lifted t+..ms: waiting for the keyboard (back to card size if none within 1.5 s)
+  com.beeper.chat.ios keyboard arrived in the pre-grown phone-size scene t+..ms (early: arbiter on=1 | keyboard note ..): the app laid out for it at 430x931; mapping 897 -> keyboard top 586: ...
+  com.beeper.chat.ios width nudge #1 sent t+..ms (...): scene {{0, 0}, {428, 931}} safeArea {59, 0, 34, 0} (...), restoring in 0.12 s
+  phonesize678 com.beeper.chat.ios width nudge #1 restored t+..ms: scene {{0, 0}, {430, 931}} ...
+  com.beeper.chat.ios pre-grow undone: the touch moved over 12 pt ... / no keyboard within 1.5 s of the finger lifting
+  com.beeper.chat.ios touch-down at card y=.. of 458: no pre-grow, <reason>
+  com.beeper.chat.ios always: keyboard down; stays phone-size, mapping 586 -> 897, bottom-anchored (...)
+  com.beeper.chat.ios touch hold: no snapshot, the tap-safe phase is visible
+Good result: touch-down -> pre-grown -> (landed) -> finger lifted -> keyboard
+arrived in the pre-grown scene, with the message bar on the card from the first tap.
+If there is no touch-down line at all, SpringBoard doesn't see the touch: try
+the -always file (C).

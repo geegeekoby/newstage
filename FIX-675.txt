@@ -1,0 +1,184 @@
+DynamicStage 4.5.675 - phonesize675 (TEST BUILD, risky; on by default for Beeper only)
+=====================================================================================
+
+WHAT CHANGED
+While Beeper (com.beeper.chat.ios) has the keyboard up on a visible stage card,
+its scene gets the phone's own size and the card shows that phone-size picture
+scaled down. The card frame on screen never changes; only its content is scaled.
+When the keyboard goes away the scene goes back to the card size, which is
+exactly the 4.5.674 geometry.
+
+Why: the 4.5.675 analysis (analysis675/ANALYSIS-675.txt) showed the ~80pt band
+is Beeper's own keyboard avoidance running against a 420x458 window. SpringBoard
+already sends card-correct values, the arbiter never relays to the source app,
+and keys674 changed nothing. Full screen, the same app shows no band. So while
+it types, Beeper is put in the full-screen situation: a window the size of the
+screen at origin 0, the screen's safe area, and the keys at the same screen y
+its own UIKit reports.
+
+WHAT BEEPER SEES (430x932 phone, 420x458 card)
+  Keys down (normal): scene {{0,0},{420,458}}, card safe area (0), portrait.
+                      Unchanged from 4.5.674.
+  Keys up:            scene {{0,0},{430,931}}, safeArea {59,0,34,0} (the screen's,
+                      read from SpringBoard's window; 59/34 fallback if it is not
+                      laid out yet), portrait. The app view's content reference
+                      size is 430x931 too. The override that rewrites every later
+                      SpringBoard settings update for this scene says the same
+                      frame and insets, so the scene frame, the app view's
+                      updates and the safe area all agree.
+  Keyboard:           untouched. keys674 still stops a keyboard layer being drawn
+                      inside the card, and the keys stay in SpringBoard's keyboard
+                      host at the bottom of the phone (586 with the quick bar,
+                      631 without).
+
+GEOMETRY CHOSEN, AND WHY
+  Scale:     fit = card width / 430 = 0.9767 for a 420 card. Full width, no side
+             bars, nothing stretched (uniform scale).
+  Position:  the host view is the phone-size picture (bounds 430x931,
+             transform scale(fit)), placed so app y = keyboard top lands exactly
+             on the card's bottom edge:
+                 center.y = cardH - keyTop*fit + 931*fit/2
+             The card shows app y (keyTop - cardH/fit) .. keyTop:
+                 quick bar up (keys 586): y 117..586
+                 no quick bar (keys 631): y 162..631
+             That is the conversation and the composer, which in a full-screen
+             layout sits right on the keys, now on the card's bottom edge.
+             keys672 still drops a single top card so its bottom is 28pt above
+             the keys, so the composer sits just above the real keys.
+  Keyboard top used: the stage's own keys (_keyboardFrame), read after the
+             keyboard note is processed. Never the raw arbiter heights (644/689),
+             which the stage already ignores ("kept quick bar 346pt").
+  Clamp:     the pin is kept in [cardH/fit, 931], so the picture always covers
+             the whole card.
+  931, not 932: one point short of the screen's bottom edge, because a scene
+             that reaches the bottom edge is one iOS may host the keyboard
+             inside (frameForScene's own rule). One point changes nothing in
+             Beeper's layout.
+  Only while typing: with the keys down, a phone-size scene would show either
+             Beeper's header or its composer, never both.
+  Rejected:
+    - Phone size all the time: hides the header or the composer while not
+      typing, and the keyboard area would sit inside the card (band again).
+    - Fit-height letterbox (x0.49): unreadably small, and the keyboard area is
+      still inside the card.
+    - Card-aspect scene (855x932): tiny, iPad-like layout, same keyboard
+      problem.
+
+TOUCHES
+The scale is a transform on the SpringBoard host view, the same mechanism the
+existing content-scale setting (0.8-1.4) and the sbcam669 camera layout use.
+The window server maps each touch through the layer transform into Beeper's
+scene coordinates. Nothing inside the app is moved. The old dial-pad tap offset
+came from moving views inside the Phone app, which this does not do.
+Mapping (logged on every ON line): card point (x, y) = app point
+(x/fit, top + y/fit), where top = keyTop - cardH/fit.
+
+WHEN IT TURNS ON / OFF
+  ON:  a keyboard note with real keys (height >= 150, top between 35% of the
+       screen and the bottom), source = an allowlisted app on a visible card,
+       evaluated 60 ms after the note (coalesced). A keyboard height change
+       (586 <-> 631) only moves the picture; no new scene write.
+  OFF: when the stage itself lets the keys go (KB FREEZE released /
+       _keyboardFrame cleared), checked 0.3 s after a "down" note. The 631/932
+       hide flicker during one typing session does NOT turn it off; the stage
+       keeps the keys then. Safety cap: 16 s of "down" notes while the stage
+       still holds keys.
+       Also OFF: card minimized, keyboard moves to another app or card, card
+       parked, stage rotated, camera layout (sbcam) takes over, app view torn
+       down, or the off file appears.
+  Never for: apps with the DynamicStage app dylib (Messages, Phone), the search
+       card, a rotated stage, or anything not in the allowlist.
+  Each switch is a geometry-only write (content reference size, override and
+  scene frame/safe area; no scene transaction, so no card blanking), deferred
+  every 80 ms (up to 15 times) while a write would trap. After each switch,
+  SpringBoard's own app-view updates for the staged app are held for 1 s
+  (appview670 "phonesize675 scene size change"), the same as after a card drag,
+  so the 670/674 SIGTRAP path in sceneHandle:didUpdateSettingsWithDiff: is not
+  entered during the change.
+
+SWITCHES
+  Off (exactly 4.5.674):  touch /var/mobile/.dynamicstage-phonesize675-off
+                          (read every 2 s; no respring needed)
+  Apps:      /var/mobile/.dynamicstage-phonesize675-apps, one bundle id per line,
+             # comments allowed. It REPLACES the default list, so include
+             com.beeper.chat.ios if you want to keep it. An empty file means
+             nobody.
+  Test knob: /var/mobile/.dynamicstage-phonesize675-pinoffset, a number of points
+             added to the keyboard top put on the card bottom (default 0).
+             Positive shows more of the app's lower part; negative shows more
+             above the keys.
+
+LOG LINES TO LOOK FOR (all "SpringBoard: phonesize675 ...")
+  phonesize675 build 4.5.675 is ON; apps: com.beeper.chat.ios (default)
+  phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 586}, {430, 346}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+  phonesize675 com.beeper.chat.ios ON (keyboard up): scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 100}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app point (x/0.9767, 117 + y/0.9767)
+  phonesize675 com.beeper.chat.ios scene size sent: frame {{0, 0}, {430, 931}} safeArea {59, 0, 34, 0} (phone size)
+  phonesize675 com.beeper.chat.ios read back 0.5 s later: scene frame {{0, 0}, {430, 931}} safeArea {59, 0, 34, 0}; wanted ...; host bounds {{0, 0}, {430, 931}} x0.9767 center ... in card ...
+  phonesize675 com.beeper.chat.ios keyboard top 586 -> 631 (keyboard changed): ...
+  phonesize675 keyboard note says down, the stage still has keys ...; staying phone-size until it lets them go
+  phonesize675 com.beeper.chat.ios OFF (keyboard down): scene back to card size 420x458 safeArea {0, 0, 0, 0} (4.5.674 geometry)
+  phonesize675 com.beeper.chat.ios scene size sent: frame {{0, 0}, {420, 458}} ... (card size)
+  phonesize675 com.beeper.chat.ios skipped while typing: off file ... is present, 4.5.674 behaviour; scene stays card-size
+  phonesize675 com.apple.MobileSMS skipped while typing: not allowlisted (...)
+  appview670 held a Live app view update (phonesize675 scene size change)
+  Trouble signs: "scene write deferred" followed by "never became safe";
+  "read back" showing a frame other than 430x931 while ON; "no scene to write".
+  keys672 lines will now show Beeper's scene as {{0,0},{430,931}} while typing.
+
+RISKS (honest)
+  1. Ordering: Beeper gets its keyboard note while its window is still 420x458,
+     and the resize lands ~0.1 s later. If Beeper only re-runs its keyboard math
+     on keyboard notes (not on a window resize), its composer could sit at the
+     bottom of the 931 window (hidden behind the card's bottom) until the next
+     keyboard change. React Native's KeyboardAvoidingView and UIKit's
+     keyboardLayoutGuide both re-run on layout, and Beeper's notes repeat often
+     (the 631/932 flicker), but this is unverified. The log plus a screenshot
+     will show it.
+  2. iOS might host the keyboard inside a near-full-screen scene. keys674 and
+     the 931 (not 932) height are aimed at that. If the keys vanish or appear
+     inside the card, use the off file.
+  3. A short visual jump when typing starts and stops (one relayout each way).
+  4. While Beeper is phone-size, a SpringBoard "stretch to phone" update for it
+     (for example, another app opened full screen mid-typing) matches the
+     stage's own size, so home668 lets it land. The override still rewrites
+     its frame to 430x931. The sbcam669 camera layout has the same exposure.
+  5. New SpringBoard app-view update holds (1 s after each switch). These hold
+     in the safe direction (no %orig), like the card-drag hold.
+  6. Content is ~2% smaller while typing (x0.977); text is still sharp
+     (uniform scale).
+
+UNCHANGED
+  The card frame and size, keys674, keys672 card moves, the 4.5.673 Messages
+  camera, the 665/668/670/674 crash guards, presence670/674, the sbcam opt-in,
+  zero app-switcher hooks. Messages, Phone, Messenger and Signal are untouched
+  unless allowlisted (and dylib apps are always skipped).
+
+TEST STEPS
+  1. Install 4.5.675, respring, open Beeper in a card, open a chat, tap the
+     composer.
+     Expect: the composer sits on the card's bottom edge, with no black band.
+  2. Type and send; tap a message, a link and the send button.
+     Expect: taps land where you touch.
+  3. Toggle the quick bar / emoji keyboard.
+     Expect: a "keyboard top 586 -> 631" line, and the composer stays on the
+     card's bottom.
+  4. Dismiss the keyboard.
+     Expect: OFF line, and the card shows the normal 420x458 layout.
+  5. Corner resize, minimize/restore, drag the card while typing, use two
+     slots (type in the other app), use the camera in Beeper.
+  6. touch /var/mobile/.dynamicstage-phonesize675-off and repeat step 1.
+     Expect: a "skipped ... off file" line and 4.5.674 behaviour (band back).
+  Send the log either way.
+
+CONFIDENCE
+  ~55-60% that the band disappears on the first try. This is the only lever
+  left that changes what Beeper's own keyboard math sees, and its full-screen
+  layout is band-free. The main unknown is risk 1 (whether Beeper re-lays out
+  after the resize). If the composer is hidden or misplaced, the read-back and
+  keyboard lines plus a screenshot will say by how much, and pinoffset can test
+  a correction without a new build.
+
+BUILD
+  make package FINALPACKAGE=1 (THEOS=/tmp/theos), clean build.
+  verify: 3 binaries, arm64 + new-ABI arm64e, signed. 41 warnings, all the usual
+  arm64e ABI notes; none in the changed files. dSYMs: dsym675/.

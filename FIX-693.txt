@@ -1,0 +1,55 @@
+DynamicStage 4.5.693 - 692 patch removed (opt-in); Beeper settings cog as a clean, tunable copy on the bar
+
+User on 692: "status bar for beeper is still broken maybe remove what we added and just reposition the
+settings cog".
+Uploads: newstage origin/main = 8e2758b (our 692). No screenshot or log. Older photos (uploads667, 668,
+671, 685) checked: none shows Beeper's main-screen top bar. The 684 photo starts at app y 117, below the
+bar, and shows no cog anywhere on the card. The 671 photos show a chat header.
+
+WHERE THE COG IS (estimate, low-to-medium confidence)
+- Side: top LEFT. Beeper's help: "settings ... the icon on the top left corner" (inbox menu -> Settings).
+- Height: it does not show in the 691 strip (which copies the bar at app y 59..127), so it is not drawn
+  in the static bar there. 691's only change was the top inset (118 -> 186), so the best estimate is that
+  it follows that inset and sits 68 pt lower, about app y 139..183 (centre ~161). That is under the strip,
+  which covers app y ~118..186 on the card. At 118 it would have been at about 71..115 (centre ~93).
+  This doesn't fully fit the 684 photo, so it stays a guess; hence everything is tunable plus a peek mode.
+- SpringBoard cannot find the cog at runtime. Beeper's views live in Beeper's process, and SpringBoard
+  only has the scene's rendered layers (no view tree, no accessibility of that app from here), so it
+  cannot locate the cog itself.
+
+WHAT CHANGED (DSSceneHost.m only, plus the version)
+- 692 patch: default off (patch=on in the 692 tune to opt in). It is also off whenever the 693 off file
+  exists.
+- New cog copy: a small view in the strip (tag 69301) with a _UIPortalView of the host view.
+    source square: app x src_x, y src_y, size x size (default 12, 139, 44; src_y auto = dst_y + shift,
+      shift = top inset - 684 top = 186 - 118 = 68)
+    destination:   bar x dst_x, y dst_y (default 12, 71), in Beeper's own points (the bar is 59..127)
+    opaque (card background colour behind), normal blend, round (cornerRadius = half) by default
+    taps: forward mode turns the copy portal's hit testing on (routes to the source square, like the
+      strip); otherwise the strip keeps the tap.
+- peek=1: hides the copied bar (keeps the 186 inset and the content fit), so the card's top shows the live
+  app under it. That's how to see where the cog really is.
+- Logs: "phonesize693 tune ...", "phonesize693 <app> cog copy made/updated: source square app x .. y ..
+  size .. -> bar x .. y .. (card rect ..)", "no cog copy (reason)", "peek ON/off", latch lines.
+
+TUNE /var/mobile/.dynamicstage-phonesize693-tune (one per line, applied within ~2 s at the next layout)
+    cog=on|off          (on)
+    side=left|right     (left; right = x 374)
+    src_x=auto|N        where the cog is in Beeper (app pt, 0 = left edge, 430 wide)
+    src_y=auto|N        where the cog is in Beeper (app pt, from the top of the phone)
+    size=N              square size (44)
+    dst_x=auto|N        where to draw it on the bar (app pt)
+    dst_y=N             where to draw it on the bar (71; the bar is 59..127)
+    round=1|0           round crop (1) or square (0)
+    peek=1|0            hide the copied bar to look under it
+  Nudging: copied the wrong spot -> change src_x / src_y (bigger src_y = take from lower down).
+  Placed wrong on the bar -> change dst_x / dst_y. Cog cut off -> size=52. Cog on the right ->
+  side=right.
+  To find it: peek=1, take a screenshot, then peek=0.
+
+OFF /var/mobile/.dynamicstage-phonesize693-off = exact 4.5.691 (no cog copy, no 692 patch).
+LATCH /var/mobile/.dynamicstage-phonesize693-trying (15 s) / -crashed (delete to allow again).
+
+Unchanged: top inset 186 + content fit, the 690 strip, keyboard, bar line 586, bottom inset 345, x0.977
+fill. No new hooks, no scene or status-bar writes.
+Build: "verify: 3 binaries, arm64 + new-ABI arm64e, signed", 41 warnings.

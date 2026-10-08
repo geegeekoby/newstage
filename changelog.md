@@ -1,3 +1,12 @@
+**4.5.693**
+- 692's blended patch removed: it's opt-in only now (patch=on in /var/mobile/.dynamicstage-phonesize692-tune). Without it the bar is exactly 691's.
+- Settings cog as a clean copy: one small opaque square (normal blend, round), copied live from where the cog sits in Beeper's view and placed at its spot on the copied bar. Taps go the same way as the 690 strip.
+- Best estimate (not visible in any photo so far): top left. Source square x 12, y 139, 44 pt (68 pt below its bar spot, because the cog follows the 186 top inset). It's placed at bar x 12, y 71 (centre of the bar 59..127). Coordinates are Beeper's own full-screen points.
+- peek=1 hides the copied bar (keeps the 186 inset) so the card shows what's really under it, to find the cog.
+- Tune /var/mobile/.dynamicstage-phonesize693-tune: cog=on|off, side=left|right, src_x=, src_y=auto|N, size=, dst_x=, dst_y=, round=1|0, peek=1|0.
+- Off: /var/mobile/.dynamicstage-phonesize693-off = exact 4.5.691 (no cog copy, no 692 patch). Crash latch: /var/mobile/.dynamicstage-phonesize693-trying / -crashed.
+- Everything else as 691 (top inset 186, strip, keyboard, bar line 586, bottom inset 345, x0.977 fill). No new hooks, no scene or status-bar writes.
+
 **4.5.692**
 - Settings button back on the recreated top bar. Likely cause: Beeper's top-left settings/inbox-menu button follows the top safe-area inset, unlike the bar's background and title (static at app y 59..127). With 691's inset 186 it moved down 68 pt to ~app y 127..186, under the strip, which still copies 59..127.
 - Fix (SpringBoard-side picture only): a second small copy ("patch") inside the strip. It copies the band the button moved into (app y 127..186, cut where the content starts, so no content is copied) for the left part of the bar (app x 0..100) and draws it at the button's old place on the bar. It uses a lighten blend in dark mode (darken in light mode), so the band's plain background leaves the bar as it was and only the button shows. Taps follow the strip's touch mode.

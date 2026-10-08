@@ -1,0 +1,65 @@
+DynamicStage 4.5.679 - phonesize679: no 2% shrink (scale 1.0), test build
+=========================================================================
+Based on 4.5.678; only the phone-size scene's width and scale change.
+
+WHAT BEEPER SEES NOW (default, no scale file)
+- While phone-size (keyboard up, pre-grown, or -always): a 420x931 scene on a
+  420x458 card (4.5.675-678: 430x931), safe area {59,0,34,0} as before,
+  shown at scale 1.0: no shrink, no side crop, touches 1:1.
+- Height, safe area and the vertical keyboard math are unchanged: window bottom
+  931, keyboard top 586, so the overlap Beeper computes is the same as in
+  675-678. That is what fixed the band.
+- Visible app y (card 458 pt tall):
+    keyboard up        128..586  (keyboard top on the card bottom; 675-678: 117..586)
+    pre-grow tap-safe    0..458  (same mapping as the card-size scene: card point =
+                                  app point, so the touch does not move in app
+                                  coordinates at all; 678 moved it by up to ~10 pt.
+                                  Beeper's layout itself changes, which is what the
+                                  held picture covers while the finger is down)
+    pre-grow bottom    439..897  (931 - 34 home inset on the card bottom)
+- Width nudge (A): 420 -> 418 -> 420 (678: 430 -> 428 -> 430).
+- The width is chosen when the scene switches (card width / scale) and stays
+  for that phone-size session. A card resize during it only changes the scale.
+
+THE 420 WIDTH: LOW RISK, KEPT
+- Beeper has run at 420 wide in this card since 4.5.674 (the card-size scene
+  is 420x458), keyboard included. 678 also gave it 420 first and 430 only
+  after the switch. So 420 is the width Beeper already knows on the stage; the
+  430 switch was actually the extra change.
+- Nothing in the 675 band fix depends on the width; it was the vertical
+  geometry (scene height / window bottom = screen bottom, safe area).
+- Possible quirks (same as at card size since 674): anything Beeper sizes from
+  UIScreen's 430 width instead of its window would overhang 10 pt on the
+  right. The keyboard in Beeper's own process is 420 wide (as at card size),
+  while SpringBoard shows the real keys full width.
+- Way back: "phone" in the scale file (678 behaviour), or a scale such as 0.98.
+  The 430-with-5-pt-crop variant isn't needed; scale 1.0 at 420 is the cleaner
+  equivalent.
+
+TEST FILE /var/mobile/.dynamicstage-phonesize679-scale (re-read every 2 s)
+  phone   -> 430 wide, scaled to the card width (4.5.678)
+  1.0     -> card width, scale 1.0 (the default without the file)
+  0.98    -> width = round(card width / 0.98) = 429, shown at x0.979
+  (0.80-1.00 accepted; anything else is logged and falls back to 1.0)
+  The new value applies at the next switch to phone size.
+
+LOG LINES ("SpringBoard: phonesize679 ...")
+  phonesize679 scale mode: default: scene as wide as the card, scale 1.0 (no /var/mobile/.dynamicstage-phonesize679-scale)
+  phonesize679 scale mode: file says "phone": 4.5.678 behaviour, phone-width scene scaled to the card's width
+  phonesize679 scale mode: file says scale 0.980: scene width = card width / 0.980
+  phonesize679 com.beeper.chat.ios switching to 420x931 (card width, scale 1.0 (default))
+  phonesize679 com.beeper.chat.ios scene 420x931 at scale 1.0000 (pre-grown, tap-safe): visible app y 0..458 in card 420x458; side crop 0.0 pt each side
+  phonesize679 com.beeper.chat.ios scene 420x931 at scale 1.0000 (pre-grown, bottom-anchored): visible app y 439..897 in card 420x458; side crop 0.0 pt each side
+  phonesize679 com.beeper.chat.ios scene 420x931 at scale 1.0000 (keyboard up): visible app y 128..586 in card 420x458; side crop 0.0 pt each side
+  phonesize679 com.beeper.chat.ios back to card size 420x458 at scale 1.0 (whole card)
+  phonesize678 com.beeper.chat.ios width nudge #1 sent ...: scene {{0, 0}, {418, 931}} ...
+All 675/676/677/678 lines stay (the 675 ON line's placement summary now says
+"scene 420x931 ... shown at x1.0000").
+
+UNCHANGED: all 678 behaviour (A, B, C) and every off file (675 off/apps/
+pinoffset, 676 nudge-off/hold-on, 677 early-off, 678 width-off/pregrow-off/
+anchor-at-down/always), no new hooks (Tweak.xm untouched), the 4.5.673 Messages
+camera, zero app-switcher hooks, the stage card size.
+
+CONFIDENCE: high that the shrink and side crop are gone and that the band fix
+holds (only the width changed). The first-tap behaviour is the same as 678.

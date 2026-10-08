@@ -1,0 +1,100 @@
+DynamicStage 4.5.667 - Beeper camera shutter missing; Messages camera buttons dead (on a stage card)
+====================================================================================================
+Base: 4.5.666. Built on the box with Theos; NOT yet tested on a device.
+
+EVIDENCE (Buttonnot .txt = buttonnot-666.txt, newstage commit 84e5c90; log says build 4.5.666,
+respring 16:13:02 "filter at boot ... age=6s")
+Beeper (staged 16:13:07-16:13:19 and 16:17:31-16:17:45):
+  16:13:07.536 SpringBoard: camera658 com.beeper.chat.ios on a card: injected app, a 'camera hook loaded' line should follow
+  16:13:09.109 SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+  16:13:16.378 SpringBoard: camera661 sensor data ... type = camera; state = active
+  -> no hello, no "app: com.beeper.chat.ios ctor ok", no camera event (hash 6f9e3a4e), no layout664,
+     no tap666 - from Beeper, ever, in any log (same for Messenger and Signal). Messages' lines all arrive.
+Messages (16:17:49-16:18:01):
+  app willAppear cameraUI CKFunCameraViewController / MSMessageExtensionBrowserViewController /
+  _MSMessageExtensionRemoteViewController
+  tap666 com.apple.MobileSMS camera screen up; windows: UIWindow lvl=0 {{0, 0}, {420, 458}} camera=1; ...
+  tap666 ... point=198,404 ... window=UIWindow lvl=0 hit=_UIRemoteView vc=_MSMessageExtensionRemoteViewController remote=1
+  (same for 205,399 208,418 202,431 198,380 181,355 377,403 58,379 215,409 - nothing happened)
+  16:18:01.110 tap666 ... point=391,29 ... hit=_UIRemoteView ... remote=1 -> 16:18:01.264 CKChatController back
+  (the close X at the top worked; same hit path as the dead lower taps)
+  No layout664 line in Messages (no in-process session/preview: running=0).
+
+ROOT CAUSE
+Beeper - hypothesis (a) confirmed, (b) partly, (c) addressed:
+  (a) The 664 "camera open" rule needs the stage to have seen startRunning on a hooked session
+      (running) or a camera-named view controller (screens). Beeper's React Native camera is
+      neither visible to us, so the camera layout never engaged: Beeper's phone-tall camera screen
+      stayed laid out past the 458pt card and the shutter row was cut off.
+  (b) A modally presented camera screen sits in a UITransitionView beside the root; the 663 FILL
+      only scaled window roots, so a presented camera screen would not have been scaled either.
+  (c) Decided only on events; no periodic look, so a preview arriving later was missed.
+  Logging: Beeper / Messenger / Signal cannot open /var/tmp from their sandbox, and none of their
+  Darwin-notify reports has ever reached SpringBoard in any log (not even the ctor line). So there
+  was no app-side evidence from Beeper at all. (Whether the dylib loads in Beeper could not be
+  proven from these logs; 667's relay answers that - see TEST.)
+Messages - taps reach the extension (close X works), so this is not hit routing. The camera is
+  Apple's (non-injected) camera extension in a 420x458 remote view; it lays its camera out for the
+  phone's full height, so the shutter row sits below the card and the lower card is viewfinder.
+
+WHAT CHANGED
+app/DSCameraStage.m
+  - DSCam667PreviewOnScreen(): a visible AVCaptureVideoPreviewLayer (>= 80x80) covering >= 30% of a
+    normal window counts as camera open on its own (never keyboard / text-effects / input /
+    above-status-bar windows; never while a keyboard >= 120pt is up - 664 rule kept).
+  - Preview watch: once a second on main while staged and not backgrounded (DSCam667PollTick),
+    plus all existing event/layout triggers.
+  - Modally presented full-card views (presentedViewController chain) get the same FILL +
+    bottom-align as the root; restored to their container when the camera layout goes off.
+  - Log: "layout667 <bundle> camera layout ENGAGED: FILL scale=... phone=430x932 card=420x458
+    roots=n presented=n bottomAlign=1 why=...", then "layout667 <bundle> camera layout geometry:
+    ... preview=WxH at x,y = P% of <window>", and "layout667 <bundle> camera layout released (...)".
+  - Messages extension camera (any staged app whose camera screen holds a remote view, no keyboard,
+    no in-process camera layout): the view holding it gets phone bounds 430x932 and FIT scale
+    (0.491) centred in the card, so the extension lays out exactly as on the phone and the whole
+    camera (close X top, shutter row bottom) is on the card. UIKit frame/bounds/center/transform
+    writes on that one view are dropped while it is held (DSCameraStageHoldsView); restored when
+    the camera screen goes or a keyboard comes up. Re-applied every 0.5 s with the 666 tick.
+    Log: "layout667 com.apple.MobileSMS remote camera fit ON for CKFunCameraViewController: ...",
+    "layout667 ... remote camera after 0.7s: target=... bounds=430x932 scale=0.491 on card=... |
+    remote=_UIRemoteView bounds=... on card=...", "layout667 ... remote camera fit off (...)".
+app/Tweak.xm
+  - UIView setFrame/setBounds/setCenter/setTransform: early drop for the held remote-camera view,
+    pass-through for the stage's own write. Nothing else changed (666 hit-test bypass, keyboard
+    hooks, Beeper paths untouched).
+shared/DSDiagnostics.m/.h, shared/DSConstants.h
+  - Trace writer falls back to <app data container>/tmp/com.recreated.dynamicstage.app-trace.log when
+    /var/tmp is refused (EPERM/EACCES/EROFS) - sandboxed apps only; Messages/Phone/SpringBoard
+    unchanged. New DSTraceAppendRelayed(). kDSBuildVersionString 4.5.667.
+springboard/DSAppTraceRelay.m (new), springboard/DSCameraArbiter.m
+  - relay667: every 1.5 s (background queue) SpringBoard reads new whole lines from Beeper /
+    Messenger / Signal's container trace file (container via LSApplicationProxy, fallback scan of
+    MCM metadata) and appends them to the shared trace. Read-only. Lines: "relay667 <bundle>
+    watching <path>", "relay667 <bundle> app trace file found ...", "... data container not
+    found", "... cannot read its trace file (errno n)".
+control / changelog.md: 4.5.667.
+
+KEPT: 665 crash fix, 666 tap routing + tap666 lines, 664 keyboard rules, camera presence (661),
+Phone dial pad (Phone excluded from all 667 paths), boot/call/home-swipe/SIGTRAP guards, zero
+app-switcher hooks, fixed card size.
+
+RISKS
+- Beeper: if the dylib does not load in Beeper at all, no app-side fix can act; the relay lines
+  will show that (no "app trace file found" / no "app ctor" line from Beeper).
+- A full-window video-call self-preview (>= 30% of the window) in Messenger/Signal/Beeper would
+  also get the camera FILL layout while no keyboard is up.
+- Messages camera is FIT (scaled ~0.49, black side bars) - small but whole. Touches into a scaled
+  remote view rely on the window server mapping through the layer transform; tap666 + layout667
+  lines will show if that fails.
+- While held, the Messages camera view ignores UIKit frame changes (dismiss animation may not slide).
+
+TEST
+1. Install 4.5.667, respring, force-quit Beeper and Messages.
+2. Beeper on a card -> open its camera ~10 s -> shutter visible and takes a photo. Close camera,
+   type in a chat (keyboard must work).
+3. Messages on a card -> camera from the app strip -> whole camera visible small; tap shutter,
+   flip, close X. Then type (keyboard).
+4. Phone dial pad on a card still fine; home swipe + corner pull still no safe mode.
+5. Send the log. Look for: relay667 Beeper lines, "app ctor reason=0 bundle=com.beeper.chat.ios",
+   "layout664 camera layout on", "layout667 com.beeper.chat.ios camera layout ENGAGED", and
+   "layout667 com.apple.MobileSMS remote camera fit ON" + "remote camera after 0.7s" + tap666.

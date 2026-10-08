@@ -1,0 +1,101 @@
+DynamicStage 4.5.666 - camera buttons on a stage card (on top of 4.5.665)
+
+USER REPORT (Oct 8 2026, 3:57 PM NZDT): "in staged app camera shows but the buttons not
+working to take the picture". Log: "Camera button.txt" (repo commit 5d973fd), saved as
+camera-button-665.txt. Build: 4.5.665 ("build 4.5.665 split=0 float=0 half=1 slots=1").
+
+WHAT THE LOG SHOWS
+  15:55:51.618 hosted com.apple.MobileSMS ... (Messages on the card, card {{5,5},{420,458}})
+  15:55:53.131 camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 ... running=0
+  15:55:53.902 camera660 com.apple.MobileSMS hello (after launch) sessions=0 ... running=0 interrupted=0 auth=authorized
+  15:55:54.200 MobileSMS | app willAppear cameraUI CKFunCameraViewController
+  15:55:54.201 MobileSMS | app willAppear MSMessageExtensionBrowserViewController
+  15:55:54.256 MobileSMS | app left UIRemoteKeyboardWindow at {{0, 0}, {420, 458}}
+  15:55:54.261 MobileSMS | app willAppear _MSMessageExtensionRemoteViewController
+  15:55:54.723 MobileSMS | app left UIDictationLayoutView / UIKeyboardDicationBackground ... at {{0, 0}, {414, 226}}
+  15:56:02.868 MobileSMS | app willAppear CKChatController   (camera closed)
+  - No "camera658 app startRunning" line, no "layout663"/"layout664" line, no camera claim:
+    Messages never ran a capture session itself, so the 663/664 FILL transform never ran.
+  - No rim651 line between 15:55:54 and 15:56:02 (the only rim hits are drags at 15:10:49
+    and 15:56:03): SpringBoard's rim / stage did not take the taps.
+  - home665 fired once at 15:55:51.625 (Messages' launch update landed at card size): fine.
+  - Beeper this session: only keyboard use, no camera opened.
+
+ROOT CAUSE
+  Messages' camera is Apple's CameraMessagesApp extension (Camera.app/PlugIns/
+  CameraMessagesApp.appex) shown in a remote view inside Messages. The preview and the
+  shutter / flip / flash / close buttons are drawn and handled in the extension's own
+  process (not injected, so it never logged anything). A tap reaches them only if the window
+  server finds no window of Messages' own drawn over that spot first. The stage keeps Messages'
+  keyboard windows (UIRemoteKeyboardWindow / UITextEffectsWindow, with the input and dictation
+  pieces) card-sized at the top of the window stack, as the log shows at 15:55:54.256. A
+  touch on the camera therefore went to Messages, not to the extension. The stage's keyboard
+  hit filters then dropped it to the window below. That works for Messages' own views, but
+  Messages never passes a touch on to the extension, so every camera button was dead. The
+  preview still showed because drawing is not touch.
+  The transform hypothesis (UIKit hit testing in untransformed bounds) is not what this log
+  shows: the transform was never applied. UIKit's hit testing also honours transforms. The
+  dial-pad problem in 648/649 was keys moved outside their parent's bounds.
+  Caveat: the log has no per-tap evidence (4.5.665 had no tap logging), so this is the most
+  likely cause, not a proven one. 4.5.666 adds the tap666 lines to settle it.
+
+FIX (app dylib only; SpringBoard unchanged apart from the version)
+  app/DSCameraStage.m
+    + DSCam666UpdateTouchPath (main thread, on camera screen appear/disappear, keyboard
+      show/hide, and every 0.5 s while a camera screen is up):
+      camera up = staged, not Phone, and a camera screen (CKFunCameraViewController, image
+      picker, any camera-named VC) visible on screen.
+      While it is up and no keyboard (>=120pt) is up: every visible UITextEffectsWindow /
+      UIRemoteKeyboardWindow / *KeyboardWindow covering >=25% of the card that holds neither
+      the camera screen nor a remote view (_UIRemoteView, _UISizeTrackingView,
+      *RemoteViewController, *MessageExtension*) is hidden (taken out of the touch path) and
+      remembered weakly. Those windows are put back the moment the camera screen goes, a
+      keyboard comes up, or the app leaves the card.
+    + DSCameraStageCameraScreenUp() (atomic read) and DSCameraStageNoteHit() (tap log).
+  app/Tweak.xm
+    While a camera screen is up, the stage's keyboard hit filters step aside (plain %orig):
+    UIView hitTest/pointInside, UIWindow hitTest, UIAutoRotatingWindow hitTest,
+    UITextEffectsWindow hitTest, UIEditingOverlayGestureView pointInside. The Phone dial-pad
+    routing (DSPhoneRouteLiftedHit) runs before this and is unchanged.
+  Logs:
+    tap666 <bundle> camera screen up|gone; windows: <class lvl frame hidden camera>; ...
+    tap666 <bundle> camera up: <window> lvl=.. <frame> taken out of the touch path (it sat over the camera)
+    tap666 <bundle> put N keyboard window(s) back (<why>)
+    tap666 <bundle> point=x,y window=<class> lvl=.. hit=<class> vc=<owner VC> remote=0|1 path=..
+      (at most 3 per tap, one per window asked, 60 per minute)
+    A tap with no tap666 line went straight to the camera extension (the good case for
+    Messages) or to SpringBoard.
+
+UNCHANGED FROM 4.5.665
+  home665 crash fix, 664 keyboard fix (video-on-screen) and camera layout (FILL only while a
+  session runs / preview + camera screen, off with a keyboard up), 661 camera presence,
+  Phone dial pad, boot / call / home-swipe / SIGTRAP guards, zero app-switcher hooks, fixed
+  stage card size.
+
+VERIFY
+  verify: 3 binaries, arm64 + new-ABI arm64e, signed
+  deb com.recreated.dynamicstage_4.5.666_iphoneos-arm64.deb 590130 bytes
+  sha256 9f48d6ccd5156959d48a3857c84d032cf396195ae0a266a1692ac322dad007d9
+
+RISKS
+  - If the extension's touches are blocked by something other than Messages' keyboard
+    windows (e.g. the extension refusing touches while its host is hosted by SpringBoard),
+    the buttons stay dead. The tap666 lines will show that: taps on the shutter that log
+    hit=_UIRemoteView/remote=1 or no line at all.
+  - Hiding a keyboard window while the camera is up: if the camera itself needs a text field
+    (rare), the keyboard notification puts the windows back first.
+  - For in-process cameras (Beeper / Signal / Messenger) the only change is that the keyboard
+    filters step aside while their camera screen is up; if their buttons still fail, the
+    tap666 lines show the hit view so the next fix can be targeted.
+
+TEST
+  1. Messages on a card -> open a chat -> camera button. Expect "tap666 com.apple.MobileSMS
+     camera screen up" and usually "... taken out of the touch path". Tap the shutter: a photo
+     is taken. Flip, flash and close respond. The preview and shutter stay visible.
+  2. Close the camera -> "camera screen gone" + "put N keyboard window(s) back"; tap the
+     reply field: the keyboard comes up as in 664.
+  3. Repeat in Beeper, Signal and Messenger on a card (camera from a chat).
+  4. Phone dial pad on a card, keyboard in staged apps, home swipe + quick corner pull (665),
+     app switcher: unchanged.
+  5. If a button still fails, send the log: the tap666 lines for that tap name the window and
+     view it hit.

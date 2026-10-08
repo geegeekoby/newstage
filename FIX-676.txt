@@ -1,0 +1,155 @@
+DynamicStage 4.5.676 - phonesize676: Beeper's first-tap message bar glitch
+==========================================================================
+
+STATUS FROM 4.5.675
+The band under Beeper's composer is fixed on the device. Remaining bug: on the
+first tap into the message field, the bar shrinks or slides off the card, then
+snaps back to the right place when the first key is typed.
+
+CAUSE (from the code and the 674 Beep.txt order)
+Beeper lays out for its keyboard inside its own process at the moment the
+keyboard appears. SpringBoard only learns of it afterwards. In Beep.txt the
+order is:
+  line 174  keys674: card's scene host asked about the keyboard layer
+  line 176  arbiter on=1 src=com.beeper.chat.ios (243)    <- earliest keyboard signal
+  line 177  SpringBoard UIKit "change" 631/301
+  line 179  stage note src=com.beeper.chat.ios            <- 4.5.675 waited 60 ms after this
+4.5.675 grew the scene after Beeper had already done its keyboard layout in the
+420x458 window. Beeper only redoes that layout on its next keyboard or text
+change, which is the first typed key.
+
+WHAT CHANGED
+1. Switch earlier
+   The scene is grown on the arbiter's first "on=1" status from the app. That
+   status is handed to the stage straight from the existing arbiter hook, with
+   no 60 ms wait.
+   - The keyboard top used for the picture is provisional: Beeper's last real
+     one, or the arbiter height + 58 (243 -> 631, 288 -> 586, as in Beep.txt).
+   - The first stage note corrects it (layout only, no scene write).
+   - If no keyboard note follows within 1.5 s, the scene goes back to card
+     size.
+   Also hooked, for timing only: -[_UIKeyboardArbiter
+   handlerRequestedFocus:shouldStealKeyboard:]. This is the app asking for
+   keyboard focus as its field becomes first responder, the earliest point
+   SpringBoard can see. It is in the iOS 16 and iOS 18 headers, and is hooked
+   only if present with a void, 4-argument signature. It runs the original
+   first and only reads the handle's bundle id.
+   It is logged but does not switch by default: it is not proven that every
+   focus request is followed by a keyboard, and switching without one would
+   flash the card. touch /var/mobile/.dynamicstage-phonesize676-focus-on to
+   switch on it as well; the 1.5 s no-keyboard fallback still applies.
+   Honest limit: Beeper's UIKit can post its keyboard-will-show in the same
+   run-loop turn as the field becoming first responder, before any SpringBoard
+   message reaches it. An earlier switch shortens the wrong-layout window but
+   cannot guarantee winning that race. Step 2 is what makes the layout right
+   regardless.
+
+2. Force a relayout after the size lands (the nudge)
+   0.3 s after the phone-size write, the scene is read back. Once it reads
+   430x931 (retried up to 3 more times, 0.15 s apart, then sent anyway):
+     nudge #1: scene 430x930, safe area {59,0,35,0}
+     0.12 s later: back to exactly 430x931, {59,0,34,0}
+     nudge #2: the same, 0.5 s after #1 is restored (after the keyboard's own
+               show animation has certainly ended)
+   Why this works: each step is a real window size change plus a safe-area
+   change. UIKit inside Beeper re-places its keyboard against the new window
+   (its frame in the window moves 1 pt and back) and lays the view tree out
+   again. That is the same kind of keyboard / layout pass a typed key gave it.
+   Safety:
+   - The same writes as a corner resize (content reference size, override,
+     scene frame and safe area). No orientation, no lifecycle, no scene
+     transaction, so no card blank.
+   - Waits while a write would trap or a card drag is settling (up to 15 x
+     0.1 s).
+   - Each write restarts the 1 s appview670 hold, so SpringBoard's own
+     app-view updates for Beeper stay held during the nudges, as during a
+     card drag. This keeps the SIGTRAP path out.
+   - The host view stays at 430x931; the 1 pt is invisible.
+   - The keyboard is untouched: keys674 and the SpringBoard keyboard are the
+     same as 675.
+   Off: touch /var/mobile/.dynamicstage-phonesize676-nudge-off.
+
+3. Picture hold (optional, OFF by default)
+   With /var/mobile/.dynamicstage-phonesize676-hold-on, a snapshot of the card
+   (snapshotViewAfterScreenUpdates:NO) is placed over the card at the switch
+   and faded out 0.1 s after nudge #1 is restored (at most 0.8 s). It ignores
+   touches.
+   It is off by default for three reasons: what it would hold is Beeper's
+   pre-switch layout, which already has its keyboard avoidance (the old band)
+   in it; a snapshot of a hosted app layer can come out black on some
+   versions; and with the earlier switch plus the nudge, the wrong layout
+   should last only ~0.3-0.4 s. Try it if the jump is still bothersome.
+
+KEPT FROM 675
+- Off file /var/mobile/.dynamicstage-phonesize675-off (exactly 4.5.674).
+- Allowlist /var/mobile/.dynamicstage-phonesize675-apps.
+- Pin offset /var/mobile/.dynamicstage-phonesize675-pinoffset.
+- The geometry: 430x931, x0.977, keyboard top on the card bottom.
+- The OFF rules (the stage's own key release).
+- The camera and minimize hand-offs.
+- keys674, the 4.5.673 Messages camera, all crash guards, zero app-switcher
+  hooks, the card size.
+- Messages, Phone, Messenger and Signal are untouched.
+
+EXPECTED TIMELINE (t = first signal of the keyboard session)
+  t+0       phonesize676 ... keyboard focus requested (if the hook fired)
+  t+~0-20   phonesize676 ... early switch on "arbiter on=1"
+            phonesize675 ... ON (early: arbiter on=1) t+..ms: scene 430x931 ...
+            phonesize675 ... scene size sent t+..ms
+  t+~5-60   phonesize676 ... first keyboard note t+..ms
+            phonesize675 ... keyboard top 631 -> 586 (keyboard note t+..ms)
+  t+~300    phonesize676 ... scene read back t+..ms: frame {{0, 0}, {430, 931}} ... (landed)
+            phonesize676 ... relayout nudge #1 sent t+..ms (phone size confirmed): scene {{0, 0}, {430, 930}} safeArea {59, 0, 35, 0}
+  t+~420    phonesize676 ... relayout nudge #1 restored t+..ms: scene {{0, 0}, {430, 931}} safeArea {59, 0, 34, 0}
+  t+~670    phonesize676 ... after nudge #1 read back t+..ms: frame {{0, 0}, {430, 931}} ...
+  t+~920    phonesize676 ... relayout nudge #2 sent ... / restored ...
+
+LOG LINES TO LOOK FOR
+  phonesize676 focus signal hooked (handlerRequestedFocus:shouldStealKeyboard:, logged only unless -focus-on)
+  phonesize676 com.beeper.chat.ios keyboard focus requested t+0ms (logged only; ...)
+  phonesize676 com.beeper.chat.ios early switch on "arbiter on=1" t+..ms (seen t+..ms, focus was t+..ms): provisional keyboard top y=631 (arbiter height 243 + 58)
+  phonesize676 com.beeper.chat.ios first keyboard note t+..ms frame {{0, 631}, {430, 301}}
+  phonesize676 com.beeper.chat.ios scene read back t+..ms: frame {{0, 0}, {430, 931}} safeArea {59, 0, 34, 0}; wanted ... (landed); host bounds ...
+  phonesize676 com.beeper.chat.ios relayout nudge #1 sent t+..ms ... / restored t+..ms ... / after nudge #1 read back ...
+  phonesize676 ... relayout nudge #2 ...
+  appview670 held a Live app view update (phonesize675 scene size change)
+  Trouble signs:
+  - "NOT landed yet" 4 times;
+  - "relayout nudge #n given up";
+  - "restore deferred to the override";
+  - "early ... signal but no keyboard note within 1.5 s" (an early switch that
+    was wrong);
+  - "focus signal not available / not hooked" (timing only, harmless).
+
+WHAT TO REPORT FROM A TEST
+- Does the bar still jump on the first tap? If so, does it fix itself without
+  typing, and after about how long?
+- The log, especially the t+ms of the early switch, the first note and the
+  nudges.
+- If it still waits for a key, try the -focus-on file (earlier switch) and/or
+  the -hold-on file, and send that log too.
+
+RISKS
+1. Beeper may still lay out once in the card-size window before the early
+   switch lands. The nudge then has to correct it, so a ~0.3-0.4 s wrong frame
+   on the first tap may remain.
+2. If Beeper's keyboard handling ignores window and safe-area changes
+   entirely, the nudge does nothing and the bar still waits for a key. The
+   log will show the nudges landing; tell me if the bar did not move.
+3. The provisional keyboard top can be off by 45 pt for the few ms before
+   the first note. Layout only.
+4. Four extra scene writes per keyboard session, each covered by the appview
+   hold.
+5. Opt-in focus trigger: a focus request without a keyboard flips the scene
+   for up to 1.5 s.
+
+CONFIDENCE
+~65% that the glitch is gone or reduced to a brief (<0.5 s) self-correcting
+blink. Of that, roughly 25% comes from the earlier switch winning the race
+outright, and the rest from the nudge making Beeper lay out again.
+~85% that the 675 band fix is unaffected.
+
+BUILD
+make package FINALPACKAGE=1 (THEOS=/tmp/theos), clean build.
+verify: 3 binaries, arm64 + new-ABI arm64e, signed. 41 warnings, all the usual
+arm64e ABI notes; none in the changed files. dSYMs: dsym676/.

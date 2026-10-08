@@ -1,0 +1,102 @@
+DynamicStage 4.5.674
+====================
+
+1) The two SIGTRAP crashes in Crashsnstuff.txt (build 4.5.673)
+   when 1791454150 = 2026-10-08 23:09:10 NZDT (ring printed twice, lines ~135 and ~560)
+   when 1791456413 = 2026-10-08 23:46:53 NZDT (line ~192)
+   Both backtraces: frames 0/1 0x221403214 / 0x203dd3fa8 (SpringBoard / FrontBoard, same as
+   the 667/669 traps), frame 2 in DynamicStage.dylib at an address ending ...205c / ...605c
+   (= 0x205c mod 0x4000, the 16 KB page slide keeps the low 14 bits). In the 4.5.673 arm64e
+   slice (UUID E101414A-..., kept in dsym673/) the only call whose return address fits is
+   0xa058 (a PAC'd BLRAA) -> llvm-symbolizer:
+     _logos_method$Stage$SBAppViewController$sceneHandle$didUpdateSettingsWithDiff$previousSettings$
+     springboard/Tweak.xm:764   (the @try { %orig; } of the owned app view)
+   So: SpringBoard's own SBAppViewController settings handler traps on an update of
+   Beeper's Live card (same frame as 667/669).
+   What is new in both recent-line rings: right before the trap Beeper's card was put back in
+   the display layout as "role=6 level=1050 template=1" (after a corner pull / coming back
+   from minimized), and the next app-view diff (statusBarStyleOverridesToSuppress /
+   targetOfEventDeferringEnvironments) went to %orig and trapped. Every earlier log (667-673)
+   and every 4.5.673 session without that template published role=1 level=1 template=0 and
+   never crashed there. The stage learns its element "template" from SpringBoard's own
+   addElement calls; it had copied a full-screen system element (role 6, level 1050 - the
+   ring shows a full-screen camera stop just before: "fff66709 stop from an app that is not
+   on a card, full-screen camera left alone").
+   Fix:
+   - Only an ordinary primary app element (role 1, level 0..10) is used as template; anything
+     else is ignored ("presence674 ignored SpringBoard's full-screen element role=.. level=..").
+   - Every publish (also a re-publish after minimize / park / corner pull) now starts the
+     1 s hold of the Live app view's SpringBoard updates (before: only moves / removals).
+   dSYMs: dsym673/ (673 obj incl. .dSYM, UUID E101414A-9D6E-35DC-8926-B73D7DC0F173 arm64e)
+          dsym674/ (674, UUID E693E20F-6C4A-3593-ABE0-3626D07AA230 arm64e). Kept per build.
+
+2) Other things in the log
+   - Second session (slots=2, 23:09:21): Beeper on slot 0, "opened another stage" moved its
+     card to the bottom {{5,469}} and the empty top card got the picker; the display layout
+     briefly lists Beeper twice ("new in, then old out") - expected, no stuck state.
+   - takeKey: only "ok"/"already", no failures. Keyboard: picker search keyboard
+     (src=SpringBoard 631/301) dropped the top card 140 and released it on hide - normal.
+   - No errors / stuck states besides the crashes.
+   - Misleading text fixed: relay668 said "SpringBoard-side camera layout (sbcam669) covers
+     its camera" although sbcam is opt-in (now says so); camera658 said Beeper is an
+     "injected app" (now: "in the app dylib filter; relay668 says whether it loads").
+
+3) tomt000's Dynamic Stage (the user's own copy, me.tomt000.stageduo 1.1.1, sha256
+   69e9ecc5da69a453b68a71f95ff83a87ad5e9e45ba5df1f22d2b2b01350e1f7a; extracted to /workspace/phone-stage-fit/tomt000/extracted, NOT in
+   newstage or CursorRepo). Before the user's copy arrived, the free 1.2 deb from Havoc's
+   public repo index was also fetched to /workspace/tomt (sha256 matches Havoc's index,
+   no login); same structure and selector set. Only inspected, no code copied.
+   - DynamicStage.dylib: filter com.apple.springboard. StageDaemon.dylib: filter
+     com.apple.UIKit = loaded into EVERY UIKit app (not a daemon).
+   - Class names are encrypted (XOR'd per byte, decrypted at start); hook targets were read by
+     emulating the decrypt routine. SpringBoard-side hooks found (1.2, same selectors in 1.1.1):
+       _UISceneLayerHostContainerView -_canShowKeyboardLayer, -dealloc
+       UIApplicationSceneSettings -frame
+       FBUpdateSceneTransaction -initWithSceneDefinition:parameters:transitionContext:, -settings
+       FBSceneManager -createSceneWithIdentifier:parameters:clientProvider:transitionContext:
+       FBScene -updateSettings:withTransitionContext:completion:
+       SBSceneManager -sceneManager:willDestroyScene:, SBApplication -isMedusaCapable,
+       SBMainWorkspace -applicationProcessDidExit:withContext:, SBSceneBackgroundedStatusAssertion,
+       a keyboard-focus class -reevaluateFocusedSceneIdentityForKeyboardFocusWithChangeInformation:
+       stealingKeyboardOnSuccess:, status-bar and orientation methods, pull gesture.
+     It hosts apps in its own FBScene + _UISceneLayerHostContainerView (not SBAppViewController);
+     scene settings it writes: frame = host view bounds, level 1, portrait interface/device
+     orientation, foreground/backgrounded, occluded, interruption policy, status bar hidden.
+     No safe-area / keyboard-frame scene keys.
+   - Keyboard, SpringBoard side: its -_canShowKeyboardLayer hook looks up the host view's
+     scene identifier; if it is one of its staged scenes it returns NO (and schedules two
+     short follow-ups at 50 ms / 140 ms), otherwise the original answer. It also hosts the
+     system "keyboardScene"'s first layer itself (layerManager.layers.firstObject in a
+     _UISceneLayerHostContainerView initWithSceneLayer:).
+   - Keyboard, app side (StageDaemon, every UIKit app): UIScreen _referenceBounds / bounds /
+     _boundsForInterfaceOrientation:, window _sceneBounds/_shouldResizeWithScene,
+     UIInputSetHostView / UITextEffectsWindow / UIKeyboardImpl, and NSNotification userInfo
+     (rewrites the keyboard frame keys). On NathanLR this part cannot load into an App Store
+     app either (needs the same per-app injection), so for Beeper only the SpringBoard part
+     can be what differs.
+   - Our equivalent (own code, keys674): hook -[_UISceneLayerHostContainerView
+     _canShowKeyboardLayer] in SpringBoard; for the card scene host of a staged app WITHOUT
+     our app dylib answer NO. Our keys already come from SpringBoard's keyboard host at the
+     bottom of the phone ("SB left SpringBoard keyboard host alone"), so we do not host the
+     keyboard scene ourselves. Kill file /var/mobile/.dynamicstage-keys674-off;
+     /var/mobile/.dynamicstage-keys674-all extends it to injected apps (default: untouched).
+
+4) Log lines
+   keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card ...
+   keys674 com.beeper.chat.ios (<scene id>) has no DynamicStage app dylib:
+     its card's scene host (...) asked whether it can show the app's keyboard layer, UIKit said YES, keys674 answers NO ...
+   keys674 <app> has the app dylib: its card keeps UIKit's keyboard layer answer (YES) ...
+   keys674 not available on this iOS (...)        <- the method does not exist; nothing changed
+   keys672 ... has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card ...
+   presence674 ignored SpringBoard's full-screen element role=6 level=1050 as the card template ...
+
+5) Risks
+   - keys674 is modelled on what tomt000's SpringBoard part does; whether the band is really
+     the in-card keyboard layer is not proven from our logs (no "keys674 ... UIKit said YES"
+     line yet). If no keys674 "answers NO" line appears while typing in Beeper, the host never
+     asked and the band has another cause. If Beeper's keys disappear or input breaks,
+     create /var/mobile/.dynamicstage-keys674-off and respring.
+   - Crash fix: if SpringBoard publishes no role-1 element the cards keep role 1 / level 1
+     (the default that every non-crashing session used).
+   - The extra 1 s hold after each publish skips SpringBoard updates to the Live app view
+     (the scene still updates), as the 670 hold already did for moves.

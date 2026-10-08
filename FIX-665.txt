@@ -1,0 +1,83 @@
+DynamicStage 4.5.665 - safe-mode SIGTRAP after home swipe + corner pull (on top of 4.5.664)
+
+CRASH (Safedmode.txt -> safemode-663.txt, 2026-10-08 14:57:33 NZDT; the 4.5.662 crash of
+2026-10-07 18:53 NZDT in the keyboard log is the same):
+  tucking the open stage for home / com.beeper.chat.ios is the only minimized app
+  home gesture began, stage minimized
+  home gesture ended
+  held a minimized stage scene update so another app can open  (x2, quiet window)
+  corner pull picked up from the system gesture
+  parked apps stopped following the home transition            (0.85 s after the gesture end)
+  kept the open stage inside its card while another app opened
+  === end ===  (SIGTRAP -> safe mode)
+
+ROOT CAUSE
+  The corner pull is SpringBoard's own bottom-edge system gesture, adopted by the stage.
+  In both crashes it was adopted less than 0.85 s after the home gesture ended (it is logged
+  BEFORE the 0.85 s hand-back line), so SpringBoard's home transition / hand-back for Beeper
+  was still finishing, and the adopted edge gesture was still SpringBoard's.
+  Right after the 1.15 s quiet window SpringBoard sent its phone-sized settings update for
+  Beeper's scene (part of that still-running transaction). The FBScene hook
+  (springboard/Tweak.xm updateSettings:withTransitionContext:completion:, the phoneSized
+  branch at ~line 241) classified it as "another app opened" and refused it: completion
+  done(YES) without %orig. SpringBoard's transaction was left half applied -> assertion ->
+  SIGTRAP -> safe mode.
+  Same kind of bug 4.5.659 fixed, but 659 only exempted the stage's OWN activation of the
+  app view (DSActivatingBundle, 1.5 s, "home659 ..." lines). This update was SpringBoard's,
+  not the stage's: there were no home659 / "was woken" lines. Also the 659 settle window
+  (_systemHomeSettleUntil) is never armed any more, because nothing sets the parked apps to
+  follow the home transition, so setFollowsSystemHomeTransition:NO returns early.
+  The same refusal outside a system transition (e.g. 14:22:18 and 14:25:14 in the keyboard
+  log, 2+ s after the gesture, corner pull already finished) did not crash.
+
+FIX
+  springboard/DSSceneHost.m/.h
+    + data-only state: home gesture end time, hand-back time, adopted edge pull active /
+      end time (an active pull that never reports its end expires after 10 s).
+    + +systemTransitionHoldsSceneReason: returns a reason while
+        - a corner pull adopted from the system gesture runs, or ended < 1.5 s ago
+        - the parked apps were handed back < 3 s ago
+        - the home gesture ended < 4 s ago
+      nil otherwise. Static reads only (safe inside the scene update hook).
+    + +noteHomeHandBack, +noteSystemEdgePullActive:, +systemEdgePullIsActive.
+  springboard/DSStageManager.m
+    adoptSystemEdgePull -> noteSystemEdgePullActive:YES; releaseSystemPull -> NO;
+    restoreParkedHostsAfterHomeGesture -> noteHomeHandBack;
+    keepOnScreenStageInsideCardForSceneIdentifier: no refit while that pull is running.
+  springboard/Tweak.xm (the refusal branch)
+    Inside that window a phone-sized update of a hosted, on-screen stage scene is NOT refused.
+    It goes through the normal path, exactly like the 659 activation update:
+    applyOverridesToSettings writes the card frame + insets over the phone frame,
+    keepCommittedForegroundOfScene keeps the foreground the scene already had, %orig applies
+    it. The card is then refit (now and again at 1.3 s, both guarded by the home-gesture,
+    nested-update and pull checks).
+    Log: "SpringBoard: home665 let SpringBoard's update of <scene> land at card size (<reason>), not refused"
+    Outside the window the old behaviour stays: opening another app still keeps the stage
+    inside its card (refusal + refit), so the stage-inside-card fixes are not undone.
+  The held path (home gesture / quiet window / minimized app) and the updateSettingsWithBlock
+  hook are unchanged.
+
+UNCHANGED FROM 4.5.664
+  keyboard fix (video-on-screen), camera presence (661) and camera layout (664), Phone dial pad,
+  boot / call / home-swipe / SIGTRAP guards, zero app-switcher hooks, fixed stage card size.
+
+VERIFY
+  verify: 3 binaries, arm64 + new-ABI arm64e, signed
+  deb com.recreated.dynamicstage_4.5.665_iphoneos-arm64.deb 588582 bytes
+  sha256 4e280389cb1c25e4bbba2fe432d37704fbbbb8f8a0d3b98e41a56922d56c483d
+
+RISKS
+  - Inside the window, if the stage has no geometry override for that scene, the update lands
+    phone-sized for a moment until the refit (the card clips it); it should not black the card.
+  - Opening another app within 4 s of a home swipe now lets that update land at card size
+    instead of refusing it; the card keeps its size and committed foreground.
+  - If a safe mode still happens in this sequence, look for the home665 line before the end.
+
+TEST
+  1. Stage Beeper, swipe home, then immediately (< 1 s) pull the stage back from the corner.
+     Repeat 10+ times, fast and slow. Expect no safe mode; "home665 ... (corner pull ...)" or
+     "(home transition finishing)" lines; Beeper back on its card at the same card size.
+  2. Stage open, open another app from the home screen after waiting 5+ s: the stage stays
+     inside its card ("kept the open stage inside its card ..." as before).
+  3. Keyboard in staged apps (664), camera in Beeper on a card, Phone dial pad, a call while
+     staged, home swipe with two stages, app switcher: unchanged.

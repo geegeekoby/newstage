@@ -1,0 +1,66 @@
+DynamicStage 4.5.682 - Beeper bar bounce: instant window change on keyboard show
+=================================================================================
+deb: com.recreated.dynamicstage_4.5.682_iphoneos-arm64.deb
+sha256: ec1824fe990ba39675beb5ee395966e60c62a7948535a0a479a53df89ebbe8c9
+
+WHAT THE RECORDING SHOWED
+Tapping the message box: Beeper moves its bar and chat up almost at once (by 1/4 to 1/3 of the
+card), with a black band under the bar (Beeper's keyboard area, empty because keys674 keeps the
+keyboard layer out of the card). Then our animated window change (680: 250 ms UIKit curve 7;
+681: the 500 ms keyboard spring) caught up and the bar slid back down to the card's bottom edge.
+Hide looked right.
+
+WHAT CHANGED
+- Keyboard show: the card's window onto the app now changes INSTANTLY. No animation; Core
+  Animation actions are disabled for the change (CATransaction), so it lands in the same frame
+  commit.
+- Trigger: the EARLIEST signal, keys674's layer question for Beeper's card (~3 ms before the
+  arbiter's on=1 in the 680 log). The move runs on the next main-queue turn, outside the UIKit
+  layout pass that asked.
+- Target: straight to the final bar position:
+  * this app's settled keyboard last time (346 -> bar bottom 585), or
+  * on the first keyboard since a respring: 243 + 58 + 45 (suggestion bar) = 346 -> 585.
+  The arbiter's on=1 (243, then 288) then finds it already there.
+- Corrections: if arbiter on=1, a height change, or the keyboard note gives a different final
+  position, it is corrected instantly.
+- Revert: if no arbiter on=1 follows the layer question within 300 ms (no keyboard after all),
+  the window goes back to rest instantly. After two such reverts within 10 s, the layer-question
+  trigger pauses for 30 s; arbiter on=1 still moves it instantly then.
+- Guards: layer questions are ignored within 0.8 s after a hide (UIKit re-asks), while the card
+  is dragged, or when the window is not at rest.
+- Hide: unchanged from 681 (UIKit's keyboard spring, 500 ms), which looked right.
+- Tune file /var/mobile/.dynamicstage-phonesize681-tune still works (nothing needs creating).
+  New key show=instant|animate (default instant). show=animate brings back 681's animated show
+  with its duration/delay/curve/spring keys. hide_duration/hide_curve/target/offset work in both.
+- Black-band background: NOT done. The band is drawn inside Beeper's own scene, and its colour
+  depends on Beeper's theme, so a card background behind the scene would not reliably hide it.
+  The instant switch removes the band instead.
+
+LOG LINES (prefix "SpringBoard: phonesize682")
+  phonesize682 com.beeper.chat.ios TRIGGER keys674 layer ask at 13803.029 (main +1 ms): predicted keyboard 346 (this app's settled keyboard last time) -> bar bottom 585, instant; reverts if no arbiter on=1 within 300 ms
+  phonesize682 com.beeper.chat.ios bar bottom 897 -> 585 (keys674 layer ask) t+1ms: card shows app y 428..897 -> app y 116..585 (bar on the keyboard); INSTANT (show=instant, CATransaction actions off, lands in this frame); host moves 305 pt on the card
+  phonesize682 com.beeper.chat.ios keyboard signal "arbiter on=1" height 243 at 13803.032 (main +0 ms, keys674 ask 3 ms earlier): keyboard top in the scene 585 (target=final: arbiter height 243 + 58 = 301, predicted 346 ...) -> bar bottom 585; now 585; already there from the keys674 ask, no move (show instant; ...)
+  phonesize682 com.beeper.chat.ios keyboard signal "arbiter on=1" height 288 ... now 585; already there, no move ...
+  phonesize682 com.beeper.chat.ios keyboard signal "arbiter on=1" ... CORRECTION of the keys674 ask prediction ...   (only if the guess was wrong)
+  phonesize682 com.beeper.chat.ios bar bottom 585 -> 630 (keyboard note) ... INSTANT ...                              (note correction, if needed)
+  phonesize682 com.beeper.chat.ios REVERT: no arbiter on=1 within 300 ms of the keys674 ask at T (no keyboard after all), window back to rest instantly
+  phonesize682 com.beeper.chat.ios keys674 layer ask at T: no instant move, <why>
+  phonesize682 com.beeper.chat.ios keyboard signal "arbiter on=0" ... -> bar bottom 897; now 585; TRIGGER, move (hide 500 ms, curve keyboard, ...)
+  phonesize682 com.beeper.chat.ios bar bottom 585 -> 897 (arbiter on=0) ...: CASpringAnimation mass 3 stiffness 1000 damping 500 ... 500 ms ...
+  phonesize682 tune file absent, defaults: (no settings) | in use: show=instant duration=500 ... hide_duration=500 hide_curve=keyboard (...)
+
+CONFIDENCE
+Fairly high that the slide-back bounce is gone: the window now changes in the same frame as the
+earliest keyboard sign instead of sliding for 250-500 ms. Remaining risks:
+- If Beeper's own bar move takes a frame or two longer than our instant switch, the bar can sit
+  briefly low (below the card edge) for 1-2 frames, the opposite of before but far smaller.
+  The tune file can't delay an instant move; show=animate with a short duration is the fallback.
+- A layer question without a keyboard would flash the window for 300 ms (guards plus the 30 s
+  pause limit this; logged as REVERT).
+- If the prediction is wrong (the suggestion bar is off), there is one instant correction when
+  the arbiter or the keyboard note arrives.
+
+UNCHANGED
+Off files (680-off = exact 679, 680-noanim, 675-off), no new hooks (the keys674 and arbiter hooks
+already existed), the 4.5.673 Messages camera, zero app-switcher hooks, the stage card size, the
+scene never resized for tap or keyboard.

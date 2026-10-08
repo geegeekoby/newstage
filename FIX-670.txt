@@ -1,0 +1,91 @@
+DynamicStage 4.5.670
+====================
+
+1) SIGTRAP on 4.5.669 (222.txt crash at 18:36:57 NZDT)
+   Backtrace frame 2 = 0xca57000103d94ecc (PAC-signed). Its page offset 0xecc
+   was matched against every call site in the 4.5.669 SpringBoard dylib
+   (.theos obj from the 669 build, dSYM kept in dsym669/). Four indirect
+   calls (BLRAA) return to an address ending in ...ecc; three are in
+   DSIntroDemoView / hasAnySceneOverride / scheduleAutoKill (not on a scene
+   update path, and frames 3+ are FrontBoard scene-update frames). The one
+   that fits is 0x8ec8 -> llvm-symbolizer:
+     _logos_method$Stage$SBAppViewController$sceneHandle$didUpdateSettingsWithDiff$previousSettings$
+     springboard/Tweak.xm:714  (the  @try { %orig; }  of the owned-app-view path)
+   Same frame as the 4.5.667 crash (0x771c0 in that build). Frames 0/1 and 3+
+   (0x221403214, 0x203dd3fa8, 0x2314cc648 ...) are identical to 667: the trap
+   is inside SpringBoard's own SBAppViewController settings handler.
+   Sequence before it (recent lines): Messages camera on (sb-attributions) ->
+   off (domain-data) -> hosted scene deactivation=0x20 -> appview update ->
+   rim drag of the Messages card -> "taken out of the display layout (card
+   moved)" -> republished at {{-11.67, 36}} -> appview update -> SIGTRAP.
+   Cause: the stage's own display-layout churn during a drag (element removed
+   then re-added at fractional frames) makes SpringBoard send the Live app
+   view an update it traps on (here with the scene deactivated).
+   Fix:
+   - No remove/re-add of the display-layout element while a card is dragged
+     or within 1.2 s of the drop ("layout670 card is moving ..."). Afterwards
+     it moves once (max every 2 s), at whole points, new element in first,
+     old one out after ("layout670 card moved ...") - the app never leaves the
+     layout.
+   - Live owned app views do not get SpringBoard's settings updates during a
+     drag (+1.2 s), within 1 s of the stage moving/removing an element, or
+     while the scene has deactivation reasons before/after the diff
+     ("appview670 held a Live app view update (...)"). Same hold as the
+     home-gesture / call guards; the scene itself still updates.
+   - The crash ring now keeps the diff's "changes = ..." part ("appview670 ...").
+   - 668 fix (home668 landing) unchanged.
+
+2) Beeper black on 4.5.669 - not sbcam669
+   No "sbcam669 ON" line exists. After the respring at 18:37:28 (pid 14350)
+   every 2 s: "camera658 com.beeper.chat.ios wants the camera but the display
+   layout publisher is not known yet". The publisher was only learnt from
+   SpringBoard's own -[FBSDisplayLayoutPublisher addElement:] calls; after a
+   respring the stage's hooks go in after the home screen, SpringBoard had
+   already added its elements, so the publisher stayed unknown, no presence
+   element was published and the camera server treated Beeper as background.
+   Fix (presence670): the publisher is asked for directly from SpringBoard's
+   objects - SBIconController.mainDisplayWindowScene / windowSceneManager scenes
+   / connected main SBWindowScene -> -displayLayoutPublisher (iOS 16/17
+   SBWindowScene + SBWindowSceneContext API), or a *layoutPublisher ivar - at
+   arbiter start, on the first staged card, and retried 0.5/1/2/3/5 s then
+   every 5 s until found. Accepts any object answering addElement: (the 669
+   code also required class FBSDisplayLayoutPublisher). Nothing is created (a
+   second main-display publisher would publish over SpringBoard's layout).
+   Log: "presence670 display layout publisher acquired via <route> (<class>)"
+   or "... via SpringBoard's own addElement", and "... still unknown (try n)".
+   sbcam: SpringBoard-side phone-size layout OFF by default; opt-in file
+   /var/mobile/.dynamicstage-sbcam-on. Start line "sbcam670 ... is OFF/ON".
+   Green-dot reader unchanged (sensor lines).
+
+3) Why Messenger works
+   Messenger's camera is an in-process UI (its own views, its own
+   AVCaptureSession). On a card the app gets the card as its window and
+   screen size, and Messenger's camera lays itself out for that size: preview
+   aspect-filled to the window, top buttons pinned to the top edge, capture
+   row pinned to the bottom. The stage has nothing to fix. If DynamicStage's
+   in-app camera layout (layout664/667: phone size + width fill, bottom-aligned)
+   had engaged in Messenger, its top would be cropped exactly like Messages in
+   668 - the user sees every button, so it evidently lays out at card size.
+   No Messenger line has reached any uploaded log (relay667 watches its tmp
+   file but nothing came through; Messenger was not put on a card in those
+   logs), so this is inferred, not logged.
+   Messages' camera is different: it is Apple's camera EXTENSION
+   (CameraMessagesApp), another process shown through a remote view. It lays
+   out phone-shaped (4.5.666 log: card-sized view -> close X at top worked,
+   shutter row below the card). A ~430x932 (0.46 aspect) layout cannot fill a
+   420x458 (0.92 aspect) card without cropping ~half or letterboxing ~half.
+
+4) Messages camera (layout670)
+   Default FIT: phone-size extension view, scale = min(cardW/430, cardH/878)
+   (~0.52), centred; only the empty status strip (30 pt) and home strip (24 pt)
+   cropped. Every Apple button (close, flash, Live, modes, shutter, flip,
+   Retake/Send on review) is on the card; no stage Done. Pill "Fill" (in the
+   empty margin, top-right) switches to the 668 width fill (top cropped, stage
+   Done top-right, pill "Fit" top-left). Remembered in Messages' defaults
+   (DynamicStage670MessagesCameraFill). Taps: transform-based, same as 667
+   (whose fit had all buttons working); tap666 window hiding unchanged.
+   Lines: "layout670 com.apple.MobileSMS remote camera FIT/FILL for ...",
+   "layout670 ... switched to ...", "layout670 ... remote camera fit off".
+
+Unchanged: 668 crash fix, 664 keyboard, 665 home swipe, dial pad, boot/call/
+home-swipe guards, zero app-switcher hooks, card size.

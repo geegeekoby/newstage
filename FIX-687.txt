@@ -1,0 +1,50 @@
+DynamicStage 4.5.687 - Beeper fills the card (684 scale) and its main-screen top bar is on the card
+====================================================================================================
+User on 4.5.686: "now it doesnt fill the stage.. its got margins... why did you change the whole
+view after fixing the keyboard issue". 686's x0.847 picture is now opt-in only
+(/var/mobile/.dynamicstage-phonesize686-on). No new newstage upload (origin/main = 5dd5b0a, 686).
+
+GEOMETRY
+At 684's fill (x0.9767, 430 wide) the 458 pt card shows 469 pt of app height. 684 put the card
+bottom on the keyboard line 586 -> app y 117..586; Beeper's top bar is at 59..127 (photo:
+uploads685/IMG_4451.png), so only its bottom 10 pt showed.
+The keyboard line itself does not need to be on the card: the keys are SpringBoard's, at the phone
+bottom (screen 586..932), and the card is at screen 5..463. The bar only has to stay still. With
+the scene 931 tall and a resting bottom inset B, the bar stays still with the keys up when
+  B >= keyboard overlap (931 - 586 = 345)       (UIKit inset / overlap rule), and
+  B >= keyboard height (346, or 301)            (an app's own "keyboard height - inset" math).
+684 had B = 345 (at the edge of the second rule). 687 raises where the bar rests instead:
+  card shows app y 59..527 (view 59 .. 59 + 469), bar rests at 519 (8 pt above the card bottom),
+  B = 931 - 519 = 412, top inset 59, scene 430x931, scale x0.977 (unchanged).
+412 >= 346 and >= 345: no movement in chats, with more headroom than 684.
+
+WHAT CHANGED (DSSceneHost.m/.h only; Tweak.xm, DSKeys674.m, DSStageManager.m identical to 684)
+- phonesize687 layer: phoneSize687Bar (rest line from card size, view, margin; never below the
+  keyboard line), card bottom = bar + margin, insets {view, 0, 931 - bar, 0}. Fill unchanged.
+- 685/686 layer opt-in only.
+
+WHAT THE USER SHOULD SEE
+- Beeper fills the card edge to edge, same size as 684.
+- Main screen: the top bar with its buttons at the card top; the bottom sheet (layers, search,
+  compose) sits on the bar line with ~8 pt under it on the card.
+- Chats: keys at the phone bottom, bar still; the composer now sits 8 pt above the card bottom
+  (684: flush), and the chat's own top bar is on the card.
+
+TUNE /var/mobile/.dynamicstage-phonesize687-tune (key=value; re-read every 2 s; applied at the next
+card open or 1.2 s after the keyboard goes down)
+  view=0..117|auto   app y on the card top (default auto = 59). Lower = more above the top bar.
+  margin=0..60|auto  pt between the bar line and the card bottom (default 8; 0 = flush as in 684).
+  top=0..300|auto    top safe inset (default = view).
+OFF  /var/mobile/.dynamicstage-phonesize687-off -> exact 4.5.684 (686's picture stays opt-in).
+
+RISKS
+- Top bar position 59..127 is from the 684 photo. If it does follow the top inset after all, it
+  lands at 59 anyway (top inset = 59 = the full-screen value), so both cases agree.
+- Bigger bottom inset (412 vs 345): any bar that grows by the bottom inset (a tab bar) grows more
+  off-card; Beeper's main screen uses a bottom sheet on the inset line, not a tab bar.
+- Chats: everything is laid out 67 pt higher in the scene; the composer rests at 519 instead of 586.
+  If Beeper's composer pads differently with a 412 inset (e.g. a fixed extra pad), it rests a few
+  pt off; margin= adjusts. Off file returns to 684.
+- 684 SIGTRAP crash seen in the last upload (06:45:20 NZDT) is still unexplained.
+Artifacts: build-687.log, publish-687.log, springboard-687.diff (vs 684), springboard-687-vs-686.diff,
+bak687/ (= 686 source), dsym687/, full-687/.

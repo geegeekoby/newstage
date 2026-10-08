@@ -1,3 +1,12 @@
+**4.5.687**
+- Beeper fills the card edge to edge again at 684's scale (x0.977, 430 wide): 686's smaller picture with side margins is gone (opt-in only: /var/mobile/.dynamicstage-phonesize686-on).
+- Beeper's main-screen top bar (app y 59..127, it does not follow the top inset) is now on the card: the card shows app y 59..527 instead of 117..586.
+- How, without moving anything for the keyboard: the keys are SpringBoard's, at the phone bottom, away from the card, so the bar only has to stay still, not sit on the keyboard line. 687 keeps 684's 430x931 scene and raises where the bar rests: 519 (8 pt above the card bottom), bottom inset 931 - 519 = 412, top inset 59. The inset is larger than the keyboard (346 / 301 tall, overlap 345), so the bar does not move when the keys come up, whether the app uses the inset or its own keyboard-height math (684 was on the edge: inset 345 vs 346).
+- Main screen bottom sheet sits on the bar line (519) with 8 pt below it on the card.
+- Tune /var/mobile/.dynamicstage-phonesize687-tune: view=0..117|auto (app y on the card top, default 59), margin=0..60|auto (pt under the bar line, default 8; 0 = flush like 684), top=0..300|auto (top inset, default = view).
+- Off: /var/mobile/.dynamicstage-phonesize687-off = exact 4.5.684.
+- No new hooks; Tweak.xm, DSKeys674.m, DSStageManager.m unchanged since 684.
+
 **4.5.686**
 - Beeper main screen: its top bar (buttons) and its bottom bar (search field, layers and compose buttons) now both fit on the card. Chats keep 684's keyboard behaviour: same scene, same bottom inset, same bar line, keys at the phone bottom, bar still.
 - Cause (photo + log from 684, uploads685): the card showed app y 117..586 at x0.977. Beeper's top bar is laid out at the phone's own top (59), so it ends at app y ~127 and only its bottom 10 pt (the dark strip at the card top) was on the card; its buttons were above. The bottom sheet (search field) sits on the safe-area bottom (586) and its field ends at ~588, flush with and 2 pt past the card bottom, under the rounded corners, with none of its padding showing.

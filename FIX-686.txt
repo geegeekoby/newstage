@@ -1,0 +1,67 @@
+DynamicStage 4.5.686 - Beeper main screen: top bar and bottom bar on the card (replaces the first 4.5.685)
+==========================================================================================================
+Already done before this: 4.5.685 was built and published (commit 735da25, 06:45 NZDT): scene cut
+to 430x620 with bottom inset 34. The user's new upload (Loggers.text + IMG_4451.png, saved in
+uploads685/) is from 684 (log says build 4.5.684) and shows that 685 could not have fixed it, so 686
+replaces it. Version must go up for Sileo, so this is 4.5.686; the off/tune files keep the 685 name.
+
+WHAT THE PHOTO SHOWS (684, card {5,5,420,458}, app y 117..586 at x0.9767)
+- Top: a uniform dark-grey strip, card y 5..15 (10 pt) with a hairline at its bottom, then black
+  list. That is the bottom of Beeper's top bar (blur material + separator): the bar ends at app y
+  ~127 and its buttons sit above app y 117, off the card. Beeper lays that bar out from the phone's
+  own top (59, status bar) - not from the 117/118 top inset we gave it (else it would start at 118
+  and be fully visible).
+- Bottom: Beeper's main screen is a bottom sheet (grabber at card y ~420) with the layers button,
+  "Search people or chats" field and compose button. Sheet top card y ~412 = app y ~534; field
+  card y ~429..463 = app y ~551..588: it ends flush with / ~2 pt past the card bottom (586) under
+  the rounded corners, and none of the sheet's padding below the field shows. The sheet sits on
+  the safe-area bottom (931 - 345 = 586).
+
+CAUSE
+The card window ends exactly at the bar line 586 (needed for chats) and starts at 117, so Beeper's
+top bar (fixed at ~59..127) is cut off and its bottom sheet is flush with the card edge.
+Why the first 685 would not help: with scene 620 / inset 34 the sheet still sits on the safe
+bottom 620 - 34 = 586 and the top bar does not follow the inset, so nothing on the main screen
+moves; and it broke the 684 identity (bottom inset = scene height - keyboard top) that makes the
+bar still for apps that pad by "keyboard height - bottom inset" (Beeper uses its own keyboard
+math, analysis675) - with 620/34 such an app would lift its bar ~312 pt with the keys up.
+
+FIX (4.5.686, phonesize685 layer, DSSceneHost.m/.h only)
+- Beeper's scene at the bottom is exactly 684's: 430x931, bottom inset 345, bar line 586 (learned
+  keyboard top). The chat bar / keys / no-movement behaviour is untouched.
+- The card now shows app y 59..600 (view = phone top inset 59 .. bar line 586 + margin 14) at
+  x0.8466 instead of 117..586 at x0.9767, centred; the card's own background (black in dark
+  mode, white in light) fills ~28 pt each side. Top safe inset 59 (same as full screen).
+- The first-685 short scene is now opt-in only (slack=).
+No new hooks; Tweak.xm, DSKeys674.m, DSStageManager.m byte-identical to 684.
+
+WHAT THE USER SHOULD SEE
+- Beeper main screen: the top bar with its buttons at the card top; the bottom sheet with the
+  layers button, search field and compose button fully on the card with ~12 pt under them.
+- Chats: keys at the phone bottom, bar still, as in 684. Content ~13% smaller than 684, with
+  narrow side bars, and ~12 pt of the area under the composer visible at the card bottom; the chat's
+  own top bar (contact name) is now on the card too.
+
+TUNE /var/mobile/.dynamicstage-phonesize685-tune (key=value; re-read every 2 s; applied at the next
+card open or 1.2 s after the keyboard goes down)
+  view=0..300|auto     app y on the card top (default auto = 59). Bigger = bigger content, less
+                       top; view=117 margin=0 is 684's picture.
+  margin=0..100|auto   pt shown under the bar line (default 14). 0 = bar flush with the card bottom.
+  top=0..400|auto      top safe inset (default = view).
+  keytop=450..800|auto bar line (default learned keyboard top, 586).
+  slack=0..200|off     default off. The first-685 scene cut (430 x bar line + slack, inset slack).
+OFF  /var/mobile/.dynamicstage-phonesize685-off -> exact 4.5.684.
+
+RISKS
+- Header position is inferred from the photo (bar ends at app ~127, buttons above). If Beeper's
+  top bar starts above 59, try view=40; if it does use the live inset, top= / view= move it.
+- Smaller content in chats (x0.847) and side bars; the user may prefer 684's size there (view=117,
+  margin=0 gives it back, but then the main screen top bar is cut again).
+- margin shows ~12 pt of the area under the composer; with the keys up that strip is what Beeper
+  draws behind its keyboard (normally its background). Bar does not move. margin=0 removes it.
+- 684 crash in the upload: SIGTRAP at 06:45:20 NZDT (SpringBoard, build 4.5.684, unsymbolicated
+  PAC'd frames, no image list), right after Beeper scene deactivation/appview670 held updates and
+  a "rim651 hit main-inner-top". Not reproduced; nothing in 686 targets it. If it repeats, the
+  crash log in the next upload is needed.
+Artifacts: build-686.log, publish-686.log, springboard-686.diff (vs 684), springboard-686-vs-685.diff,
+bak686/ (= published 685 source), dsym686/, full-686/.

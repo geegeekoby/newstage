@@ -1,0 +1,57 @@
+DynamicStage 4.5.694 - real Beeper top bar, card squashed vertically (no fake bar)
+
+User on 693: "its still got our fake status bar covering stuff remove it show the original just resize
+it". They then approved a non-uniform stretch (full width, vertically squashed).
+Uploads: newstage origin/main = 48117f2 (our 693). No new upload.
+
+WHAT CHANGED (DSSceneHost.m only, plus the version)
+1. The fake bar is off by default.
+   - The 690 copied strip is not made while 694 squash is on (log: "no top-bar strip (694 squash ...)").
+   - The 692 patch is opt-in (patch=on, as in 693).
+   - The 693 cog copy is now opt-in too (cog=on).
+2. Top safe inset back to 684's: 691's raise is off while 694 squashes, so the inset is 684's auto top
+   (118). It's written by the usual 684 at-rest geometry write (keys down, card at rest) and at the next
+   card open. Safe area {118,0,345,0} again.
+3. Scene and keyboard geometry unchanged from 684: 430x931, bottom inset 345, bar line 586, keys674 NO.
+4. Card mapping (layoutHostView phone-size branch, the host view's transform and centre only):
+     sx = fit = card width / 430                         (0.9767 for 420)
+     sy = card height / (bar line 586 - view_top 59)      (458 / 527 = 0.8691)
+     transform = scale(sx, sy); centre = (W/2, H - 586*sy + 931*sy/2)
+   So app y 586 sits exactly on the card bottom (as 684) and app y 59 on the card top. It's applied only
+   for the 684 geometry (not with the 685/687/688-geo opt-ins), only when it actually squashes (sy < fit),
+   and clamped to 0.5..1.2. Logged:
+   "phonesize694 <app> squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) /
+    y0.8691; app y 586 on the card bottom ...".
+
+TOUCHES
+The card shows Beeper through SpringBoard's scene layer host. Touches on it go to Beeper by the window
+server, which hit-tests the hosted context and converts the point with the inverse of the layer's full
+transform chain. That's what made taps land right with 684's x0.977 on a 430-wide scene. A non-uniform
+scale is still an affine transform (invertible, same code path), so a tap at card (x, y) should reach app
+(x/0.9767, 59 + y/0.8691). The SpringBoard side doesn't change (the card's hitTest is unchanged, and no
+strip view sits on top now). Not verified on the device; if taps land vertically off, sy= or
+mode=691 shows it quickly.
+
+WHAT THE USER SHOULD SEE
+Beeper's own top bar (with the settings cog, live and tappable) at the top of the card, the full main
+screen or chat down to the bar or bottom sheet at the card bottom, everything ~11% shorter than wide
+(squashed vertically), full width, no margins. Keys at the phone bottom and the chat bar on the card
+bottom, as 684.
+
+RISKS
+- Text and images look vertically squashed (87% vs 97.7%), which is the requested trade-off.
+- Content sits under Beeper's own top bar again as on a normal phone (the inset is 118; Beeper's lists
+  scroll under its bar as they do full screen).
+- Taps rely on the window server's affine mapping (expected to hold).
+- The inset change from 186 to 118 happens at the at-rest write (keys down) or the next card open; until
+  then the content may start 68 pt lower.
+
+TUNE /var/mobile/.dynamicstage-phonesize694-tune
+    mode=squash|691     (squash; 691 = exact 4.5.691: copied strip + 186 inset)
+    view_top=N          app y on the card top (59; e.g. 50 shows a bit more above, 70 less squash)
+    sy=auto|0.5..1.2    vertical scale override (auto = 458 / (586 - view_top))
+OFF /var/mobile/.dynamicstage-phonesize694-off = exact 4.5.691.
+LATCH /var/mobile/.dynamicstage-phonesize694-trying (15 s after the first squash) / -crashed (back to 691;
+delete it to allow again).
+
+No new hooks, no status-bar writes. Build: "verify: 3 binaries, arm64 + new-ABI arm64e, signed", 41 warnings.

@@ -1,3 +1,12 @@
+**4.5.694**
+- The copied (fake) top bar is gone. The card now shows Beeper's REAL picture from app y 59 (the top of Beeper's own top bar) down to the bar line 586, squashed vertically to fit: x scale = card width / 430 (0.977, full width, no margins), y scale = 458 / 527 (0.869).
+- App y 586 stays exactly on the card bottom, so the chat bar and keyboard behave as in 684. Scene and keyboard geometry are 684's: 430x931, safe area back to {118,0,345,0} (691's 186 raise is off), keys674 NO. Only the card's mapping of the app changes; nothing new is written to the scene.
+- The 690 strip, 692 patch and 693 cog copy are off by default. The strip comes back with mode=691 or the 694 off file. The 692 patch (patch=on) and 693 cog (cog=on) are opt-in in their tune files.
+- Touches: the window server maps touches through the host view's (now non-uniform) transform, the same affine mapping that already handled 684's x0.977.
+- Tune /var/mobile/.dynamicstage-phonesize694-tune: mode=squash|691, view_top= (59), sy=auto|0.5..1.2.
+- Off: /var/mobile/.dynamicstage-phonesize694-off = exact 4.5.691 (copied strip + 186 inset). Crash latch: /var/mobile/.dynamicstage-phonesize694-trying / -crashed (15 s; latched = 691).
+- No new hooks, no status-bar writes.
+
 **4.5.693**
 - 692's blended patch removed: it's opt-in only now (patch=on in /var/mobile/.dynamicstage-phonesize692-tune). Without it the bar is exactly 691's.
 - Settings cog as a clean copy: one small opaque square (normal blend, round), copied live from where the cog sits in Beeper's view and placed at its spot on the copied bar. Taps go the same way as the 690 strip.

@@ -1,3 +1,12 @@
+**4.5.689**
+- Fix: 4.5.688 crashed SpringBoard into safe mode when staging Beeper. No crash log was uploaded; the prime suspect is 688's default mode=statusbar, the only new code that ran by default (it raised the Beeper scene's status bar height through UIApplicationSceneSettings setDefaultStatusBarHeight:forOrientation:).
+- Default is now mode=684: exact 4.5.684 geometry (known good on this phone). With mode=684 no status bar code runs at all (not even a selector check).
+- mode=statusbar is opt-in only (mode=statusbar in /var/mobile/.dynamicstage-phonesize688-tune) and fenced: main thread only; the setter/getter signatures are checked (void(double,long long) / double(long long)) before any call; values 20..200 only; a crash latch (/var/mobile/.dynamicstage-phonesize689-statusbar-trying written before the first raise, removed after 15 s; if SpringBoard comes back with it there, statusbar mode is switched off permanently via /var/mobile/.dynamicstage-phonesize689-statusbar-crashed, delete that file to allow it again).
+- All scene geometry writes are validated: frame finite with a positive size and origin within a few screens, safe-area insets finite and 0..2000; a bad field is skipped, not written; setFrame:/setSafeAreaInsetsPortrait: only when the settings object responds.
+- mode=offset and mode=short stay opt-in, unchanged.
+- Off: /var/mobile/.dynamicstage-phonesize689-off (same as -688-off) = exact 4.5.684 - which is also the default now.
+- No new hooks; Tweak.xm, DSKeys674.m, DSStageManager.m unchanged since 684.
+
 **4.5.688**
 - Back to 684's chat geometry: the card bottom is the keyboard top as Beeper sees it and the bar rests there, so tapping the text box in a chat no longer moves the bar out of view (687 raised the resting bar to 519; Beeper put it on the keyboard top 586 with the keys up). 687 is opt-in only (/var/mobile/.dynamicstage-phonesize687-on); fill stays x0.977, no margins.
 - Main-screen top bar (app y 59..127, does not follow the top inset): four modes in /var/mobile/.dynamicstage-phonesize688-tune, one line, no rebuild:

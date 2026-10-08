@@ -1,0 +1,38 @@
+DynamicStage 4.5.689 - safe-mode fix: default back to exact 684, statusbar mode fenced and opt-in
+================================================================================================
+User: 4.5.688 crashed SpringBoard into safe mode when staging Beeper.
+
+CRASH: SUSPECTED, NOT PROVEN. newstage had no new upload (origin/main = 96c6e79, our 688 publish),
+so there was no crash log to decode with dsym688/ (uploads689/NOTE.txt). Reasoning: 687 staged
+Beeper without crashing; the only new code 688 ran by default was mode=statusbar - writing
+setDefaultStatusBarHeight:118 forOrientation:portrait on Beeper's scene settings, both from our own
+geometry write and from the existing settings-override hook during SpringBoard's own scene updates
+(possibly off the main thread, with an unsynchronised dictionary). Either SpringBoard/FrontBoard
+reacting to a non-default status bar height for that scene, a signature mismatch of that private
+selector, or the cross-thread dictionary access fits a crash at stage time that repeats on every
+attempt (-> safe mode). offset/short were not active (opt-in).
+To prove it: upload the DynamicStage log after the next crash-free run, or the crash log
+(/var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log) / the iOS SpringBoard .ips.
+
+WHAT CHANGED (DSSceneHost.m/.h only; Tweak.xm, DSKeys674.m, DSStageManager.m identical to 684)
+- Default mode = 684 (exact 4.5.684 geometry). With mode=684 no status bar code runs at all.
+- mode=statusbar opt-in only, fenced: main thread only; selector signatures checked before any call;
+  values 20..200; @synchronized originals map; crash latch (trying-file written before the first
+  raise, removed after 15 s; if SpringBoard comes back with it present, statusbar mode is latched
+  off via /var/mobile/.dynamicstage-phonesize689-statusbar-crashed; delete it to allow again).
+- DSApplyGeometry (every scene geometry write): frame must be finite, size 1..4000, origin within
+  -2000..4000; insets finite 0..2000; bad fields skipped; setters only if the object responds.
+- offset/short unchanged, opt-in.
+
+FILES
+  Tune: /var/mobile/.dynamicstage-phonesize688-tune  mode=684 (default) | offset | short | statusbar
+        (+ view=, offset=, shift=, statusbar= as in 688)
+  Off:  /var/mobile/.dynamicstage-phonesize689-off (or -688-off) -> exact 684 = same as the default.
+  686/687 stay opt-in (-phonesize686-on / -phonesize687-on).
+
+WHAT THE USER SHOULD SEE
+Exactly 4.5.684: Beeper staged without a crash, chats fine (keys at the phone bottom, bar still), the
+main-screen top bar cut as in 684. To try the top-bar fix: "mode=offset" in the tune file (unproven,
+no status bar writes); avoid mode=statusbar until a log shows what crashed.
+Artifacts: build-689.log, publish-689.log, springboard-689.diff (vs 684), springboard-689-vs-688.diff,
+bak689/ (= 688 source), dsym689/, full-689/, uploads689/NOTE.txt.

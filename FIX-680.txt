@@ -1,0 +1,74 @@
+DynamicStage 4.5.680 - Beeper: always full screen, the message bar does not move
+=================================================================================
+deb: com.recreated.dynamicstage_4.5.680_iphoneos-arm64.deb
+sha256: 2e735406b9e2cd1e9c732d6ec0b8b8916babb7f08d8a1a15503a351e661b5b57
+
+WHAT BEEPER SEES
+- From the moment its card shows it, the app thinks it is full screen: a 430x931 scene with the
+  iPhone safe area {59,0,34,0}, scaled to the card width (x0.977, the 4.5.678 look; the shrink is
+  back). This never changes while it is staged: not on a tap, not when the keyboard shows or
+  hides. No pre-grow on touch, no width/height nudge, no early switch, no scene write for the
+  keyboard. The scene is written only when the card opens, restores or is resized (the same
+  guarded SIGTRAP-safe writes and appview hold as before).
+
+WHAT MOVES, AND WHEN
+- Before any tap (keyboard down): the card shows app y 428..897. 897 = 931 - the 34 pt home
+  inset, so the message bar sits on the card's bottom edge. Tapping changes nothing.
+- Keyboard up: only the card's window onto the app moves (a host view position change, not a
+  scene write). It ends at the bar's new bottom = min(897, keyboard top in the app) = 931 - 346 =
+  585, so the card shows app y 116..585. The app scrolls its content up over the keys and the
+  bar stays on the card's bottom edge: same place on screen as before the tap.
+  * Start: the arbiter's on=1, timed back to keys674's layer question when that came within
+    100 ms before it (in the 675 log that was 3 ms earlier).
+  * Duration/curve: whatever SpringBoard's last keyboard notification used (UIKit duration and
+    curve keys); otherwise 250 ms with the keyboard curve (7).
+  * Height change while up (arbiter 243 -> 288, i.e. keyboard 301 -> 346): first it heads for
+    630, then retargets smoothly to 585 from the current position.
+  * The keyboard note then corrects any difference over 200 ms (normally none: stage keys top
+    586 -> 585 in the scene).
+- Keyboard down: the arbiter's on=0 reverses it (back to 428..897), with the same curve.
+- The stage no longer drops Beeper's card onto the keys. 675 moved it 95 pt (y 5 -> 100), which
+  dragged the bar along. The card stays where it rests.
+- Touches: the host view is the moved/scaled view, so taps map to whatever is shown.
+
+FILES
+- /var/mobile/.dynamicstage-phonesize680-off   -> exact 4.5.679 behaviour
+- /var/mobile/.dynamicstage-phonesize675-off   -> all phone-size work off (4.5.674)
+- /var/mobile/.dynamicstage-phonesize680-noanim -> the window change is instant
+(re-read every 2 s; no respring needed)
+
+LOG LINES (Diagnostics, prefix "SpringBoard: phonesize680")
+  phonesize680 build 4.5.680 is ON: allowlisted apps always full screen (430x931 scaled to the card), ...
+  phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; ...))
+  phonesize680 com.beeper.chat.ios keyboard signal "keys674 layer ask" at 51.508 (earliest sign; ...)
+  phonesize680 com.beeper.chat.ios keyboard signal "arbiter on=1" height 288 at 51.520 (main +1 ms, keys674 ask 12 ms earlier): keyboard top in the scene 585 (arbiter height 288 + 58) -> bar bottom 585; duration 250 ms curve 7 (...)
+  phonesize680 com.beeper.chat.ios bar bottom 897 -> 585 (arbiter on=1) t+13ms: card shows app y 428..897 -> app y 116..585 (bar on the keyboard), animated 250 ms, UIKit curve 7 (keyboard), started 13 ms in the past to match the signal; host moves 304 pt on the card, the bar stays on the card's bottom edge
+  phonesize680 com.beeper.chat.ios card kept at rest {{5, 5}, {420, 458}}, not dropped onto the keys (...)
+  phonesize680 com.beeper.chat.ios keyboard signal "arbiter on=0" ... -> bar bottom 897 ...
+  phonesize680 com.beeper.chat.ios keyboard signal "...": scene is not phone-size yet, the 4.5.675 switch at the keyboard note takes over (fallback, a scene write)
+  phonesize680 com.beeper.chat.ios nudge #1 skipped: always full screen, ...
+(The numbers above are examples taken from the 675 timings.)
+
+CONFIDENCE
+- Always full screen, no scene change on tap/keyboard, no card drop: high (this is all
+  SpringBoard-side logic).
+- The bar staying put through the keyboard: medium-high. Beeper must lay out for its keyboard in
+  the 430x931 scene and place the bar at the keyboard top (585), which matches 675's band-fix
+  geometry.
+- The animation being in sync: medium. It is two processes. The start time is corrected for
+  the delay, but Beeper may animate with its own timing or curve. Expect a few ms or a pt of
+  wobble, not a jump.
+
+RISKS
+- If the card sits in the bottom half where the keys would cover it, the stage still lifts it
+  (that can't be avoided: the keys would hide it), so the bar moves in that case.
+- If Beeper hasn't gone phone-size yet when the keyboard shows (within ~1 s of opening, or
+  mid-drag), the 675 fallback grows it then (one scene write, logged as the fallback).
+- In phone size the app's header is off the card (the window shows the bottom 469 pt of the app).
+- The scene is 931 high on a 932 screen (1 pt offset, accounted for in the keyboard top).
+- If an arbiter on=0 is missed, the keyboard note's rest (0.3 s later, 250 ms) still brings it back.
+
+UNCHANGED
+No new hooks (the arbiter and keys674 hooks already existed and carry the new calls, guarded with
+respondsToSelector and @try). The 4.5.673 Messages camera, zero app-switcher hooks, the stage card
+size never changes.

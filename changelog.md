@@ -1,3 +1,14 @@
+**4.5.688**
+- Back to 684's chat geometry: the card bottom is the keyboard top as Beeper sees it and the bar rests there, so tapping the text box in a chat no longer moves the bar out of view (687 raised the resting bar to 519; Beeper put it on the keyboard top 586 with the keys up). 687 is opt-in only (/var/mobile/.dynamicstage-phonesize687-on); fill stays x0.977, no margins.
+- Main-screen top bar (app y 59..127, does not follow the top inset): four modes in /var/mobile/.dynamicstage-phonesize688-tune, one line, no rebuild:
+  - mode=statusbar (default): exact 684 scene (430x931, safe area {118,0,345,0}) plus the scene's default status bar height raised to 118, for a top bar laid out under the status bar. If iOS has no such setting (logged) or Beeper doesn't follow it, this is exactly 684.
+  - mode=offset: scene frame {0,60,430,871}, safe area {58,0,345,0}: the keyboard (screen 586) is at window y 526, where the bar rests (871 - 345) and where the card bottom is; the card shows window 57..526, the top bar included. The picture's place in the card is measured from the view tree (shift=).
+  - mode=short: scene {0,0,430,871}, same insets, for an app that puts its keyboard at its own bottom (height - keyboard height).
+  - mode=684: exact 684.
+  - also view=0..117 (offset/short: window y on the card top, default 57), offset=0..150 (o, default auto 60), shift=0..150 (offset: picture shift, default measured), statusbar=0..300 (statusbar: height, default = top inset 118).
+- Off: /var/mobile/.dynamicstage-phonesize688-off = exact 4.5.684.
+- No new hooks; Tweak.xm, DSKeys674.m, DSStageManager.m unchanged since 684.
+
 **4.5.687**
 - Beeper fills the card edge to edge again at 684's scale (x0.977, 430 wide): 686's smaller picture with side margins is gone (opt-in only: /var/mobile/.dynamicstage-phonesize686-on).
 - Beeper's main-screen top bar (app y 59..127, it does not follow the top inset) is now on the card: the card shows app y 59..527 instead of 117..586.

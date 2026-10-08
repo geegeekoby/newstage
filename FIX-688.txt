@@ -1,0 +1,54 @@
+DynamicStage 4.5.688 - 684 chat geometry back; main-screen top bar via switchable modes
+=====================================================================================
+User on 4.5.687: "everything looks good but now when in message and you tap to enter text it moves
+out of the view again". No new newstage upload (origin/main = 80dcb7c, 687).
+
+LESSON FROM 687
+Beeper puts its bar on the keyboard top as it sees it when the keys come up, whatever the bottom
+inset (keyboard layout guide / frame avoidance, or "scene height - keyboard height"; with the scene
+931 tall both say ~586). 687 rested the bar at 519, so it dropped to 586, below the card bottom (527).
+So the card bottom = keyboard top in Beeper's window = resting bar, as in 684.
+
+MODES (/var/mobile/.dynamicstage-phonesize688-tune, mode=...; one line, applied at the next card
+open or 1.2 s after the keyboard goes down)
+- statusbar (DEFAULT): 684's scene exactly (430x931 at {0,0}, safe area {118,0,345,0}, card shows
+  117..586, x0.977). In addition the scene's default portrait status bar height
+  (UIApplicationSceneSettings setDefaultStatusBarHeight:forOrientation:, called only if the settings
+  object responds; logged either way) is raised from ~59 to the top inset (118). Beeper's top bar
+  sits at 59..127 = status bar height + 68, while ignoring the 118 safe-area top: if it follows the
+  status bar height it lands at 118..186, on the card. The original height is stored per scene and
+  written back when the card goes away / the mode changes.
+  Why default: the bottom of the scene, the insets and the card mapping are byte-for-byte 684, the
+  only geometry known to keep the chat bar still. If iOS lacks the setting or Beeper ignores it,
+  the result is exactly 684 (top bar still cut), never a moving bar.
+- offset: scene frame {0, o, 430, 931 - o} with o = 60 (auto: 586 - 469 - view 57), safe area
+  {58, 0, 345, 0}. Keyboard (screen 586) in the window: 586 - 60 = 526 if UIKit uses the scene's
+  origin (as iPad split view needs); "scene height - keyboard height": 871 - 346 = 525. Resting bar
+  871 - 345 = 526. Card bottom = window 526, card top = window 57: the top bar (59..127) is on the
+  card, fill x0.977. The picture's offset inside the card host is measured from the view tree
+  (UIScenePresentationView / SceneLayerHost origin; frameForScene notes that the origin gets copied
+  into it) and logged ("phonesize688 ... picture starts at host y"); shift= overrides.
+- short: scene {0, 0, 430, 871}, same insets: works if Beeper uses "scene height - keyboard height";
+  fails (bar drops) if it uses the screen keyboard frame (586 in an origin-0 window).
+- 684: exact 684.
+Other keys: view=0..117 (offset/short, window y on the card top, default 57), offset=0..150
+(default auto), shift=0..150 (offset, default measured), statusbar=0..300 (default = top inset).
+OFF  /var/mobile/.dynamicstage-phonesize688-off -> exact 4.5.684 (686/687 stay opt-in:
+     /var/mobile/.dynamicstage-phonesize686-on, -phonesize687-on).
+
+WHAT THE USER SHOULD SEE (default)
+- Chats: exactly 684 - keys at the phone bottom, bar on the card bottom, no movement.
+- Main screen: if the status-bar setting takes, the top bar with its buttons at the card top;
+  if not, as 684 (top bar cut) -> then try "mode=offset" in the tune file.
+
+RISKS
+- statusbar: the setting may not exist / be ignored (=684). If UIKit treats a taller status bar
+  like the old in-call bar and shifts the whole window down, the chat bar would move: use
+  mode=684 or the off file. A raised height not written back (e.g. a respring mid-card) could
+  leave Beeper full screen with a low top bar until relaunch.
+- offset: unproven: depends on UIKit using the scene origin for the keyboard (or Beeper using
+  height - keyboard height) and on the picture-offset measurement; wrong -> bar off the card or
+  the picture 60 pt off (shift=0 or shift=60 corrects the picture).
+- short: works only for the height-based model.
+Artifacts: build-688.log, publish-688.log, springboard-688.diff (vs 684), springboard-688-vs-687.diff,
+bak688/ (= 687 source), dsym688/, full-688/.

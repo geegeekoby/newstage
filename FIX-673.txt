@@ -1,0 +1,67 @@
+DynamicStage 4.5.673 - Messages camera: FILL by default, Apple's top bar on the card
+
+REQUEST
+"fix the camera so it fills the messages staged, make the top buttons show even when fill"
+
+WHAT WAS IN THE WAY
+- Apple's Messages camera is the CameraMessagesApp extension shown in a _UIRemoteView. It always
+  lays out at the phone's 430x932 (4.5.666 gave it the card size; it still laid out phone-shaped
+  and its shutter row ended up below the card). A shorter layout size is therefore not an option,
+  and squashing it non-uniformly would make the preview and round buttons ovals.
+- At the card width (420, scale 0.977) the layout is 910pt tall; the card is 458. 4.5.668 FILL
+  showed layout y 433..902 (bottom-aligned): shutter row OK, top bar (close/flash/Live, Retake) cut.
+- Touches: backboardd asks the render server which context is under the finger at touch-down
+  (real on-screen geometry, transforms included - why 667/668's scaled remote view took taps).
+  Messages cannot forward a touch into the extension (host-synthesised touches never reach a
+  remote view controller), and one hosted context can only be shown in one place. So a picture
+  of the top bar can be shown anywhere, but only the real remote layer takes taps.
+
+DESIGN (app/DSCameraStage.m, DSCam667ApplyRemoteFit + DSCam673*)
+- The card shows two bands at the same scale (0.977):
+    card y 0..107   = Apple's top bar (layout y 0..110)
+    card y 107..458 = bottom of the camera (layout y ~543..902: lower preview, mode row,
+                      shutter, flip, zoom). The middle of the preview (layout 110..543) is left out.
+- One band is the REAL extension view, the other a live _UIPortalView of the same remote view
+  (same pixels, same scale, exactly where the real one would be). Source = the _UIRemoteView.
+  Portal: matchesPosition/Transform/Alpha NO, hidesSourceView NO, allowsHitTesting NO, inside an
+  opaque clipping DSCam673MirrorView that sits above the real view in the card.
+- Camera opens with the BOTTOM band real (exactly the 4.5.668 fill placement): shutter, modes,
+  flip, zoom, tap-to-focus work directly. The top bar is the mirror.
+- Touching the mirrored top bar: the real camera is moved to top-aligned (Apple's real top bar now
+  under the finger's band), the bottom band becomes the mirror. The picture does not change; the
+  band blinks once. That first touch stays in Messages; the next tap there is Apple's own button
+  (close X, flash, Live, review Retake / close). Touching the mirrored bottom band switches back.
+  Each new camera open starts with the bottom band real.
+- No stage Done, no Fit/Fill pill while the split view is up (Apple's close/Retake reachable).
+- Fallback: if _UIPortalView is missing or cannot be made, the 4.5.668 FILL with stage Done and
+  the Fit pill (logged once: "layout673 ... no live mirror ...").
+- FILL is the default (new key DynamicStage673MessagesCameraFit, default NO). FIT stays reachable
+  from the pill only in fallback / FIT, or by setting that key in Messages' defaults.
+- Mirror views and portals carry the camera hold key, so the app's frame/bounds/transform hooks
+  leave them alone; all writes are inside DSCam667RemoteWriting. Mirrors are removed in
+  DSCam667RestoreRemote (camera gone, keyboard up, unstaged, view swapped, ...).
+
+LOG LINES
+  layout673 com.apple.MobileSMS remote camera FILL split: card 420x458 scale=0.977, card y 0..107 =
+    Apple's top bar (layout y 0..110), card y 107..458 = camera bottom (layout y 543..902), preview
+    middle 110..543 left out; real camera=BOTTOM band, TOP band = live mirror ...
+  layout673 com.apple.MobileSMS mirrored TOP band touched at x,y: real camera is now the TOP band ...
+  layout673 ... no live mirror (_UIPortalView missing|would not build): FILL keeps the 4.5.668 layout
+  (layout670 lines still appear: fill on / geometry after 0.7s / fit off)
+
+RISKS
+- If the portal does not draw the extension's hosted content the mirrored band shows black
+  (the user would report a black strip at the top on open). Next step then: CALayerHost-free
+  fallback = 4.5.668 layout; the log line tells which build path ran.
+- The mirrored band takes one touch before Apple's buttons there respond (by design, see above).
+- TOP band height 110 layout pt is an estimate of Apple's top bar (status band + controls);
+  if Apple's buttons sit lower, the bottom of them may be cut by the band edge.
+- Unknown how the extension animates the review screen; the bands follow the same remote view.
+
+LOL.TXT (f3cdbf0)
+- Builds 4.5.671/4.5.672, Beeper presence/drag lines, "layout667 com.apple.MobileSMS camera preview
+  watch on"; no Messages remote camera use in it. Both "--- crash ---" sections are empty.
+
+UNCHANGED
+4.5.664 keyboard fix, 4.5.666 taps, dial pad, 665/668/670 crash guards, presence670, 4.5.672 keys
+revert, zero app-switcher hooks, fixed card size. SpringBoard code untouched (version string only).

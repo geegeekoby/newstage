@@ -1,0 +1,120 @@
+DynamicStage 4.5.677 - fix for the 4.5.676 SpringBoard crash (safe mode)
+=======================================================================
+
+1. CRASH CAUSE (symbol evidence)
+--------------------------------
+Log: uploads677/logger.txt, build 4.5.676, SIGSEGV, main thread, right after the
+start. Last stage lines: "call653 guard listening", "keys674 on: ...",
+"phonesize676 focus signal hooked (handlerRequestedFocus:shouldStealKeyboard:, ...)".
+
+PAC bits stripped (top bits above bit 39). The DynamicStage.dylib load address
+(slide base) was found by matching the frames to the 4.5.676 dylib's __text
+(0x66b4-0xa0c8c): base 0x1071cc000. Every DynamicStage frame lands exactly one
+instruction after a BL (a real return address). Symbolicated with
+dsym676/arm64e (pc = return - 4):
+
+  frame (stripped)  offset   symbol / line
+  0x2121db214       -        system (shared cache; most likely the _sigtramp return)
+  0x1b24f5b18       -        system (shared cache; most likely the objc method lookup)
+  0x1b24f4848       -        system (shared cache; most likely the objc method lookup)
+  0x1072672b0       0x9b2b0  -[DSPreferences resolvedPath:]       DSPreferences.m:38
+                             if ([path hasPrefix:@"/var/mobile"])   <- objc_msgSend
+  0x1072674a4       0x9b4a4  -[DSPreferences reload]              DSPreferences.m:66
+  0x107267268       0x9b268  -[DSPreferences init]                DSPreferences.m:28
+  0x1072671e4       0x9b1e4  +[DSPreferences sharedPreferences] block  DSPreferences.m:20
+  0x1072671c8       0x9b1c8  dispatch_once                        (sharedPreferences)
+  0x107248628       0x7c628  -[DSStageManager publishStageStateForBundleIdentifier:frame:active:]
+                                                                  DSStageManager.m:7225
+                             NSArray *liveRecents = [DSPreferences sharedPreferences].recentApplications;
+  0x107224850       0x58850  -[DSStageManager activate]           DSStageManager.m:792
+  0x1071d3890       0x7890   DSInstallRemainingHooks block        Tweak.xm:2386 (generated .mm line)
+  0x1071d2b68       0x6b68   dispatch_once                        (DSInstallRemainingHooks)
+
+So the crash is the first objc message send in DynamicStage's first
+DSPreferences use (hasPrefix: on a constant string, inside
+-[DSPreferences resolvedPath:]), called from -[DSStageManager activate].
+That message send crashed inside the runtime.
+
+None of that code changed since before 4.5.675 (DSPreferences.m is identical to
+the 675 copy), and the same path ran cleanly in the 4.5.675 session
+(uploads677/Fixer.txt). The ONLY new step that runs before activate in 4.5.676
+is in the same install block, immediately before activate:
+
+    %init(Arbiter, _UIKeyboardArbiter = arbiter);
+    DSInstallPhoneSize676FocusHook(arbiter);   // NEW in 676: manual MSHookMessageEx on
+                                               // -[_UIKeyboardArbiter handlerRequestedFocus:shouldStealKeyboard:]
+    [[DSStageManager sharedManager] activate];  // <- crashes in its first objc lookup
+
+Its "focus signal hooked" line is the last line logged before the crash. A
+SIGSEGV in the runtime's message send/lookup right after a method hook is the
+usual pattern of a method-cache/IMP swap gone wrong (the arbiter runs on its own
+queue in SpringBoard, so the swap can race a send on another thread). The
+arbiter on=1 early switch (also new in 676) is NOT on the stack: it only queues
+a block onto main, and that block cannot run in the middle of the synchronous
+activate call shown here.
+
+Caveat: without the device's shared cache the three system frames can't be
+named for certain, so the exact way the hook damaged the runtime is inferred, not
+proven. The link to the focus hook rests on: it is the only new pre-activate step,
+the crash timing, and the crash signature.
+
+2. FIX (4.5.677)
+----------------
+- The 4.5.676 focus hook is REMOVED (DSInstallPhoneSize676FocusHook,
+  DSHookHandlerRequestedFocus, the MSHookMessageEx call and the -focus-on file).
+  It only logged by default, so no behaviour is lost. The binary no longer
+  references handlerRequestedFocus at all (checked with strings: 0 hits, arm64 and arm64e).
+  The arbiter now has only the long-standing %hook updateKeyboardStatus:fromHandler:.
+- The arbiter on=1 early switch inside that hook is kept, now defensive:
+  * on the arbiter queue only already-read values leave: the source string
+    (isKindOfClass NSString checked, copied), a height checked finite and >= 0,
+    and a timestamp. No ivar reads, and nothing else of the arbiter, handler or
+    information object is touched. The whole thing is wrapped in @try.
+  * on main: the off-file check, then a respondsToSelector check on the
+    manager, inside @try (a throw is logged as "phonesize677 early switch threw ...").
+  * -[DSStageManager phoneSize676EarlySignal:...] returns if it is not on the main
+    thread or the types are wrong, and wraps the switch in @try ("phonesize677
+    early switch for <app> threw ...; left to the keyboard note").
+  * New off file /var/mobile/.dynamicstage-phonesize677-early-off: no early
+    switch, so it is exactly the 4.5.675 keyboard-note trigger plus the 676 nudge.
+- Kept unchanged: the 4.5.675 band fix (phone-size scene scaled into the
+  card), the 676 relayout nudge (geometry writes only; -nudge-off file still
+  works), the opt-in -hold-on picture hold, the 675 off/apps/pinoffset files.
+- Unchanged: the 4.5.673 Messages camera, keys674, the crash guards, zero
+  app-switcher hooks, the stage card size (only content scales).
+
+3. DYNAMIC ISLAND - NOT OURS
+----------------------------
+- No DynamicStage code hides, fades, moves or changes the level of
+  SBSystemApertureWindow. Window level changes only apply to keyboard-class
+  windows, and Aperture/system-chrome windows are explicitly skipped
+  (DSWindowIsSystemChromeScene). alpha=0 only applies to SBHomeGrabberView.
+- Our only contact with it is key-window status: takeKey can make it resign key,
+  and DSMakeKeyBesidePlayingVideo briefly swaps resignKeyWindow on the competing
+  key window's class during one makeKeyAndVisible call and restores it straight
+  away. That does not affect visibility, it predates 675, and the clean 675
+  session (Fixer.txt, island fine) has the same
+  "takeKey ok ... other=SBSystemApertureWindow" lines (15 of them).
+- The 676 crash log has no Aperture lines at all: it crashed before any takeKey.
+- On the start after the crash (02:46:51 "DynamicStage stayed off for this
+  start ...") the %ctor returns before any %init, hook or signal handler. Nothing of
+  ours was running, so the missing island was SpringBoard's state after
+  the crash / safe mode. A normal respring (or a reboot plus re-jailbreak if it
+  persists) brings it back.
+
+4. CONFIDENCE
+-------------
+- High that 4.5.677 no longer has this startup crash: the one new pre-activate
+  step is gone, and the startup sequence is byte-for-byte the 4.5.675 one apart
+  from the early-switch block, which is only queued from the arbiter hook.
+- Medium that the first-tap glitch fix still works as in 676: the early switch
+  and nudge are unchanged. Only the focus signal is gone, and it was log-only.
+- If anything still misbehaves: create /var/mobile/.dynamicstage-phonesize677-early-off
+  (675 trigger plus nudge), then -phonesize676-nudge-off, then -phonesize675-off.
+
+5. LOG LINES TO LOOK FOR
+------------------------
+- There should be NO "phonesize676 focus signal hooked" line any more.
+- "phonesize676 <app> early switch on "arbiter on=1" t+..ms" (unchanged).
+- "phonesize676 ... relayout nudge #1/#2 ..." (unchanged).
+- "phonesize677 early switch ... threw ..." means a guarded failure (it should never appear).

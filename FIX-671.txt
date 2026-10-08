@@ -1,0 +1,72 @@
+DynamicStage 4.5.671 - Beeper quick bar / composer rising inside the card when the keyboard shows
+(log: uploads Quickbar.txt + IMG_4444 / IMG_4445, tested on 4.5.670)
+
+WHAT THE LOG AND SCREENSHOTS SHOW
+- DynamicStageApp.dylib is not running in Beeper: "relay668 com.beeper.chat.ios on a card 7s and no ctor or
+  mapped marker in its container: DynamicStageApp.dylib is NOT running in this app". Inside injected apps the
+  dylib swallows UIKeyboard*Notification (app/Tweak.xm NSNotificationCenter hook), so they never slide their
+  own composer. Beeper hears its own keyboard notes and does its own keyboard avoidance.
+- Keyboard frames are normal: Beeper's keyboard {{0,631},{430,301}} -> {{0,586},{430,346}} (arbiter 243/288 =
+  keys only). Messages receives the same {{0,586},{430,346}}, so nothing Beeper-specific in the frames.
+  "[KEYS] kept quick bar 346pt, ignored 243pt/288pt" is correct (real keyboard top is 586).
+- Scene geometry never changes: "force geometry frame={{0, 0}, {420, 458}}"; single card, so no overlap
+  safe-area inset (stageSafeAreaInsets only applies with two stacked cards). Card size fixed.
+- The stage moved the card onto the keys: "[LIFT] top drop slot=0 shift=-95" (card 5..463 -> 100..558, bottom
+  = keyboard top 586 - 28) and, for a bottom-half card later, "lifted stack slot 0 by 369" (469 -> 100).
+  The display-layout element followed: "layout670 card moved: display-layout element {{5, 5}, {420, 458}} ->
+  {{5, 100}, {420, 458}}".
+- Screenshot pixel measurements (no viewing; numbers only, card coordinates in pt):
+  IMG_4445 (no keyboard): card 5..463, composer at the card bottom (c386..458).
+  IMG_4444 (keyboard up): card 100..558, keyboard from 586; composer elements c342..366, then a uniform empty
+  band c376..c458 (~82-84pt). Beeper moved its own bar up ~80pt inside the card.
+
+ROOT CAUSE
+Double keyboard avoidance: the stage put Beeper's card on the keys AND Beeper (no dylib) slid its own composer
+up for the same keyboard. The band (~82-84) equals card bottom on screen minus (screen height - card height):
+558 - (932 - 458) = 84; the only position-dependent thing Beeper is told is where its card is (the card's
+display-layout element / presentation), so a card resting on the top half (bottom 463 < 474) gives 0.
+Confidence: the double-avoidance part is high (dylib absent, composer moved inside an unchanged 420x458 scene,
+nothing else changed). The exact channel by which Beeper's avoidance scales with the card position is
+inferred from one measurement (medium-low); 4.5.671 logs whether it holds.
+
+FIX (SpringBoard only, all apps without the app dylib)
+- DSStageManager: keys671CardAppAvoidsKeysItself: = the card's app has no live DynamicStageApp.dylib marker
+  (DSAppTraceRelayBundleIsLive NO) and is not Messages / Phone / SpringBoard; never during picker search, never
+  for the float/front card; opt-out file /var/mobile/.dynamicstage-keys671-off.
+- dropNeededToSitOnKeyboard: returns 0 for such a card -> a single top card stays at rest (5..463) while the
+  keyboard is up (also covers the settled-move and the two-stage upper drop).
+- liftNeededToClearKeyboard: a single bottom card of such an app rises to the top half's resting bottom (463),
+  i.e. lift 464 instead of 369 (no longer stops on the keys).
+- Apps with the dylib (Messages incl. Fit/Fill + app strip, Phone dial pad, injected Messenger/Signal/Beeper),
+  picker search, split and the third stage: unchanged 4.5.670 behaviour. No new hooks; no app-switcher hooks.
+- All 4.5.670 pieces kept (presence670, drag670 holds, appview670, sbcam opt-in, crash guards).
+
+LOG LINES TO LOOK FOR (4.5.671)
+- "keys671 com.beeper.chat.ios has no DynamicStage app dylib (it slides its own composer): top card kept at
+  rest {{5, 5}, {420, 458}}, not dropped onto the keys at 558 ..."
+- "keys671 ... bottom card lifted by 464 to the top half (bottom 463), not by 369 onto the keys ..."
+- "[LIFT] top drop slot=0 shift=0 keys671selfAvoid=1 ..." / "[LIFT] stack slot=0 need=464 keys671selfAvoid=1"
+- Messages / Phone should show keys671selfAvoid=0 and the old shifts.
+If the band is still there with "shift=0 keys671selfAvoid=1", Beeper's inset does not depend on the card
+position; then the only complete fix is getting the dylib injected into Beeper (jailbreak hiding / tweak
+blocking for Beeper) - send a screenshot plus the log.
+
+RISKS
+- A non-dylib app's card no longer sits on the keyboard: there is a gap of wallpaper between the card bottom
+  (463) and the keyboard (586). Intended.
+- Messenger/Signal: if their dylib marker is not live yet (first ~1-2 s after staging) or they are not
+  injected, they get the new behaviour. Injected and live -> unchanged.
+- Opt-out file restores 4.5.670 behaviour without reinstalling.
+
+4.5.670 FINDINGS FROM Quickbar.txt
+- presence670: "presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.
+  displayLayoutPublisher (FBMainDisplayLayoutPublisher)" (line 22).
+- Beeper camera: on via green dot (line ~404, "camera661 sensor com.beeper.chat.ios camera on via
+  sb-attributions"), off ~445; card published to the display layout; zero "publisher is not known yet"
+  lines. Whether the preview was visibly live cannot be proven from the log, but nothing refused it.
+- sbcam670 is OFF (opt-in file absent).
+- Crash: none (crash section empty).
+- Messages camera: no "layout670 com.apple.MobileSMS remote camera" FIT/FILL lines (Messages camera not opened
+  in this test).
+- drag670 holds and "layout670 card moved ... (new in, then old out)" lines working, no SIGTRAP.
+- Messenger / Signal: no keyboard sessions for them in this log, so no comparison data.

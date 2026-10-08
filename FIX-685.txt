@@ -1,0 +1,59 @@
+DynamicStage 4.5.685 - phonesize685: Beeper main screen bars fit, chats unchanged from 684
+==========================================================================================
+
+User on 4.5.684: "that is 1000x better only problem now is the bottom bar on main beeper
+screen and the top buttons dont fit.. keyboard working fine"
+
+No new upload in newstage (HEAD = origin/main = cdf51fe, the 684 publish); see uploads685/NOTE.txt.
+
+CAUSE
+684 gave Beeper a 430x931 scene with safe area {117, 0, 345, 0}. The 345 pt bottom inset
+(931 - 586) is what kept the chat bar resting on the keyboard line. But a whole app is laid
+out in that scene: a bottom tab/tool bar extends by the bottom safe inset, so Beeper's
+main-screen bottom bar became ~49 + 345 pt tall and its buttons sat around app y 880 - far
+below the card's visible bottom (app y 586). The main screen was laid out for a 931 pt phone
+with only 117..586 "safe", which also crowds/cuts the top nav buttons.
+
+FIX (phonesize685, a layer on 684)
+Same bar line (scene y 586 = keyboard top, learned like 684), same fixed card window (app y
+117..586, x0.9767), same top inset 117 (Beeper's top edge = card top). The scene now ends
+slack (34) pt below the bar line:
+    scene 430x620, safe area {117, 0, 34, 0}
+  keys down: bar rests at 620 - 34 = 586 (identical to 684)
+  keys up:   Beeper's keyboard top (screen y 586) overlaps its window by 620 - 586 = 34
+             = the bottom inset, so the bar stays at 586 (same zero-movement rule as 684)
+  main screen: bottom bar is a normal 49 + 34 bar, buttons at app y ~537..586 = the card's
+             bottom edge; the screen is laid out for 620 pt instead of 931, top buttons
+             inside the 117..586 region.
+No new hooks. Tweak.xm, DSKeys674.m, DSStageManager.m byte-identical to 684. Only
+DSSceneHost.m/.h (scene height + insets when 685 is on), version, changelog.
+
+WHAT THE USER SHOULD SEE
+- Beeper main screen: the bottom bar with its buttons visible at the card bottom, top
+  buttons inside the card.
+- Chats: same as 684 - keys full size at the phone bottom, bar still, no bounce.
+
+TUNE  /var/mobile/.dynamicstage-phonesize685-tune   (key=value lines, re-read every 2 s;
+       applies at next card open or 1.2 s after the keyboard goes down)
+  slack=0..200|auto   default 34. Bottom safe inset and scene height below the bar line.
+                      Bigger = more room under the bottom bar's buttons (they move up);
+                      0 = the scene ends at the bar line (like 684 mode=short).
+  top=0..400|auto     top inset, default auto = card top (117). Bigger pushes the nav down.
+  keytop=450..800|auto bar line in scene y, default learned keyboard top (586).
+  The 684 tune (bottom=, top=) still works; 684 mode= is ignored while 685 is on.
+OFF   /var/mobile/.dynamicstage-phonesize685-off  -> exact 4.5.684
+      (/var/mobile/.dynamicstage-phonesize684-off -> 682, phonesize675-off -> 674)
+
+RISKS
+- If Beeper sizes its chat bar from the bottom inset in a way that differs between 345 and
+  34 (e.g. it adds a home-indicator pad only when the inset is small), the resting bar could
+  sit a few pt off 586. Tune slack= (e.g. 0 or 20) fixes it; off file returns to 684.
+- Beeper's own keyboard math with a 620 scene: overlap = 34 = inset, so no change is
+  expected, but this is the one line not field-tested; if the bar moves when keys come up,
+  use the 685 off file.
+- Main screen content below the bar (scene 586..620) and above 117 is off-card, as in 684.
+- Top: if the nav still looks cut, try top=130..160.
+
+Logs: "SpringBoard: phonesize685 build 4.5.685 is ON ...", "phonesize685 tune ...", and the
+phonesize684 summary includes "685: scene ends 34 pt (slack) below the bar line 586".
+Artifacts: build-685.log, publish-685.log, springboard-685.diff, bak685/, dsym685/, full-685/.

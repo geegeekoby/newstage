@@ -1,0 +1,885 @@
+build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 99}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=1 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=-95 top=0 float=0 kFrame={{0, 586}, {430, 346}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+[TRACE] SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+[TRACE] SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+[TRACE] SpringBoard: relay667 copying trace lines from 3 sandboxed apps (Beeper, Messenger, Signal) into this log
+SpringBoard: relay667 copying trace lines from 3 sandboxed apps (Beeper, Messenger, Signal) into this log
+[TRACE] SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+[TRACE] SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+[TRACE] SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+[TRACE] SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+[TRACE] SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+[TRACE] SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+[TRACE] SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCrack.plist,AudioRecorder.dylib,dig3st.dylib,SNMessenger.plist,ShadowBuster.plist,Griddy.dylib,RocketPro.plist,TasksCrack.plist,Designer.dylib,Cephei-compat.dylib,SwiftgramPatch.dylib,DynamicStageApp.dylib,EmojiSkinPrefs.dylib,Bloom.dylib,0Antho.dylib,AlertControllerllld.dylib,NoRedirect.plist,PreferenceLoader.plist,replaced.dylib,DisableAppLibrary.plist,FilzaCrack.dylib,AudioRecorder.plist,dig3st.plist,SNMessenger.dylib,DynamicStage.dylib,FouadCrack.plist,PhotomathPlus.plist,Erika.dylib,SimpleActivationActions.dylib,DataManager.plist,AppStoreUpdatesTab.plist,GraphitePlugin.plist,SandyProxy.dylib,DavevanCrack.dylib,AppData.plist,Airaw.plist,0symbolab.dylib,CameraModes.dylib,PicsArt.dylib,CCSupport.plist,TeraBoxPremium.plist,Xinam1ne.dylib,LoopVideos.dylib,FouadCrack.dylib,DynamicStage.plist,PhotomathPlus.dylib,EmojiPort,Erika.plist,DataManager.dylib,SimpleActivationActions.plist,AppStoreUpdatesTab.dylib,GraphitePlugin.dylib,SandyProxy.plist,DavevanCrack.plist,CameraModes.plist,Airaw.dylib,0symbolab.plist,AppData.dylib,PicsArt.plist,Xinam1ne.plist,TeraBoxPremium.dylib,CCSupport.dylib,LoopVideos.plist,CepheiSpringBoard.plist,Rocket.dylib,1NebbsCrack.plist,0Snail.dylib,FacebookNoAds.plist,82Hack.dylib,LetMeDecline.dylib,LimneosCrack.dylib,SimPlus.dylib,RocketBootstrap.plist,ApolloCrack.dylib,CC18.dylib,NoYTPremium.dylib,LyricsTweak.dylib,SafariBlocker.plist,AudioRecorderUI.plist,CepheiSpringBoard.dylib,1NebbsCrack.dylib,Rocket.plist,0Snail.plist,FacebookNoAds.dylib,LetMeDecline.plist,82Hack.plist,LimneosCrack.plist,RocketBootstrap.dylib,SimPlus.plist,ApolloCrack.plist,CC18.plist,NoYTPremium.plist,LyricsTweak.plist,SafariBlocker.dylib,AudioRecorderUI.dylib,QuickAppsKill.dylib,RecordPause.dylib,EmojiPortPE.plist,PMP.plist,Photomator.dylib,YTShortsProgress.dylib,LendMyPhone.plist,iarrays_hack_.dylib,DeleteContact.plist,CalculatorConverter.dylib,appstoretroller.dylib,QuickAppsKill.plist,EmojiPortPE.dylib,RecordPause.plist,Photomator.plist,PMP.dylib,YTShortsProgress.plist,LendMyPhone.dylib,CalculatorConverter.plist,DeleteContact.dylib,iarrays_hack_.plist,appstoretroller.plist
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+[TRACE] SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=43s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=43s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }]
+SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=43s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=43s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple....
+[CARD] reset geometry radius=44 mask=1 local={{5, 1012}, {420, 458}} screen={{5, 1012}, {420, 458}}
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+[TRACE] SpringBoard: taking key from SBCoverSheetWindow on this scene
+SpringBoard: taking key from SBCoverSheetWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] relay667 com.beeper.chat.ios watching /private/var/mobile/Containers/Data/Application/E0E43FC6-AA46-4266-89FE-FD304717A75C/tmp/com.recreated.dynamicstage.app-trace.log
+[TRACE] relay667 com.facebook.Messenger watching /private/var/mobile/Containers/Data/Application/705A8F36-599E-4048-A599-236977707F86/tmp/com.recreated.dynamicstage.app-trace.log
+[TRACE] relay667 org.whispersystems.signal watching /private/var/mobile/Containers/Data/Application/CC65759B-F5BD-4DED-BEEF-678589769B20/tmp/com.recreated.dynamicstage.app-trace.log
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: putting com.beeper.chat.ios on stack slot 0
+SpringBoard: putting com.beeper.chat.ios on stack slot 0
+[TRACE] launch com.beeper.chat.ios state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+[TRACE] SpringBoard: creating app view for com.beeper.chat.ios
+SpringBoard: creating app view for com.beeper.chat.ios
+[TRACE] SpringBoard: created app view for com.beeper.chat.ios
+SpringBoard: created app view for com.beeper.chat.ios
+[TRACE] scene transaction com.beeper.chat.ios actions=1
+[TRACE] SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+[TRACE] SpringBoard: com.beeper.chat.ios stays running in the background
+SpringBoard: com.beeper.chat.ios stays running in the background
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+[TRACE] SpringBoard: com.beeper.chat.ios is on stack slot 0
+SpringBoard: com.beeper.chat.ios is on stack slot 0
+[TRACE] hosted com.beeper.chat.ios state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+[KEYBOARD LOG] attach com.beeper.chat.ios slot 0 stack=1 prim=1
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[REST] com.beeper.chat.ios slot=0 cardY=5 cardH=458 restMaxY=463
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+[TRACE] SpringBoard: camera661 presence com.beeper.chat.ios in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+SpringBoard: camera661 presence com.beeper.chat.ios in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+[TRACE] SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+[TRACE] scene update begin sceneID:com.beeper.chat.ios-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+[TRACE] SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+[TRACE] app-view settings update
+[TRACE] SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282adf390> { statusBarStyleOverridesToSuppress = (none); }; }
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282adf390> { statusBarStyleOverridesToSuppress = (none); }; }
+[TRACE] SpringBoard: appview670 held a Live app view update (stage display-layout change)
+SpringBoard: appview670 held a Live app view update (stage display-layout change)
+[TRACE] SpringBoard: fitting com.beeper.chat.ios's scene to the card
+SpringBoard: fitting com.beeper.chat.ios's scene to the card
+[TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+[TRACE] app-view settings update
+[TRACE] SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28350d020> { hostContextIdentifierForSnapshotting = 802e30d8; scenePresenterRenderIdentifierForSnapshotting = fc9e61fd84d54021; }; }
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28350d020> { hostContextIdentifierForSnapshotting = 802e30d8; scenePresenterRenderIdentifierForSnapshotting = fc9e61fd84d54021; }; }
+[TRACE] app-view settings update done
+[TRACE] SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+[TRACE] SpringBoard: stayed up, boot guard cleared
+SpringBoard: stayed up, boot guard cleared
+[TRACE] relay668 com.beeper.chat.ios on a card 6s and no ctor or mapped marker in its container: DynamicStageApp.dylib is NOT running in this app (no injection: check jailbreak-hiding / tweak-blocking settings for it); its camera is not handled inside the app (the SpringBoard-side camera layout is opt-in: /var/mobile/.dynamicstage-sbcam-on)
+[TRACE] SpringBoard: keys674 com.beeper.chat.ios (sceneID:com.beeper.chat.ios-default) has no DynamicStage app dylib: its card's scene host (_UISceneLayerHostContainerView) asked whether it can show the app's keyboard layer, UIKit said YES, keys674 answers NO (no keyboard layer inside the card; the keys stay in SpringBoard's keyboard host at the bottom of the phone)
+SpringBoard: keys674 com.beeper.chat.ios (sceneID:com.beeper.chat.ios-default) has no DynamicStage app dylib: its card's scene host (_UISceneLayerHostContainerView) asked whether it can show the app's keyboard layer, UIKit said YES, keys674 answers NO (no keyboard layer inside the card; the keys stay in SpringBoard's keyboard host at the bottom of the phone)
+[TRACE] arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the app's keyboard layer; the keys stay in SpringBoard's keyboard host at the bottom of the phone), see the keys674 lines
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the app's k...
+[TRACE] SpringBoard: com.beeper.chat.ios put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: com.beeper.chat.ios put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x5)
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=301
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYBOARD] src=com.beeper.chat.ios slot=0 on=1 keysY=0 keysH=243 type=unknown frozen=0 frozenY=0 frozenH=0
+[TRACE] keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+[TRACE] keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+[BEEPER] SB left SpringBoard keyboard host alone
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 689}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=689 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=-95 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[LIFT] top drop slot=0 shift=-95 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0 (x2)
+[KEYBOARD] src=com.beeper.chat.ios slot=0 on=1 keysY=0 keysH=288 type=unknown frozen=0 frozenY=0 frozenH=0
+[TRACE] keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+[TRACE] keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 644}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=644 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 288pt
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 689}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=689 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 243pt
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 644}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=644 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] kept quick bar 346pt, ignored 288pt
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 100}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 100}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 100}, {420, 458}} (new in, then old out)
+SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 100}, {420, 458}} (new in, then old out)
+[TRACE] arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 631}, {430, 301}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 631}, {430, 301}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 631}, {430, 301}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 631}, {430, 301}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.beeper.chat.ios frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=-140 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] top drop slot=0 shift=0 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYBOARD] src=com.beeper.chat.ios slot=0 on=0 keysY=0 keysH=0 type=unknown frozen=0 frozenY=0 frozenH=0
+[KB FREEZE] released slot=0
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: restored resting frame slot 0 cardY=5 cardH=458
+SpringBoard: restored resting frame slot 0 cardY=5 cardH=458
+[TRACE] keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+[KEYS] note src=com.beeper.chat.ios frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.beeper.chat.ios frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 100}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 100}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+[TRACE] arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the app's keyboard layer; the keys stay in SpringBoard's keyboard host at the bottom of the phone), see the keys674 lines
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the app's k...
+[LIFT] top drop slot=0 shift=-95 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[LIFT] top drop slot=0 shift=-95 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0 (x2)
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[LIFT] top drop slot=0 shift=-95 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0 (x5)
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=1/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change had no owner bundle=com.beeper.chat.ios h=346
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYBOARD] src=com.beeper.chat.ios slot=0 on=1 keysY=0 keysH=288 type=unknown frozen=0 frozenY=0 frozenH=0
+[TRACE] keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+[TRACE] keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+[BEEPER] SB left SpringBoard keyboard host alone
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 644}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=644 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 644}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=644 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 100}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 100}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 100}, {420, 458}} (new in, then old out)
+SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 100}, {420, 458}} (new in, then old out)
+[TRACE] arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 131}, {420, 458}} lift=-95; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the app's keyboard layer; the keys stay in SpringBoard's keyboard host at the bottom of the phone), see the keys674 lines
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 131}, {420, 458}} lift=-95; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the app'...
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[LIFT] willHide on-screen frameEmpty=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0 (x2)
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] note src=com.beeper.chat.ios frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 586}, {430, 346}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] willHide kept, keys still on screen {{0, 586}, {430, 346}}
+[KEYS] note src=com.beeper.chat.ios frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=com.beeper.chat.ios req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[LIFT] top drop slot=0 shift=0 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-95 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYBOARD] src=com.beeper.chat.ios slot=0 on=0 keysY=0 keysH=0 type=unknown frozen=0 frozenY=0 frozenH=0
+[KB FREEZE] released slot=0
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: restored resting frame slot 0 cardY=5 cardH=458
+SpringBoard: restored resting frame slot 0 cardY=5 cardH=458
+[TRACE] keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+[KEYS] note src=com.beeper.chat.ios frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=com.beeper.chat.ios frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 100}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 100}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+[TRACE] SpringBoard: rim651 system gesture held at 0,257 (rim)
+SpringBoard: rim651 system gesture held at 0,257 (rim)
+[TRACE] SpringBoard: rim651 hit main-outer-left at 0,257 -> DSStageDragShellView
+SpringBoard: rim651 hit main-outer-left at 0,257 -> DSStageDragShellView
+[TOUCH] screenY=266 top-half
+[TRACE] SpringBoard: rim651 drag began at 0,266 won by main-shell-pan
+SpringBoard: rim651 drag began at 0,266 won by main-shell-pan
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 5}, {420, 458}} until the drag settles
+SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 5}, {420, 458}} until the drag settles
+[GEOM] place build 4.5.674 split=0 float=0 half=0 slots=1
+card {{5, 469}, {420, 458}}
+shell {{-31, 433}, {492, 530}}
+outline {{4, 468}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 469}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 469}, {420, 458}} outline={{4, 468}, {422, 460}} shell={{-31, 433}, {492, 530}} host={{5, 469}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[REST] com.beeper.chat.ios slot=0 cardY=469 cardH=458 restMaxY=927
+[TRACE] SpringBoard: rim651 system gesture held at 426,455 (rim)
+SpringBoard: rim651 system gesture held at 426,455 (rim)
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 5}, {420, 458}} until the drag settles
+SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 5}, {420, 458}} until the drag settles
+[TRACE] SpringBoard: rim651 system gesture held at 360,468 (rim)
+SpringBoard: rim651 system gesture held at 360,468 (rim)
+[GEOM] place build 4.5.674 split=0 float=0 half=0 slots=2
+card {{5, 469}, {420, 458}}
+shell {{-31, 433}, {492, 530}}
+outline {{4, 468}, {422, 460}}
+topCard {{5, 5}, {420, 458}}
+topRim {{-31, -31}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 469}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 469}, {420, 458}} outline={{4, 468}, {422, 460}} shell={{-31, 433}, {492, 530}} host={{5, 469}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{5, 5}, {420, 458}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: com.beeper.chat.ios stays running in the background
+SpringBoard: com.beeper.chat.ios stays running in the background
+[TRACE] SpringBoard: opened another stage
+SpringBoard: opened another stage
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+[TOUCH] screenY=503 bottom-half
+[TRACE] SpringBoard: rim651 drag began at 16,503 won by top-rim-pan
+SpringBoard: rim651 drag began at 16,503 won by top-rim-pan
+[TRACE] SpringBoard: rim651 system gesture held at 0,494 (rim)
+SpringBoard: rim651 system gesture held at 0,494 (rim)
+[TOUCH] screenY=514 bottom-half
+[TRACE] SpringBoard: rim651 drag began at 4,514 won by top-rim-pan
+SpringBoard: rim651 drag began at 4,514 won by top-rim-pan
+[TOUCH] screenY=492 bottom-half
+[TRACE] SpringBoard: rim651 drag began at 15,492 won by top-rim-pan
+SpringBoard: rim651 drag began at 15,492 won by top-rim-pan
+[GEOM] place build 4.5.674 split=0 float=0 half=0 slots=1
+card {{5, 469}, {420, 458}}
+shell {{-31, 433}, {492, 530}}
+outline {{4, 468}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 469}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 469}, {420, 458}} outline={{4, 468}, {422, 460}} shell={{-31, 433}, {492, 530}} host={{5, 469}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+[TRACE] SpringBoard: rim651 system gesture held at 2,467 (rim)
+SpringBoard: rim651 system gesture held at 2,467 (rim)
+[TRACE] SpringBoard: rim651 hit main-outer-top at 2,467 -> DSStageDragShellView
+SpringBoard: rim651 hit main-outer-top at 2,467 -> DSStageDragShellView
+[TRACE] SpringBoard: rim651 hit main-inner-top at 9,469 -> DSStageContainerView
+SpringBoard: rim651 hit main-inner-top at 9,469 -> DSStageContainerView
+[TOUCH] screenY=472 bottom-half
+[TRACE] SpringBoard: rim651 drag began at 16,472 won by main-shell-pan
+SpringBoard: rim651 drag began at 16,472 won by main-shell-pan
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 469}, {420, 458}} until the drag settles
+SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 469}, {420, 458}} until the drag settles
+[TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 457.99999999999989}}
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+[TRACE] app-view settings update
+[TRACE] SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = <BSMutableSettings: 0x2865af700> { frame = NSRect: {{0, 0}, {420, 457.99999999999989}}; }; subclassChanges = (none); }
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = <BSMutableSettings: 0x2865af700> { frame = NSRect: {{0, 0}, {420, 457.99999999999989}}; }; subclassChanges = (none); }
+[TRACE] SpringBoard: appview670 held a Live app view update (card drag)
+SpringBoard: appview670 held a Live app view update (card drag)
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios taken out of the display layout (app left the stage), path=layout-off
+SpringBoard: camera658 com.beeper.chat.ios taken out of the display layout (app left the stage), path=layout-off
+[TRACE] SpringBoard: camera661 presence com.beeper.chat.ios out of the display layout (app left the stage)
+SpringBoard: camera661 presence com.beeper.chat.ios out of the display layout (app left the stage)
+[TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+[KEYS] note src=com.apple.Spotlight frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: com.apple.Spotlight put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: com.apple.Spotlight put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[REST] rejected restMaxY=2008, it is past the screen
+[REST]  slot=0 cardY=5 cardH=458 restMaxY=463
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=an app frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.mobilenotes frame={{0, 0}, {430, 243}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=com.apple.mobilenotes frame={{0, 0}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[TRACE] arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+[KEYS] note src=com.apple.mobilenotes frame={{0, 0}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 932}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit willHide end={{0, 932}, {430, 346}} staged=-1 search=-1 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] hide ignored, keys still {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit change frame={{0, 857}, {430, 75}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 857}, {430, 75}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 857}, {430, 75}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=857 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=com.apple.mobilenotes frame={{0, 0}, {430, 288}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: taking key from SBMainSwitcherWindow on this scene
+SpringBoard: taking key from SBMainSwitcherWindow on this scene
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: SpringBoard put a keyboard up at {{0, 586}, {430, 346}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: SpringBoard put a keyboard up at {{0, 586}, {430, 346}} (the display is {{0, 0}, {430, 932}})
+[LIFT] top drop slot=0 shift=-95 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit willShow frame={{0, 586}, {430, 346}} staged=-1 search=-1 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] uikit change frame={{0, 586}, {430, 346}} staged=-1 search=-1 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0
+[LIFT] top drop slot=0 shift=-95 keys671selfAvoid=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 586}, {430, 346}} split=0 (x2)
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys={{0, 586}, {430, 346}} scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys={{0, 586}, {430, 346}} scenes=fg-active/main*,fg-active/main,fg-active/main
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 586}, {430, 346}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[REST]  slot=0 cardY=5 cardH=458 restMaxY=463
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[GEOM] place build 4.5.674 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 99}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=1 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=-95 top=0 float=0 kFrame={{0, 586}, {430, 346}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 99}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys={{0, 586}, {430, 346}} scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys={{0, 586}, {430, 346}} scenes=fg-active/main*,fg-active/main,fg-active/main
+[KEYS] note src=SpringBoard frame={{0, 586}, {430, 346}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=586 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: SpringBoard put a keyboard up at {{0, 586}, {430, 346}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: SpringBoard put a keyboard up at {{0, 586}, {430, 346}} (the display is {{0, 0}, {430, 932}})
+[REST]  slot=0 cardY=5 cardH=458 restMaxY=463
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+00:11:09.753 SpringBoard pid=27359 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+00:11:09.753 SpringBoard pid=27359 main | ready state=0 split=0 bottom=- top=- hover=-
+00:11:09.753 SpringBoard pid=27359 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+00:11:09.762 SpringBoard pid=27359 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+00:11:09.762 SpringBoard pid=27359 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+00:11:09.762 SpringBoard pid=27359 main | SpringBoard: relay667 copying trace lines from 3 sandboxed apps (Beeper, Messenger, Signal) into this log
+00:11:09.763 SpringBoard pid=27359 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+00:11:09.769 SpringBoard pid=27359 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+00:11:09.774 SpringBoard pid=27359 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+00:11:09.774 SpringBoard pid=27359 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+00:11:09.774 SpringBoard pid=27359 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+00:11:09.774 SpringBoard pid=27359 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+00:11:09.776 SpringBoard pid=27359 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+00:11:09.776 SpringBoard pid=27359 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=43s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=43s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.face...
+00:11:11.235 SpringBoard pid=27359 main | SpringBoard: stage on screen
+00:11:11.235 SpringBoard pid=27359 main | on screen state=2 split=0 bottom=- top=- hover=-
+00:11:11.235 SpringBoard pid=27359 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+00:11:11.236 SpringBoard pid=27359 main | SpringBoard: taking key from SBCoverSheetWindow on this scene
+00:11:11.236 SpringBoard pid=27359 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+00:11:11.236 SpringBoard pid=27359 main | SpringBoard: opened the top stage
+00:11:11.553 SpringBoard pid=27359 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+00:11:11.554 SpringBoard pid=27359 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+00:11:11.780 SpringBoard pid=27359 bg | relay667 com.beeper.chat.ios watching /private/var/mobile/Containers/Data/Application/E0E43FC6-AA46-4266-89FE-FD304717A75C/tmp/com.recreated.dynamicstage.app-trace.log
+00:11:11.785 SpringBoard pid=27359 bg | relay667 com.facebook.Messenger watching /private/var/mobile/Containers/Data/Application/705A8F36-599E-4048-A599-236977707F86/tmp/com.recreated.dynamicstage.app-trace.log
+00:11:11.789 SpringBoard pid=27359 bg | relay667 org.whispersystems.signal watching /private/var/mobile/Containers/Data/Application/CC65759B-F5BD-4DED-BEEF-678589769B20/tmp/com.recreated.dynamicstage.app-trace.log
+00:11:13.110 SpringBoard pid=27359 main | SpringBoard: putting com.beeper.chat.ios on stack slot 0
+00:11:13.110 SpringBoard pid=27359 main | launch com.beeper.chat.ios state=2 split=0 bottom=- top=- hover=-
+00:11:13.110 SpringBoard pid=27359 main | SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+00:11:13.110 SpringBoard pid=27359 main | SpringBoard: creating app view for com.beeper.chat.ios
+00:11:13.110 SpringBoard pid=27359 main | SpringBoard: created app view for com.beeper.chat.ios
+00:11:13.115 SpringBoard pid=27359 main | scene transaction com.beeper.chat.ios actions=1
+00:11:13.117 SpringBoard pid=27359 main | SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+00:11:13.120 SpringBoard pid=27359 main | SpringBoard: com.beeper.chat.ios stays running in the background
+00:11:13.120 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+00:11:13.120 SpringBoard pid=27359 main | SpringBoard: com.beeper.chat.ios is on stack slot 0
+00:11:13.120 SpringBoard pid=27359 main | hosted com.beeper.chat.ios state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+00:11:13.145 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+00:11:13.145 SpringBoard pid=27359 main | SpringBoard: camera661 presence com.beeper.chat.ios in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0)
+00:11:13.146 SpringBoard pid=27359 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+00:11:13.146 SpringBoard pid=27359 main | scene update begin sceneID:com.beeper.chat.ios-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+00:11:13.146 SpringBoard pid=27359 main | SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+00:11:13.148 SpringBoard pid=27359 main | app-view settings update
+00:11:13.148 SpringBoard pid=27359 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282adf390> { statusBarStyleOverridesToSuppress = (none); }; }
+00:11:13.148 SpringBoard pid=27359 main | SpringBoard: appview670 held a Live app view update (stage display-layout change)
+00:11:13.161 SpringBoard pid=27359 main | SpringBoard: fitting com.beeper.chat.ios's scene to the card
+00:11:13.161 SpringBoard pid=27359 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+00:11:14.679 SpringBoard pid=27359 main | SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+00:11:14.959 SpringBoard pid=27359 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+00:11:14.961 SpringBoard pid=27359 main | app-view settings update
+00:11:14.962 SpringBoard pid=27359 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28350d020> { hostContextIdentifierForSnapshotting = 802e30d8; scenePresenterRenderIdentifierForSnapshotting = fc9e61fd84d54021; }; }
+00:11:14.962 SpringBoard pid=27359 main | app-view settings update done
+00:11:15.630 SpringBoard pid=27359 main | SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+00:11:17.832 SpringBoard pid=27359 main | SpringBoard: stayed up, boot guard cleared
+00:11:19.512 SpringBoard pid=27359 bg | relay668 com.beeper.chat.ios on a card 6s and no ctor or mapped marker in its container: DynamicStageApp.dylib is NOT running in this app (no injection: check jailbreak-hiding / tweak-blocking settings for it); its camera is not handled inside the app (the SpringBoard-side camera layout is opt-in: /var/mobile/.dynam...
+00:11:20.709 SpringBoard pid=27359 main | SpringBoard: keys674 com.beeper.chat.ios (sceneID:com.beeper.chat.ios-default) has no DynamicStage app dylib: its card's scene host (_UISceneLayerHostContainerView) asked whether it can show the app's keyboard layer, UIKit said YES, keys674 answers NO (no keyboard layer inside the card; the keys stay in SpringBoard'...
+00:11:20.710 SpringBoard pid=27359 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+00:11:20.712 SpringBoard pid=27359 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard...
+00:11:20.712 SpringBoard pid=27359 main | SpringBoard: com.beeper.chat.ios put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+00:11:20.716 SpringBoard pid=27359 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+00:11:20.721 SpringBoard pid=27359 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+00:11:20.721 SpringBoard pid=27359 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+00:11:20.721 SpringBoard pid=27359 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+00:11:20.730 SpringBoard | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen x3
+00:11:20.730 SpringBoard pid=27359 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+00:11:20.730 SpringBoard pid=27359 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+00:11:20.730 SpringBoard pid=27359 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+00:11:21.156 SpringBoard | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen x3
+00:11:21.156 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 100}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1...
+00:11:21.157 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 100}, {420, 458}} (new in, then old out)
+00:11:22.255 SpringBoard pid=27359 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+00:11:22.258 SpringBoard pid=27359 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+00:11:22.279 SpringBoard | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen x5
+00:11:22.279 SpringBoard pid=27359 main | SpringBoard: restored resting frame slot 0 cardY=5 cardH=458
+00:11:22.279 SpringBoard pid=27359 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+00:11:22.279 SpringBoard pid=27359 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+00:11:23.304 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 a...
+00:11:23.304 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 100}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+00:11:58.403 SpringBoard pid=27359 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+00:11:58.408 SpringBoard pid=27359 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard...
+00:11:58.426 SpringBoard pid=27359 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+00:11:58.427 SpringBoard pid=27359 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+00:11:58.427 SpringBoard pid=27359 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+00:11:59.181 SpringBoard | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen x2
+00:11:59.181 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 100}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1...
+00:11:59.182 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 100}, {420, 458}} (new in, then old out)
+00:12:04.850 SpringBoard pid=27359 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+00:12:04.853 SpringBoard pid=27359 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+00:12:04.856 SpringBoard pid=27359 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 131}, {420, 458}} lift=-95; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keybo...
+00:12:04.858 SpringBoard pid=27359 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+00:12:04.875 SpringBoard | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen x4
+00:12:04.875 SpringBoard pid=27359 main | SpringBoard: restored resting frame slot 0 cardY=5 cardH=458
+00:12:04.875 SpringBoard pid=27359 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+00:12:04.876 SpringBoard pid=27359 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+00:12:05.183 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1 a...
+00:12:05.183 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 100}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+00:12:05.499 SpringBoard pid=27359 main | SpringBoard: rim651 system gesture held at 0,257 (rim)
+00:12:05.503 SpringBoard pid=27359 main | SpringBoard: rim651 hit main-outer-left at 0,257 -> DSStageDragShellView
+00:12:05.549 SpringBoard pid=27359 main | SpringBoard: rim651 drag began at 0,266 won by main-shell-pan
+00:12:05.602 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 5}, {420, 458}} until the drag settles
+00:12:07.946 SpringBoard pid=27359 main | SpringBoard: rim651 system gesture held at 426,455 (rim)
+00:12:08.063 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 5}, {420, 458}} until the drag settles
+00:12:08.731 SpringBoard pid=27359 main | SpringBoard: rim651 system gesture held at 360,468 (rim)
+00:12:08.942 SpringBoard pid=27359 main | SpringBoard: com.beeper.chat.ios stays running in the background
+00:12:08.949 SpringBoard pid=27359 main | SpringBoard: opened another stage
+00:12:08.958 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.beeper.chat.ios(role=1 level=1 app=1 full=0), com.beeper.chat.ios(role=1 level=1...
+00:12:08.958 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+00:12:10.491 SpringBoard pid=27359 main | SpringBoard: rim651 drag began at 16,503 won by top-rim-pan
+00:12:11.140 SpringBoard pid=27359 main | SpringBoard: rim651 system gesture held at 0,494 (rim)
+00:12:11.241 SpringBoard pid=27359 main | SpringBoard: rim651 drag began at 4,514 won by top-rim-pan
+00:12:11.758 SpringBoard pid=27359 main | SpringBoard: rim651 drag began at 15,492 won by top-rim-pan
+00:12:13.261 SpringBoard pid=27359 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+00:12:13.262 SpringBoard pid=27359 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+00:12:13.693 SpringBoard pid=27359 main | SpringBoard: rim651 system gesture held at 2,467 (rim)
+00:12:13.699 SpringBoard pid=27359 main | SpringBoard: rim651 hit main-outer-top at 2,467 -> DSStageDragShellView
+00:12:13.710 SpringBoard pid=27359 main | SpringBoard: rim651 hit main-inner-top at 9,469 -> DSStageContainerView
+00:12:13.726 SpringBoard pid=27359 main | SpringBoard: rim651 drag began at 16,472 won by main-shell-pan
+00:12:13.779 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios layout670 card is moving: display-layout element kept at {{5, 469}, {420, 458}} until the drag settles
+00:12:14.094 SpringBoard pid=27359 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 457.99999999999989}}
+00:12:14.095 SpringBoard pid=27359 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+00:12:14.097 SpringBoard pid=27359 main | app-view settings update
+00:12:14.097 SpringBoard pid=27359 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = <BSMutableSettings: 0x2865af700> { frame = NSRect: {{0, 0}, {420, 457.99999999999989}}; }; subclassChanges = (none); }
+00:12:14.097 SpringBoard pid=27359 main | SpringBoard: appview670 held a Live app view update (card drag)
+00:12:14.819 SpringBoard pid=27359 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+00:12:14.820 SpringBoard pid=27359 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+00:12:15.190 SpringBoard pid=27359 main | SpringBoard: camera658 com.beeper.chat.ios taken out of the display layout (app left the stage), path=layout-off
+00:12:15.190 SpringBoard pid=27359 main | SpringBoard: camera661 presence com.beeper.chat.ios out of the display layout (app left the stage)
+00:12:15.299 SpringBoard pid=27359 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+00:12:15.300 SpringBoard pid=27359 main | SpringBoard: com.apple.Spotlight put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+00:12:17.584 SpringBoard pid=27359 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+00:12:21.418 SpringBoard pid=27359 bg | arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 243}}
+00:12:21.422 SpringBoard pid=27359 bg | arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+00:12:26.134 SpringBoard pid=27359 bg | arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+00:12:27.293 SpringBoard pid=27359 bg | arbiter on=1 src=com.apple.mobilenotes frame={{0, 0}, {430, 288}}
+00:12:28.500 SpringBoard pid=27359 main | SpringBoard: stage on screen
+00:12:28.500 SpringBoard pid=27359 main | on screen state=2 split=0 bottom=- top=- hover=-
+00:12:28.501 SpringBoard pid=27359 main | SpringBoard: taking key from SBMainSwitcherWindow on this scene
+00:12:28.503 SpringBoard pid=27359 main | SpringBoard: SpringBoard put a keyboard up at {{0, 586}, {430, 346}} (the display is {{0, 0}, {430, 932}})
+00:12:28.504 SpringBoard pid=27359 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys={{0, 586}, {430, 346}} scenes=fg-active/main*,fg-active/main,fg-active/main
+00:12:28.504 SpringBoard pid=27359 main | SpringBoard: opened the top stage
+00:12:28.850 SpringBoard pid=27359 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys={{0, 586}, {430, 346}} scenes=fg-active/main*,fg-active/main,fg-active/main
+00:12:28.851 SpringBoard pid=27359 main | SpringBoard: SpringBoard put a keyboard up at {{0, 586}, {430, 346}} (the display is {{0, 0}, {430, 932}})
+
+--- crash ---
+
+--- diagnostics ---

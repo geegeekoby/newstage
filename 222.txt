@@ -1,0 +1,433 @@
+build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+[TRACE] SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+[TRACE] SpringBoard: relay667 copying trace lines from 3 sandboxed apps (Beeper, Messenger, Signal) into this log
+SpringBoard: relay667 copying trace lines from 3 sandboxed apps (Beeper, Messenger, Signal) into this log
+[TRACE] SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+[TRACE] SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+[TRACE] SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+[TRACE] SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+[TRACE] SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+[TRACE] SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCrack.plist,AudioRecorder.dylib,dig3st.dylib,SNMessenger.plist,ShadowBuster.plist,Griddy.dylib,RocketPro.plist,TasksCrack.plist,Designer.dylib,Cephei-compat.dylib,SwiftgramPatch.dylib,DynamicStageApp.dylib,EmojiSkinPrefs.dylib,Bloom.dylib,0Antho.dylib,AlertControllerllld.dylib,NoRedirect.plist,PreferenceLoader.plist,replaced.dylib,DisableAppLibrary.plist,FilzaCrack.dylib,AudioRecorder.plist,dig3st.plist,SNMessenger.dylib,DynamicStage.dylib,FouadCrack.plist,PhotomathPlus.plist,Erika.dylib,SimpleActivationActions.dylib,DataManager.plist,AppStoreUpdatesTab.plist,GraphitePlugin.plist,SandyProxy.dylib,DavevanCrack.dylib,AppData.plist,Airaw.plist,0symbolab.dylib,CameraModes.dylib,PicsArt.dylib,CCSupport.plist,TeraBoxPremium.plist,Xinam1ne.dylib,LoopVideos.dylib,FouadCrack.dylib,DynamicStage.plist,PhotomathPlus.dylib,EmojiPort,Erika.plist,DataManager.dylib,SimpleActivationActions.plist,AppStoreUpdatesTab.dylib,GraphitePlugin.dylib,SandyProxy.plist,DavevanCrack.plist,CameraModes.plist,Airaw.dylib,0symbolab.plist,AppData.dylib,PicsArt.plist,Xinam1ne.plist,TeraBoxPremium.dylib,CCSupport.dylib,LoopVideos.plist,CepheiSpringBoard.plist,Rocket.dylib,1NebbsCrack.plist,0Snail.dylib,FacebookNoAds.plist,82Hack.dylib,LetMeDecline.dylib,LimneosCrack.dylib,SimPlus.dylib,RocketBootstrap.plist,ApolloCrack.dylib,CC18.dylib,NoYTPremium.dylib,LyricsTweak.dylib,SafariBlocker.plist,AudioRecorderUI.plist,CepheiSpringBoard.dylib,1NebbsCrack.dylib,Rocket.plist,0Snail.plist,FacebookNoAds.dylib,LetMeDecline.plist,82Hack.plist,LimneosCrack.plist,RocketBootstrap.dylib,SimPlus.plist,ApolloCrack.plist,CC18.plist,NoYTPremium.plist,LyricsTweak.plist,SafariBlocker.dylib,AudioRecorderUI.dylib,QuickAppsKill.dylib,RecordPause.dylib,EmojiPortPE.plist,PMP.plist,Photomator.dylib,YTShortsProgress.dylib,LendMyPhone.plist,iarrays_hack_.dylib,DeleteContact.plist,CalculatorConverter.dylib,appstoretroller.dylib,QuickAppsKill.plist,EmojiPortPE.dylib,RecordPause.plist,Photomator.plist,PMP.dylib,YTShortsProgress.plist,LendMyPhone.dylib,CalculatorConverter.plist,DeleteContact.dylib,iarrays_hack_.plist,appstoretroller.plist
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+[TRACE] SpringBoard: filter at boot ctor=[age=51s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=51s mapped bundle=com.apple.MobileSMS pid=14322 build=4.5.669] libsPlist=[age=4245s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=4245s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }]
+SpringBoard: filter at boot ctor=[age=51s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=51s mapped bundle=com.apple.MobileSMS pid=14322 build=4.5.669] libsPlist=[age=4245s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=424...
+[TRACE] relay667 com.beeper.chat.ios watching /private/var/mobile/Containers/Data/Application/E0E43FC6-AA46-4266-89FE-FD304717A75C/tmp/com.recreated.dynamicstage.app-trace.log
+[TRACE] relay667 com.facebook.Messenger watching /private/var/mobile/Containers/Data/Application/705A8F36-599E-4048-A599-236977707F86/tmp/com.recreated.dynamicstage.app-trace.log
+[TRACE] relay667 org.whispersystems.signal watching /private/var/mobile/Containers/Data/Application/CC65759B-F5BD-4DED-BEEF-678589769B20/tmp/com.recreated.dynamicstage.app-trace.log
+[TRACE] SpringBoard: stage window moved back to the foreground scene
+SpringBoard: stage window moved back to the foreground scene
+[CARD] reset geometry radius=44 mask=1 local={{5, 1012}, {420, 458}} screen={{5, 1012}, {420, 458}}
+[GEOM] place build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+[TRACE] SpringBoard: taking key from SBCoverSheetWindow on this scene
+SpringBoard: taking key from SBCoverSheetWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[GEOM] place build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: search asked try=0 slot=0 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=0 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search asked try=0 slot=0 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=0 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] search field begin editing: fr=0 win=1 key=1 att=0
+search field begin editing: fr=0 win=1 key=1 att=0
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=0 drop=140 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] uikit willShow frame={{0, 631}, {430, 301}} staged=-1 search=0 host=0/0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[TRACE] SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+[KEYS] uikit change frame={{0, 631}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 631}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=0 drop=140 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=631 depth=0 kFrame={{0, 631}, {430, 301}} split=0 (x2)
+[TRACE] SpringBoard: search visible try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: search visible try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+[KEYS] uikit change frame={{0, 932}, {430, 301}} staged=-1 search=0 owner=- req=- lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-140 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[KEYS] note src=SpringBoard frame={{0, 932}, {430, 301}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=-140 keyTop=932 depth=0 kFrame={{0, 631}, {430, 301}} split=0
+[LIFT] search slot=0 lift=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[KEYS] uikit willHide end={{0, 932}, {430, 301}} staged=-1 search=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=932 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[TRACE] SpringBoard: UIKit willHide
+SpringBoard: UIKit willHide
+[KEYS] note src=SpringBoard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[LIFT] search slot=0 lift=0 lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0 (x2)
+[KEYS] note src=com.apple.springboard frame={{0, 0}, {0, 0}} lower=primary slot=0 placed={{5, 5}, {420, 458}} bottom=463 liftNow=0 keyTop=0 depth=0 kFrame={{0, 0}, {0, 0}} split=0
+[GEOM] place build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: putting com.beeper.chat.ios on stack slot 0
+SpringBoard: putting com.beeper.chat.ios on stack slot 0
+[TRACE] launch com.beeper.chat.ios state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+[TRACE] SpringBoard: creating app view for com.beeper.chat.ios
+SpringBoard: creating app view for com.beeper.chat.ios
+[TRACE] SpringBoard: created app view for com.beeper.chat.ios
+SpringBoard: created app view for com.beeper.chat.ios
+[TRACE] app-view settings update
+[TRACE] SpringBoard: appview668 sceneID:com.beeper.chat.ios-default mode=0 flip=0 update: <FBSSceneSettingsDiff: 0x2857c51a0> { settingsClass = UIApplicationSceneSettings; changes = <BSMutableSettings: 0x2857c46e0> { foreground = BSSettingFlagYes; }; subclassChanges = <BSSettingsDiff: 0x2804aa7f0> { deviceOri
+SpringBoard: appview668 sceneID:com.beeper.chat.ios-default mode=0 flip=0 update: <FBSSceneSettingsDiff: 0x2857c51a0> { settingsClass = UIApplicationSceneSettings; changes = <BSMutableSettings: 0x2857c46e0> { foreground = BSSettingFlagYes; }; subclassChanges = <BSSettingsDiff: 0x2804aa7f0> { deviceOri
+[TRACE] app-view settings update done
+[TRACE] scene transaction com.beeper.chat.ios actions=1
+[TRACE] SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+[TRACE] SpringBoard: com.beeper.chat.ios stays running in the background
+SpringBoard: com.beeper.chat.ios stays running in the background
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios on a card: injected app, a 'camera hook loaded' line should follow
+SpringBoard: camera658 com.beeper.chat.ios on a card: injected app, a 'camera hook loaded' line should follow
+[TRACE] SpringBoard: com.beeper.chat.ios is on stack slot 0
+SpringBoard: com.beeper.chat.ios is on stack slot 0
+[TRACE] hosted com.beeper.chat.ios state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+[KEYBOARD LOG] attach com.beeper.chat.ios slot 0 stack=1 prim=1
+[GEOM] place build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[REST] com.beeper.chat.ios slot=0 cardY=5 cardH=458 restMaxY=463
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 932}}
+[TRACE] SpringBoard: kept the open stage inside its card while another app opened
+SpringBoard: kept the open stage inside its card while another app opened
+[TRACE] SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+[TRACE] SpringBoard: fitting com.beeper.chat.ios's scene to the card
+SpringBoard: fitting com.beeper.chat.ios's scene to the card
+[TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+[TRACE] SpringBoard: appview668 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: <FBSSceneSettingsDiff: 0x28579d5a0> { settingsClass = UIApplicationSceneSettings; changes = (none); subclassChanges = <BSSettingsDiff: 0x280765710> { hostContextIdentifierForSnapshotting = 221ffce6; scenePresenterRenderI
+SpringBoard: appview668 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: <FBSSceneSettingsDiff: 0x28579d5a0> { settingsClass = UIApplicationSceneSettings; changes = (none); subclassChanges = <BSSettingsDiff: 0x280765710> { hostContextIdentifierForSnapshotting = 221ffce6; scenePresenterRenderI
+[TRACE] SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+[TRACE] SpringBoard: stayed up, boot guard cleared
+SpringBoard: stayed up, boot guard cleared
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+[TRACE] SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+[TRACE] relay668 com.beeper.chat.ios on a card 7s and no ctor or mapped marker in its container: DynamicStageApp.dylib is NOT running in this app (no injection: check jailbreak-hiding / tweak-blocking settings for it); SpringBoard-side camera layout (sbcam669) covers its camera
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+[TRACE] SpringBoard: rim651 system gesture held at 2,291 (rim)
+SpringBoard: rim651 system gesture held at 2,291 (rim)
+[TRACE] SpringBoard: rim651 hit main-outer-left at 2,291 -> DSStageDragShellView
+SpringBoard: rim651 hit main-outer-left at 2,291 -> DSStageDragShellView
+[TOUCH] screenY=294 top-half
+[TRACE] SpringBoard: rim651 drag began at 12,294 won by main-shell-pan
+SpringBoard: rim651 drag began at 12,294 won by main-shell-pan
+[GEOM] place build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 5}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.beeper.chat.ios slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{5, 5}, {420, 458}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[REST] com.beeper.chat.ios slot=0 cardY=5 cardH=458 restMaxY=463
+[TRACE] SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+[TRACE] SpringBoard: rim651 system gesture held at 0,288 (rim)
+SpringBoard: rim651 system gesture held at 0,288 (rim)
+[TRACE] SpringBoard: rim651 hit main-outer-left at 0,288 -> DSStageDragShellView
+SpringBoard: rim651 hit main-outer-left at 0,288 -> DSStageDragShellView
+[TOUCH] screenY=295 top-half
+[TRACE] SpringBoard: rim651 drag began at 0,295 won by main-shell-pan
+SpringBoard: rim651 drag began at 0,295 won by main-shell-pan
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[TRACE] SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 1550}, {420, 458}}
+[GEOM] place build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, -470}, {420, 458}}
+shell {{-31, -506}, {492, 530}}
+outline {{4, -471}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, -470}, {420, 458}} outline={{4, -471}, {422, 460}} shell={{-31, -506}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: stage on screen
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+[TRACE] SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+[GEOM] place build 4.5.669 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+[GEOM-DBG] card={{5, 5}, {420, 458}} outline={{4, 4}, {422, 460}} shell={{-31, -31}, {492, 530}} host={{0, 0}, {0, 0}} topHost={{0, 0}, {0, 0}} topCard={{0, 0}, {0, 0}} float={{0, 0}, {0, 0}} front={{0, 0}, {0, 0}} zFloat=0
+[TRACE] SpringBoard: opened the top stage
+SpringBoard: opened the top stage
+[CARD] reset geometry radius=44 mask=1 local={{36, 36}, {420, 458}} screen={{5, 5}, {420, 458}}
+[TRACE] SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+18:37:27.901 MobileSMS pid=14322 main | app restored the phone layout
+18:37:28.130 SpringBoard pid=14350 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+18:37:28.130 SpringBoard pid=14350 main | ready state=0 split=0 bottom=- top=- hover=-
+18:37:28.130 SpringBoard pid=14350 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+18:37:28.137 SpringBoard pid=14350 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+18:37:28.137 SpringBoard pid=14350 main | SpringBoard: relay667 copying trace lines from 3 sandboxed apps (Beeper, Messenger, Signal) into this log
+18:37:28.138 SpringBoard pid=14350 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+18:37:28.142 SpringBoard pid=14350 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+18:37:28.146 SpringBoard pid=14350 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+18:37:28.146 SpringBoard pid=14350 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+18:37:28.146 SpringBoard pid=14350 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+18:37:28.148 SpringBoard pid=14350 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+18:37:28.149 SpringBoard pid=14350 main | SpringBoard: filter at boot ctor=[age=51s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=51s mapped bundle=com.apple.MobileSMS pid=14322 build=4.5.669] libsPlist=[age=4245s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal...
+18:37:30.165 SpringBoard pid=14350 bg | relay667 com.beeper.chat.ios watching /private/var/mobile/Containers/Data/Application/E0E43FC6-AA46-4266-89FE-FD304717A75C/tmp/com.recreated.dynamicstage.app-trace.log
+18:37:30.171 SpringBoard pid=14350 bg | relay667 com.facebook.Messenger watching /private/var/mobile/Containers/Data/Application/705A8F36-599E-4048-A599-236977707F86/tmp/com.recreated.dynamicstage.app-trace.log
+18:37:30.176 SpringBoard pid=14350 bg | relay667 org.whispersystems.signal watching /private/var/mobile/Containers/Data/Application/CC65759B-F5BD-4DED-BEEF-678589769B20/tmp/com.recreated.dynamicstage.app-trace.log
+18:37:30.306 SpringBoard pid=14350 main | SpringBoard: stage window moved back to the foreground scene
+18:37:30.306 SpringBoard pid=14350 main | SpringBoard: stage on screen
+18:37:30.306 SpringBoard pid=14350 main | on screen state=2 split=0 bottom=- top=- hover=-
+18:37:30.309 SpringBoard pid=14350 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+18:37:30.309 SpringBoard pid=14350 main | SpringBoard: taking key from SBCoverSheetWindow on this scene
+18:37:30.309 SpringBoard pid=14350 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:37:30.310 SpringBoard pid=14350 main | SpringBoard: opened the top stage
+18:37:30.732 SpringBoard pid=14350 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:37:31.913 SpringBoard pid=14350 main | SpringBoard: search asked try=0 slot=0 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBHomeScreenWindow winScene=fg-active fr=0 win=1 key=0 att=0 keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:37:31.914 SpringBoard pid=14350 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:37:31.916 SpringBoard pid=14350 main | SpringBoard: takeKey ok try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:37:31.916 SpringBoard pid=14350 main | search field begin editing: fr=0 win=1 key=1 att=0
+18:37:31.960 SpringBoard pid=14350 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+18:37:31.973 SpringBoard pid=14350 main | SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+18:37:32.084 SpringBoard pid=14350 main | SpringBoard: search visible try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main*,fg-active/main
+18:37:33.482 SpringBoard pid=14350 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+18:37:33.485 SpringBoard pid=14350 main | SpringBoard: UIKit willHide
+18:37:34.199 SpringBoard pid=14350 main | SpringBoard: putting com.beeper.chat.ios on stack slot 0
+18:37:34.199 SpringBoard pid=14350 main | launch com.beeper.chat.ios state=2 split=0 bottom=- top=- hover=-
+18:37:34.199 SpringBoard pid=14350 main | SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+18:37:34.199 SpringBoard pid=14350 main | SpringBoard: creating app view for com.beeper.chat.ios
+18:37:34.199 SpringBoard pid=14350 main | SpringBoard: created app view for com.beeper.chat.ios
+18:37:34.201 SpringBoard pid=14350 main | app-view settings update
+18:37:34.201 SpringBoard pid=14350 main | SpringBoard: appview668 sceneID:com.beeper.chat.ios-default mode=0 flip=0 update: <FBSSceneSettingsDiff: 0x2857c51a0> { settingsClass = UIApplicationSceneSettings; changes = <BSMutableSettings: 0x2857c46e0> { foreground = BSSettingFlagYes; }; subclassChanges = <BSSettingsDiff: 0x2804aa7f0> { deviceOri
+18:37:34.201 SpringBoard pid=14350 main | app-view settings update done
+18:37:34.202 SpringBoard pid=14350 main | scene transaction com.beeper.chat.ios actions=1
+18:37:34.204 SpringBoard pid=14350 main | SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+18:37:34.205 SpringBoard pid=14350 main | SpringBoard: com.beeper.chat.ios stays running in the background
+18:37:34.205 SpringBoard pid=14350 main | SpringBoard: camera658 com.beeper.chat.ios on a card: injected app, a 'camera hook loaded' line should follow
+18:37:34.205 SpringBoard pid=14350 main | SpringBoard: com.beeper.chat.ios is on stack slot 0
+18:37:34.205 SpringBoard pid=14350 main | hosted com.beeper.chat.ios state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+18:37:34.231 SpringBoard pid=14350 main | SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+18:37:34.231 SpringBoard pid=14350 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 932}}
+18:37:34.231 SpringBoard pid=14350 main | SpringBoard: kept the open stage inside its card while another app opened
+18:37:34.231 SpringBoard pid=14350 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+18:37:34.251 SpringBoard pid=14350 main | SpringBoard: fitting com.beeper.chat.ios's scene to the card
+18:37:34.251 SpringBoard pid=14350 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+18:37:34.751 SpringBoard pid=14350 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+18:37:34.755 SpringBoard pid=14350 main | SpringBoard: appview668 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: <FBSSceneSettingsDiff: 0x28579d5a0> { settingsClass = UIApplicationSceneSettings; changes = (none); subclassChanges = <BSSettingsDiff: 0x280765710> { hostContextIdentifierForSnapshotting = 221ffce6; scenePresenterRenderI
+18:37:35.775 SpringBoard pid=14350 main | SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+18:37:36.195 SpringBoard pid=14350 main | SpringBoard: stayed up, boot guard cleared
+18:37:36.250 SpringBoard pid=14350 main | SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+18:37:36.826 SpringBoard pid=14350 main | SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+18:37:38.373 SpringBoard pid=14350 main | SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+18:37:40.525 SpringBoard pid=14350 main | SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+18:37:40.924 SpringBoard pid=14350 bg | relay668 com.beeper.chat.ios on a card 7s and no ctor or mapped marker in its container: DynamicStageApp.dylib is NOT running in this app (no injection: check jailbreak-hiding / tweak-blocking settings for it); SpringBoard-side camera layout (sbcam669) covers its camera
+18:37:43.362 SpringBoard pid=14350 main | SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+18:37:44.111 SpringBoard pid=14350 main | SpringBoard: rim651 system gesture held at 2,291 (rim)
+18:37:44.117 SpringBoard pid=14350 main | SpringBoard: rim651 hit main-outer-left at 2,291 -> DSStageDragShellView
+18:37:44.178 SpringBoard pid=14350 main | SpringBoard: rim651 drag began at 12,294 won by main-shell-pan
+18:37:45.494 SpringBoard pid=14350 main | SpringBoard: camera658 com.beeper.chat.ios wants the camera but the display layout publisher is not known yet
+18:37:46.755 SpringBoard pid=14350 main | SpringBoard: rim651 system gesture held at 0,288 (rim)
+18:37:46.762 SpringBoard pid=14350 main | SpringBoard: rim651 hit main-outer-left at 0,288 -> DSStageDragShellView
+18:37:46.823 SpringBoard pid=14350 main | SpringBoard: rim651 drag began at 0,295 won by main-shell-pan
+18:37:48.235 SpringBoard pid=14350 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:37:48.239 SpringBoard pid=14350 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:37:53.227 SpringBoard pid=14350 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+18:37:54.394 SpringBoard pid=14350 main | SpringBoard: stage on screen
+18:37:54.394 SpringBoard pid=14350 main | on screen state=2 split=0 bottom=- top=- hover=-
+18:37:54.395 SpringBoard pid=14350 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:37:54.395 SpringBoard pid=14350 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+18:37:54.395 SpringBoard pid=14350 main | SpringBoard: opened the top stage
+18:37:54.753 SpringBoard pid=14350 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main*,fg-active/main
+
+--- crash ---
+Dynamic Stage crash log
+Build 4.5.669
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.669
+when: 1791437817
+signal: SIGTRAP
+session: 2563D292-D577-48D0-A5E2-36FA1CFF6151
+backtrace:
+  0x076f000221403214
+  0x025e000203dd3fa8
+  0xca57000103d94ecc
+  0xde388002314cc648
+  0xb12a0002314c9150
+  0xeb0d0002314c8f5c
+  0xcd6f800203d5a0e0
+  0x8b288001dea599dc
+  0xb3320001dea4d754
+  0x5d6a8001dea5e37c
+  0xaa5c8001dea47f14
+  0x75370001c8d44500
+  0xc34a8001c8d41078
+  0xcd498001c8d3b634
+  0xd91d0001dea434fc
+  0x7c6f0001dea46968
+--- recent stage lines ---
+SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+SpringBoard: com.apple.MobileSMS stays running in the background
+SpringBoard: camera658 com.apple.MobileSMS on a card: injected app, a 'camera hook loaded' line should follow
+SpringBoard: com.apple.MobileSMS is on stack slot 0
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.sp
+SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(r
+SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A's phone-size update lands at ca
+SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A fg=1 occluded=0 deactivation=0x0 camera=0
+SpringBoard: fitting com.apple.MobileSMS's scene to the card
+SpringBoard: appview668 sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A mode=4 flip=0 update: <FBSSceneSettingsDiff: 0x284f51f40> { settingsClass = UIApplicationS
+app: com.apple.MobileSMS ctor ok
+SpringBoard: appview668 sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A mode=4 flip=0 update: <FBSSceneSettingsDiff: 0x284e4ac20> { settingsClass = UIApplicationS
+SpringBoard: camera660 com.apple.MobileSMS pid=14322 reporting camera events to SpringBoard
+SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+app: com.apple.MobileSMS remote keyboard hooks are in
+app: com.apple.MobileSMS is listening for staged keys
+SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multit
+SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/
+SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=a
+SpringBoard: camera661 sensor com.apple.MobileSMS camera on via sb-attributions pid=0 (staged card) front=home screen staged=[com.apple.MobileSMS]
+SpringBoard: camera661 sensor com.apple.MobileSMS camera off via domain-data activeAttributionData.dataAccessAttributions pid=0
+SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A fg=1 occluded=0 deactivation=0x20 camera=0
+SpringBoard: appview668 sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A mode=4 flip=0 update: <FBSSceneSettingsDiff: 0x284e8ea60> { settingsClass = UIApplicationS
+SpringBoard: rim651 system gesture held at 0,379 (rim)
+SpringBoard: rim651 hit main-outer-left at 0,379 -> DSStageDragShellView
+SpringBoard: rim651 drag began at 3,393 won by main-shell-pan
+SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (card moved), path=layout-off
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{-11.666671752929688, 36}, {420, 458}} role=1 level=1 template=0, path=layout-element; layou
+SpringBoard: appview668 sceneID:com.apple.MobileSMS-E7BD7945-5AD8-4BA8-9A53-587402C14E7A mode=4 flip=0 update: <FBSSceneSettingsDiff: 0x284eb5120> { settingsClass = UIApplicationS
+=== end ===
+
+--- diagnostics ---

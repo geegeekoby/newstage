@@ -1,0 +1,102 @@
+DynamicStage 4.5.664 - keyboard does not show in ANY staged app (after 4.5.663)
+================================================================================
+Base: 4.5.663. Built on the box with Theos; NOT yet tested on a device.
+
+EVIDENCE ("Keyboard debug.txt", newstage commit bc4eed1, session 14:19-14:25 Oct 8)
+- Log header / crash section say "build 4.5.662": SpringBoard was still running
+  the 4.5.662 dylib when the log was taken (4.5.663 changed only the app dylib).
+- Every keyboard raise in the session:  "[TRACE] raise keyboard video=1 depth=0"
+  (42x). The 4.5.657 / 4.5.659 / 4.5.660 logs, where the keyboard worked, show
+  only "raise keyboard video=0" (45 / 30 / 30x).
+- Not one "takeKey" line in the whole log. 4.5.660 log: "stage on screen" ->
+  "taking key from SBHomeScreenWindow on this scene" -> "takeKey ok".
+  This log: "14:22:17.183 SpringBoard: stage on screen" -> "opened the top
+  stage", no key-window take at all.
+- Beeper on the card: "14:25:15.596 com.beeper.chat.ios put a keyboard up at
+  {{0, 631}, {430, 301}}", card "lifted stack slot 0 by 324", then
+  "raise keyboard video=1 depth=0" repeated - SpringBoard thought keys were up,
+  the user saw none.
+- Beeper never sent its camera660 hello / ctor line in this session, so no
+  app-side camera-layout lines could reach the log either.
+
+ROOT CAUSE
+DSVideoIsPlayingOnScreen() (springboard/DSKeyboardVisibility.m) answered YES
+for the whole session. With YES the stage deliberately stands back for a
+"video under the stage": takeKeyWindowForStageChrome returns early, takeKeyWindow
+goes the "beside video" path, DSRaiseKeyboardWindowAboveStage only holds levels
+and its deferred retries bail on video, the keyboard window is never docked
+(holdWindow=NO), and the picker search "begins editing over video". Net: no
+keyboard in any staged app, nor the picker search.
+The check returned YES whenever SBMediaController had a now-playing app that
+was playing and EITHER no front app was open (home screen + music / podcast /
+background audio) OR the front app was the playing app - which with 4.5.661
+presence can also be the staged app itself.
+
+Secondary (app dylib, 4.5.662/663): DSCameraStageNeedsTallLayout() ran on every
+UIScreen.bounds read, walked every window's layer tree each time, and counted a
+camera-ish VC name alone (CKBrowser, CKPhoto, MediaPicker, AttachmentPicker,
+Scanner, Lens, Recorder...) as "camera open" through a refcount that could leak.
+A false "open" gives the app the real phone screen, unclamps frames and scales
+windows. Not proven by this log (no app lines), but fixed so it cannot
+interfere with typing.
+
+WHAT CHANGED
+springboard/DSKeyboardVisibility.m (+ .h)
+  - DSVideoIsPlayingOnScreen(): YES only when something is playing AND the
+    full-screen front app is that same app AND it is not on a stage card.
+    Home screen + background audio -> NO. Media in a staged app -> NO.
+  - New log line on every change of answer (max 40):
+      "SpringBoard: keyboard664 video-on-screen=<0|1> (<why> playing=<bundle> front=<bundle|home screen>)"
+  - "raise keyboard video=%d depth=%ld why=..." now carries the reason.
+app/DSCameraStage.m
+  - Camera layout ("tall") is a cached answer, recomputed on the main thread only
+    on camera events (session start/stop/interrupted/ended, heartbeat, camera
+    screen appear/disappear, keyboard show/hide; at most every 0.25 s from
+    layout passes). UIScreen reads just load an atomic.
+  - On only while: a video capture session is running, OR a live preview layer
+    (visible, >= 40x40) is on screen together with an interrupted session or a
+    camera screen. Never while a keyboard (>= 120pt) is up.
+  - Camera screens tracked in a weak NSHashTable (count only while their view is
+    in a visible window) instead of a leaking counter.
+  - Never touches keyboard / text-effects / remote-keyboard / editing-overlay /
+    input windows or any window at/above status-bar level; hidden windows skipped.
+  - Log: "camera658 layout664 camera layout on|off: <reason>".
+app/Tweak.xm
+  - viewWillAppear / viewDidDisappear pass the controller
+    (DSCameraStageNoteCameraScreen) instead of +1 / -1.
+shared/DSConstants.h, control, changelog.md -> 4.5.664.
+
+UNCHANGED
+4.5.663 FILL + bottom-align shutter fix (while the camera is really open),
+4.5.661 presence / sensor attribution / all camera660 logging, Phone dial pad,
+boot / call / home-swipe guards, SIGTRAP protections, zero switcher hooks,
+stage card size.
+
+RISKS
+- Over a full-screen app that is itself playing video, behaviour is as before.
+  But if 4.5.661 presence makes iOS report the STAGED app as the front app while
+  a full-screen app plays video behind it, the stage now takes the key window
+  (the pre-4.5.x "video flash" could come back in that one case). The new
+  keyboard664 line will show "front=<staged app>" if so.
+- Camera UIs that draw without an AVCaptureVideoPreviewLayer and keep no running
+  session (rare) will not get the shutter FILL layout.
+- With the keyboard up (e.g. a caption field in a camera screen) the camera
+  layout steps aside until the keyboard hides.
+- 4.5.662 crash log in the upload: SIGTRAP Oct 7 18:53 NZDT right after
+  "camera661 presence com.beeper.chat.ios in the display layout ... role=6
+  level=1050" / "kept the open stage inside its card while another app opened".
+  Not addressed here (unsymbolicated); watch for it.
+
+TEST
+1. Install 4.5.664 and RESPRING (the log must say build 4.5.664).
+2. Force-quit Beeper / Signal / Messenger / Messages, open them from the stage
+   picker. Tap a text field in each: keys must show and type. Try once with
+   music playing on the home screen and once with nothing playing.
+3. Stage picker search field: keyboard must show.
+4. Camera in a staged app: shutter still visible; close camera, then type.
+5. Phone dial pad still fits.
+6. Upload the log; look for "keyboard664 video-on-screen=0", "takeKey ok",
+   "raise keyboard video=0", "layout664".
+
+verify: 3 binaries, arm64 + new-ABI arm64e, signed
+deb: /workspace/phone-stage-fit/com.recreated.dynamicstage_4.5.664_iphoneos-arm64.deb

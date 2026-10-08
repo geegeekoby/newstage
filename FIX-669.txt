@@ -1,0 +1,79 @@
+DynamicStage 4.5.669 - SpringBoard detects the staged app using the camera (Beeper shutter)
+=========================================================================================
+
+FROM THE 4.5.668 LOG (Semi.txt)
+- "relay668 com.beeper.chat.ios on a card 7s and no ctor or mapped marker in its container:
+  DynamicStageApp.dylib is NOT running in this app" -> no injection into Beeper, confirmed.
+- No "sensor com.beeper.chat.ios ... camera on" and no sbcam668 line. The only sensor line:
+  "camera661 sensor data STUIDataAccessStatusDomainData items=0 ... attributions: <STListData ...>".
+  (That line is rate-limited to once per 10 minutes, which is why it shows only once; the
+  hook does fire.)
+
+ROOT CAUSE OF items=0
+STUIDataAccessStatusDomainData (SystemStatusUI, iOS 16) has NO -attributions method. "attributions"
+is just the label its description prints. Its real API (iOS 16 runtime headers,
+qingralf/iOS16-Runtime-Headers; matches the iOS 17 / 18.2 dumps):
+  ivar STListData *_attributionListData
+  -attributionListData (STListData), -dataAccessAttributions (NSArray),
+  -activeAttributionData / -recentAttributionData (filtered copies).
+STListData: ivar NSMutableArray *_objects, -objects, -count.
+STUIDataAccessAttribution: -dataAccessType (0 audio, 1 camera, 2 location), -cameraCaptureAttribution,
+  -audioRecordingActivityAttribution, -locationAttribution, -attributedEntity, -isRecent.
+STAttributedEntity: -bundleIdentifier, -executableIdentity, -bundlePath.
+STMediaStatusDomainCameraCaptureAttribution: -activityAttribution (STActivityAttribution: -pid).
+4.5.668 asked the data object for "attributions" -> nil -> 0 items. (The 668 STListData unwrap was
+right, but it never got an STListData to unwrap.)
+
+SIGNALS (springboard/DSCameraArbiter.m)
+1. Domain data (hook on -[SBSensorActivityDataProvider _handleNewDomainData:], unchanged hook):
+   activeAttributionData.dataAccessAttributions -> dataAccessAttributions -> attributionListData /
+   other names via any list route (collection, objects/allObjects/array/items/list/entries/values/
+   orderedSet/set, NSFastEnumeration, class_copyIvarList on the class chain) -> ivars of the data.
+   Camera = cameraCaptureAttribution present, else dataAccessType == 1, else "type = camera" text.
+   Recent-only dots skipped. Bundle = attributedEntity.bundleIdentifier (also via
+   cameraCaptureAttribution.activityAttribution.attributedEntity / activeEntity, bundlePath ->
+   Info.plist). Last resort: regex over the whole [data description] per STUIDataAccessAttribution
+   block with "type = camera" (state active) -> bundleIdentifier.
+   Confidence: high (real accessor names from class dumps, SpringBoard's own _handleNewDomainData
+   uses activeAttributionData.dataAccessAttributions in the 18.2 reconstruction).
+2. SpringBoard's own green-dot model: hook on -[SBSensorActivityDataProvider
+   setActiveSensorActivityAttributions:] (installed only if present with a void(id) signature) plus a
+   once-a-second poll of -activeSensorActivityAttributions (respondsToSelector guarded).
+   SBSensorActivityAttribution: -bundleIdentifier, -sensor (0 camera / 1 microphone / 2 location per
+   the 18.2 -initWithDataAccessAttribution:), -usedRecently. Camera = description says
+   "sensor = camera", or sensor == 0 when the description does not name another sensor.
+   Confidence: high that the methods exist on iOS 16 (in the iOS 17 header, and _handleNewDomainData:
+   which we already hook is in the same class); medium on the sensor numbering for iOS 16 (from
+   the 18.2 code; the one-time shape line logs it).
+3. Safety net: none that is independent of the green dot without injection. SpringBoard cannot see an
+   app's AVCaptureSession; the recording indicator manager reads the same provider. Not added.
+
+sbcam (unchanged design from 668, now reachable): staged, visible, non-Apple, no live app dylib,
+camera on (either signal), no keyboard, not locked / call -> scene 430x932 shown at card width,
+bottom-aligned, card size unchanged. Off on any of those. Unchanged while home / switcher.
+Kill switch: /var/tmp/com.recreated.dynamicstage.nosbcam
+
+LOG LINES TO EXPECT (Beeper camera on a card)
+  SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: ...
+  SpringBoard: camera661 sensor669 domain shape: data=STUIDataAccessStatusDomainData ivars=[...] ... read via ... desc=...   (once per launch, again for the first camera)
+  SpringBoard: camera661 sensor669 SpringBoard attribution shape (...): SBSensorActivityAttribution ... sensor=0 camera=1 | ...
+  SpringBoard: camera661 sensor com.beeper.chat.ios camera on via domain-data activeAttributionData.dataAccessAttributions+sb-attributions pid=NNNN (staged card) front=... staged=[com.beeper.chat.ios]
+  SpringBoard: sbcam669 com.beeper.chat.ios phone-size camera layout ON (green dot: camera pid NNNN, no app dylib (...)): scene 430x932 shown at x0.977, card 420x458, visible part y=463..932 of the app
+  ... and on close:
+  SpringBoard: camera661 sensor com.beeper.chat.ios camera off via ...
+  SpringBoard: sbcam669 com.beeper.chat.ios phone-size camera layout OFF (camera off): ...
+
+RISKS
+- If iOS 16's SBSensorActivityAttribution numbers sensors differently and its description does not say
+  "camera", a microphone-only use (Beeper voice note) could count as camera for signal 2 -> Beeper's
+  scene goes phone-size during the voice note (card size unchanged; off when the mic stops). The
+  shape line shows the real numbering.
+- Beeper's camera screen at phone size is shown at card width, bottom-aligned: the top of Beeper's
+  camera (flash) is cropped, shutter visible.
+- One extra [data description] per green-dot change (not per frame).
+
+TEST
+1. Beeper on a card -> open its camera: within ~1 s the whole bottom of Beeper's camera with the
+   shutter fits the card width; take a photo. Close: back to the card layout.
+2. Beeper voice note on a card: should NOT switch layout (check for an unexpected sbcam669 ON).
+3. Messages camera unchanged (fill width, Done). Keyboard, dial pad, drag with camera, home swipe.

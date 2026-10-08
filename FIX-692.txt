@@ -1,0 +1,76 @@
+DynamicStage 4.5.692 - Beeper settings button back on the recreated top bar
+
+User on 691: "okay perfect only problem now is setting button in the top bar is missing".
+Uploads: newstage origin/main = 4455f38 (our 691). No screenshot or log.
+
+CAUSE (most likely; not proven without a screenshot)
+- 690 to 691 changed exactly one thing: the scene's top safe-area inset, 118 to 186. The strip still
+  copies app y 59..127, and the strip itself was not changed.
+- Beeper's bar background and title don't follow the top inset. With 118 the bar stayed at 59..127
+  (684 photo: only its 10 pt bottom band showed at the card top, nothing else).
+- Beeper's content does follow it: 691's 186 moved the content below the strip, which the user confirmed.
+- Beeper's help says settings is behind the top-left icon of the chat list (the inbox menu). A button
+  that follows the safe-area top (instead of the static bar) moved down by the same 186 - 118 = 68 pt in
+  691, to about app y 127..186. That is exactly the area the strip covers on the card (app y ~118..186),
+  so it's under the strip and outside the strip's copied range. This also fits 684, where it would sit
+  above the card's top (117) and be invisible.
+- Ruled out: the card's rounded corner (radius 55 still leaves a button at x 16..52 / y 75..111 fully
+  inside); the strip's x mapping (same as the host's). A portal dropping a sublayer is unlikely, since
+  only the inset changed between 690 and 691.
+
+FIX (DSSceneHost.m only, plus the version; additions only vs 691)
+- A "patch" inside the 690 strip (tag 69201, no interaction) holds a second _UIPortalView of the same
+  host view. It copies app y (strip_top + shift)..min(strip_top + strip_height + shift, top inset)
+  = 127..186, for app x 0..100, and draws it at strip y 0..~58 (the button's old place) at the same x and
+  scale.
+- The source is cut at the top inset (186) so no Beeper content is ever copied.
+- Blend: lighten (dark mode) / darken (light mode) via layer.compositingFilter (only if the layer
+  responds). The band's black background leaves the bar as it was; only the lighter button pixels show.
+  If nothing is there, the bar looks like 691.
+- Taps: in forward mode the patch's portal hit-tests too, so a tap could route to the button's real
+  (moved) place. If it doesn't, the strip keeps the tap as in 690/691 (logged).
+- Made and laid out from the existing 690 strip update (card layout), main thread, inside @try. Only
+  when 691's raised inset is active (shift = 186 - 118 = 68), unless patch_shift= is set.
+
+Files
+- Tune: /var/mobile/.dynamicstage-phonesize692-tune
+    patch=on|off       (on)
+    patch_x=0..420     (0)    app x where the patch starts
+    patch_w=10..430    (100)  width in app pt (430 = whole bar)
+    patch_shift=auto|0..300  (auto = top inset - 684 top = 68)
+    blend=auto|lighten|darken|normal  (auto = lighten in dark mode, darken in light mode)
+- Off: /var/mobile/.dynamicstage-phonesize692-off = exact 4.5.691.
+- Latch: /var/mobile/.dynamicstage-phonesize692-trying (15 s), -crashed (delete it to allow again).
+- Logs: phonesize692 tune ..., settings-button patch made/updated (source rect, strip rect, blend),
+  no settings-button patch (reason), patch removed (reason).
+
+RISKS
+- If the cause is wrong, the patch copies only black, so with lighten nothing changes (same as 691).
+- While the chat list is scrolled up, rows passing under the strip's top-left 100 pt may show faintly
+  there (lighten). Narrow it with patch_w, or set patch=off.
+- The button glyph is drawn without the bar's background behind it (blended onto the bar instead).
+
+WHAT A SCREENSHOT WOULD CONFIRM
+- With /var/mobile/.dynamicstage-phonesize692-off (691 view) plus a 691 tune top_inset=118 (690
+  inset), the button should sit in the bar, and with the 186 inset it disappears. A screenshot of Beeper
+  full screen (not staged) shows the button's x/y; a screenshot of the card with 692 shows whether the
+  patch lines up.
+
+KEYBOARD DELAY (secondary)
+Nothing of ours delays Beeper's keys:
+- keys674 (_canShowKeyboardLayer) is a synchronous yes/no with no timer.
+- The _UIKeyboardArbiter updateKeyboardStatus hook calls %orig synchronously. Our work is dispatched
+  async after it.
+- For 684 apps, phoneSize680KeyboardSignal -> phoneSize684ArbiterOn only logs and records times
+  (window fixed, no scene write, no animation).
+- _UIRemoteKeyboards addHostedWindowView leaves out only the in-card copy of the keyboard view (the
+  band keys674 prevents); the keys at the phone bottom are SpringBoard's own keyboard host and aren't
+  touched.
+- The only timer near the keys is DSRaiseKeyboardWindowAboveStage's 0.12 s retries during a scene
+  update. Those change the window level only (the keys at 586..932 don't overlap the card at 5..463).
+  Not changed, since it isn't a show delay and touching it could break the keys elsewhere.
+Any visible lag is most likely iOS handing keyboard focus to an app that isn't frontmost (the remote
+keyboard round trip) plus Beeper's own animation.
+
+Build: tools reinstalled this session (tarballs), "verify: 3 binaries, arm64 + new-ABI arm64e, signed",
+41 warnings.

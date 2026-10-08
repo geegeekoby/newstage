@@ -1,0 +1,88 @@
+DynamicStage 4.5.681 - Beeper message bar bounce: tunable keyboard-follow animation
+===================================================================================
+deb: com.recreated.dynamicstage_4.5.681_iphoneos-arm64.deb
+sha256: 5bf5a84b6cd03e4e1abd7b1f6fb2a203848d987a90f2875b3099baf7d1b94b93
+
+WHAT CHANGED SINCE 680
+- 680 moved the card's window with UIView animate + curve 7 (250 ms), then copied UIKit's
+  "position" animation and re-added it with a shifted start, and 17 ms later stacked a second
+  UIKit animation for the retarget 630 -> 585. Two overlapping springs with a hand-shifted start
+  is a likely bounce source on its own.
+- 681 uses ONE explicit, additive Core Animation animation of our own (key ps681). It starts at
+  an exact time relative to the arbiter's keyboard signal, and a new move replaces it from the
+  on-screen position. Every parameter is logged and tunable at runtime.
+- target=final (default): the first signal (arbiter 243) aims straight at this app's last
+  settled keyboard (346 -> bar bottom 585). The 288 signal 17 ms later then finds it already
+  there: no retarget. The first keyboard after a respring has no history, so that one is
+  stepwise. The keyboard note corrects a wrong guess.
+- The scene is still never resized: always 430x931, as in 680.
+
+DEFAULTS AND WHY
+  duration=500 delay=0 curve=keyboard target=final offset=0 hide_duration=500 hide_curve=keyboard
+  (spring_damping=1.0 spring_velocity=0 are only used with curve=spring)
+- For curve 7, UIKit does not use the 0.25 s in the keyboard notification. Inside a UIView
+  animation block with option 7<<16, UIKit builds a CASpringAnimation with mass 3, stiffness 1000,
+  damping 500, initial velocity 0, duration 0.5 s, and ignores the passed duration. Telegram-iOS
+  reproduces the keyboard with exactly this; the StackOverflow answer on 24923086 shows the
+  dumped animation. So "UIView animate, curve 7, 0.25 s" and "the spring 3/1000/500" are the
+  same motion; the real length is 0.5 s.
+- An in-app bar that follows the keyboard (notification + UIView animate with its curve,
+  keyboardLayoutGuide, or inputAccessoryView) moves with that spring. So 681 uses that exact
+  spring for both show and hide, starting at the arbiter signal (Beeper's keyboard starts about
+  then; keys674's ask was 3 ms earlier).
+- 681 builds the spring itself instead of calling UIView animate. That gives an exact start
+  time and an additive, replaceable animation, and lets duration= rescale it (the animation's
+  speed = 500/duration) without changing the shape.
+
+TUNE FILE  /var/mobile/.dynamicstage-phonesize681-tune
+key=value per line, # for comments, re-read every 2 s (no respring). An empty or absent file
+means the defaults. Every parsed value (ok/IGNORED) and the values in use are logged on change.
+  duration=<ms>        show length (keyboard curve: same spring shape, sped up or slowed)
+  delay=<ms>           + = start later; - = start earlier, counted from keys674's ask (-300..500)
+  curve=keyboard|easeinout|easeout|linear|spring
+  spring_damping=<r>   damping ratio for curve=spring (1 = no overshoot, <1 = overshoot)
+  spring_velocity=<v>  initial velocity for curve=spring (units of the distance per second)
+  target=final|stepwise   stepwise = 680's two-step 630 -> 585
+  offset=<pt>          app points; + raises the keyboard-up bar on screen, - lowers it
+  hide_duration=<ms>   hide length
+  hide_curve=...       hide curve
+
+RECIPES (write one block to the file; it applies within 2 s)
+  - Bar jumps up then settles (we are slower than Beeper):   duration=400
+  - Bar dips then catches up (we are faster than Beeper):     duration=600     (or delay=20)
+  - We start too late:                                        delay=-20
+  - We start too early:                                       delay=30
+  - Try UIKit's documented 250 ms with a plain curve:         curve=easeout  duration=250
+  - Snappy spring:                                            curve=spring  duration=350  spring_damping=1.0
+  - Soft spring:                                              curve=spring  duration=550  spring_damping=0.9
+  - Back to 680's two-step:                                   target=stepwise
+  - Bar ends a few pt low/high with the keyboard up:          offset=4   /  offset=-4
+  - Hide too fast / slow:                                     hide_duration=600 / hide_duration=400
+  - No animation at all (diagnose):  touch /var/mobile/.dynamicstage-phonesize680-noanim
+
+LOG LINES (prefix "SpringBoard: phonesize681")
+  tune file absent, defaults: (no settings) | in use: duration=500 delay=+0 curve=keyboard spring_damping=1.00 spring_velocity=0.00 target=final offset=+0.0 hide_duration=500 hide_curve=keyboard
+  tune file /var/mobile/.dynamicstage-phonesize681-tune read: duration=400 ok, curve=fast IGNORED (unknown key or bad value) | in use: ...
+  com.beeper.chat.ios keyboard signal "arbiter on=1" height 243 at 13803.032 (main +0 ms, keys674 ask 3 ms earlier): keyboard top in the scene 585 (target=final: arbiter height 243 + 58 = 301, predicted 346 (this app's settled keyboard last time)) -> bar bottom 585; now 897; move (show 500 ms, curve keyboard, delay +0 ms from the arbiter signal)
+  com.beeper.chat.ios bar bottom 897 -> 585 (arbiter on=1) t+3ms: card shows app y 428..897 -> app y 116..585 (bar on the keyboard); CASpringAnimation mass 3 stiffness 1000 damping 500 velocity 0, duration 0.5 x speed 1.000 = 500 ms (UIKit's curve-7 keyboard spring); starts +0 ms from the signal (signal at 13803.032, delay +0 ms, added 1 ms after the signal); host moves 305 pt on the card
+  com.beeper.chat.ios keyboard signal "arbiter on=1" height 288 ... -> bar bottom 585; now 585; already there, no move (...)
+  com.beeper.chat.ios keyboard signal "arbiter on=0" ... keyboard down -> bar bottom 897; now 585; move (hide 500 ms, curve keyboard, ...)
+  (bezier curves log: CABasicAnimation easeOut bezier (0.00, 0.00, 0.58, 1.00), duration 250 ms)
+  (spring logs: CASpringAnimation mass 1 stiffness ... damping ... (ratio ..) velocity .., duration .. ms (settling .. ms; response .. ms))
+The 680 lines remain: "phonesize680 build ... is ON", keys674 layer ask, card kept at rest,
+nudge skipped.
+
+CONFIDENCE / RISKS
+- Medium that the defaults alone remove the bounce. They match UIKit's real keyboard motion,
+  and they remove the double animation and the retarget. If Beeper moves its bar some other way
+  (e.g. React Native tracking the keyboard frame per frame, or its own timing), the tune file is
+  how to match it.
+- Cross-process start time: the arbiter signal is taken on the arbiter's own queue. Beeper's own
+  animation start may differ by a frame or two; delay= covers it.
+- The first keyboard after a respring is stepwise (no settled height known yet).
+- If the prediction is wrong (e.g. the suggestion bar is off this time), the bar first aims at
+  585 and then corrects when the keyboard note arrives (about 90 ms later).
+
+UNCHANGED
+Off files (680-off = exact 679, 680-noanim, 675-off), no new hooks, the 4.5.673 Messages camera,
+zero app-switcher hooks, the stage card size, the scene never resized for tap or keyboard.

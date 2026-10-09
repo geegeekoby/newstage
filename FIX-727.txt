@@ -1,0 +1,47 @@
+DynamicStage 4.5.727 - stuck727 + flick727 + restore726 fixes
+=============================================================
+Base: 4.5.726. No new hooks, nothing new at load, no new UI. Log: uploads726/Bug.txt (recorded on 4.5.724).
+
+STUCK CAUSE (Bug log, NZDT)
+09:10:40.768  drag706 minimised Beeper "released at 377,923" (the finger let go in the bottom 9 pt).
+09:10:41.333  0.57 s later, while the minimise was still in flight, "corner pull picked up from the system
+              gesture": SpringBoard's bottom-edge gesture from the SAME movement was adopted as a restore.
+09:10:44.378  "restored ... (card 130x106)": the card was restored 3 s later, still at 130x106 (a third of
+              its size, scale 0.30) in mid-flight. It sat out of position for ~3 s before layout put it back
+              (09:10:44.70 "card 420x458"). Same pattern at 09:10:33.004 (release 247,918) -> pull 09:10:33.869
+              -> restored 09:10:38.018 (4.1 s), and at 09:09:28 (restored at 377x406 in a home transition).
+Cause: a pull adopted while the minimise was still finishing, then nothing re-checks the card's position.
+heal700, the drag checks and kb720 all skip while any pull, drag, typing or transition is busy, and nothing
+forces the card back once those clear.
+
+stuck727 (off: /var/mobile/.dynamicstage-stuck727-off, per-action latch)
+- One resting frame per card: placedFrameForCard:state: (what layout gives it).
+- Every stage tick (1.5 s), plus 0.5 s re-checks: in single / two-stage layouts, when no finger is down,
+  nothing is animating and no keyboard is on screen, each visible card must be at its resting frame with
+  no keyboard offset and no transform. If it is still wrong 0.5 s later, it is sprung there and logged:
+  "stuck727 forced <app> from X to Y because Z".
+- It ignores the heal700 / kb720 typing / drag706 / sync725 waits, so those can no longer hold a card out
+  of place (counted from when the tick sees the problem: at most ~1.5 s + 0.5 s).
+
+flick727 (off: /var/mobile/.dynamicstage-flick727-off, per-action latch)
+- Start lag: a fast corner swipe minimises with finishFirst, which ran the whole minimise bookkeeping
+  (hide parked cards, give back the key window, apps to background = scene updates, shelf) on the main
+  thread BEFORE the flight animation was even created. The snapshot is a render-server snapshot
+  (snapshotViewAfterScreenUpdates:NO, cheap); the picture taken at drag start is reused.
+- Fix: the flight starts first; the bookkeeping runs on the next main-loop turn. Spring initial velocity =
+  release velocity along the path / distance (cap 30, was 10); duration from the release speed
+  (1.6 x distance / speed, 0.18-0.34 s; was a fixed 0.34 s).
+
+restore726 fixes
+- The corner-side check now runs for off-screen minimised cards (they are always off-screen).
+- A refused corner pull is logged with its reason while a card is minimised: "restore726 corner pull
+  refused at x,y: <reason> (...)" (home bar, above the bottom 108 pt, not within 86 pt of a corner, no
+  card in that corner, a pull still registered, pull block, call screen, switcher swipe).
+
+CORNER ICON (703)
+It exists: _openAppIcon / _secondOpenAppIcon, a 26x26 pt squircle (iOS icon radius) of the app's icon,
+4 pt from the side and 8 pt from the bottom, in the stage window; the minimise flight lands on it. It is
+shown only while the card is parked, its app is hosted, and the "show open app icon" preference is on
+(default on). The minimised card itself is kept off-screen. The icon sits inside the system's home
+gesture band, and the stage window can be hidden behind other UI, so it is easy to miss; restoring is a pull
+from that corner, not a tap. No UI was added.

@@ -1,3 +1,8 @@
+**4.5.727**
+- stuck727: with no finger down, nothing animating and no keyboard up, every visible card is put back at its resting frame within ~0.5 s of being noticed (logged "stuck727 forced ..."). Fixes a card left small / out of place after a corner pull caught the end of a minimise swipe. Off: -stuck727-off.
+- flick727: a fast corner swipe starts its flight immediately (bookkeeping moved after the start), spring starts at the finger's speed, shorter duration for fast flicks. Off: -flick727-off.
+- restore726: the corner-side check now works for minimised cards; refused corner pulls are logged with the reason.
+
 **4.5.726**
 - Fixed: a staged app could be minimised by a touch near the bottom of the screen and then never come back. outside726: no outside-minimise in the bottom 140 pt (home swipe), 56 pt around cards, never within 1 s of touching a card or opening / closing a stage, 0.45 s re-check. restore726: every tick a minimised card is checked to be restorable (a corner pull that never ended is released, the corner side is matched to where the card is drawn, a stale pull block is cleared). Off: -outside726-off / -restore726-off.
 - No new hooks, nothing new at load.

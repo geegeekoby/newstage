@@ -1,0 +1,59 @@
+DynamicStage 4.5.708 (install-script and write-path hardening)
+==============================================================
+
+Why
+---
+On NathanLR the user reported that after a reboot the jailbreak would not come
+up on 4.5.707 and safe mode had to be forced. CrashReporter shows no SpringBoard
+crash (only a Signal crash at 19:26 NZDT), and there is no
+com.recreated.dynamicstage.crash.log. A static review of 703-707 found no
+launch-time change: the SpringBoard %ctor, boot guard, crash handler, filters
+and package contents are unchanged, and the new 707 code only runs with a stage
+open. The only part of the package that can reach beyond SpringBoard and the
+five chat apps is the TweakInject copy made by the install scripts, so 708
+hardens that, plus two small run-time paths. Everything else is exactly 707.
+
+1. postinst (TweakInject copy)
+  - The app filter plist is copied into TweakInject first. The app dylib is
+    copied only if TweakInject/DynamicStageApp.plist is present afterwards.
+  - No copy when source and target are already the same file ([ a -ef b ]),
+    e.g. when DynamicLibraries is a symlink to TweakInject (before: cp onto
+    itself, error swallowed).
+  - New: an app dylib in TweakInject with no filter plist next to it is removed
+    (a filterless dylib can be loaded into every process).
+  - Still no set -e, every command is "|| true", ends with exit 0.
+
+2. postrm
+  - Acts only on "remove" / "purge". Before, it also ran on "upgrade", which
+    dpkg runs after unpacking the new version: where TweakInject and
+    DynamicLibraries are the same files it deleted the new package's own app
+    dylib and plist (postinst then restored them from Application Support).
+  - Skips a file that is the same file as the package's DynamicLibraries copy
+    (-ef): dpkg removes that one itself.
+  - set -e removed; every rm is "|| true"; ends with exit 0.
+  - Note: the upgrade from 707 to 708 still runs 707's old postrm once; 708's
+    postinst restores the files from Application Support as before.
+
+3. outside707
+  - The stage state is checked before the outside707 switch is read, so touches
+    passed through while the stage is closed / minimised read no file.
+
+4. Trace writer
+  - DSTraceWriteBytes and DSTraceAppendRelayed read no switch, crash latch or
+    perf counter any more (before: DSPerf697On, DSFeature699On("perf706") whose
+    first call runs the crash-latch file check, and DSPerfCount). The 706 burst
+    batching (the previous default) is always used.
+  - Side effect: -perf697-off / -perf706-off no longer change trace batching;
+    the traceWrites / traceFlush perf counters stay 0.
+
+Tested: sh -n on both scripts; both run in a scratch root with separate
+folders, with DynamicLibraries -> TweakInject symlink, with an orphan dylib and
+no plist source, and with no folders at all: always exit 0, the orphan dylib is
+removed, "upgrade" leaves files, "remove" clears our TweakInject copies.
+
+Build: 3 binaries signed, 41 warnings (same set). Package files identical to
+707 apart from the binaries, control and the two scripts.
+
+If it still fails: create /var/mobile/.dynamicstage-disabled (tweak inert),
+reboot and re-jailbreak. Also check for /var/mobile/.eksafemode (ElleKit safe
+mode marker) and send the Signal crash report from 19:26 NZDT.

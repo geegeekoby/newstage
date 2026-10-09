@@ -1,0 +1,52 @@
+DynamicStage 4.5.721 - kb721: kb707 is the one keyboard controller; the typing card always clears the keys
+==========================================================================================================
+Base: 4.5.720. Off: /var/mobile/.dynamicstage-kb721-off (= 4.5.720). Per-action crash latch: kb721-trying
+before every kb721 action (re-check, split move, correction), removed 15 s after the latest one.
+No new hooks, nothing new at load. Messages, Beeper 684, camera 673, bg719, defer719 unchanged.
+
+WHY THE CARD DID NOT MOVE ON 720 (found by tracing; no new logs in newstage)
+1. Picker search / the stage's own field: kb707 only saw an owner while the NOTED frame was >= 150 pt
+   or a staged keyboard window was drawn. One short report (243 pt pre-bar frame, a re-assert) set the
+   noted frame to zero; UIKit does not re-send an unchanged frame, so the card was never lifted, or a
+   lifted card was dropped after kb707's 3 s cap although the keys were still on screen.
+2. App fields: when the frame note was swallowed (scene update in progress for 8 x 0.12 s ->
+   "show dropped", stray-source filter), kb707 had an owner but no keys and moved nothing.
+3. No re-check: kb707 looked at 0.05 s and 0.40 s after a note. If the owner or keys were not known
+   yet and no later note came, nothing moved. (The drag / spam / restore deferrals already re-checked.)
+4. Split: kb707 did not own split; split had its own mover fed only by noteKeyboardFrame703, with the
+   same frame-noting gaps and no re-check.
+5. Not the cause: kb720's "no re-place while typing" (it only acts after kb707 has lifted) and the
+   status-bar decision (never moves a card).
+
+WHAT 4.5.721 DOES
+- kb707 is the only decision path in single, two-stage AND split (with its third stage), for picker
+  search, the stage's own field and app fields. The split geometry (applySplitKeyboardShift + its side
+  park) is now called only by kb707 ("split mode"); noteKeyboardFrame703's split branch and the 705
+  picker lift/drop branch are no longer reached while kb721 is on (they are kb707's input now).
+- Owner: SpringBoard's own keys on screen count for search / stage field even after a short report;
+  the third stage card is an owner in split.
+- Keys: the owner app's own keyboard report (arbiter) is used when the frame was never noted.
+- Re-check: a typing context with no known owner/keys is looked at again every 0.3 s for up to 2 s.
+- Self-check: while kb707 holds a session it checks every 0.35 s; if the owner card covers the keys
+  by > 8 pt for over 0.3 s and is not at kb707's lift, kb707 lifts it and logs "kb721 corrected ...".
+  Busy (drag / minimise / restore / settling) = it tries again on the next check.
+
+MESSAGES / BEEPER / SPLIT / THIRD STAGE
+- Messages: single / two-stage already went through kb707 since 4.5.715 (unchanged). Messages on a split
+  card keeps 4.5.720's split path. Messages is excluded from the new owner rule, the arbiter keys,
+  the re-check and the self-check, so its timing is 4.5.714-720's.
+- Beeper 684: kb707 keeps using its pinned keys top (already avoided); excluded from the self-check.
+- Split (incl. third stage while split): kb707 split mode, same geometry as before.
+- Third stage hovering WITHOUT split: unchanged 4.5.720 path.
+
+NOT DELETED (and why)
+The old split branch of noteKeyboardFrame703 (~15 lines) and the 705 non-kb707 search lift/drop (~45
+lines) are bypassed while kb721 is on but kept, because -kb721-off must return to 4.5.720 and the
+third stage without split and Messages-in-split still use them. They can be removed in a later build
+once 721 is confirmed (that removes the 720 fallback).
+
+RISKS
+- Split now restores after kb707's 0.4 s absent window instead of at once.
+- The self-check could fight another writer on a card kb707 cannot fully lift (it only acts when the
+  card is NOT at kb707's lift, so a capped lift is left alone).
+- The arbiter-keys fallback could lift for a stale app report (cleared on the app's own hide).

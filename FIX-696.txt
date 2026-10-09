@@ -1,0 +1,32 @@
+DynamicStage 4.5.696 - blackout after lock, first-tap keyboard drop, lower phone-size card fit
+
+Built on 4.5.695. Upload: newstage 12bd206 "Create Blackout" = log from 4.5.694 (pid 26310, 13:09-13:22 NZDT, no crash).
+
+1 BLACKOUT
+ Log: 13:20:34 phone locked with the Beeper card on the stage -> scene fg NO + deactivation 0x20; "appview670 held a Live app
+ view update (scene deactivated 0x0->0x20)", then the next update went through and SBAppViewController threw "foreground status
+ out from underneath us" (contained). The card was "taken out of the display layout"; after unlock nothing woke it. At 13:22:11
+ the user dragged the card -> "had been put in the background off the stage and was woken", then flung it off (13:22:14).
+ Fix: Tweak.xm Live hold also holds while SBLockScreenManager isUILocked ("phone locked (696)"), no new hook.
+      Watchdog every 1.5 s (DSStageManager blackout696Tick): unlocked, stage in overlay, no drag/home gesture/system transition/
+      camera layout change, not Messages. Detached or stash-held live view of a visible card -> returnHostView + fit. Backgrounded /
+      not showing / hidden / zero-scale for 2 ticks -> wakeIfBackgrounded (the card-tap wake), max once per 4 s per card.
+ Off: /var/mobile/.dynamicstage-phonesize696-blackout-off
+
+2 KEYS (first-tap keyboard drop)
+ Log: deactivation 0x20 (systemAnimation) on the Beeper scene; keys dropped right after the first tap.
+ Fix: applyOverridesToSettings clears only 0x20 on scenes of visible phone-size (684) cards (set kept from layoutHostView,
+      removed on teardown/minimise), only while foreground, not during home gesture/system transition/lock. Same place camera658
+      clears reasons for camera apps. No new hook.
+ Off: /var/mobile/.dynamicstage-phonesize696-keys-off
+ Open/restore delay (~320 ms resize relayout) was already removed by 695 (not installed when the log was made).
+
+3 FIT (lower card)
+ Log: lower card y469: "[LIFT] stack slot=0 need=369" (keys 586 - 28 gap), 324 when the keyboard frame said 631; on keys down
+ "restored resting frame slot 0 cardY=5" sent it to the top slot (stale stored resting frame).
+ Fix (684 phone-size cards only): keys top = MIN(keyboard y, 586), no 28 pt gap -> constant lift 341, card bottom = bar line on
+      the keys. Stored resting frame refreshed while unlifted -> the card returns to y469 after typing.
+ Off: /var/mobile/.dynamicstage-phonesize696-fit-off
+
+Crash latches: /var/mobile/.dynamicstage-phonesize696-<blackout|keys|fit>-trying / -crashed (15 s after first use).
+No new hooks, no status-bar writes. Messages unchanged.

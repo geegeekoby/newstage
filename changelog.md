@@ -1,3 +1,10 @@
+**4.5.738**
+- crash fix (live738): the 735 SIGTRAP in SpringBoard's own live app-view update; updates are held while a finger is on the rim and right after another hold. Off: -live738-off.
+- drag738: dragging no longer rebuilds the outline and rim strips every frame. Off: -drag738-off.
+- rim738: easier grab at the screen edges (14 pt strip where the card hugs the edge). Off: -rim738-off.
+- audit: the feature switch table was too small (44 names, 32 slots), so newer features were silently off; fixed. Latch markers rate-limited. Features wrongly latched by the 734/735 crashes (e.g. the Beeper squash) are re-enabled once.
+- top737 removed: the band over Beeper's arrow was the old copied top-bar strip, shown only because the squash had been latched off.
+
 **4.5.737**
 - top737: staged Beeper's top bar is shorter, so the round arrow under it is fully visible; card still edge to edge, keyboard unchanged. Off: -top737-off.
 

@@ -1,0 +1,118 @@
+Dynamic Stage crash log
+Build 4.5.735
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.735
+when: 1791579673
+signal: SIGSEGV
+session: DBB0220F-D59B-4C22-9E83-982398BE01F6
+backtrace:
+  0xb80b8002266ef214
+  0xee638001056c8130
+  0xeb758001cdecaeac
+  0x6c550001cdecc6ec
+  0x6b330001056c8008
+  0xb91f8001056ca6e0
+  0x3e560001cdecaeac
+  0x0f6c0001cdece330
+  0x11420001cdee1908
+  0x41230001cded95f8
+  0x18140001cded92f4
+  0x6f1a0001c6a93c28
+  0x52050001c6a75560
+  0x736a8001c6a7a3ec
+  0x794e800201f1735c
+  0x94248001c8e076e8
+--- recent stage lines ---
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{-464, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple
+SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 469}, {420, 458}} -> {{-464, 5}, {420, 458}} (new in, then old out)
+SpringBoard: slide728 1 card(s) slid out the side, then minimised to the corner (no flight)
+rim off card (place) build 4.5.735 split=0 float=0 half=1 slots=1 card {{466, 960}, {56, 56}} shell {{430, 924}, {128, 128}} outline {{-4, 959}, {58, 58}} topCard {{0, 0}, {0, 0}}
+SpringBoard: camera658 com.beeper.chat.ios taken out of the display layout (card hidden, parked, minimized or closed), path=layout-off
+SpringBoard: camera661 presence com.beeper.chat.ios out of the display layout (card hidden, parked, minimized or closed)
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 368x395 shows the real app y 59..586 at x0.8568 (full width) / y0.7502; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.8568 (pre-grown, bottom-anchored): visible app y 125..586 in card 368x395; side crop 0.0 pt each side
+SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {125, 0, 345, 0}, squash placed on the first frame (card 368x395), no resize
+SpringBoard: camera661 presence com.beeper.chat.ios in the display layout (card visible) frame={{5, 469}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+SpringBoard: keys674 com.beeper.chat.ios (sceneID:com.beeper.chat.ios-default) has no DynamicStage app dylib: its card's scene host (_UISceneLayerHostContainerView) asked whether 
+SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 38156.949: keys stay at the phone bottom; window fixed, no 682 trigger
+SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 243 at 38156.951: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 631}, {430, 301}}
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} o
+SpringBoard: com.beeper.chat.ios put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: phonesize696 fit: slot 0 stored resting frame y=5 bottom=463 was stale; the card rests at y=469 bottom=927 now
+SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 38156.957: window fixed at app y 117..586, no move (684) (height change)
+SpringBoard: kb707 typing in the lower card (com.beeper.chat.ios, keys (at once)): lifted 341 pt to the keyboard
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 586}, {430, 346}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+SpringBoard: phonesize684 com.beeper.chat.ios keyboard top 586 (keyboard note t+105ms): window fixed at app y 117..586, no move; matches the bar bottom 586 (K=345): the app's bar 
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+SpringBoard: home gesture began, stage open
+SpringBoard: home731 the home bar was touched but not swiped (up -1 pt, v -221): cards left in place
+SpringBoard: home gesture ended
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 586}, {430, 346}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 128}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.
+SpringBoard: camera658 com.beeper.chat.ios layout670 card moved: display-layout element {{5, 469}, {420, 458}} -> {{5, 128}, {420, 458}} (new in, then old out)
+=== end ===
+
+=== Dynamic Stage crash ===
+build: 4.5.735
+when: 1791580135
+signal: SIGTRAP
+session: C7E6114E-83F5-49C8-A205-19A682EE9AB5
+backtrace:
+  0x13660002266ef214
+  0x57248002090bffa8
+  0x5b52800109a68658
+  0xfb5b0002367b8648
+  0xcf310002367b5150
+  0x4c1c8002367b4f5c
+  0xbd298002090460e0
+  0xc55f8001e3d459dc
+  0x541c8001e3d39754
+  0xf11d8001e3d4a37c
+  0x4e0a0001e3d33f14
+  0x0b760001ce030500
+  0xa01a8001ce02d078
+  0x42798001ce027634
+  0xdc5b0001e3d2f4fc
+  0x30318001e3d32968
+--- recent stage lines ---
+SpringBoard: camera658 com.beeper.chat.ios taken out of the display layout (home / switcher has the screen), path=layout-off
+SpringBoard: camera661 presence com.beeper.chat.ios out of the display layout (home / switcher has the screen)
+SpringBoard: keys697 UIKit keyboard frame {{0, 631}, {430, 301}} not given to com.beeper.chat.ios: its card is minimised / parked (another app is typing)
+SpringBoard: phonesize695 com.beeper.chat.ios kept 430x931 safeArea {186, 0, 345, 0} while minimised (keyboard down): no shrink, no scene write; restore needs no relayout
+SpringBoard: held a minimized app view update so another app can open
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {56, 56}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={186, 0, 345, 0} ori
+SpringBoard: held a minimized app view update so another app can open
+SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 586}, {430, 346}}
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {56, 56}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={186, 0, 345, 0} ori
+SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+2805ms frame {{0, 631}, {430, 301}}
+SpringBoard: phonesize695 keep-while-minimised survived 15 s; crash latch cleared
+SpringBoard: restore726 corner pull refused at 302,910: started on the home bar (primary parked=1 right, second parked=0 right)
+SpringBoard: tucking the open stage for home
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: held a minimized stage scene update so another app can open (+4 more in the last 10 s)
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.7104 (pre-grown, bottom-anchored): visible app y 137..586 in card 305x319; side crop 0.0 pt each side
+SpringBoard: phonesize690 com.beeper.chat.ios top-bar strip updated: app y 59..127 shown at card y 0..49 (x0.7104, card 305x319; the card itself still shows app y 137..586, unchan
+SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {206, 0, 345, 0}, squash placed on the first frame (card 305x319), no resize
+SpringBoard: camera658 com.beeper.chat.ios card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.
+SpringBoard: camera661 presence com.beeper.chat.ios in the display layout (card visible) frame={{5, 469}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283a2f3f0> { targetOfEventDeferringEnviron
+SpringBoard: appview670 held a Live app view update (stage display-layout change)
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+SpringBoard: phonesize690 com.beeper.chat.ios top-bar strip updated: app y 59..127 shown at card y 0..67 (x0.9767, card 420x458; the card itself still shows app y 117..586, unchan
+SpringBoard: rim651 system gesture held at 57,463 (rim)
+SpringBoard: rim651 hit main-outer-top at 57,463 -> DSStageDragShellView
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282575e30> { targetOfEventDeferringEnviron
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+=== end ===

@@ -1,0 +1,56 @@
+DynamicStage 4.5.738 (on 4.5.737)
+
+1. Crash: Logggy, build 4.5.735, SIGTRAP at 10:08:55 NZDT
+Frame 1 (0x109a68658) is offset 0x8658 in the 735 binary, the instruction right
+after "blraaz x8", the call to the original app-view settings update in the Live
+(display mode 4) hook in Tweak.xm. The log line just before it, from the same
+code, is "appview699 Live update passed to SpringBoard (mode=4 drag=0)". This is
+SpringBoard's own update trapping, the known site from 669/697/704. That update
+came about 1 s after a "stage display-layout change" hold, with a finger just down
+on the rim ("rim651 hit main-outer-top at 57,463") before the drag was recognised.
+Fix (live738): a Live update is now also held while a finger is on the rim or drag
+shell (touch-down plus 1.5 s), and for 2 s after any other hold.
+Off: -live738-off (per-action latch).
+
+2. Drag lag and the grab rim (Slide log)
+- Every pan frame rebuilt the card outline twice (CATransaction plus layer
+  properties) and re-laid the 4 rim strips three times, even though only the
+  shell moves. Now skipped when nothing changed (drag738, off: -drag738-off).
+- Cause found in the audit (item 3a): features beyond the 32nd switch name were
+  silently off. That can include drag706, perf706 and anim698 savings, depending
+  on start order.
+- Rim: a 420 pt card on a 430 pt screen leaves only 5 pt of rim at the left and
+  right edges, and the Slide log has grabs there that never reached the rim
+  ("system gesture held" with no hit). Where a card hugs the screen edge, the grab
+  strip now covers 14 pt on screen, reaching at most 10 pt over the card's
+  outermost edge column, and a drag can start there (rim738, off: -rim738-off).
+  The rest of the card stays app-only (rim731).
+
+3. Audit
+a) Switch table overflow (a real bug): DS699_MAX was 32, but 44 feature names are
+   in use. Names registered after the 32nd got no slot, so DSFeature699On returned
+   NO and those features were silently off. Raised to 128.
+b) Per-action crash latch: the -trying file was created on every action, which can
+   mean main-thread disk I/O per frame. Now rewritten at most every 2 s; the 15 s
+   clear still follows the latest action.
+c) Wrongly latched features: the relay crashes latched off whatever had acted in
+   the 15 s before each crash. The Slide log shows "phonesize694 squash LATCHED
+   OFF". The first start of 738 clears the latch files written since 734 was
+   installed (09:40 NZDT), once. Marker: -latch738-cleared.
+d) No blocking calls (dispatch_sync, sleep, semaphore waits, waitUntilDone).
+   Diagnostics writes run on a background queue.
+e) Features without a latch: rim731, drag738 and rim738 only change hit areas and
+   layout caching (no system calls); their off files work. Every other feature
+   has a latch.
+f) Private classes: the class lookups checked are messaged through the nil-safe
+   objc runtime; selectors are checked with respondsToSelector before use.
+g) Timers: the stuck727 / heal700 / kb707 / black731 checks all stand down for a
+   finger, the keyboard, calls (call733) and the call screen.
+h) Half-finished or risky: the app trace relay was removed in 736.
+
+4. Beeper top bar: top737 removed
+The band in IMG_4476 was the 690 copied top-bar strip. It only appears because the
+694 squash had been latched off by the relay crash (item 3c). With the squash back,
+the card shows Beeper's real top bar (settings cog included), with no strip.
+top737's lower inset would have put Beeper's content under that real bar, so it is
+gone.

@@ -1,0 +1,43 @@
+DynamicStage 4.5.709 (known-good rollback: 4.5.706 code + 4.5.708 scripts)
+==========================================================================
+
+The user reports NathanLR will not re-jailbreak since 4.5.707. Deep review of
+706 -> 707 -> 708, every file including shared code linked into both dylibs:
+
+- Initializers: DynamicStage.dylib has one (__init_offsets 4 bytes = %ctor),
+  DynamicStageApp.dylib two (constructor(101) + %ctor) in 706, 707 and 708.
+  No new static initializer, no C++ globals.
+- Linked libraries (otool -L): identical 706/707/708.
+- Imports: SpringBoard dylib 707 adds CGAffineTransformEqualToTransform and
+  CGColorGetAlpha (CoreGraphics, every iOS) and drops CGRectUnion / pow. App
+  dylib imports identical. Nothing that could fail to bind at load.
+- %ctor / boot guard / crash handler / DSHomeReady / full install: unchanged.
+- 707 code paths: kb707 registers nothing (no notifications, no timers at load);
+  beeper707 only runs inside the phone-size layout of a hosted card; outside707
+  runs only from the stage window's hit test, after the window exists, and only
+  schedules (dispatch_after) - no synchronous hitTest -> minimise -> layout loop.
+- 57 removed functions: none named anywhere else (no @selector, string,
+  NSSelectorFromString source, timer / notification target, header or %hook);
+  all were @implementation methods or static C functions, none a hook body.
+- Switch table: 32 slots, all loops bounded by DS699_MAX, 21 names. DSLogGate:
+  lazy dictionary under its own lock; app dylib does not call it.
+- Uploaded files (uploads709): two Signal reports. 19:26 = FrontBoard 0x8BADF00D
+  "failed to terminate gracefully after 5.0s" in Signal's own GRDB/SQLCipher
+  code, before any reboot (uptime 16 h); 2026-09-05 = 0xDEAD10CC. No
+  DynamicStage / ElleKit / jailbreak image in either.
+
+No culprit found. 709 gives the user a build that re-jailbroke fine before:
+- springboard/, shared/, app/ = the 4.5.706 sources exactly (bak707); only
+  kDSBuildVersionString changed. Both dylibs are byte-for-byte the same size
+  as 4.5.706 and import the same symbols.
+- DEBIAN/postinst and postrm = 4.5.708 (filter plist before dylib, -ef skips,
+  orphan TweakInject dylib removed, postrm only on remove/purge, exit 0).
+- Not in 709: kb707, corner707, outside707, beeper707, the 707 purge / log
+  throttle, the 708 trace-writer and outside707 tweaks. 707/708 sources kept in
+  bak709/.
+
+Manual recovery if NathanLR still will not jailbreak: NathanLR safe mode, or
+Filza (TrollStore) delete DynamicStage*.dylib/.plist in
+/var/jb/Library/MobileSubstrate/DynamicLibraries and /var/jb/usr/lib/TweakInject,
+plus /var/jb/Library/Application Support/DynamicStage/, and /var/mobile/.eksafemode
+if present; reboot, jailbreak, then install 709 from Sileo.

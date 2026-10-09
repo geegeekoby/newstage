@@ -1,3 +1,8 @@
+**4.5.709**
+- Known-good rollback: the code is exactly 4.5.706 (only the version string differs), with the 4.5.708 install / remove scripts. The 4.5.707 changes (kb707, corner707, outside707, beeper707, the dead-code purge and the shared log throttle) and the 4.5.708 run-time tweaks are not in this build.
+- Why: after 4.5.707 the user could not re-jailbreak with NathanLR. A full review of 706 -> 707 -> 708 found no launch-time cause (same single SpringBoard initializer and two app initializers, same linked libraries, two new CoreGraphics imports that exist on every iOS, no new hooks, notifications or timers at load, nothing of 707 runs until a stage is open), and the uploaded Signal reports do not involve the tweak. This build lets the user go back to the last build that re-jailbroke fine.
+- Scripts (from 4.5.708): TweakInject gets the filter plist before the app dylib, same-file copies are skipped, an app dylib without its plist is removed, postrm acts only on remove / purge and can never fail.
+
 **4.5.708**
 - Hardening hotfix after a NathanLR re-jailbreak failure reported on 4.5.707. No crash log pointed at the tweak and no launch-time code changed in 703-707; this closes the install-script paths that could reach beyond SpringBoard and the five chat apps. Everything else is exactly 4.5.707.
 - postinst: in TweakInject the filter plist is copied first and the app dylib only once the plist is really there; nothing is copied when TweakInject and DynamicLibraries are already the same files; an app dylib left in TweakInject without its plist is removed (a filterless dylib can be loaded into every process). Still always exits 0.

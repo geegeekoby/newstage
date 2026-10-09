@@ -1,0 +1,43 @@
+DynamicStage 4.5.715 (old keyboard step-aside removed, kb707 only)
+
+What was removed (DSStageManager.m: 259 lines out, 34 in; net -225)
+- The focus704 / focus705 two-stage step-aside, the kb707-off fallback:
+  the body of focus704Evaluate after the kb707 check (raise the typing card,
+  slide the other card, the 705 "one session" hold), focus704Release,
+  focus704AnimateCard, focus704Holds, focus704FrontViewFor, focus705QueueCheck,
+  and their state (_focus704Owner/Moved/Side/Raised/Defers,
+  _focus705AbsentSince/CheckQueued).
+- Every read of that state elsewhere: the side park's "held" card, the
+  stageHasSideShift exception, the release in clearKeyboardSideShift, the
+  drag702End re-check, kbmin702's "typing inside a stage" reason, the
+  drag706 keyboard-around test, the tick condition, the perf705 gauge text.
+Why it is provably dead: the step-aside only ran when the stage was the
+overlay, not split and with no third stage - exactly the conditions under
+which kb707 owns the layout. kb707Owns no longer reads the off file, so with
+those conditions kb707 always owns it and the step-aside could never run. On
+4.5.714 with kb707 on, its state was therefore always empty: every removed
+check was "nil / NO" there, so the remaining code runs the same as on 714.
+
+What was kept, and why
+- Messages: its whole 714 path is unchanged - the keyboard note
+  (noteKeyboardFrame703), focus704NoteKeys / focus704TypingCard (kb707's
+  input), kb707 itself (lift, other card's slide, spring back), the app-side
+  input bar code (app dylib sources unchanged), camera 673, msgdiag714.
+- Beeper 684: the 683 own-keyboard path, the frozen keyboard top
+  (kb707KeysForCard) and fit696KeysTopForSlot - unchanged.
+- The older movers (picker-search lift / drop, liftCardBy / setLift /
+  reapplyBottomKeyboardLift, the side park, the settled top move,
+  applySplitKeyboardShift): they still run for split, the third stage and
+  outside the overlay (kb707 does not own those), so they are not dead.
+- focus705On / focus705UpperSearchStill (picker search and heal700 use them).
+
+kb707 switch
+- /var/mobile/.dynamicstage-kb707-off now does NOTHING (no fallback left).
+- The crash latch stays: a SpringBoard crash within 15 s of kb707's first
+  use writes /var/mobile/.dynamicstage-kb707-crashed; then kb707 moves no
+  card for the keyboard (cards stay put) until that file is deleted.
+- /var/mobile/.dynamicstage-focus704-off also does nothing now.
+
+Unchanged: no new hooks, nothing new at load (initialiser sizes 4 / 8 bytes,
+imports identical to 714), app switcher, camera 673, scripts (4.5.708).
+Recovery: reinstall 4.5.714 (the kb707-off fallback is there).

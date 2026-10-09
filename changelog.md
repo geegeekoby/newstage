@@ -1,3 +1,6 @@
+**4.5.729**
+- 4.5.728 plus slide728: an outside-tap minimise slides the cards out the side (kb707's side slide), then they are minimised normally (corner icon, corner pull). Flick / drag minimise unchanged. Off: -slide728-off.
+
 **4.5.728**
 - kbshow728: if a staged, visible app asks for its keyboard and no keys are on screen 0.5 s later, the keyboard windows are revealed and raised above the stage (up to 3 tries, logged). The "show dropped" counter now resets. Off: -kbshow728-off.
 - pull728: corner pulls are ignored while a minimise animation runs or within 1 s of a drag-minimise. Off: -pull728-off.

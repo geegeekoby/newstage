@@ -1,0 +1,87 @@
+DynamicStage 4.5.698 - smoother minimise to the corner, performance sweep; Beeper size unchanged (= 697)
+
+Built on 4.5.697. newstage origin/main before publishing = 02aad84 (our 697); no new upload/log.
+
+1 BEEPER BIGGER - NOT APPLIED (user: "if it can't be bigger while everything still fits, don't change it")
+ Geometry (697): scene 430x931, safe area {118,0,345,0}; card 420x458 shows app y 59..586 (527 pt) at
+ x0.9767 / y0.8691. Bottom = app y 586 = keyboard top (684 mechanism, must stay on the card bottom).
+ Top = app y 59 = top of Beeper's own top bar (59..127, follows the status bar, not the inset; settings
+ cog is inside it). So the whole 527 pt must fit 458 pt: y0.8691 is already the largest vertical scale
+ that shows everything, and x0.9767 the largest horizontal one with no side crop. Any bigger = cutting
+ the top bar (cog) or the sides. Bottom quick bar (layers / search / compose, app y ~534..588) therefore
+ stays the same size.
+ Shipped as OPT-IN only (default = exact 697 picture, logged "phonesize698 ... not bigger (tune gives
+ 697's picture)"):
+   tune /var/mobile/.dynamicstage-phonesize698-tune (key=value, re-read every 2 s)
+     view_top=59..200 (59)   app y on the card top (bigger = taller picture, crops the top bar's top)
+     side_crop=0..40 (0)     app pt cut each side (bigger = wider picture)
+     zoom=off|1.0..1.4       multiplies 697's x and y (zoom=1.10 shows app y ~107..586: top bar cut)
+     sx=auto|0.9..1.4, sy=auto|0.5..1.4, x_shift=-40..40 (+ = more of the left side)
+   e.g. view_top=72 + side_crop=5 -> x1.0000 / y0.8911 (~2.5% bigger; crops app y 59..72 + 5 pt/side).
+   Never smaller than 697, never narrower than the card (no margins). Mapping only (host view
+   transform/centre), no scene write, keyboard/bar line 586 untouched.
+ Off /var/mobile/.dynamicstage-phonesize698-off = 697. Latch phonesize698-trying/-crashed.
+
+2 SMOOTH MINIMISE (anim698)   off: /var/mobile/.dynamicstage-anim698-off   latch: anim698-trying/-crashed
+ Causes found:
+ a) Dragging toward a bottom corner sets card.cornerRadius = resting + (16 - resting) * approach on every
+    pan frame. 697's "same radius = no-op" can't help (the value changes each frame), so every frame was
+    a full card relayout: content mask, three rounded clips, blur-fill rounding (subview class-name walk),
+    rim catcher layout, shadow. Fix: when only the radius changes (no keyboard band, bounds unchanged) the
+    radius is written straight to the layers that carry it (card, content, content mask, backdrop + its
+    mask/backdrop subviews, shadow) with actions off; no setNeedsLayout. Clamped to 20 like the layout.
+ b) The minimise animated the REAL card's frame 420x458 -> 56x56 square past the corner (0.32 s ease-in):
+    bounds animation of a view with masksToBounds corner clips, a separate CALayer mask (not view-backed:
+    it got CA's own 0.25 s default animation or jumped), a UIVisualEffectView blur being resized every
+    frame, the outline layer (actions disabled -> jumps), and layoutAllStackSlotsForState + chrome/keyboard
+    /status-bar work inside the animation block.
+    Fix: anim698FlyCard: snapshotViewAfterScreenUpdates:NO of the card (the drag already uses this API)
+    is put on the window at the card's spot; the stack layout runs once WITHOUT animation (the real card
+    goes straight to its off-screen corner park frame; only when that frame is off screen, else 697
+    path); the snapshot gets ONE UIView animation of center + scale transform (0.30 s ease-in) -> pure GPU
+    compositing, no layout/mask/blur work per frame. Completion = the same 697 finish block (state,
+    hide parked cards, key window, backgrounding, icon, shelf), at the same time as before.
+    Fast flick (697: card vanished instantly, "snap"): the stage still finishes at once as before, the
+    snapshot flies 0.18 s ease-out to the corner (cosmetic only).
+    Safety: flight is removed by stopMinimizedMotionForCard; hidden if the card is unparked mid-flight
+    (completion still runs when it would have). Public UIKit/CA API only, no hooks. Scene size is not
+    touched by the animation (Beeper keeps 430x931 per 695; other apps' resize still happens in the
+    minimised layout exactly as in 697, now outside the animation).
+ Not changed: the two-card case (other card stays: spring re-layout of the remaining card) and the
+ restore animation.
+
+3 SWEEP (perf698)   off: /var/mobile/.dynamicstage-perf698-off   latch: perf698-trying/-crashed
+ Fixed:
+ - Card shadow view: clear, no content -> its shadow never drew anything, but shadowOpacity 0.28 with no
+   shadowPath = off-screen render pass each frame a card moves/animates. Now opacity 0 (same picture).
+ - Trace "alive" heartbeat: a trace-file write every 3 s forever; now only with the verbose log
+   (STALL detection unchanged). In the app dylib (sandbox can't see the verbose file) it is now off.
+ - App-trace relay (Beeper/Messenger/Signal containers, ~8 stats/reads per app per poll every 1.5 s
+   forever): every 6 s while none of them is on a card; full rate while one is (camera/live logic same).
+ - (always on, no switch) Intro demo repeating NSTimer captured self strongly (view could never dealloc
+   if stop was missed) -> weak.
+ Looked at, left alone (risky or negligible), listed for later:
+ - Blackout watchdog (696) ticks every 1.5 s forever; cheap early returns when no stage. Could stop when
+   no card is staged, but it is also the perf-log clock.
+ - DSDiagnostics run-loop observer (one store per run-loop pass) - negligible.
+ - Camera arbiter 1 s timer only while claims exist (already stops).
+ - noteStageGeometry still builds the 14-line summary once a second in the quiet log (rim-off-card crash
+   note) - kept for crash diagnosis.
+ - logStageGeometry has dead code after "return;" - harmless.
+ - Pan handler per frame: refreshOutline (frame + border), facing-rim pulse, terminate glow (697 no-op
+   when hidden), refreshSystemStatusBar (early-out) - all light now.
+ - Corner-park frame of a minimised card is 56x56: the hosted picture for non-684 apps is shrunk to the
+   card size on minimise (675 rule) -> those apps relayout on minimise/restore. Changing that is the 695
+   keep-size idea applied to every app; not done (scene/keyboard risk for Messages/Signal).
+
+4 PERF LOG (/var/mobile/.dynamicstage-perf, line every ~3 s)
+ perf697 line + ", perf698 on|OFF, anim698 on|OFF" + for minimise animations:
+ " | anims N (last minimise698 312ms), frames F, slow frames S, worst frame gap G ms".
+ minimise698 = new flight, minimise-flick698 = flick flight, minimise697 = old path (anim698 off).
+ Measured with a CADisplayLink only while the perf file exists (slow = gap > 1.5x frame interval).
+
+No new hooks, no status-bar writes, Messages and the iOS app switcher untouched, 697 perf + keys697 kept.
+Build: "verify: 3 binaries, arm64 + new-ABI arm64e, signed", 41 warnings (usual).
+Files changed: springboard/DSSceneHost.m, DSStageManager.m, DSStageContainerView.m, DSAppTraceRelay.m,
+DSIntroDemoView.m, shared/DSStageDebug.h/.m, DSDiagnostics.m, DSConstants.h (version), control, changelog.md.
+Backups (697 versions): bak698/. Diff: springboard-698.diff.

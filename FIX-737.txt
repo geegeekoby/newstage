@@ -1,0 +1,11 @@
+DynamicStage 4.5.737 (on 4.5.736)
+
+top737 - Beeper's top bar no longer covers its round arrow button (IMG_4476)
+With the 694 squash the card shows Beeper from app y 59, but the scene's top safe
+area was 117/118 (where the card's top would be at uniform scale). Beeper draws its
+blurred top bar over everything above the safe area, so the card showed a band
+(app y 59..119) over the list, and the arrow at about app y 103 was cut.
+The top safe area is now 75 (16 pt below the card's top) while the squash is in use,
+so the bar ends just above the arrow. Card size and position, edge-to-edge fill, the
+bottom inset (the keyboard line) and all keyboard behaviour are unchanged.
+Off: /var/mobile/.dynamicstage-top737-off (per-action latch).

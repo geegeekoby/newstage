@@ -1,3 +1,6 @@
+**4.5.737**
+- top737: staged Beeper's top bar is shorter, so the round arrow under it is fully visible; card still edge to edge, keyboard unchanged. Off: -top737-off.
+
 **4.5.736**
 - crash fix: the 734/735 crash was the app trace relay (diagnostics) on its first object; it's removed.
 - latch736: features wrongly latched off by those crashes (e.g. phonesize696 fit) are re-enabled once.

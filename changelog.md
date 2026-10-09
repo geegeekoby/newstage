@@ -1,3 +1,7 @@
+**4.5.736**
+- crash fix: the 734/735 crash was the app trace relay (diagnostics) on its first object; it's removed.
+- latch736: features wrongly latched off by those crashes (e.g. phonesize696 fit) are re-enabled once.
+
 **4.5.735**
 - crash fix: the 4.5.734 start-up crash in the app trace relay (diagnostics). It now starts 20 s after the stage is up and latches itself off if it ever crashes. Off: -relay735-off.
 

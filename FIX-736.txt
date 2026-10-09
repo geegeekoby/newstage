@@ -1,0 +1,29 @@
+DynamicStage 4.5.736 (on 4.5.735)
+
+Crash ("Logggggg", build 4.5.735, SIGSEGV, previous session before the 10:01 NZDT start)
+The 735 tweak binary lines up at load address 0x1056b0000 (all 3 tweak frames land
+right after a call):
+  0x1056ca6e0  DSCameraArbiter.m:1683  (relay735's 20 s delayed start, main queue)
+  0x1056c8008  DSAppTraceRelayStart (dispatch_once, DSAppTraceRelay.m:298)
+  0x1056c8130  DSAppTraceRelay.m:301   [DSAppTraceRelayEntry new]
+The same line as the 734 "Hi" crash. Delaying it (735) only moved the crash to 20 s
+after start. relay735's latch caught it (the next start logged "relay735 app trace
+relay off"). But every feature that had acted in the 15 s before the crash was latched
+off along with it; the log shows "phonesize696 fit LATCHED OFF".
+Why that first message crashes is still unknown: the class's metadata is signed the
+same way as every other class in the binary.
+
+Fixes
+- The app trace relay is no longer started at all. It was diagnostics only; nothing
+  visible uses it, and the camera/presence code already copes with it being off.
+- latch736: on the first start of 4.5.736, latch files (-trying/-crashed) written
+  since 734 was installed (09:40 NZDT) are removed once, so features wrongly latched
+  by the relay crashes come back. Older latches stay. Marker:
+  /var/mobile/.dynamicstage-latch736-cleared.
+
+Audit
+- No blocking calls (dispatch_sync, sleep, semaphore waits, waitUntilDone) anywhere
+  in the SpringBoard tweak.
+- Timers: the stage tick and one other StageManager timer, the camera arbiter's
+  timer, and one each in the intro/picker views. The relay's timer is gone with the
+  relay.

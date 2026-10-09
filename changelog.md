@@ -1,3 +1,8 @@
+**4.5.733**
+- crash fix: black731 no longer touches a card whose app is still starting (the 4.5.732 crash when opening an app right after the keyboard went away).
+- grab733: pulling a minimised card from its corner no longer scrolls or swipes the home screen behind it. Off: -grab733-off.
+- flick733: flick-to-minimise starts exactly where the card is and animates visibly (0.28-0.42 s spring, icon fades in at the end). Off: -flick733-off.
+
 **4.5.732**
 - black731: a card that comes back from a side slide (search, keyboard) is switched back to the app's live picture; fixes a black top card. Off: -black731-off.
 - rim731: the drag rim is only outside the card now; taps at the app's edges reach the app. Off: -rim731-off.

@@ -1,0 +1,33 @@
+DynamicStage 4.5.733 (built on 4.5.732)
+
+grab733 - a corner pull owns its touch
+Cause: the corner pull of a minimised card is SpringBoard's own bottom-edge gesture,
+which the stage adopts. The same touch had already been delivered to the window under
+the finger (home screen / dock; the stage window says "not mine" while minimised), so
+the home screen's scroll and page pans moved with the pull.
+Fix: as soon as the pull is adopted, every pan/scroll recogniser in the SpringBoard
+window under the start point is cancelled (disable + re-enable). The system gesture,
+the home bar, the app switcher, pull728 and home731 are unchanged. Logs
+"grab733 corner pull claimed". An app behind (another process) gets its touches from
+the window server and cannot be cancelled from SpringBoard.
+Off: /var/mobile/.dynamicstage-grab733-off (per-action latch). The rim band is unchanged.
+
+flick733 - flick-to-minimise looks animated
+Found: (1) at release the drag's follow animations were removed before the flight was
+built, so the flight started from the model frame, not where the card was drawn
+(a jump); (2) 727's 0.18 s floor with a spring velocity up to 30 made fast flicks land
+in about 3 frames, reading as "not animated".
+Fix: the flight starts from the card's presentation frame captured before release;
+one UIViewPropertyAnimator spring (damping 0.85, velocity from release clamped 0-6)
+moves, scales and rounds the corner together; 0.28-0.42 s; the icon crossfades in at
+the end. Off: /var/mobile/.dynamicstage-flick733-off (falls back to 727).
+
+crash733 - the 4.5.732 crash (Crasher, Sat 10 Oct 09:36 NZDT)
+SIGSEGV in SpringBoard right after the keyboard slide ended ("cards spring back")
+and Beeper was being put on stack slot 0. Frame 1 is in DynamicStage; the log has
+no image base, so the frame cannot be pinned to one line with certainty. The only
+new code in 732 acting on a card's host at that moment is black731 (it runs 0.6 s
+after the cards come back, and on every tick), which re-ran the phone-size
+"card is showing the app" step on a host that was still being created.
+Fix: black731 no longer runs on the tick, and acts only on a host that has been
+hosting the same app for at least 3 s. black731 is otherwise unchanged.

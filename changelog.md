@@ -1,3 +1,6 @@
+**4.5.735**
+- crash fix: the 4.5.734 start-up crash in the app trace relay (diagnostics). It now starts 20 s after the stage is up and latches itself off if it ever crashes. Off: -relay735-off.
+
 **4.5.734**
 - call733: during a call (and 4 s after) the stage leaves the cards alone: no tuck, no minimise, no keyboard moves, no position forcing. Off: -call733-off.
 

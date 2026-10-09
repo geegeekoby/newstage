@@ -1,0 +1,19 @@
+DynamicStage 4.5.735 (on 4.5.734)
+
+crash735 - the "Hi" crash (build 4.5.734, Sat 10 Oct 09:46 NZDT, at SpringBoard start)
+The crash log's frames line up with the 734 DynamicStage.dylib at load address
+0x1047a4000 (all 7 tweak frames land right after a call instruction):
+  0x1047ced08  DSWhenHomeScreenIsReady (DSHomeReady.m:30)
+  0x1047a8d64  DSInstallRemainingHooks (Tweak.xm:2388, dispatch_once)
+  0x1047a99f0  Tweak.xm:2437 -> [DSCameraArbiter start]
+  0x1047be278/364  DSCameraArbiter start (DSCameraArbiter.m:1653/1667) -> DSAppTraceRelayStart()
+  0x1047bc200  DSAppTraceRelayStart (dispatch_once)
+  0x1047bc328  DSAppTraceRelay.m:301: [DSAppTraceRelayEntry new]
+  (0x2266ef214 is _sigtramp; the 0x1cdec... pairs are libdispatch callouts)
+SIGSEGV inside objc_msgSend on that first "new" to DSAppTraceRelayEntry (the class's
+first use). The last log line is "camera658 arbiter listening", printed just before.
+Fix: the app trace relay (diagnostics only) starts 20 s after the stage is up, with a
+per-action crash latch: if it crashes again it latches itself off at the next start
+instead of costing a SpringBoard start. Off: /var/mobile/.dynamicstage-relay735-off.
+Note: the same _sigtramp address is in the 4.5.732 Crasher; that log has only one
+tweak frame, so it cannot be tied to this site.

@@ -1,0 +1,35 @@
+Dynamic Stage crash log
+Build 4.5.734
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.734
+when: 1791578767
+signal: SIGSEGV
+session: 123C601F-D5D3-4EC0-99E1-7E4BBADBF83C
+backtrace:
+  0x347b0002266ef214
+  0xe8088001047bc328
+  0xc2168001cdecaeac
+  0x34470001cdecc6ec
+  0xcc668001047bc200
+  0xe9338001047be364
+  0x2f618001cdecaeac
+  0x72088001cdecc6ec
+  0x5e530001047be278
+  0xa4150001047a99f0
+  0xce038001cdecaeac
+  0xcb038001cdecc6ec
+  0x68708001047a8d64
+  0x76308001047ced08
+  0x58730001cdecaeac
+  0xa71d8001cdece330
+--- recent stage lines ---
+SpringBoard: call653 guard listening (call screen containment is off)
+SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-ac
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+=== end ===

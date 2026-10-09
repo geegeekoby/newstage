@@ -1,0 +1,42 @@
+DynamicStage 4.5.726 - outside726 (stricter outside-touch minimise) + restore726 (a minimised card stays restorable)
+====================================================================================================================
+Base: 4.5.725. No new hooks, nothing new at load. Log analysed: uploads726/Lalalaa.txt (recorded on 4.5.724).
+
+WHAT THE LOG SHOWS (times NZDT)
+09:06:27.417  Beeper put on stack slot 0 from the picker (card {5,5,420,458}).
+09:06:28.346  "outside707 the home screen / app behind was used at 277,853: the staged card is minimised
+              to its corner" - 0.93 s after the app opened, a touch at y=853 (screen 932): the bottom band
+              where the home swipe starts. outside707's limits are y<44 / y>892 and 16 pt sides, so 853
+              passed. It went through the normal (spam700-numbered) minimise path.
+09:06:29.657  home swipe: "tucking the open stage for home", "home gesture began, stage minimized".
+09:06:30.238  "corner pull picked up from the system gesture" -> restored (typing in Beeper 09:06:35-46).
+09:07:00.294  tucked for home again; 09:07:01.478 corner pull -> restored (card at {5,469}).
+09:07:02.251  0.6 s later tucked for home again ("home gesture began" / "ended" 36 ms apart: the end
+              of the corner pull itself was taken as a home swipe).
+09:07:02.483  Beeper (kept running by bg719) put its keyboard up while minimised (keys697: ignored).
+09:07:03.594  home / switcher has the screen. No "corner pull picked up" after this: every later pull
+              was refused (refusals are not logged); touches at 09:07:07-08 went to the home screen.
+
+CAUSE
+1. outside707 fired on a touch-down in the home-swipe band, 0.9 s after the user opened the app.
+2. The card could not come back: a corner pull is the only way back, and it is refused while a previous
+   corner pull is still registered (_systemPull) or when the pull starts in the corner opposite to the
+   one the stage remembers. The 09:07:01 pull ran straight into a home swipe, so SpringBoard never sent
+   its end; the stale pull then blocked every later pull (and heal / outside checks), with no log line.
+   (corner707 side mix-ups after the home tuck's opposite-corner assignment can do the same.)
+Not involved: sync725 (built later), kb707 offsets (cards spring back on "typing ended"), heal700.
+
+FIX
+outside726 (off: /var/mobile/.dynamicstage-outside726-off):
+- never in the bottom 140 pt of the screen (home swipe start);
+- 56 pt around every card (was 24);
+- never within 1 s of a touch the stage took (a card) or of a stage opening / picker showing / card
+  closing;
+- waits 0.45 s (was 0.18) and re-checks, so a swipe or drag that began is refused. (A true tap test would
+  need a new touch hook; not added.)
+restore726 (off: /var/mobile/.dynamicstage-restore726-off), every stage tick (1.5 s) while a card is
+minimised:
+- releases a corner pull SpringBoard never ended (no finger, not Began/Changed for > 1 s, or > 4 s);
+- clears a corner-pull block set far in the future;
+- makes the remembered corner side match the corner the minimised card is drawn in.
+Each action is logged ("restore726 ...", once per 30 s per kind) with a per-action crash latch.

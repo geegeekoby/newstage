@@ -1,3 +1,7 @@
+**4.5.726**
+- Fixed: a staged app could be minimised by a touch near the bottom of the screen and then never come back. outside726: no outside-minimise in the bottom 140 pt (home swipe), 56 pt around cards, never within 1 s of touching a card or opening / closing a stage, 0.45 s re-check. restore726: every tick a minimised card is checked to be restorable (a corner pull that never ended is released, the corner side is matched to where the card is drawn, a stale pull block is cleared). Off: -outside726-off / -restore726-off.
+- No new hooks, nothing new at load.
+
 **4.5.725**
 - sync725: the other card slides aside together with the typing card (one spring, same start), and every card comes back as soon as the keyboard is dismissed (0.1 s blip guard instead of a 0.4-0.9 s wait). Cause: kb707 first looked at the short pre-suggestion-bar keyboard frame (lift without slide), then 0.35 s later lifted the rest and started the slide. Messages and Beeper 684 unchanged. Off: /var/mobile/.dynamicstage-sync725-off (per-action latch; kb707 is never latched).
 - No new hooks, nothing new at load.

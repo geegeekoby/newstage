@@ -1,0 +1,83 @@
+DynamicStage 4.5.713 - Messages keyboard back to 4.5.706 + group D (bisect done)
+================================================================================
+
+4.5.712 (706 code + 708 scripts + beeper707 + kb707 + corner707 + outside707)
+re-jailbroke fine with NathanLR. This build adds two things.
+
+1. Messages back to the 4.5.706 keyboard handling
+-------------------------------------------------
+kb707 skips Messages (com.apple.MobileSMS) entirely.
+- "Messages owns the keyboard" = Messages' keyboard note is up, or Messages is
+  the staged app that reported the keyboard (focus704), or the lifted card is
+  Messages with a keyboard noted.
+- While that holds - and afterwards until the 4.5.706 paths have put everything
+  back (no keyboard noted, no lift or side offset on either card, focus704
+  released) - kb707 does not own the layout. All the 4.5.706 movers run as in
+  706: the Messages card's lift, the other card's side slide (focus704 /
+  two-stage side park / settled top move), and the 706 spring-back.
+- If kb707 was holding a lift for another card when Messages takes the
+  keyboard, that card is put back first (no animation), so the 706 path starts
+  from rest.
+- If another staged app then takes the keyboard, kb707 takes over again (it
+  writes both cards' lift and side).
+- Every other app keeps kb707. Messages' camera (673) is not touched.
+- Cheap: ivar / static reads and string compares only; no switch, no file.
+- Log: "kb713 Messages owns the keyboard: the 4.5.706 keyboard paths run".
+
+2. Group D (the last 4.5.707 group)
+-----------------------------------
+- The 57 unused functions / methods removed (923 lines; DSStageManager.m 42,
+  DSSceneHost.m 6, Tweak.xm 7, DSCameraArbiter.m 2). Re-verified on this tree:
+  each name and full selector (e.g. stashHost:fromCard:) has zero hits in
+  springboard/, shared/ and app/ - no call, @selector, string literal (so no
+  NSSelectorFromString source), timer / notification target or hook; no selector
+  is built by string concatenation; the %hook list is identical to 4.5.706.
+- DSLogGate: four hand-rolled log throttles merged (keys697, phonesize695
+  "kept", the held-update line, the scene trace).
+- The switch table: 32 slots (24 in 706).
+- The 4.5.708 trace writer: no switch / latch read on the write path, burst
+  batching always, relayed lines always async.
+
+Nothing new at load
+-------------------
+- The switch table arrays and DSLogGate's lock / dictionary are zero-filled
+  statics (constant init, created lazily under the lock on first use); no
+  initialiser, no file access at load.
+- Load-time initialiser lists unchanged from 4.5.706: SpringBoard dylib 4 bytes
+  (the %ctor), app dylib 8 bytes (constructor(101) + %ctor). Linked libraries
+  identical to 706 for both dylibs.
+- App dylib (Phone, Signal and the other apps): imports identical to 4.5.706;
+  app sources are 706's. The only shared-code change it runs is the trace writer,
+  and only when something traces - with fewer file checks than 706's writer
+  (706 read perf697 + perf706 switches there).
+- SpringBoard dylib imports vs 706: + CGAffineTransformEqualToTransform,
+  CGColorGetAlpha (beeper707), - CGRectUnion, pow (purged code). Same as 707.
+
+Kill switch
+-----------
+/var/mobile/.dynamicstage-groupd713-off = the trace writer and relay run the
+exact 4.5.706 code. Checked only on a trace write (cached access(), 2 s), no
+crash-latch file. The purge, the table size and the throttle cannot be switched
+(removed code / static sizes; none of them runs at load).
+
+All off files (touch, then respring)
+------------------------------------
+/var/mobile/.dynamicstage-groupd713-off   trace writer = 4.5.706
+/var/mobile/.dynamicstage-kb707-off       keyboard = 4.5.706 for every app
+/var/mobile/.dynamicstage-corner707-off   corners = 4.5.706
+/var/mobile/.dynamicstage-outside707-off  no outside-touch minimise
+/var/mobile/.dynamicstage-beeper707-off   drawing = 4.5.706
+Crash latches (kb707 / corner707 / outside707 / beeper707):
+/var/mobile/.dynamicstage-<name>-trying / -crashed.
+
+Rules kept: no new hooks, no status-bar writes, no tune files; app switcher,
+Messages' camera (673), the Beeper 684 keyboard mechanism, backgrounding /
+keep-alive and the card size untouched. Build: 41 warnings, the 4.5.704 set.
+Scripts = 4.5.708.
+
+Recovery
+--------
+If the re-jailbreak fails on 713: re-test once. If it fails again, group D is
+it - remove the tweak in Filza (DynamicStage / DynamicStageApp dylib + plist in
+/var/jb/usr/lib/TweakInject), re-jailbreak, reinstall 4.5.712 (known good). Once
+jailbroken on 713, a misbehaving piece can be turned off with its off file.

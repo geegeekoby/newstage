@@ -1,0 +1,63 @@
+DynamicStage 4.5.702 - anim702 (spring minimise/restore), drag702 (no drag shake), kbmin702 (minimise for other keyboards),
+multi702 (several stages), all user tune files removed. Built on 4.5.701.
+
+1) anim702 - minimise and restore animation  (off: /var/mobile/.dynamicstage-anim702-off = 698/700 animation; latch anim702-trying/-crashed)
+   Minimise: a picture of the card springs into its corner icon. One UIViewPropertyAnimator, UISpringTimingParameters damping 0.86,
+   0.40 s (flick 0.34 s), initial velocity = the finger's release speed along the path. Corner radius animates card radius -> 9 pt
+   (icon), 1 pt outline on the clip, shadow with a fixed shadowPath scaled by transform (no per-frame rebuild). The app icon fades in
+   on the picture over the second half; at the end the real corner icon is shown under it and the picture fades out (0.16 s).
+   Restore (corner pull): the same spring with the pull's velocity; the still picture cross-fades to the live app (0.18 s).
+   Open from icon (no pull): the card grows out of the icon by a transform of its shell (scene size fixed), icon fades into it.
+   Interruptible: minimise / restore / open / drag stop a running animation at its on-screen state (finish at current position);
+   completions still run and spam700 drops stale ones. heal700 / crash699 / blackout699 code unchanged.
+   Perf log names: minimise702, minimise-flick702, restore702, expand702, handoff702.
+   Values are fixed in code (no tune file - see 5).
+
+2) drag702 - stage shakes while dragging  (off: /var/mobile/.dynamicstage-drag702-off; latch)
+   Cause (code + logs): the drag was not the only thing moving the card.
+   - A grab while the card was still springing (restore/open 0.26 s, snap-back) measured the grab from the frame the animation was
+     heading to while the picture was still moving: the first finger frames fight the running animation (judder, then a jump).
+     697 Laggy log: drags start 0.45 s after restores/corner pulls (13:43:47.185 restore -> 13:43:47.638 drag; 13:43:48.697 ->
+     13:43:49.292).
+   - Other code wrote the card's frame / lift while the finger was down: the drag start dismisses keyboards, whose lift/side-slide
+     changes re-placed the card; restore/open completions and heal/blackout ticks run layout passes; Live scene updates arrive
+     mid-drag (701 log: 13 Signal "scene update begin" lines inside one top-rim drag).
+   Logs do not record per-frame positions, so this is inferred; 702 logs "drag702 held N position writes" for evidence.
+   Fix: at grab, running springs stop where they are and the card is taken from its on-screen (presentation) position; all its
+   animations are removed; until the finger lifts only the drag writes the card's frame (assignFrame / setPrimaryCardFrameInRoot
+   hold other callers for that card) and lift/side-slide writes are held; released at Ended/Cancelled/Failed and by the stage tick
+   as a safety net. The normal drop and keyboard placement then run as before.
+
+3) kbmin702 - minimise when another app's keyboard comes up  (off: /var/mobile/.dynamicstage-kbmin702-off; latch)
+   Keyboard arbiter source (697 ownership path, keyboardOnScreen697) with height >= 150: if it is not a staged app (hosted bundle,
+   its extensions, remote view services / pickers / WebKit), not the stage's own keyboard (stand-in field, picker search), not a 683
+   session, not locked, no drag / corner pull / home gesture / transition / call, stage settled on screen with a staged app visible:
+   after 0.3 s (same owner still up) the card is minimised - one card: minimizeDraggedCard (spam700 numbered, anim702 flight);
+   two / split / float: the home tuck (also spam700 numbered).
+
+4) multi702 - cost with 2+ stages  (off: /var/mobile/.dynamicstage-multi702-off; latch)
+   Audit: SpringBoard has no per-card repeating timers or display links (one stage tick, one relay timer, the watchdog, the camera
+   presence timer only while something is visible; per-card work is bounded retries). Minimised / parked cards are hidden (shell /
+   card hidden + alpha 0), so their blur, shadow (opacity 0 since 698) and content are not drawn. App dylib timers per app were
+   slowed in 701 (background 6 s / 4 s).
+   Fixed: (a) a card going out of sight stops its remaining animations (outside animation blocks only); (b) [KEYS]/[LIFT] debug
+   strings with per-card lift summaries are no longer built on every keyboard notification when the log is quiet (21 + 14 sites).
+   Left alone: keep-alive of staged/minimised apps (695 running assertion), the camera presence timer, scene update handling.
+
+5) Tune files removed (the files are not read any more; values = the built-in defaults a phone without the file used):
+   phonesize681-tune: show=instant, duration=500 ms, delay=0, curve=keyboard, spring_damping=1.0, spring_velocity=0,
+                      target=final, offset=0, hide_duration=500 ms, hide_curve=keyboard
+   phonesize684-tune: bottom=auto (learned K, default 345), top=auto (card top), mode=safe
+   phonesize685-tune: view=auto, margin=14, slack=auto, top=auto, key_top=auto
+   phonesize687-tune: view=auto, margin=8, top=auto
+   phonesize688-tune: mode=684 (exact 684), view/offset/shift/statusbar=auto
+   phonesize690-tune: strip on, strip_top=59, strip_height=68, place_y=0, touch=0
+   phonesize691-tune: top_inset=auto (strip bottom auto)
+   phonesize692-tune: patch=off (x=0, w=100, shift=auto, blend=0)
+   phonesize693-tune: cog=off (size=44, dst_y=71, round=yes, peek=no)
+   phonesize694-tune: squash=on, view_top=59, sy=auto
+   phonesize698-tune: view_top=59, side_crop=0, zoom/sx/sy=auto, x_shift=0 (= 697 Beeper picture)
+   Not tune files, unchanged: phonesize675-apps (allowlist), phonesize679-scale, phonesize675-pinoffset, all -off files, latches.
+   anim702 has no tune file (fixed 0.40/0.34/0.44 s, damping 0.86).
+
+Unchanged: no new hooks, no status-bar writes, keyboard mechanism (684), Messages camera (673), iOS app switcher, card size.

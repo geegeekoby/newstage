@@ -1,0 +1,67 @@
+DynamicStage 4.5.717 - bg717: true backgrounding for staged and minimised apps
+==============================================================================
+
+What it does
+- While an app is on a stage card, minimised to the corner, or stashed next to
+  Split, SpringBoard holds a RunningBoard assertion on that app's process:
+    RBSAssertion  target = [RBSTarget targetWithPid:<pid>]
+                  attributes = @[ [RBSDomainAttribute attributeWithDomain:@"com.apple.frontboard" name:@"Visibility"] ]
+                  -initWithExplanation:target:attributes: then -acquireWithError:
+  This is the same domain/name FrontBoard (inside SpringBoard) puts on an app
+  whose scene is visible (runningboardd logs show "FBApplicationProcess" with
+  <RBSDomainAttribute domain:"com.apple.frontboard" name:"Visibility">). While
+  it is held RunningBoard treats the process as visible, so it is not
+  suspended - not when the card is minimised, not when the phone is locked.
+- Released ([assertion invalidate]) when the card closes, the app is replaced
+  or leaves the stage (relinquish / tear-down / dealloc of the scene host).
+- Re-acquired: on every hold path the stage already had (open, minimise,
+  home hand-back, staysBackgrounded) and from the stage tick (<=1.5 s unlocked,
+  <=30 s locked, and at once on unlock via the existing unlock listener):
+  a relaunched app (new pid) or an assertion RunningBoard dropped is taken
+  again. After a respring every assertion dies with SpringBoard; the stage
+  rehosts its apps and takes them again.
+- The 4.5.6xx BKSProcessAssertion hold is unchanged and still runs alongside.
+- Log: "bg717 holding <bundle> pid <n>", "bg717 released <bundle> pid <n> (<why>)",
+  "bg717 could not hold ... (<RunningBoard error>)", "bg717 RunningBoard API missing".
+
+How it was verified (build side)
+- iPhoneOS16.5 SDK: RunningBoardServices.tbd exports RBSAssertion, RBSTarget,
+  RBSDomainAttribute (classes). Selectors are the ones WebKit's
+  ProcessAssertionCocoa.mm uses against the same framework (targetWithPid:,
+  attributeWithDomain:name:, initWithExplanation:target:attributes:,
+  acquireWithError:, invalidate, isValid).
+- At runtime: objc_getClass for all three classes, respondsToSelector /
+  instancesRespondToSelector for every selector. Anything missing -> one log
+  line, nothing held (same as 4.5.716). acquireWithError: returning NO (e.g.
+  RunningBoard refusing the attribute) -> log the error, invalidate, do not retry
+  for that pid. No linking to RunningBoardServices (all calls via objc_msgSend).
+- No new hooks (hook count identical to 4.5.716). Nothing new at load: the
+  first bg717 code runs when a card hosts an app.
+
+Scope
+- Every staged / minimised / stashed app except Messages (com.apple.MobileSMS),
+  which keeps exactly its 4.5.714-716 behaviour. Beeper 684, the camera 673,
+  the keyboard and the app switcher are untouched. Scene foreground/background
+  state is not changed by bg717 (process lifetime only).
+
+Battery
+- A held app runs like a foreground app with the screen off: its timers,
+  network sockets, sync loops and any animation it keeps ticking keep running,
+  with no 30 s background limit, for as long as it is on the stage or minimised.
+  Cost depends on the app: a quiet chat app (Beeper idle on its socket) is small
+  (a few % per night); an app that polls, plays video or animates can cost as
+  much as leaving it open on screen minus the display. Close the card (or swipe
+  it off the stage) to drop the hold.
+
+Off: touch /var/mobile/.dynamicstage-bg717-off (respring not required; the next
+tick releases the holds). Crash latch: bg717-trying is written at first use;
+a SpringBoard crash within 15 s turns it into bg717-crashed and bg717 stays off
+until that file is deleted.
+
+Risks
+- "Visibility" is SpringBoard/FrontBoard's own attribute; RunningBoard could
+  refuse it for an extra originator assertion -> "bg717 could not hold" in the
+  log and behaviour as 4.5.716 (no crash path).
+- Jetsam: a visible-priority app is less likely to be killed under memory
+  pressure, so other background apps may be evicted sooner.
+- Thermal / battery as above.

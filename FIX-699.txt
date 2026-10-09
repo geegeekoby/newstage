@@ -1,0 +1,50 @@
+DynamicStage 4.5.699 - blackout after lock while minimised + SpringBoard trap (safe mode)
+
+Log: uploads699/Blackoutagain.txt (newstage commit 8fad1eb "Create Blackoutagain", 14:37 NZDT, 12,230 bytes)
+
+Finding 1 - 698 was NOT installed:
+  log header "build 4.5.697"; session SpringBoard pid=30404 14:36:38 "mapped ... build=4.5.697";
+  crash section "Build 4.5.697 ... signal: SIGTRAP" at 1791509788 = 14:36:28 NZDT.
+  So anim698/perf698/phonesize698 cannot be involved. (Refresh Sileo and install 4.5.699.)
+
+Finding 2 - crash = SpringBoard's own SBAppViewController settings-handler trap, via our Live update:
+  frame 0 0x...21db214 / frame 1 0x...1f4babfa8 = the same sigtramp + trap frames as 674/677 (after slide).
+  frame 2 0x...105a8e8f0 -> low bits 0x8f0: return of `blraaz x8` at 0xa8ec in the 4.5.697 arm64e dylib
+    = _logos_method$Stage$SBAppViewController$sceneHandle$didUpdateSettingsWithDiff$previousSettings$ (Tweak.xm:771),
+    the `@try { %orig; }` of the owned (staged) app view; followed by the "app-view settings update done" trace.
+  Ring just before: "com.beeper.chat.ios is the only minimized app" ... home gesture ... card restored
+    (phonesize694/695, camera658 card published {{5,469},{420,458}}) ... "rim651 drag began at 0,505 won by main-shell-pan"
+    ... "layout670 card is moving" ... "appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none);
+    subclassChanges = { targetOfEventDeferringEnviron..." === end ===
+
+Cause: Beeper minimised, phone locked a while -> iOS put the scene in the background. The card was brought back
+  but stayed backgrounded (black; no wake: setStaysBackgrounded:NO only re-registers geometry, and the 696
+  watchdog needs two quiet 1.5 s ticks with no drag). The user dragged the black card from the rim; Live
+  (mode 4) updates for a backgrounded scene with no deactivation reasons were not held by any 670/696 hold
+  (lock hold ended at unlock; drag hold covers only 1.2 s settle windows, and its log is throttled) and went
+  to SpringBoard's handler, which traps (SIGTRAP; @try cannot catch it) -> safe mode.
+  Uncertain: the exact update that trapped is not in the ring (hold/diff logs were throttled); whether it was
+  during the drag or just after the settle window is unknown. Backgrounded-scene is inferred from the black card
+  plus the 696 Blackout log pattern (fg NO after lock).
+
+Changes (no new hooks, no status-bar writes, Messages/keyboard/app switcher untouched):
+  crash699 (Tweak.xm existing SBAppViewController hook): in Live mode, an owned app-view update whose scene is
+    in the background in previousSettings or current settings is held ("appview670 held a Live app view update
+    (scene in the background fg x->y (699))"). The background->foreground flip was already skipped. Each new
+    hold reason is now always logged (1 s throttle only for repeats). Forensic line "appview699 Live update passed
+    to SpringBoard" (max 2/s) so the next crash ring names the last update let through.
+    Off: /var/mobile/.dynamicstage-crash699-off ; latch crash699-trying / crash699-crashed
+  blackout699 (DSStageManager/DSSceneHost): on unpark (card back from minimised) and on unlock for every visible
+    card: check after 0.35 s (retry every 0.6 s up to 4x if drag/home gesture/system transition/settings update
+    in progress); if the scene is known backgrounded -> the same card-tap wake (wakeIfBackgrounded) the 696 watchdog
+    uses, rate-limited 1 s per host. Not while locked, not Messages, not hidden/parked cards.
+    Off: /var/mobile/.dynamicstage-blackout699-off ; latch blackout699-trying / blackout699-crashed
+  Version 4.5.699 (control, DSConstants.h), changelog.
+
+Risks: holding background updates means SpringBoard's app view does not see settings for a backgrounded
+  Live card until it is foregrounded again (same as the existing lock/drag holds). The wake is the existing card-tap
+  wake used by 696 since 4.5.696 (no crash attributed to it). If the trap came from a foreground update during
+  the drag, crash699 will not cover it; the new forensic lines will show it.
+
+Files: bak699/ (pre-699 = 698 sources), springboard-699.diff, build-699.log, publish-699.log, dsym699/, full-699/
+b2e40d581fff3efd52b6c6e6427e8f715a2591c4e9f99a1eac13d224701327ff  CursorRepo/packages/com.recreated.dynamicstage_4.5.699_iphoneos-arm64.deb

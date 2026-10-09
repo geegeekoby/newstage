@@ -1,0 +1,26 @@
+DynamicStage 4.5.724 - the keyboard lift / slide is back (kb707 is no longer crash-latchable)
+==============================================================================================
+Base: 4.5.723. No new hooks, nothing new at load. Everything else as in 4.5.723.
+
+CAUSE (no new log; traced)
+kb707 is the only code that lifts the typing card and slides the other one aside. Since 4.5.711 it
+wrote /var/mobile/.dynamicstage-kb707-trying at its first use in each SpringBoard run, removed 15 s
+later. If SpringBoard went down inside those 15 s, the next start turned it into kb707-crashed, and
+since 4.5.715 a kb707-crashed latch means "kb707 owns the layout but moves no card". 4.5.721's
+"new stage" respring happened right at kb707's first use (opening a stage), so kb707-crashed was
+left behind and every later build (722, 723) kept honouring it: no lift, no slide, anywhere.
+(Any respring within 15 s of first opening a stage, e.g. installing a package, could do the same.)
+Not the cause: kb723's 0.6 s quiet window (it only gates kb723's own extras), kb720's no-re-place
+(acts only after a lift), the kb720 / kb721 / kb723 latches (they only switch their extras off), the
+version switch.
+
+FIX
+- kb707 is not latchable: no kb707-trying marker is written, kb707-crashed is ignored.
+- At kb707's first use a stale /var/mobile/.dynamicstage-kb707-crashed / -trying (and the /var/jb
+  copy) is deleted once and logged: "kb724 removed a stale kb707 crash latch ...".
+
+FILES (optional; 4.5.724 removes the kb707 ones itself)
+/var/mobile/.dynamicstage-kb707-crashed   (the cause)
+/var/mobile/.dynamicstage-kb721-crashed   (harmless leftover, kb721 no longer exists)
+/var/mobile/.dynamicstage-kb720-crashed   (if present, kb720's extras are off; delete to re-enable)
+/var/mobile/.dynamicstage-kb723-crashed   (if present, kb723's extras are off; delete to re-enable)

@@ -1,3 +1,7 @@
+**4.5.724**
+- Fixed: cards no longer lifted above the keyboard or slid aside (single and two-stage). A crash latch left by 4.5.721's "new stage" respring (/var/mobile/.dynamicstage-kb707-crashed) had switched the keyboard mover off. The core lift / slide (kb707) is no longer latchable, and 4.5.724 deletes that stale file itself.
+- No new hooks, nothing new at load. Everything else as in 4.5.723.
+
 **4.5.723**
 - kb723: the typing card lifts above the keyboard every time in single and two-stage layouts (4.5.721's fixes without its split takeover): the search / stage field keeps its owner across short keyboard frames, an app's own keyboard report is used when its frame was missed, a 0.3 s re-check for up to 2 s, and a 0.35 s self-check that lifts a card still covering the keys ("kb723 corrected"). Split and the third stage stay as in 4.5.720. Quiet while a stage or picker opens or a card closes. Off: /var/mobile/.dynamicstage-kb723-off, per-action crash latch; last action breadcrumb in /var/tmp/com.recreated.dynamicstage.kb723.last.
 - No new hooks, nothing new at load. Messages, Beeper 684, the camera 673, bg719 and defer719 unchanged.

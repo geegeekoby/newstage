@@ -1,0 +1,79 @@
+DynamicStage 4.5.704 - typing with two stages (focus704) + whole-project sweep (sweep704)
+
+Built on 4.5.703 (newstage origin/main before publishing = 4a46c99, our 703). No newer upload/log in newstage (fetch only):
+the newest logs are "Beeper message bar dropped out of view" (4.5.699) and "Bugs when spamming..." (4.5.698).
+
+1 TWO-STAGE TYPING (focus704)   off: /var/mobile/.dynamicstage-focus704-off   latch: focus704-trying/-crashed
+ User: "when 2 stages are open the app picker ... when typing in input box it goes behind the other stage.. the stage not
+ being typed in should shift to the side".
+ Cause (code; no log of it was uploaded):
+  - Two stacked stages (not split). The picker search path in noteKeyboardFrame (the _searchSlot branch) lifts the searching
+    card with a plain setLiftOffset: animation. It never calls bringCardAboveItsPartner: (only liftCardBy:, the hosted-app
+    path, raises the moving card), and the side park it calls (commitSideParkForOwner) only slides cards for split mode /
+    the third stage (bottomSplitIsTypingInCard needs _splitMode) and for typing in the UPPER card. Searching in the LOWER card
+    therefore lifted it up over the upper card's half while it stayed underneath it in z-order: field, results and picker
+    behind the other stage. The hosted-app path lifts the other card off the top instead (companion lift), so that case
+    mostly worked - hence "sometimes".
+  - Beeper's own lift (684 handleKeyboardForBundle -> setCardY) moves its card the same way, without a z-order raise or a
+    move of the other card.
+  - The picker is a child of its card's contentView (not another window or level), so the card's stacking order is what
+    decides; the keyboard window itself was already above the stage.
+ Fix: after every keyboard note (and on search start/end, a staged app's keyboard on/off, the end of a drag, the stage tick):
+  - who is typing comes from the 697 ownership logic: the search slot, the stand-in field slot, the hosted keyboard source
+    (not a minimised / parked card's: keys697), else the lift slot of a staged typing session;
+  - that card is brought in front of the other one (bringCardAboveItsPartner: - the rim, third stage and shelf order kept);
+  - if the other card's on-screen frame overlaps the typing card (after its lift), it slides to its nearest screen edge by
+    the existing side-slide distance (two full-width stacked cards tie -> left, like the existing side park), with the 702
+    spring (damping 0.86, 0.40 s; Reduce Motion: 0.2 s ease). A card the existing side park or companion lift already moved
+    is left to that code.
+  - keyboard gone / typing card minimised, parked or hidden / stage not on screen / locked: the other card springs back to 0
+    and, if the typing card had been raised, the other card goes back on top 0.45 s later (cancelled by a new focus or drag).
+  - The existing side-park code no longer takes the slide back while the typing continues (stageHasSideShift, the park's
+    "already there" check and its reset skip the focus704-held card); a swap / drag / collapse (clearKeyboardSideShift)
+    ends it.
+  - Guards: nothing moves while a finger is down or a drag is settling (drag702), while a minimise / restore completion is
+    pending or a corner pull runs (spam700), or while the overlay settles - re-checked every 0.3 s (12 tries).
+  - Only two stacked stages; split and the third stage keep their own side park (unchanged).
+ kbmin702: never minimises for a SpringBoard keyboard while a picker is on a card (the search slot is set a moment after
+  the field asks, so the earlier "stage's own keyboard" check could miss it), nor while focus704 has a typing card.
+  Staged apps' own keyboards were already refused.
+
+2 SWEEP (sweep704) - fixed (safe):
+ a) Switch table race (shared/DSStageDebug.m). DSFeature699On registers names in a fixed table on first use with no lock;
+    the stall watchdog (global queue) and the app-trace relay (own queue) call it for battery701 while the main thread
+    registers the others -> a name could be torn / registered twice, or the one-time latch check run twice. Table and latch
+    decision are now under an os_unfair_lock (file checks outside the lock).
+ b) Log noise (springboard/Tweak.xm). "held a minimized stage scene update so another app can open" was written up to once a
+    second for every held scene update (123 times in the "Beeper message bar" log). Now once per 10 s with a "+N more" count.
+ c) Packaging (layout/DEBIAN/postinst). A feature's "-trying" marker exists for its first 15 s of use; the respring after an
+    install inside that window was read as a crash at the next start and latched the feature off. postinst now removes
+    stale /var/mobile/.dynamicstage-*-trying markers; "-crashed" latches are kept.
+ d) kbmin702 picker refusal (above).
+ e) Version strings: control and kDSBuildVersionString 4.5.704; every log / crash line uses kDSBuildVersionString (checked).
+
+ Checked, nothing to fix: NotificationCenter observers in SpringBoard / app dylibs are registered once (dispatch_once or the
+ once-only buildWindow / startObserving) for objects that live as long as the process; NSTimers (auto-kill, picker, intro)
+ are invalidated; GCD timers are deliberate lifelong ones (adapted in 701); notify blocks run on the main queue; stored
+ handler blocks use weak self; dictionary / array literals have no nil-able values; the 702 tune readers no longer read files.
+
+3 LEFT ALONE (risky or not worth it) - listed, not changed:
+ - The keyboard side-slide (commitSideParkForOwner) still uses a 0.28 s ease-in-out and the keyboard lift its own curves:
+   keyboard mechanism.
+ - restoreCardStackingOrder puts the upper card on top after every keyboard drop even if the user had raised the lower one
+   by dragging: changes long-standing two-card behaviour.
+ - _lockedScreenInsets is measured once per SpringBoard start; a start during a call bar / odd safe area keeps those insets
+   until the next respring: changing it can change card size.
+ - The 692 / 693 tune parsers still run once with no file (patch off / cog off): dead but cheap; removing touches the Beeper
+   (684) layout code.
+ - postinst keeps "-crashed" latches: re-enabling a feature that really crashed could safe-mode SpringBoard.
+ - Camera arbiter "stop from an app that is not on a card" log lines (19 in one log): camera path (673).
+ - The focus704 spring is not in the anim702 tracker; a drag start stops it through the side-shift clear instead.
+
+4 LOG SCAN (newstage, fetch only): crash sections are SIGTRAPs on 4.5.684 (Loggers.text) and 4.5.697 (Blackoutagain) -
+ the app-view trap crash699 holds since 699; none on 698/699 logs. Recurring non-error noise: the held-update line (fixed),
+ camera arbiter stop lines (left). "phonesize695 keep-while-minimised LATCHED OFF" was handled by rearm701. No upload covers
+ 702/703, so focus704 is from code reading, not a trace.
+
+Unchanged: no new hooks, no status-bar writes, Beeper keyboard mechanism (684), Messages camera (673), iOS app switcher,
+card size, Beeper edge-to-edge fill, all earlier off files / latches. No tune files.
+Files: bak704/ (= 703 sources), springboard-704.diff, build-704.log, publish-704.log, dsym704/, full-704/

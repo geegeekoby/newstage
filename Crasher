@@ -1,0 +1,61 @@
+Dynamic Stage crash log
+Build 4.5.732
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.732
+when: 1791578161
+signal: SIGSEGV
+session: D9AF6CDD-14A9-40A2-A840-BA13C9C462C4
+backtrace:
+  0xcf338002266ef214
+  0x7913000102aff160
+  0x3c688001cdecaeac
+  0xac718001cdece330
+  0xc07e0001cdee1908
+  0xdf400001cded95f8
+  0x1c268001cded92f4
+  0x31478001c6a93c28
+  0x984e0001c6a75560
+  0x40150001c6a7a3ec
+  0x4760800201f1735c
+  0x204e0001c8e076e8
+  0xad178001c8e0734c
+  0x35068002090c2d54
+  0xc52f0001e5f52dec
+  0x2c42000000000000
+--- recent stage lines ---
+SpringBoard: opened the top stage
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active
+SpringBoard: phonesize680 build 4.5.732 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,
+SpringBoard: takeKey already try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/
+search field begin editing: fr=0 win=1 key=1 att=0
+SpringBoard: phonesize675 build 4.5.732 is ON; apps: com.beeper.chat.ios (default)
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: phonesize683 build 4.5.732 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+SpringBoard: search visible try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/
+SpringBoard: stayed up, boot guard cleared
+SpringBoard: kb720 search keys gone: straight to kb707 (no 705 hold on top of kb707's own wait)
+SpringBoard: UIKit willHide
+SpringBoard: rim651 system gesture held at 367,477 (rim)
+SpringBoard: opened another stage
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active
+SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,
+SpringBoard: takeKey already try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/
+search field begin editing: fr=0 win=1 key=1 att=0
+SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+SpringBoard: kb707 typing in the lower card (the stage's app search, keys (at once)): lifted 324 pt to the keyboard, the other card slid left 469 pt
+SpringBoard: search visible try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/
+SpringBoard: UIKit willHide
+SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+SpringBoard: putting com.beeper.chat.ios on stack slot 0
+SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+SpringBoard: creating app view for com.beeper.chat.ios
+SpringBoard: created app view for com.beeper.chat.ios
+SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+SpringBoard: com.beeper.chat.ios stays running in the background
+SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+SpringBoard: com.beeper.chat.ios is on stack slot 0
+=== end ===

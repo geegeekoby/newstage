@@ -1,0 +1,50 @@
+DynamicStage 4.5.700 - card stuck minimised after spamming minimise / restore
+
+Log: uploads699/Bugs-spam-minimise-stuck.txt (newstage 95560d6 "Create Bugs when spamming minimise unmiminise makes
+it stuck minimised", 14:43 NZDT; recorded on 4.5.698, SpringBoard pid 32291 from 14:40:16). No crash in it. No newer uploads
+in newstage at 14:52 NZDT (origin/main = 95560d6).
+
+Evidence:
+  final dump: card {{466, 960}, {56, 56}} = cornerParkFrameForCard (screen 430 + 36, 932 + 28), slot0=com.beeper.chat.ios
+  normal corner restores: pull 14:42:17.583 -> card published 17.717 (134 ms); 14:42:31.459 -> 31.611 (152 ms)
+  pull picked up 14:42:29.316, minimise ("taken out of the display layout") 29.376 -> the pull caught a card whose minimise
+    (0.30 s anim698 flight, completion still to come) had just started; that pull never brought the card back, the user
+    pulled again at 31.459.
+  pull 14:42:22.579 -> published 27.483 (4.9 s); pull 14:42:37.539 (minimise 37.593) -> published 43.479 (5.9 s, no pull
+    logged in between): the card stayed away for seconds after a restore.
+  14:42:47.5 and 14:42:50.7 home swipes "tucking the open stage for home" re-park it (the only way out).
+
+Cause (code): minimizeCard:toCornerAnimated: puts the card in its park spot at once and runs its completion 0.30 s later
+  (_state = Minimized, hideParkedCardsCompletely, giveBackKeyWindow, setForegroundForAllHostedApps:NO, ...). The completion
+  had no idea whether it was still wanted. A corner pull picks the card up as soon as it is parked; a fast restore
+  (setParked:NO, state Overlay) finished before that completion, and the stale completion then set the stage to Minimized
+  and backgrounded the app under a restored, un-parked card. Un-parked = no corner icon and parkedCardForCornerPoint
+  returns nil (no corner pull); Minimized = layout puts the card in the park spot. Stuck until a home swipe re-parks it.
+  The reverse also existed: a restore's reveal (finishCornerRestoreOfCard, 0.26-0.45 s later, re-tried every 0.3 s during
+  the home gesture) and the open spring's completion ran even if the card was minimised again meanwhile. 698 made the first
+  race easier to hit: its flight puts the real card in the corner at once, so the pull can catch it immediately (697 moved
+  the real card for 0.32 s).
+
+Changes (DSStageManager.m only, plus the version; no new hooks, no status-bar writes, Messages/keyboard/switcher untouched):
+  spam700 - numbered requests (minimise, drag minimise, home tuck = 1; corner restore, stage on screen = 2).
+    minimise completion: once only; dropped unless the card is still parked and the last request is a minimise; if a corner
+      pull is running it waits (cancelTracking runs it if the pull is given up; a restore drops it).
+    pull picked up while a minimise is finishing: _stateBeforeTracking = Minimized (a given-up pull returns to minimised).
+    finishCornerRestoreOfCard: dropped if the card is parked again. enterStateOverlay completion: dropped if minimised since.
+    Lines: "spam700 ignored a stale minimise/restore/open completion ...", "spam700 ... waits", "spam700 corner pull ...".
+    Off: /var/mobile/.dynamicstage-spam700-off ; latch spam700-trying / spam700-crashed
+  heal700 - on the existing 1.5 s watchdog tick: hosted card not parked but off the screen / park spot (< 25% on screen,
+    < 80 pt, alpha < 0.05), or stage Minimized with the primary card not parked; two ticks in a row, same card; skipped while
+    locked, dragging/settling, pulling, home gesture, system transition, scene update, overlay settling, split, float,
+    search, call screen, a minimise still finishing, any animation on the card. Last request minimise -> parked properly
+    (setParked + minimise, icon and pull work); otherwise -> back on the stage (enterStateOverlay / spring + reveal).
+    Line: "heal700 <bundle>: <why>; last request was ...".
+    Off: /var/mobile/.dynamicstage-heal700-off ; latch heal700-trying / heal700-crashed
+
+Risks: heal700 is a new automatic layout action; a legitimate state not foreseen (card deliberately off screen while
+  Overlay) would be "healed" after ~3 s - the line says what it saw, the off file disables it. Dropping completions could leave
+  some chrome (icon/shelf) un-refreshed in a corner case; the newer request's own completion refreshes it.
+  Uncertain: the log is quiet (no verbose/perf lines), so the exact sequence is inferred from timing + code, not a trace line.
+
+Files: bak700/ (= 699 sources), springboard-700.diff, build-700.log, publish-700.log, dsym700/, full-700/
+00924011b72d4a64f32121c956b22eacfded7783c3073732777765035f608106  CursorRepo/packages/com.recreated.dynamicstage_4.5.700_iphoneos-arm64.deb

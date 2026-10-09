@@ -1,0 +1,58 @@
+DynamicStage 4.5.712 - bisect step 3 of 4: 4.5.711 + group B (outside707)
+=========================================================================
+
+4.5.711 (706 code + 708 scripts + beeper707 + kb707 + corner707) re-jailbroke
+fine with NathanLR. This build adds group B only.
+
+In this build
+-------------
+- Everything in 4.5.711, unchanged.
+- B outside707: a touch the stage window passes through to the home screen /
+  app behind, well clear of the cards (24 pt beyond the rim) and of the screen
+  edges (top 44 pt, bottom 40 pt, 16 pt sides, the 86x108 bottom-corner squares),
+  minimises the visible stages after 0.18 s if nothing else started meanwhile.
+  Never while dragging, with a keyboard up, during / 0.8 s after a minimise or
+  restore or opening the stage, during a call, while locked, during the home
+  gesture / app switcher / an edge pull, or with only the picker open.
+- The kbmin702 merge: kbmin702 and outside707 share one minimise path
+  (minimiseVisibleStages: one card to its corner - corner707 picks a free one -,
+  more cards take the home tuck; spam700-guarded). Same code as 4.5.707.
+
+Changes from 4.5.707's outside707
+---------------------------------
+- hitTest does zero work with no stage on screen: after the 706 touch test says
+  "not ours", it reads one BOOL (outsideArmed) and returns nil. No switch read,
+  no block call, no allocation. outsideArmed is set inside the window's existing
+  touch test: YES only while the stage is in overlay (on screen).
+- outside707NoteTouchAt checks the stage state (and the pending flag) before its
+  switch read.
+- Crash latch at first use: the first touch handled with a stage open marks
+  outside707-trying (removed after 15 s). 4.5.707 marked it only just before a
+  minimise, so a fault in the touch path itself could never latch off.
+
+Not in this build
+-----------------
+D: the 57-function purge, DSLogGate, the 32-slot switch table, the 4.5.708 trace
+writer. shared/ is 4.5.706 apart from the version string (DS699_MAX 24, 21 names
+in use). App dylib: same size (860,784 bytes) and imports as 709-711.
+SpringBoard dylib imports = 4.5.711's.
+
+Off files (touch, then respring)
+--------------------------------
+/var/mobile/.dynamicstage-outside707-off  = no outside-touch minimise (706)
+/var/mobile/.dynamicstage-kb707-off       = the 4.5.706 keyboard paths
+/var/mobile/.dynamicstage-corner707-off   = each park path picks its own corner
+/var/mobile/.dynamicstage-beeper707-off   = the 4.5.706 drawing
+/var/mobile/.dynamicstage-kbmin702-off    = (existing) no minimise when another
+                                            keyboard comes up
+Crash latches: /var/mobile/.dynamicstage-<name>-trying / -crashed.
+
+Rules kept: no new hooks (DSStageWindow is our own window), no status-bar
+writes, no tune files; app switcher, Messages' camera (673), the Beeper 684
+keyboard mechanism, backgrounding / keep-alive and the card size untouched.
+Build: 41 warnings, the 4.5.704 set. Scripts = 4.5.708.
+
+Test: reboot, re-jailbreak with NathanLR.
+- Fine: 4.5.713 adds D (the last group).
+- Fails: re-test once; if it fails again, group B is it (remove the tweak in
+  Filza from /var/jb/usr/lib/TweakInject, re-jailbreak, reinstall 4.5.711).

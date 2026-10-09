@@ -1,0 +1,27 @@
+DynamicStage 4.5.739 (on 4.5.738)
+
+What broke on 738 (Fixitsl log)
+- live738 (738's crash guard) held app-view updates for 2 s after any other hold.
+  When staged Messages opened, 8 updates in a row were held "right after a held
+  update (738)", one after each "stage display-layout change" hold. Those are the
+  updates that carry keyboard focus (event deferring), snapshot context and
+  status-bar settings to the app, so the keyboard and Messages' input bar broke.
+  Display-layout holds happen whenever a card moves, so every app was hit.
+- drag738 (outline / rim-strip caching) and rim738 (grab strip reaching into
+  the card at the screen edges) changed the drag path; dragging became buggy.
+- The 32 -> 128 switch-table change was not the cause. A feature name only takes
+  a slot when its code first runs: logs from 724 and 730 show drag702 and
+  msgdiag714 never logging even with far fewer names in use, so they are just
+  rarely triggered, not overflowed. kb720 was on in 732 (its search lines are in
+  the 732 crash log). The 738 audit claim that features were "silently off" was
+  not proven, and is withdrawn.
+
+739
+- live738, drag738 and rim738 are forced off in code (off files no longer
+  needed). Keyboard, Messages and drag paths are back to exactly what 737 ran.
+- Kept: the 128-slot table, the 2 s rate limit on latch marker writes, the
+  one-time latch clear, the relay removal, and top737's removal.
+- Not changed: the Messages 714 setup, kb707 / sync725 / kbshow728, Beeper 684,
+  camera 673.
+- Known: the 735 SIGTRAP site (Logggy) has no extra guard again. The 669-735
+  holds still apply.

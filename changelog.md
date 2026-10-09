@@ -1,3 +1,6 @@
+**4.5.739**
+- back to 737's keyboard, Messages and drag paths: live738, drag738 and rim738 are off (live738's chained holds dropped keyboard / Messages scene updates on 738).
+
 **4.5.738**
 - crash fix (live738): the 735 SIGTRAP in SpringBoard's own live app-view update; updates are held while a finger is on the rim and right after another hold. Off: -live738-off.
 - drag738: dragging no longer rebuilds the outline and rim strips every frame. Off: -drag738-off.

@@ -1,0 +1,4 @@
+DynamicStage 4.5.718 - emergency rollback of 4.5.717
+- 4.5.717 (bg717, RunningBoard "Visibility" assertion on staged/minimised apps) put SpringBoard into a respring loop.
+- 4.5.718 = 4.5.716 source byte-for-byte (springboard/, shared/) + Version bump. No bg717 code or strings in the binary.
+- bg717 will not come back until a log/crash report from the loop has been read.

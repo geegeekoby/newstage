@@ -1,3 +1,6 @@
+**4.5.718**
+- Emergency rollback: 4.5.717 caused a respring loop. 4.5.718 is 4.5.716's exact code with only the version bumped; bg717 (the RunningBoard "Visibility" hold) is removed entirely, not just switched off. Install 4.5.718 over 4.5.717.
+
 **4.5.717**
 - True backgrounding (bg717): while an app is on a stage card or minimised, SpringBoard holds a RunningBoard assertion on its pid (RBSAssertion, target pid, RBSDomainAttribute domain "com.apple.frontboard" name "Visibility" - the attribute FrontBoard gives a visible app), so iOS does not suspend it, including with the phone locked. Released when the card closes or the app leaves the stage; taken again after relaunch (new pid), unlock and respring. Classes and selectors are checked at runtime; anything missing or refused -> nothing held, as 4.5.716. Messages excluded (unchanged). Log: "bg717 holding <app> pid <n>" / "bg717 released". Off: /var/mobile/.dynamicstage-bg717-off (crash latch bg717-trying / -crashed). Battery: a held app keeps its timers and network running with the screen off for as long as it is staged or minimised.
 - No new hooks, nothing new at load. Messages, Beeper 684, the camera 673, the keyboard and the app switcher are unchanged.

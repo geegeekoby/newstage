@@ -1,0 +1,115 @@
+DynamicStage 4.5.706 (drag706 + perf706 + polish706)
+====================================================
+
+Logs used
+---------
+- "Saferestmode" (newstage d0b4edc, 12,480 bytes): recorded on 4.5.704. SIGTRAP at
+  18:14:31 NZDT, right after a corner pull restored Beeper and grew it to its 684
+  size. The last stage line before the trap: "appview699 Live update passed to
+  SpringBoard (mode=4 drag=0)".
+- "Forcefully pema minimised staged app ?" (newstage d216bf7, 18:53 NZDT, 1,950
+  lines): recorded on 4.5.705. Saved as uploads706/forcefully-minimised.log.
+
+1. Card stuck after a drag (drag706)
+------------------------------------
+Causes, found in the code:
+ a) handleStagePan keeps the drag in static state shared by every pan (main
+    shell, card, top card, top rim, float rim, float card). A second pan
+    beginning while one card was held reset "dragging" and _stageDragActive,
+    so the held card's moves and release were ignored and it stayed under
+    where the finger left it. The other pan's end also let go of drag702's
+    hold on the held card.
+ b) A drag whose end never arrived left _stageDragActive set, and the
+    layout skips placing cards while that is set.
+ c) A keyboard side shift or lift with no keyboard left: heal700 (705) no
+    longer counts shifted cards, so nothing put them back.
+ d) Stored keyboard resting frames survived a swap ("phonesize696 fit: slot 0
+    stored resting frame y=469 ... was stale; the card rests at y=5"), so the
+    next lift used the pre-drag place.
+Fix:
+ - One pan owns the drag. Any other pan is ignored until it ends (logged once).
+ - Watchdog 0.6 s after every drag end, cancel or fail, and on the stage tick.
+   If no finger is down, nothing is animating or settling (spam700, anim702,
+   corner restore, home or system gesture, scene update) and a card is not at
+   a valid rest for more than 0.5 s, it is settled:
+     - keyboard shift with no keyboard -> shift dropped, lift sprung to 0
+     - not at its layout place (>3 pt) -> spring back to the layout + stacking order
+     - single free card less than 90% on screen -> clamped on screen
+     - drag that never ended -> layout unblocked
+   Log: "drag706 settled <app> from <drag end|tick|recheck> reason <...>".
+   At most two settles per drag, then "drag706 gave up".
+ - After a drag with no keyboard anywhere, stale stored resting frames are dropped.
+
+2. Card minimised by itself while dragging (Forcefully-minimised log)
+---------------------------------------------------------------------
+Evidence: 18:48:40.604 "rim651 drag began at 15,482 won by main-shell-pan"
+-> 18:48:41.761 Beeper "taken out of the display layout (... minimized)";
+18:50:54.438 "drag began at 9,472" -> 18:50:56.224 minimised. Beeper had to
+be pulled back from the corner each time. The final state is Beeper parked
+in the corner ({{466, 960}, {56, 56}}).
+Cause: at release, velocityIsQuickCornerSwipe only looked at the finger's
+release speed (down at least 700 pt/s, sideways at least 320 pt/s). Lifting a
+finger off the glass often ends with exactly that flick, even after the card
+was carried up or only nudged. A corner flick also beat swap and settle.
+Fix: a flick only minimises if the card travelled at least 48 pt down during
+the drag and the flick, projected 0.25 s ahead, carries the finger into the
+lower 38% of the screen on that corner's side. Ending with the finger at the
+corner still minimises as before. Logged: "drag706 <app> minimised by the
+drag: ..." and "drag706 ... is not a corner swipe: the card settles".
+
+3. Saferestmode crash (4.5.704 SIGTRAP)
+---------------------------------------
+Cause: the same SpringBoard Live app-view %orig trap as 670/699. It came
+right after a corner restore grew the card, when no hold was active (the
+drag hold covers card drags only).
+Fix: while a corner pull or restore runs, and for 1.5 s after, the Live
+app-view update is held ("appview670 held a Live app view update (corner
+restore (706))").
+
+4. Other problems in the new log
+--------------------------------
+ a) Garbled tune lines: "phonesize684 tune ... built-in values: ©Þ_È | in
+    use". In the trace file the rest of the line was lost and it ran into
+    the next one. The bad argument was the empty "notes" leftover from the
+    705 dead-code cut. All ten tune lines now print "built-in values | in
+    use: ..." without it.
+ b) Log noise: "scene update begin sceneID:org.whispersystems.signal-default"
+    appeared 83 times (76 straight repeats). "phonesize695 ... kept ...
+    while minimised" appeared 69 times, and "keys697 ... not given ...
+    minimised" 60 times. Now: an identical scene update is traced once per
+    3 s with a count, and the 695 and 697 lines once a minute per key.
+ c) "held a minimized stage scene update" (+55 in 10 s) is the keep-alive
+    hold working as designed. Left alone (keep-alive is unchanged).
+
+5. Battery and performance (perf706)
+------------------------------------
+ - Stage tick: 30 s while locked (was 6 s, 80% fewer wakeups) and 15 s with
+   nothing on the stage (was 6 s, 60% fewer). Opening a stage or unlocking
+   runs a tick within 0.3 s, and the sleeping tick is dropped. Counter: slowTick.
+ - Per drag frame (60-120 Hz), no longer done:
+     - re-raising the card / rim / float / shelf in the view tree (up to 4
+       sublayer reorders a frame)
+     - the drag-tile reset (6 view property writes)
+     - the hidden drag ghost CATransaction
+     - the dead corner and terminate hint maths
+   Counter: dragSkip.
+ - Trace lines are coalesced: one file write per burst instead of one per
+   line. Counter: traceFlush.
+ - Already true (checked): minimised cards are hidden completely, and the
+   camera timer and frame meter only run when needed.
+
+6. Polish (polish706)
+---------------------
+ - Held lift: the card's shadow grows while held (opacity 0.16 -> 0.24,
+   radius 18 -> 26) and settles on release. The card size is never changed.
+   Uses the existing haptics.
+ - Top-edge rubber band while dragging a card past the top of the screen.
+ - Single-card half choice uses the release velocity (iOS PiP projection).
+ - Not done (unsafe without new hooks): card scale, a corner icon press state
+   (the corner pull comes from the system edge gesture), and animated z-order.
+
+Switches
+--------
+/var/mobile/.dynamicstage-drag706-off, -perf706-off, -polish706-off
+(crash latches <name>-trying / <name>-crashed). With all three off, the build
+behaves like 705, apart from the fixed tune log line.

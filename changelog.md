@@ -1,3 +1,9 @@
+**4.5.719**
+- bg719: true backgrounding for staged and minimised apps, the safe way. SpringBoard takes a legacy RunningBoard keep-alive on the app's pid (RBSAssertion + RBSLegacyAttribute, reason audio then continuous, flags PreventSuspend | PreventThrottleDownCPU | AllowIdleSleep; no Visibility). Taken off the main thread, once per process and card (one re-take per card change, unlock or relaunch, never from the tick), first use only after you stage an app and 30 s after SpringBoard starts. Never Messages. Per-action crash latch (bg719-trying before every take/release, cleared 15 s later), 3 failed takes in a row = off for that run. Off: /var/mobile/.dynamicstage-bg719-off. Log: "bg719 holding <app> pid <n>" / "bg719 released".
+- defer719: the 4.5.717 startup crash was inside the first use of the composer-touch observer class while the stage window was being built at startup. That observer now goes on the bottom card lazily when an app is first staged (never in the first 30 s). Off: /var/mobile/.dynamicstage-defer719-off (old behaviour).
+- The build string in logs now says 4.5.719 (717 and 718 said 4.5.716).
+- No new hooks, nothing new at load. Messages, Beeper 684, the camera 673, the keyboard and the app switcher are unchanged.
+
 **4.5.718**
 - Emergency rollback: 4.5.717 caused a respring loop. 4.5.718 is 4.5.716's exact code with only the version bumped; bg717 (the RunningBoard "Visibility" hold) is removed entirely, not just switched off. Install 4.5.718 over 4.5.717.
 

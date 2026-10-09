@@ -1,0 +1,69 @@
+DynamicStage 4.5.719 - bg719 (safe true backgrounding), defer719 (startup crash), version strings
+=========================================================================================
+Base: 4.5.718 (= 4.5.716 code). 4.5.717's bg717 / "Visibility" hold is not in this build.
+
+1. bg719 - keep staged and minimised apps running
+- SpringBoard asks RunningBoard for a legacy background keep-alive on the app's pid:
+    RBSAssertion -initWithExplanation:target:attributes:
+      target     [RBSTarget targetWithPid:pid]
+      attributes @[ [RBSLegacyAttribute attributeWithReason:R flags:7] ]
+      flags 7 = PreventSuspend | PreventThrottleDownCPU | AllowIdleSleep
+      R = 1 (audio) first, then 10005 (continuous)
+    -acquireWithError:, released with -invalidate.
+  No Visibility attribute, no scene/foreground change.
+- Off the main thread: acquire and invalidate run on a private serial queue (they are
+  XPC calls to runningboardd). The result is stored on the main thread only. A card
+  that changed while the take was in flight gets the new hold invalidated at once.
+- Once per process and card: a pid that was tried is not tried again unless ONE re-take
+  is allowed by a card change (the app put on a card), an unlock (1.2 s after the
+  lock-state notification, only if unlocked) or a relaunch (new pid). Never from the
+  1.5 s stage tick.
+- First use only after the user staged an app (launchEntry) and >= 30 s after
+  SpringBoard started (process start time from sysctl); before that one deferred try.
+- Never Messages (com.apple.MobileSMS), never getpid(), never pid <= 0.
+- Runtime checks: RBSTarget, RBSLegacyAttribute, RBSAssertion classes and
+  targetWithPid:, attributeWithReason:flags:, initWithExplanation:target:attributes:,
+  acquireWithError:, invalidate. Anything missing -> off for this run, one log line.
+- Per-action latch: /var/mobile/.dynamicstage-bg719-trying is written before EVERY take
+  and release; it is removed (on the main queue) only 15 s after the latest action. A
+  SpringBoard crash or a watchdog kill of a stuck main thread inside that window turns
+  it into bg719-crashed at the next start and bg719 stays off.
+- Kill switch: 3 failed takes in a row -> off for this SpringBoard run.
+- Off file: /var/mobile/.dynamicstage-bg719-off.
+- The existing BKSProcessAssertion hold (4.5.6xx) is unchanged.
+- Log: "bg719 holding <app> pid <n> (audio|continuous, <why>)",
+       "bg719 released <app> pid <n> (<why>)",
+       "bg719 could not hold <app> pid <n> (<RunningBoard error>) [n in a row]",
+       "bg719 off for this SpringBoard run", "bg719 RunningBoard API missing".
+
+2. defer719 - the 4.5.717 startup crash
+- 4.5.717 crashed (SIGSEGV, 02:05:35 NZDT) inside the system's first use of the
+  DSPS678TouchObserver class, from -[DSStageManager buildWindow] during the startup
+  install. buildWindow no longer sets that observer up. It is added to the bottom card
+  lazily on the main thread when an app is first put on a card, and never in the first
+  30 s after SpringBoard started. The top / float cards were already lazy (unchanged).
+- Off file /var/mobile/.dynamicstage-defer719-off -> buildWindow sets it up as before.
+  Crash latch defer719-trying / -crashed.
+
+3. Version strings: kDSBuildVersionString and control are 4.5.719 (717 and 718 reported
+   "4.5.716" in their logs).
+
+Unchanged: no new hooks (hook count identical), nothing new at load (constructors
+identical), Messages 714, Beeper 684, camera 673, keyboard, app switcher.
+
+Battery: a held app keeps running like an app playing audio in the background: timers,
+sockets and sync keep going with the screen off for as long as it is staged or
+minimised; the CPU is not throttled, the phone can still sleep. Quiet chat apps cost
+little; busy apps cost much more. Close the card to drop the hold.
+
+Risks
+- RunningBoard may refuse a legacy hold that SpringBoard requests for another app
+  ("could not hold ... entitlement"): after 3 refusals it stays off for that run;
+  behaviour = 4.5.716.
+- Audio reason on an app that plays no audio: RunningBoard could later drop it; a
+  re-take needs an unlock / card change / relaunch, so the app may still be suspended
+  in between.
+- The pre-grow on the first composer tap (phonesize678) is not active for the first 30 s
+  after a respring, or until an app is first staged.
+- The 717 crash cause inside the system is not proven; if the startup crash returns with
+  defer719 on, the next log will show it elsewhere.

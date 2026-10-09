@@ -1,0 +1,163 @@
+DynamicStage 4.5.705 (focus705 + perf705)
+=========================================
+
+1. Flicker: top-card app picker search with two stages (focus705)
+-----------------------------------------------------------------
+Cause, found in the code:
+ a) The noteKeyboardFrame703 search branch. While searching, the search
+    keyboard check (ensurePickerSearchKeyboard, every 0.16 s for up to 7
+    tries) reclaims the key window and re-asserts or restarts the field. Each
+    time, the keyboard reports a short (<150 pt) or empty frame, which the
+    search branch treats as "keys gone". It then:
+      - put the upper card's drop back at once (motion 0)
+      - called parkStagesForKeyboardOwner(keysUp:NO), which snaps the
+        lower card's side slide back with no animation.
+    The next show report dropped the upper card onto the keys and slid the
+    lower card away again. That loop (drop / slide / snap back) is the
+    flicker.
+ b) focus704 counted the same blink as "typing ended". Its release then
+    restored the old stacking order 0.45 s later, in the middle of the
+    search, and the next evaluation raised the card again.
+ c) heal700 measured cards with their keyboard transform included, so a
+    card slid aside or lifted for typing was "off the screen". Two ticks
+    later (about 3 s) it re-laid the whole stage out with a spring, under
+    the user.
+
+Fix (off file /var/mobile/.dynamicstage-focus705-off, crash latch
+focus705-trying/-crashed; off = 704 exactly):
+ - Two stacked stages (not split), search in the upper card: that card is
+   already clear of the keys and does not cover the lower card. It is no
+   longer dropped onto the keys, and topSplitIsTypingInCard answers NO, so
+   there is no side park and no settled top move. If there is no overlap,
+   nothing moves at all, and there is no z-order change either.
+ - Search-keyboard hides are debounced by 0.35 s with a generation counter.
+   Any keyboard report in between cancels the hide, and it only goes through
+   if no keyboard (>=150 pt) is on screen. If search ended meanwhile, the
+   hide undoes that search's lift and park, exactly as 704 did.
+ - A typing session: focus704 releases (slides back, restores the order)
+   only after 0.4 s with no typing card AND no keyboard on screen. A keyboard
+   with no typing card found is held for at most 3 s. Leaving the two-stage
+   layout (drag, split, lock, a card gone) still releases at once. The slide
+   happens once per session: it was already idempotent through the
+   focus704Holds and sideOffset checks, and the session no longer ends on a
+   blink. The z-order is changed only when it is wrong and the cards really
+   overlap.
+ - heal700 measures a keyboard-shifted card at its resting frame
+   (frameWithoutKeyboardShift).
+The Beeper keyboard mechanism (684), the hosted-app lift, kbmin702 and
+clearKeyboardSideShift are unchanged.
+
+2. Two-stage performance (perf705)
+----------------------------------
+Off file /var/mobile/.dynamicstage-perf705-off (crash latch perf705; off =
+704 exactly).
+These figures are estimated from the code, not measured on the phone. The
+perf705 counters (section 3) will measure them in the next log.
+ - GPU, the biggest item. On each card, the content view (which holds the
+   live 430x931 scene) and the blur each carried a CALayer mask, on top of
+   their own masksToBounds + cornerRadius clip. The mask had the same frame,
+   radius and continuous curve, so it cut exactly the same shape.
+   A layer mask makes Core Animation render the masked subtree offscreen and
+   composite it again, every frame the app draws:
+     1290x2793 px = about 3.6 MP, about 14 MB per pass at 4 B/px.
+     Two cards: about 29 MB of extra render target per frame.
+     At 60 Hz that is about 1.7 GB/s of extra GPU bandwidth (double on
+     ProMotion).
+   Before: 2 offscreen passes per frame with two live cards. After: 0 from
+   us. The masks are removed; the rounded clip stays. The scene itself was
+   already rounded by roundHostedSceneToCard, and per the code's own comment
+   an ancestor mask doesn't clip the scene anyway. The blur is hidden while a
+   card hosts an app (it already was), so its mask cost nothing until a
+   picker shows.
+ - CPU per card layout pass (drag frames, keyboard moves, animations).
+     Before:
+       - 2 mask rebuilds
+       - a class-name walk of the blur's subviews (NSStringFromClass per
+         subview, about 5-15 us)
+       - 4 bringSubviewToFront calls
+     After:
+       - the walk runs only when the blur is shown and its radius or
+         subviews changed
+       - the views are re-raised only when out of order
+   The anim698 radius fast path still works without the mask. Before, it
+   relied on the mask existing.
+ - CPU per host layout pass. Before: the hosted-scene rounding walk ran
+   twice. Each walk:
+     - covers the whole host subtree, up to 14 levels deep
+     - calls NSStringFromClass per view
+     - runs 6 media-name string checks per filled view
+     - allocates a new NSDictionary per view
+   That is about 20-60 us per walk for a typical tree. After: one walk
+   (after the clamp, which never touches corners), and the dictionary is
+   reused when the radius and corners are unchanged. That roughly halves the
+   cost.
+ - Checked and left alone:
+     - The 690 Beeper top-bar strip (a live _UIPortalView of a 68 pt band).
+       It is visible UI on the default path.
+     - The background blur during pulls (setPullBlur). It is removed at 0.
+     - The shadow. It already uses a fixed shadowPath (native703) and has no
+       offscreen pass.
+     - Shadow and frame updates per setFrame. These are cheap.
+     - The non-focused card's scene frame rate. There is no verified safe
+       API to throttle it, and backgrounding / keep-alive are not to be
+       touched.
+     - camera658/662/666, sbcam668 and statusbar688. These run on events,
+       not per frame. Camera 673 is not to be touched.
+     - The 675-694 phone-size paths. They run only for the Beeper allowlist,
+       through the off files.
+
+3. perf705 counters (/var/mobile/.dynamicstage-perf)
+----------------------------------------------------
+The summary line now ends with:
+  perf705/s: sceneWrites, logs, fileStats, clip, clipWalk, maskRebuild,
+    shadow, rim, roundHost, kbNote, focusEval, focusMove, searchHideHeld,
+    heal, tick, blurToggle
+  gauge705 stages=N split=N [slotN shift=x,y] hosted=N blurVisible=N
+    maskedCards=N focus=... perf705=on/OFF focus705=on/OFF
+The existing per-bucket ms/calls (cardLayout, hostLayout, keyboard, sceneHook,
+drag) give the layout passes per window. To compare, take one log with the
+two off files and one without.
+
+4. Dead code removed (provably unreachable; nothing an off file can reach)
+--------------------------------------------------------------------------
+springboard/DSSceneHost.m: 7975 -> 7326 lines (649 net).
+ - 379 lines: the eleven tune parse loops (681, 684, 685, 687, 688, 690,
+   691, 692, 693, 694, 698). Their input text has been nil since 4.5.702,
+   so each loop saw one empty line and skipped it.
+ - 194 lines: the 692 settings-button patch builder and the 693 cog-copy
+   builder. Both were opt-in through a tune file only (on=NO by default), so
+   they could never be made. Removing a leftover view is kept.
+ - 82 lines: the 692/693 crash latches. They were only used by those
+   builders.
+ - 18 lines: the unused 681 curve parser and the 692 off switch. The switch
+   had nothing left to switch.
+Each removed loop or builder left a one-line comment.
+
+5. Files
+--------
+ - springboard/DSStageManager.m
+ - springboard/DSStageContainerView.m and .h
+ - springboard/DSSceneHost.m
+ - shared/DSStageDebug.m and .h
+ - control and shared/DSConstants.h (4.5.705)
+ - changelog.md
+Build: 3 binaries, arm64 + new-ABI arm64e, signed. 41 warnings, the same
+set as 704.
+
+6. Risks
+--------
+ - No overlap means no movement. With two stacked stages, the upper card's
+   search results stay where they are, above the keyboard; they are no
+   longer dropped onto the keys. If a user resized the upper card so that
+   the keys cover it, it lifts (the normal path), and focus704 slides the
+   lower card once if they overlap.
+ - Closing a picker search returns the cards 0.35 s later than before
+   (because of the debounce).
+ - Typing focus holds up to 0.4 s after the keyboard really goes, and up to
+   3 s if a keyboard stays with no typing card found.
+ - Masks removed: the clip is the same shape by construction. If a hosted
+   app draws outside the rounded corner on some iOS build, the off file
+   brings the masks back.
+ - heal700 no longer heals a card whose keyboard shift is stuck, as long as
+   its resting frame is on screen. clearKeyboardSideShift / commitSidePark
+   still reset those shifts.

@@ -1,0 +1,40 @@
+DynamicStage 4.5.723 - kb723: the typing card lifts every time (kb721's fixes, no split takeover)
+=================================================================================================
+Base: 4.5.722 (= 4.5.720 code). Off: /var/mobile/.dynamicstage-kb723-off (= 4.5.722).
+Per-action crash latch: kb723-trying before every kb723 action, removed 15 s after the latest one.
+No new hooks, nothing new at load. Split / third stage, Messages, Beeper 684, camera 673, bg719,
+defer719 and kb720 unchanged.
+
+FIXES (single and two-stage layouts only)
+1. Owner kept across short frames: SpringBoard's own keys on screen (>= 150 pt) keep the picker
+   search / stage field as the typing card after a short noted frame.
+2. App's own report: when the keyboard frame of a staged app was never noted (scene-update wait
+   dropped it), kb707 uses that app's own keyboard report (not Messages, not a 683 in-card keyboard).
+3. Re-check: a typing context with no owner / keys yet is looked at again every 0.3 s for up to 2 s.
+4. Self-check: every 0.35 s while kb707 holds a typing session; a typing card that still covers the
+   keys by > 8 pt for over 0.3 s and is not at kb707's lift is lifted ("kb723 corrected" in the log).
+
+GUARDS
+- Split and third stage: kb723 never runs (4.5.720 path). kb707 ownership rule unchanged from 720.
+- Stage creation / picker appearing / teardown: kb723 is quiet for 0.6 s after presentPickerOnCard,
+  presentPickerOnHalf, presentPickerFromFinger, addSecondStageOnHalf, addSecondStageFromFinger,
+  presentHoverStageFromPoint, launchEntry, attachHostedAppForSlot, exitToPicker, collapseToSingleTopStage,
+  closeStage, terminateFrontStage, terminateDraggedCard, dismissFloatStage; also while the overlay
+  settles or a minimise is pending, and with the stage not on screen.
+- Timers: each re-checks kb723 is allowed, the card is non-nil, still in a window with a superview,
+  is _container / _topContainer and is live (not hidden / parked).
+- All new code is inside @try. Messages and Beeper are excluded from every kb723 rule.
+- Breadcrumb: before each kb723 action one line is written synchronously (open / write / close) to
+  /var/tmp/com.recreated.dynamicstage.kb723.last: time, action, build.
+
+WHY THE CRASH HANDLER MISSED 4.5.721
+The handler (DSCrashLog) catches SIGABRT, SIGSEGV, SIGBUS, SIGILL, SIGTRAP, SIGFPE with sigaction and
+no alternate signal stack (no sigaltstack / SA_ONSTACK). It cannot see:
+- SIGKILL: a watchdog kill (main thread stuck / spinning, e.g. a timer or layout loop), jetsam or a
+  RunningBoard termination. Uncatchable.
+- A stack overflow (deep recursion): the SIGSEGV handler needs stack to run and there is none left
+  without an alternate stack, so the process dies with nothing written.
+A plain exception would have been SIGABRT and logged. So 721 most likely died by a watchdog kill or a
+recursion stack overflow. The trace log is written in batches off the main thread, so its last lines
+can be lost too; hence the synchronous breadcrumb file. Adding sigaltstack would change startup code
+(not done: nothing new at load).

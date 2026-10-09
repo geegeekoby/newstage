@@ -1,0 +1,40 @@
+DynamicStage 4.5.728 - kbshow728 (keyboard show watchdog) + pull728
+===================================================================
+Base: 4.5.727. No new hooks, nothing new at load. Messages, Beeper 684, camera 673, switcher untouched.
+Log: uploads728/Keybaord.txt (recorded on 4.5.724; app: Beeper, com.beeper.chat.ios, which has NO
+DynamicStage app dylib: "relay668 ... DynamicStageApp.dylib is NOT running in this app").
+
+WHAT THE LOG CAN AND CANNOT SHOW
+Beeper is not injected, so there are no app-side lines (first responder, UIKeyboard notes). SpringBoard
+sees an app's keyboard request only as keys674's layer ask and the arbiter "on=1". Every time Beeper's
+keyboard came up there is that chain within ~30 ms, e.g. 09:17:36.537 keys674 layer ask -> .540 arbiter
+on=1 (288) -> .544 first keyboard note -> .563 raise keyboard -> .625 kb707 lift.
+The candidate failure windows have NO request at all, on the SpringBoard side:
+ - 09:17:07.112 corner restore (over Signal) -> 09:17:08.534 "arbiter on=0 src=?" -> nothing from Beeper
+   until it was dragged away at 09:17:24.101 (no layer ask, no arbiter on, no show waiting/dropped).
+ - 09:16:37.790 restore -> 09:16:38.900 "arbiter on=0 src=?" -> nothing until the drag at 09:16:43.6.
+ - 09:12:55.564 restore -> 09:13:01.262 "arbiter on=0 src=?" -> nothing until 09:13:35 (when
+   SpringBoard's Spotlight keyboard was briefly taken as Beeper's: kb707 lifted Beeper 317 pt).
+After 09:17:27.806's restore the same tap worked (09:17:36.537). No "show dropped", no kbmin702, no
+outside707 (except 09:13:36.647, a minimise), no blackout716 hold, bg719 holding.
+Conclusion: the request died before SpringBoard's keyboard path (inside Beeper / UIKit focus), right
+after a corner restore over a full-screen app (Signal). Which flag stopped it is not in the log; first
+responder, deactivation reasons and keyboard focus are not logged for non-injected apps.
+
+FIX
+kbshow728 (off: /var/mobile/.dynamicstage-kbshow728-off, per-action latch):
+- Watchdog: when a visible, foreground staged card's app asks for its keyboard (keys674 layer ask or
+  arbiter on=1) and 0.5 s later no keys are on screen, SpringBoard's keyboard windows are revealed and
+  raised above the stage (the "raise keyboard" path every working show uses). Up to 3 tries 0.5 s apart.
+  Log: "kbshow728 recovered because <app> asked for its keyboard ... (try n)".
+- "show dropped, scene update never finished": the wait counter was never reset after a drop, so later
+  shows inside a scene update were dropped at once. Now it waits up to 24 updates, resets the counter
+  and asks kb707 to re-check. Same never-reset fix for "hide dropped".
+pull728 (off: /var/mobile/.dynamicstage-pull728-off, per-action latch):
+- A corner pull from the system gesture is refused while a minimise animation runs or within 1 s of a
+  drag-minimise release (logged as "restore726 corner pull refused ... pull728: ...").
+
+NOT MADE IMPOSSIBLE
+If the app never asks (no layer ask, no arbiter on), SpringBoard has nothing to see; this is what the log
+shows. Seeing an app's first responder needs the app dylib (not loaded in Beeper on this jailbreak) or a
+new hook on an unverified focus selector (not allowed).

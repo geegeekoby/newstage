@@ -1,3 +1,7 @@
+**4.5.728**
+- kbshow728: if a staged, visible app asks for its keyboard and no keys are on screen 0.5 s later, the keyboard windows are revealed and raised above the stage (up to 3 tries, logged). The "show dropped" counter now resets. Off: -kbshow728-off.
+- pull728: corner pulls are ignored while a minimise animation runs or within 1 s of a drag-minimise. Off: -pull728-off.
+
 **4.5.727**
 - stuck727: with no finger down, nothing animating and no keyboard up, every visible card is put back at its resting frame within ~0.5 s of being noticed (logged "stuck727 forced ..."). Fixes a card left small / out of place after a corner pull caught the end of a minimise swipe. Off: -stuck727-off.
 - flick727: a fast corner swipe starts its flight immediately (bookkeeping moved after the start), spring starts at the finger's speed, shorter duration for fast flicks. Off: -flick727-off.

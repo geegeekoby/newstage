@@ -1,0 +1,38 @@
+Dynamic Stage crash log
+Build 4.5.716
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.716
+when: 1791551135
+signal: SIGSEGV
+session: 10BBF17F-C646-4311-AFAB-32703B9AAF70
+backtrace:
+  0xf0208002266ef214
+  0x5bb68001bfa99c2c
+  0xad460001bfa99c2c
+  0x75710001bfaabfec
+  0xba080001bfa9073c
+  0x20168001bfa8acc4
+  0x3c4d800103d1ad78
+  0x423e000103d07050
+  0x6c38000103d062f8
+  0xfd7c000103ca3c4c
+  0x294d8001cdecaeac
+  0xf3118001cdecc6ec
+  0xe343800103ca2fdc
+  0x3161000103cc8f68
+  0x75328001cdecaeac
+  0x52208001cdece330
+--- recent stage lines ---
+SpringBoard: call653 guard listening (call screen containment is off)
+SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var
+=== end ===
+
+
+
+
+
+02:07:11.786 SpringBoard pid=15118 main | SpringBoard: DynamicStage stayed off for this start after a crash right after the last respring; respring once to turn it back on
+

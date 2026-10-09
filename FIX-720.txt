@@ -1,0 +1,97 @@
+DynamicStage 4.5.720 - kb720: one owner per keyboard state (keyboard stability, picker search flicker)
+=====================================================================================================
+Base: 4.5.719. bg719, defer719, Beeper 684, the camera 673, Messages and the app switcher are unchanged.
+No new hooks, no new classes set up at load, no tune files, no status-bar writes (the existing
+status-bar refresh only decides differently while typing). Off: /var/mobile/.dynamicstage-kb720-off.
+Crash latch: kb720-trying is written before every kb720 action and removed 15 s after the latest one;
+a crash in that window latches kb720 off for the next start (= 4.5.719 behaviour).
+
+KEYBOARD ACTOR MAP (single / two-stage unless noted)
+actor                         | trigger                                   | writes                                   | guards (719)
+------------------------------|-------------------------------------------|------------------------------------------|------------------------------
+UIKit observers (willChange/  | SpringBoard's own keyboard                | _keyboardFrame via noteKeyboardFrame     | -
+ willShow/willHide)           |                                           |                                          |
+arbiter keyboardOnScreen697   | any app / SB keyboard (src bundle id)     | kbmin702, focus704 keys, 684 Beeper path,| 683 session, Messages paths
+                              |                                           | noteHostedAppKeyboard / noteKeyboardFrame|
+noteKeyboardFrame703 search   | picker search keys                        | 705 0.35 s hide hold, _keyboardFrame;    | kb707Owns -> no direct move
+                              |                                           | non-kb707: lift / drop / side park       |
+noteKeyboardFrame703 app      | staged app keys                           | lift / park (non-kb707), band height     | kb707Owns -> return
+focus704 / kb707              | every keyboard note, 0.05 s + 0.40 s      | lift (owner), side (other card), z-order | Overlay, !split, !float; drag
+                              | absent window 0.4 s, re-check 0.45 s      | restore + stacking order 0.45 s later    | defers 0.3 / 1.0 s
+697 / 684 / 696 lift (setLift,| Beeper frozen keys (Beeper only)          | liftOffset                               | kb707Gate
+ restoreLift, liftCardBy)     |                                           |                                          |
+705 picker lift / drop        | search keys (non-kb707)                   | lift / drop                              | kb707 branch first
+side park (commitSidePark)    | second card covered                       | sideOffset                               | kb707Gate
+scheduleSettledTopKeyboardMove| top card keys, 0.16 s                     | drop                                     | kb707Gate
+reapplyBottomKeyboardLift     | every layout pass                         | lift                                     | kb707Gate
+split shift / third stage     | split / float keys                        | lift / side                              | own path (kb707 not owner)
+placeCard / assignFrame       | every layout pass                         | zero lift+side, set frame, restore lift; | NONE for kb707 (front card
+                              |                                           | front card / empty frame -> lift dropped |  and empty frame drop lift)
+layoutAllStackSlotsForState   | heal700, prefs, picker finish, keyboard   | placeCard both cards, status-bar refresh | only drag
+                              | forget, stand-in keyboard, swaps ...      |                                          |
+heal700 (tick, 2 ticks)       | card "off its place" (incl. lifted)       | relayout                                 | search slot, drag, split...
+drag706 (tick)                | card offset with no drag                  | lift 0 / relayout                        | keyboard-around check only
+kbmin702 (0.3 s)              | keyboard from a non-staged owner          | minimise stages                          | picker check compared
+                              |                                           |                                          | "SpringBoard" (arbiter says
+                              |                                           |                                          | "com.apple.springboard")
+outside707 (0.18 s)           | touch outside cards                       | minimise stages                          | keyboard / search -> blocked
+picker search ensure loop     | field asks for keys, every 0.16 s, 7 tries| key window, reloadInputViews, from try 2 | -
+                              |                                           | resign+become (= keyboard hide + show)   |
+DSSearchFieldView             | shouldBegin / plate tap                   | asks key window each begin (focus704)    | 0.35 s tap guard
+staged stand-in keyboard loop | Messages / staged field, 0.16 s           | stand-in field                           | (left alone)
+status bar (stageOccupiesTop) | layout pass + _UIStatusBar layoutSubviews | bar hidden when a card's LIVE lifted top | -
+                              |                                           | is near the top                          |
+
+CONTRADICTIONS FOUND AND FIXES (all behind kb720, single / two-stage, never Messages)
+1. Layout during typing re-placed the cards. placeCard / assignFrame zeroed the lift and put it back
+   without animation on every layout pass (heal, prefs, picker finish, stand-in keyboard ...). That
+   cut kb707's spring mid-way, and for the front card or while the noted frame was empty (705 hold,
+   short search frames) the lift was not put back at all; kb707 then lifted it again 0.05 s later
+   (a drop-and-lift jump). Fix: while kb707 holds a session, a card whose resting frame is unchanged
+   is not re-placed at all; a real resting change keeps kb707's lift and kb707 re-checks.
+2. heal700 and drag706 treated kb707's lift / side slide as "off its place" and re-laid out / zeroed
+   the lift (then kb707 lifted again). Fix: both wait while kb707 holds a session.
+3. Two debounces on the picker search hide: 705's 0.35 s hold, replayed into kb707, which then had its
+   own 0.4 s absent window + 0.45 s re-check (and the held stale frame kept kb707 "typing"). Fix: with
+   kb707 owning the search card the hide goes straight to kb707; its window is the only debounce.
+4. The picker re-raise loop emitted hide/show: every 0.16 s while the keyboard was not yet >= 60 pt on
+   screen (e.g. still sliding in) it reloaded input views, and from the 3rd try resigned and re-became
+   first responder = a real keyboard hide + show, each going through 705 / kb707 / the status bar.
+   Its own re-asserts also re-entered "search asked" and re-scheduled focus704 (resetting kb707's
+   timers). Fix: a keyboard on its way (UIKit willShow in the last 0.8 s or any part on screen) is left
+   alone for up to 5 tries; a retry never resigns an editing field (become if not editing, reload from
+   try 2); resign+become only as a last resort with no keyboard on screen at all (nothing to drop);
+   own re-asserts no longer re-schedule the focus.
+5. Status bar during typing: stageOccupiesTop used the LIVE lift, so the bar hid / showed whenever a
+   layout pass or keyboard blink changed the lift (1, 4), at random moments (bar layout, refresh).
+   Fix: while kb707 holds a session the decision uses kb707's target place (one change per session).
+6. kbmin702's "the stage's own picker" check compared the source with "SpringBoard", but the arbiter
+   reports "com.apple.springboard": a dead guard (the search slot was the only protection). Fix: the
+   real name is accepted too.
+7. Split / third stage: kb707's "layout changed" restore zeroed lift and side on both cards, including
+   offsets the split / third-stage mover had already written. Fix: kb707 hands over and only undoes
+   offsets still exactly where kb707 put them. Split and third-stage movers themselves unchanged.
+8. 684/696 lift for non-Beeper apps: there is none (handleKeyboardForBundle is Beeper-only and its
+   writer setLift: is already kb707-gated). Beeper 684 untouched.
+
+PICKER SEARCH FLICKER - CAUSE
+The search card is lifted by kb707 to just above the keys, which puts its top near the screen top, so
+the status bar decision says "hide". Anything that briefly changed the card's live lift flipped the
+bar: the ensure loop's reload / resign+become (keyboard hide+show, 0.16 s cadence), and every layout
+pass in between (placeCard dropping the lift of the front card / with an empty noted frame until kb707
+re-lifted it). The card jumped and the status bar blinked with it. 4.5.720 removes the blips (4, 1)
+and makes the bar follow kb707's target (5).
+
+LOG LINES: "kb720 layout while typing: ...", "kb720 search keys on their way: no re-raise",
+"kb720 search keys gone: straight to kb707 ...", "kb720 heal700 waits ...", "kb720 drag706 leaves ...",
+"kb720 kbmin702 ignores the picker's own keyboard", "kb720 split / third stage took the keyboard ...".
+(at most one per kind every 5 s)
+
+RISKS
+- A layout pass that should have moved a typing card to the same rect it is already at is skipped
+  (nothing to move); one that changes the rect still runs and keeps the lift.
+- heal700 / drag706 fix-ups are postponed until typing ends (kb707 restores the cards then).
+- A search keyboard that is stuck partly on screen gets its re-raise later (after 5 tries, ~0.8 s).
+- Status bar while searching: hidden once when kb707 lifts the card near the top, back when typing
+  ends; it no longer blinks in between.
+- Off file or a crash latch returns everything to 4.5.719 behaviour.

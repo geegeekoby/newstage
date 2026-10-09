@@ -1,0 +1,27 @@
+DynamicStage 4.5.731 - home731 (tuck only on a real home swipe) + kbown731 (SpringBoard keyboards are not the card's)
+==================================================================================================================
+Base: 4.5.730. No new hooks, nothing new at load. Log: uploads731/Wow.txt (recorded on 4.5.730).
+
+CAUSE (NZDT)
+The home-gesture tuck (slide728's home path) ran on the gesture's BEGIN; a touch on the home bar is enough:
+09:26:26.193 tucking the open stage for home / .200 slide728 home tuck / .200 home gesture began
+09:26:26.257 home gesture ended                      (57 ms later: a touch, not a swipe)
+09:26:44.915 tucking ... / .928 began / .955 ended   (27 ms)
+09:26:47.771 restore726 corner pull refused at 330,908: started on the home bar / .772 tucking / .825 ended (51 ms)
+09:26:50.795 corner pull refused at 332,915 (home bar) / .795 tucking / .904 ended (107 ms)
+Not outside726 (its one minimise, 09:26:31.344 at 234,735, was an outside tap) and not the corner pull.
+
+home731 (off: /var/mobile/.dynamicstage-home731-off, per-action latch)
+- With a card open, the home gesture's begin no longer tucks. The tuck runs only when the swipe commits:
+  40 pt up, or released upward (>= 12 pt and > 400 pt/s). "home731 the home swipe committed ...".
+- A touch or tiny / cancelled gesture leaves the cards where they are (nothing moved, so nothing to
+  animate back) and gives the live app back over the picture frozen at the begin:
+  "home731 the home bar was touched but not swiped ...: cards left in place".
+- The begin's other work (scene-update hold, pictures, timeouts) is unchanged; the switcher is untouched.
+
+kbown731 (off: /var/mobile/.dynamicstage-kbown731-off, per-action latch)
+- Keybaord log 09:13:35.152 "arbiter on=1 src=com.apple.Spotlight", .156 SpringBoard's UIKit frame was
+  given to Beeper ("phonesize676 com.beeper.chat.ios first keyboard note"), .212 "kb707 ... lifted 317 pt".
+  The arbiter path ignored Spotlight correctly; the UIKit-notification path did not check.
+- Now: when the arbiter's latest "on" (within 1.5 s) is an app that is not on a card, SpringBoard's UIKit
+  keyboard frame is not given to the card ("kbown731 UIKit keyboard frame ... is <app>'s keyboard").

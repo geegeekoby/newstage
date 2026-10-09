@@ -1,3 +1,7 @@
+**4.5.731**
+- home731: touching the home bar no longer tucks the stage; it tucks only when the home swipe really goes up (40 pt or an upward flick). Off: -home731-off.
+- kbown731: Spotlight / SpringBoard keyboards no longer lift a staged card. Off: -kbown731-off.
+
 **4.5.730**
 - slide728 also covers the home-bar swipe: open cards slide out the side, then park in their corner as before (corner icons, corner pull). Off: -slide728-off.
 

@@ -1,0 +1,35 @@
+DynamicStage 4.5.703 - native703: native iOS look and feel. Built on 4.5.702.
+Off: /var/mobile/.dynamicstage-native703-off (crash latch native703-trying/-crashed). No tune file; values fixed in code.
+
+Audit (every visible piece) -> what 703 does
+ 1 Card corners: already continuous (cornerCurve continuous on card, content, mask, blur, outline, shadow), radius = display
+   radius - 10 clamped 34-44 (concentric inside the screen corner). LEFT ALONE (already native; card size unchanged).
+ 2 Outline: 3 pt white 28 % on every card - the most "custom" thing on screen.
+   -> 1 pt hairline, dark: white 20 %, light: black 12 %, on the main shell and the second card's rim; the anim702 flight
+      outline matches.
+ 3 Shadow: off since 698 (a shadow without shadowPath cost an offscreen pass).
+   -> soft shadow 16 %, 18 pt blur, 6 pt down, from a shadowPath rebuilt only when size/radius changes.
+ 4 Blur materials: system UIBlurEffectStyleSystemThickMaterialDark/Light, light/dark aware. LEFT ALONE.
+ 5 Corner icon (minimised): 26 pt, radius 9 (35 %, rounder than an iOS icon); primary/second set 6/8 then 9.
+   -> iOS app-icon corner 22.37 % of the side (5.8 pt), continuous; anim702 flight ends on the same radius.
+      Size and place unchanged (corner pull geometry). No icon shadow (home-screen icons have none).
+ 6 Rim drop highlight: blinking (opacity 0.2<->1, 0.55 s, forever while hovering a half). -> steady 70 % highlight.
+ 7 Buttons / menus: none visible (the card's minimise button is disabled in code); picker uses its own grid. LEFT ALONE.
+ 8 App picker + search field: custom grid and field (16 pt fixed fonts). LEFT ALONE: replacing with UISearchTextField /
+   sheet would change the picker layout and its keyboard path (keyboard mechanism must stay untouched).
+ 9 Intro / demo: one-time onboarding, system fonts already. LEFT ALONE.
+10 Haptics: manager had a generator that was never used.
+   -> light & subtle: drag start (light 0.5), minimise (soft 0.8), drop/snap (soft 0.6), corner restore (light 0.7);
+      none for terminate; max one per 0.12 s.
+11 Curves: generic stage moves (snap-back, drop, open/close, split, float) were a 0.26 s ease-out.
+   -> system critically damped spring (UISpringTimingParameters dampingRatio 1.0, 0.30 s). anim702 minimise/restore
+      unchanged. Keyboard lift and side slide LEFT ALONE (keyboard mechanism).
+12 Reduce Motion: not supported. -> minimise fades the card out in place (0.22 s, the icon appears), restore/open short
+   ease (0.2 s), open-from-icon cross-fade only.
+13 Dark mode: followed only at start and on a Settings change. -> the stage window's root view controller reports a
+   light/dark switch; with Appearance = Automatic the stage re-applies (blur, picker, shelf, outline).
+14 Dynamic Type: the Terminate hint now uses the footnote text style and follows the text size. Picker cells / shelf
+   captions LEFT ALONE (fixed grid cells would clip at large sizes).
+
+Unchanged: no new hooks (traitCollectionDidChange is an override in our own view controller), no status-bar writes,
+keyboard mechanism, Messages camera, app switcher, card size, Beeper edge-to-edge fill, 702 features.

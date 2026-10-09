@@ -1,3 +1,12 @@
+**4.5.695**
+- Minimise / restore flicker: a phone-size Beeper card (684 geometry, the 694 squash) no longer shrinks its scene back to card size (420x458, safe area 0) when it is minimised or goes off screen. The scene keeps 430x931 and safe area {118,0,345,0} the whole time, so restoring needs no resize and Beeper does not lay itself out again (693 log: every minimise/restore did, and the size landed ~320 ms after the card was back).
+- Restore places the kept phone-size picture with the 694 squash at once when the live view goes back on its card (no identity-size frame first).
+- While minimised the live view stays in the hidden holder; the top inset is still worked out from the card (118), not from the full-screen holder. In a tiny card the phone-size picture is only scaled down (transform), never laid out into it.
+- Keep happens only for "card minimized", "card not on screen", or a keyboard-down / other-app keyboard while the card is minimised. Rotation, camera, pre-grow undo etc. still shrink as before.
+- Everything else is 694: squash, 118 inset, keys/keyboard, bar line 586.
+- Off: /var/mobile/.dynamicstage-phonesize695-off = exact 4.5.694. Crash latch: /var/mobile/.dynamicstage-phonesize695-trying / -crashed (15 s; latched = 694).
+- No new hooks, no status-bar writes.
+
 **4.5.694**
 - The copied (fake) top bar is gone. The card now shows Beeper's REAL picture from app y 59 (the top of Beeper's own top bar) down to the bar line 586, squashed vertically to fit: x scale = card width / 430 (0.977, full width, no margins), y scale = 458 / 527 (0.869).
 - App y 586 stays exactly on the card bottom, so the chat bar and keyboard behave as in 684. Scene and keyboard geometry are 684's: 430x931, safe area back to {118,0,345,0} (691's 186 raise is off), keys674 NO. Only the card's mapping of the app changes; nothing new is written to the scene.

@@ -1,0 +1,65 @@
+DynamicStage 4.5.695 - no shrink while minimised / off screen (minimise-restore flicker)
+
+Built on 4.5.694. Uploads: newstage origin/main = c6e6353 (the 4.5.693 log "Fix flickers and minimise").
+No 4.5.694 log has arrived yet.
+
+WHY
+693 log: every minimise or off-screen moment ("card not on screen", 9x) shrank Beeper's scene from
+430x931 safe area {118,0,345,0} to the card size 420x458 safe area {0,0,0,0}. Every restore grew it back,
+and the size landed ~320 ms after the card was visible again. Beeper laid itself out twice per
+minimise/restore: that is the flicker.
+
+WHAT CHANGED (DSSceneHost.m/.h, DSStageManager.m, plus the version)
+1. setPhoneSize675:NO doesn't shrink a 684-geometry phone-size card (the 694 squash path; not
+   685/687/688-geo, not the camera layout) when the reason is:
+   - "card minimized" or "card not on screen", or
+   - "keyboard down" / "keyboard now belongs to X" while the card is minimised (hidden holder tag 9158,
+     or a card under 80x80).
+   The scene keeps 430x931 and {118,0,345,0}. Nothing is written. Log: "phonesize695 <app> kept 430x931
+   safeArea {118, 0, 345, 0} while minimised|off screen (<why>): no shrink, no scene write; restore needs
+   no relayout".
+   Rotation, camera, pre-grow undo, teardown etc. still shrink exactly as in 694. A keyboard-down
+   reason still closes 684's keys-up bookkeeping (the same call the 678 rest makes for a visible card).
+2. layoutHostView minimised branch: the async "card minimized" shrink isn't sent while keeping. The live
+   view in the hidden holder stays hidden at 430x931 (holdHostViewAtStageSize already keeps the
+   bigger view size). If the view is ever left in a tiny (<80) card, the phone-size picture is scaled to
+   that card's width by transform only (bounds and scene untouched).
+3. 684 top inset while held: in the full-screen hidden holder the auto top inset is worked out from the
+   card frame (118), not from the 430x932 holder (which would give 0), so any SpringBoard settings rewrite
+   while minimised keeps the same safe area.
+4. Restore: returnHostView (DSStageManager) calls -phoneSize695ReturnedToCard right after putting the view
+   back on the card. That runs layoutHostView at once, so the first frame already has the 694 squash
+   (x0.9767 / y0.8691, 586 on the card bottom). Before, the view went back at identity and was only placed
+   on the next layout. Log: "phonesize695 <app> restored: scene still 430x931 safeArea {118, 0, 345, 0},
+   squash placed on the first frame (card 420x458), no resize".
+No new hooks, no status-bar writes, card size unchanged. Squash, 118 inset, keyboard and bar line 586
+are exactly 694's.
+
+WHAT THE USER SHOULD SEE
+Minimising Beeper and bringing it back (bubble tap, home and back, switching apps) shows the same
+layout straight away: no shrink-then-grow, no ~0.3 s jump or relayout. The bubble looks as before (the
+live view is hidden while minimised; the bubble shows its icon/still).
+
+OFF / LATCH
+Off: /var/mobile/.dynamicstage-phonesize695-off = exact 4.5.694 (re-read every 2 s).
+Crash latch: /var/mobile/.dynamicstage-phonesize695-trying is written at the first keep. It's removed
+after 15 s; if it's still there at the next SpringBoard start, -phonesize695-crashed is made and 695
+stays off (= 694). Delete -crashed to allow it again.
+
+RISKS
+- While minimised the backgrounded Beeper scene stays phone-size. If Beeper is opened full screen from
+  the Home Screen while its card is minimised, SpringBoard's update is still rewritten to our geometry
+  (home668), as in 694. It's now 430x931 {118,0,345,0} instead of 420x458 {0,0,0,0}: still not true full
+  screen, but no worse.
+- The keyboard learning (K) is no longer reset at each restore (no reconfigure); a changed K is still
+  applied only at rest with the keys down, as in 684.
+- If anything looks wrong after restore, the off file brings 694 back at once.
+
+LEFT ALONE (not zero-risk)
+- First-tap keyboard drop: the keys come up and drop ~0.3 s later when Beeper's scene loses the
+  systemAnimation deactivation mark set at card open (11:52:09 -> cleared 11:52:11.83 in the 693 log).
+  The second tap works. A fix means touching the scene's deactivation/foreground handling, which is
+  lifecycle, not geometry.
+- Lower-card (y 469) keyboard lift jumps 324 -> 369 -> 324 -> rest as the keyboard height changes;
+  it's the stage lift following each keyboard frame. A fix needs lift smoothing that also affects the
+  upper card and Messages.

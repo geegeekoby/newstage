@@ -1,0 +1,65 @@
+DynamicStage 4.5.701 - Beeper bar fix (keys701), 695 re-arm (rearm701), battery701 (less idle work; background keep-alive unchanged)
+
+New log: "Beeper message bar dropped out of view .. it's a bug" (newstage 52add7b, uploaded 15:24 NZDT), recorded on build 4.5.699
+(SpringBoard pid 33599, ~15:19-15:23:50 NZDT). Only ONE new log was found (re-checked); no second one in the repo.
+Crash section: empty (no crash, no safe mode). Latches: none tripped this session (694 squash / 696 fit survived 15 s).
+
+E1 Bar out of view (keyboard height re-learn from one odd keyboard)
+   15:23:24.929 arbiter on=1 height 337 (was 288); "keyboard top 537 ... differs from the bar bottom 586 by -49 pt"
+   15:23:26.951 keyboard down: "settled keyboard top 537 (1935 of 2897 ms, 2 values) -> learned K 394 (was 345; in use 345)"
+   15:23:28.544 "geometry change with the keys down: K=345 -> safeArea {69, 0, 394, 0}: card shows app y 68..537"
+   15:23:32/35/41 normal keyboard "top 586 differs from the bar bottom 537 by +49 pt (K=394)" -> bar hidden
+   15:23:45.589/47.155 two normal keyboards -> K 345 back, safeArea {118,0,345,0}
+   Cause: K was replaced after a single keyboard session, even one that was taller only for part of the time.
+   Fix keys701 (springboard/DSSceneHost.m phoneSize684KeysDown): a K >4 pt from the one in use needs a second keyboard
+   that settles at the same K; one outlier is logged and ignored; <=4 pt keeps the K in use.
+   Off /var/mobile/.dynamicstage-keys701-off, latch keys701-trying/-crashed.
+E2 45-pt keyboard (15:23:40.147, 15:23:45.078; accessory/hardware bar): handled correctly (card at rest, not learned). No change.
+E3 Minimised Beeper shrunk to 420x458 and grown back on each restore; 5 "phonesize676 ... (NOT landed yet)" read-backs
+   (e.g. 15:20:12.173). Cause: phonesize695 keep-while-minimised latched off since the 4.5.697 crash (14:36:28), which was the
+   app-view trap now held by crash699, not the keep. Fix rearm701: clear that latch once (marker -rearm701-done); latch
+   still works. Off /var/mobile/.dynamicstage-rearm701-off.
+E4 relay668: Signal on a card 7 s with "DynamicStageApp.dylib is NOT running in this app" - injection blocked on the device
+   (tweak injection disabled/hidden for Signal). Not fixable in the tweak.
+
+
+User ask: "check for what could cause battery drain or if we could prevent battery drain without ruining the background part fully"
+
+Audit (SpringBoard + app dylibs), ranked by likely drain:
+ 1. App stage probe (app/DSStageContext.m scheduleProbe) - in EVERY injected app (Messages, Messenger, Signal, Beeper, Phone)
+    for the process's life: every 0.35 s when not on a card (normal Messages use = ~3 wake-ups/s), every 1.5 s on a card,
+    also while backgrounded (minimised Beeper is kept running). Each run reads notify state (and a plist when notify has none).
+    -> FIXED: background 6 s; not on a card 1 s (0.35 s for 10 s after launch/foreground); on a card + foreground 1.5 s (same).
+       Foreground/active notifications refresh at once. Stage notifications (the real signal) unchanged.
+ 2. App camera-preview watch (app/DSCameraStage.m DSCam667) - 1 s GCD timer in every injected app except Phone, whole life.
+    -> FIXED: 4 s (2 s leeway) when not on a card or in background; back to 1 s at once on foreground or stage notification;
+       1 s on a card in the foreground, and while the camera layout is tall (same as before).
+ 3. SpringBoard stall watchdog (shared/DSDiagnostics.m) - 0.5 s GCD timer forever, screen off included.
+    -> FIXED: 1 s unlocked, 10 s (5 s leeway) locked (no stall checks while locked); main thread asleep waiting for work is
+       not a stall (After/BeforeWaiting observer) - needed because the stage tick no longer wakes main every 1.5 s.
+ 4. SpringBoard stage tick (DSStageManager blackout696ScheduleTick: blackout 696, blackout 699 unlock, heal700, perf summary)
+    - 1.5 s forever. -> FIXED: 6 s while locked or nothing on the stage (no host, nothing parked/stashed, Closed);
+       the lock-state notification runs it 0.3 s and 1.2 s after unlock; 1.5 s with a card staged/minimised and unlocked.
+ 5. App-trace relay (springboard/DSAppTraceRelay.m) - 1.5 s timer forever (698 skipped 3 of 4 polls when idle, but still woke).
+    -> FIXED: timer 6 s (2 s leeway) when no relay app is on a card; locked: no polling, 30 s check; 1.5 s when hosted.
+ 6. Camera arbiter presence timer (1 s, tolerance 0.3) - only while a card is visible or a staged camera is live, stops otherwise.
+    LEFT ALONE (camera/presence path; already stops when idle).
+ 7. Running assertion keeping a staged/minimised app alive (DSSceneHost holdRunningAssertion, 695 keep-alive) - the largest
+    inherent cost (Beeper keeps running instead of being suspended) but it IS the background feature. LEFT ALONE.
+ 8. In-call watch 0.5 s (only during a call with a card), intro demo 4.4 s / intro watchdog 30 s (only while the intro shows),
+    perf698 frame meter CADisplayLink (only with the perf log file). LEFT ALONE (not idle costs).
+ 9. Switch files: access() at most every 2 s per switch when used (cached). LEFT ALONE.
+ Not changed: keyboard, Messages camera (673), app switcher, status bar, hooks (none added), scene foreground/background policy.
+
+Switch: /var/mobile/.dynamicstage-battery701-off (crash latch battery701-trying/-crashed, marked when the stage tick first
+  slows). The app dylibs can't read that file from their sandbox: SpringBoard publishes notify state of
+  com.recreated.dynamicstage.battery701 (1 on, 2 off); apps treat "no state" as on.
+
+Risks: lock detection uses the system Darwin notification com.apple.springboard.lockstate (state != 0 = locked); if it ever
+  reads wrong, the stall/relay timers just stay at their unlocked cadence. A missed stage notification in an app that is not on
+  a card is now caught within 1 s instead of 0.35 s (after the first 10 s in the foreground). Camera-preview detection for a
+  background app moving onto a card relies on the foreground/stage notifications to go back to 1 s (else up to 4 s).
+  STALL lines: sampled every 1 s instead of 0.5 s.
+
+Files: bak701/ (= 700 sources), springboard-701.diff, build-701.log, publish-701.log, dsym701/, full-701/
+8023c2c01ce2addc8007fb9a46b05124a2d498ecd4421adc849976e6aef6209f  CursorRepo/packages/com.recreated.dynamicstage_4.5.701_iphoneos-arm64.deb

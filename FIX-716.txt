@@ -1,0 +1,48 @@
+DynamicStage 4.5.716 (blackout716)
+
+Log: newstage 8629631 "Create Blacked out again after lock screen and minimised for ages"
+(uploaded 00:59:31 NZDT), saved as uploads716/blacked-out-after-lock.log.
+Recorded on 4.5.715 (header "build 4.5.715", SpringBoard pid 12740, 00:21:53-00:57:21 NZDT).
+No crash (crash section empty), no latch trip ("survived 15 s; crash latch cleared" only).
+
+1. BLACK BEEPER CARD after lock while minimised (the bug)
+ 00:45:20 Beeper opened on a card (684 phone-size, fine).
+ 00:49:10 minimised (home tuck); 00:50:36 and 00:51:57 lock screen (presence674 role=6 level=1050).
+ 00:50:38 "scene update begin sceneID:com.beeper.chat.ios-default fg=0": the lock put the
+          minimised scene in the background (Beeper's 695 keep-while-minimised path leaves it
+          open to SpringBoard's updates).
+ 00:57:03.542 corner restore; 00:57:03.875 "scene update ... fg=1" (SpringBoard bringing it
+          forward); 00:57:03.901 "blackout699 ... scene was in the background on a visible
+          card: woken" - i.e. the fg=1 update had NOT taken.
+ 00:57:09-00:57:16 every drag/tap: "scene update ... fg=1" then "had been put in the
+          background off the stage and was woken" (x12) - still background each time.
+ 00:57:18 user closed the card ("app view torn down") and opened a new stage.
+ Cause: FBScene update hooks (Tweak.xm) call keepCommittedForegroundOfScene for an
+ on-screen hosted scene: the incoming foreground flag is overwritten with the scene's
+ committed one ("an on-screen stage keeps the foreground it already has"). Committed =
+ background after the lock, so every foreground update - including the ones produced by
+ the stage's own wake (_activateApp, used by blackout699 / blackout696 / card tap) - was
+ written back to background. The wake could never take; the card stayed black.
+ Fix (blackout716, DSSceneHost.m, +41 lines, no new hook): for 2 s after the stage's own
+ wake activates an app, a background -> foreground update of that app's scene lands.
+ Never foreground -> background (the original purpose of the rule is kept), never
+ Messages (com.apple.MobileSMS is never put in the window), never while the phone is
+ locked. The Live app view still does not see the flip (crash699 / 668 holds unchanged).
+ Log: "blackout716 <scene> woken by the stage: its foreground update lands".
+ Off: /var/mobile/.dynamicstage-blackout716-off (latch blackout716-trying / -crashed)
+ = exactly 4.5.715.
+
+2. Not bugs (checked)
+ - relay668 "DynamicStageApp.dylib is NOT running in this app" (Beeper, 00:45:34):
+   Beeper blocks injection; the 684 SpringBoard-side path is what runs. Expected.
+ - presence674 ignored role=6 level=1050 (00:50:36, 00:51:57): the lock screen, by design.
+ - camera658 "fff66709 stop from an app that is not on a card": full-screen camera, ignored.
+ - keys697 "UIKit keyboard frame not given to Beeper: minimised": correct (Spotlight / ASB typing).
+ - Messages 00:22:29-00:22:45: card 420x458, scene 420x458, safe area 0 (msgdiag714), typing
+   worked; 00:22:45 Messages left the stage after a rim drag (user closed it). Clean.
+ - No lag lines, no stalls, no 696 watchdog fires, no kb707 issues.
+
+Unfixable / unknown: why the lock backgrounds the minimised scene in the first place is
+SpringBoard behaviour (expected on lock); 716 makes the restore undo it.
+Unchanged: no new hooks, nothing new at load (initialiser sizes 4 / 8 bytes, imports = 715),
+Messages, Beeper 684 geometry, camera 673, keyboard, app switcher, scripts (4.5.708).

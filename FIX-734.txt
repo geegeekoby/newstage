@@ -1,0 +1,12 @@
+DynamicStage 4.5.734 (on 4.5.733; 733 was already live when call733 was asked for)
+
+call733 - hands off during a call
+The uploaded Crasher (732) is not a call crash: no call653 lines, it happened while
+opening Beeper after the keyboard slide (fixed in 733).
+While the call653 guard is active (call screen up or coming, and 4 s after it goes)
+or the stage has stepped aside for the call screen, these do nothing: home-swipe tuck,
+outside-touch minimise, kb707 keyboard moves, stuck727 forcing, heal700, black731.
+The cards stay where they are until the call UI is gone. Logged as "call733 ... left
+alone" (at most every 5 s). The existing call653 scene-update hold is unchanged.
+Limit: a call shown only as a banner (no full-screen call UI) is not detected by the
+call653 guard. Off: /var/mobile/.dynamicstage-call733-off (per-action latch).

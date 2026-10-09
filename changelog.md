@@ -1,3 +1,6 @@
+**4.5.734**
+- call733: during a call (and 4 s after) the stage leaves the cards alone: no tuck, no minimise, no keyboard moves, no position forcing. Off: -call733-off.
+
 **4.5.733**
 - crash fix: black731 no longer touches a card whose app is still starting (the 4.5.732 crash when opening an app right after the keyboard went away).
 - grab733: pulling a minimised card from its corner no longer scrolls or swipes the home screen behind it. Off: -grab733-off.

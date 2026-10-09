@@ -1,3 +1,6 @@
+**4.5.722**
+- Emergency rollback: 4.5.721 resprung SpringBoard when opening a new stage. 4.5.722 is 4.5.720's exact code with only the version bumped; kb721 is removed entirely. Install 4.5.722 over 4.5.721.
+
 **4.5.721**
 - kb721: the typing card moves above the keyboard every time. kb707 is now the one keyboard controller in single, two-stage and split layouts (split's geometry runs as kb707's split mode), for the picker search, the stage's own field and app fields. Fixed: a short keyboard report could leave the search card down (or drop it after 3 s); an app keyboard whose frame was swallowed during a scene update never lifted the card; no re-check when the owner was not known yet. New self-check: a typing card still covering the keys after 0.3 s is lifted ("kb721 corrected" in the log). Messages and Beeper 684 behave as before. Off: /var/mobile/.dynamicstage-kb721-off (back to 4.5.720), per-action crash latch.
 - No new hooks, nothing new at load.

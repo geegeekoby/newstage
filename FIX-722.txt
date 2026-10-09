@@ -1,0 +1,5 @@
+DynamicStage 4.5.722 - emergency rollback of 4.5.721
+====================================================
+4.5.721 resprung SpringBoard when tapping "new stage". 4.5.722 is 4.5.720's exact code with only
+the version bumped (kDSBuildVersionString and control = 4.5.722). kb721 is removed entirely (not just
+switched off). kb720, bg719, defer719 as in 4.5.720. Install 4.5.722 over 4.5.721.

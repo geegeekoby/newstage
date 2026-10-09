@@ -1,0 +1,56 @@
+DynamicStage 4.5.711 - bisect step 2 of 4: 4.5.710 + group A (kb707 + corner707)
+=================================================================================
+
+4.5.710 (706 code + 708 scripts + beeper707) re-jailbroke fine with NathanLR.
+This build adds group A only.
+
+In this build
+-------------
+- 4.5.709 base (4.5.706 code, 4.5.708 install / remove scripts, unchanged).
+- C beeper707 (from 4.5.710).
+- A kb707: one keyboard controller (the typing card sits on the keyboard, the
+  other card slides off its nearest side only if it would be covered, one spring,
+  everything springs back when typing ends; the old movers return at once while
+  kb707 owns the layout). Same code as 4.5.707, with these changes:
+  - No stage open (state not Overlay: closed, minimised, being pulled) = kb707
+    does nothing at all. kb707Owns returns NO before its switch read, so the
+    4.5.706 keyboard paths run untouched (Lock Screen / passcode keyboards after a
+    re-jailbreak reach none of kb707).
+  - Crash latch set at first use: the first time kb707 owns the layout it marks
+    kb707-trying (removed after 15 s). 4.5.707 only marked it just before a card
+    moved.
+  - If the stage closes / minimises while kb707 holds a lift, the cards are put
+    back at once (no animation) before the 4.5.706 path runs.
+- A corner707: one corner resolver for the corner flick, minimise, picker leave,
+  split leave, stash and every park; the free corner is used when the other stage
+  is parked in the wanted one; a stashed third icon stacks 42 pt per parked icon.
+  Same code as 4.5.707.
+
+Not in this build
+-----------------
+- B outside707 (the stage window does not report pass-through touches; its
+  hitTest is exactly 4.5.706).
+- D: the 57-function purge, DSLogGate, the 32-slot switch table, the 4.5.708
+  trace writer. kbmin702 keeps its 4.5.706 body (the minimiseVisibleStages merge
+  belongs to outside707).
+- shared/ is 4.5.706 apart from the version string (DS699_MAX 24; 20 switch
+  names in use). The app dylib is the same size (860,784 bytes) with the same
+  imports as 709 / 710. The SpringBoard dylib's imports equal 4.5.710's.
+
+Off files (touch, then respring)
+--------------------------------
+/var/mobile/.dynamicstage-kb707-off      = the 4.5.706 keyboard paths
+/var/mobile/.dynamicstage-corner707-off  = each park path picks its own corner (706)
+/var/mobile/.dynamicstage-beeper707-off  = the 4.5.706 drawing (from 4.5.710)
+Each has a crash latch: /var/mobile/.dynamicstage-<name>-trying / -crashed
+(delete -crashed to allow it again).
+
+Rules kept: no new hooks, no status-bar writes, no tune files; app switcher,
+Messages' camera (673), the Beeper 684 keyboard mechanism, backgrounding /
+keep-alive and the card size untouched. Build: 41 warnings, the 4.5.704 set.
+
+Test: reboot, re-jailbreak with NathanLR.
+- Fine: 4.5.712 adds B (outside707), then 4.5.713 adds D.
+- Fails: re-test once (NathanLR fluke check). If it fails again, group A is it:
+  remove the tweak in Filza (DynamicStage / DynamicStageApp dylib + plist in
+  /var/jb/usr/lib/TweakInject), re-jailbreak, reinstall 4.5.710.

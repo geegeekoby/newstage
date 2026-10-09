@@ -1,0 +1,17 @@
+DynamicStage 4.5.697 - performance pass + keys697
+See changelog.md 4.5.697. Summary:
+LAG CAUSES (Laggy log, 4.5.696):
+ 1. Card drag relaid the whole card every frame (cornerRadius set twice per pan frame -> setNeedsLayout ->
+    content mask layer dropped and rebuilt over the hosted 430x931 scene, clip/rims/shadow redone,
+    hidden close-glow gradient rebuilt). Fixed: same radius is a no-op, mask layer reused, hidden glow skipped.
+ 2. Synchronous trace-file I/O (open/flock/write/close) on the main thread for every trace line, and every
+    line stored twice ("[TRACE]" copy). Fixed: async serial writer queue; duplicate dropped in quiet mode.
+ 3. Debug log building per layout/keyboard event (33 x 14-line [GEOM] dumps, 177 [KEYS], [LIFT]).
+    Fixed: quiet by default (60 lines/s cap, crash notes unchanged); /var/mobile/.dynamicstage-verbose = full log.
+ 4. Keyboard window raise walked every window up to 10x in 16 ms. Fixed: 80 ms coalescing + one trailing raise.
+ 5. Uncached access() checks (kill switch, sbcam opt-in). Fixed: 2 s cache.
+PERF LOG: /var/mobile/.dynamicstage-perf -> "perf697" summary line every ~3 s.
+KEYS697: a minimised/parked/hidden card no longer owns the keyboard (stale "typing on the stage" from 693/694
+ logs blocked Messages/Spotlight/Maps keyboards and refused hides). Off: /var/mobile/.dynamicstage-keys697-off.
+OFF: /var/mobile/.dynamicstage-perf697-off -> 4.5.696 code paths for all performance changes.
+No new hooks, no status-bar writes.

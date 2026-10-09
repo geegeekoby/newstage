@@ -1,3 +1,6 @@
+**4.5.730**
+- slide728 also covers the home-bar swipe: open cards slide out the side, then park in their corner as before (corner icons, corner pull). Off: -slide728-off.
+
 **4.5.729**
 - 4.5.728 plus slide728: an outside-tap minimise slides the cards out the side (kb707's side slide), then they are minimised normally (corner icon, corner pull). Flick / drag minimise unchanged. Off: -slide728-off.
 

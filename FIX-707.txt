@@ -1,0 +1,145 @@
+DynamicStage 4.5.707 (kb707 + corner707 + outside707 + beeper707 + purge)
+=========================================================================
+
+A consolidation and stability release, not more patches on top.
+
+Logs used
+---------
+- newstage was fetched first: no new logs since 4.5.706 (2b6e9aa). The fixes
+  below come from the user's report on 706 and from reading the code.
+
+1. One keyboard controller (kb707)
+----------------------------------
+Before: four separate movers placed cards for a keyboard, each with its own
+timing and curve:
+  a. noteKeyboardFrame703's picker-search branch (lift / drop + side park),
+  b. the staged-app lift: liftCardBy / setLift:forSlot: / reapplyBottomKeyboardLift
+     / setKeyboardLift:onCard:, with a "companion" lift for the other card and a
+     stored resting frame put back afterwards (restoreLiftForBundle),
+  c. the two-stage side park: commitSideParkForOwner / applySplitKeyboardShift /
+     scheduleSettledTopKeyboardMove,
+  d. focus704 / 705's step-aside, run after all of them.
+Now (kb707, outside split / float): input = the typing card (picker search,
+stage field, app field incl. Beeper's keys) + its keyboard (Beeper's frozen app
+keyboard, SpringBoard's noted keyboard, or the keyboard on screen).
+  - The typing card rises until its bottom sits on the keyboard (28 pt above the
+    reported frame for the suggestion bar; Beeper's 684 card uses its pinned keys
+    top, exactly the 706 numbers, so its own bar lands on the keys). A card already
+    clear of the keys does not move (no drop: the 705 flicker finding).
+  - The other card slides off its nearest side only when the typing card would
+    cover it.
+  - One UIViewPropertyAnimator with the anim702 spring (0.2 s ease with Reduce
+    Motion). Only the lift / side transforms; no frame rewrites.
+  - One typing session = one move: release after 0.4 s with no typing card and
+    no keyboard on screen (3 s cap), then everything springs back and the stacking
+    order is restored.
+  - Waits (0.3 s, then 1 s) while a finger holds a card, drag702 / drag settling,
+    a corner restore, a spam700 minimise / restore, or the overlay settling; never
+    springs back under a finger.
+  - Scheduled 0.05 s and 0.40 s after every keyboard note, and from the stage tick
+    while active.
+  - Every old mover above returns at once while kb707 owns the layout (and asks
+    kb707 to re-check). Split and the float stage keep applySplitKeyboardShift.
+  - Off: /var/mobile/.dynamicstage-kb707-off (crash latch kb707-trying/-crashed)
+    = the 4.5.706 paths. The old paths stay in this build for that switch; they
+    are deleted in the next build once kb707 is confirmed on device.
+
+2. Corners (corner707)
+----------------------
+Cause: each park path picked its side alone. kbmin702 single used the card's
+last side, heal700 the current side, a stash its stash side, the corner flick the
+flick side - none checked where the other stage was parked.
+Fix: corner707Side:forCard:why: - the wanted corner unless the other stage is
+parked (and hosting) there, then the free corner. Applied at the minimise
+(corner flick / kbmin702 / outside707), picker leave, split leave, both stash
+slots, minimizeCard:toCorner, and in setParked:YES (heal700, focus, any park).
+The home tuck already uses opposite corners. A stashed third icon is stacked
+42 pt per parked icon in its corner. Log: "corner707 ... using the X corner".
+Off: -corner707-off.
+
+3. Outside use minimises (outside707)
+-------------------------------------
+DSStageWindow (our window, not a hook) now reports a touch it passes through to
+the home screen / app behind. outside707 minimises the visible stages through
+minimiseVisibleStages: (shared with kbmin702: one card to its corner, more cards
+the home tuck; both spam700-guarded) after 0.18 s when all of these hold:
+stage in overlay and visible with a live app card; the point is not within
+24 pt of a card's rim, not in the top 44 pt, the bottom 40 pt, the 16 pt side
+edges or the 86x108 bottom-corner squares; no keyboard; no drag / drag settling;
+no minimise / restore pending or within 0.8 s (also 0.8 s after the stage
+opens); no call; not locked; no home gesture, system transition or edge pull
+(app switcher untouched); spam700 generation unchanged during the 0.18 s.
+A picker-only stage is left alone. Off: -outside707-off.
+
+4. Beeper lag (beeper707)
+-------------------------
+Per frame / per layout with Beeper staged (684 phone-size, 430x931 scene,
+squash sx != sy):
+  ours, before:
+  - DSAfterHostedLayout ran DSApplyRoundInfo twice per scene-presentation layout
+    (directly and again inside DSContainScenePresentation), each writing
+    clipsToBounds / masksToBounds / cornerRadius / cornerCurve / maskedCorners,
+    plus 5 chrome writes.
+  - The presentation kept a rounded masksToBounds (34-44 pt continuous) under
+    the host's non-uniform squash: a rounded clip over live content with
+    sublayers = an offscreen pass per frame. Invisible: the card's content view
+    already clips with the same rounded corner.
+  - The host also clipped (masksToBounds) inside the parent's clip.
+  - layoutHostView697Body reset the host transform to identity and then set
+    bounds, the squash and the center again on every layout.
+  ours, after (beeper707): nested rounded clips dropped once when entering
+  phone-size; host clip off (parent clips: a plain rectangle); host
+  allowsGroupOpacity NO, shouldRasterize NO; bounds / transform / center written
+  only on change, no identity reset; rounding applied once per layout and
+  change-only everywhere (all apps). Leaving phone-size puts the corners back.
+  Unchanged: the 690 top-bar strip (already skipped under the 694 squash), the
+  keys674 layer host and the appview holds (both part of the 684 keyboard
+  mechanism, which stays untouched), scene-settings writes (already throttled).
+  Beeper's own cost: its layout, drawing and keyboard animation for a full
+  430x931 phone scene run in Beeper's process (not measurable or changeable from
+  SpringBoard; not measured on device here). The squash itself is a GPU
+  transform (cheap) once no rounded clip sits under it.
+  Off: -beeper707-off (= 706 drawing).
+
+5. Dedupe / dead code
+---------------------
+- 57 functions / methods that nothing referenced (checked across springboard,
+  shared and app, including @selector and string uses), removed in three passes
+  (each pass exposed more): 923 lines.
+    DSStageManager.m (42): restingFrameForKeyboardLiftSlot:state:, logStageGeometry:,
+    pushLiftedGeometryToApp, lockedScreenInsets, screenSafeAreaInsets,
+    stageSafeAreaInsets(+ForTopSlot), minimizeFlightFrameForCard:,
+    min/maxPrimaryCardOriginYForOverlayDrag, clampedOnScreenFrame:,
+    stickyHoverFrameFrom:, floatOverlapsCard:, showFreshBottomStagePicker,
+    prepareTopSlotForPicker, addStackSlotAnimated, noteRefusedPull:,
+    dragTileFrameAtPoint:, peekFrameForProgress:, updateCornerRadiusForProgress:,
+    prepareHostSnapshot, updateHostSnapshotForProgress:, attachHostedApp,
+    scheduleAutoKill, minimizeCardToCornerAnimated:, bottomCornerZoneOnLeft:,
+    fractionOfFrame:insideZone:, terminateHintRect, cardFrameInTerminateZone:finger:,
+    swapTravelForFrame:card:, swapGlass:, updateSwapGlassForCard:frame:velocity:,
+    snapFloatToNearestHalf, closeZoneRect, beginSplitFromFinger:,
+    setParkedHostsFollowSystemHomeTransition:, freeParkedCardForSplit:,
+    newStageSplitAvailable, launchFrontApplicationOnSlot:, stashHost:fromCard:,
+    parkedHostPreferringLeft:, DSRectIsDisplayKeyboard.
+    DSSceneHost.m (6): launchThroughSystemService, launchInForeground,
+    presentSceneOfOwnMaking, keepPictureFromTrackingHost, DSPhoneSize692CurrentTune,
+    DSPhoneSize692BlendName.
+    Tweak.xm (7): DSMessagesHostStaysOnScreen, DSKeyboardArbiterSummary,
+    DSHandlerBundle, DSSpringBoardKeyboardHandler, DSArbiterSceneLayer,
+    DSCallHandler, DSKeyboardUIHandle.
+    DSCameraArbiter.m (2): DSCam661Flatten, DSCam661Items.
+- Merged: four log throttles -> DSLogGate (shared); kbmin702 + outside707 -> one
+  minimiseVisibleStages:; the double round apply -> one; keyboard movers -> kb707
+  (old ones gated, deletion next build).
+- Already merged in 706 and left: heal700 / drag706 / blackout checks on one tick.
+- Lines: DSStageManager.m 14,747 -> 14,532; DSSceneHost.m 7,311 -> 7,200;
+  Tweak.xm 2,564 -> 2,474; DSCameraArbiter.m 2,170 -> 2,141; all sources
+  49,298 -> 48,899 (net -399 with the new features in).
+
+Switches
+--------
+New off files: /var/mobile/.dynamicstage-kb707-off, -corner707-off,
+-outside707-off, -beeper707-off (each with a crash latch). 21 switch names in
+use; the table now holds 32.
+
+Build: 41 warnings, the same set as 4.5.704 - 4.5.706.

@@ -1,3 +1,10 @@
+**4.5.710**
+- Bisect step 1 of 4 after the NathanLR re-jailbreak finding (4.5.709 = 4.5.706 code re-jailbreaks fine; 4.5.707 / 4.5.708 did not). This build is 4.5.709 plus one 4.5.707 group only: beeper707 (the Beeper phone-size host drawing). kb707, corner707, outside707, the dead-code purge, the shared log throttle, the 32-slot switch table and the 4.5.708 trace-writer change are NOT in this build. Shared code (the part also loaded into Phone, Signal and the other chat apps) is byte-for-byte 4.5.706 apart from the version string.
+- beeper707 as in 4.5.707: with a phone-size (684) scene the nested rounded clips inside the host are dropped once, the host does not clip (the card does), host group opacity / rasterising are off, and bounds / transform / center are written only on change. The hosted-scene rounding runs once per layout and writes only what changed.
+- Safer than 4.5.707: the change-only rounding / chrome writes, which 4.5.707 ran with no switch, are now also behind beeper707. Off: /var/mobile/.dynamicstage-beeper707-off = exactly the 4.5.706 drawing everywhere; crash latch beeper707-trying / -crashed (marked at first use).
+- Scripts: the 4.5.708 install / remove scripts, unchanged.
+- Test: reboot, re-jailbreak with NathanLR. If it re-jailbreaks, 4.5.711 adds the next group.
+
 **4.5.709**
 - Known-good rollback: the code is exactly 4.5.706 (only the version string differs), with the 4.5.708 install / remove scripts. The 4.5.707 changes (kb707, corner707, outside707, beeper707, the dead-code purge and the shared log throttle) and the 4.5.708 run-time tweaks are not in this build.
 - Why: after 4.5.707 the user could not re-jailbreak with NathanLR. A full review of 706 -> 707 -> 708 found no launch-time cause (same single SpringBoard initializer and two app initializers, same linked libraries, two new CoreGraphics imports that exist on every iOS, no new hooks, notifications or timers at load, nothing of 707 runs until a stage is open), and the uploaded Signal reports do not involve the tweak. This build lets the user go back to the last build that re-jailbroke fine.

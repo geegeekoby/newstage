@@ -1,0 +1,89 @@
+DynamicStage 4.5.710 - bisect step 1 of 4: 4.5.709 + beeper707 only
+=====================================================================
+
+Why a bisect
+------------
+4.5.709 (the 4.5.706 code + the 4.5.708 install scripts) re-jailbreaks fine with
+NathanLR on the phone; 4.5.707 and 4.5.708 did not. The scripts are the same in
+708 and 709, so the cause is in 707's code. The 707 changes go back one group per
+build; each build is checked with a reboot + NathanLR re-jailbreak.
+
+Groups, re-examined for anything that runs outside SpringBoard UI time
+----------------------------------------------------------------------
+Least to most suspicious:
+
+1. C beeper707 (host drawing) - in THIS build.
+   Runs only in SpringBoard, only inside our layout hook on views we marked
+   (a scene hosted in a stage card) and in the phone-size layout. Nothing of it
+   runs at boot or before a stage hosts an app. No file, lock, static table,
+   notification or timer. 707 ran part of it (the change-only rounding / chrome
+   writes) with no switch; 710 puts that part behind the beeper707 switch too.
+
+2. A kb707 + corner707 (planned 4.5.711).
+   SpringBoard only. corner707 only acts with two stages parked. kb707 sits on
+   the keyboard paths, which also fire with no stage open (e.g. a passcode
+   keyboard on the Lock Screen right after the re-jailbreak): there it reads its
+   switch (first read: the crash-latch files) and queues two 0.05 / 0.40 s
+   checks that return at once (stage not open). Its crash latch is only marked
+   just before it moves a card, so a fault before that would not latch.
+
+3. B outside707 (planned 4.5.712).
+   SpringBoard only, but the stage window is made visible at SpringBoard start
+   (buildWindow, "the window itself stays up") and its hitTest now calls back on
+   EVERY SpringBoard touch it passes through: Lock Screen, passcode, home screen,
+   from the first touch after the userspace reboot. 708 already reads the stage
+   state first (closed = return). Latch only marked just before a minimise, so a
+   fault in the touch path itself could never latch off.
+
+4. D purge + DSLogGate + 32-slot switch table + 708 trace writer (planned 4.5.713).
+   Most suspicious. Reasons:
+   - The only group in the shared code that is also linked into the app dylib,
+     i.e. into Phone, Signal and the other chat apps that start during and after
+     the jailbreak's userspace reboot (the switch table grows 24 -> 32; the 708
+     trace writer makes every trace write in every such process async on a
+     queue).
+   - The only group with no off file and no crash latch at all: a fault there
+     repeats on every boot and can only be escaped with safe mode - exactly what
+     the user saw.
+   - DSLogGate runs from SpringBoard's FBScene update hook (keyboard and
+     MobileSMS scenes), which starts at SpringBoard launch, before any stage
+     exists.
+   - The purge removed 923 lines in four files; nothing referenced them
+     statically, but it is the largest change by volume.
+   No line of D has been shown to fail; this is ranking by exposure.
+
+Honest note: no group shows an actual bug on static reading. One clean
+re-jailbreak on 709 is one data point; if a later step fails, re-test the
+previous build once to rule out a NathanLR fluke.
+
+What 4.5.710 contains
+---------------------
+- 4.5.709 exactly (4.5.706 code, 4.5.708 scripts), plus in springboard/DSSceneHost.m
+  the 707 beeper707 hunks only:
+  - change-only DSApplyRoundInfo / DSClearSceneChrome, single round apply in
+    DSAfterHostedLayout (707 had these unswitched; now behind beeper707);
+  - DSBeeper707Flatten, _beeper707Flat / _beeper707Logged, the
+    roundHostedSceneToCard skip, the phone-size layout writes only on change, host
+    clip / group opacity / rasterise off, corners back on leaving phone-size.
+- Not in: kb707, corner707, outside707, the purge, DSLogGate, DS699_MAX 32, the
+  708 trace writer. shared/ = 4.5.706 + version string; the app dylib is the same
+  size as 709 (860,784 bytes) with identical imports. The SpringBoard dylib adds
+  only CGAffineTransformEqualToTransform and CGColorGetAlpha (CoreGraphics).
+- Off: touch /var/mobile/.dynamicstage-beeper707-off (respring) = exactly the
+  4.5.706 drawing everywhere. Crash latch: beeper707-trying / -crashed, marked at
+  first use.
+- No new hooks; app switcher, Messages' camera (673), the Beeper 684 keyboard
+  mechanism, backgrounding / keep-alive and the card size untouched.
+- Build: 41 warnings, the same set as 4.5.704.
+
+Plan
+----
+4.5.710 = 709 + C (beeper707)            <- this build
+4.5.711 = 710 + A (kb707 + corner707)
+4.5.712 = 711 + B (outside707)
+4.5.713 = 712 + D (purge, DSLogGate, 32-slot table, 708 trace writer)
+Each: reboot, re-jailbreak with NathanLR. The first build that fails names the
+group; that group's off file then tells whether the switched code or the
+always-on part is the cause.
+If it fails: Filza, delete DynamicStage.dylib/.plist and DynamicStageApp.dylib/.plist
+from /var/jb/usr/lib/TweakInject (or reinstall 4.5.709 once jailbroken).

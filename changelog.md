@@ -1,3 +1,7 @@
+**4.5.732**
+- black731: a card that comes back from a side slide (search, keyboard) is switched back to the app's live picture; fixes a black top card. Off: -black731-off.
+- rim731: the drag rim is only outside the card now; taps at the app's edges reach the app. Off: -rim731-off.
+
 **4.5.731**
 - home731: touching the home bar no longer tucks the stage; it tucks only when the home swipe really goes up (40 pt or an upward flick). Off: -home731-off.
 - kbown731: Spotlight / SpringBoard keyboards no longer lift a staged card. Off: -kbown731-off.

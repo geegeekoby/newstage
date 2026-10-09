@@ -1,0 +1,53 @@
+DynamicStage 4.5.714 (kb707 back to 4.5.712 + msgdiag714)
+
+1. Keyboard handling exactly as in 4.5.712
+   The 4.5.713 Messages exclusion (kb713MessagesSession and its flag) is gone.
+   kb707Owns is byte-for-byte the 4.5.712 version: nothing with no stage open,
+   switch read, crash latch at first use. Messages' camera (673) untouched.
+
+2. Messages input bar (compose bar not visible on the card)
+   Not pinned down from the code. Checked 4.5.697 to 4.5.713:
+   - No change alters Messages' scene size or safe area. Phone-size mode
+     (684/695/707) is for the allowlist only (default: Beeper), so it does not
+     apply to Messages unless /var/mobile/.dynamicstage-phonesize675-apps lists it.
+   - The card clip: always on since before 4.5.690 (setClipsContents ignores
+     its argument). perf705 replaced the mask layer with the same rounded clip.
+   - beeper707's always-on writes are the same values as 4.5.706's.
+   - The Messages app code (entry bar parking/anchoring) is unchanged since 4.5.703.
+   - The last uploaded log (4.5.706) shows Messages' scene at the card size,
+     {{0,0},{420,458}}, safe area {0,0,0,0}: as expected.
+   So no build in that range has a visible Messages-specific cause.
+
+   New, read-only: msgdiag714. While a stage is open with Messages on a card,
+   one line "msgdiag714 Messages geometry ..." (on change, else once a minute):
+   card frame/bounds, lift, side, clip, the hosted view's frame and transform
+   inside the card, the scene frame and safe area (and what the stage wants),
+   the app picture's size. Writes nothing to any view, layer or scene.
+   Off: /var/mobile/.dynamicstage-msgdiag714-off
+   (crash latch msgdiag714-trying / msgdiag714-crashed).
+   Please open Messages on a card, wait 10 s, and upload the log.
+
+3. Bisect on 4.5.714 (touch the file, respring, open Messages on a card):
+   /var/mobile/.dynamicstage-beeper707-off
+   /var/mobile/.dynamicstage-perf705-off
+   /var/mobile/.dynamicstage-perf706-off
+   /var/mobile/.dynamicstage-polish706-off
+   /var/mobile/.dynamicstage-drag706-off
+   /var/mobile/.dynamicstage-native703-off
+   /var/mobile/.dynamicstage-focus705-off
+   /var/mobile/.dynamicstage-focus704-off
+   /var/mobile/.dynamicstage-kb707-off
+   /var/mobile/.dynamicstage-corner707-off
+   /var/mobile/.dynamicstage-outside707-off
+   /var/mobile/.dynamicstage-anim698-off
+   /var/mobile/.dynamicstage-anim702-off
+   /var/mobile/.dynamicstage-perf697-off
+   /var/mobile/.dynamicstage-perf698-off
+   /var/mobile/.dynamicstage-heal700-off
+   /var/mobile/.dynamicstage-blackout699-off
+   /var/mobile/.dynamicstage-phonesize695-off (and -phonesize698-off)
+   Also check that /var/mobile/.dynamicstage-phonesize675-apps does not exist
+   or does not list com.apple.MobileSMS.
+
+Group D kept. Scripts: the 4.5.708 install / remove scripts, unchanged.
+Recovery: the same as 4.5.713 (any -off file above, or reinstall 4.5.712).

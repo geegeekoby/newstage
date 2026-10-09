@@ -1,0 +1,28 @@
+DynamicStage 4.5.725 - sync725: typing card and the other card move together; cards come back at once
+=======================================================================================================
+Base: 4.5.724. Off: /var/mobile/.dynamicstage-sync725-off (= 4.5.724). Per-action crash latch on
+sync725 only; kb707 itself is never latched. No new hooks, nothing new at load. Messages and
+Beeper 684 keep 4.5.724's timing. Split / third stage unchanged.
+
+WHY THE OTHER CARD WAS NOT IN SYNC (traced; no new log)
+kb707 already moved the typing card and slid the other card in one spring block. The lag came from
+WHEN it looked:
+- It looked 0.05 s after a keyboard note and again at 0.40 s. The first look often saw the 243 pt
+  frame (keyboard before its suggestion bar). The lift for 243 pt is smaller, the lifted card did not
+  yet reach the other card, so only the typing card moved. At 0.40 s the 301 pt frame gave a bigger
+  lift, the cards now overlapped, and the other card's slide started then: ~0.35 s late, as a second
+  move (and the typing card jumped again).
+- Coming back: after the keyboard left, kb707 waited 0.4 s with no keys + a 0.45 s re-check, and kept
+  waiting while the keys were still sliding off (they count as "on screen"): 0.4 - 0.9 s late.
+Not the cause: separate curves (both cards share one spring), another mover (none in single /
+two-stage), layout re-applying the offset (kb720 keeps it), the status bar (does not move cards).
+
+WHAT CHANGED
+- On every keyboard note kb707 decides at once (next run-loop turn), not 0.05 s later (the 0.40 s
+  follow-up check stays).
+- A short pre-bar frame is planned with the full keyboard height already seen, so the final lift and
+  the slide are known on the first look: one spring, same start, same duration for all cards.
+- Keyboard will-hide / frame gone: a noted hide wins over keys still sliding off; 0.1 s blip guard (a
+  show inside it cancels and nothing moves), then every card springs back in one shared animation.
+  The 0.4 s absence wait and 0.45 s re-check are no longer used for this.
+- Stacking order is still put back 0.45 s after the cards return.

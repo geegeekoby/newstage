@@ -1,3 +1,7 @@
+**4.5.725**
+- sync725: the other card slides aside together with the typing card (one spring, same start), and every card comes back as soon as the keyboard is dismissed (0.1 s blip guard instead of a 0.4-0.9 s wait). Cause: kb707 first looked at the short pre-suggestion-bar keyboard frame (lift without slide), then 0.35 s later lifted the rest and started the slide. Messages and Beeper 684 unchanged. Off: /var/mobile/.dynamicstage-sync725-off (per-action latch; kb707 is never latched).
+- No new hooks, nothing new at load.
+
 **4.5.724**
 - Fixed: cards no longer lifted above the keyboard or slid aside (single and two-stage). A crash latch left by 4.5.721's "new stage" respring (/var/mobile/.dynamicstage-kb707-crashed) had switched the keyboard mover off. The core lift / slide (kb707) is no longer latchable, and 4.5.724 deletes that stale file itself.
 - No new hooks, nothing new at load. Everything else as in 4.5.723.

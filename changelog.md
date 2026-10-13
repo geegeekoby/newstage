@@ -1,3 +1,6 @@
+**4.5.742**
+- staged Messages back to 739's paths: hold740, raise740/741, open741, launch740 and picker740 stand aside for Messages (msg742).
+
 **4.5.741**
 - no flicker of the remaining card when one closes (close741); one window move and key grab per open / close (open741).
 - side rim strips reach the screen edge; all strips arm rimwin740 (edge741). Clean log lines (log741). One keyboard raise per show / hide (raise741).

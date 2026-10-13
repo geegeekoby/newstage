@@ -1,0 +1,13 @@
+DynamicStage 4.5.742 (14 Oct 2026, NZDT) - staged Messages back to the 739 paths
+Findings (714 = last confirmed good):
+- The Messages app dylib (app/Tweak.xm, DSCameraStage.m, plist) is byte-identical 714 -> 741.
+- Shared code: feature table 32 -> 128 (738), latch clears (736/738), retired739 - all already in 739.
+- No staged-Messages session in any log since Fixitsl (738); Bnb's Messages was full screen.
+- So the changes that can touch staged Messages and were not in 739 are 740/741's:
+  hold740 (replays held scene updates, passes the reactivation unheld), raise740/741
+  (skips keyboard-window raises), open741 (skips key grabs / scene moves), launch740,
+  picker740. hold740 is the most likely: it changes how Messages' own scene updates
+  reach SpringBoard, the path that broke the bar on 713 and 738.
+Fix (msg742): while Messages is on a card, all of the above stand aside and Messages
+runs exactly 739's code. kbguard740 and cam740 already exempted Messages.
+Off (741 behaviour): /var/mobile/.dynamicstage-msg742-off

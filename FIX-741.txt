@@ -1,0 +1,13 @@
+DynamicStage 4.5.741 (14 Oct 2026, NZDT) - from the Bnb log (740)
+1. close741: closing a card no longer refits the card that stays open. The closing app's last
+   phone-size update (sent 1 ms after its phone-size mode went off) was taken for "another app
+   opened" and the open stage was refitted (12:07:14.328). The update still lands (668 rule).
+2. open741: the stage window moves scene at most once, and grabs key once, per 0.6 s
+   (open and close). Bnb 12:07:59.434-.840 had three moves and two grabs. Picker search exempt.
+3. edge741: a card within 24 pt of a screen side gets its outer strip stretched to the screen
+   edge (outside the card only). Every rim strip (also the top card's) now arms rimwin740.
+4. log741: a corrupted strip name ("top-outer-" + garbage, from a static NSString C array) put
+   a control byte in the line, cutting it and merging the next. Names now built without the
+   static array; control characters are replaced before the serial, whole-line write.
+5. raise741: within 0.3 s of a raise only a shown<->hidden change raises again.
+Off files: /var/mobile/.dynamicstage-{close741,open741,edge741,log741,raise741}-off, per-action latches.

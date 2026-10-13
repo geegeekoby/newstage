@@ -1,3 +1,7 @@
+**4.5.741**
+- no flicker of the remaining card when one closes (close741); one window move and key grab per open / close (open741).
+- side rim strips reach the screen edge; all strips arm rimwin740 (edge741). Clean log lines (log741). One keyboard raise per show / hide (raise741).
+
 **4.5.740**
 - crash fix: held app-view updates are passed later instead of dropped, the reactivation is never held, kbshow728 no longer forces keys for inactive / non-allowlisted apps (hold740, kbguard740).
 - right rim drags like the other edges (edge740); side-rim grabs win over the system edge gesture (rimwin740).

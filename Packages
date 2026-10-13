@@ -1,5 +1,26 @@
 Package: com.recreated.dynamicstage
 Name: Dynamic Stage
+Version: 4.5.743
+Architecture: iphoneos-arm64
+Description: Stage Manager Reimagined for iPhone
+Depends: firmware (>= 14.0), mobilesubstrate (>= 0.9.5000), preferenceloader
+Conflicts: me.tomt000.stageduo
+Section: Tweaks
+Tag: compatible::ios16
+Author: Dynamic Stage Recreation
+Maintainer: Dynamic Stage Recreation
+Installed-Size: 4252
+Filename: debs/com.recreated.dynamicstage_4.5.743_iphoneos-arm64.deb
+Size: 820970
+MD5sum: 6c9382f352bd0fe7158001fe46489bc9
+SHA1: b4de8dd5e6a1936fe04b393f13da05abbc419308
+SHA256: 2a31a4bd3e2942b2f098a231a81d7a81d853b01d3952bb12a3b8dce8e3d583e4
+Icon: https://geegeekoby.github.io/newstage/assets/icon.png
+Depiction: https://geegeekoby.github.io/newstage/depiction.json
+SileoDepiction: https://geegeekoby.github.io/newstage/depiction.json
+
+Package: com.recreated.dynamicstage
+Name: Dynamic Stage
 Version: 4.5.742
 Architecture: iphoneos-arm64
 Description: Stage Manager Reimagined for iPhone

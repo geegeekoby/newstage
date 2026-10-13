@@ -1,3 +1,7 @@
+## 4.5.743
+- kbleave743: hide the keys when leaving a Messages conversation.
+- fast743: cards spring back as soon as the keyboard starts hiding.
+
 **4.5.742**
 - staged Messages back to 739's paths: hold740, raise740/741, open741, launch740 and picker740 stand aside for Messages (msg742).
 

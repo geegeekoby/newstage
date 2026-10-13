@@ -1,0 +1,16 @@
+DynamicStage 4.5.743
+
+kbleave743 (Messages app side): going back from a conversation to the list
+never resigned the entry field through our hooks, so no hide request reached
+SpringBoard and its keys stayed up until a later cancel. Now when the list
+appears after a chat, the app asks SpringBoard to hide the keys.
+Off: /var/mobile/.dynamicstage-kbleave743-off. Nothing else in Messages changed;
+msg742 kept.
+
+fast743 (SpringBoard): the keyboard-hide note was dropped while the keys were
+still sliding off, so sync725's 0.1 s spring-back never armed and kb707 fell
+back to its 0.4 s absent wait + 0.45 s re-check (~0.5-0.9 s late). Now the
+first hide signal (app note on=0 or arbiter on=0) starts the spring-back after
+0.1 s, skipped if the keys have not moved (blip). Fallback when the keys just
+leave the screen: 0.15 s. Beeper joins the fast timing; Messages keeps its old
+timing. Off: /var/mobile/.dynamicstage-fast743-off (per-action crash latch).

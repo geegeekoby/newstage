@@ -1,0 +1,16 @@
+DynamicStage 4.5.744
+
+kbdrag744 (SpringBoard): one shared dismiss. Every minimise / close / terminate /
+home tuck / outside-tap minimise path, and a drag heading for a corner, a flick
+or the terminate zone, drops the keys of the card that owns them at the start of
+the action. SpringBoard's staged keys use the existing hide; picker search ends;
+an app drawing its own keys is asked to end editing. Plain repositioning drags
+keep the keyboard. Off: /var/mobile/.dynamicstage-kbdrag744-off (crash latch).
+
+kbapp744 (app side): the app ends editing when SpringBoard asks (not Messages).
+Off: /var/mobile/.dynamicstage-kbapp744-off
+
+kbhide744 (SpringBoard): a hide that waited 8 scene updates was dropped; it is
+now applied. An app hide inside the 1 s stand-in window is re-checked when the
+window ends instead of lost (Messages excluded, unchanged).
+Off: /var/mobile/.dynamicstage-kbhide744-off (crash latch).

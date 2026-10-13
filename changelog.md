@@ -1,3 +1,7 @@
+## 4.5.744
+- kbdrag744/kbapp744: keys go at the start of minimise/close/terminate.
+- kbhide744: keyboard hides are never dropped.
+
 ## 4.5.743
 - kbleave743: hide the keys when leaving a Messages conversation.
 - fast743: cards spring back as soon as the keyboard starts hiding.

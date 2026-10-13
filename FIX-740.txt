@@ -1,0 +1,25 @@
+DynamicStage 4.5.740 (14 Oct 2026, NZDT)
+
+1. Crash fix (hold740, kbguard740) - Needs patching log, SIGTRAP 10:57:09 NZDT on 739
+   Cause: held Live app-view updates were dropped, including the 0x20->0x0 reactivation,
+   so SpringBoard's own app-view state drifted from the real scene; kbshow728 kept forcing
+   keys for Messenger (not allowlisted, scene inactive). The next passed update trapped.
+   Fix: the 0x20->0x0 reactivation is never held. A held update is no longer dropped: the
+   latest one is kept and passed once nothing holds it (checked every 0.3 s); a newer update
+   that passes replaces it; after 4 s it is always let go. kbshow728 no longer forces keys
+   for non-allowlisted apps (Messages excepted, unchanged) or while the scene is inactive,
+   and logs why keys are not showing ("kbguard740 ... not forced, because ...").
+2. rimwin740: a finger down on a side rim strip holds SpringBoard's edge gesture for 0.5 s
+   near that spot, so the stage drag wins. Grab area not widened.
+3. edge740: right-rim asymmetry. The "left swipe along the bottom" cancel ran for any drag
+   starting within 44 pt of the right edge, at any height, every frame: a right-rim drag
+   moving up/down with leftward drift was dropped and snapped back. Now only for the
+   bottom-right corner it was meant for.
+4. cam740: camera display-layout presence only while a staged app uses the camera (its own
+   camera event in 12 s, or the green dot). Messages keeps 661/673 behaviour.
+5. raise740: keyboard raise only on a real show/hide/move of the keys.
+6. launch740: opening a staged app from SpringBoard (icon, notification, Spotlight) closes
+   its card (scene released, not killed) so it opens normally. Switcher untouched.
+7. picker740: apps open full screen or alive as running scenes are greyed out in the picker
+   and refused with a log line (FBSceneManager scenes + front app; no switcher hooks).
+Every new piece: /var/mobile/.dynamicstage-<name>-off and a per-action crash latch.

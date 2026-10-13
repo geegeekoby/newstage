@@ -1,3 +1,9 @@
+**4.5.740**
+- crash fix: held app-view updates are passed later instead of dropped, the reactivation is never held, kbshow728 no longer forces keys for inactive / non-allowlisted apps (hold740, kbguard740).
+- right rim drags like the other edges (edge740); side-rim grabs win over the system edge gesture (rimwin740).
+- camera presence only while a staged app uses the camera (cam740); fewer keyboard raises (raise740).
+- opening a staged app from the home screen closes its stage (launch740); apps open full screen / alive in the switcher can't be staged (picker740).
+
 **4.5.739**
 - back to 737's keyboard, Messages and drag paths: live738, drag738 and rim738 are off (live738's chained holds dropped keyboard / Messages scene updates on 738).
 

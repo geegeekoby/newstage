@@ -1,3 +1,6 @@
+## 4.5.748
+- core748: fewer scene writes and held updates, one clean card move at a time, hosted scenes settled when cards return.
+
 ## 4.5.747
 - core747: one keyboard state, keyboard owner from the keyboard system, one card-move path.
 

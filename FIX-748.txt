@@ -1,0 +1,14 @@
+DynamicStage 4.5.748 (core748; master off: .dynamicstage-core748-off = 4.5.747)
+
+geo748: hosted scene geometry (forceSceneGeometry, the one geometry writer) is
+written only when it changes; Messages exempt. Off: geo748-off (latch).
+focus748: a focus-only scene update (event deferring / keyboard focus, no frame,
+activation or foreground change) is passed instead of held for our own
+display-layout or scene-size changes; drag/deactivated/background/lock/restore
+holds unchanged; Messages exempt. Off: focus748-off (latch).
+anim748: a keyboard move in flight ends cleanly when any other card move starts
+(animateSpring: drag-end snap, minimise, restore, tuck); fixes 747's
+stop-in-place mismatch. Off: anim748-off (latch).
+scene748: when a card comes back (keyboard slide ended, restored, search closed)
+its hosted scene is settled right then (black731's step, at the transition).
+black731 logs "backstop fired" when it still acts. Off: scene748-off (latch).

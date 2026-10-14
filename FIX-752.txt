@@ -1,0 +1,7 @@
+DynamicStage 4.5.752 (core752; master off: .dynamicstage-core752-off = 4.5.751)
+shadow752: card shadow taken over with the card and follows its transform (keyboard lift/slide).
+vel752: an interrupted move's new spring starts at the card's current speed (sampled per frame).
+same752: an animated set to the target already being moved to does not restart the move.
+fold752: open741 skips only while host750's state is unchanged (still within 0.6 s).
+bk752: blackout699 still wakes, logged as BLACKOUT699 BACKSTOP.
+Staged Messages keeps 751 behaviour. Each part: <name>-off + crash latch.

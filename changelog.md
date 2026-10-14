@@ -1,3 +1,6 @@
+## 4.5.752
+- core752: shadow in sync, velocity carry-over, no needless restarts, open741 folded into host750, blackout699 backstop log.
+
 ## 4.5.751
 - pos751: one position owner per card; a new move continues from where the card is.
 

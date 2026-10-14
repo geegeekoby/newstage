@@ -1,0 +1,9 @@
+DynamicStage 4.5.753: dead-code pass, no behaviour change intended.
+Removed (compiler-verified no callers, iterated until no unused warnings):
+42 unused static functions/constants/globals (mostly old app-side phone-fit,
+input-pinning and keyboard-debug helpers; SpringBoard keyboard tint helpers;
+old pull constants), 12 ObjC methods declared but never called, and 15 ivars
+that were never read (plus their 11 writes). ~790 lines.
+Kept: every off file, core74x/75x master and feature switch, rollback paths,
+crash latches, bg719/defer719, camera 673, Messages paths, spam700/loop745,
+home/outside timers.

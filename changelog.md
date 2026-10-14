@@ -1,3 +1,6 @@
+## 4.5.753
+- Dead-code pass: unused functions, methods and ivars removed. No behaviour change.
+
 ## 4.5.752
 - core752: shadow in sync, velocity carry-over, no needless restarts, open741 folded into host750, blackout699 backstop log.
 

@@ -1,0 +1,24 @@
+DynamicStage 4.5.757 (from the Yo.txt 4.5.756 log)
+
+A) Messages reply bar missing in a conversation
+   Log: from 16:41:44 NZDT, before any keyboard or lift, Messages' own keyboard
+   lines came in at phone width (w=430, bar at y=851 of 932). 4.5.755 had them
+   card-local (w=420, y=377). SpringBoard's scene said 420x458, but the Messages
+   process stayed at phone size, so its bar sat below the 458 pt card.
+   That happened on a cold launch while a second stage was opening. It was not
+   lift756: lift was 0 then.
+   msgfit757: when an app's kb line is full width but its card scene is
+   narrower, the card frame is re-sent (1 pt nudge, then the real frame) so the
+   app gets it. Limited to once per 3 s and 3 times. Off: msgfit757-off.
+
+B) Beeper keyboard invisible after the first time
+   Log 16:42:00.141: the keyboard system named Beeper as owner, but Messages'
+   dylib (still phone-size, so it hears every keyboard) reported the same keys
+   as Messages' keys. phonesize684 then put Beeper's keyboard "down (keyboard
+   belongs to com.apple.MobileSMS)". The keyboard was requested and on, but
+   the stage handled it as Messages'.
+   own757: while the keyboard owner is another app, an app's kb line can't
+   claim the keys. Off: own757-off.
+
+Master: /var/mobile/.dynamicstage-core757-off returns to 4.5.756. Both new
+features have crash latches.

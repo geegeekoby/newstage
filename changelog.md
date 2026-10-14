@@ -1,3 +1,7 @@
+## 4.5.757
+- msgfit757: re-send the card frame when Messages (or any app) is left at phone size, which fixes the missing reply bar.
+- own757: app kb lines cannot claim keys owned by another app, which fixes Beeper keys being treated as Messages'.
+
 ## 4.5.756
 - core756: one lift rule for all stages and apps, minimised cards always restorable (no ghost outline), keyboard shown again when a card comes back still typing, typing owner cleared on minimise, slot tracking, no double lift, clean-respring heartbeat.
 

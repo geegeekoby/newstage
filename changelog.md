@@ -1,3 +1,7 @@
+## 4.5.745
+- ghost745/loop745: no lift or slide loop without a keyboard.
+- log745/spam745/why745: clean, shorter logs.
+
 ## 4.5.744
 - kbdrag744/kbapp744: keys go at the start of minimise/close/terminate.
 - kbhide744: keyboard hides are never dropped.

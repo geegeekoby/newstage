@@ -1,0 +1,20 @@
+DynamicStage 4.5.745
+
+Loop (Depd 12:54:08-12:54:14): after the Messages search cancel, a ghost
+keyboard "up" (card-local hide frame at the card bottom / keys still sliding
+off) left a stale keyboard frame and owner. Opening the second stage ran kb707,
+which lifted Messages 324 pt and slid the picker 469 pt with no keyboard;
+stuck727 put them back but did not clear kb707's state, so the next tick lifted
+again, over and over.
+
+ghost745: card-local frame at/below card height = hidden; an "up" within 0.3 s
+of a SpringBoard hide with no show since is ignored; the staged hide clears the
+remembered frame and keys owner. Off: .dynamicstage-ghost745-off (latch).
+loop745: kb707 lifts/slides only with keys really on screen; stuck727 clears
+kb707 state and blocks re-lift until a real keyboard shows.
+Off: .dynamicstage-loop745-off (latch).
+log745: printable ASCII only; mostly-garbage lines become a hex marker; thread
+label built safely. Off: .dynamicstage-log745-off
+spam745: identical lines within 0.25 s counted, not repeated.
+Off: .dynamicstage-spam745-off
+why745: kbleave743 records why=kbleave743 before its hide.

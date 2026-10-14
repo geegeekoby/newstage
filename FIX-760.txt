@@ -1,0 +1,28 @@
+DynamicStage 4.5.760 — one global keyboard model + holdsafe crash fix
+
+Architecture (kbglobal760, master core760-off → 759):
+- Keyboard owner and on/off come ONLY from iOS's keyboard arbiter (ks747 /
+  keyboardOnScreen697). App dylib kb lines and other UIKit/hosted notes are
+  log-only and cannot set owner, show or hide (DSKb760ApplyingArbiter gate).
+- own757 / src746 state fights are unused under kbglobal760 (app lines never
+  apply a frame). msgfit757 scene nudge kept (not ownership).
+- DSRevealAllKeyboardWindowsOnSpringBoard is real again (the stub `return`
+  was removed). Reveal + raise on every arbiter show and every kb707 move
+  (up or down). Window level = statusBar+5000, above stage 998.
+- kb707 is the one mover for stacked, split and three-stage: typing card sits
+  just above the keys; every other live card slides off; all spring back on
+  dismiss.
+- Beeper 684: K learned only from the arbiter frame ("arbiter frame" notes).
+
+Messages (msgglobal760):
+- Off (default until you enable): Messages keeps the msg742 path as before.
+- On: Messages joins the global model; in-card keys (683) do not double-lift.
+
+Crash (holdsafe760) — Ik 22:10:48 NZDT and Lokkk home tuck:
+- SIGTRAP was Live SBAppViewController %orig after hold740 passed/replayed
+  during keyboard-end 0x20 clear, rim drag, or home tuck.
+- hold740 never passes or replays Live updates in those windows for ANY app
+  (keyboard end, 0x20 clear, card drag, home gesture, call guard).
+
+Off files: kbglobal760-off, msgglobal760-off, holdsafe760-off;
+master core760-off returns to 4.5.759. Each has a crash latch.

@@ -1,3 +1,8 @@
+## 4.5.760
+- kbglobal760: one arbiter-owned keyboard model; real reveal+raise; kb707 moves all layouts.
+- msgglobal760: opt-in Messages into that model (off = msg742 unchanged).
+- holdsafe760: never Live %orig pass/replay after keyboard end, 0x20 clear, drag, home tuck, or call.
+
 ## 4.5.759
 - keys759: raise SpringBoard keyboard host above the stage for Beeper / no-dylib apps so lift756 cannot hide the keys behind the card.
 - call758: only Signal/Phone scene arms it; holds app-view updates only (not kb707).

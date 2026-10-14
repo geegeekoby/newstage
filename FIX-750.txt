@@ -1,0 +1,13 @@
+DynamicStage 4.5.750 (core750; master off: .dynamicstage-core750-off = 4.5.749)
+
+ks750: kb707's last raw keyboard-system reader now reads core747's state.
+Off: ks750-off (latch).
+pos750: placeCard (the resting-frame setter for layout, drag end, minimise,
+restore) ends a keyboard move in flight when a card really moves. stuck727 is
+a loud backstop ("STUCK750 BACKSTOP") with a safety snap after 2 s.
+Off: pos750-off (latch).
+host750: explicit per-card host state (attaching, live, minimised, hidden,
+detached) on the stage tick; entering live settles the scene (scene748).
+Never writes foreground/active. Off: host750-off (latch).
+Beeper's full-size switch already writes through forceSceneGeometry, so geo748
+dedupes it. Messages unchanged.

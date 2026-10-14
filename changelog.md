@@ -1,3 +1,6 @@
+## 4.5.750
+- core750: keyboard reader on the one state, card moves end cleanly, stuck-card check is a loud backstop, per-card host state.
+
 ## 4.5.749
 - core749: call tail follows the call screen, latched features listed at startup, safe mode keeps the Stages tab, Messages notes recorded in the keyboard state.
 

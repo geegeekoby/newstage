@@ -1,3 +1,7 @@
+## 4.5.758
+- call758: hold Live app-view updates for 2.5 s when systemAnimation hits a staged Signal/Phone card (Signal VoIP call-end SIGTRAP).
+- react758: safety — hold740 cannot pass reactivation while call758 is armed.
+
 ## 4.5.757
 - msgfit757: re-send the card frame when Messages (or any app) is left at phone size, which fixes the missing reply bar.
 - own757: app kb lines cannot claim keys owned by another app, which fixes Beeper keys being treated as Messages'.

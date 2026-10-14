@@ -1,0 +1,26 @@
+DynamicStage 4.5.758 (from Yoop 4.5.757 safe-mode crash)
+
+Crash: SIGTRAP in SpringBoard when ending a Signal VoIP call (Signal staged).
+Faulting path: SBAppViewController Live %orig (appview670), after hold740 passed
+Signal's scene reactivation (0x20->0x0). Same assertion call653 was built for.
+
+Proven sequence in the crash ring (~16:52 NZDT):
+1. Beeper keyboard ended; cards sprang back (lift756/kb707 fine).
+2. systemAnimation (0x20) hit Beeper; phonesize696 cleared it to 0x0.
+3. systemAnimation (0x20) hit Signal; appview670 held 0x0->0x20.
+4. hold740 PASSED Signal's reactivation 0x20->0x0 (Live %orig returned).
+5. Beeper focus update (targetOfEventDeferringEnvironments) Live %orig -> SIGTRAP.
+
+Root cause: Signal VoIP does not put InCallService in front, so DSCallGuardActive
+stayed NO. call653 never held. hold740's reactivation bypass then let Live %orig
+run during call-end scene churn.
+
+Not involved (no lines): launch740, host754/park756, keys756, own757, msgfit757,
+zone749 call-tail early end. lift756 only restored after typing.
+
+Fixes:
+- call758: when a hosted scene gets systemAnimation (0x20) while Signal/Phone is
+  involved, arm the Live app-view hold for 2.5 s (same door as call653).
+- react758 (safety): while call758 is armed, hold740 must not bypass reactivation.
+
+Off: call758-off, react758-off. Master core758-off returns to 4.5.757.

@@ -1,0 +1,21 @@
+DynamicStage 4.5.761 — Messages no double-lift + quiet core747
+
+Hellllk (760, 01:08:20 NZDT): Messages card lifted 324 then 464 pt
+(msgdiag y=-428, lift=464) while the entry bar stayed card-local at
+y=377 w=420. Cause: msgglobal760's lift=0 required phonesize683, which
+has been opt-in/off since 684, so the guard never fired.
+
+msgnolift761:
+- When the card hosts com.apple.MobileSMS and the card is stage-sized
+  (width < phone → entry bar is card-local), kb707LiftForCard returns 0.
+- Other live cards still slide off; spring-back unchanged.
+- Off: /var/mobile/.dynamicstage-msgnolift761-off (crash latch).
+- core761-off restores the 760 path (683-gated msgglobal760 lift=0).
+
+quiet747761:
+- While keys are already up (frame height ≥ 150 or SpringBoard drawing),
+  the core747 "keyboard system names no keyboard" line logs at most
+  once per 5 s.
+- Off: /var/mobile/.dynamicstage-quiet747761-off (crash latch).
+
+Master: /var/mobile/.dynamicstage-core761-off → 4.5.760.

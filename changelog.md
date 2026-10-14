@@ -1,3 +1,8 @@
+## 4.5.761
+- msgnolift761: Messages card lift=0 when hosted + entry bar card-local (fixes Hellllk 324/464 → y=-428). No phonesize683 gate.
+- quiet747761: rate-limit core747 "names no keyboard" to 1/5s while keys already up.
+- core761-off → 4.5.760. Off files + latches for each part.
+
 ## 4.5.760
 - kbglobal760: one arbiter-owned keyboard model; real reveal+raise; kb707 moves all layouts.
 - msgglobal760: opt-in Messages into that model (off = msg742 unchanged).

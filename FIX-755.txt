@@ -1,0 +1,21 @@
+DynamicStage 4.5.755 - fixes from the 754 log review (root causes) + focus diagnostic
+
+Master off: /var/mobile/.dynamicstage-core755-off  -> behaves as 4.5.754.
+Each part has its own off file (/var/mobile/.dynamicstage-<name>-off) and crash latch:
+
+k755      Beeper (phonesize684) learns its keyboard height only from a keyboard the
+          keyboard system names as Beeper's own. Messages' keyboard no longer teaches it K=300.
+lift755   kb707 never lifts a phonesize684 card (its keyboard is inside the card);
+          the other card still slides aside if they overlap.
+name755   host750 refreshes each slot's app name every tick while hosting, so the
+          detach line names the app that was really there.
+type755   "Is a staged app typing?" has one answer for both the ignore check and kbmin702:
+          set when the keyboard system names a staged app, cleared when it turns off.
+          No more stale "X is typing" after the keys went down.
+spring755 kb707 sets lift and side in one transform write: one spring back per hide.
+focus755  LOG ONLY. At each keyboard on/off for a staged app: key window, and the last
+          focus / event-deferring update SpringBoard sent that scene (passed or held, list).
+          Empty-list focus updates are logged as "focus755 empty-list focus update".
+
+Untouched: Messages paths, camera 673, Beeper 684 keyboard mechanism, msg742,
+app switcher, bg719/defer719, crash latches, status bar.

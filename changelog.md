@@ -1,3 +1,6 @@
+## 4.5.755
+- core755: Beeper keyboard height only from its own keyboard, no kb707 lift on phonesize684 cards, correct app names in host750, one shared "typing" answer cleared on keyboard off, one spring back per hide, focus755 diagnostic (log only).
+
 ## 4.5.754
 - core754: latches only on real crashes (old latches cleared), keyboard-move speed carry-over, heal700 side-slide fix, inf keyboard frames hidden, faster host state, quieter and accurate logs.
 

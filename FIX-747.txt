@@ -1,0 +1,14 @@
+DynamicStage 4.5.747 (core747)
+
+One keyboard state: the keyboard system's on/off + owner (keyboardOnScreen697)
+and every frame note (noteKeyboardFrame: UIKit, the app dylib's kb lines,
+hosted-app notes, SpringBoard's field, delayed watchers) write one state with
+a sequence number. A note is converted to screen coordinates and checked in
+trust order (keyboard system first) before anything uses it. Messages keeps
+its own path.
+Keyboard owner: the UIKit "no owner" guess (frame size) is replaced by the
+keyboard system's owner. kbown731 / Spotlight filters stay as backstops.
+One move path: keyboard lift, side slide and spring back run through one
+animator; a new move stops the old one in place; drag start, minimise, close,
+terminate and home tuck cancel it. stuck727 logs "backstop fired" when it acts.
+Master off: /var/mobile/.dynamicstage-core747-off (crash latch core747) = 4.5.746.

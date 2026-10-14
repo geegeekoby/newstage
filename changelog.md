@@ -1,3 +1,6 @@
+## 4.5.747
+- core747: one keyboard state, keyboard owner from the keyboard system, one card-move path.
+
 ## 4.5.746
 - src746: app keyboard hide lines are never read as keys up.
 - notch746: the edge tab is put back if it is ever off screen.

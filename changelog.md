@@ -1,3 +1,7 @@
+## 4.5.759
+- keys759: raise SpringBoard keyboard host above the stage for Beeper / no-dylib apps so lift756 cannot hide the keys behind the card.
+- call758: only Signal/Phone scene arms it; holds app-view updates only (not kb707).
+
 ## 4.5.758
 - call758: hold Live app-view updates for 2.5 s when systemAnimation hits a staged Signal/Phone card (Signal VoIP call-end SIGTRAP).
 - react758: safety — hold740 cannot pass reactivation while call758 is armed.

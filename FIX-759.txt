@@ -1,0 +1,26 @@
+DynamicStage 4.5.759 (from Lokkk / 756–758 invisible Beeper keys)
+
+Symptom: stage moves for the keyboard (kb707 drop) but the keys cannot be seen.
+Affected: Beeper and other no-dylib / phonesize684 apps (keys674 NO). Messages
+has its own path and was fine on 757.
+
+Cause (plain words):
+keys674 keeps the keyboard out of the card (SpringBoard's host at the phone
+bottom). The stage window is clear, so with lift 0 (754) you could see the keys
+through the empty band under the card even when the host sat behind the stage.
+lift756 drops the card onto the keyboard top so the bar lines up — that opaque
+card covers that band. Beeper's "raise" was DSRaiseVisibleKeyboardAboveStage,
+which is a deliberate no-op ("left host alone"), so the keys stayed behind the
+stage and disappeared under the dropped card.
+
+758 call758 also armed when Beeper got systemAnimation while Signal was only
+hosted, which made DSCallGuardActive YES and could freeze movers via call733.
+That is narrowed: only Signal/Phone's own scene arms call758, and call758 holds
+Live app-view updates only (not call733/kb707).
+
+Fix:
+- keys759: on Beeper / phonesize684 keyboard show, reveal + real
+  DSRaiseKeyboardWindowAboveStage; again after every kb707 drop.
+- call758 narrowed as above.
+
+Off: keys759-off. Master core759-off returns to 4.5.758.

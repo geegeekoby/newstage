@@ -1,0 +1,22 @@
+DynamicStage 4.5.762 - one drawn-keyboard geometry (Beeper black margin)
+
+Cause (Hellllk, 760): K was learned from the arbiter height 288 (top 644, no
+top strip) while the keyboard drawn on screen is 586/346. K 345 -> 288 moved
+Beeper's bar line 586 -> 643 (safe area {175,0,288,0}); lift756 also dropped
+the Beeper card 123/180 pt below rest.
+
+geo762   The arbiter decides only WHO owns the keys and ON/OFF. All geometry
+         comes from ONE global value: SpringBoard's keyboard as drawn on screen
+         (DSGeo762DrawnKeyboard: visible keyboard window, full width, to the
+         phone bottom). Used by kb707 lift/slide targets (all apps), the 696
+         pin (min(drawn top, pin)) and Beeper 684 K / safe area. Arbiter
+         height and other per-source keyboard notes no longer feed K.
+         Off: /var/mobile/.dynamicstage-geo762-off (crash latch).
+rest762  684 rule back inside kb707: a Beeper/684 card never drops below its
+         resting place (no negative lift). A lower card may still rise so its
+         bar line sits on the keys; the other cards slide off.
+         Off: /var/mobile/.dynamicstage-rest762-off (crash latch).
+
+Kept: msgnolift761, quiet747761, kbglobal760 ownership, holdsafe760.
+Master: /var/mobile/.dynamicstage-core762-off -> 4.5.761.
+Untouched: switcher, camera 673, msg742, fixed card size, status bar.

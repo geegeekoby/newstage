@@ -1,3 +1,8 @@
+## 4.5.762
+- geo762: one global keyboard geometry = keyboard as drawn on screen (586/346); arbiter = owner/on-off only. Beeper K 345, bar 586 (black margin fix).
+- rest762: Beeper/684 card never drops below rest; may rise onto keys; others slide off.
+- core762-off -> 4.5.761. msgnolift761 kept.
+
 ## 4.5.761
 - msgnolift761: Messages card lift=0 when hosted + entry bar card-local (fixes Hellllk 324/464 → y=-428). No phonesize683 gate.
 - quiet747761: rate-limit core747 "names no keyboard" to 1/5s while keys already up.

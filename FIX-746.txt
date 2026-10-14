@@ -1,0 +1,14 @@
+DynamicStage 4.5.746
+
+src746: root cause of the ghost keyboard "up" (Depd 12:53:57.494). The app
+dylib's line "kb hide x=0 y=458 w=420 h=233" is parsed by
+noteAppReportedKeyboardLine, which ignored the kind (show/hide) and judged by
+geometry only, so a hide frame (card-local, keys at the card bottom) counted as
+keys up. A "hide" line is now a hide and a card-local frame at the card's
+height is gone. Every app-credited keyboard "up" is logged with its path
+(src746 up ... via ...), visible keys, slot and time since the last hide.
+ghost745 stays as the backstop. Off: .dynamicstage-src746-off (latch).
+
+notch746: the right-edge "Stages" tab is re-asserted on every shelf refresh
+(in the root, unhidden, opaque, full frame, in front); a notch746 line says
+what was fixed. Off: .dynamicstage-notch746-off

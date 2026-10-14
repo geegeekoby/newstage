@@ -1,3 +1,7 @@
+## 4.5.746
+- src746: app keyboard hide lines are never read as keys up.
+- notch746: the edge tab is put back if it is ever off screen.
+
 ## 4.5.745
 - ghost745/loop745: no lift or slide loop without a keyboard.
 - log745/spam745/why745: clean, shorter logs.

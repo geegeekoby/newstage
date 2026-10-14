@@ -1,0 +1,956 @@
+build 4.5.756 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+SpringBoard: latch749: no feature is latched off
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=7s empty] injectPlist=[age=7s empty]
+SpringBoard: stage window moved back to the foreground scene
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: taking key from SBCoverSheetWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: opened the top stage
+SpringBoard: putting com.apple.MobileSMS on stack slot 0
+[TRACE] launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+SpringBoard: creating app view for com.apple.MobileSMS
+SpringBoard: created app view for com.apple.MobileSMS
+[TRACE] scene transaction com.apple.MobileSMS actions=1
+SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+SpringBoard: com.apple.MobileSMS stays running in the background
+SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+SpringBoard: com.apple.MobileSMS is on stack slot 0
+[TRACE] hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+[KEYBOARD LOG] attach com.apple.MobileSMS slot 0 stack=1 prim=1
+[TRACE] layoutHost Messages frame={{0, 0}, {430, 932}}
+SpringBoard: phonesize680 build 4.5.756 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+SpringBoard: latch754 last SpringBoard exit: unknown (no exit marker); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8's phone-size update lands at card size, not refused)
+[TRACE] scene update begin sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 depth=1 frame={{0, 0}, {430, 932}}
+SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 occluded=0 deactivation=0x0 camera=0
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2828517d0> { statusBarStyleOverridesToSuppress = (none); }; }
+SpringBoard: appview670 held a Live app view update (stage display-layout change)
+SpringBoard: fitting com.apple.MobileSMS's scene to the card
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+app: com.apple.MobileSMS ctor ok
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sceneH...
+SpringBoard: rim651 system gesture held at 430,463 (rim)
+SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+SpringBoard: com.apple.MobileSMS stays running in the background
+SpringBoard: opened another stage
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+SpringBoard: camera660 com.apple.MobileSMS pid=22904 reporting camera events to SpringBoard
+SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+app: com.apple.MobileSMS is listening for staged keys
+[KEYS] hook search-cancel _cancelButtonPressed
+app: com.apple.MobileSMS is listening for staged keys
+[TRACE] scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282ada1c0> { hostContextIdentifierForSnapshotting = 279ace50; scenePresenterRenderIdentifierForSnapshotting = 7a8ddf4b461a6518; }; }
+SpringBoard: appview670 held a Live app view update (stage display-layout change)
+SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+[KEYS] kb change x=0.0 y=809.0 w=430.0 h=123.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: phonesize675 build 4.5.756 is ON; apps: com.beeper.chat.ios (default)
+[KEYS] kb show x=0.0 y=809.0 w=430.0 h=123.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=833.0 w=430.0 h=99.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=833.0 w=430.0 h=99.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=833.0 w=430.0 h=99.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=833.0 w=430.0 h=99.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[TRACE] hideStray split=0 depth=0
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sceneH...
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+SpringBoard: putting com.beeper.chat.ios on stack slot 1
+[TRACE] launch com.beeper.chat.ios state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+SpringBoard: creating app view for com.beeper.chat.ios
+SpringBoard: created app view for com.beeper.chat.ios
+[TRACE] scene transaction com.beeper.chat.ios actions=1
+SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+SpringBoard: com.beeper.chat.ios stays running in the background
+SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+SpringBoard: com.beeper.chat.ios is on stack slot 1
+[TRACE] hosted com.beeper.chat.ios state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+[KEYBOARD LOG] attach com.beeper.chat.ios slot 1 stack=2 prim=0
+SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+SpringBoard: phonesize683 build 4.5.756 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+SpringBoard: phonesize684 build 4.5.756 is ON: allowlisted apps without the app dylib get safe area = keyboard in the 430x931 scene (bar fixed), the card's window is fixed (no 680-682 chasing), keys at the phone bottom (keys674 NO)
+SpringBoard: phonesize684 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: bottom=auto (learned, default 345) top=auto (card top) mode=safe (applies at the next card open or 1 s after the keyboard goes down)
+SpringBoard: phonesize685 build 4.5.756 is OFF (4.5.687: 686's picture is opt-in, /var/mobile/.dynamicstage-phonesize686-on)
+SpringBoard: phonesize685 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=14 slack=off (684 scene) top=auto (= app y on the card top) keytop=auto (learned keyboard top, default 586) (applies at the next card open or 1.2 s after the keyboard goes down)
+SpringBoard: phonesize687 build 4.5.756 is OFF (4.5.688: opt-in only, /var/mobile/.dynamicstage-phonesize687-on)
+SpringBoard: phonesize687 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=8 top=auto (= view) (applies at the next card open or 1.2 s after the keyboard goes down)
+SpringBoard: phonesize688 build 4.5.756 is ON: 684 chat geometry; default mode=684 (exact 684); opt-in modes in /var/mobile/.dynamicstage-phonesize688-tune: mode=offset|short|statusbar
+SpringBoard: phonesize688 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=684 view=auto (57) offset=auto shift=auto (measured) statusbar=auto (= top inset) (applies at the next card open or 1.2 s after the keyboard goes down)
+SpringBoard: phonesize694 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=squash view_top=59 sy=auto
+SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+SpringBoard: phonesize683 com.beeper.chat.ios not in 683 mode (off file, camera, dylib or not allowlisted): 4.5.682 window rules
+SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+3ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app point (x/0.9767, 117 + y/0.9767)
+SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+SpringBoard: phonesize675 com.beeper.chat.ios has no scene to write, back to card size
+SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+[TRACE] scene update begin sceneID:com.beeper.chat.ios-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282aec810> { statusBarStyleOverridesToSuppress = (none); }; }
+SpringBoard: appview670 held a Live app view update (phonesize675 scene size change)
+SpringBoard: fitting com.beeper.chat.ios's scene to the card
+[TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+SpringBoard: focus755 empty-list focus update for sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 held (phonesize675 scene size change)
+SpringBoard: focus748 passed a focus-only update instead of holding it (phonesize675 scene size change)
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+[TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2829ff120> { targetOfEventDeferringEnvironments = (empty); }; }
+SpringBoard: focus748 passed a focus-only update instead of holding it (phonesize675 scene size change)
+SpringBoard: focus755 empty-list focus update for sceneID:com.beeper.chat.ios-default passed (-)
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+0ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app point (x/0.9767, 117 + y/0.9767)
+SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+SpringBoard: phonesize698 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view_top=59 side_crop=0.0 zoom=off sx=auto sy=auto x_shift=0
+SpringBoard: phonesize698 com.beeper.chat.ios not bigger (tune gives 697's picture): 697 picture x0.9767 / y0.8691
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+SpringBoard: beeper707 com.beeper.chat.ios phone-size host drawn flat: 10 nested rounded clips dropped, host clip off (the card clips), squash 0.977x0.869
+SpringBoard: phonesize690 tune files absent, defaults | in use: on=1 strip_top=59 strip_height=68 place_y=0 touch=forward
+SpringBoard: phonesize690 com.beeper.chat.ios no top-bar strip (694 squash: the real top bar is shown (copied bar only with 694 mode=691 or the 694 off file))
+[TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {430, 931}}
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = <BSMutableSettings: 0x283fe5ac0> { frame = NSRect: {{0, 0}, {430, 931}}; }; subclassChanges = <BSSettingsDiff: 0x28292b840> { safeAreaInsetsPortrait = UIEdgeInsets: {118, 0, 345, 0}; }; }
+SpringBoard: appview670 held a Live app view update (phonesize675 scene size change)
+SpringBoard: phonesize675 com.beeper.chat.ios scene size sent t+9ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0} (phone size)
+SpringBoard: phonesize678 com.beeper.chat.ios pre-grown t+9ms: mapping bottom-anchored (the app's bottom above the home inset on the card's bottom edge)
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: host750 top card com.beeper.chat.ios: detached -> live
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+SpringBoard: phonesize676 com.beeper.chat.ios scene read back t+313ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0}; wanted {{0, 0}, {430, 931}} (landed); host bounds {{0, 0}, {430, 931}} x0.9767 center {210, 353.27703984819732} in card {{0, 0}, {420, 458}}
+SpringBoard: phonesize678 com.beeper.chat.ios pre-grown scene landed t+313ms, no keyboard yet: no nudge
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28292d080> { hostContextIdentifierForSnapshotting = 279ace50; scenePresenterRenderIdentifierForSnapshotting = 7a8ddf4b5f3c8548; }; }
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: hiding the staged keyboard fr=0 keys={{inf, inf}, {0, 0}} why=kbleave743 caller=DynamicStage+0x77ce0 < DynamicStage+0x791f0 < DynamicStage+0x72aec
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] app req com.apple.MobileSMS hide
+SpringBoard: hold740 passed the latest held Live update 0.3 s later
+[TRACE] app-view settings update
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+[TRACE] app-view settings update done
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+SpringBoard: stayed up, boot guard cleared
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=75.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=75.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=75.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=75.0 bundle=com.apple.MobileSMS local=1
+[KEYS] focus UISearchBarTextField bundle=com.apple.MobileSMS
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: told Messages the keyboard is on screen
+SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+SpringBoard: kb707 typing in the lower card (the stage's text field, keys (at once)): lifted 324 pt to the keyboard, the other card slid left 469 pt
+SpringBoard: ignored com.apple.springboard keyboard while the stage's own keyboard is typing on the stage
+SpringBoard: com.apple.MobileSMS picker keyboard visible {{0, 631}, {430, 301}}
+SpringBoard: told Messages the keyboard is on screen
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 145}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 469}, {420, 458}} -> {{5, 145}, {420, 458}} (new in, then old out)
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1
+app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1
+app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, -288}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=324 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sc...
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1
+app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1
+app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1
+app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=0 hold=1
+[KEYS] search cancel button
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=cancel=1 caller=DynamicStage+0x77ce0 < DynamicStage+0x791f0 < DynamicStage+0x72aec
+[TRACE] arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] app req com.apple.MobileSMS hide
+[KEYS] kb change x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{inf, inf}, {0, 0}} slot=0 sinceHide=0.04 via app dylib kb line
+SpringBoard: ghost745 ignored com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} 0.04 s after SpringBoard hid its keys
+[KEYS] kb show x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: ghost745 ignored com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} 0.04 s after SpringBoard hid its keys
+[KEYS] kb change x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: ghost745 ignored com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} 0.04 s after SpringBoard hid its keys
+[KEYS] kb show x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: ghost745 ignored com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} 0.04 s after SpringBoard hid its keys
+[KEYS] resign UISearchBarTextField cancel=0 blocked=1 guard=0
+[KEYS] resign UISearchBarTextField cancel=0 blocked=1 guard=0
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: kb707 typing ended (typing ended): cards spring back
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sceneH...
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 145}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: hiding the staged keyboard fr=0 keys={{inf, inf}, {0, 0}} why=kbleave743 caller=DynamicStage+0x77ce0 < DynamicStage+0x791f0 < DynamicStage+0x72aec
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] app req com.apple.MobileSMS hide
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+[TRACE] scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282accf60> { targetOfEventDeferringEnvironments = (empty); }; }
+SpringBoard: focus755 empty-list focus update for sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 passed (-)
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+[TRACE] app-view settings update done
+SpringBoard: keys674 com.beeper.chat.ios (sceneID:com.beeper.chat.ios-default) has no DynamicStage app dylib: its card's scene host (_UISceneLayerHostContainerView) asked whether it can show the app's keyboard layer, UIKit said YES, keys674 answers NO (no keyboard layer inside the card; the keys stay in SpringBoard's keyboard host at the bottom of the phone)
+[TRACE] arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 30834.159: keys stay at the phone bottom; window fixed, no 682 trigger
+SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 243 at 30834.159: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+[TRACE] arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+SpringBoard: core747 UIKit keyboard {{0, 631}, {430, 301}} not given to com.apple.MobileSMS: the keyboard system names no keyboard
+SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 0.22s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+[TRACE] keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+[BEEPER] SB left SpringBoard keyboard host alone
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 689}, {430, 243}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=1.06 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 689}, {430, 243}}
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 689}, {430, 243}} slot=1 card={{5, 5}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the a...
+SpringBoard: com.beeper.chat.ios put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 30834.165: window fixed at app y 117..586, no move (684) (height change)
+[KEYS] kb change x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=1.06 via app dylib kb line
+SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside the app, so it does not pad its composer (no band)
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.07 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=1 card={{5, 5}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the a...
+[KEYS] kb show x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=1.07 via app dylib kb line
+SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside the app, so it does not pad its composer (no band)
+SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 0.23s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+[TRACE] keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.07 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 644}, {430, 288}} slot=1 card={{5, 5}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show the a...
+SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard, the other card slid left 469 pt
+[KEYS] kb show x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=1.07 via app dylib kb line
+SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} slot=0 card={{-433, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside the app, so it does not pad its composer (no band)
+[KEYS] kb show x=0.0 y=631.0 w=430.0 h=301.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb change x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=1.07 via app dylib kb line
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb change x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (keyboard belongs to com.apple.MobileSMS): window fixed, no move; no keyboard top seen (no note): K unchanged
+SpringBoard: phonesize675 com.apple.MobileSMS skipped while typing: not allowlisted (apps: com.beeper.chat.ios (default)); scene stays card-size
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 689}, {430, 243}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.27 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 689}, {430, 243}} slot=1 card={{5, 128}, {420, 458}} lift=-123; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show ...
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.27 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{-433, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=-469 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 s...
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{-464, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 469}, {420, 458}} -> {{-464, 469}, {420, 458}} (new in, then old out)
+[TRACE] arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+SpringBoard: fast743 keys hiding (arbiter on=0)
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.23 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.23 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 631}, {430, 301}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.25 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 631}, {430, 301}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.25 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 1.41s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+SpringBoard: kb720 same frame for a typing card: kb707's offsets left running
+[TRACE] keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+SpringBoard: fast743 keys hiding (keyboard note on=0)
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sceneH...
+SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 30836.783: keys stay at the phone bottom; window fixed, no 682 trigger
+[TRACE] arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 30836.785: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+SpringBoard: core747 UIKit keyboard {{0, 586}, {430, 346}} not given to com.apple.MobileSMS: the keyboard system names no keyboard (previous burst: +9 repeats)
+SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 2.85s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+[TRACE] keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+[BEEPER] SB left SpringBoard keyboard host alone
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=3.69 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+2626ms frame {{0, 644}, {430, 288}}
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=3.69 via app dylib kb line
+SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside the app, so it does not pad its composer (no band)
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard, the other card slid left 469 pt
+SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (keyboard belongs to com.apple.MobileSMS): window fixed, no move; no keyboard top seen (no note): K unchanged
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=3.90 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 644}, {430, 288}} slot=1 card={{5, 128}, {420, 458}} lift=-123; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show ...
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{-433, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=-469 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 s...
+[TRACE] arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+SpringBoard: fast743 keys hiding (arbiter on=0)
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=4.99 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=4.99 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=4.99 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=4.99 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=5.00 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=5.00 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=5.00 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=5.00 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 4.17s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+SpringBoard: fast743 keys hiding (keyboard note on=0)
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{-464, 469}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 30839.090: keys stay at the phone bottom; window fixed, no 682 trigger
+[TRACE] arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 30839.092: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+SpringBoard: core747 UIKit keyboard {{0, 586}, {430, 346}} not given to com.apple.MobileSMS: the keyboard system names no keyboard (previous burst: +9 repeats)
+SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 5.15s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+[TRACE] keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+[BEEPER] SB left SpringBoard keyboard host alone
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=6.00 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 644}, {430, 288}}
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=6.00 via app dylib kb line
+SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside the app, so it does not pad its composer (no band)
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb show x=0.0 y=586.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard, the other card slid left 469 pt
+SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (keyboard belongs to com.apple.MobileSMS): window fixed, no move; no keyboard top seen (no note): K unchanged
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=6.21 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 644}, {430, 288}} slot=1 card={{5, 128}, {420, 458}} lift=-123; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its keyboard layer out of the card (the card's scene host is told it cannot show ...
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+[TRACE] arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+SpringBoard: fast743 keys hiding (arbiter on=0)
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.03 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.03 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.03 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.04 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.04 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.04 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.04 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.04 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 6.21s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+SpringBoard: fast743 keys hiding (keyboard note on=0)
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+[KEYS] kb change x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+[KEYS] kb hide x=0.0 y=932.0 w=430.0 h=346.0 bundle=com.apple.MobileSMS local=0
+SpringBoard: phonesize694 squash survived 15 s; crash latch cleared
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sceneH...
+SpringBoard: rim651 system gesture held at 0,223 (rim)
+SpringBoard: a touch above the keys passed through local={0.16666666666666666, 223} screen={0.16666666666666666, 223} window={{0, 0}, {430, 932}}
+SpringBoard: rim651 hit top-outer-left at 0,223 -> DSStageRimHitView
+SpringBoard: rim651 drag began at 2,235 won by top-rim-pan
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+SpringBoard: com.beeper.chat.ios stays running in the background
+SpringBoard: a touch above the keys passed through local={7, 256} screen={7, 256} window={{0, 0}, {430, 932}}
+SpringBoard: defer719 touch observer on the bottom card (30 s after start)
+SpringBoard: a touch above the keys passed through local={48.666666666666664, 464} screen={48.666666666666664, 464} window={{0, 0}, {430, 932}}
+SpringBoard: rim651 hit top-outer-bottom at 49,464 -> DSStageRimHitView
+SpringBoard: bg719 holding com.beeper.chat.ios pid 22907 (audio, 30 s after start)
+SpringBoard: rim651 system gesture held at 0,263 (rim)
+SpringBoard: a touch above the keys passed through local={0.16666666666666666, 263} screen={0.16666666666666666, 263} window={{0, 0}, {430, 932}}
+SpringBoard: rim651 hit top-outer-left at 0,263 -> DSStageRimHitView
+SpringBoard: rim651 drag began at 0,271 won by top-rim-pan
+SpringBoard: bg719 released com.beeper.chat.ios pid 22907 (card closed)
+SpringBoard: phonesize675 com.beeper.chat.ios OFF (app view torn down)
+[TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing (card torn down just now): its last update is not a reason to refit the open stage
+SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing: update landed, no refit of the open stage
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+SpringBoard: phonesize696 fit survived 15 s; crash latch cleared
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28280c180> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+SpringBoard: appview670 held a Live app view update (card drag)
+SpringBoard: rim651 system gesture held at 0,569 (rim)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card is moving: display-layout element kept at {{5, 469}, {420, 458}} until the drag settles
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+SpringBoard: host750 top card com.beeper.chat.ios: live -> detached
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (app no longer on a card), path=layout-off
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: host750 bottom card com.apple.MobileSMS: live -> detached
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: opened the top stage
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+16:41:40.200 SpringBoard pid=22880 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+16:41:40.200 SpringBoard pid=22880 main | ready state=0 split=0 bottom=- top=- hover=-
+16:41:40.200 SpringBoard pid=22880 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+16:41:40.201 SpringBoard pid=22880 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+16:41:40.201 SpringBoard pid=22880 main | SpringBoard: latch749: no feature is latched off
+16:41:40.203 SpringBoard pid=22880 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+16:41:40.203 SpringBoard pid=22880 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+16:41:40.204 SpringBoard pid=22880 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+16:41:40.205 SpringBoard pid=22880 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+16:41:40.206 SpringBoard pid=22880 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+16:41:40.206 SpringBoard pid=22880 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+16:41:40.206 SpringBoard pid=22880 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+16:41:40.206 SpringBoard pid=22880 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+16:41:40.208 SpringBoard pid=22880 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+16:41:40.208 SpringBoard pid=22880 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=7s empty] injectPlist=[age=7s empty]
+16:41:41.521 SpringBoard pid=22880 main | SpringBoard: stage window moved back to the foreground scene
+16:41:41.521 SpringBoard pid=22880 main | SpringBoard: stage on screen
+16:41:41.521 SpringBoard pid=22880 main | on screen state=2 split=0 bottom=- top=- hover=-
+16:41:41.521 SpringBoard pid=22880 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+16:41:41.522 SpringBoard pid=22880 main | SpringBoard: taking key from SBCoverSheetWindow on this scene
+16:41:41.522 SpringBoard pid=22880 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+16:41:41.522 SpringBoard pid=22880 main | SpringBoard: opened the top stage
+16:41:42.810 SpringBoard pid=22880 main | SpringBoard: putting com.apple.MobileSMS on stack slot 0
+16:41:42.810 SpringBoard pid=22880 main | launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+16:41:42.811 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+16:41:42.811 SpringBoard pid=22880 main | SpringBoard: creating app view for com.apple.MobileSMS
+16:41:42.811 SpringBoard pid=22880 main | SpringBoard: created app view for com.apple.MobileSMS
+16:41:42.814 SpringBoard pid=22880 main | scene transaction com.apple.MobileSMS actions=1
+16:41:42.816 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+16:41:42.843 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS stays running in the background
+16:41:42.844 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+16:41:42.844 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS is on stack slot 0
+16:41:42.844 SpringBoard pid=22880 main | hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+16:41:42.845 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {430, 932}}
+16:41:42.845 SpringBoard pid=22880 main | SpringBoard: phonesize680 build 4.5.756 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+16:41:42.849 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:41:42.849 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:41:42.854 SpringBoard pid=22880 main | SpringBoard: latch754 last SpringBoard exit: unknown (no exit marker); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+16:41:42.855 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+16:41:42.855 SpringBoard pid=22880 main | SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+16:41:42.856 SpringBoard pid=22880 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8's phone-size update lands at card size, not refused)
+16:41:42.856 SpringBoard pid=22880 main | scene update begin sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 depth=1 frame={{0, 0}, {430, 932}}
+16:41:42.856 SpringBoard pid=22880 main | SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 occluded=0 deactivation=0x0 camera=0
+16:41:42.857 SpringBoard pid=22880 main | app-view settings update
+16:41:42.857 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2828517d0> { statusBarStyleOverridesToSuppress = (none); }; }
+16:41:42.857 SpringBoard pid=22880 main | SpringBoard: appview670 held a Live app view update (stage display-layout change)
+16:41:42.861 SpringBoard pid=22880 main | SpringBoard: fitting com.apple.MobileSMS's scene to the card
+16:41:42.861 SpringBoard pid=22880 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+16:41:43.293 SpringBoard pid=22880 main | app: com.apple.MobileSMS ctor ok
+16:41:43.294 MobileSMS pid=22904 main | app ctor reason=0 bundle=com.apple.MobileSMS
+16:41:43.417 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, ...
+16:41:43.446 SpringBoard pid=22880 main | SpringBoard: rim651 system gesture held at 430,463 (rim)
+16:41:43.729 SpringBoard pid=22880 main | SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+16:41:44.244 MobileSMS pid=22904 main | layout667 com.apple.MobileSMS camera preview watch on (once a second while on a card)
+16:41:44.245 MobileSMS pid=22904 main | camera658 app capture hooks in, multitask switch present
+16:41:44.300 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS stays running in the background
+16:41:44.303 SpringBoard pid=22880 main | SpringBoard: opened another stage
+16:41:44.322 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+16:41:44.323 SpringBoard pid=22880 main | SpringBoard: camera660 com.apple.MobileSMS pid=22904 reporting camera events to SpringBoard
+16:41:44.323 SpringBoard pid=22880 main | SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+16:41:44.323 SpringBoard pid=22880 main | app: com.apple.MobileSMS is listening for staged keys
+16:41:44.323 SpringBoard pid=22880 main | scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+16:41:44.323 MobileSMS pid=22904 main | app left _UIVisualEffectBackdropView at {{0, 0}, {430, 143}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:44.323 SpringBoard pid=22880 main | app-view settings update
+16:41:44.323 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282ada1c0> { hostContextIdentifierForSnapshotting = 279ace50; scenePresenterRenderIdentifierForSnapshotting = 7a8ddf4b461a6518; }; }
+16:41:44.323 SpringBoard pid=22880 main | SpringBoard: appview670 held a Live app view update (stage display-layout change)
+16:41:44.346 SpringBoard pid=22880 main | SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+16:41:44.346 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+16:41:44.346 SpringBoard pid=22880 main | SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+16:41:44.505 MobileSMS pid=22904 main | app input window laid out
+16:41:44.511 SpringBoard pid=22880 main | SpringBoard: phonesize675 build 4.5.756 is ON; apps: com.beeper.chat.ios (default)
+16:41:44.528 MobileSMS pid=22904 main | app left _UIRemoteKeyboardPlaceholderView at {{0, 0}, {420, 81}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:44.868 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:41:44.931 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, ...
+16:41:45.260 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:41:45.424 SpringBoard pid=22880 main | SpringBoard: putting com.beeper.chat.ios on stack slot 1
+16:41:45.424 SpringBoard pid=22880 main | launch com.beeper.chat.ios state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+16:41:45.424 SpringBoard pid=22880 main | SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+16:41:45.424 SpringBoard pid=22880 main | SpringBoard: creating app view for com.beeper.chat.ios
+16:41:45.424 SpringBoard pid=22880 main | SpringBoard: created app view for com.beeper.chat.ios
+16:41:45.425 SpringBoard pid=22880 main | scene transaction com.beeper.chat.ios actions=1
+16:41:45.427 SpringBoard pid=22880 main | SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+16:41:45.428 SpringBoard pid=22880 main | SpringBoard: com.beeper.chat.ios stays running in the background
+16:41:45.428 SpringBoard pid=22880 main | SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+16:41:45.428 SpringBoard pid=22880 main | SpringBoard: com.beeper.chat.ios is on stack slot 1
+16:41:45.428 SpringBoard pid=22880 main | hosted com.beeper.chat.ios state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+16:41:45.440 SpringBoard pid=22880 main | SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+16:41:45.441 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+16:41:45.441 SpringBoard pid=22880 main | SpringBoard: phonesize683 build 4.5.756 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+16:41:45.441 SpringBoard pid=22880 main | SpringBoard: phonesize684 build 4.5.756 is ON: allowlisted apps without the app dylib get safe area = keyboard in the 430x931 scene (bar fixed), the card's window is fixed (no 680-682 chasing), keys at the phone bottom (keys674 NO)
+16:41:45.441 SpringBoard pid=22880 main | SpringBoard: phonesize684 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: bottom=auto (learned, default 345) top=auto (card top) mode=safe (applies at the next card open or 1 s after the keyboard goes down)
+16:41:45.442 SpringBoard pid=22880 main | SpringBoard: phonesize685 build 4.5.756 is OFF (4.5.687: 686's picture is opt-in, /var/mobile/.dynamicstage-phonesize686-on)
+16:41:45.442 SpringBoard pid=22880 main | SpringBoard: phonesize685 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=14 slack=off (684 scene) top=auto (= app y on the card top) keytop=auto (learned keyboard top, default 586) (applies at the next card open or 1.2 s after the keyboard...
+16:41:45.442 SpringBoard pid=22880 main | SpringBoard: phonesize687 build 4.5.756 is OFF (4.5.688: opt-in only, /var/mobile/.dynamicstage-phonesize687-on)
+16:41:45.442 SpringBoard pid=22880 main | SpringBoard: phonesize687 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=8 top=auto (= view) (applies at the next card open or 1.2 s after the keyboard goes down)
+16:41:45.442 SpringBoard pid=22880 main | SpringBoard: phonesize688 build 4.5.756 is ON: 684 chat geometry; default mode=684 (exact 684); opt-in modes in /var/mobile/.dynamicstage-phonesize688-tune: mode=offset|short|statusbar
+16:41:45.442 SpringBoard pid=22880 main | SpringBoard: phonesize688 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=684 view=auto (57) offset=auto shift=auto (measured) statusbar=auto (= top inset) (applies at the next card open or 1.2 s after the keyboard goes down)
+16:41:45.443 SpringBoard pid=22880 main | SpringBoard: phonesize694 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=squash view_top=59 sy=auto
+16:41:45.443 SpringBoard pid=22880 main | SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+16:41:45.444 SpringBoard pid=22880 main | SpringBoard: phonesize683 com.beeper.chat.ios not in 683 mode (off file, camera, dylib or not allowlisted): 4.5.682 window rules
+16:41:45.444 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+3ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app...
+16:41:45.444 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+16:41:45.445 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios has no scene to write, back to card size
+16:41:45.445 SpringBoard pid=22880 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+16:41:45.445 SpringBoard pid=22880 main | scene update begin sceneID:com.beeper.chat.ios-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+16:41:45.446 SpringBoard pid=22880 main | SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+16:41:45.446 SpringBoard pid=22880 main | app-view settings update
+16:41:45.446 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282aec810> { statusBarStyleOverridesToSuppress = (none); }; }
+16:41:45.446 SpringBoard pid=22880 main | SpringBoard: appview670 held a Live app view update (phonesize675 scene size change)
+16:41:45.475 SpringBoard pid=22880 main | SpringBoard: fitting com.beeper.chat.ios's scene to the card
+16:41:45.475 SpringBoard pid=22880 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+16:41:45.548 SpringBoard pid=22880 main | SpringBoard: focus755 empty-list focus update for sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 held (phonesize675 scene size change)
+16:41:45.548 SpringBoard pid=22880 main | SpringBoard: focus748 passed a focus-only update instead of holding it (phonesize675 scene size change)
+16:41:45.548 SpringBoard pid=22880 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+16:41:45.887 SpringBoard pid=22880 main | SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+16:41:45.949 SpringBoard pid=22880 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+16:41:45.955 SpringBoard pid=22880 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+16:41:45.956 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2829ff120> { targetOfEventDeferringEnvironments = (empty); }; }
+16:41:45.956 SpringBoard pid=22880 main | SpringBoard: focus748 passed a focus-only update instead of holding it (phonesize675 scene size change)
+16:41:45.956 SpringBoard pid=22880 main | SpringBoard: focus755 empty-list focus update for sceneID:com.beeper.chat.ios-default passed (-)
+16:41:46.055 MobileSMS pid=22904 main | app willAppear CKConversationListCollectionViewController
+16:41:46.069 MobileSMS pid=22904 main | app willAppear CKSearchViewController
+16:41:46.074 MobileSMS pid=22904 main | app input window laid out (+1 repeats)
+16:41:46.081 MobileSMS pid=22904 main | app left UIInputSetContainerView at {{0, 4000}, {430, 932}}. cause=it lives in UITextEffectsWindow {{0, 0}, {430, 932}}, and fitting it would lift the piece under the field into the card
+16:41:46.081 MobileSMS pid=22904 main | app left UIView at {{0, 0}, {430, 932}}. cause=it lives in UITextEffectsWindow {{0, 0}, {430, 932}}, and fitting it would lift the piece under the field into the card
+16:41:46.754 SpringBoard pid=22880 main | SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+16:41:46.754 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+0ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app...
+16:41:46.754 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+16:41:46.754 MobileSMS pid=22904 main | app left UIDictationLayoutView at {{0, 0}, {320, 216}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:46.754 MobileSMS pid=22904 main | app left UIKeyboardDicationBackground at {{0, 0}, {320, 216}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:46.754 MobileSMS pid=22904 main | app left UIKeyboardDicationBackgroundGradientView at {{0, 0}, {320, 216}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:46.755 SpringBoard pid=22880 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+16:41:46.759 SpringBoard pid=22880 main | SpringBoard: phonesize698 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view_top=59 side_crop=0.0 zoom=off sx=auto sy=auto x_shift=0
+16:41:46.759 SpringBoard pid=22880 main | SpringBoard: phonesize698 com.beeper.chat.ios not bigger (tune gives 697's picture): 697 picture x0.9767 / y0.8691
+16:41:46.759 SpringBoard pid=22880 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+16:41:46.759 SpringBoard pid=22880 main | SpringBoard: beeper707 com.beeper.chat.ios phone-size host drawn flat: 10 nested rounded clips dropped, host clip off (the card clips), squash 0.977x0.869
+16:41:46.759 SpringBoard pid=22880 main | SpringBoard: phonesize690 tune files absent, defaults | in use: on=1 strip_top=59 strip_height=68 place_y=0 touch=forward
+16:41:46.759 SpringBoard pid=22880 main | SpringBoard: phonesize690 com.beeper.chat.ios no top-bar strip (694 squash: the real top bar is shown (copied bar only with 694 mode=691 or the 694 off file))
+16:41:46.760 SpringBoard pid=22880 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {430, 931}}
+16:41:46.760 SpringBoard pid=22880 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+16:41:46.762 MobileSMS pid=22904 main | app input window laid out (+2 repeats)
+16:41:46.762 SpringBoard pid=22880 main | app-view settings update
+16:41:46.763 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = <BSMutableSettings: 0x283fe5ac0> { frame = NSRect: {{0, 0}, {430, 931}}; }; subclassChanges = <BSSettingsDiff: 0x28292b840> { safeAreaInsetsPortrait = UIEdgeInsets: {118, 0, 345, 0}; }; }
+16:41:46.763 SpringBoard pid=22880 main | SpringBoard: appview670 held a Live app view update (phonesize675 scene size change)
+16:41:46.763 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios scene size sent t+9ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0} (phone size)
+16:41:46.763 SpringBoard pid=22880 main | SpringBoard: phonesize678 com.beeper.chat.ios pre-grown t+9ms: mapping bottom-anchored (the app's bottom above the home inset on the card's bottom edge)
+16:41:46.799 MobileSMS pid=22904 main | app willAppear CKNavigationController
+16:41:46.799 MobileSMS pid=22904 main | app willAppear CKChatController
+16:41:46.805 SpringBoard pid=22880 main | SpringBoard: host750 top card com.beeper.chat.ios: detached -> live
+16:41:46.817 MobileSMS pid=22904 main | app left _UIReplicantView at {{0, 0}, {430, 932}}. cause=it lives in UITextEffectsWindow {{0, 0}, {430, 932}}, and fitting it would lift the piece under the field into the card
+16:41:46.825 MobileSMS pid=22904 main | app willAppear CKTranscriptCollectionViewController
+16:41:46.998 SpringBoard pid=22880 main | SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+16:41:47.067 SpringBoard pid=22880 main | SpringBoard: phonesize676 com.beeper.chat.ios scene read back t+313ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0}; wanted {{0, 0}, {430, 931}} (landed); host bounds {{0, 0}, {430, 931}} x0.9767 center {210, 353.27703984819732} in card {{0, 0}, {420, 458}}
+16:41:47.067 SpringBoard pid=22880 main | SpringBoard: phonesize678 com.beeper.chat.ios pre-grown scene landed t+313ms, no keyboard yet: no nudge
+16:41:47.593 SpringBoard pid=22880 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+16:41:47.594 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28292d080> { hostContextIdentifierForSnapshotting = 279ace50; scenePresenterRenderIdentifierForSnapshotting = 7a8ddf4b5f3c8548; }; }
+16:41:47.872 MobileSMS pid=22904 main | app input window laid out (+4 repeats)
+16:41:47.890 MobileSMS pid=22904 main | app willAppear CKConversationListCollectionViewController
+16:41:47.890 MobileSMS pid=22904 main | kbleave743: left the conversation, asking SpringBoard to hide the keys
+16:41:47.893 SpringBoard pid=22880 main | SpringBoard: told Messages the keyboard is gone
+16:41:47.893 SpringBoard pid=22880 main | SpringBoard: hiding the staged keyboard fr=0 keys={{inf, inf}, {0, 0}} why=kbleave743 caller=DynamicStage+0x77ce0 < DynamicStage+0x791f0 < DynamicStage+0x72aec
+16:41:47.893 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:41:47.893 MobileSMS pid=22904 main | app keyboard request hide token=524 set=0 post=0
+16:41:47.895 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:41:47.895 MobileSMS pid=22904 main | app willAppear CKSearchViewController
+16:41:47.897 SpringBoard pid=22880 main | SpringBoard: hold740 passed the latest held Live update 0.3 s later
+16:41:47.897 SpringBoard pid=22880 main | app-view settings update
+16:41:47.897 SpringBoard pid=22880 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+16:41:47.897 SpringBoard pid=22880 main | app-view settings update done
+16:41:47.934 SpringBoard pid=22880 main | SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+16:41:48.228 SpringBoard pid=22880 main | SpringBoard: stayed up, boot guard cleared
+16:41:48.450 MobileSMS pid=22904 main | app input window laid out (+4 repeats)
+16:41:49.334 MobileSMS pid=22904 main | app left UILabel at {{83.000000000000014, 22.333333333333332}, {210.33333333333334, 35.333333333333329}}. cause=the piece under the field is 35pt, and pulling its bottom up to 9 puts it above the field
+16:41:49.551 MobileSMS pid=22904 main | app become UISearchBarTextField
+16:41:49.555 MobileSMS pid=22904 main | app left TUIPredictionView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:49.555 MobileSMS pid=22904 main | app left TUIPredictionViewStackView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:49.555 MobileSMS pid=22904 main | app left TUIPredictionViewStackContentView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:49.555 MobileSMS pid=22904 main | app left UIKeyboardAutomatic at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:49.556 MobileSMS pid=22904 main | app left UIKeyboardLayoutStar at {{0, 0}, {320, 233}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:49.557 MobileSMS pid=22904 main | app left UIKeyboardImpl at {{0, 0}, {430, 233}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:49.562 MobileSMS pid=22904 main | app left TUIPredictionViewCell at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+16:41:49.564 MobileSMS pid=22904 main | app input window laid out
+16:41:49.570 MobileSMS pid=22904 main | app keyboard request show token=524 set=0 post=0
+16:41:49.576 MobileSMS pid=22904 main | app willAppear CKSearchViewController
+16:41:49.580 SpringBoard pid=22880 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+16:41:49.582 SpringBoard pid=22880 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+16:41:49.581 MobileSMS pid=22904 main | app Messages keeps its keyboard and app strip
+16:41:49.615 SpringBoard pid=22880 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+16:41:49.621 SpringBoard pid=22880 main | SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+16:41:49.623 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+16:41:49.626 SpringBoard pid=22880 main | SpringBoard: told Messages the keyboard is on screen
+16:41:49.626 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+16:41:49.642 SpringBoard pid=22880 main | SpringBoard: kb707 typing in the lower card (the stage's text field, keys (at once)): lifted 324 pt to the keyboard, the other card slid left 469 pt
+16:41:49.645 SpringBoard pid=22880 main | SpringBoard: ignored com.apple.springboard keyboard while the stage's own keyboard is typing on the stage
+16:41:49.792 SpringBoard pid=22880 main | SpringBoard: com.apple.MobileSMS picker keyboard visible {{0, 631}, {430, 301}}
+16:41:49.875 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 145}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1...
+16:41:49.875 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 469}, {420, 458}} -> {{5, 145}, {420, 458}} (new in, then old out)
+16:41:50.310 SpringBoard pid=22880 main | SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+16:41:50.317 MobileSMS pid=22904 main | app: editing UISearchBarTextField fr=1 win=1
+16:41:50.320 MobileSMS pid=22904 main | app: key insert -> UISearchBarTextField fr=1 win=1 changed=1 hold=1
+16:41:50.327 SpringBoard pid=22880 main | app: key insert -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+16:41:50.754 SpringBoard pid=22880 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1
+16:41:50.764 MobileSMS pid=22904 main | app: key delete -> UISearchBarTextField fr=1 win=1 changed=1 hold=1
+16:41:50.764 SpringBoard pid=22880 main | app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1
+16:41:51.071 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, -288}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=324 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, ...
+16:41:51.071 SpringBoard pid=22880 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 (+1 repeats)
+16:41:51.079 MobileSMS pid=22904 main | app: key delete -> UISearchBarTextField fr=1 win=1 changed=1 hold=1 (+1 repeats)
+16:41:51.080 SpringBoard pid=22880 main | app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=1 hold=1 (+1 repeats)
+16:41:51.370 SpringBoard pid=22880 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 (+1 repeats)
+16:41:51.377 MobileSMS pid=22904 main | app: key delete -> UISearchBarTextField fr=1 win=1 changed=0 hold=1
+16:41:51.379 SpringBoard pid=22880 main | app: key delete -> com.apple.MobileSMS field fr=1 win=1 changed=0 hold=1
+16:41:51.770 SpringBoard pid=22880 main | SpringBoard: told Messages the keyboard is gone
+16:41:51.771 SpringBoard pid=22880 main | SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=cancel=1 caller=DynamicStage+0x77ce0 < DynamicStage+0x791f0 < DynamicStage+0x72aec
+16:41:51.772 MobileSMS pid=22904 main | app keyboard request hide token=524 set=0 post=0
+16:41:51.776 SpringBoard pid=22880 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+16:41:51.778 SpringBoard pid=22880 main | SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+16:41:51.784 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:41:51.786 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:41:51.804 MobileSMS pid=22904 main | app input window laid out (+3 repeats)
+16:41:51.807 SpringBoard pid=22880 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{inf, inf}, {0, 0}} slot=0 sinceHide=0.04 via app dylib kb line
+16:41:51.807 SpringBoard pid=22880 main | SpringBoard: ghost745 ignored com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} 0.04 s after SpringBoard hid its keys
+16:41:52.260 SpringBoard pid=22880 main | SpringBoard: kb707 typing ended (typing ended): cards spring back
+16:41:52.649 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, ...
+16:41:52.856 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1...
+16:41:52.856 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 145}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+16:41:53.041 MobileSMS | app input window laid out (+3 repeats) x2
+16:41:53.041 MobileSMS pid=22904 main | app willAppear CKNavigationController
+16:41:53.041 MobileSMS pid=22904 main | app willAppear CKChatController
+16:41:53.045 MobileSMS pid=22904 main | app input window laid out
+16:41:53.080 MobileSMS pid=22904 main | app left UISearchBar at {{-420, 44}, {420, 47}}. cause=the piece under the field is 47pt, and pulling its bottom up to 0 puts it above the field
+16:41:53.082 MobileSMS pid=22904 main | app willAppear CKTranscriptCollectionViewController
+16:41:54.054 MobileSMS pid=22904 main | app input window laid out (+3 repeats)
+16:41:54.072 MobileSMS pid=22904 main | app willAppear CKConversationListCollectionViewController
+16:41:54.072 MobileSMS pid=22904 main | kbleave743: left the conversation, asking SpringBoard to hide the keys
+16:41:54.075 SpringBoard pid=22880 main | SpringBoard: told Messages the keyboard is gone
+16:41:54.075 SpringBoard pid=22880 main | SpringBoard: hiding the staged keyboard fr=0 keys={{inf, inf}, {0, 0}} why=kbleave743 caller=DynamicStage+0x77ce0 < DynamicStage+0x791f0 < DynamicStage+0x72aec
+16:41:54.075 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:41:54.076 MobileSMS pid=22904 main | app keyboard request hide token=524 set=0 post=0
+16:41:54.077 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:41:54.080 MobileSMS pid=22904 main | app willAppear CKSearchViewController
+16:41:54.664 MobileSMS pid=22904 main | app input window laid out (+4 repeats)
+16:41:54.910 SpringBoard pid=22880 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+16:41:54.913 SpringBoard pid=22880 main | scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+16:41:54.914 SpringBoard pid=22880 main | app-view settings update
+16:41:54.914 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282accf60> { targetOfEventDeferringEnvironments = (empty); }; }
+16:41:54.915 SpringBoard pid=22880 main | SpringBoard: focus755 empty-list focus update for sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 passed (-)
+16:41:54.915 SpringBoard pid=22880 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+16:41:54.915 SpringBoard pid=22880 main | app-view settings update done
+16:41:55.122 SpringBoard pid=22880 main | SpringBoard: keys674 com.beeper.chat.ios (sceneID:com.beeper.chat.ios-default) has no DynamicStage app dylib: its card's scene host (_UISceneLayerHostContainerView) asked whether it can show the app's keyboard layer, UIKit said YES, keys674 answers NO (no keyboard layer inside the card; the keys stay in SpringBoard'...
+16:41:55.123 SpringBoard pid=22880 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+16:41:55.123 SpringBoard pid=22880 main | SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 30834.159: keys stay at the phone bottom; window fixed, no 682 trigger
+16:41:55.123 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 243 at 30834.159: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+16:41:55.128 SpringBoard pid=22880 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+16:41:55.129 SpringBoard pid=22880 main | SpringBoard: core747 UIKit keyboard {{0, 631}, {430, 301}} not given to com.apple.MobileSMS: the keyboard system names no keyboard
+16:41:55.131 MobileSMS pid=22904 main | app input window laid out
+16:41:55.135 SpringBoard pid=22880 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 0.22s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:41:55.135 SpringBoard pid=22880 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+16:41:55.135 SpringBoard pid=22880 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+16:41:55.135 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+16:41:55.137 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 689}, {430, 243}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=1.06 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+16:41:55.137 SpringBoard pid=22880 main | SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 689}, {430, 243}}
+16:41:55.137 SpringBoard pid=22880 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 689}, {430, 243}} slot=1 card={{5, 5}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its ke...
+16:41:55.137 SpringBoard pid=22880 main | SpringBoard: com.beeper.chat.ios put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+16:41:55.137 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 30834.165: window fixed at app y 117..586, no move (684) (height change)
+16:41:55.137 SpringBoard pid=22880 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=1.06 via app dylib kb line
+16:41:55.138 SpringBoard pid=22880 main | SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside th...
+16:41:55.140 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.07 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:41:55.140 SpringBoard pid=22880 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 586}, {430, 346}} slot=1 card={{5, 5}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its ke...
+16:41:55.142 SpringBoard pid=22880 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=1.07 via app dylib kb line
+16:41:55.142 SpringBoard pid=22880 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 0.23s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:41:55.142 SpringBoard pid=22880 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+16:41:55.142 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.07 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+16:41:55.142 SpringBoard pid=22880 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 644}, {430, 288}} slot=1 card={{5, 5}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its ke...
+16:41:55.143 SpringBoard pid=22880 main | SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard, the other card slid left 469 pt
+16:41:55.144 SpringBoard pid=22880 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 631}, {430, 301}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=1.07 via app dylib kb line
+16:41:55.144 SpringBoard pid=22880 main | SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 631}, {430, 301}} slot=0 card={{-433, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside ...
+16:41:55.148 SpringBoard pid=22880 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=1.07 via app dylib kb line
+16:41:55.216 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (keyboard belongs to com.apple.MobileSMS): window fixed, no move; no keyboard top seen (no note): K unchanged
+16:41:55.216 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.apple.MobileSMS skipped while typing: not allowlisted (apps: com.beeper.chat.ios (default)); scene stays card-size
+16:41:55.245 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+16:41:55.347 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 689}, {430, 243}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.27 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+16:41:55.347 SpringBoard pid=22880 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 689}, {430, 243}} slot=1 card={{5, 128}, {420, 458}} lift=-123; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps i...
+16:41:55.347 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=1.27 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+16:41:55.409 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+16:41:55.660 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{-433, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=-469 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0,...
+16:41:55.857 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{-464, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 leve...
+16:41:55.858 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 469}, {420, 458}} -> {{-464, 469}, {420, 458}} (new in, then old out)
+16:41:56.300 SpringBoard pid=22880 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+16:41:56.301 SpringBoard pid=22880 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+16:41:56.304 MobileSMS pid=22904 main | app input window laid out (+3 repeats)
+16:41:56.307 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+2 repeats)
+16:41:56.308 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.23 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:41:56.309 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.23 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:41:56.312 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:41:56.314 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:41:56.317 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:41:56.318 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 631}, {430, 301}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.24 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:41:56.320 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.25 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:41:56.322 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 631}, {430, 301}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=2.25 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:41:56.330 SpringBoard pid=22880 main | SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+16:41:56.330 SpringBoard pid=22880 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 1.41s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:41:56.331 SpringBoard pid=22880 main | SpringBoard: kb720 same frame for a typing card: kb707's offsets left running
+16:41:56.331 SpringBoard pid=22880 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+16:41:56.331 SpringBoard pid=22880 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+16:41:56.331 SpringBoard pid=22880 main | SpringBoard: fast743 keys hiding (keyboard note on=0)
+16:41:56.331 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:41:56.332 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:41:56.442 SpringBoard pid=22880 main | SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+16:41:56.843 MobileSMS pid=22904 main | app input window laid out (+1 repeats)
+16:41:57.239 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, ...
+16:41:57.748 SpringBoard pid=22880 main | SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 30836.783: keys stay at the phone bottom; window fixed, no 682 trigger
+16:41:57.748 SpringBoard pid=22880 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+16:41:57.748 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 30836.785: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+16:41:57.753 SpringBoard pid=22880 main | SpringBoard: core747 UIKit keyboard {{0, 586}, {430, 346}} not given to com.apple.MobileSMS: the keyboard system names no keyboard (previous burst: +9 repeats)
+16:41:57.756 MobileSMS pid=22904 main | app input window laid out
+16:41:57.761 SpringBoard pid=22880 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 2.85s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:41:57.761 SpringBoard pid=22880 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+16:41:57.762 SpringBoard pid=22880 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=- (+1 repeats)
+16:41:57.762 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+16:41:57.763 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=3.69 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+16:41:57.763 SpringBoard pid=22880 main | SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+2626ms frame {{0, 644}, {430, 288}}
+16:41:57.764 SpringBoard pid=22880 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=3.69 via app dylib kb line
+16:41:57.764 SpringBoard pid=22880 main | SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside th...
+16:41:57.766 SpringBoard pid=22880 main | SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard, the other card slid left 469 pt
+16:41:57.826 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (keyboard belongs to com.apple.MobileSMS): window fixed, no move; no keyboard top seen (no note): K unchanged
+16:41:57.976 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=3.90 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+16:41:57.977 SpringBoard pid=22880 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 644}, {430, 288}} slot=1 card={{5, 128}, {420, 458}} lift=-123; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps i...
+16:41:58.040 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+16:41:58.813 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{-433, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=-469 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0,...
+16:41:59.058 SpringBoard pid=22880 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+16:41:59.058 SpringBoard pid=22880 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+16:41:59.059 MobileSMS pid=22904 main | app input window laid out (+1 repeats)
+16:41:59.062 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+16:41:59.065 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=4.99 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:41:59.067 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=4.99 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:41:59.072 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=5.00 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:41:59.073 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=5.00 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:41:59.084 SpringBoard pid=22880 main | SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+16:41:59.085 SpringBoard pid=22880 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 4.17s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:41:59.089 SpringBoard pid=22880 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+16:41:59.089 SpringBoard pid=22880 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+16:41:59.089 SpringBoard pid=22880 main | SpringBoard: fast743 keys hiding (keyboard note on=0)
+16:41:59.090 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:41:59.090 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:41:59.195 SpringBoard pid=22880 main | SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+16:41:59.858 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1...
+16:41:59.858 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{-464, 469}, {420, 458}} -> {{5, 469}, {420, 458}} (new in, then old out)
+16:42:00.055 SpringBoard pid=22880 main | SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 30839.090: keys stay at the phone bottom; window fixed, no 682 trigger
+16:42:00.055 SpringBoard pid=22880 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+16:42:00.055 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 30839.092: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+16:42:00.059 SpringBoard pid=22880 main | SpringBoard: core747 UIKit keyboard {{0, 586}, {430, 346}} not given to com.apple.MobileSMS: the keyboard system names no keyboard (previous burst: +9 repeats)
+16:42:00.061 MobileSMS | app input window laid out (+1 repeats) x2
+16:42:00.061 MobileSMS pid=22904 main | app input window laid out
+16:42:00.070 SpringBoard pid=22880 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 5.15s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:42:00.070 SpringBoard pid=22880 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+16:42:00.070 SpringBoard pid=22880 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+16:42:00.071 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+16:42:00.073 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=6.00 via DynamicStage+0x7e92c < DynamicStage+0x766cc < DynamicStage+0x75804 < DynamicStage+0x74f74 < DynamicStage+0x164d0 < DynamicStage+0x6e94 < DynamicStage+0x16470
+16:42:00.074 SpringBoard pid=22880 main | SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 644}, {430, 288}}
+16:42:00.076 SpringBoard pid=22880 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=6.00 via app dylib kb line
+16:42:00.076 SpringBoard pid=22880 main | SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 586}, {430, 346}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside th...
+16:42:00.081 SpringBoard pid=22880 main | SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard, the other card slid left 469 pt
+16:42:00.141 SpringBoard pid=22880 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (keyboard belongs to com.apple.MobileSMS): window fixed, no move; no keyboard top seen (no note): K unchanged
+16:42:00.281 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=6.21 via DynamicStage+0x7e92c < DynamicStage+0x768ec < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+16:42:00.282 SpringBoard pid=22880 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 644}, {430, 288}} slot=1 card={{5, 128}, {420, 458}} lift=-123; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps i...
+16:42:00.345 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+16:42:01.093 SpringBoard pid=22880 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+16:42:01.094 SpringBoard pid=22880 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+16:42:01.097 MobileSMS pid=22904 main | app input window laid out (+1 repeats)
+16:42:01.103 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+16:42:01.104 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.03 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:42:01.107 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.03 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:42:01.111 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.04 via DynamicStage+0x7e92c < DynamicStage+0x74240 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+16:42:01.113 SpringBoard pid=22880 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=7.04 via DynamicStage+0x7e92c < DynamicStage+0x73a10 < DynamicStage+0x73288 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+16:42:01.125 SpringBoard pid=22880 main | SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+16:42:01.125 SpringBoard pid=22880 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 6.21s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:42:01.126 SpringBoard pid=22880 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+16:42:01.126 SpringBoard pid=22880 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.apple.MobileSMS top=com.beeper.chat.ios hover=-
+16:42:01.126 SpringBoard pid=22880 main | SpringBoard: fast743 keys hiding (keyboard note on=0)
+16:42:01.127 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:42:01.127 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:42:01.213 SpringBoard pid=22880 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+16:42:01.238 SpringBoard pid=22880 main | SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+16:42:01.860 SpringBoard pid=22880 main | SpringBoard: phonesize694 squash survived 15 s; crash latch cleared
+16:42:01.865 SpringBoard pid=22880 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, ...
+16:42:05.847 SpringBoard pid=22880 main | SpringBoard: rim651 system gesture held at 0,223 (rim)
+16:42:05.853 SpringBoard pid=22880 main | SpringBoard: a touch above the keys passed through local={0.16666666666666666, 223} screen={0.16666666666666666, 223} window={{0, 0}, {430, 932}}
+16:42:05.854 SpringBoard pid=22880 main | SpringBoard: rim651 hit top-outer-left at 0,223 -> DSStageRimHitView
+16:42:05.960 SpringBoard pid=22880 main | SpringBoard: rim651 drag began at 2,235 won by top-rim-pan
+16:42:06.001 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:42:06.003 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:42:06.003 SpringBoard pid=22880 main | SpringBoard: com.beeper.chat.ios stays running in the background
+16:42:06.026 SpringBoard pid=22880 main | SpringBoard: a touch above the keys passed through local={7, 256} screen={7, 256} window={{0, 0}, {430, 932}}
+16:42:06.105 SpringBoard pid=22880 main | SpringBoard: defer719 touch observer on the bottom card (30 s after start)
+16:42:06.406 SpringBoard pid=22880 main | SpringBoard: a touch above the keys passed through local={48.666666666666664, 464} screen={48.666666666666664, 464} window={{0, 0}, {430, 932}}
+16:42:06.406 SpringBoard pid=22880 main | SpringBoard: rim651 hit top-outer-bottom at 49,464 -> DSStageRimHitView
+16:42:06.625 SpringBoard pid=22880 main | SpringBoard: bg719 holding com.beeper.chat.ios pid 22907 (audio, 30 s after start)
+16:42:08.386 SpringBoard pid=22880 main | SpringBoard: rim651 system gesture held at 0,263 (rim)
+16:42:08.392 SpringBoard pid=22880 main | SpringBoard: a touch above the keys passed through local={0.16666666666666666, 263} screen={0.16666666666666666, 263} window={{0, 0}, {430, 932}}
+16:42:08.393 SpringBoard pid=22880 main | SpringBoard: rim651 hit top-outer-left at 0,263 -> DSStageRimHitView
+16:42:08.500 SpringBoard pid=22880 main | SpringBoard: rim651 drag began at 0,271 won by top-rim-pan
+16:42:09.815 SpringBoard pid=22880 main | SpringBoard: bg719 released com.beeper.chat.ios pid 22907 (card closed)
+16:42:09.815 SpringBoard pid=22880 main | SpringBoard: phonesize675 com.beeper.chat.ios OFF (app view torn down)
+16:42:09.816 SpringBoard pid=22880 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+16:42:09.817 SpringBoard pid=22880 main | SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing (card torn down just now): its last update is not a reason to refit the open stage
+16:42:09.817 SpringBoard pid=22880 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+16:42:09.817 SpringBoard pid=22880 main | SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing: update landed, no refit of the open stage
+16:42:09.825 SpringBoard pid=22880 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+16:42:09.828 SpringBoard pid=22880 main | hideStray split=0 depth=0
+16:42:09.832 SpringBoard pid=22880 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+16:42:10.158 SpringBoard pid=22880 main | SpringBoard: phonesize696 fit survived 15 s; crash latch cleared
+16:42:10.158 SpringBoard pid=22880 main | app-view settings update
+16:42:10.158 SpringBoard pid=22880 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28280c180> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+16:42:10.159 SpringBoard pid=22880 main | SpringBoard: appview670 held a Live app view update (card drag)
+16:42:10.184 SpringBoard pid=22880 main | SpringBoard: rim651 system gesture held at 0,569 (rim)
+16:42:10.320 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card is moving: display-layout element kept at {{5, 469}, {420, 458}} until the drag settles
+16:42:10.669 SpringBoard pid=22880 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+16:42:10.669 SpringBoard pid=22880 main | scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+16:42:11.348 SpringBoard pid=22880 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+16:42:11.348 SpringBoard pid=22880 main | scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+16:42:11.491 SpringBoard pid=22880 main | SpringBoard: host750 top card com.beeper.chat.ios: live -> detached
+16:42:11.491 SpringBoard pid=22880 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+16:42:11.492 SpringBoard pid=22880 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+16:42:11.499 MobileSMS | app input window laid out (+1 repeats) x2
+16:42:11.499 MobileSMS pid=22904 main | app restored the phone layout
+16:42:11.520 SpringBoard pid=22880 main | SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (app no longer on a card), path=layout-off
+16:42:11.520 SpringBoard pid=22880 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+16:42:11.813 SpringBoard pid=22880 main | SpringBoard: host750 bottom card com.apple.MobileSMS: live -> detached
+16:42:12.354 SpringBoard pid=22880 main | SpringBoard: stage on screen
+16:42:12.354 SpringBoard pid=22880 main | on screen state=2 split=0 bottom=- top=- hover=-
+16:42:12.354 SpringBoard pid=22880 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+16:42:12.355 SpringBoard pid=22880 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+16:42:12.355 SpringBoard pid=22880 main | SpringBoard: opened the top stage
+
+--- crash ---
+
+--- diagnostics ---

@@ -1,0 +1,203 @@
+build 4.5.757 split=0 float=0 half=1 slots=2
+card {{466, 960}, {56, 56}}
+shell {{430, 924}, {128, 128}}
+outline {{465, 959}, {58, 58}}
+topCard {{5, 5}, {420, 458}}
+topRim {{-31, -31}, {492, 530}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {420, 458}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=org.whispersystems.signal slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+SpringBoard: LATCHED OFF 3 feature(s): sync725 (latched 10-14 16:52:04, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-sync725-crashed to allow it); core747 (latched 10-14 16:51:57, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-core747-crashed to allow it); focus755 (latched 10-14 16:52:04, SpringBoard went down within 15 s of its...
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+SpringBoard: filter at boot ctor=[age=80s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=80s mapped bundle=com.apple.MobileSMS pid=23920 build=4.5.757] libsPlist=[age=100s empty] injectPlist=[age=100s empty]
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: taking key from SBCoverSheetWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: opened the top stage
+SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+SpringBoard: putting org.whispersystems.signal on stack slot 0
+[TRACE] launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+SpringBoard: creating app view for org.whispersystems.signal
+SpringBoard: created app view for org.whispersystems.signal
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=0 flip=0 update: changes = <BSMutableSettings: 0x282c8e380> { frame = NSRect: {{0, 0}, {430, 932}}; foreground = BSSettingFlagYes; }; subclassChanges = <BSSettingsDiff: 0x2826c4480> { safeAreaInsetsPortrait = UIEdgeInsets: {59, 0, 34, 0}
+[TRACE] app-view settings update done
+[TRACE] scene transaction org.whispersystems.signal actions=1
+SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+SpringBoard: org.whispersystems.signal stays running in the background
+SpringBoard: camera658 org.whispersystems.signal on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+SpringBoard: org.whispersystems.signal is on stack slot 0
+[TRACE] hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+[KEYBOARD LOG] attach org.whispersystems.signal slot 0 stack=1 prim=1
+SpringBoard: phonesize680 build 4.5.757 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+SpringBoard: fitting org.whispersystems.signal's scene to the card
+[TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+[TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {430, 932}}
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+[TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2827075d0> { hostContextIdentifierForSnapshotting = fbbc0427; scenePresenterRenderIdentifierForSnapshotting = 6dfbbb77d0556b30; }; }
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+[TRACE] app-view settings update done
+SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+[TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x0 camera=0
+SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+[TRACE] scene update begin: 2 identical updates not traced (perf706)
+[TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+SpringBoard: stayed up, boot guard cleared
+SpringBoard: rim651 system gesture held at 0,209 (rim)
+SpringBoard: rim651 hit main-outer-left at 0,209 -> DSStageDragShellView
+SpringBoard: rim651 drag began at 0,222 won by main-shell-pan
+SpringBoard: drag706 org.whispersystems.signal minimised by the drag: corner swipe v=(1784,2728) moved (350,678) released at 350,899
+SpringBoard: held a minimized stage scene update so another app can open
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+16:54:09.757 SpringBoard pid=23955 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+16:54:09.758 SpringBoard pid=23955 main | ready state=0 split=0 bottom=- top=- hover=-
+16:54:09.758 SpringBoard pid=23955 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+16:54:09.759 SpringBoard pid=23955 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+16:54:09.759 SpringBoard pid=23955 main | SpringBoard: LATCHED OFF 3 feature(s): sync725 (latched 10-14 16:52:04, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-sync725-crashed to allow it); core747 (latched 10-14 16:51:57, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-core747-crashed to allow...
+16:54:09.792 SpringBoard pid=23955 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+16:54:09.792 SpringBoard pid=23955 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+16:54:09.794 SpringBoard pid=23955 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+16:54:09.795 SpringBoard pid=23955 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+16:54:09.796 SpringBoard pid=23955 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+16:54:09.796 SpringBoard pid=23955 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+16:54:09.796 SpringBoard pid=23955 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+16:54:09.796 SpringBoard pid=23955 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+16:54:09.799 SpringBoard pid=23955 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+16:54:09.801 SpringBoard pid=23955 main | SpringBoard: filter at boot ctor=[age=80s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=80s mapped bundle=com.apple.MobileSMS pid=23920 build=4.5.757] libsPlist=[age=100s empty] injectPlist=[age=100s empty]
+16:54:11.188 SpringBoard pid=23955 main | SpringBoard: stage on screen
+16:54:11.188 SpringBoard pid=23955 main | on screen state=2 split=0 bottom=- top=- hover=-
+16:54:11.188 SpringBoard pid=23955 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+16:54:11.189 SpringBoard pid=23955 main | SpringBoard: taking key from SBCoverSheetWindow on this scene
+16:54:11.192 SpringBoard pid=23955 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+16:54:11.193 SpringBoard pid=23955 main | SpringBoard: opened the top stage
+16:54:11.752 SpringBoard pid=23955 main | SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+16:54:12.077 SpringBoard pid=23955 main | SpringBoard: putting org.whispersystems.signal on stack slot 0
+16:54:12.077 SpringBoard pid=23955 main | launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+16:54:12.077 SpringBoard pid=23955 main | SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+16:54:12.077 SpringBoard pid=23955 main | SpringBoard: creating app view for org.whispersystems.signal
+16:54:12.077 SpringBoard pid=23955 main | SpringBoard: created app view for org.whispersystems.signal
+16:54:12.082 SpringBoard pid=23955 main | app-view settings update
+16:54:12.082 SpringBoard pid=23955 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=0 flip=0 update: changes = <BSMutableSettings: 0x282c8e380> { frame = NSRect: {{0, 0}, {430, 932}}; foreground = BSSettingFlagYes; }; subclassChanges = <BSSettingsDiff: 0x2826c4480> { safeAreaInsetsPortrait = UIEdgeInsets: {59, 0, 34, 0}
+16:54:12.082 SpringBoard pid=23955 main | app-view settings update done
+16:54:12.086 SpringBoard pid=23955 main | scene transaction org.whispersystems.signal actions=1
+16:54:12.093 SpringBoard pid=23955 main | SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+16:54:12.094 SpringBoard pid=23955 main | SpringBoard: org.whispersystems.signal stays running in the background
+16:54:12.094 SpringBoard pid=23955 main | SpringBoard: camera658 org.whispersystems.signal on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+16:54:12.094 SpringBoard pid=23955 main | SpringBoard: org.whispersystems.signal is on stack slot 0
+16:54:12.094 SpringBoard pid=23955 main | hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+16:54:12.097 SpringBoard pid=23955 main | SpringBoard: phonesize680 build 4.5.757 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+16:54:12.129 SpringBoard pid=23955 main | SpringBoard: fitting org.whispersystems.signal's scene to the card
+16:54:12.129 SpringBoard pid=23955 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+16:54:12.130 SpringBoard pid=23955 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {430, 932}}
+16:54:12.131 SpringBoard pid=23955 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+16:54:13.213 SpringBoard pid=23955 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+16:54:13.215 SpringBoard pid=23955 main | app-view settings update
+16:54:13.215 SpringBoard pid=23955 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2827075d0> { hostContextIdentifierForSnapshotting = fbbc0427; scenePresenterRenderIdentifierForSnapshotting = 6dfbbb77d0556b30; }; }
+16:54:13.215 SpringBoard pid=23955 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+16:54:13.215 SpringBoard pid=23955 main | app-view settings update done
+16:54:13.654 SpringBoard pid=23955 main | SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+16:54:13.842 SpringBoard pid=23955 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+16:54:13.842 SpringBoard pid=23955 main | SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x0 camera=0
+16:54:14.708 SpringBoard pid=23955 main | SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+16:54:17.431 SpringBoard pid=23955 main | scene update begin: 2 identical updates not traced (perf706)
+16:54:17.431 SpringBoard pid=23955 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+16:54:18.169 SpringBoard pid=23955 main | SpringBoard: stayed up, boot guard cleared
+16:54:20.047 SpringBoard pid=23955 main | SpringBoard: rim651 system gesture held at 0,209 (rim)
+16:54:20.049 SpringBoard pid=23955 main | SpringBoard: rim651 hit main-outer-left at 0,209 -> DSStageDragShellView
+16:54:20.163 SpringBoard pid=23955 main | SpringBoard: rim651 drag began at 0,222 won by main-shell-pan
+16:54:21.149 SpringBoard pid=23955 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: corner swipe v=(1784,2728) moved (350,678) released at 350,899
+16:54:22.048 SpringBoard pid=23955 main | SpringBoard: held a minimized stage scene update so another app can open
+
+--- crash ---
+Dynamic Stage crash log
+Build 4.5.757
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.757
+when: 1791950038
+signal: SIGTRAP
+session: A039FB8C-BCB4-42AE-AA89-222BEA8FEB7A
+backtrace:
+  0x871e00022469f214
+  0x201680020706ffa8
+  0x7d5d0001062601f4
+  0x2a7a000234768648
+  0x5379000234765150
+  0xaf79800234764f5c
+  0xb64c000206ff60e0
+  0x6f518001e1cf59dc
+  0xbb3c0001e1ce9754
+  0xb5140001e1cfa37c
+  0x73270001e1ce3f14
+  0x8e5d0001cbfe0500
+  0x15228001cbfdd078
+  0xb5578001cbfd7634
+  0x7d5b8001e1cdf4fc
+  0x1c620001e1ce2968
+--- recent stage lines ---
+SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 31547.013: window fixed at app y 117..586, no move (684) (height change)
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 631}, {430, 301}} slot=1 sinceHide=52.22 via DynamicStage+0x7e834 < DynamicStage+0x76440 < Dyn
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=52.22 via DynamicStage+0x7e834 < DynamicStage+0x73784 < Dyn
+SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys): kept (already clear) 123 pt to the keyboard, the other card slid left 469 pt
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 586}, {430, 346}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+SpringBoard: phonesize684 com.beeper.chat.ios keyboard top 586 (keyboard note t+73ms): window fixed at app y 117..586, no move; matches the bar bottom 586 (K=345): the app's bar s
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 689}, {430, 243}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=52.41 via DynamicStage+0x7e834 < DynamicStage+0x76660 < lib
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=52.42 via DynamicStage+0x7e834 < DynamicStage+0x76660 < lib
+SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (arbiter on=0 at 31549.524): window fixed, no move; settled keyboard top 586 (2432 of 2432 ms, 1 value) -> learned K 34
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.72 via DynamicStage+0x7e834 < DynamicStage+0x73784 < Dyn
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.72 via DynamicStage+0x7e834 < DynamicStage+0x73fb4 < Cor
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.72 via DynamicStage+0x7e834 < DynamicStage+0x73784 < Dyn
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.73 via DynamicStage+0x7e834 < DynamicStage+0x73fb4 < Cor
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.73 via DynamicStage+0x7e834 < DynamicStage+0x73784 < Dyn
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.73 via DynamicStage+0x7e834 < DynamicStage+0x73fb4 < Cor
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 932}, {430, 301}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.73 via DynamicStage+0x7e834 < DynamicStage+0x73784 < Dyn
+SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=1 sinceHide=54.73 via DynamicStage+0x7e834 < DynamicStage+0x73fb4 < Cor
+SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+SpringBoard: kb720 same frame for a typing card: kb707's offsets left running
+SpringBoard: kb707 typing ended (typing ended): cards spring back
+SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x20 camera=0
+SpringBoard: phonesize696 keys: cleared SpringBoard's systemAnimation deactivation (0x20 -> 0x0) on the phone-size card sceneID:com.beeper.chat.ios-default, so the app is already 
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282f09980> { deactivationReasons = ; }; }
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x20 camera=0
+SpringBoard: appview670 held a Live app view update (scene deactivated 0x0->0x20)
+SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282cd66a0> { deactivationReasons = ;
+SpringBoard: hold740 passed a scene reactivation (deactivation -> 0x0) without holding it
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x282e96c40> { targetOfEventDeferringEnviron
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+=== end ===
+
+--- diagnostics ---

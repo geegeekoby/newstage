@@ -1,3 +1,7 @@
+## 4.5.764
+- win764: raise the remote-keyboard scene's windows (UIRemoteKeyboardWindow draws the keys), never SpringBoard's own text-effects window. Fixes no keys on 763. Inventory log.
+- core764-off -> 4.5.763.
+
 ## 4.5.763
 - one763: reveal removed; raise only the owner's visible keyboard window (level only), restore on keys down. Fixes ghost globe/mic and invisible first keyboard.
 - settle763: drawn keyboard only after arbiter height stable 0.35 s; tallest in session for K, 696 pin, kb707.

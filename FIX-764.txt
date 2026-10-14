@@ -1,0 +1,23 @@
+DynamicStage 4.5.764 - raise the window that really draws the keys
+
+Proven (Nine, 763, 01:42 NZDT): every "one763 raised only" line names a
+UITextEffectsWindow (scene com.apple.UIKit.remote-keyboard, then SpringBoard's
+own scene), lvl=6000, keys 586/346, arbiterTop=644, "5 other keyboard
+window(s) left alone". one763 matched windows by UIKeyboard*/InputSetHost
+views only. The staged app's keys are drawn by the remote-keyboard scene's
+UIRemoteKeyboardWindow via a layer host (no such view), so that window was
+always left under the stage (998): no keys visible in any app.
+
+win764   Level-only raise of every keyboard window in the owner's
+         com.apple.UIKit.remote-keyboard scene (UIRemoteKeyboardWindow + its
+         input host). SpringBoard's own-scene UITextEffectsWindow (placeholder /
+         ghost dock) is never raised. No view, alpha or animation writes.
+         Falls back to the 763 match when no remote-keyboard window exists.
+         Log: "win764 raised ... ; N other keyboard window(s) left alone; all:
+         <class[scene lvl hid a keys]> | ..." on change.
+         Off: /var/mobile/.dynamicstage-win764-off (crash latch).
+unhide764 If that UIRemoteKeyboardWindow itself is hidden, only the window is
+         shown (never its views, never alpha). Off: unhide764-off (latch).
+
+settle763 checked in Nine: K 345, drawn top 586, nothing blocked.
+Master: /var/mobile/.dynamicstage-core764-off -> 4.5.763.

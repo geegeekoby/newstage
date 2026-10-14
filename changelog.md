@@ -1,3 +1,6 @@
+## 4.5.751
+- pos751: one position owner per card; a new move continues from where the card is.
+
 ## 4.5.750
 - core750: keyboard reader on the one state, card moves end cleanly, stuck-card check is a loud backstop, per-card host state.
 

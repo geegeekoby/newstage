@@ -1,0 +1,12 @@
+DynamicStage 4.5.751 (pos751; master off: .dynamicstage-core751-off = 4.5.750)
+
+pos751: one position owner per card, in the card view itself. Every card move
+(any path: drag end, minimise, restore, tuck, split layout, keyboard
+lift/slide, spring back) ends in the card's setFrame:/setCenter:/setTransform:.
+An animated move there first takes over from the move in flight: the card is
+set to where it is drawn now, the old position/size/transform animations on
+that card are removed, and the new move (same spring and duration) starts from
+there. Finger drags (not animated) are untouched.
+heal700 and drag706's settle are log-only backstops (HEAL700 / DRAG706
+BACKSTOP lines); stuck727's 2 s safety snap stays. spam700 and loop745 stay
+active (they are gates, not repairs). Off: pos751-off (latch).

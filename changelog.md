@@ -1,3 +1,6 @@
+## 4.5.749
+- core749: call tail follows the call screen, latched features listed at startup, safe mode keeps the Stages tab, Messages notes recorded in the keyboard state.
+
 ## 4.5.748
 - core748: fewer scene writes and held updates, one clean card move at a time, hosted scenes settled when cards return.
 

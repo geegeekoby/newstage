@@ -1,0 +1,14 @@
+DynamicStage 4.5.749 (core749; master off: .dynamicstage-core749-off = 4.5.748)
+
+zone749: the 4 s call tail ends early once SpringBoard's own state shows no
+call UI for 0.5 s (main thread only). home731 / outside726 keep their timers
+(no verified system signal); a startup line says so. Off: zone749-off (latch).
+latch749: one startup line listing every latched-off feature (name, when, why,
+file to delete), also in /var/mobile/DynamicStage-latched.txt. Off: latch749-off.
+safe749: when the boot guard skips the tweak, a light safe mode shows the
+Stages tab (plain window, no hooks, no stage features) and logs why; tapping
+it explains. Off: safe749-off.
+msg749: Messages notes folded into the core747 keyboard state only where
+identical (recorded; a card-local frame at the card bottom is a hide, as src746
+and ghost745 already do). Its input bar and keyboard handoff keep their own
+path. Off: msg749-off (latch).

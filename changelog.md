@@ -1,3 +1,6 @@
+## 4.5.754
+- core754: latches only on real crashes (old latches cleared), keyboard-move speed carry-over, heal700 side-slide fix, inf keyboard frames hidden, faster host state, quieter and accurate logs.
+
 ## 4.5.753
 - Dead-code pass: unused functions, methods and ivars removed. No behaviour change.
 

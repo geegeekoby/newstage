@@ -1,0 +1,21 @@
+DynamicStage 4.5.754 (core754; master off: /var/mobile/.dynamicstage-core754-off = 4.5.753)
+
+latch754: a crash latch is only set on a real crash. SpringBoard now records how
+it ended: SIGTERM (respring, ldrestart, reboot) = clean; our signal/exception
+handler, a SpringBoard .ips report newer than the last start, or the boot-guard
+safe mode = crash. Next start: crash -> latches as before; clean or unknown ->
+the 15 s "trying" markers are dropped (no latch); a clean respring after >= 60 s
+of running clears all latches. First 754 start clears the 13 old-rule latches
+once (kb723, outside726, kb720, kbmin702, anim698, anim702, slide728, sync725,
+restore726, focus705, beeper707, phonesize696-keys, phonesize696-blackout).
+The log says what was decided ("latch754 last SpringBoard exit: ...").
+vel754: speed carry-over also for keyboard (transform) moves.
+heal754: heal700 skips a card kb707 slid aside for the keyboard.
+kbnan754: inf/NaN keyboard frames are hidden as soon as they arrive.
+log754: one core747 "not given to" line per burst; via/caller tags are
+image+offset; detach lines name the old app; repeated hideStray / layoutHost
+trace lines dropped.
+host754: attaching -> live as soon as the app shows in the card (was a fixed
+3 s); a new card state must hold 0.3 s before it is acted on.
+Off files: latch754, vel754, heal754, kbnan754, log754, host754 (each -off,
+each with a crash latch). Messages msg742 path and camera 673 unchanged.

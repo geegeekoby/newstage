@@ -1,3 +1,8 @@
+## 4.5.763
+- one763: reveal removed; raise only the owner's visible keyboard window (level only), restore on keys down. Fixes ghost globe/mic and invisible first keyboard.
+- settle763: drawn keyboard only after arbiter height stable 0.35 s; tallest in session for K, 696 pin, kb707.
+- core763-off -> 4.5.762.
+
 ## 4.5.762
 - geo762: one global keyboard geometry = keyboard as drawn on screen (586/346); arbiter = owner/on-off only. Beeper K 345, bar 586 (black margin fix).
 - rest762: Beeper/684 card never drops below rest; may rise onto keys; others slide off.

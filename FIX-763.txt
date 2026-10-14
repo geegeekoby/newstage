@@ -1,0 +1,26 @@
+DynamicStage 4.5.763 - one keyboard layer + settled keyboard geometry
+
+Cause (Bhu, 762): the 760 reveal forced EVERY keyboard/TextEffects window and
+every keyboard-named view (dock globe/mic included) shown and opaque, removed
+their animations, and the raise lifted every keyboard window to statusBar+5000.
+iOS's hidden placeholder dock was drawn over the real keys (two layers), and
+on the first show (reveal ~40 ms into the slide-in) only that ghost dock showed.
+
+one763   Reveal removed (DSRevealAllKeyboardWindowsOnSpringBoard is a no-op).
+         No hidden/alpha/animation writes on any keyboard window or view, also
+         not in the scene-update branch. Only ONE window is raised: the visible
+         keyboard window whose keys reach the phone bottom and cover the
+         arbiter's keys top (tallest if several). Level only. Restored 0.5 s
+         after the arbiter goes off (and on the existing keys-gone path).
+         Log: "one763 raised only <class> scene=<..> lvl=<..> keys=<..>
+         arbiterTop=<..>; N other keyboard window(s) left alone".
+         Off: /var/mobile/.dynamicstage-one763-off (crash latch).
+settle763 Drawn keyboard accepted only after the arbiter height has been the
+         same for 0.35 s (iOS shows 243 before the 288 suggestion bar). The
+         tallest settled keyboard in the session feeds Beeper K, the 696 pin
+         and kb707 targets; re-checked 0.40 s after each arbiter change.
+         Off: /var/mobile/.dynamicstage-settle763-off (crash latch).
+
+Master: /var/mobile/.dynamicstage-core763-off -> 4.5.762.
+Kept: geo762, rest762, msgnolift761, quiet747761, kbglobal760 ownership,
+holdsafe760. Untouched: switcher, camera 673, msg742, card size, status bar.

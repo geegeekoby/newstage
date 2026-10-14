@@ -1,3 +1,6 @@
+## 4.5.756
+- core756: one lift rule for all stages and apps, minimised cards always restorable (no ghost outline), keyboard shown again when a card comes back still typing, typing owner cleared on minimise, slot tracking, no double lift, clean-respring heartbeat.
+
 ## 4.5.755
 - core755: Beeper keyboard height only from its own keyboard, no kb707 lift on phonesize684 cards, correct app names in host750, one shared "typing" answer cleared on keyboard off, one spring back per hide, focus755 diagnostic (log only).
 

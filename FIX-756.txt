@@ -1,0 +1,29 @@
+DynamicStage 4.5.756 - fixes from the 755 log (Lalalalalla), root causes
+
+Master off: /var/mobile/.dynamicstage-core756-off  -> behaves as 4.5.755.
+Each part: /var/mobile/.dynamicstage-<name>-off plus its own crash latch.
+
+lift756    One lift rule for every stage and app (Beeper, Messages, Messenger, all):
+           the typed-in card sits just above the keys (moves up OR down), every other
+           stage slides off to the side, all return together on dismiss.
+           Removed exemptions: 755 lift755 (Beeper no-lift), 684/680 "card kept at
+           rest", the "slides its own composer" top-card exemption, kb723's Beeper skip.
+           Beeper's 684 card still uses its pinned keys top so its bar lines up.
+           (Split / third-stage layouts keep their own mover.)
+park756    Promoting the second card to primary (an app's card closed by opening it
+           full screen) now carries its corner side and picture and hides the empty
+           card's rim. 755: Beeper sat in the left corner but the stage thought
+           "right", so it could not be pulled back, and the orphan top rim / outline
+           stayed. A corner pull also matches a parked card by where it is drawn.
+keys756    A card minimised while its app (no app dylib) was typing keeps the
+           keyboard system's "on" with nothing drawn; tapping the field then shows
+           nothing. When the card comes back and the app still owns the keyboard,
+           the keyboard report is replayed: keys shown, card lifted.
+type756    Typing owner cleared when its card is minimised or closed; the "ignored"
+           line names the real typer.
+track756   host750 logs when a different app moves into a slot (old app left).
+coalesce756 The full-keyboard top is remembered per app (fixes the 324 -> 369 double lift).
+beat756    Heartbeat every 30 s so a respring without SIGTERM reads as a clean exit.
+
+Untouched: Messages camera 673, Beeper 684 keyboard mechanism, msg742, app switcher,
+bg719/defer719, crash latches, status bar. Card size fixed.

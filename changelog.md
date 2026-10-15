@@ -1,3 +1,9 @@
+## 4.5.765
+- Back to 759 behaviour: all 760-764 keyboard and crash-guard switches retired (always off); reveal is the 759 stub again.
+- tree765 (log only): map of every keyboard window's view/layer tree on the first 3 keyboard shows ("--- tree765 ---" in Copy Logs).
+- corner765: hold Live app-view updates 1.5 s after a corner restore (Shdhb SIGTRAPs).
+- core765-off -> exactly 4.5.759.
+
 ## 4.5.764
 - win764: raise the remote-keyboard scene's windows (UIRemoteKeyboardWindow draws the keys), never SpringBoard's own text-effects window. Fixes no keys on 763. Inventory log.
 - core764-off -> 4.5.763.

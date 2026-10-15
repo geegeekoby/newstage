@@ -1,0 +1,26 @@
+DynamicStage 4.5.765 — back to 759 + tree765 (log only) + corner765
+
+Base = 4.5.759 behaviour (the keyboard that shows: keys759 raise, no reveal).
+All 760-764 work is retired in code (always OFF, files ignored):
+  core760..core764, kbglobal760, msgglobal760, holdsafe760, msgnolift761,
+  quiet747761, geo762, rest762, one763, settle763, win764, unhide764.
+Two 760 bits that had no switch are now behind the retired ones too:
+  - DSRevealAllKeyboardWindowsOnSpringBoard is the 759 stub again (returns).
+  - hold740's extra "card drag 1.5 s / home gesture" checks (holdsafe760).
+
+tree765 (log only): on the first 3 keyboard shows, at 0.05 / 0.4 / 1.2 s,
+writes every keyboard / text-effects window (class, scene, windowLevel,
+hidden, alpha, frame, layer class, layer.hidden, opacity, layer-host ctx)
+and its view + layer tree (depth 14, 400 lines per window) to
+/var/mobile/Library/Preferences/com.recreated.dynamicstage.tree765.log.
+Copy Logs adds it as "--- tree765 ---". Only getters are read.
+Off: tree765-off. Crash latch: tree765.
+
+corner765: Shdhb (759) SIGTRAPs 06:02:01 and 06:37:59 NZDT 16 Oct: one
+Live update held as "corner restore (706)", the next focus update passed
+(appview699) and SpringBoard trapped. Every Live app-view update is now held
+for 1.5 s after the last corner-restore hold ("after a corner restore (765)"),
+and hold740 replays wait it out. Off: corner765-off. Crash latch: corner765.
+
+Master: core765-off = exactly 4.5.759.
+Off files: /var/mobile/.dynamicstage-tree765-off, -corner765-off, -core765-off

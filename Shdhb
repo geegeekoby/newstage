@@ -1,0 +1,191 @@
+build 4.5.759 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+SpringBoard: LATCHED OFF 13 feature(s): slide728 (latched 10-16 00:10:26, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-slide728-crashed to allow it); type755 (latched 10-15 21:54:38, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-type755-crashed to allow it); phonesize696-keys (latched 10-15 21:54:41, SpringBoard went down within...
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+SpringBoard: filter at boot ctor=[age=801s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=801s mapped bundle=com.apple.MobileSMS pid=14489 build=4.5.759] libsPlist=[age=102692s empty] injectPlist=[age=102692s empty]
+SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+SpringBoard: stayed up, boot guard cleared
+SpringBoard: stage window moved back to the foreground scene
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: opened the top stage
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+06:38:09.020 SpringBoard pid=14748 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+06:38:09.020 SpringBoard pid=14748 main | ready state=0 split=0 bottom=- top=- hover=-
+06:38:09.020 SpringBoard pid=14748 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:38:09.023 SpringBoard pid=14748 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+06:38:09.023 SpringBoard pid=14748 main | SpringBoard: LATCHED OFF 13 feature(s): slide728 (latched 10-16 00:10:26, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-slide728-crashed to allow it); type755 (latched 10-15 21:54:38, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-type755-crashed to al...
+06:38:09.024 SpringBoard pid=14748 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+06:38:09.024 SpringBoard pid=14748 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+06:38:09.025 SpringBoard pid=14748 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+06:38:09.026 SpringBoard pid=14748 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+06:38:09.026 SpringBoard pid=14748 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+06:38:09.026 SpringBoard pid=14748 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+06:38:09.026 SpringBoard pid=14748 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+06:38:09.026 SpringBoard pid=14748 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+06:38:09.028 SpringBoard pid=14748 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+06:38:09.029 SpringBoard pid=14748 main | SpringBoard: filter at boot ctor=[age=801s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=801s mapped bundle=com.apple.MobileSMS pid=14489 build=4.5.759] libsPlist=[age=102692s empty] injectPlist=[age=102692s empty]
+06:38:11.639 SpringBoard pid=14748 main | SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+06:38:17.033 SpringBoard pid=14748 main | SpringBoard: stayed up, boot guard cleared
+06:38:18.886 SpringBoard pid=14748 main | SpringBoard: stage window moved back to the foreground scene
+06:38:18.886 SpringBoard pid=14748 main | SpringBoard: stage on screen
+06:38:18.886 SpringBoard pid=14748 main | on screen state=2 split=0 bottom=- top=- hover=-
+06:38:18.886 SpringBoard pid=14748 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+06:38:18.889 SpringBoard pid=14748 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+06:38:18.890 SpringBoard pid=14748 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+06:38:18.890 SpringBoard pid=14748 main | SpringBoard: opened the top stage
+
+--- crash ---
+Dynamic Stage crash log
+Build 4.5.759
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.759
+when: 1792083721
+signal: SIGTRAP
+session: F09DA082-0938-4C38-8A0E-84E822D1F538
+backtrace:
+  0x8f1380020392b214
+  0x09150001e62fbfa8
+  0x636e800105493b4c
+  0x4c728002139f4648
+  0xc2600002139f1150
+  0xdd100002139f0f5c
+  0xa7600001e62820e0
+  0x72248001c0f819dc
+  0xb0238001c0f75754
+  0x22670001c0f8637c
+  0xfd318001c0f6ff14
+  0xdd498001ab26c500
+  0x58050001ab269078
+  0x1b068001ab263634
+  0x12548001c0f6b4fc
+  0x2a3d8001c0f6e968
+--- recent stage lines ---
+SpringBoard: tucking the open stage for home
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: held a minimized stage scene update so another app can open (+15 more in the last 10 s)
+SpringBoard: parked apps stopped following the home transition
+app: com.apple.MobileSMS ctor ok
+app: com.apple.MobileSMS remote keyboard hooks are in
+app: com.apple.MobileSMS is listening for staged keys
+SpringBoard: tucking the open stage for home
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: src746 up com.facebook.Messengerzzzzz frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x7e4f4 < DynamicStage+0x751b
+SpringBoard: tucking the open stage for home
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: grab733 corner pull claimed: cancelled 1 pan / scroll recogniser(s) in SBMainSwitcherWindow under 406,912
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 306x320 shows the real app y 59..586 at x0.7120 (full width) / y0.6067; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.7120 (pre-grown, bottom-anchored): visible app y 137..586 in card 306x320; side crop 0.0 pt each side
+SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {137, 0, 345, 0}, squash placed on the first frame (card 306x320), no resize
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28145d560> { targetOfEventDeferringEnviron
+SpringBoard: appview670 held a Live app view update (corner restore (706))
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28145e400> { targetOfEventDeferringEnviron
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+=== end ===
+
+=== Dynamic Stage crash ===
+build: 4.5.759
+when: 1792085879
+signal: SIGTRAP
+session: 3F9CB898-B357-41D1-806C-7FB8C9FE40AB
+backtrace:
+  0xc76180020392b214
+  0xb94d0001e62fbfa8
+  0xd13500010565bb4c
+  0x49048002139f4648
+  0xa31a0002139f1150
+  0x49220002139f0f5c
+  0x91290001e62820e0
+  0x5b1c0001c0f819dc
+  0x8f238001c0f75754
+  0xcb060001c0f8637c
+  0x0c2c8001c0f6ff14
+  0x7d3c0001ab26c500
+  0x78678001ab269078
+  0x6c408001ab263634
+  0x98468001c0f6b4fc
+  0x33618001c0f6e968
+--- recent stage lines ---
+SpringBoard: phonesize695 com.beeper.chat.ios kept 430x931 safeArea {118, 0, 345, 0} while minimised (keyboard down): no shrink, no scene write; restore needs no relayout
+SpringBoard: src746 up org.whispersystems.signal frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x7e4f4 < DynamicStage+0x751b4 
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {118, 0, 345, 0}, squash placed on the first frame (card 420x458), no resize
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281cd31b0> { targetOfEventDeferringEnviron
+SpringBoard: appview670 held a Live app view update (corner restore (706))
+SpringBoard: rim651 system gesture held at 313,462 (rim)
+SpringBoard: rim651 hit main-outer-top at 313,462 -> DSStageDragShellView
+SpringBoard: rim651 drag began at 313,467 won by main-shell-pan
+SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: finger at the corner v=(573,521) moved (99,430) released at 412,892
+SpringBoard: held a minimized stage scene update so another app can open (+12 more in the last 10 s)
+SpringBoard: tucking the open stage for home
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: tucking the open stage for home
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 300x312 shows the real app y 59..586 at x0.6973 (full width) / y0.5922; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.6973 (pre-grown, bottom-anchored): visible app y 138..586 in card 300x312; side crop 0.0 pt each side
+SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {139, 0, 345, 0}, squash placed on the first frame (card 300x312), no resize
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281cae670> { targetOfEventDeferringEnviron
+SpringBoard: appview670 held a Live app view update (corner restore (706))
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281cce220> { targetOfEventDeferringEnviron
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+=== end ===
+
+--- diagnostics ---

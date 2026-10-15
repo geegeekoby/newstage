@@ -1,3 +1,11 @@
+## 4.5.766
+- Dead code removed (760-764, live738/drag738/rim738, tune readers 681-698, 692/693 patches, reveal-all, Messages own-keyboard path, hostedAppKeepsItsCardStill). Keyboard path unchanged from 765.
+- trace766: one trace file per process, flock-safe trims, Copy Logs merges them.
+- late766: stale app keyboard-up right after the keyboard went off is ignored (replayed if it comes back on within 1 s).
+- src766 / core766log / tree766: quieter, more precise keyboard logs. ev766: evidence lines for black731, blackout699, stuck727, loop745, spam700.
+- three766: off file + latch for the hovering third stage.
+- core766-off -> 4.5.765.
+
 ## 4.5.765
 - Back to 759 behaviour: all 760-764 keyboard and crash-guard switches retired (always off); reveal is the 759 stub again.
 - tree765 (log only): map of every keyboard window's view/layer tree on the first 3 keyboard shows ("--- tree765 ---" in Copy Logs).

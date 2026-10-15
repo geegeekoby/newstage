@@ -1,0 +1,33 @@
+DynamicStage 4.5.766 — dead code removed, trace766, late766, log fixes, evidence
+
+Base = 4.5.765. The keyboard path is unchanged: SBMedusaHostedKeyboardWindow
+still draws the keys, keys759 raise as on 759/765, and nothing touches
+UITextEffectsWindow or UIKeyboardDockView.
+
+1 Removed dead code (each gated on a flag that was always off; build checked):
+  760-764 (core760-764, kbglobal760, msgglobal760, holdsafe760, msgnolift761,
+  quiet747761, geo762, rest762, one763, settle763, win764, unhide764) and the
+  DS739Retired / DS765Retired lists; live738, drag738, rim738; the tune-file
+  readers for phonesize681-698 (defaults stay as constants); 692/693 patches;
+  the do-nothing reveal-all and DSReassertKeyboardViewVisibility; the Messages
+  own-keyboard path (DSMessagesDrawsOwnKeyboard + handoff/release/picker);
+  hostedAppKeepsItsCardStill (always NO; callers simplified).
+2 trace766: each process except SpringBoard writes its own trace file
+  (/var/tmp/com.recreated.dynamicstage.trace.p-<process>.log); a trim only
+  happens under a granted flock. Copy Logs merges all files by timestamp.
+3 late766: an app keyboard-up within 0.5 s after the keyboard system said off
+  is dropped (after 0.5 s core747's no-keys-on-screen rule still applies); if
+  the system says on within 1 s the dropped note is replayed.
+4 src766: offscreen frames logged as "down", one line per app per 3 s.
+  core766log: core747 drop lines name the arbiter's current state/owner and are
+  rate-limited per reason. tree766: tree765 dumps due after the keyboard went
+  off are skipped (still log-only).
+5 ev766 (log only): one state line when black731, blackout699, stuck727 or
+  loop745 fire, and when spam700 sees a new intent while a minimise is in
+  flight. No root cause proven yet for those; guards unchanged.
+7 three766: the hovering third stage gets an off file and crash latch.
+
+Master: core766-off = 4.5.765 behaviour for every 766 switch (the removed dead
+code stays removed: it was already off on 765).
+Off files (/var/mobile/.dynamicstage-<name>-off): core766, trace766, late766,
+src766, core766log, tree766, ev766, three766.

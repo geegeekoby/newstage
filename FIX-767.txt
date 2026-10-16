@@ -1,0 +1,15 @@
+DynamicStage 4.5.767 — four proven fixes from the Resssj (766) log
+
+corner767: an app-view update held for a corner restore is dropped, not
+  replayed by hold740 (Resssj 21:43:31 SIGTRAP: held diff 0x28311e0d0 replayed
+  1.5 s later; Shdhb 06:02/06:37: first update after the corner hold passed and
+  trapped). The corner765 window is 2.5 s (was 1.5 s, same as hold740's hold).
+prev767: the after-respring log refresh keeps trace.previous.log; only a
+  manual refresh deletes it.
+tree767: tree765 dumps only while the stage is on screen and the keyboard note
+  comes from a staged app. Still log-only.
+sbkb767: the "ignored <app> keyboard while ... typing on the stage" rule and
+  line apply only with the stage on screen.
+
+Master: core767-off = 4.5.766. Off files (/var/mobile/.dynamicstage-<name>-off):
+core767, corner767, prev767, tree767, sbkb767. Each has a crash latch.

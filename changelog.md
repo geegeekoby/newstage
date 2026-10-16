@@ -1,3 +1,10 @@
+## 4.5.767
+- corner767: updates held for a corner restore are dropped, not replayed (Resssj/Shdhb SIGTRAPs); corner hold window 2.5 s.
+- prev767: a respring no longer deletes the previous session's trace.
+- tree767: keyboard tree map only for a staged card's keyboard.
+- sbkb767: "ignored ... typing on the stage" only when the stage is on screen.
+- core767-off -> 4.5.766.
+
 ## 4.5.766
 - Dead code removed (760-764, live738/drag738/rim738, tune readers 681-698, 692/693 patches, reveal-all, Messages own-keyboard path, hostedAppKeepsItsCardStill). Keyboard path unchanged from 765.
 - trace766: one trace file per process, flock-safe trims, Copy Logs merges them.

@@ -1,0 +1,4 @@
+4.5.783 = 782 with reopen783 replacing reopen782, strip783 logging, strip782 default off. core783-off -> 782 minus reopen (reopen782 code replaced) with strip782 back on.
+reopen783: staged Messages, box focused, UIInputSetContainerView >1500 pt off, at auto-focus and chat didAppear: once, inputDelegate textWillChange:/textDidChange: + UITextView delegate textViewDidChange: (no text edit). Logs before/after and next pass. Off /var/mobile/.dynamicstage-reopen783-off
+strip783: one line per entry781 event: UIInputSetHostView children (class/y/h/hidden + 4 grandchildren) and UIKeyboardImpl isInHardwareKeyboardMode/isMinimized/showsCandidateBar/isUsingDictationLayout if responds. Off /var/mobile/.dynamicstage-strip783-off
+strip782: off unless /var/mobile/.dynamicstage-strip782-on.

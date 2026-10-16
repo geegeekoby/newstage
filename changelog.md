@@ -1,3 +1,6 @@
+## 4.5.783
+- Messages draft reopen: brings the input area back with a text-changed signal (reopen783). strip783 diagnostics; strip782 off by default.
+
 ## 4.5.782
 - Messages: input container brought back when a draft chat reopens (reopen782); app strip kept while typing by telling Messages a zero-height keyboard is up (strip782).
 

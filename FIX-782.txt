@@ -1,0 +1,3 @@
+4.5.782 = 781 + reopen782 (replaces reopen781) + strip782. core782-off returns to 781.
+reopen782: staged Messages, box focused and UIInputSetContainerView >1500 pt off: on auto-focus while opening -> reloadInputViews once; at CKChatController didAppear -> reloadInputViews, re-measure after layoutIfNeeded, still parked -> one internal resign+become (caret778 drop flag, keys/wanted kept). Old parked-bar slide skipped while the container is parked. Off /var/mobile/.dynamicstage-reopen782-off
+strip782: while caret778 holds Messages' box (wanted=1, box fr), Will/DidShow and Will/DidChangeFrame notes reach Messages with begin/end = {0, cardH, cardW, 0}; hide notes and other cases still dropped. entry781 logged after each. Off /var/mobile/.dynamicstage-strip782-off

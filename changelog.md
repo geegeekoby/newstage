@@ -1,3 +1,6 @@
+## 4.5.782
+- Messages: input container brought back when a draft chat reopens (reopen782); app strip kept while typing by telling Messages a zero-height keyboard is up (strip782).
+
 ## 4.5.781
 - Fixed: reopening a chat with a draft no longer pushes the input bar out of view (message box released when the chat closes; one input reload if the bar is still off the card).
 - Added entry781 logging for the app strip / input bar while typing.

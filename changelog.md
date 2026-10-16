@@ -1,3 +1,7 @@
+## 4.5.781
+- Fixed: reopening a chat with a draft no longer pushes the input bar out of view (message box released when the chat closes; one input reload if the bar is still off the card).
+- Added entry781 logging for the app strip / input bar while typing.
+
 ## 4.5.780
 - 778 + backspace779 only (held delete repeats via stand-in filler; delete log gap=ms). tapout779 and log779 removed (778 logging restored). Off: backspace779-off; core780-off = 778.
 

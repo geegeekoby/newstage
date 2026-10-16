@@ -1,0 +1,7 @@
+4.5.781 = 780 + leave781 + reopen781 + entry781 logging. core781-off returns to 780.
+Regression: caret778 (4.5.778) — box stays first responder. Strip collapse while typing first seen in 778 log Heidi (kb show y=414 h=119 / y=397 h=136); 777 Fuchhc and earlier only y=377 h=81.
+Draft reopen bar at y=-3542 (h=4075) first seen in 780 Hdidhdu; caret778's drop resigned the box at 15.669, after the chat had closed (list willAppear 15.629), so Messages refocused the box on reopen (16.874, before transcript appeared) while its input container was parked ~4000 pt down.
+leave781: CKChatController viewWillDisappear releases the message box (wanted cleared). Off /var/mobile/.dynamicstage-leave781-off
+reopen781: CKChatController viewDidAppear, box focused and bar off the card -> reloadInputViews once. Off /var/mobile/.dynamicstage-reopen781-off
+entry781: log of bar/input container/app strip frames+hidden at become, auto-focus (draft restore), chat didAppear, empty<->text flips. Off /var/mobile/.dynamicstage-entry781-off
+Strip collapse: not changed yet (cause inside Messages' strip rule unproven); entry781 logs collect the proof.

@@ -1,0 +1,20 @@
+DynamicStage 4.5.769 — focus769: SpringBoard never left with stale keyboard focus
+
+Cbskh (767): 01:18:17.123 Beeper's keyboardFocus update was held for the
+corner restore and dropped by corner767 (focus755: "held keyboardFocus" for the
+next 112 s); keys invisible; 01:20:10.6 an empty-focus update passed; SIGTRAP.
+
+focus769 tracks, per staged scene, the app's latest focus (keyboardFocus /
+empty, from the update diffs) and the focus SpringBoard last received.
+ a) A keyboardFocus update is never held for the corner restore (706/765),
+    stage display-layout or phonesize675 holds: passed straight through.
+ b) A keyboardFocus update held for any other reason (card drag, lock,
+    background/deactivated scene) is delivered as soon as that hold ends, if it
+    is still the app's latest and SpringBoard does not have it (max 6 s).
+ c) An empty-focus update is DROPPED (not passed) while SpringBoard's last
+    focus differs from the app's latest. Dropping was chosen over "deliver the
+    latest first": delivering first means replaying an old held diff, and a
+    replayed held diff is exactly what trapped in Resssj (21:43:31).
+ d) Held / dropped focus lines always log (no throttle).
+Messages is exempt (msg742 unchanged). kbvis768 kept.
+Off: focus769-off / core769-off (= 4.5.768). Crash latch focus769.

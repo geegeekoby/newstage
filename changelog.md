@@ -1,3 +1,7 @@
+## 4.5.769
+- focus769: keyboard-focus updates are never held for corner restore / layout holds; a focus update held for other reasons is delivered when the hold ends; an empty-focus update is dropped while SpringBoard's focus is out of date (Cbskh invisible keys + SIGTRAP). Focus hold/drop lines always logged.
+- core769-off -> 4.5.768.
+
 ## 4.5.768
 - kbvis768 (log only): every keyboard show with the stage on screen is sampled until the keys go off: Medusa keyboard window, layer hosts, neighbouring windows, stage window, keys759 raise, arbiter, keyboard frame, and a "keys visible?" verdict ("--- kbvis768 ---" in Copy Logs).
 - core768-off -> 4.5.767.

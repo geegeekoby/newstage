@@ -1,3 +1,6 @@
+## 4.5.775
+- rekey775 home->stage key handoff; why775 log-only Medusa decision hooks.
+
 ## 4.5.774
 - name774 PAC-strip fix; register774 read-only focus/layout probe (no registration yet).
 

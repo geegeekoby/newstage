@@ -1,3 +1,11 @@
+## 4.5.770
+- gest770 (log only): edge pulls (ours vs system) and their end, switcher window show/hide, corner-grab disabled/enabled after a minimise (pull728), app-view state on every minimise/restore, first Live update after a restore, taps outside the cards. Never for Messages.
+- core770-off -> 4.5.769.
+
+## 4.5.770
+- gest770 (log only): edge pulls (ours vs system) and their end, switcher window show/hide, corner-grab disabled/enabled after a minimise (pull728), app-view state on every minimise/restore, first Live update after a restore, taps outside the cards. Never for Messages.
+- core770-off -> 4.5.769.
+
 ## 4.5.769
 - focus769: keyboard-focus updates are never held for corner restore / layout holds; a focus update held for other reasons is delivered when the hold ends; an empty-focus update is dropped while SpringBoard's focus is out of date (Cbskh invisible keys + SIGTRAP). Focus hold/drop lines always logged.
 - core769-off -> 4.5.768.

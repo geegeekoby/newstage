@@ -1,0 +1,14 @@
+DynamicStage 4.5.770 — gest770 (log only)
+
+Ohim (769): corner grabs right after a drag-minimise were refused by pull728
+("within 1 s of a drag-minimise release") at 01:42:23.658, 25.608, 29.974; the
+system home gesture then ran each time. No switcher signal was logged at all.
+
+gest770 logs: every bottom-edge pull (claimed by the stage or left to the
+system) and how it ended; system-gesture refusals; switcher window shown/hidden
+with home/busy state; corner grab disabled/enabled times after a minimise; the
+app view (mode, foreground, active, deactivation, layer-host context ids) on
+every minimise/restore; the first Live update after a restore (passed or held);
+taps outside the cards and what they did. Never for Messages.
+Off: /var/mobile/.dynamicstage-gest770-off (crash latch gest770).
+core770-off -> 4.5.769. No behaviour change.

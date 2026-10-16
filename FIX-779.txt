@@ -1,0 +1,5 @@
+4.5.779 (on 778 c3addc6)
+- backspace779 (SpringBoard, DSStageManager.m DSStagedKeyboardField): filler "x x ... x" kept in the stand-in field (set on become, reset after every key instead of @""). Delete log now has gap=ms. Off: backspace779-off.
+- tapout779 (app): UIApplication sendEvent: marks touch delivery; caret778 rule lets a message-box resign during a touch through as a dismissal (wanted+guard cleared -> DSNoteStageKeyboardResign -> SpringBoard hide). Off: tapout779-off (latch).
+- log779 (app): stacks only for MessageEntry resigns as "resign779 #N stack1/stack2" (image+offset, symbol when not redacted); focus line only for message box, adds touch=. Becomes: /var/mobile/.dynamicstage-stack779become-on. Off: log779-off (back to 778 logging).
+- core779-off returns to 778.

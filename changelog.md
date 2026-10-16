@@ -1,3 +1,8 @@
+## 4.5.779
+- backspace779: held delete repeats in staged apps (SpringBoard stand-in field keeps filler text so UIKit's delete repeat continues; was emptied after every key).
+- tapout779: in staged Messages a message-box resign during a user touch (transcript tap, bubble, strip, transcript drag) is a real dismissal: wanted cleared, resign passes, SpringBoard hides the keys in sync.
+- log779: resign stacks only for message-box resigns, two compact lines; no stacks on become (opt-in stack779become-on).
+
 ## 4.5.778
 - caret778: staged Messages keeps the message box focused while it wants the staged keys (all resigns refused except search Cancel). SpringBoard's hide (and arbiter on=0, e.g. swipe-down) tells Messages the keys are gone; Messages clears "wanted" and lets go, so keys and caret leave together. Replaces caret777's key-window rule.
 - resign778 (log only): resign stacks one frame per line named via dladdr; keyboard focus state (UIKeyboardImpl delegate, first-responder chain).

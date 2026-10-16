@@ -1,3 +1,6 @@
+## 4.5.792
+- log792 (logging only, no behaviour change): strip792 lines when CKBrowserSwitcherFooterView is removed from its superview or hidden, with caller images (DS+ = our code). Messages trace from chat open through 10 taps / 10 s is tagged w792, skips the burst cap, and is exported as its own section so the trace tail can't push it out. Off: /var/mobile/.dynamicstage-log792-off. core792-off returns to 791.
+
 ## 4.5.791
 - reopen791: the reopen text-changed signal is only sent when the message box is not focused (fr=0); skipped at draft auto-focus (fr=1), which is what dropped the app strip (Highb 07:53:51.322 -> 51.353 bar 81 -> 44). Off: /var/mobile/.dynamicstage-reopen791-off
 - log791: strip790/entry781/focus791/reopen79x lines skip the trace burst cap; activeKeyboardHeight logs its type when it can't be read; one compact focus791 line names who focused/resigned the box (replaces 16 stack lines). Off: -log791-off

@@ -1,0 +1,7 @@
+DynamicStage 4.5.772 - hide772 + keyfocus772
+
+Oaksk 02:09:01: Beeper keys hidden 0.1 s after showing, home screen key.
+hide772 (log only): who hides SBMedusaHostedKeyboardWindow (setHidden stack, key window, focus, paths).
+keyfocus772: stage takes the key window back (open-time takeKeyWindow) when keys hidden with another
+window key, and 0.6 s after a corner restore with the home screen key. Never Messages.
+Off: hide772-off, keyfocus772-off (latches); core772-off -> 4.5.771.

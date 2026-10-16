@@ -1,3 +1,8 @@
+## 4.5.772
+- hide772 (log only): when the staged app's keys get hidden while the arbiter is on: key window and scene, card state, stage window, last focus and age, front app / home, our code paths in the last 0.5 s, and the setHidden call stack. gest770 now reads the real app switcher state; the keyboard verdict skips SpringBoard's own keyboard.
+- keyfocus772: the stage takes the key window back (as on open) when a staged app's keys are hidden with another window key, and after a corner restore with the home screen in front. Never for Messages.
+- core772-off -> 4.5.771.
+
 ## 4.5.771
 - corner771: a minimised card's corner owns its touch from the minimise release: the 1 s pull728 refusal is gone, the parked corner is exempt from the after-move pull block and the switcher-swipe refusal, and a pull there is always claimed (never home / switcher). A pull during the minimise animation is claimed and its restore queued, run through the normal restore once the minimise finishes. Only the minimise drag's own touch is ignored.
 - core771-off -> 4.5.770.

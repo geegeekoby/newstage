@@ -1,0 +1,1026 @@
+build 4.5.769 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+SpringBoard: LATCHED OFF 1 feature(s): anim698 (latched 10-17 01:42:43, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-anim698-crashed to allow it)
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+SpringBoard: filter at boot ctor=[age=94s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=94s mapped bundle=com.apple.MobileSMS pid=9077 build=4.5.769] libsPlist=[age=107s empty] injectPlist=[age=107s empty]
+SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+app: com.apple.MobileSMS ctor ok
+app: com.apple.MobileSMS remote keyboard hooks are in
+[KEYS] hook search-cancel _cancelButtonPressed
+app: com.apple.MobileSMS is listening for staged keys
+SpringBoard: stayed up, boot guard cleared
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: opened the top stage
+
+--- trace ---
+=== previous session ===
+01:41:02.165 SpringBoard pid=9053 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+01:41:02.165 SpringBoard pid=9053 main | ready state=0 split=0 bottom=- top=- hover=-
+01:41:02.165 SpringBoard pid=9053 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+01:41:02.166 SpringBoard pid=9053 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+01:41:02.166 SpringBoard pid=9053 main | SpringBoard: latch749: no feature is latched off
+01:41:02.167 SpringBoard pid=9053 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+01:41:02.167 SpringBoard pid=9053 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+01:41:02.168 SpringBoard pid=9053 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+01:41:02.169 SpringBoard pid=9053 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+01:41:02.169 SpringBoard pid=9053 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+01:41:02.169 SpringBoard pid=9053 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+01:41:02.169 SpringBoard pid=9053 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+01:41:02.169 SpringBoard pid=9053 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+01:41:02.171 SpringBoard pid=9053 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+01:41:02.171 SpringBoard pid=9053 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=6s empty] injectPlist=[age=6s empty]
+01:41:04.577 SpringBoard pid=9053 main | SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 1229 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 7 latch(es) cleared: type755, sync725, src766, kb723, fast743, core747, focus755
+01:41:09.209 SpringBoard pid=9053 main | app: com.apple.MobileSMS ctor ok
+01:41:09.570 SpringBoard pid=9053 main | app: com.apple.MobileSMS remote keyboard hooks are in
+01:41:09.576 SpringBoard pid=9053 main | app: com.apple.MobileSMS is listening for staged keys
+01:41:10.286 SpringBoard pid=9053 main | SpringBoard: stayed up, boot guard cleared
+01:41:10.357 SpringBoard pid=9053 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+01:41:10.362 SpringBoard pid=9053 main | SpringBoard: phonesize675 build 4.5.769 is ON; apps: com.beeper.chat.ios (default)
+01:41:16.619 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+01:41:16.621 SpringBoard pid=9053 main | SpringBoard: phonesize680 build 4.5.769 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+01:41:16.625 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+01:41:16.629 SpringBoard pid=9053 main | SpringBoard: phonesize683 build 4.5.769 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+01:41:16.647 SpringBoard pid=9053 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 857}, {430, 75}} slot=-1 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7aa18 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964 < libdispatch+0x2320
+01:41:16.647 SpringBoard pid=9053 main | SpringBoard: com.apple.MobileSMS put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+01:41:17.233 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+01:41:17.254 SpringBoard pid=9053 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7aa18 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964 < libdispatch+0x2320
+01:41:27.541 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+01:41:27.572 SpringBoard pid=9053 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7aa18 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964 < libdispatch+0x2320
+01:41:28.564 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+01:41:29.633 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+01:41:29.661 SpringBoard pid=9053 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7aa18 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964 < libdispatch+0x2320
+01:41:30.748 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+01:41:39.074 SpringBoard | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}} x2
+01:41:39.074 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+01:41:39.102 SpringBoard pid=9053 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7aa18 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964 < libdispatch+0x2320
+01:41:48.692 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+1 repeats)
+01:41:48.721 SpringBoard pid=9053 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7aa18 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964 < libdispatch+0x2320
+01:41:49.628 SpringBoard pid=9053 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+01:41:51.116 SpringBoard pid=9053 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+01:41:55.134 SpringBoard pid=9053 main | SpringBoard: stage window moved back to the foreground scene
+01:41:55.134 SpringBoard pid=9053 main | SpringBoard: stage on screen
+01:41:55.134 SpringBoard pid=9053 main | on screen state=2 split=0 bottom=- top=- hover=-
+01:41:55.137 SpringBoard pid=9053 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+01:41:55.137 SpringBoard pid=9053 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+01:41:55.137 SpringBoard pid=9053 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:41:55.138 SpringBoard pid=9053 main | SpringBoard: opened the top stage
+01:41:57.198 SpringBoard pid=9053 main | SpringBoard: search asked try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=0 win=1 key=1 att=0 keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:41:57.199 SpringBoard pid=9053 main | SpringBoard: takeKey already try=- slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+01:41:57.199 SpringBoard pid=9053 main | search field begin editing: fr=0 win=1 key=1 att=0
+01:41:57.234 SpringBoard pid=9053 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+01:41:57.251 SpringBoard pid=9053 main | SpringBoard: UIKit willShow {{0, 631}, {430, 301}}
+01:41:57.264 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+01:41:57.267 SpringBoard pid=9053 main | SpringBoard: kb707 typing in the upper card (the stage's app search, keys (at once)): kept (already clear) 140 pt to the keyboard
+01:41:57.268 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 1 start owner=com.apple.springboard h=243
+01:41:57.268 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=1 owner=com.apple.springboard h...
+01:41:57.365 SpringBoard pid=9053 main | SpringBoard: search visible try=0 slot=0 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active fr=1 win=1 key=1 att=0 keys={{0, 631}, {430, 301}} scenes=fg-active/main,fg-active/main,fg-active/main*
+01:41:57.373 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 1 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=1 owner=com.apple.springboard h=243 | sbk...
+01:41:57.793 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 1 +0.52s keys visible? NO (Medusa hidden; Medusa layer hidden/transparent; no layer host) (owner com.apple.springboard)
+01:41:57.947 SpringBoard pid=9053 main | SpringBoard: a touch above the keys passed through local={123, 309} screen={123, 309} window={{0, 0}, {430, 932}}
+01:41:58.017 SpringBoard pid=9053 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+01:41:58.019 SpringBoard pid=9053 main | SpringBoard: kb720 search keys gone: straight to kb707 (no 705 hold on top of kb707's own wait)
+01:41:58.019 SpringBoard pid=9053 main | SpringBoard: UIKit willHide
+01:41:58.022 SpringBoard pid=9053 main | SpringBoard: kb720 layout while typing: the card stays where kb707 holds it (not re-placed)
+01:41:58.096 SpringBoard pid=9053 main | SpringBoard: putting com.beeper.chat.ios on stack slot 0
+01:41:58.097 SpringBoard pid=9053 main | launch com.beeper.chat.ios state=2 split=0 bottom=- top=- hover=-
+01:41:58.097 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+01:41:58.097 SpringBoard pid=9053 main | SpringBoard: creating app view for com.beeper.chat.ios
+01:41:58.097 SpringBoard pid=9053 main | SpringBoard: created app view for com.beeper.chat.ios
+01:41:58.102 SpringBoard pid=9053 main | scene transaction com.beeper.chat.ios actions=1
+01:41:58.103 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+01:41:58.106 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios stays running in the background
+01:41:58.106 SpringBoard pid=9053 main | SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+01:41:58.106 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios is on stack slot 0
+01:41:58.106 SpringBoard pid=9053 main | hosted com.beeper.chat.ios state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:41:58.114 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+01:41:58.115 SpringBoard pid=9053 main | SpringBoard: defer719 touch observer on the bottom card (60 s after start)
+01:41:58.115 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 1 +0.85s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=0 owner=com.apple.springboard h=243 | sbk...
+01:41:58.116 SpringBoard pid=9053 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+01:41:58.116 SpringBoard pid=9053 main | scene update begin sceneID:com.beeper.chat.ios-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+01:41:58.116 SpringBoard pid=9053 main | SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+01:41:58.117 SpringBoard pid=9053 main | SpringBoard: phonesize684 build 4.5.769 is ON: allowlisted apps without the app dylib get safe area = keyboard in the 430x931 scene (bar fixed), the card's window is fixed (no 680-682 chasing), keys at the phone bottom (keys674 NO)
+01:41:58.117 SpringBoard pid=9053 main | SpringBoard: phonesize684 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: bottom=auto (learned, default 345) top=auto (card top) mode=safe (applies at the next card open or 1 s after the keyboard goes down)
+01:41:58.117 SpringBoard pid=9053 main | SpringBoard: phonesize685 build 4.5.769 is OFF (4.5.687: 686's picture is opt-in, /var/mobile/.dynamicstage-phonesize686-on)
+01:41:58.117 SpringBoard pid=9053 main | SpringBoard: phonesize685 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=14 slack=off (684 scene) top=auto (= app y on the card top) keytop=auto (learned keyboard top, default 586) (applies at the next card open or 1.2 s after the keyboard...
+01:41:58.117 SpringBoard pid=9053 main | SpringBoard: phonesize687 build 4.5.769 is OFF (4.5.688: opt-in only, /var/mobile/.dynamicstage-phonesize687-on)
+01:41:58.117 SpringBoard pid=9053 main | SpringBoard: phonesize687 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=8 top=auto (= view) (applies at the next card open or 1.2 s after the keyboard goes down)
+01:41:58.118 SpringBoard pid=9053 main | SpringBoard: phonesize688 build 4.5.769 is ON: 684 chat geometry; default mode=684 (exact 684); opt-in modes in /var/mobile/.dynamicstage-phonesize688-tune: mode=offset|short|statusbar
+01:41:58.118 SpringBoard pid=9053 main | SpringBoard: phonesize688 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=684 view=auto (57) offset=auto shift=auto (measured) statusbar=auto (= top inset) (applies at the next card open or 1.2 s after the keyboard goes down)
+01:41:58.119 SpringBoard pid=9053 main | SpringBoard: phonesize694 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=squash view_top=59 sy=auto
+01:41:58.119 SpringBoard pid=9053 main | SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+01:41:58.119 SpringBoard pid=9053 main | SpringBoard: phonesize683 com.beeper.chat.ios not in 683 mode (off file, camera, dylib or not allowlisted): 4.5.682 window rules
+01:41:58.119 SpringBoard pid=9053 main | SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+3ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app...
+01:41:58.119 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+01:41:58.119 SpringBoard pid=9053 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+01:41:58.120 SpringBoard pid=9053 main | SpringBoard: phonesize698 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view_top=59 side_crop=0.0 zoom=off sx=auto sy=auto x_shift=0
+01:41:58.120 SpringBoard pid=9053 main | SpringBoard: phonesize698 com.beeper.chat.ios not bigger (tune gives 697's picture): 697 picture x0.9767 / y0.8691
+01:41:58.120 SpringBoard pid=9053 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+01:41:58.120 SpringBoard pid=9053 main | SpringBoard: beeper707 com.beeper.chat.ios phone-size host drawn flat: 10 nested rounded clips dropped, host clip off (the card clips), squash 0.977x0.869
+01:41:58.120 SpringBoard pid=9053 main | SpringBoard: phonesize690 tune built-in defaults | in use: on=1 strip_top=59 strip_height=68 place_y=0 touch=forward
+01:41:58.120 SpringBoard pid=9053 main | SpringBoard: phonesize690 com.beeper.chat.ios no top-bar strip (694 squash: the real top bar is shown (copied bar only with 694 mode=691 or the 694 off file))
+01:41:58.120 SpringBoard pid=9053 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {430, 931}}
+01:41:58.121 SpringBoard pid=9053 main | app-view settings update
+01:41:58.121 SpringBoard pid=9053 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = <BSMutableSettings: 0x281d87a20> { frame = NSRect: {{0, 0}, {430, 931}}; }; subclassChanges = <BSSettingsDiff: 0x280852010> { safeAreaInsetsPortrait = UIEdgeInsets: {118, 0, 345, 0}; }; }
+01:41:58.121 SpringBoard pid=9053 main | SpringBoard: appview670 held a Live app view update (phonesize675 scene size change)
+01:41:58.122 SpringBoard pid=9053 main | SpringBoard: phonesize675 com.beeper.chat.ios scene size sent t+5ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0} (phone size)
+01:41:58.122 SpringBoard pid=9053 main | SpringBoard: phonesize678 com.beeper.chat.ios pre-grown t+5ms: mapping bottom-anchored (the app's bottom above the home inset on the card's bottom edge)
+01:41:58.306 SpringBoard pid=9053 main | SpringBoard: focus748 passed a focus-only update instead of holding it (phonesize675 scene size change)
+01:41:58.306 SpringBoard pid=9053 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+01:41:58.423 SpringBoard pid=9053 main | SpringBoard: phonesize676 com.beeper.chat.ios scene read back t+306ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0}; wanted {{0, 0}, {430, 931}} (landed); host bounds {{0, 0}, {430, 931}} x0.9767 center {210, 353.27703984819732} in card {{0, 0}, {420, 458}}
+01:41:58.423 SpringBoard pid=9053 main | SpringBoard: phonesize678 com.beeper.chat.ios pre-grown scene landed t+306ms, no keyboard yet: no nudge
+01:41:58.635 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 1 ended after 1.4s: keys visible NEVER
+01:41:58.934 SpringBoard pid=9053 main | SpringBoard: host750 bottom card com.beeper.chat.ios: detached -> live
+01:41:59.618 SpringBoard pid=9053 main | SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+01:42:00.279 SpringBoard pid=9053 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+01:42:00.281 SpringBoard pid=9053 main | app-view settings update
+01:42:00.281 SpringBoard pid=9053 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280a4f1b0> { hostContextIdentifierForSnapshotting = e2b69b16; scenePresenterRenderIdentifierForSnapshotting = d9982f19d7b2f7a; }; }
+01:42:00.281 SpringBoard pid=9053 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+01:42:00.281 SpringBoard pid=9053 main | app-view settings update done
+01:42:00.721 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+01:42:03.920 SpringBoard pid=9053 main | SpringBoard: rim651 system gesture held at 332,467 (rim)
+01:42:03.922 SpringBoard pid=9053 main | SpringBoard: rim651 hit main-outer-bottom at 332,467 -> DSStageDragShellView
+01:42:04.004 SpringBoard pid=9053 main | SpringBoard: rim651 drag began at 330,472 won by main-shell-pan
+01:42:06.254 SpringBoard pid=9053 main | SpringBoard: keys674 com.beeper.chat.ios (sceneID:com.beeper.chat.ios-default) has no DynamicStage app dylib: its card's scene host (_UISceneLayerHostContainerView) asked whether it can show the app's keyboard layer, UIKit said YES, keys674 answers NO (no keyboard layer inside the card; the keys stay in SpringBoard'...
+01:42:06.255 SpringBoard pid=9053 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+01:42:06.257 SpringBoard pid=9053 main | SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 21397.854: keys stay at the phone bottom; window fixed, no 682 trigger
+01:42:06.257 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 243 at 21397.854: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+01:42:06.260 SpringBoard pid=9053 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:06.261 SpringBoard pid=9053 main | SpringBoard: core747 UIKit keyboard {{0, 631}, {430, 301}} not given to com.beeper.chat.ios: the keyboard system names no keyboard
+01:42:06.274 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 start owner=com.beeper.chat.ios h=243
+01:42:06.275 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=1 owner=com.beeper.chat.ios h=243 | sbkey...
+01:42:06.276 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 7.97s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:06.277 SpringBoard pid=9053 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 243}}
+01:42:06.277 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:06.277 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+01:42:06.281 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 689}, {430, 243}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7b9a4 < DynamicStage+0x7a9c8 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964
+01:42:06.282 SpringBoard pid=9053 main | SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 689}, {430, 243}}
+01:42:06.282 SpringBoard pid=9053 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 689}, {430, 243}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its ...
+01:42:06.282 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+01:42:06.283 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 21397.860: window fixed at app y 117..586, no move (684) (height change)
+01:42:06.284 SpringBoard pid=9053 main | SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard
+01:42:06.285 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x78ab8 < DynamicStage+0x78330 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc
+01:42:06.287 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 7.98s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:06.287 SpringBoard pid=9053 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:06.287 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:06.287 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7b9a4 < DynamicStage+0x7a9c8 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964
+01:42:06.330 SpringBoard pid=9053 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +0.05 s (see --- tree765 ---)
+01:42:06.349 SpringBoard pid=9053 main | SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+01:42:06.349 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard top 586 (keyboard note t+67ms): window fixed at app y 117..586, no move; matches the bar bottom 586 (K=345): the app's bar should not move
+01:42:06.381 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:42:06.280 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkey...
+01:42:06.381 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+01:42:06.486 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 689}, {430, 243}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7bb7c < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+01:42:06.487 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 +0.21s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip741->1@01:42:06.486 | arb on=1 owner=com.beeper.chat.ios h=288 | sbke...
+01:42:06.488 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7bb7c < libdispatch+0x3eac < libdispatch+0x7330 < libdispatch+0x1a908 < libdispatch+0x125f8 < libdispatch+0x122f4
+01:42:06.689 SpringBoard pid=9053 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +0.40 s (see --- tree765 ---)
+01:42:06.698 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 +0.42s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3684572941,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:06.598 | arb on=1 owner=com.beeper...
+01:42:06.802 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 +0.53s keys visible? YES (owner com.beeper.chat.ios)
+01:42:07.529 SpringBoard pid=9053 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +1.20 s (see --- tree765 ---)
+01:42:08.169 SpringBoard pid=9053 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:08.169 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+01:42:08.169 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (arbiter on=0 at 21399.769): window fixed, no move; settled keyboard top 586 (1821 of 1821 ms, 1 value) -> learned K 345 (was none; in use 345)
+01:42:08.172 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+01:42:08.172 SpringBoard pid=9053 main | SpringBoard: src766 down com.beeper.chat.ios frame={{0, 932}, {430, 301}} (offscreen)
+01:42:08.175 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x792e8 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+01:42:08.183 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 631}, {430, 301}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x792e8 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38
+01:42:08.193 SpringBoard pid=9053 main | SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+01:42:08.193 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 9.89s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:08.194 SpringBoard pid=9053 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:08.194 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:08.194 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (keyboard note on=0)
+01:42:08.306 SpringBoard pid=9053 main | SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+01:42:08.370 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 +2.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3684572941,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:08.284 | arb on=0 owner=com.beeper...
+01:42:08.888 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 +2.61s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:08.284 | arb on=0 owner=com.beeper.chat.ios h=288 | sbk...
+01:42:08.888 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 2 ended after 2.6s: keys visible ALL of the time
+01:42:13.189 SpringBoard pid=9053 main | SpringBoard: phonesize694 squash survived 15 s; crash latch cleared
+01:42:14.820 SpringBoard pid=9053 main | SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 21406.417: keys stay at the phone bottom; window fixed, no 682 trigger
+01:42:14.823 SpringBoard pid=9053 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:14.823 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 21406.423: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+01:42:14.828 SpringBoard pid=9053 main | SpringBoard: core747 UIKit keyboard {{0, 586}, {430, 346}} not given to com.beeper.chat.ios: the keyboard system names no keyboard (previous burst: +9 repeats)
+01:42:14.843 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 start owner=com.beeper.chat.ios h=288
+01:42:14.844 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:08.284 | arb on=1 owner=com.beeper.chat.ios h=288 | sbk...
+01:42:14.844 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 16.54s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:14.844 SpringBoard pid=9053 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:14.844 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:14.845 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+01:42:14.849 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7b9a4 < DynamicStage+0x7a9c8 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964
+01:42:14.850 SpringBoard pid=9053 main | SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+0ms frame {{0, 644}, {430, 288}}
+01:42:14.850 SpringBoard pid=9053 main | SpringBoard: keys672 com.beeper.chat.ios keyboard up {{0, 644}, {430, 288}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0} orientation=1 (stage wants frame={{0, 0}, {430, 931}} safeArea={118, 0, 345, 0}); has NO DynamicStage app dylib: 4.5.674 keys674 keeps its ...
+01:42:14.855 SpringBoard pid=9053 main | SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard
+01:42:14.897 SpringBoard pid=9053 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 2 at +0.05 s (see --- tree765 ---)
+01:42:14.912 SpringBoard pid=9053 main | SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+01:42:14.912 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard top 586 (keyboard note t+63ms): window fixed at app y 117..586, no move; matches the bar bottom 586 (K=345): the app's bar should not move
+01:42:14.946 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:42:14.847 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkey...
+01:42:15.053 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:14.956 | arb on=1 owner=com.beeper...
+01:42:15.159 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +0.32s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:15.054 | arb on=1 owner=com.beeper....
+01:42:15.267 SpringBoard pid=9053 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 2 at +0.40 s (see --- tree765 ---)
+01:42:15.372 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +0.53s keys visible? YES (owner com.beeper.chat.ios)
+01:42:15.599 SpringBoard pid=9053 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:15.600 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+01:42:15.600 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (arbiter on=0 at 21407.199): window fixed, no move; settled keyboard top 586 (687 of 687 ms, 1 value) -> learned K 345 (was 345; in use 345)
+01:42:15.603 SpringBoard pid=9053 main | SpringBoard: src766 down com.beeper.chat.ios frame={{0, 932}, {430, 346}} (offscreen; 3 more quiet)
+01:42:15.605 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x792e8 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38 (+1 repeats)
+01:42:15.624 SpringBoard pid=9053 main | SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+01:42:15.624 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 17.32s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:15.625 SpringBoard pid=9053 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:15.625 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:15.625 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (keyboard note on=0)
+01:42:15.679 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +0.84s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@01:42:15.603 | arb on=0 owner=com.beeper.chat.ios h=288 | s...
+01:42:15.712 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+01:42:15.732 SpringBoard pid=9053 main | SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+01:42:15.780 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +0.94s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:15.722 | arb on=0 owner=com.beeper...
+01:42:16.085 SpringBoard pid=9053 main | SpringBoard: tree766 skipped show 2 +1.20 s dump: the keyboard already went off
+01:42:16.190 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 +1.35s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:15.722 | arb on=0 owner=com.beeper.chat.ios h=288 | sbk...
+01:42:16.190 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 3 ended after 1.3s: keys visible ALL of the time
+01:42:16.333 SpringBoard pid=9053 main | SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 21407.933: keys stay at the phone bottom; window fixed, no 682 trigger
+01:42:16.340 SpringBoard pid=9053 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:16.341 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 21407.940: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+01:42:16.344 SpringBoard pid=9053 main | SpringBoard: core747 UIKit keyboard {{0, 586}, {430, 346}} not given to com.beeper.chat.ios: the keyboard system names no keyboard (previous burst: +9 repeats)
+01:42:16.361 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 start owner=com.beeper.chat.ios h=288
+01:42:16.361 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:15.722 | arb on=1 owner=com.beeper.chat.ios h=288 | sbk...
+01:42:16.361 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 18.06s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:16.362 SpringBoard pid=9053 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:16.362 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:16.362 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7b9a4 < DynamicStage+0x7a9c8 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964
+01:42:16.363 SpringBoard pid=9053 main | SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+1513ms frame {{0, 644}, {430, 288}}
+01:42:16.365 SpringBoard pid=9053 main | SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard
+01:42:16.416 SpringBoard pid=9053 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 3 at +0.05 s (see --- tree765 ---)
+01:42:16.426 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard top 586 (keyboard note t+1576ms): window fixed at app y 117..586, no move; matches the bar bottom 586 (K=345): the app's bar should not move
+01:42:16.467 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:16.362 | arb on=1 owner=com.beeper.chat.ios h=288 | sbke...
+01:42:16.467 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+01:42:16.569 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2388469407,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:16.569 | arb on=1 owner=com.beeper....
+01:42:16.781 SpringBoard pid=9053 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 3 at +0.40 s (see --- tree765 ---)
+01:42:16.860 SpringBoard pid=9053 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:16.861 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+01:42:16.865 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (arbiter on=0 at 21408.460): window fixed, no move; settled keyboard top 586 (440 of 440 ms, 1 value) -> learned K 345 (was 345; in use 345)
+01:42:16.872 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x792e8 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38 (+3 repeats)
+01:42:16.893 SpringBoard pid=9053 main | SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+01:42:16.893 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 18.59s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:16.894 SpringBoard pid=9053 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:16.894 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:16.894 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (keyboard note on=0)
+01:42:16.897 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 +0.54s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2388469407,2050936788] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@01:42:16.869 | arb on=0 owner=com.beeper.chat.ios h=288 | s...
+01:42:16.976 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+01:42:17.003 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 +0.64s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2388469407,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:16.985 | arb on=0 owner=com.beeper...
+01:42:17.007 SpringBoard pid=9053 main | SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+01:42:17.416 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 +1.05s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:16.985 | arb on=0 owner=com.beeper.chat.ios h=288 | sbk...
+01:42:17.416 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 4 ended after 1.1s: keys visible not judged (off within 0.5 s)
+01:42:17.599 SpringBoard pid=9053 main | SpringBoard: phonesize675 phonesize684 com.beeper.chat.ios keys674 layer ask at 21409.198: keys stay at the phone bottom; window fixed, no 682 trigger
+01:42:17.600 SpringBoard pid=9053 main | SpringBoard: tree766 skipped show 3 +1.20 s dump: the keyboard already went off
+01:42:17.605 SpringBoard pid=9053 bg | arbiter on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:17.605 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios arbiter on=1 height 288 at 21409.205: window fixed at app y 117..586, no move (684); keys at the phone bottom (keys674 NO)
+01:42:17.609 SpringBoard pid=9053 main | SpringBoard: core747 UIKit keyboard {{0, 586}, {430, 346}} not given to com.beeper.chat.ios: the keyboard system names no keyboard (previous burst: +9 repeats)
+01:42:17.625 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 start owner=com.beeper.chat.ios h=288
+01:42:17.626 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:16.985 | arb on=1 owner=com.beeper.chat.ios h=288 | sbk...
+01:42:17.626 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=1 key window=SBHomeScreenWindow last focus update: 19.32s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:17.626 SpringBoard pid=9053 main | keyboard note on=1 src=com.beeper.chat.ios frame={{0, 0}, {430, 288}}
+01:42:17.626 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=1 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:17.627 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 644}, {430, 288}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x7b9a4 < DynamicStage+0x7a9c8 < DynamicStage+0x7a050 < DynamicStage+0x189c4 < DynamicStage+0x8214 < DynamicStage+0x18964
+01:42:17.627 SpringBoard pid=9053 main | SpringBoard: phonesize676 com.beeper.chat.ios first keyboard note t+2777ms frame {{0, 644}, {430, 288}}
+01:42:17.632 SpringBoard pid=9053 main | SpringBoard: kb707 typing in the upper card (com.beeper.chat.ios, keys (at once)): kept (already clear) 123 pt to the keyboard
+01:42:17.690 SpringBoard pid=9053 main | SpringBoard: phonesize675 com.beeper.chat.ios keyboard while typing: note {{0, 644}, {430, 288}}, stage keys {{0, 586}, {430, 346}} -> keyboard top y=586
+01:42:17.690 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard top 586 (keyboard note t+2840ms): window fixed at app y 117..586, no move; matches the bar bottom 586 (K=345): the app's bar should not move
+01:42:17.731 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:17.627 | arb on=1 owner=com.beeper.chat.ios h=288 | sbke...
+01:42:17.731 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+01:42:17.833 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[827550176,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:17.832 | arb on=1 owner=com.beeper.c...
+01:42:18.107 SpringBoard pid=9053 bg | arbiter on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:18.108 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (arbiter on=0)
+01:42:18.108 SpringBoard pid=9053 main | SpringBoard: phonesize684 com.beeper.chat.ios keyboard down (arbiter on=0 at 21409.707): window fixed, no move; settled keyboard top 586 (418 of 418 ms, 1 value) -> learned K 345 (was 345; in use 345)
+01:42:18.114 SpringBoard pid=9053 main | SpringBoard: src746 up com.beeper.chat.ios frame={{0, 586}, {430, 346}} visible={{0, 586}, {430, 346}} slot=0 sinceHide=-1.00 via DynamicStage+0x841e0 < DynamicStage+0x792e8 < CoreFoundation+0x37590 < CoreFoundation+0xdb828 < CoreFoundation+0xbe8b8 < CoreFoundation+0x4bafc < Foundation+0x5cd38 (+3 repeats)
+01:42:18.137 SpringBoard pid=9053 main | SpringBoard: type755 com.beeper.chat.ios keyboard off: no staged app typing
+01:42:18.137 SpringBoard pid=9053 main | SpringBoard: focus755 com.beeper.chat.ios keyboard on=0 key window=SBHomeScreenWindow last focus update: 19.83s ago passed keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+01:42:18.138 SpringBoard pid=9053 main | keyboard note on=0 src=com.beeper.chat.ios frame={{0, 0}, {0, 0}}
+01:42:18.138 SpringBoard pid=9053 main | keyboard com.beeper.chat.ios on=0 state=2 split=0 bottom=com.beeper.chat.ios top=- hover=-
+01:42:18.138 SpringBoard pid=9053 main | SpringBoard: fast743 keys hiding (keyboard note on=0)
+01:42:18.145 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 +0.52s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[827550176,2050936788] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@01:42:18.112 | arb on=0 owner=com.beeper.chat.ios h=288 | sb...
+01:42:18.223 SpringBoard pid=9053 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+01:42:18.248 SpringBoard pid=9053 main | SpringBoard: kb707 typing ended (keyboard dismissed (sync725)): cards spring back
+01:42:18.249 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 +0.62s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[827550176,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:18.235 | arb on=0 owner=com.beeper....
+01:42:18.657 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 +1.03s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:18.235 | arb on=0 owner=com.beeper.chat.ios h=288 | sbk...
+01:42:18.657 SpringBoard pid=9053 main | SpringBoard: kbvis768 show 5 ended after 1.0s: keys visible not judged (off within 0.5 s)
+01:42:19.796 SpringBoard pid=9053 main | SpringBoard: rim651 system gesture held at 0,240 (rim)
+01:42:19.798 SpringBoard pid=9053 main | SpringBoard: a touch above the keys passed through local={0.16666666666666666, 239.66666666666666} screen={0.16666666666666666, 239.66666666666666} window={{0, 0}, {430, 932}}
+01:42:19.799 SpringBoard pid=9053 main | SpringBoard: rim651 hit main-outer-left at 0,240 -> DSStageDragShellView
+01:42:19.896 SpringBoard pid=9053 main | SpringBoard: rim651 drag began at 2,246 won by main-shell-pan
+01:42:20.766 SpringBoard pid=9053 main | SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: corner swipe v=(1677,2937) moved (293,625) released at 295,871
+01:42:20.770 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios stays running in the background
+01:42:20.796 SpringBoard pid=9053 main | SpringBoard: bg719 holding com.beeper.chat.ios pid 9095 (audio, stage hold)
+01:42:21.304 SpringBoard pid=9053 main | SpringBoard: phonesize696 fit survived 15 s; crash latch cleared
+01:42:22.016 SpringBoard pid=9053 main | SpringBoard: corner pull picked up from the system gesture
+01:42:22.073 SpringBoard pid=9053 main | SpringBoard: host750 bottom card com.beeper.chat.ios: live -> minimised
+01:42:22.096 SpringBoard pid=9053 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 340x361 shows the real app y 59..586 at x0.7901 (full width) / y0.6842; app y 586 on the card bottom (bar line, as 684); top inset 130, scene/keyboard 684
+01:42:22.097 SpringBoard pid=9053 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.7901 (pre-grown, bottom-anchored): visible app y 130..586 in card 340x361; side crop 0.0 pt each side
+01:42:22.097 SpringBoard pid=9053 main | SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {130, 0, 345, 0}, squash placed on the first frame (card 340x361), no resize
+01:42:22.580 SpringBoard pid=9053 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+01:42:22.580 SpringBoard pid=9053 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+01:42:22.815 SpringBoard pid=9053 main | SpringBoard: rim651 system gesture held at 51,462 (rim)
+01:42:22.820 SpringBoard pid=9053 main | SpringBoard: rim651 hit main-outer-top at 51,462 -> DSStageDragShellView
+01:42:22.915 SpringBoard pid=9053 main | SpringBoard: rim651 drag began at 63,466 won by main-shell-pan
+01:42:23.034 SpringBoard pid=9053 main | SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: corner swipe v=(2249,3427) moved (139,198) released at 200,664
+01:42:23.658 SpringBoard pid=9053 main | SpringBoard: restore726 corner pull refused at 409,909: pull728: within 1 s of a drag-minimise release (primary parked=1 right, second parked=0 right)
+01:42:23.659 SpringBoard pid=9053 main | SpringBoard: tucking the open stage for home
+01:42:23.660 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios is the only minimized app
+01:42:23.662 SpringBoard pid=9053 main | SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+01:42:23.662 SpringBoard pid=9053 main | SpringBoard: home gesture began, stage minimized
+01:42:23.729 SpringBoard pid=9053 main | SpringBoard: held a minimized stage scene update so another app can open
+01:42:23.732 SpringBoard pid=9053 main | SpringBoard: home gesture ended
+01:42:24.245 SpringBoard pid=9053 main | SpringBoard: corner pull picked up from the system gesture
+01:42:24.311 SpringBoard pid=9053 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 272x278 shows the real app y 59..586 at x0.6317 (full width) / y0.5272; app y 586 on the card bottom (bar line, as 684); top inset 147, scene/keyboard 684
+01:42:24.311 SpringBoard pid=9053 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.6317 (pre-grown, bottom-anchored): visible app y 146..586 in card 272x278; side crop 0.0 pt each side
+01:42:24.311 SpringBoard pid=9053 main | SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {147, 0, 345, 0}, squash placed on the first frame (card 272x278), no resize
+01:42:24.612 SpringBoard pid=9053 main | SpringBoard: parked apps stopped following the home transition
+01:42:25.013 SpringBoard pid=9053 main | SpringBoard: rim651 drag began at 69,467 won by main-shell-pan
+01:42:25.080 SpringBoard pid=9053 main | SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: corner swipe v=(2278,3239) moved (124,182) released at 193,649
+01:42:25.129 SpringBoard pid=9053 main | SpringBoard: spam700 ignored a stale restore completion (#10): the card was minimised again
+01:42:25.608 SpringBoard pid=9053 main | SpringBoard: restore726 corner pull refused at 410,906: pull728: within 1 s of a drag-minimise release (primary parked=1 right, second parked=0 right)
+01:42:25.608 SpringBoard pid=9053 main | SpringBoard: tucking the open stage for home
+01:42:25.608 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios is the only minimized app
+01:42:25.610 SpringBoard pid=9053 main | SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+01:42:25.610 SpringBoard pid=9053 main | SpringBoard: home gesture began, stage minimized
+01:42:25.717 SpringBoard pid=9053 main | SpringBoard: home gesture ended
+01:42:26.108 SpringBoard pid=9053 main | SpringBoard: corner pull picked up from the system gesture
+01:42:26.189 SpringBoard pid=9053 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 385x416 shows the real app y 59..586 at x0.8956 (full width) / y0.7886; app y 586 on the card bottom (bar line, as 684); top inset 122, scene/keyboard 684
+01:42:26.189 SpringBoard pid=9053 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.8956 (pre-grown, bottom-anchored): visible app y 122..586 in card 385x416; side crop 0.0 pt each side
+01:42:26.602 SpringBoard pid=9053 main | SpringBoard: parked apps stopped following the home transition
+01:42:26.664 SpringBoard pid=9053 main | SpringBoard: host750 bottom card com.beeper.chat.ios: minimised -> live
+01:42:26.819 SpringBoard pid=9053 main | SpringBoard: rim651 drag began at 83,472 won by main-shell-pan
+01:42:26.974 SpringBoard pid=9053 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+01:42:26.975 SpringBoard pid=9053 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+01:42:27.235 SpringBoard pid=9053 main | SpringBoard: rim651 system gesture held at 74,462 (rim)
+01:42:27.237 SpringBoard pid=9053 main | SpringBoard: rim651 hit main-outer-top at 74,462 -> DSStageDragShellView
+01:42:27.302 SpringBoard pid=9053 main | SpringBoard: rim651 drag began at 94,483 won by main-shell-pan
+01:42:27.669 SpringBoard pid=9053 main | SpringBoard: rim651 system gesture held at 60,460 (rim)
+01:42:28.623 SpringBoard pid=9053 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+01:42:28.631 SpringBoard pid=9053 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+01:42:29.295 SpringBoard pid=9053 main | SpringBoard: rim651 drag began at 80,468 won by main-shell-pan
+01:42:29.372 SpringBoard pid=9053 main | SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: corner swipe v=(2196,2438) moved (117,134) released at 197,602
+01:42:29.737 SpringBoard pid=9053 main | SpringBoard: host750 bottom card com.beeper.chat.ios: live -> minimised
+01:42:29.974 SpringBoard pid=9053 main | SpringBoard: restore726 corner pull refused at 412,907: pull728: within 1 s of a drag-minimise release (primary parked=1 right, second parked=0 right)
+01:42:29.974 SpringBoard pid=9053 main | SpringBoard: tucking the open stage for home
+01:42:29.974 SpringBoard pid=9053 main | SpringBoard: com.beeper.chat.ios is the only minimized app
+01:42:29.977 SpringBoard pid=9053 main | SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+01:42:29.977 SpringBoard pid=9053 main | SpringBoard: home gesture began, stage minimized
+01:42:30.536 SpringBoard pid=9053 main | SpringBoard: home gesture ended
+01:42:30.894 SpringBoard pid=9053 main | SpringBoard: corner pull picked up from the system gesture
+01:42:31.418 SpringBoard pid=9053 main | SpringBoard: parked apps stopped following the home transition
+01:42:32.159 SpringBoard pid=9053 main | SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {118, 0, 345, 0}, squash placed on the first frame (card 420x458), no resize
+01:42:32.831 SpringBoard pid=9053 main | SpringBoard: host750 bottom card com.beeper.chat.ios: minimised -> live
+01:42:32.870 SpringBoard pid=9053 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+01:42:33.808 SpringBoard | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}} x2
+01:42:33.808 SpringBoard pid=9053 main | app-view settings update
+01:42:33.809 SpringBoard pid=9053 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281550240> { targetOfEventDeferringEnvironments = (empty); }; }
+01:42:33.812 SpringBoard pid=9053 main | SpringBoard: focus755 empty-list focus update for sceneID:com.beeper.chat.ios-default passed (-)
+01:42:33.812 SpringBoard pid=9053 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+01:42:43.349 SpringBoard pid=9114 main | SpringBoard: call653 guard listening (call screen containment is off)
+01:42:43.349 SpringBoard pid=9114 main | SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var/mobile/.dynamicstage-keys674-all)
+
+=== this session ===
+(trace766: merged SpringBoard + MobileSMS.log)
+01:42:43.490 SpringBoard pid=9114 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+01:42:43.490 SpringBoard pid=9114 main | ready state=0 split=0 bottom=- top=- hover=-
+01:42:43.490 SpringBoard pid=9114 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+01:42:43.491 SpringBoard pid=9114 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+01:42:43.491 SpringBoard pid=9114 main | SpringBoard: LATCHED OFF 1 feature(s): anim698 (latched 10-17 01:42:43, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-anim698-crashed to allow it)
+01:42:43.493 SpringBoard pid=9114 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+01:42:43.493 SpringBoard pid=9114 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+01:42:43.494 SpringBoard pid=9114 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+01:42:43.494 SpringBoard pid=9114 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+01:42:43.495 SpringBoard pid=9114 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+01:42:43.495 SpringBoard pid=9114 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+01:42:43.495 SpringBoard pid=9114 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+01:42:43.495 SpringBoard pid=9114 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+01:42:43.496 SpringBoard pid=9114 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+01:42:43.497 SpringBoard pid=9114 main | SpringBoard: filter at boot ctor=[age=94s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=94s mapped bundle=com.apple.MobileSMS pid=9077 build=4.5.769] libsPlist=[age=107s empty] injectPlist=[age=107s empty]
+01:42:46.080 SpringBoard pid=9114 main | SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+01:42:47.188 SpringBoard pid=9114 main | app: com.apple.MobileSMS ctor ok
+01:42:47.189 MobileSMS pid=9128 main | app ctor reason=0 bundle=com.apple.MobileSMS
+01:42:47.761 MobileSMS pid=9128 main | layout667 com.apple.MobileSMS camera preview watch on (once a second while on a card)
+01:42:47.761 MobileSMS pid=9128 main | camera658 app capture hooks in, multitask switch present
+01:42:47.764 SpringBoard pid=9114 main | app: com.apple.MobileSMS remote keyboard hooks are in
+01:42:47.766 SpringBoard pid=9114 main | app: com.apple.MobileSMS is listening for staged keys
+01:42:51.544 SpringBoard pid=9114 main | SpringBoard: stayed up, boot guard cleared
+01:42:53.988 SpringBoard pid=9114 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+01:43:05.171 SpringBoard pid=9114 main | SpringBoard: stage on screen
+01:43:05.171 SpringBoard pid=9114 main | on screen state=2 split=0 bottom=- top=- hover=-
+01:43:05.172 SpringBoard pid=9114 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+01:43:05.172 SpringBoard pid=9114 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+01:43:05.173 SpringBoard pid=9114 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+01:43:05.173 SpringBoard pid=9114 main | SpringBoard: opened the top stage
+
+--- crash ---
+Dynamic Stage crash log
+Build 4.5.769
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.769
+when: 1792154553
+signal: SIGTRAP
+session: A096CF14-AEF9-4DDB-BC1E-341320F0E05F
+backtrace:
+  0x7a288002233af214
+  0xbb70000205d7ffa8
+  0x522d80010b6423e8
+  0x335e000233478648
+  0xc45d000233475150
+  0xcf1b000233474f5c
+  0x8c6f800205d060e0
+  0xf9208001e0a059dc
+  0x992b8001e09f9754
+  0x8c640001e0a0a37c
+  0x5f7e0001e09f3f14
+  0x30790001cacf0500
+  0x536d0001caced078
+  0x4d568001cace7634
+  0xff710001e09ef4fc
+  0x934f8001e09f2968
+--- recent stage lines ---
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 385x416 shows the real app y 59..586 at x0.8956 (full width) / y0.7886; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.8956 (pre-grown, bottom-anchored): visible app y 122..586 in card 385x416; side crop 0.0 pt each side
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: host750 bottom card com.beeper.chat.ios: minimised -> live
+SpringBoard: rim651 drag began at 83,472 won by main-shell-pan
+SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684);
+SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+SpringBoard: rim651 system gesture held at 74,462 (rim)
+SpringBoard: rim651 hit main-outer-top at 74,462 -> DSStageDragShellView
+SpringBoard: rim651 drag began at 94,483 won by main-shell-pan
+SpringBoard: rim651 system gesture held at 60,460 (rim)
+SpringBoard: rim651 drag began at 80,468 won by main-shell-pan
+SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: corner swipe v=(2196,2438) moved (117,134) released at 197,602
+SpringBoard: host750 bottom card com.beeper.chat.ios: live -> minimised
+SpringBoard: restore726 corner pull refused at 412,907: pull728: within 1 s of a drag-minimise release (primary parked=1 right, second parked=0 right)
+SpringBoard: tucking the open stage for home
+SpringBoard: com.beeper.chat.ios is the only minimized app
+SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+SpringBoard: home gesture began, stage minimized
+SpringBoard: home gesture ended
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {118, 0, 345, 0}, squash placed on the first frame (card 420x458), no resize
+SpringBoard: host750 bottom card com.beeper.chat.ios: minimised -> live
+SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281550240> { targetOfEventDeferringEnviron
+SpringBoard: focus755 empty-list focus update for sceneID:com.beeper.chat.ios-default passed (-)
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+=== end ===
+
+--- diagnostics ---
+
+--- tree765 ---
+=== tree765 build 4.5.769 show 1 at +0.05 s (10-17 01:42:06.329) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=3534C617-4137-4D60-9A1E-45ED2AB9A7D1 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.769 show 1 at +0.40 s (10-17 01:42:06.688) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+      _UISceneLayerHostContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+        _UITouchPassthroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=3684572941
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=2050936788
+WINDOW UITextEffectsWindow scene=3534C617-4137-4D60-9A1E-45ED2AB9A7D1 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.769 show 1 at +1.20 s (10-17 01:42:07.528) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+      _UISceneLayerHostContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+        _UITouchPassthroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=3684572941
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=2050936788
+WINDOW UITextEffectsWindow scene=3534C617-4137-4D60-9A1E-45ED2AB9A7D1 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+1.20 s): 7 window(s) ===
+=== tree765 build 4.5.769 show 2 at +0.05 s (10-17 01:42:14.896) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=3534C617-4137-4D60-9A1E-45ED2AB9A7D1 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.769 show 2 at +0.40 s (10-17 01:42:15.264) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+      _UISceneLayerHostContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+        _UITouchPassthroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=2455455593
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=2050936788
+WINDOW UITextEffectsWindow scene=3534C617-4137-4D60-9A1E-45ED2AB9A7D1 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.769 show 3 at +0.05 s (10-17 01:42:16.414) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=3534C617-4137-4D60-9A1E-45ED2AB9A7D1 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.769 show 3 at +0.40 s (10-17 01:42:16.778) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+      _UISceneLayerHostContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+        _UITouchPassthroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=2388469407
+          _UIContextLayerHostView hid=0 a=1.00 f=0,0 430x932 L=CALayerHost lh=0 op=1.00 ctx=2050936788
+WINDOW UITextEffectsWindow scene=3534C617-4137-4D60-9A1E-45ED2AB9A7D1 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,586 430x346 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,586 430x346 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,586 430x288 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+0.40 s): 7 window(s) ===
+
+--- kbvis768 ---
+01:41:57.268 kbvis768 show 1 start owner=com.apple.springboard h=243
+01:41:57.268 kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+01:41:57.374 kbvis768 show 1 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+01:41:57.793 kbvis768 show 1 +0.52s keys visible? NO (Medusa hidden; Medusa layer hidden/transparent; no layer host) (owner com.apple.springboard)
+01:41:58.116 kbvis768 show 1 +0.85s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+01:41:58.636 kbvis768 show 1 ended after 1.4s: keys visible NEVER
+01:42:06.275 kbvis768 show 2 start owner=com.beeper.chat.ios h=243
+01:42:06.275 kbvis768 show 2 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:41:57.267 | arb on=1 owner=com.beeper.chat.ios h=243 | sbkeys={{0, 631}, {430, 301}}
+01:42:06.382 kbvis768 show 2 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:42:06.280 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:06.487 kbvis768 show 2 +0.21s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip741->1@01:42:06.486 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:06.698 kbvis768 show 2 +0.42s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3684572941,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:06.598 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:06.802 kbvis768 show 2 +0.53s keys visible? YES (owner com.beeper.chat.ios)
+01:42:08.370 kbvis768 show 2 +2.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3684572941,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:08.284 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:08.889 kbvis768 show 2 +2.61s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:08.284 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:08.889 kbvis768 show 2 ended after 2.6s: keys visible ALL of the time
+01:42:14.843 kbvis768 show 3 start owner=com.beeper.chat.ios h=288
+01:42:14.844 kbvis768 show 3 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:08.284 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:14.947 kbvis768 show 3 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@01:42:14.847 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:15.054 kbvis768 show 3 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:14.956 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:15.159 kbvis768 show 3 +0.32s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:15.054 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:15.372 kbvis768 show 3 +0.53s keys visible? YES (owner com.beeper.chat.ios)
+01:42:15.680 kbvis768 show 3 +0.84s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@01:42:15.603 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:15.781 kbvis768 show 3 +0.94s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2455455593,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:15.722 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:16.191 kbvis768 show 3 +1.35s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:15.722 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:16.191 kbvis768 show 3 ended after 1.3s: keys visible ALL of the time
+01:42:16.361 kbvis768 show 4 start owner=com.beeper.chat.ios h=288
+01:42:16.362 kbvis768 show 4 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:15.722 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:16.468 kbvis768 show 4 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:16.362 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:16.570 kbvis768 show 4 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2388469407,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:16.569 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:16.897 kbvis768 show 4 +0.54s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2388469407,2050936788] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@01:42:16.869 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:17.003 kbvis768 show 4 +0.64s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2388469407,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:16.985 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:17.417 kbvis768 show 4 +1.05s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:16.985 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:17.417 kbvis768 show 4 ended after 1.1s: keys visible not judged (off within 0.5 s)
+01:42:17.626 kbvis768 show 5 start owner=com.beeper.chat.ios h=288
+01:42:17.626 kbvis768 show 5 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:16.985 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:17.732 kbvis768 show 5 +0.11s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:17.627 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:17.833 kbvis768 show 5 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[827550176,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@01:42:17.832 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+01:42:18.146 kbvis768 show 5 +0.52s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[827550176,2050936788] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@01:42:18.112 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:18.249 kbvis768 show 5 +0.62s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[827550176,2050936788] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:18.235 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:18.658 kbvis768 show 5 +1.03s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@01:42:18.235 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+01:42:18.658 kbvis768 show 5 ended after 1.0s: keys visible not judged (off within 0.5 s)

@@ -1,3 +1,6 @@
+## 4.5.780
+- 778 + backspace779 only (held delete repeats via stand-in filler; delete log gap=ms). tapout779 and log779 removed (778 logging restored). Off: backspace779-off; core780-off = 778.
+
 ## 4.5.779
 - backspace779: held delete repeats in staged apps (SpringBoard stand-in field keeps filler text so UIKit's delete repeat continues; was emptied after every key).
 - tapout779: in staged Messages a message-box resign during a user touch (transcript tap, bubble, strip, transcript drag) is a real dismissal: wanted cleared, resign passes, SpringBoard hides the keys in sync.

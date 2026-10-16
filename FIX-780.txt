@@ -1,0 +1,4 @@
+4.5.780 = 778 (c3addc6) + backspace779 only.
+In: DSStagedKeyboardField filler (DSStageManager.m), staged key delete gap=ms.
+Out: tapout779 (UIApplication sendEvent hook, touch release), log779 (app/Tweak.xm restored to 778 byte-for-byte).
+Off: backspace779-off; core780-off returns to 778.

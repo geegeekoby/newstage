@@ -1,3 +1,7 @@
+## 4.5.777
+- caret777: staged Messages keeps the message box focused (blue caret stays) when UIKit resigns it for a key-window change while Messages owns the staged keys. Real dismissals still resign.
+- resign777 (log only): every text become/resign in staged apps with stack, key window, app/scene state, caret views, decision.
+
 ## 4.5.776
 - keep776: prevent SpringBoard hiding the staged keyboard window (Medusa) while a staged app owns the keys.
 

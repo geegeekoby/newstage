@@ -1,3 +1,6 @@
+## 4.5.774
+- name774 PAC-strip fix; register774 read-only focus/layout probe (no registration yet).
+
 ## 4.5.773
 - name773 (log only): the hide stack's SpringBoard / SpringBoardFoundation frames named as -[Class selector]+offset.
 - scene773 (log only): SpringBoard-sent scene updates in the 0.3 s before a keyboard hide.

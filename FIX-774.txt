@@ -1,0 +1,4 @@
+4.5.774
+- name774: strips the PAC signature from method IMPs before comparing addresses, so hide stacks resolve to class/method names. Off: /var/mobile/.dynamicstage-name774-off (crash latch)
+- register774: a READ-ONLY runtime probe. It logs the keyboard-focus coordinator/target, the display-layout element classes, selectors and ivars at each Medusa hide and at keyboard show start. It does NOT register staged scenes yet. Off: /var/mobile/.dynamicstage-register774-off (crash latch)
+- core774-off returns to 773 behaviour. Messages stays excluded. No status-bar writes. Medusa is not forced visible.

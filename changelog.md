@@ -1,3 +1,7 @@
+## 4.5.771
+- corner771: a minimised card's corner owns its touch from the minimise release: the 1 s pull728 refusal is gone, the parked corner is exempt from the after-move pull block and the switcher-swipe refusal, and a pull there is always claimed (never home / switcher). A pull during the minimise animation is claimed and its restore queued, run through the normal restore once the minimise finishes. Only the minimise drag's own touch is ignored.
+- core771-off -> 4.5.770.
+
 ## 4.5.770
 - gest770 (log only): edge pulls (ours vs system) and their end, switcher window show/hide, corner-grab disabled/enabled after a minimise (pull728), app-view state on every minimise/restore, first Live update after a restore, taps outside the cards. Never for Messages.
 - core770-off -> 4.5.769.

@@ -1,0 +1,6 @@
+DynamicStage 4.5.771 - corner771
+
+Parked corner owns its touch from the minimise release (no pull728 1 s timer,
+no _ignoreSystemPullUntil, no switcher-swipe refusal there); pulls during the
+minimise animation are claimed and the restore queued through the normal path.
+Off: corner771-off (latch corner771); core771-off -> 4.5.770.

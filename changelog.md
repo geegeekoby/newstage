@@ -1,3 +1,10 @@
+## 4.5.791
+- reopen791: the reopen text-changed signal is only sent when the message box is not focused (fr=0); skipped at draft auto-focus (fr=1), which is what dropped the app strip (Highb 07:53:51.322 -> 51.353 bar 81 -> 44). Off: /var/mobile/.dynamicstage-reopen791-off
+- log791: strip790/entry781/focus791/reopen79x lines skip the trace burst cap; activeKeyboardHeight logs its type when it can't be read; one compact focus791 line names who focused/resigned the box (replaces 16 stack lines). Off: -log791-off
+- Re-tap with long draft: become at 12.359 was called by UIKit (no DS frame above our hook), not our code; no fix, logged.
+- flicker791 skipped: no verified way to stop UIKit's dismiss before it starts.
+- core791-off returns to 790.
+
 ## 4.5.790
 caret790: caret788 (caret778 box-kept-focused) is opt-in again: /var/mobile/.dynamicstage-caret788-on. Shush's: with the box focused the first key collapsed CKMessageEntryView 81 -> 44 (07:42:23.760) and the strip was gone on later lines (07:41:53.461, 56.957, 59.976, 07:42:21.872); isKeyboardVisible=YES (07:42:17.375) did not stop it. 784 (box not focused, fr=0) kept 81 + strip on every key (Hahahah 07:00:56.373-07:01:01.919). Off -caret790-off (= 789, caret788 on).
 reopen790: with caret off, reopen789's text-changed signal (Messages' relayout that unparks the input container) runs at draft auto-focus and chat didAppear even if the box is not focused. Off -reopen790-off.

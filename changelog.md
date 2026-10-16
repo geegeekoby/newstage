@@ -1,3 +1,7 @@
+## 4.5.768
+- kbvis768 (log only): every keyboard show with the stage on screen is sampled until the keys go off: Medusa keyboard window, layer hosts, neighbouring windows, stage window, keys759 raise, arbiter, keyboard frame, and a "keys visible?" verdict ("--- kbvis768 ---" in Copy Logs).
+- core768-off -> 4.5.767.
+
 ## 4.5.767
 - corner767: updates held for a corner restore are dropped, not replayed (Resssj/Shdhb SIGTRAPs); corner hold window 2.5 s.
 - prev767: a respring no longer deletes the previous session's trace.

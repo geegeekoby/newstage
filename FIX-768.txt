@@ -1,0 +1,18 @@
+DynamicStage 4.5.768 — kbvis768 keyboard visibility diagnostics (log only)
+
+Cbskh (767): the last keyboard show (Beeper, bottom card, 01:20:09.2 NZDT)
+logged exactly like the visible ones, and there was no tree765 data for it.
+SpringBoard then hit SIGTRAP at 01:20:10.6 (crash when=01:20:10).
+
+kbvis768: on every keyboard show while the stage is on screen, samples every
+0.1 s (0.25 s after 1.5 s) until 0.5 s after the keyboard goes off (max 90 s).
+It logs only changes in: the SBMedusaHostedKeyboardWindow (level, hidden,
+alpha, frame, scene, layer hidden/opacity, CALayerHost count + context ids,
+host hidden up the chain), the nearest visible windows above/below it, the
+stage window, the last keys759 raise (raised/skip740/skip741/trailing ->
+result @time), the arbiter (on, owner, height) and SpringBoard's visible
+keyboard frame. It also logs a "keys visible? YES/NO (reasons)" line whenever
+the verdict changes and an end line (ALL / SOME / NEVER of the time).
+Written to the trace and to its own file, shown in Copy Logs as
+"--- kbvis768 ---". Getters only; no behaviour change.
+Off: kbvis768-off / core768-off (crash latch kbvis768).

@@ -1,0 +1,6 @@
+4.5.778 (on 777 8a8b198)
+- caret778 (app): DSKeepComposer for Messages: message box + wanted=1 + not search Cancel -> resign refused. Replaces caret777's key-window test (never matched: suppress=0, stripped frames).
+- caret778 (app): DSOnSpringBoardKeyboardShown no longer ignores Messages on shown=NO: clears wanted + guard, resigns the message box once (DSCaret778Dropping skips the echo hide request).
+- caret778 (SpringBoard): arbiter on=0 also posts "told Messages the keyboard is gone" (covers swipe-down). hideStagedKeyboardLikePicker already posts it for home, minimise/close (kb744), close slot, split, app hide requests.
+- Off: /var/mobile/.dynamicstage-caret778-off (crash latch caret778). core778-off returns to 777.
+- resign778 log: "resign778 #N focus: kbImpl.delegate=... firstResponder=a>b>c" and "resign778 #N fNN image symbol+0xoff" (16 frames, resigns; becomes too unless stack778become-off). Off with resign777-off.

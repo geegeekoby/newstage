@@ -1,3 +1,7 @@
+## 4.5.778
+- caret778: staged Messages keeps the message box focused while it wants the staged keys (all resigns refused except search Cancel). SpringBoard's hide (and arbiter on=0, e.g. swipe-down) tells Messages the keys are gone; Messages clears "wanted" and lets go, so keys and caret leave together. Replaces caret777's key-window rule.
+- resign778 (log only): resign stacks one frame per line named via dladdr; keyboard focus state (UIKeyboardImpl delegate, first-responder chain).
+
 ## 4.5.777
 - caret777: staged Messages keeps the message box focused (blue caret stays) when UIKit resigns it for a key-window change while Messages owns the staged keys. Real dismissals still resign.
 - resign777 (log only): every text become/resign in staged apps with stack, key window, app/scene state, caret views, decision.

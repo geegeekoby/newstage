@@ -1,3 +1,8 @@
+## 4.5.790
+caret790: caret788 (caret778 box-kept-focused) is opt-in again: /var/mobile/.dynamicstage-caret788-on. Shush's: with the box focused the first key collapsed CKMessageEntryView 81 -> 44 (07:42:23.760) and the strip was gone on later lines (07:41:53.461, 56.957, 59.976, 07:42:21.872); isKeyboardVisible=YES (07:42:17.375) did not stop it. 784 (box not focused, fr=0) kept 81 + strip on every key (Hahahah 07:00:56.373-07:01:01.919). Off -caret790-off (= 789, caret788 on).
+reopen790: with caret off, reopen789's text-changed signal (Messages' relayout that unparks the input container) runs at draft auto-focus and chat didAppear even if the box is not focused. Off -reopen790-off.
+strip790 (log only): first 3 keys after each focus log fr, caret, entry height, Messages' unhooked isKeyboardVisible and activeKeyboardHeight, and entry781 at next pass and +0.3 s; every -[CKMessageEntryView _updateUIForEntryFieldCollapsedStateChange] call (hooked only if void, no args) logged before/after. Off -strip790-off.
+
 ## 4.5.789
 reopen789: reopen788's frame move did nothing (Shush's 07:42:17.650/17.953/27.393/27.626/27.947 all "{{0, 4000}} -> {{0, 4000}}"). Messages' own text-changed relayout is what brings the input container back (Shush's delete 07:42:21.872 and 29.977 -> {{0, 0}}; reopen783 signal Hingis 06:47:58.100 next pass {{0, 0}}). Rule: reopen788 is off; at draft auto-focus and chat didAppear the reopen783 text-changed signal runs (box focused via caret788). Off /var/mobile/.dynamicstage-reopen789-off.
 caret788 kept on: strip stayed on the card while typing (Shush's 07:42:23.760, 30.085 CKBrowserSwitcherFooterView{{0, 421}, {420, 37}}).

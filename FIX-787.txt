@@ -1,0 +1,4 @@
+4.5.787 = 786 + swipe787 + return787 + rimname787. core787-off returns to 786.
+swipe787: swipe786's hide reason is "swipe786 cancel=1"; SpringBoard's noteStagedAppKeyboardRequest treats it as userCancel, so the 1 s "stand-in was just kept" guard no longer drops it; falls through to hideStagedKeyboardLikePicker (resign stand-in, collapseHostedKeyboardLift) and arbiter on=0 -> fast return. SpringBoard logs "swipe787 drag-down hide ... (userCancel=1)". Off /var/mobile/.dynamicstage-swipe787-off
+return787: sync725NoteKeyboard ignores not-up frames when the kb707 owner is Messages (zero-frame on=1 notes), so Messages' fast return starts only from arbiter on=0 (fast743), SpringBoard's own hide, kbdrag744. Off /var/mobile/.dynamicstage-return787-off
+rimname787: rim651 "drag began ... won by" built from C literals via snprintf. Off /var/mobile/.dynamicstage-rimname787-off

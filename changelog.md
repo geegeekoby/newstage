@@ -1,3 +1,6 @@
+## 4.5.787
+- Messages: drag-down now actually hides the keys (swipe787); no card drop while the keys come up (return787); rim log name fix.
+
 ## 4.5.786
 - Messages: dragging the conversation down to the bar hides the staged keys (swipe786); the stage returns right after the keys hide (return786).
 

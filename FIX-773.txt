@@ -1,0 +1,4 @@
+DynamicStage 4.5.773 - name773, scene773, keyfocus773
+
+Pkjon: SpringBoard hides Medusa itself (SpringBoard+0x3aa858 path); a fresh key take re-showed it.
+name773/scene773 log only; keyfocus773 re-takes key up to 3x per show. Off files + latches; core773-off -> 4.5.772.

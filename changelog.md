@@ -1,3 +1,9 @@
+## 4.5.773
+- name773 (log only): the hide stack's SpringBoard / SpringBoardFoundation frames named as -[Class selector]+offset.
+- scene773 (log only): SpringBoard-sent scene updates in the 0.3 s before a keyboard hide.
+- keyfocus773: while a staged app owns the keys and SpringBoard hides them for >= 0.15 s, the stage takes (or re-takes) the key window, up to 3 times per show. Real key window check (no more Bloom confusion). Never for Messages.
+- core773-off -> 4.5.772.
+
 ## 4.5.772
 - hide772 (log only): when the staged app's keys get hidden while the arbiter is on: key window and scene, card state, stage window, last focus and age, front app / home, our code paths in the last 0.5 s, and the setHidden call stack. gest770 now reads the real app switcher state; the keyboard verdict skips SpringBoard's own keyboard.
 - keyfocus772: the stage takes the key window back (as on open) when a staged app's keys are hidden with another window key, and after a corner restore with the home screen in front. Never for Messages.

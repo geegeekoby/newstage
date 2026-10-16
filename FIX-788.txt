@@ -1,0 +1,4 @@
+4.5.788 = 787 + reopen788 + caret788 + flicker788 log; strip783/strip784/tree765 opt-in (-on files). core788-off returns to 787.
+reopen788: reopen784's becomeFirstResponder never unparked the input container (Kaisjd 41.481, Hufhj 07:19:38.268 still {0,4000}) and its extra focus moved SpringBoard's keys off and up (41.479->41.507 = flicker). Now: at chat didAppear (wanted=1, Messages owns keys) and at stand-in focus when parked, the UIInputSetContainerView frame is moved back on the card; no focus change. Off -reopen788-off.
+caret788: caret778 on again (box stays first responder -> blue caret, no re-focus on tap -> no flicker), plus -[CKMessageEntryView isKeyboardVisible] answers YES while staged keys wanted (hooked only if present, BOOL, no args). Off -caret788-off (back to caret778 off unless -caret778-on).
+flicker788: "UIKit moving the keyboard off the bottom" no longer capped at 8 per boot. Off -flicker788-off.

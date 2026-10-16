@@ -1,3 +1,6 @@
+## 4.5.788
+- Messages: draft reopen puts the bar back without a second focus; blue caret back with app strip kept (caret788); less flicker; quieter log.
+
 ## 4.5.787
 - Messages: drag-down now actually hides the keys (swipe787); no card drop while the keys come up (return787); rim log name fix.
 

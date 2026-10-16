@@ -1,3 +1,6 @@
+## 4.5.784
+- Messages: blue-caret hold (caret778) off by default so the app strip stays while typing (caret778-on file re-enables). strip784 diagnostics.
+
 ## 4.5.783
 - Messages draft reopen: brings the input area back with a text-changed signal (reopen783). strip783 diagnostics; strip782 off by default.
 

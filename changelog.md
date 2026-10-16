@@ -1,3 +1,6 @@
+## 4.5.785
+- Messages: reopening a chat with a draft focuses the box once after the chat appears (like a tap), so the bar and app strip come back on the card (reopen784).
+
 ## 4.5.784
 - Messages: blue-caret hold (caret778) off by default so the app strip stays while typing (caret778-on file re-enables). strip784 diagnostics.
 

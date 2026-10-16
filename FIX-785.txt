@@ -1,0 +1,2 @@
+4.5.785 = 784 + reopen784. core785-off / reopen784-off return to 784.
+reopen784 (caret778 off): no text-changed signal at draft auto-focus. At CKChatController didAppear, if Messages auto-focused the box during this open, wanted=1 and UIInputSetContainerView >1500 pt off: [box becomeFirstResponder] once (same as a tap), log before/after frames + fr. With caret778-on the 783 signal path runs as before.

@@ -1,0 +1,1579 @@
+build 4.5.783 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+SpringBoard: latch749: no feature is latched off
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=6s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=6s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mo...
+SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 630 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: opened the top stage
+SpringBoard: putting com.apple.MobileSMS on stack slot 0
+[TRACE] launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+SpringBoard: creating app view for com.apple.MobileSMS
+SpringBoard: created app view for com.apple.MobileSMS
+[TRACE] scene transaction com.apple.MobileSMS actions=1
+SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+SpringBoard: com.apple.MobileSMS stays running in the background
+SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+SpringBoard: com.apple.MobileSMS is on stack slot 0
+[TRACE] hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+[KEYBOARD LOG] attach com.apple.MobileSMS slot 0 stack=1 prim=1
+[TRACE] layoutHost Messages frame={{0, 0}, {430, 932}}
+SpringBoard: phonesize680 build 4.5.783 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+[log745 corrupt line len=111 bytes=c28bc2802040c3b9c3a0c2b4c2a82040c3b968c2b4c2a940]
+[TRACE] scene update begin sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 depth=1 frame={{0, 0}, {430, 932}}
+SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 occluded=0 deactivation=0x0 camera=0
+[TRACE] app-view settings update
+SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283374b10> { statusBarStyleOverridesToSuppress = (none); }; }
+SpringBoard: appview670 held a Live app view update (stage display-layout change)
+SpringBoard: fitting com.apple.MobileSMS's scene to the card
+[TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+app: com.apple.MobileSMS ctor ok
+[TRACE] scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2832b7b70> { hostContextIdentifierForSnapshotting = 9556150c; scenePresenterRenderIdentifierForSnapshotting = 2587a79b93336874; }; }
+SpringBoard: camera660 com.apple.MobileSMS pid=26632 reporting camera events to SpringBoard
+SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+app: com.apple.MobileSMS remote keyboard hooks are in
+[KEYS] hook search-cancel _cancelButtonPressed
+app: com.apple.MobileSMS is listening for staged keys
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sceneH...
+SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: phonesize675 build 4.5.783 is ON; apps: com.beeper.chat.ios (default)
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+[TRACE] hideStray split=0 depth=0
+SpringBoard: stayed up, boot guard cleared
+SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+[KEYS] focus CKMessageEntryRichTextView bundle=com.apple.MobileSMS
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: told Messages the keyboard is on screen
+SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+SpringBoard: kb707 typing in the upper card (the stage's text field, keys (at once)): kept (already clear) 140 pt to the keyboard
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: kbvis768 show 1 start owner=com.apple.MobileSMS h=0
+SpringBoard: kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1494466106] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:51.893 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys={{0, 631}, {430, 301}}
+SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 2.17s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+SpringBoard: phonesize683 build 4.5.783 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+[TRACE] keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+SpringBoard: keyboard already up {{0, 631}, {430, 301}}, not raised again
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+SpringBoard: ignored com.apple.springboard keyboard while the stage's own keyboard is typing on the stage
+SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +0.05 s (see --- tree765 ---)
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: kbvis768 show 1 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:51.997 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+SpringBoard: com.apple.MobileSMS picker keyboard visible {{0, 631}, {430, 301}}
+SpringBoard: told Messages the keyboard is on screen
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 145}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 145}, {420, 458}} (new in, then old out)
+SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +0.40 s (see --- tree765 ---)
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 176}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=-140 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sc...
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +1.20 s (see --- tree765 ---)
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=-1ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=501ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=111ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=100ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=kbleave743 caller=DynamicStage+0x80b70 < DynamicStage+0x82080 < DynamicStage+0x7b794
+[TRACE] arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] app req com.apple.MobileSMS hide
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: kbvis768 show 1 +4.19s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:51.997 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+SpringBoard: kb707 typing ended (typing ended): cards spring back
+SpringBoard: kbvis768 show 1 ended after 4.7s: keys visible not judged (SpringBoard's own keyboard)
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 145}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] focus CKMessageEntryRichTextView bundle=com.apple.MobileSMS
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: told Messages the keyboard is on screen
+SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 377}, {420, 156}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=1.40 via app dylib kb line
+SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 377}, {420, 156}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside the app, so it does not pad its composer (no band)
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: kbvis768 show 2 start owner=com.apple.MobileSMS h=0
+SpringBoard: kbvis768 show 2 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:57.426 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys={{0, 631}, {430, 301}}
+SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 7.69s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+SpringBoard: keyboard already up {{0, 631}, {430, 301}}, not raised again
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: kb707 typing in the upper card (the stage's text field, keys gone): kept (already clear) 140 pt to the keyboard
+SpringBoard: tree765 mapped 7 keyboard window(s) for show 2 at +0.05 s (see --- tree765 ---)
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+SpringBoard: stand-in ended why=focus CKMessageEntryRichTextView entry={{0, 4414}, {420, 44}} cardH=458 container parked, left to reopen782 com.apple.MobileSMS
+SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 7.77s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: told Messages the keyboard is on screen
+SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+[KEYS] app req com.apple.MobileSMS show
+SpringBoard: kbvis768 show 2 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:57.509 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+SpringBoard: keys674 com.apple.MobileSMS has the app dylib: its card keeps UIKit's keyboard layer answer (YES), 4.5.664 handling unchanged
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+SpringBoard: stand-in ended why=focus CKMessageEntryRichTextView entry={{0, 4414}, {420, 44}} cardH=458 container parked, left to reopen782 com.apple.MobileSMS
+SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 7.81s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: staged keyboard stayed on the same field fr=1 key=1
+(log697: 13 lines dropped by the rate limit)
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: tree765 mapped 7 keyboard window(s) for show 2 at +1.20 s (see --- tree765 ---)
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=4404ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 145}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 145}, {420, 458}} (new in, then old out)
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=156ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=194ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=44.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=kbleave743 caller=DynamicStage+0x80b70 < DynamicStage+0x82080 < DynamicStage+0x7b794
+[TRACE] arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] app req com.apple.MobileSMS hide
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: kbvis768 show 2 +3.37s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.814 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+SpringBoard: kb707 typing ended (typing ended): cards spring back
+SpringBoard: kbvis768 show 2 ended after 3.9s: keys visible not judged (SpringBoard's own keyboard)
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] focus CKMessageEntryRichTextView bundle=com.apple.MobileSMS
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: told Messages the keyboard is on screen
+SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+[KEYS] app req com.apple.MobileSMS show
+SpringBoard: kb707 typing in the upper card (the stage's text field, keys (at once)): kept (already clear) 140 pt to the keyboard
+[KEYS] app req com.apple.MobileSMS show
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: kbvis768 show 3 start owner=com.apple.MobileSMS h=0
+SpringBoard: kbvis768 show 3 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:48:01.908 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys={{0, 631}, {430, 301}}
+SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 12.18s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+SpringBoard: keyboard already up {{0, 631}, {430, 301}}, not raised again
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+SpringBoard: stand-in ended why=focus CKMessageEntryRichTextView entry={{0, 4414}, {420, 44}} cardH=458 container parked, left to reopen782 com.apple.MobileSMS
+SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 12.19s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: staged keyboard stayed on the same field fr=1 key=1
+[TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+SpringBoard: stand-in ended why=focus CKMessageEntryRichTextView entry={{0, 4414}, {420, 44}} cardH=458 container parked, left to reopen782 com.apple.MobileSMS
+SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 12.22s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+[TRACE] keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+[TRACE] keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+[TRACE] arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+SpringBoard: staged keyboard stayed on the same field fr=1 key=1
+SpringBoard: tree765 mapped 7 keyboard window(s) for show 3 at +0.05 s (see --- tree765 ---)
+[TRACE] raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+SpringBoard: kbvis768 show 3 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.011 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+SpringBoard: phonesize675 com.apple.MobileSMS skipped while typing: not allowlisted (apps: com.beeper.chat.ios (default)); scene stays card-size
+SpringBoard: com.apple.MobileSMS picker keyboard visible {{0, 631}, {430, 301}}
+SpringBoard: told Messages the keyboard is on screen
+(log697: 7 lines dropped by the rate limit)
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=3563ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=180ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: tree765 mapped 7 keyboard window(s) for show 3 at +1.20 s (see --- tree765 ---)
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=181ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 377}, {420, 156}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=2.65 via app dylib kb line
+SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 377}, {420, 156}} slot=0 card={{36, 176}, {420, 458}} lift=-140; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside the app, so it does not pad its composer (no band)
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=185ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=0 hold=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=414.0 w=420.0 h=119.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=2268ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=167ms
+app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: src746 up com.apple.MobileSMS frame={{0, 377}, {420, 156}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=5.28 via app dylib kb line
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=156.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb show x=0.0 y=377.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb change x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+[KEYS] kb hide x=0.0 y=458.0 w=420.0 h=81.0 bundle=com.apple.MobileSMS local=1
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=kbleave743 caller=DynamicStage+0x80b70 < DynamicStage+0x82080 < DynamicStage+0x7b794
+[TRACE] arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+[TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+[TRACE] hideStray split=0 depth=0
+[KEYS] app req com.apple.MobileSMS hide
+SpringBoard: told Messages the keyboard is gone
+SpringBoard: kbvis768 show 3 +5.43s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.272 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+SpringBoard: kb707 typing ended (typing ended): cards spring back
+SpringBoard: rim651 system gesture held at 0,269 (rim)
+SpringBoard: rim651 hit main-outer-left at 0,269 -> DSStageDragShellView
+SpringBoard: kbvis768 show 3 ended after 6.0s: keys visible not judged (SpringBoard's own keyboard)
+SpringBoard: rim651 drag began at 0,281 won by ??G???@
+SpringBoard: drag702 the card was still animating when grabbed: taken where it was on screen, animation stopped
+SpringBoard: core747 card move stopped (drag)
+SpringBoard: camera658 com.apple.MobileSMS layout670 card is moving: display-layout element kept at {{5, 145}, {420, 458}} until the drag settles
+SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}) [SCENE] com.apple.MobileSMS stageH=458 sceneH...
+SpringBoard: defer719 touch observer on the bottom card (30 s after start)
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (app no longer on a card), path=layout-off
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: host750 bottom card com.apple.MobileSMS: live -> detached
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: opened the top stage
+
+--- trace ---
+=== previous session ===
+06:47:43.049 SpringBoard pid=26607 main | SpringBoard: call653 guard listening (call screen containment is off)
+06:47:43.049 SpringBoard pid=26607 main | SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var/mobile/.dynamicstage-keys674-all)
+06:47:43.049 SpringBoard pid=26607 main | SpringBoard: keep776 installed (Medusa hide from updateMedusaHostedKeyboardWindowForScene: kept out while a staged app owns the keys)
+06:47:43.049 SpringBoard pid=26607 main | SpringBoard: why775 hooks installed: update,sized,target
+
+=== this session ===
+(trace766: merged SpringBoard + MobileSMS.log)
+06:47:43.227 SpringBoard pid=26607 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+06:47:43.227 SpringBoard pid=26607 main | ready state=0 split=0 bottom=- top=- hover=-
+06:47:43.227 SpringBoard pid=26607 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:47:43.228 SpringBoard pid=26607 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+06:47:43.228 SpringBoard pid=26607 main | SpringBoard: latch749: no feature is latched off
+06:47:43.229 SpringBoard pid=26607 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+06:47:43.229 SpringBoard pid=26607 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+06:47:43.231 SpringBoard pid=26607 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+06:47:43.231 SpringBoard pid=26607 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+06:47:43.232 SpringBoard pid=26607 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+06:47:43.232 SpringBoard pid=26607 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+06:47:43.232 SpringBoard pid=26607 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+06:47:43.232 SpringBoard pid=26607 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+06:47:43.233 SpringBoard pid=26607 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+06:47:43.233 SpringBoard pid=26607 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=6s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=6s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebo...
+06:47:45.771 SpringBoard pid=26607 main | SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 630 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+06:47:48.057 SpringBoard pid=26607 main | SpringBoard: stage on screen
+06:47:48.057 SpringBoard pid=26607 main | on screen state=2 split=0 bottom=- top=- hover=-
+06:47:48.057 SpringBoard pid=26607 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+06:47:48.057 SpringBoard pid=26607 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+06:47:48.058 SpringBoard pid=26607 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:47:48.058 SpringBoard pid=26607 main | SpringBoard: opened the top stage
+06:47:48.989 SpringBoard pid=26607 main | SpringBoard: putting com.apple.MobileSMS on stack slot 0
+06:47:48.989 SpringBoard pid=26607 main | launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+06:47:48.989 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+06:47:48.989 SpringBoard pid=26607 main | SpringBoard: creating app view for com.apple.MobileSMS
+06:47:48.989 SpringBoard pid=26607 main | SpringBoard: created app view for com.apple.MobileSMS
+06:47:48.992 SpringBoard pid=26607 main | scene transaction com.apple.MobileSMS actions=1
+06:47:48.996 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+06:47:48.997 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS stays running in the background
+06:47:48.997 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+06:47:48.997 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS is on stack slot 0
+06:47:48.997 SpringBoard pid=26607 main | hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+06:47:48.998 SpringBoard pid=26607 main | layoutHost Messages frame={{0, 0}, {430, 932}}
+06:47:48.999 SpringBoard pid=26607 main | SpringBoard: phonesize680 build 4.5.783 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+06:47:49.002 SpringBoard pid=26607 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+06:47:49.002 SpringBoard pid=26607 main | hideStray split=0 depth=0
+06:47:49.006 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+06:47:49.006 SpringBoard pid=26607 main | SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+06:47:49.009 SpringBoard pid=26607 main | [log745 corrupt line len=138 bytes=3f3fc28bc2802040c3b9c3a03f3fc2b4c2a82040c3b9683f]
+06:47:49.009 SpringBoard pid=26607 main | scene update begin sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 depth=1 frame={{0, 0}, {430, 932}}
+06:47:49.009 SpringBoard pid=26607 main | SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 fg=1 occluded=0 deactivation=0x0 camera=0
+06:47:49.010 SpringBoard pid=26607 main | app-view settings update
+06:47:49.010 SpringBoard pid=26607 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283374b10> { statusBarStyleOverridesToSuppress = (none); }; }
+06:47:49.010 SpringBoard pid=26607 main | SpringBoard: appview670 held a Live app view update (stage display-layout change)
+06:47:49.040 SpringBoard pid=26607 main | SpringBoard: fitting com.apple.MobileSMS's scene to the card
+06:47:49.040 SpringBoard pid=26607 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+06:47:49.316 SpringBoard pid=26607 main | app: com.apple.MobileSMS ctor ok
+06:47:49.317 MobileSMS pid=26632 main | app ctor reason=0 bundle=com.apple.MobileSMS
+06:47:49.636 SpringBoard pid=26607 main | scene block sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 frame={{0, 0}, {420, 458}}
+06:47:49.637 SpringBoard pid=26607 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-02219D63-1A12-455F-9488-4764D3B620F8 mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2832b7b70> { hostContextIdentifierForSnapshotting = 9556150c; scenePresenterRenderIdentifierForSnapshotting = 2587a79b93336874; }; }
+06:47:49.680 MobileSMS pid=26632 main | layout667 com.apple.MobileSMS camera preview watch on (once a second while on a card)
+06:47:49.680 MobileSMS pid=26632 main | camera658 app capture hooks in, multitask switch present
+06:47:49.682 SpringBoard pid=26607 main | SpringBoard: camera660 com.apple.MobileSMS pid=26632 reporting camera events to SpringBoard
+06:47:49.683 SpringBoard pid=26607 main | SpringBoard: camera660 com.apple.MobileSMS capture hooks in multitask switch present | staged=0 appActive=0 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+06:47:49.683 SpringBoard pid=26607 main | app: com.apple.MobileSMS remote keyboard hooks are in
+06:47:49.689 SpringBoard pid=26607 main | app: com.apple.MobileSMS is listening for staged keys
+06:47:49.706 MobileSMS pid=26632 main | app left _UIVisualEffectBackdropView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:49.716 MobileSMS pid=26632 main | app left UIToolbar at {{0, 458}, {420, 49}}. cause=the piece under the field is 49pt, and pulling its bottom up to 409 puts it above the field
+06:47:49.941 SpringBoard pid=26607 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, ...
+06:47:50.241 SpringBoard pid=26607 main | SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+06:47:50.243 SpringBoard pid=26607 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+06:47:50.510 SpringBoard pid=26607 main | SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+06:47:50.512 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+06:47:50.513 SpringBoard pid=26607 main | SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+06:47:50.642 MobileSMS pid=26632 main | app willAppear CKNavigationController
+06:47:50.642 MobileSMS pid=26632 main | app willAppear CKChatController
+06:47:50.643 MobileSMS pid=26632 main | app left UITextEffectsWindow at {{0, 0}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+06:47:50.646 MobileSMS pid=26632 main | app left UIInputSetContainerView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:50.646 MobileSMS pid=26632 main | app left UIInputSetHostView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:50.648 MobileSMS pid=26632 main | app left _UIRemoteKeyboardPlaceholderView at {{0, 0}, {430, 932}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:50.650 MobileSMS pid=26632 main | app left UIKeyboardDockView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:50.650 MobileSMS pid=26632 main | app left UIKeyboardDockItemButton at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:50.652 MobileSMS pid=26632 main | app input window laid out
+06:47:50.664 SpringBoard pid=26607 main | SpringBoard: phonesize675 build 4.5.783 is ON; apps: com.beeper.chat.ios (default)
+06:47:50.677 MobileSMS pid=26632 main | app left UIInputSetContainerView at {{0, 4000}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+06:47:50.677 MobileSMS pid=26632 main | app left _UIReplicantView at {{0, 0}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+06:47:50.677 MobileSMS pid=26632 main | app left UIView at {{420, 0}, {420, 458}}. cause=it lives in UITextEffectsWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+06:47:50.686 MobileSMS pid=26632 main | app willAppear CKTranscriptCollectionViewController
+06:47:50.702 SpringBoard pid=26607 main | SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+06:47:51.020 SpringBoard pid=26607 main | hideStray split=0 depth=0
+06:47:51.243 MobileSMS pid=26632 main | strip783 chat didAppear text=0 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: CKMessageEntryView y=0 h=81 hid=0 [UIView y=0 h=81 hid=0] [UIView y=44 h=37 hid=0] [CKBrowserSwitcherFooterView y=40 h=37 hid=0] ; UIKeyboardDockView y=0 h=75 hid=1 [UIKeyboardDockItemButton...
+06:47:51.243 MobileSMS pid=26632 main | entry781 chat didAppear fr=0 text=0 wanted=0 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4377}, {420, 81}} h=0 a=1.0 ; CKMessageEntryView{{0, 4377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 4417.333333333333}, {420, 37}} h=0 a=1.0
+06:47:51.282 SpringBoard pid=26607 main | SpringBoard: stayed up, boot guard cleared
+06:47:51.290 SpringBoard pid=26607 main | SpringBoard: camera660 com.apple.MobileSMS hello (after launch) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+06:47:51.536 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+06:47:51.784 MobileSMS pid=26632 main | app become CKMessageEntryRichTextView
+06:47:51.797 MobileSMS pid=26632 main | app left TUIPredictionView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.797 MobileSMS pid=26632 main | app left TUIPredictionViewStackView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.797 MobileSMS pid=26632 main | app left TUIPredictionViewStackContentView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.799 MobileSMS pid=26632 main | app left UIKeyboardAutomatic at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.805 MobileSMS pid=26632 main | app left UIKeyboardLayoutStar at {{0, 0}, {320, 233}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.806 MobileSMS pid=26632 main | app left UIKeyboardImpl at {{0, 0}, {430, 233}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.814 MobileSMS pid=26632 main | app left TUIPredictionViewCell at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.817 MobileSMS pid=26632 main | strip783 become text=0 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: CKMessageEntryView y=0 h=81 hid=0 [UIView y=0 h=81 hid=0] [UIView y=44 h=37 hid=0] [CKBrowserSwitcherFooterView y=40 h=37 hid=0] ; UIKeyboardDockView y=0 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=6...
+06:47:51.817 MobileSMS pid=26632 main | entry781 become fr=0 text=0 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKMessageEntryView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 417.33333333333331}, {420, 37}} h=0 a=1.0
+06:47:51.818 MobileSMS pid=26632 main | resign777 #1 become(UIResponder) CKMessageEntryRichTextView result=YES (was fr=0) fr=1 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=1 | caret=none
+06:47:51.818 MobileSMS pid=26632 main | resign778 #1 focus: kbImpl.delegate=CKMessageEntryRichTextView firstResponder=CKMessageEntryRichTextView>CKMessageEntryContentView>UIView>UIView>CKMessageEntryView>CKChatController
+06:47:51.818 MobileSMS pid=26632 main | resign778 #1 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xc4cc
+06:47:51.818 MobileSMS pid=26632 main | resign778 #1 f01 UIKitCore <redacted>+0x78
+06:47:51.818 MobileSMS pid=26632 main | resign778 #1 f02 UIKitCore <redacted>+0x108
+06:47:51.818 MobileSMS pid=26632 main | resign778 #1 f03 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd33c
+06:47:51.818 MobileSMS pid=26632 main | resign778 #1 f04 UIKitCore <redacted>+0x80
+06:47:51.819 MobileSMS pid=26632 main | resign778 #1 f05 UIKitCore <redacted>+0xbc
+06:47:51.819 MobileSMS pid=26632 main | resign778 #1 f06 UIKitCore <redacted>+0x2c8
+06:47:51.819 MobileSMS pid=26632 main | resign778 #1 f07 UIKitCore <redacted>+0x64
+06:47:51.819 MobileSMS pid=26632 main | resign778 #1 f08 UIKitCore <redacted>+0x118
+06:47:51.819 MobileSMS pid=26632 main | resign778 #1 f09 UIKitCore <redacted>+0x80
+06:47:51.820 MobileSMS pid=26632 main | resign778 #1 f10 UIKitCore <redacted>+0x5c
+06:47:51.820 MobileSMS pid=26632 main | resign778 #1 f11 UIKitCore <redacted>+0x110
+06:47:51.820 MobileSMS pid=26632 main | resign778 #1 f12 UIKitCore <redacted>+0x210
+06:47:51.820 MobileSMS pid=26632 main | resign778 #1 f13 UIKitCore <redacted>+0x9ac
+06:47:51.820 MobileSMS pid=26632 main | resign778 #1 f14 UIKitCore <redacted>+0x120
+06:47:51.820 MobileSMS pid=26632 main | resign778 #1 f15 UIKitCore <redacted>+0xbc
+06:47:51.829 MobileSMS pid=26632 main | app keyboard request show token=523 set=0 post=0
+06:47:51.840 MobileSMS pid=26632 main | app left UIRemoteKeyboardWindow at {{0, 0}, {420, 458}}. cause=it lives in UIRemoteKeyboardWindow {{0, 0}, {420, 458}}, and fitting it would lift the piece under the field into the card
+06:47:51.841 MobileSMS pid=26632 main | app hid UIRemoteKeyboardWindow at {{0, 0}, {420, 458}}. cause=this window is the card, and showing it draws the keys inside the stage
+06:47:51.843 SpringBoard pid=26607 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+06:47:51.843 MobileSMS pid=26632 main | app input window laid out (+4 repeats)
+06:47:51.844 SpringBoard pid=26607 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+06:47:51.844 MobileSMS pid=26632 main | app left UIKBInputBackdropView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.844 MobileSMS pid=26632 main | app left UIKBBackdropView at {{0, 0}, {0, 0}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:51.845 SpringBoard pid=26607 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:47:51.855 MobileSMS pid=26632 main | strip783 become text=0 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: CKMessageEntryView y=0 h=81 hid=0 [UIView y=0 h=81 hid=0] [UIView y=44 h=37 hid=0] [CKBrowserSwitcherFooterView y=40 h=37 hid=0] ; UIKeyboardDockView y=81 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=...
+06:47:51.855 MobileSMS pid=26632 main | entry781 become fr=1 text=0 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 377}, {420, 156}} h=0 a=1.0 ; CKMessageEntryView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 417.33333333333331}, {420, 37}} h=0 a=1.0
+06:47:51.855 MobileSMS pid=26632 main | resign777 #2 become(UITextView) CKMessageEntryRichTextView result=YES (was fr=0) fr=1 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=1 | caret=UITextSelectionView hid=0 a=1.00
+06:47:51.855 MobileSMS pid=26632 main | resign778 #2 focus: kbImpl.delegate=CKMessageEntryRichTextView firstResponder=CKMessageEntryRichTextView>CKMessageEntryContentView>UIView>UIView>CKMessageEntryView>CKChatController
+06:47:51.855 MobileSMS pid=26632 main | resign778 #2 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd49c
+06:47:51.855 MobileSMS pid=26632 main | resign778 #2 f01 UIKitCore <redacted>+0x80
+06:47:51.855 MobileSMS pid=26632 main | resign778 #2 f02 UIKitCore <redacted>+0xbc
+06:47:51.855 MobileSMS pid=26632 main | resign778 #2 f03 UIKitCore <redacted>+0x2c8
+06:47:51.855 MobileSMS pid=26632 main | resign778 #2 f04 UIKitCore <redacted>+0x64
+06:47:51.856 MobileSMS pid=26632 main | resign778 #2 f05 UIKitCore <redacted>+0x118
+06:47:51.856 MobileSMS pid=26632 main | resign778 #2 f06 UIKitCore <redacted>+0x80
+06:47:51.856 MobileSMS pid=26632 main | resign778 #2 f07 UIKitCore <redacted>+0x5c
+06:47:51.856 MobileSMS pid=26632 main | resign778 #2 f08 UIKitCore <redacted>+0x110
+06:47:51.856 MobileSMS pid=26632 main | trace paused, main thread is spinning
+06:47:51.888 SpringBoard pid=26607 main | SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+06:47:51.889 SpringBoard pid=26607 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen
+06:47:51.892 SpringBoard pid=26607 main | SpringBoard: told Messages the keyboard is on screen
+06:47:51.893 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+06:47:51.896 SpringBoard pid=26607 main | SpringBoard: kb707 typing in the upper card (the stage's text field, keys (at once)): kept (already clear) 140 pt to the keyboard
+06:47:51.899 SpringBoard pid=26607 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+06:47:51.900 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 1 start owner=com.apple.MobileSMS h=0
+06:47:51.901 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1494466106] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:51.893 | arb on=1 owner=com.apple.MobileSMS h=0...
+06:47:51.902 SpringBoard pid=26607 main | SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 2.17s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+06:47:51.902 SpringBoard pid=26607 main | SpringBoard: phonesize683 build 4.5.783 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+06:47:51.902 SpringBoard pid=26607 main | keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+06:47:51.902 SpringBoard pid=26607 main | keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+06:47:51.902 SpringBoard pid=26607 main | SpringBoard: keyboard already up {{0, 631}, {430, 301}}, not raised again
+06:47:51.902 SpringBoard pid=26607 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+06:47:51.918 SpringBoard pid=26607 main | SpringBoard: ignored com.apple.springboard keyboard while the stage's own keyboard is typing on the stage
+06:47:51.954 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +0.05 s (see --- tree765 ---)
+06:47:52.005 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 1 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:51.997 | arb on=1 owner=com.apple.springboard h=243 | s...
+06:47:52.055 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS picker keyboard visible {{0, 631}, {430, 301}}
+06:47:52.055 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 145}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1...
+06:47:52.055 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 145}, {420, 458}} (new in, then old out)
+06:47:52.323 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +0.40 s (see --- tree765 ---)
+06:47:52.576 SpringBoard pid=26607 main | SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1
+06:47:52.583 MobileSMS pid=26632 main | trace resumed after dropping 27 lines
+06:47:52.583 MobileSMS pid=26632 main | app: editing CKMessageEntryRichTextView fr=1 win=1
+06:47:52.593 MobileSMS pid=26632 main | app: key insert -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1
+06:47:52.594 SpringBoard pid=26607 main | app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+06:47:52.597 MobileSMS pid=26632 main | app input window laid out (+5 repeats)
+06:47:52.607 MobileSMS pid=26632 main | strip783 after insert (empty/text flip) text=1 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hid=0] ; UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hi...
+06:47:52.607 MobileSMS pid=26632 main | entry781 after insert (empty/text flip) fr=1 text=1 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 414}, {420, 44}} h=0 a=1.0
+06:47:52.870 SpringBoard pid=26607 main | SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1 (+2 repeats)
+06:47:52.877 SpringBoard pid=26607 main | app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:47:52.877 MobileSMS pid=26632 main | app: key insert -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:47:52.990 SpringBoard pid=26607 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 176}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=-140 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, ...
+06:47:53.137 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 1 at +1.20 s (see --- tree765 ---)
+06:47:53.186 SpringBoard pid=26607 main | SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1 (+2 repeats)
+06:47:53.192 SpringBoard pid=26607 main | app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:47:53.478 SpringBoard pid=26607 main | SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1 (+2 repeats)
+06:47:53.492 SpringBoard pid=26607 main | app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:47:53.862 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=-1ms
+06:47:53.880 MobileSMS | app: key insert -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1 (+2 repeats) x3
+06:47:53.880 MobileSMS pid=26632 main | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1
+06:47:53.881 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+06:47:54.364 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=501ms
+06:47:54.379 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+06:47:54.475 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=111ms
+06:47:54.575 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=100ms
+06:47:55.977 MobileSMS | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1 x2
+06:47:55.977 MobileSMS pid=26632 main | leave781: chat closing, releasing the message box before Messages saves it
+06:47:55.995 MobileSMS pid=26632 main | app input window laid out
+06:47:56.008 MobileSMS pid=26632 main | resign777 #4 resign(UIResponder) CKMessageEntryRichTextView result=YES allowed fr=0 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=0 | caret=UITextSelectionView hid=0 a=1.00
+06:47:56.008 MobileSMS pid=26632 main | resign778 #4 focus: kbImpl.delegate=nil firstResponder=nil
+06:47:56.008 MobileSMS pid=26632 main | resign778 #4 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xc8a4
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f01 UIKitCore <redacted>+0x58
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f02 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd6ec
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f03 ChatKit <redacted>+0x34
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f04 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0x5468
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f05 ChatKit <redacted>+0x34
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f06 ChatKit <redacted>+0x38
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f07 ChatKit <redacted>+0x38
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f08 UIKitCore <redacted>+0x4d4
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f09 UIKitCore <redacted>+0x60
+06:47:56.009 MobileSMS pid=26632 main | resign778 #4 f10 UIKitCore <redacted>+0x6c
+06:47:56.010 MobileSMS pid=26632 main | resign778 #4 f11 UIKitCore <redacted>+0x4d4
+06:47:56.010 MobileSMS pid=26632 main | resign778 #4 f12 UIKitCore <redacted>+0x60
+06:47:56.010 MobileSMS pid=26632 main | resign778 #4 f13 UIKitCore <redacted>+0x3f4
+06:47:56.010 MobileSMS pid=26632 main | resign778 #4 f14 UIKitCore <redacted>+0x1f0
+06:47:56.010 MobileSMS pid=26632 main | resign778 #4 f15 UIKitCore <redacted>+0x60
+06:47:56.016 MobileSMS pid=26632 main | resign777 #5 resign(UITextView) CKMessageEntryRichTextView result=YES allowed fr=0 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=0 | caret=none
+06:47:56.016 MobileSMS pid=26632 main | resign778 #5 focus: kbImpl.delegate=nil firstResponder=nil
+06:47:56.016 MobileSMS pid=26632 main | resign778 #5 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd778
+06:47:56.016 MobileSMS pid=26632 main | resign778 #5 f01 ChatKit <redacted>+0x34
+06:47:56.016 MobileSMS pid=26632 main | resign778 #5 f02 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0x5468
+06:47:56.016 MobileSMS pid=26632 main | resign778 #5 f03 ChatKit <redacted>+0x34
+06:47:56.016 MobileSMS pid=26632 main | resign778 #5 f04 ChatKit <redacted>+0x38
+06:47:56.016 MobileSMS pid=26632 main | resign778 #5 f05 ChatKit <redacted>+0x38
+06:47:56.017 MobileSMS pid=26632 main | resign778 #5 f06 UIKitCore <redacted>+0x4d4
+06:47:56.017 MobileSMS pid=26632 main | resign778 #5 f07 UIKitCore <redacted>+0x60
+06:47:56.017 MobileSMS pid=26632 main | resign778 #5 f08 UIKitCore <redacted>+0x6c
+06:47:56.017 MobileSMS pid=26632 main | resign778 #5 f09 UIKitCore <redacted>+0x4d4
+06:47:56.017 MobileSMS pid=26632 main | resign778 #5 f10 UIKitCore <redacted>+0x60
+06:47:56.018 MobileSMS pid=26632 main | resign778 #5 f11 UIKitCore <redacted>+0x3f4
+06:47:56.018 MobileSMS pid=26632 main | resign778 #5 f12 UIKitCore <redacted>+0x1f0
+06:47:56.018 MobileSMS pid=26632 main | resign778 #5 f13 UIKitCore <redacted>+0x60
+06:47:56.018 MobileSMS pid=26632 main | resign778 #5 f14 UIKitCore <redacted>+0xac
+06:47:56.018 MobileSMS pid=26632 main | resign778 #5 f15 UIKitCore <redacted>+0x7c8
+06:47:56.021 MobileSMS pid=26632 main | app input window laid out (+3 repeats)
+06:47:56.028 MobileSMS pid=26632 main | app left UIDictationLayoutView at {{0, 0}, {320, 216}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:56.028 MobileSMS pid=26632 main | app left UIKeyboardDicationBackground at {{0, 0}, {320, 216}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:56.028 MobileSMS pid=26632 main | app left UIKeyboardDicationBackgroundGradientView at {{0, 0}, {320, 216}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+06:47:56.028 MobileSMS pid=26632 main | app willAppear CKConversationListCollectionViewController
+06:47:56.028 MobileSMS pid=26632 main | kbleave743: left the conversation, asking SpringBoard to hide the keys
+06:47:56.030 SpringBoard pid=26607 main | SpringBoard: told Messages the keyboard is gone
+06:47:56.031 SpringBoard pid=26607 main | SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=kbleave743 caller=DynamicStage+0x80b70 < DynamicStage+0x82080 < DynamicStage+0x7b794
+06:47:56.031 MobileSMS pid=26632 main | app keyboard request hide token=523 set=0 post=0
+06:47:56.033 MobileSMS pid=26632 main | app willAppear CKSearchViewController
+06:47:56.035 SpringBoard pid=26607 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+06:47:56.036 SpringBoard pid=26607 main | SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+06:47:56.041 SpringBoard pid=26607 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+06:47:56.042 SpringBoard pid=26607 main | hideStray split=0 depth=0
+06:47:56.088 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 1 +4.19s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:51.997 | arb on=0 owner=com.apple.springboard h=243 | s...
+06:47:56.461 SpringBoard pid=26607 main | SpringBoard: kb707 typing ended (typing ended): cards spring back
+06:47:56.609 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 1 ended after 4.7s: keys visible not judged (SpringBoard's own keyboard)
+06:47:57.014 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1 a...
+06:47:57.015 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 145}, {420, 458}} -> {{5, 5}, {420, 458}} (new in, then old out)
+06:47:57.349 MobileSMS pid=26632 main | app willAppear CKNavigationController
+06:47:57.349 MobileSMS pid=26632 main | app willAppear CKChatController
+06:47:57.358 MobileSMS pid=26632 main | app input window laid out (+2 repeats)
+06:47:57.373 MobileSMS pid=26632 main | app become CKMessageEntryRichTextView (+1 repeats)
+06:47:57.378 MobileSMS pid=26632 main | strip783 auto-focus while chat opening (draft restore) text=8 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=0 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=81 hid=0 [UIVi...
+06:47:57.378 MobileSMS pid=26632 main | entry781 auto-focus while chat opening (draft restore) fr=0 text=8 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKMessageEntryView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 417.33333333333331}, {420, 37}} h=0 a=1.0
+06:47:57.378 MobileSMS pid=26632 main | resign777 #6 become(UIResponder) CKMessageEntryRichTextView result=YES (was fr=0) fr=1 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=1 | caret=none
+06:47:57.378 MobileSMS pid=26632 main | resign778 #6 focus: kbImpl.delegate=CKMessageEntryRichTextView firstResponder=CKMessageEntryRichTextView>CKMessageEntryContentView>UIView>UIView>CKMessageEntryView>CKChatController
+06:47:57.378 MobileSMS pid=26632 main | resign778 #6 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xc4cc
+06:47:57.378 MobileSMS pid=26632 main | resign778 #6 f01 UIKitCore <redacted>+0x78
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f02 UIKitCore <redacted>+0x108
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f03 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd33c
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f04 ChatKit <redacted>+0x368
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f05 UIKitCore <redacted>+0x64
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f06 UIKitCore <redacted>+0x208
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f07 UIKitCore <redacted>+0x48
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f08 UIKitCore <redacted>+0x60
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f09 UIKitCore <redacted>+0xc4
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f10 UIKitCore <redacted>+0xb4
+06:47:57.379 MobileSMS pid=26632 main | resign778 #6 f11 UIKitCore <redacted>+0x1e4
+06:47:57.380 MobileSMS pid=26632 main | resign778 #6 f12 UIKitCore <redacted>+0xa90
+06:47:57.380 MobileSMS pid=26632 main | resign778 #6 f13 UIKitCore <redacted>+0x1f0
+06:47:57.380 MobileSMS pid=26632 main | resign778 #6 f14 UIKitCore <redacted>+0x60
+06:47:57.380 MobileSMS pid=26632 main | resign778 #6 f15 UIKitCore <redacted>+0xac
+06:47:57.382 MobileSMS pid=26632 main | app keyboard request show token=523 set=0 post=0
+06:47:57.384 SpringBoard pid=26607 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+06:47:57.388 SpringBoard pid=26607 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:47:57.388 SpringBoard pid=26607 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+06:47:57.405 MobileSMS pid=26632 main | strip783 auto-focus while chat opening (draft restore) text=8 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=81 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=81 hid=0 [UIV...
+06:47:57.406 MobileSMS pid=26632 main | entry781 auto-focus while chat opening (draft restore) fr=1 text=8 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4377}, {420, 156}} h=0 a=1.0 ; CKMessageEntryView{{0, 4377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 4417.333333333333}, {420, 37}} h=0 a=1.0
+06:47:57.406 MobileSMS pid=26632 main | reopen783 auto-focus: input container parked {{0, 4000}, {420, 458}}, sending text-changed signal
+06:47:57.424 SpringBoard pid=26607 main | SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+06:47:57.425 SpringBoard pid=26607 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+06:47:57.425 SpringBoard pid=26607 main | SpringBoard: told Messages the keyboard is on screen (+1 repeats)
+06:47:57.425 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}}
+06:47:57.426 SpringBoard pid=26607 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 377}, {420, 156}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=1.40 via app dylib kb line
+06:47:57.426 SpringBoard pid=26607 main | SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 377}, {420, 156}} slot=0 card={{36, 36}, {420, 458}} lift=0; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed inside th...
+06:47:57.428 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 start owner=com.apple.MobileSMS h=0
+06:47:57.429 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:57.426 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys=...
+06:47:57.429 SpringBoard pid=26607 main | SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 7.69s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+06:47:57.429 SpringBoard pid=26607 main | keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+06:47:57.429 SpringBoard pid=26607 main | keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+06:47:57.429 SpringBoard pid=26607 main | SpringBoard: keyboard already up {{0, 631}, {430, 301}}, not raised again
+06:47:57.429 SpringBoard pid=26607 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}}
+06:47:57.430 SpringBoard pid=26607 main | SpringBoard: kb707 typing in the upper card (the stage's text field, keys gone): kept (already clear) 140 pt to the keyboard
+06:47:57.480 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 2 at +0.05 s (see --- tree765 ---)
+06:47:57.504 MobileSMS pid=26632 main | reopen783 after {{0, 4000}, {420, 458}} (still parked this pass)
+06:47:57.504 MobileSMS pid=26632 main | strip783 after reopen783 text=8 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hid=0] ; _UIRemot...
+06:47:57.504 MobileSMS pid=26632 main | entry781 after reopen783 fr=1 text=8 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 4414}, {420, 44}} h=0 a=1.0
+06:47:57.504 MobileSMS pid=26632 main | resign777 #7 become(UITextView) CKMessageEntryRichTextView result=YES (was fr=0) fr=1 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=1 | caret=UITextSelectionView hid=0 a=1.00
+06:47:57.504 MobileSMS pid=26632 main | resign778 #7 focus: kbImpl.delegate=CKMessageEntryRichTextView firstResponder=CKMessageEntryRichTextView>CKMessageEntryContentView>UIView>UIView>CKMessageEntryView>CKChatController
+06:47:57.504 MobileSMS pid=26632 main | resign778 #7 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd49c
+06:47:57.504 MobileSMS pid=26632 main | resign778 #7 f01 ChatKit <redacted>+0x368
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f02 UIKitCore <redacted>+0x64
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f03 UIKitCore <redacted>+0x208
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f04 UIKitCore <redacted>+0x48
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f05 UIKitCore <redacted>+0x60
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f06 UIKitCore <redacted>+0xc4
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f07 UIKitCore <redacted>+0xb4
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f08 UIKitCore <redacted>+0x1e4
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f09 UIKitCore <redacted>+0xa90
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f10 UIKitCore <redacted>+0x1f0
+06:47:57.505 MobileSMS pid=26632 main | resign778 #7 f11 UIKitCore <redacted>+0x60
+06:47:57.506 MobileSMS pid=26632 main | resign778 #7 f12 UIKitCore <redacted>+0xac
+06:47:57.506 MobileSMS pid=26632 main | resign778 #7 f13 UIKitCore <redacted>+0x7c8
+06:47:57.506 MobileSMS pid=26632 main | trace paused, main thread is spinning
+06:47:57.507 SpringBoard pid=26607 main | SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+06:47:57.508 SpringBoard pid=26607 main | SpringBoard: stand-in ended why=focus CKMessageEntryRichTextView entry={{0, 4414}, {420, 44}} cardH=458 container parked, left to reopen782 com.apple.MobileSMS
+06:47:57.509 SpringBoard pid=26607 main | SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 7.77s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+06:47:57.510 SpringBoard pid=26607 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:47:57.531 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:57.509 | arb on=1 owner=com.apple.springboard h=243 | sbk...
+06:47:57.543 SpringBoard pid=26607 main | SpringBoard: keys674 com.apple.MobileSMS has the app dylib: its card keeps UIKit's keyboard layer answer (YES), 4.5.664 handling unchanged
+06:47:57.551 SpringBoard pid=26607 main | SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 7.81s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+06:47:57.564 SpringBoard pid=26607 main | SpringBoard: staged keyboard stayed on the same field fr=1 key=1
+06:47:57.636 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 +0.21s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.531 | arb on=1 owner=com.apple.springboard h=243 | s...
+06:47:57.688 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS picker keyboard visible {{0, 631}, {430, 301}}
+06:47:57.688 SpringBoard pid=26607 main | SpringBoard: told Messages the keyboard is on screen (+1 repeats)
+06:47:57.738 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 +0.31s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.655 | arb on=1 owner=com.apple.springboard h=243 | s...
+06:47:57.755 SpringBoard pid=26607 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+3 repeats)
+06:47:57.840 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 2 at +0.40 s (see --- tree765 ---)
+06:47:57.841 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 +0.41s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.814 | arb on=1 owner=com.apple.springboard h=243 | s...
+06:47:58.065 MobileSMS pid=26632 main | trace resumed after dropping 43 lines
+06:47:58.065 MobileSMS pid=26632 main | strip783 chat didAppear text=8 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hid=0] ; _UIRemote...
+06:47:58.065 MobileSMS pid=26632 main | entry781 chat didAppear fr=1 text=8 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 4414}, {420, 44}} h=0 a=1.0
+06:47:58.065 MobileSMS pid=26632 main | reopen783 chat didAppear: input container parked {{0, 4000}, {420, 458}}, sending text-changed signal
+06:47:58.084 MobileSMS pid=26632 main | reopen783 after {{0, 4000}, {420, 458}} (still parked this pass)
+06:47:58.085 MobileSMS pid=26632 main | strip783 after reopen783 text=8 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hid=0] ; _UIRemot...
+06:47:58.085 MobileSMS pid=26632 main | entry781 after reopen783 fr=1 text=8 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 4414}, {420, 44}} h=0 a=1.0
+06:47:58.100 MobileSMS pid=26632 main | reopen783 next pass {{0, 0}, {420, 458}}
+06:47:58.671 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 2 at +1.20 s (see --- tree765 ---)
+06:47:58.978 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=4404ms
+06:47:58.989 MobileSMS pid=26632 main | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:47:58.990 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:47:59.040 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 145}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0), com.apple.MobileSMS(role=1 level=1...
+06:47:59.041 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{5, 145}, {420, 458}} (new in, then old out)
+06:47:59.135 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=156ms
+06:47:59.329 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=194ms
+06:47:59.339 MobileSMS pid=26632 main | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1 (+1 repeats)
+06:47:59.340 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1 (+1 repeats)
+06:48:00.577 MobileSMS pid=26632 main | leave781: chat closing, releasing the message box before Messages saves it
+06:48:00.591 MobileSMS pid=26632 main | app input window laid out (+3 repeats)
+06:48:00.606 MobileSMS pid=26632 main | resign777 #10 resign(UIResponder) CKMessageEntryRichTextView result=YES allowed fr=0 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=0 | caret=UITextSelectionView hid=0 a=1.00
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 focus: kbImpl.delegate=nil firstResponder=nil
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xc8a4
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f01 UIKitCore <redacted>+0x58
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f02 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd6ec
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f03 ChatKit <redacted>+0x34
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f04 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0x5468
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f05 ChatKit <redacted>+0x34
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f06 ChatKit <redacted>+0x38
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f07 ChatKit <redacted>+0x38
+06:48:00.606 MobileSMS pid=26632 main | resign778 #10 f08 UIKitCore <redacted>+0x4d4
+06:48:00.607 MobileSMS pid=26632 main | resign778 #10 f09 UIKitCore <redacted>+0x60
+06:48:00.607 MobileSMS pid=26632 main | resign778 #10 f10 UIKitCore <redacted>+0x6c
+06:48:00.607 MobileSMS pid=26632 main | resign778 #10 f11 UIKitCore <redacted>+0x4d4
+06:48:00.607 MobileSMS pid=26632 main | resign778 #10 f12 UIKitCore <redacted>+0x60
+06:48:00.607 MobileSMS pid=26632 main | resign778 #10 f13 UIKitCore <redacted>+0x3f4
+06:48:00.608 MobileSMS pid=26632 main | resign778 #10 f14 UIKitCore <redacted>+0x1f0
+06:48:00.608 MobileSMS pid=26632 main | resign778 #10 f15 UIKitCore <redacted>+0x60
+06:48:00.613 MobileSMS pid=26632 main | resign777 #11 resign(UITextView) CKMessageEntryRichTextView result=YES allowed fr=0 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=0 | caret=none
+06:48:00.613 MobileSMS pid=26632 main | resign778 #11 focus: kbImpl.delegate=nil firstResponder=nil
+06:48:00.613 MobileSMS pid=26632 main | resign778 #11 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd778
+06:48:00.613 MobileSMS pid=26632 main | resign778 #11 f01 ChatKit <redacted>+0x34
+06:48:00.613 MobileSMS pid=26632 main | resign778 #11 f02 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0x5468
+06:48:00.613 MobileSMS pid=26632 main | resign778 #11 f03 ChatKit <redacted>+0x34
+06:48:00.613 MobileSMS pid=26632 main | resign778 #11 f04 ChatKit <redacted>+0x38
+06:48:00.613 MobileSMS pid=26632 main | resign778 #11 f05 ChatKit <redacted>+0x38
+06:48:00.614 MobileSMS pid=26632 main | resign778 #11 f06 UIKitCore <redacted>+0x4d4
+06:48:00.614 MobileSMS pid=26632 main | resign778 #11 f07 UIKitCore <redacted>+0x60
+06:48:00.614 MobileSMS pid=26632 main | resign778 #11 f08 UIKitCore <redacted>+0x6c
+06:48:00.614 MobileSMS pid=26632 main | resign778 #11 f09 UIKitCore <redacted>+0x4d4
+06:48:00.614 MobileSMS pid=26632 main | resign778 #11 f10 UIKitCore <redacted>+0x60
+06:48:00.614 MobileSMS pid=26632 main | resign778 #11 f11 UIKitCore <redacted>+0x3f4
+06:48:00.615 MobileSMS pid=26632 main | resign778 #11 f12 UIKitCore <redacted>+0x1f0
+06:48:00.615 MobileSMS pid=26632 main | resign778 #11 f13 UIKitCore <redacted>+0x60
+06:48:00.615 MobileSMS pid=26632 main | resign778 #11 f14 UIKitCore <redacted>+0xac
+06:48:00.615 MobileSMS pid=26632 main | resign778 #11 f15 UIKitCore <redacted>+0x7c8
+06:48:00.617 MobileSMS pid=26632 main | app input window laid out (+1 repeats)
+06:48:00.622 MobileSMS pid=26632 main | app willAppear CKConversationListCollectionViewController
+06:48:00.622 MobileSMS pid=26632 main | kbleave743: left the conversation, asking SpringBoard to hide the keys
+06:48:00.624 SpringBoard pid=26607 main | SpringBoard: told Messages the keyboard is gone (+1 repeats)
+06:48:00.624 SpringBoard pid=26607 main | SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=kbleave743 caller=DynamicStage+0x80b70 < DynamicStage+0x82080 < DynamicStage+0x7b794
+06:48:00.624 MobileSMS pid=26632 main | app keyboard request hide token=523 set=0 post=0
+06:48:00.627 SpringBoard pid=26607 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+06:48:00.627 MobileSMS pid=26632 main | app willAppear CKSearchViewController
+06:48:00.628 SpringBoard pid=26607 main | SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1 (+1 repeats)
+06:48:00.633 SpringBoard pid=26607 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+06:48:00.634 SpringBoard pid=26607 main | hideStray split=0 depth=0
+06:48:00.796 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 +3.37s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.814 | arb on=0 owner=com.apple.springboard h=243 | s...
+06:48:01.052 SpringBoard pid=26607 main | SpringBoard: kb707 typing ended (typing ended): cards spring back
+06:48:01.306 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 2 ended after 3.9s: keys visible not judged (SpringBoard's own keyboard)
+06:48:01.849 MobileSMS pid=26632 main | app willAppear CKNavigationController
+06:48:01.849 MobileSMS pid=26632 main | app willAppear CKChatController
+06:48:01.854 MobileSMS pid=26632 main | app input window laid out (+2 repeats)
+06:48:01.862 MobileSMS pid=26632 main | app become CKMessageEntryRichTextView (+1 repeats)
+06:48:01.867 MobileSMS pid=26632 main | strip783 auto-focus while chat opening (draft restore) text=5 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=0 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=81 hid=0 [UIVi...
+06:48:01.867 MobileSMS pid=26632 main | entry781 auto-focus while chat opening (draft restore) fr=0 text=5 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKMessageEntryView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 417.33333333333331}, {420, 37}} h=0 a=1.0
+06:48:01.867 MobileSMS pid=26632 main | resign777 #12 become(UIResponder) CKMessageEntryRichTextView result=YES (was fr=0) fr=1 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=1 | caret=none
+06:48:01.867 MobileSMS pid=26632 main | resign778 #12 focus: kbImpl.delegate=CKMessageEntryRichTextView firstResponder=CKMessageEntryRichTextView>CKMessageEntryContentView>UIView>UIView>CKMessageEntryView>CKChatController
+06:48:01.867 MobileSMS pid=26632 main | resign778 #12 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xc4cc
+06:48:01.867 MobileSMS pid=26632 main | resign778 #12 f01 UIKitCore <redacted>+0x78
+06:48:01.867 MobileSMS pid=26632 main | resign778 #12 f02 UIKitCore <redacted>+0x108
+06:48:01.867 MobileSMS pid=26632 main | resign778 #12 f03 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd33c
+06:48:01.867 MobileSMS pid=26632 main | resign778 #12 f04 ChatKit <redacted>+0x368
+06:48:01.867 MobileSMS pid=26632 main | resign778 #12 f05 UIKitCore <redacted>+0x64
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f06 UIKitCore <redacted>+0x208
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f07 UIKitCore <redacted>+0x48
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f08 UIKitCore <redacted>+0x60
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f09 UIKitCore <redacted>+0xc4
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f10 UIKitCore <redacted>+0xb4
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f11 UIKitCore <redacted>+0x1e4
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f12 UIKitCore <redacted>+0xa90
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f13 UIKitCore <redacted>+0x1f0
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f14 UIKitCore <redacted>+0x60
+06:48:01.868 MobileSMS pid=26632 main | resign778 #12 f15 UIKitCore <redacted>+0xac
+06:48:01.871 MobileSMS pid=26632 main | app keyboard request show token=523 set=0 post=0 (+1 repeats)
+06:48:01.872 SpringBoard pid=26607 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+06:48:01.874 SpringBoard pid=26607 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:48:01.876 SpringBoard pid=26607 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} (+2 repeats)
+06:48:01.892 MobileSMS pid=26632 main | strip783 auto-focus while chat opening (draft restore) text=3 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=81 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=81 hid=0 [UIV...
+06:48:01.892 MobileSMS pid=26632 main | entry781 auto-focus while chat opening (draft restore) fr=1 text=3 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4377}, {420, 156}} h=0 a=1.0 ; CKMessageEntryView{{0, 4377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 4417.333333333333}, {420, 37}} h=0 a=1.0
+06:48:01.892 MobileSMS pid=26632 main | reopen783 auto-focus: input container parked {{0, 4000}, {420, 458}}, sending text-changed signal
+06:48:01.904 MobileSMS pid=26632 main | reopen783 after {{0, 4000}, {420, 458}} (still parked this pass)
+06:48:01.904 MobileSMS pid=26632 main | strip783 after reopen783 text=3 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hid=0] ; _UIRemot...
+06:48:01.904 MobileSMS pid=26632 main | entry781 after reopen783 fr=1 text=3 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 4414}, {420, 44}} h=0 a=1.0
+06:48:01.905 MobileSMS pid=26632 main | resign777 #13 become(UITextView) CKMessageEntryRichTextView result=YES (was fr=0) fr=1 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=1 | caret=UITextSelectionView hid=0 a=1.00
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 focus: kbImpl.delegate=CKMessageEntryRichTextView firstResponder=CKMessageEntryRichTextView>CKMessageEntryContentView>UIView>UIView>CKMessageEntryView>CKChatController
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd49c
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f01 ChatKit <redacted>+0x368
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f02 UIKitCore <redacted>+0x64
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f03 UIKitCore <redacted>+0x208
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f04 UIKitCore <redacted>+0x48
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f05 UIKitCore <redacted>+0x60
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f06 UIKitCore <redacted>+0xc4
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f07 UIKitCore <redacted>+0xb4
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f08 UIKitCore <redacted>+0x1e4
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f09 UIKitCore <redacted>+0xa90
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f10 UIKitCore <redacted>+0x1f0
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f11 UIKitCore <redacted>+0x60
+06:48:01.905 MobileSMS pid=26632 main | resign778 #13 f12 UIKitCore <redacted>+0xac
+06:48:01.906 MobileSMS pid=26632 main | resign778 #13 f13 UIKitCore <redacted>+0x7c8
+06:48:01.906 MobileSMS pid=26632 main | trace paused, main thread is spinning
+06:48:01.907 SpringBoard pid=26607 main | SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}}) (+2 repeats)
+06:48:01.907 SpringBoard pid=26607 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+1 repeats)
+06:48:01.907 SpringBoard pid=26607 main | SpringBoard: told Messages the keyboard is on screen
+06:48:01.907 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS keyboard drive attempt 0 fr=1 key=1 raised=1 visible={{0, 631}, {430, 301}} (+1 repeats)
+06:48:01.909 SpringBoard pid=26607 main | SpringBoard: kb707 typing in the upper card (the stage's text field, keys (at once)): kept (already clear) 140 pt to the keyboard
+06:48:01.911 SpringBoard pid=26607 bg | arbiter on=1 src=com.apple.springboard frame={{0, 0}, {430, 243}} (+2 repeats)
+06:48:01.912 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 3 start owner=com.apple.MobileSMS h=0
+06:48:01.912 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 3 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:48:01.908 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys=...
+06:48:01.912 SpringBoard pid=26607 main | SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 12.18s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+06:48:01.913 SpringBoard pid=26607 main | keyboard note on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} (+2 repeats)
+06:48:01.913 SpringBoard pid=26607 main | keyboard com.apple.MobileSMS on=1 state=2 split=0 bottom=com.apple.MobileSMS top=- hover=- (+2 repeats)
+06:48:01.913 SpringBoard pid=26607 main | SpringBoard: keyboard already up {{0, 631}, {430, 301}}, not raised again
+06:48:01.922 SpringBoard pid=26607 main | SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1
+06:48:01.923 SpringBoard pid=26607 main | SpringBoard: stand-in ended why=focus CKMessageEntryRichTextView entry={{0, 4414}, {420, 44}} cardH=458 container parked, left to reopen782 com.apple.MobileSMS (+1 repeats)
+06:48:01.923 SpringBoard pid=26607 main | SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 12.19s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+06:48:01.924 SpringBoard pid=26607 main | SpringBoard: takeKey already try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main (+1 repeats)
+06:48:01.935 SpringBoard pid=26607 main | SpringBoard: staged keyboard stayed on the same field fr=1 key=1
+06:48:01.961 SpringBoard pid=26607 main | SpringBoard: focus755 com.apple.MobileSMS keyboard on=1 key window=DSStageWindow last focus update: 12.22s ago held keyboardFocus targetOfEventDeferringEnvironments = keyboardFocus; }; }
+06:48:01.977 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 3 at +0.05 s (see --- tree765 ---)
+06:48:02.013 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 3 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.011 | arb on=1 owner=com.apple.springboard h=243 | s...
+06:48:02.033 SpringBoard pid=26607 main | SpringBoard: phonesize675 com.apple.MobileSMS skipped while typing: not allowlisted (apps: com.beeper.chat.ios (default)); scene stays card-size
+06:48:02.071 SpringBoard pid=26607 main | SpringBoard: com.apple.MobileSMS picker keyboard visible {{0, 631}, {430, 301}}
+06:48:02.215 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 3 +0.30s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:48:02.125 | arb on=1 owner=com.apple.springboard h=243 | sbk...
+06:48:02.272 SpringBoard pid=26607 main | raise keyboard video=0 depth=0 why=nothing playing playing=- front=home screen (+2 repeats)
+06:48:02.319 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 3 at +0.40 s (see --- tree765 ---)
+06:48:02.319 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 3 +0.41s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.272 | arb on=1 owner=com.apple.springboard h=243 | s...
+06:48:02.472 MobileSMS pid=26632 main | trace resumed after dropping 43 lines
+06:48:02.472 MobileSMS pid=26632 main | strip783 chat didAppear text=3 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hid=0] ; _UIRemote...
+06:48:02.472 MobileSMS pid=26632 main | entry781 chat didAppear fr=1 text=3 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 4414}, {420, 44}} h=0 a=1.0
+06:48:02.472 MobileSMS pid=26632 main | reopen783 chat didAppear: input container parked {{0, 4000}, {420, 458}}, sending text-changed signal
+06:48:02.483 MobileSMS pid=26632 main | reopen783 after {{0, 4000}, {420, 458}} (still parked this pass)
+06:48:02.484 MobileSMS pid=26632 main | strip783 after reopen783 text=3 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hid=0] ; _UIRemot...
+06:48:02.484 MobileSMS pid=26632 main | entry781 after reopen783 fr=1 text=3 wanted=1 | UIInputSetContainerView{{0, 4000}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 4414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 4414}, {420, 44}} h=0 a=1.0
+06:48:02.498 MobileSMS pid=26632 main | reopen783 next pass {{0, 0}, {420, 458}}
+06:48:02.892 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=3563ms
+06:48:02.902 MobileSMS pid=26632 main | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1
+06:48:02.904 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+06:48:03.071 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=180ms
+06:48:03.137 SpringBoard pid=26607 main | SpringBoard: tree765 mapped 7 keyboard window(s) for show 3 at +1.20 s (see --- tree765 ---)
+06:48:03.253 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=181ms
+06:48:03.264 MobileSMS pid=26632 main | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1 (+1 repeats)
+06:48:03.265 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1 (+1 repeats)
+06:48:03.265 MobileSMS pid=26632 main | strip783 after delete (empty/text flip) text=0 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=81 hid=0 [UIView y=0 h=44 hi...
+06:48:03.265 MobileSMS pid=26632 main | entry781 after delete (empty/text flip) fr=1 text=0 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 414}, {420, 81}} h=0 a=1.0
+06:48:03.276 MobileSMS pid=26632 main | app input window laid out (+3 repeats)
+06:48:03.279 SpringBoard pid=26607 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 377}, {420, 156}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=2.65 via app dylib kb line
+06:48:03.281 SpringBoard pid=26607 main | SpringBoard: keys672 com.apple.MobileSMS keyboard up {{0, 377}, {420, 156}} slot=0 card={{36, 176}, {420, 458}} lift=-140; scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0}); has the app dylib: its own keyboard notes are swallowed insid...
+06:48:03.438 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=185ms
+06:48:03.450 MobileSMS pid=26632 main | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=? hold=1
+06:48:03.451 MobileSMS pid=26632 main | strip783 after delete (empty/text flip) text=0 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=81 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=81 hid=0 [UIView y=0 h=81 hi...
+06:48:03.451 MobileSMS pid=26632 main | entry781 after delete (empty/text flip) fr=1 text=0 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 377}, {420, 156}} h=0 a=1.0 ; CKMessageEntryView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 417.33333333333331}, {420, 37}} h=0 a=1.0
+06:48:03.456 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=0 hold=1
+06:48:05.041 SpringBoard pid=26607 main | SpringBoard: staged key insert len=1 app=com.apple.MobileSMS fr=1 (+2 repeats)
+06:48:05.056 SpringBoard pid=26607 main | app: key insert -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:48:05.056 MobileSMS pid=26632 main | app: key insert -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1 (+2 repeats)
+06:48:05.063 MobileSMS pid=26632 main | app input window laid out
+06:48:05.075 MobileSMS pid=26632 main | strip783 after insert (empty/text flip) text=1 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=44 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=44 hid=0 [UIView y=0 h=44 hi...
+06:48:05.075 MobileSMS pid=26632 main | entry781 after insert (empty/text flip) fr=1 text=1 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 414}, {420, 119}} h=0 a=1.0 ; CKMessageEntryView{{0, 414}, {420, 44}} h=0 a=1.0
+06:48:05.237 MobileSMS pid=26632 main | app: key insert -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1
+06:48:05.706 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=2268ms
+06:48:05.722 MobileSMS pid=26632 main | app: key delete -> CKMessageEntryRichTextView fr=1 win=1 changed=1 hold=1
+06:48:05.724 SpringBoard pid=26607 main | app: key delete -> com.apple.MobileSMS textview fr=1 win=1 changed=1 hold=1
+06:48:05.873 SpringBoard pid=26607 main | SpringBoard: staged key delete app=com.apple.MobileSMS fr=1 gap=167ms
+06:48:05.902 MobileSMS pid=26632 main | app input window laid out
+06:48:05.906 SpringBoard pid=26607 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 377}, {420, 156}} visible={{0, 631}, {430, 301}} slot=0 sinceHide=5.28 via app dylib kb line
+06:48:05.917 MobileSMS pid=26632 main | strip783 after delete (empty/text flip) text=0 | isInHardwareKeyboardMode=0 isMinimized=0 showsCandidateBar=0 isUsingDictationLayout=0 | host: UIKeyboardDockView y=81 h=75 hid=1 [UIKeyboardDockItemButton y=7 h=69 hid=0] [UIKeyboardDockItemButton y=6 h=69 hid=0] ; CKMessageEntryView y=0 h=81 hid=0 [UIView y=0 h=81 hi...
+06:48:05.917 MobileSMS pid=26632 main | entry781 after delete (empty/text flip) fr=1 text=0 wanted=1 | UIInputSetContainerView{{0, 0}, {420, 458}} h=0 a=1.0 ; UIInputSetHostView{{0, 377}, {420, 156}} h=0 a=1.0 ; CKMessageEntryView{{0, 377}, {420, 81}} h=0 a=1.0 ; CKBrowserSwitcherFooterView{{0, 417.33333333333331}, {420, 37}} h=0 a=1.0
+06:48:07.218 MobileSMS pid=26632 main | leave781: chat closing, releasing the message box before Messages saves it
+06:48:07.233 MobileSMS pid=26632 main | app input window laid out
+06:48:07.247 MobileSMS pid=26632 main | resign777 #16 resign(UIResponder) CKMessageEntryRichTextView result=YES allowed fr=0 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=0 | caret=UITextSelectionView hid=0 a=1.00
+06:48:07.247 MobileSMS pid=26632 main | resign778 #16 focus: kbImpl.delegate=nil firstResponder=nil
+06:48:07.247 MobileSMS pid=26632 main | resign778 #16 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xc8a4
+06:48:07.247 MobileSMS pid=26632 main | resign778 #16 f01 UIKitCore <redacted>+0x58
+06:48:07.247 MobileSMS pid=26632 main | resign778 #16 f02 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd6ec
+06:48:07.247 MobileSMS pid=26632 main | resign778 #16 f03 ChatKit <redacted>+0x34
+06:48:07.247 MobileSMS pid=26632 main | resign778 #16 f04 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0x5468
+06:48:07.248 MobileSMS pid=26632 main | resign778 #16 f05 ChatKit <redacted>+0x34
+06:48:07.248 MobileSMS pid=26632 main | resign778 #16 f06 ChatKit <redacted>+0x38
+06:48:07.248 MobileSMS pid=26632 main | resign778 #16 f07 ChatKit <redacted>+0x38
+06:48:07.248 MobileSMS pid=26632 main | resign778 #16 f08 UIKitCore <redacted>+0x4d4
+06:48:07.248 MobileSMS pid=26632 main | resign778 #16 f09 UIKitCore <redacted>+0x60
+06:48:07.248 MobileSMS pid=26632 main | resign778 #16 f10 UIKitCore <redacted>+0x6c
+06:48:07.248 MobileSMS pid=26632 main | resign778 #16 f11 UIKitCore <redacted>+0x4d4
+06:48:07.249 MobileSMS pid=26632 main | resign778 #16 f12 UIKitCore <redacted>+0x60
+06:48:07.249 MobileSMS pid=26632 main | resign778 #16 f13 UIKitCore <redacted>+0x3f4
+06:48:07.249 MobileSMS pid=26632 main | resign778 #16 f14 UIKitCore <redacted>+0x1f0
+06:48:07.249 MobileSMS pid=26632 main | resign778 #16 f15 UIKitCore <redacted>+0x60
+06:48:07.254 MobileSMS pid=26632 main | resign777 #17 resign(UITextView) CKMessageEntryRichTextView result=YES allowed fr=0 | key=UIWindow isKey=1 fieldWin=UITextEffectsWindow fieldWinKey=0 app=active scene=fg-active wanted=0 | caret=none
+06:48:07.254 MobileSMS pid=26632 main | resign778 #17 focus: kbImpl.delegate=nil firstResponder=nil
+06:48:07.254 MobileSMS pid=26632 main | resign778 #17 f00 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0xd778
+06:48:07.254 MobileSMS pid=26632 main | resign778 #17 f01 ChatKit <redacted>+0x34
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f02 DynamicStageApp.dylib DSRestoreAfterLeavingStage+0x5468
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f03 ChatKit <redacted>+0x34
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f04 ChatKit <redacted>+0x38
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f05 ChatKit <redacted>+0x38
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f06 UIKitCore <redacted>+0x4d4
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f07 UIKitCore <redacted>+0x60
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f08 UIKitCore <redacted>+0x6c
+06:48:07.255 MobileSMS pid=26632 main | resign778 #17 f09 UIKitCore <redacted>+0x4d4
+06:48:07.256 MobileSMS pid=26632 main | resign778 #17 f10 UIKitCore <redacted>+0x60
+06:48:07.256 MobileSMS pid=26632 main | resign778 #17 f11 UIKitCore <redacted>+0x3f4
+06:48:07.256 MobileSMS pid=26632 main | resign778 #17 f12 UIKitCore <redacted>+0x1f0
+06:48:07.256 MobileSMS pid=26632 main | resign778 #17 f13 UIKitCore <redacted>+0x60
+06:48:07.256 MobileSMS pid=26632 main | resign778 #17 f14 UIKitCore <redacted>+0xac
+06:48:07.256 MobileSMS pid=26632 main | resign778 #17 f15 UIKitCore <redacted>+0x7c8
+06:48:07.265 MobileSMS pid=26632 main | app willAppear CKConversationListCollectionViewController
+06:48:07.265 MobileSMS pid=26632 main | kbleave743: left the conversation, asking SpringBoard to hide the keys
+06:48:07.266 SpringBoard pid=26607 main | SpringBoard: told Messages the keyboard is gone (+1 repeats)
+06:48:07.267 SpringBoard pid=26607 main | SpringBoard: hiding the staged keyboard fr=1 keys={{0, 631}, {430, 301}} why=kbleave743 caller=DynamicStage+0x80b70 < DynamicStage+0x82080 < DynamicStage+0x7b794
+06:48:07.267 MobileSMS pid=26632 main | app keyboard request hide token=523 set=0 post=0
+06:48:07.269 MobileSMS pid=26632 main | app willAppear CKSearchViewController
+06:48:07.270 SpringBoard pid=26607 bg | arbiter on=0 src=com.apple.springboard frame={{0, 0}, {0, 0}}
+06:48:07.272 SpringBoard pid=26607 main | SpringBoard: UIKit moving the keyboard off the bottom {{0, 932}, {430, 301}} fr=1 (+1 repeats)
+06:48:07.276 SpringBoard pid=26607 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+06:48:07.276 SpringBoard pid=26607 main | hideStray split=0 depth=0
+06:48:07.346 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 3 +5.43s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.272 | arb on=0 owner=com.apple.springboard h=243 | s...
+06:48:07.695 SpringBoard pid=26607 main | SpringBoard: kb707 typing ended (typing ended): cards spring back
+06:48:07.813 SpringBoard pid=26607 main | SpringBoard: rim651 system gesture held at 0,269 (rim)
+06:48:07.818 SpringBoard pid=26607 main | SpringBoard: rim651 hit main-outer-left at 0,269 -> DSStageDragShellView
+06:48:07.872 SpringBoard pid=26607 main | SpringBoard: kbvis768 show 3 ended after 6.0s: keys visible not judged (SpringBoard's own keyboard)
+06:48:07.914 SpringBoard pid=26607 main | SpringBoard: rim651 drag began at 0,281 won by ????G??????@??
+06:48:07.917 SpringBoard pid=26607 main | SpringBoard: drag702 the card was still animating when grabbed: taken where it was on screen, animation stopped
+06:48:07.925 SpringBoard pid=26607 main | SpringBoard: core747 card move stopped (drag)
+06:48:07.967 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card is moving: display-layout element kept at {{5, 145}, {420, 458}} until the drag settles
+06:48:08.248 SpringBoard pid=26607 main | SpringBoard: msgdiag714 Messages geometry slot=0 card={{36, 36}, {420, 458}} bounds={{0, 0}, {420, 458}} lift=0 side=0 clips=1 host={{0, 0}, {420, 458}} hostInCard={{0, 0}, {420, 458}} hostT={1.00,1.00,0,0} hostHidden=0 scene frame={{0, 0}, {420, 458}} safeArea={0, 0, 0, 0} orientation=1 (stage wants frame={{0, 0}, ...
+06:48:09.285 SpringBoard pid=26607 main | SpringBoard: defer719 touch observer on the bottom card (30 s after start)
+06:48:09.853 SpringBoard pid=26607 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+06:48:09.854 SpringBoard pid=26607 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:48:09.857 MobileSMS pid=26632 main | app restored the phone layout
+06:48:09.872 SpringBoard pid=26607 main | SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (app no longer on a card), path=layout-off
+06:48:09.872 SpringBoard pid=26607 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+06:48:10.155 SpringBoard pid=26607 main | SpringBoard: host750 bottom card com.apple.MobileSMS: live -> detached
+06:48:10.699 SpringBoard pid=26607 main | SpringBoard: stage on screen
+06:48:10.699 SpringBoard pid=26607 main | on screen state=2 split=0 bottom=- top=- hover=-
+06:48:10.700 SpringBoard pid=26607 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+06:48:10.700 SpringBoard pid=26607 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+06:48:10.700 SpringBoard pid=26607 main | SpringBoard: opened the top stage
+
+--- crash ---
+
+--- diagnostics ---
+
+--- tree765 ---
+=== tree765 build 4.5.783 show 1 at +0.05 s (10-17 06:47:51.954) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 1 at +0.40 s (10-17 06:47:52.319) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 1 at +1.20 s (10-17 06:47:53.136) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+1.20 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 2 at +0.05 s (10-17 06:47:57.480) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 2 at +0.40 s (10-17 06:47:57.839) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 2 at +1.20 s (10-17 06:47:58.670) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+1.20 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 3 at +0.05 s (10-17 06:48:01.977) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 3 at +0.40 s (10-17 06:48:02.318) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.783 show 3 at +1.20 s (10-17 06:48:03.135) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=B207DFFC-74DC-41D1-90D2-499F7687F2D4 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+1.20 s): 7 window(s) ===
+
+--- kbvis768 ---
+06:47:51.901 kbvis768 show 1 start owner=com.apple.MobileSMS h=0
+06:47:51.901 kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1494466106] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:51.893 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys={{0, 631}, {430, 301}}
+06:47:52.005 kbvis768 show 1 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:51.997 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:47:56.089 kbvis768 show 1 +4.19s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:51.997 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+06:47:56.610 kbvis768 show 1 ended after 4.7s: keys visible not judged (SpringBoard's own keyboard)
+06:47:57.429 kbvis768 show 2 start owner=com.apple.MobileSMS h=0
+06:47:57.429 kbvis768 show 2 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:57.426 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys={{0, 631}, {430, 301}}
+06:47:57.531 kbvis768 show 2 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:47:57.509 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:47:57.636 kbvis768 show 2 +0.21s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.531 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:47:57.739 kbvis768 show 2 +0.31s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.655 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:47:57.841 kbvis768 show 2 +0.41s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.814 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:48:00.797 kbvis768 show 2 +3.37s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:47:57.814 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+06:48:01.306 kbvis768 show 2 ended after 3.9s: keys visible not judged (SpringBoard's own keyboard)
+06:48:01.913 kbvis768 show 3 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:48:01.908 | arb on=1 owner=com.apple.MobileSMS h=0 | sbkeys={{0, 631}, {430, 301}}
+06:48:01.913 kbvis768 show 3 start owner=com.apple.MobileSMS h=0
+06:48:02.013 kbvis768 show 3 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.011 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:48:02.215 kbvis768 show 3 +0.30s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@06:48:02.125 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:48:02.320 kbvis768 show 3 +0.41s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.272 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+06:48:07.347 kbvis768 show 3 +5.43s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@06:48:02.272 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+06:48:07.872 kbvis768 show 3 ended after 6.0s: keys visible not judged (SpringBoard's own keyboard)

@@ -1,3 +1,6 @@
+## 4.5.786
+- Messages: dragging the conversation down to the bar hides the staged keys (swipe786); the stage returns right after the keys hide (return786).
+
 ## 4.5.785
 - Messages: reopening a chat with a draft focuses the box once after the chat appears (like a tap), so the bar and app strip come back on the card (reopen784).
 

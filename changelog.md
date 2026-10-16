@@ -1,3 +1,6 @@
+## 4.5.776
+- keep776: prevent SpringBoard hiding the staged keyboard window (Medusa) while a staged app owns the keys.
+
 ## 4.5.775
 - rekey775 home->stage key handoff; why775 log-only Medusa decision hooks.
 

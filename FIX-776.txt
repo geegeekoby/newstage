@@ -1,0 +1,4 @@
+4.5.776
+- keep776 (prevention): while the arbiter says a staged app (not Messages, not SpringBoard) owns the keyboard and the stage is on screen, -[SBMedusaHostedKeyboardWindow setHidden:YES] is dropped ONLY when it comes from inside -[SBMedusaHostedKeyboardWindowController updateMedusaHostedKeyboardWindowForScene:isForeground:]. setHidden:NO and every other caller pass through. Hidden windows are never forced visible. UITextEffectsWindow and the dock are not touched. When the arbiter goes off, any dropped hide is handed back to SpringBoard's own setHidden:YES 0.6 s later. Off: /var/mobile/.dynamicstage-keep776-off (crash latch). Any exception falls back to %orig.
+- While keep776 is on, keyfocus773/rekey775 and keyfocus772's one-shot key take are off (keyfocus772's restore take stays). keep776-off brings them back.
+- why775 and kbvis768 logging stay. core776-off returns to 775.

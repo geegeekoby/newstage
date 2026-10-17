@@ -115,6 +115,10 @@ void DSReleaseKeyboardLevelHold(void);
 CGFloat DSKeyboardWindowLevelAboveStage(void);
 // 4.5.802 medusa802: SpringBoard's own Medusa level assertion instead of direct level writes.
 BOOL DSMedusa802Handles(id window);
+// 4.5.803 one keyboard model (set from the arbiter callback, main thread).
+void DS803NoteArbiter(BOOL on, NSString *source);
+NSString *DS803KeyboardOwner(void);
+NSString *DS803KeysDownFor(void);
 // While a staged keyboard is up, any scene other than the stage's own scene
 // is replaced with that scene. Level alone cannot cross scenes.
 id DSReplacementSceneForKeyboardWindow(id window, id proposedScene);

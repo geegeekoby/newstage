@@ -2750,6 +2750,24 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
          [name rangeOfString:@"Message"].location != NSNotFound ||
          [name rangeOfString:@"CK"].location == 0)) {
         DSTraceFormat(@"app willAppear %@", name);
+        // 4.5.803 strip803 (log only): the switches the Messages strip path reads,
+        // as this process sees them, once per process at the first chat.
+        if (DS803On("strip803") && [name isEqualToString:@"CKChatController"]) {
+            static BOOL said = NO;
+            if (!said) {
+                said = YES;
+                DSTraceFormat(@"strip803 switches: caret778=%d caret788=%d reopen783=%d reopen784=%d reopen788=%d reopen789=%d reopen790=%d reopen791=%d strip782=%d strip783=%d strip784=%d strip790=%d entry781=%d leave781=%d resign777=%d stack778become=%d swipe786=%d swipe787=%d keyring795=%d kbleave743=%d kbapp744=%d core783=%d",
+                    DSCaret778Enabled(), DS788On("caret788"), DS783On("reopen783"), DS785On("reopen784"), DS788On("reopen788"), DS789On("reopen789"),
+                    DS790On("reopen790"), DS791On("reopen791"),
+                    DS782On("strip782") && access("/var/mobile/.dynamicstage-strip782-on", F_OK) == 0,
+                    DS783On("strip783") && access("/var/mobile/.dynamicstage-strip783-on", F_OK) == 0,
+                    DS784On("strip784") && access("/var/mobile/.dynamicstage-strip784-on", F_OK) == 0,
+                    DS790On("strip790"), DS781On("entry781"), DS781On("leave781"), DS777On("resign777"), DS778On("stack778become"),
+                    DS786On("swipe786"), DS787On("swipe787"), DS795AppKeyringOn(),
+                    access("/var/mobile/.dynamicstage-kbleave743-off", F_OK) != 0, access("/var/mobile/.dynamicstage-kbapp744-off", F_OK) != 0,
+                    DSFeature699On("core783"));
+            }
+        }
     }
     if (DSStaged() && [name rangeOfString:@"CKChatController"].location != NSNotFound) { DSChatOpening781 = YES; DSAutoFocus785 = NO; DSTrace792Open(10.0); }
     // The push lays the reply bar out. Sliding it now cancels the push.
@@ -7303,7 +7321,25 @@ static void DSInstallMessagesBehaviorHooks(void) {
 - (BOOL)shouldShowAppStrip {
     // StageDuo shows this strip with the phone-sized keyboard, under the
     // field. Forcing it on while the field is editing drew it above the field.
-    return %orig;
+    BOOL r = %orig;
+    // 4.5.803 strip803 (log only): Messages' own answer, each time it changes,
+    // with what it can see. 791 showed the strip (entry 81 pt) from chat open;
+    // 799-802 show 44 pt from chat open, before any tap. Off: strip803-off.
+    @try {
+        if (DSStaged() && DS803On("strip803")) {
+            static int last = -1;
+            if (last != (int)r) {
+                last = (int)r;
+                UIView *me = (UIView *)self;
+                UIResponder *fr = nil;
+                for (UIWindow *w in UIApplication.sharedApplication.windows) if (w.isKeyWindow) { fr = [w valueForKey:@"firstResponder"]; break; }
+                DSTraceFormat(@"strip803 shouldShowAppStrip=%d entry=%@ win=%@ fr=%@ keysWanted=%d ownsKeys=%d",
+                              r, NSStringFromCGRect(me.frame), me.window ? NSStringFromClass(me.window.class) : @"none",
+                              fr ? NSStringFromClass(fr.class) : @"none", DSStageKeyboardWanted, DSMessagesOwnsKeyboard());
+            }
+        }
+    } @catch (NSException *e) {}
+    return r;
 }
 
 - (UIEdgeInsets)safeAreaInsets {

@@ -935,7 +935,6 @@ extern NSString *DSFocus755LastFor(NSString *bundle, CFAbsoluteTime *at);
     NSInteger _stagedKeyboardReassertCount;
     // 4.5.801 kbfocus801: real SBWorkspaceKeyboardFocusController focus for the
     // staged scene (bypass stand-in / keyring while active).
-    BOOL _kbfocus801Marked;
     BOOL _kbfocus801Active;
     NSString *_kbfocus801Bundle;
     NSString *_kbfocus802Bundle;      // 4.5.802: focus requested (once) for this bundle
@@ -2322,6 +2321,14 @@ static void DSKeys697Log(NSString *key, NSString *line) {
 }
 
 - (BOOL)shouldIgnoreForeignKeyboardEventFrom:(NSString *)source onScreen:(BOOL)onScreen {
+    // 4.5.803 typing803: a keyboard from the app the keyboard system names as
+    // the owner right now is never "foreign" (802 02:00:32.690 ignored
+    // Spotlight's own keys on a stale typing flag). Off: typing803-off.
+    if (DS803On("typing803") && onScreen && [source isKindOfClass:NSString.class] && source.length &&
+        [source isEqualToString:DS803KeyboardOwner()] && ![self isHostingBundleIdentifier:source]) {
+        DSFeature719MarkAction("typing803");
+        return NO;
+    }
     // 4.5.767 sbkb767: with no stage on screen nothing is "typing on the stage"
     // (Resssj 21:43:47: full-screen Messages' keys were ignored as foreign while
     // the stage was off). The rule and its log line need the stage on screen.
@@ -2837,8 +2844,14 @@ static void DSKeys697Log(NSString *key, NSString *line) {
     if (shown) state |= kDSStageStateActiveBit;
     if (token != NOTIFY_TOKEN_INVALID) notify_set_state(token, state);
     notify_post(kDSKeyboardShownNotification);
-    DSDiagnosticsRecord(shown ? @"SpringBoard: told Messages the keyboard is on screen"
-                              : @"SpringBoard: told Messages the keyboard is gone");
+    // 4.5.803 noise803: the post still goes out every time; the line is only
+    // written when the state changes. Off: noise803-off.
+    static int lastLogged = -1;
+    if (!DS803On("noise803") || lastLogged != (shown ? 1 : 0)) {
+        lastLogged = shown ? 1 : 0;
+        DSDiagnosticsRecord(shown ? @"SpringBoard: told Messages the keyboard is on screen"
+                                  : @"SpringBoard: told Messages the keyboard is gone");
+    }
 }
 
 - (BOOL)bundlePrefersHostedTextFieldKeyboard:(NSString *)bundle {
@@ -2899,18 +2912,6 @@ static void DSKeys697Log(NSString *key, NSString *line) {
 // DSStagedKeyboardField / keyring795 / msg742 path is skipped; card lift still
 // uses the real keyboard frame height. Off: kbfocus801-off / core801-off
 // (crash latch kbfocus801).
-- (BOOL)kbfocus801On {
-    // 4.5.802: kbfocus801 (trusted "ok" without visible keys) is replaced by
-    // opt-in kbfocus802. core802-off brings 801's behaviour back.
-    if (DSFeature699On("core802")) return NO;
-    if (!DS801On("kbfocus801")) return NO;
-    if (!_kbfocus801Marked) {
-        _kbfocus801Marked = YES;
-        DSFeature699MarkTrying("kbfocus801");
-    }
-    return YES;
-}
-
 - (BOOL)kbfocus801IsActive {
     return _kbfocus801Active;
 }
@@ -2941,156 +2942,6 @@ static void DSKeys697Log(NSString *key, NSString *line) {
     if (_topSceneHost.isHosting && [_topSceneHost.bundleIdentifier isEqualToString:bundle]) return _topSceneHost;
     if (_floatSceneHost.isHosting && [_floatSceneHost.bundleIdentifier isEqualToString:bundle]) return _floatSceneHost;
     return nil;
-}
-
-- (BOOL)kbfocus801RequestForBundle:(NSString *)bundle {
-    if (![self kbfocus801On] || bundle.length == 0) return NO;
-    DSSceneHost *host = [self kbfocus801HostForBundle:bundle];
-    if (!host) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=no-host", bundle);
-        return NO;
-    }
-    FBScene *scene = nil;
-    @try { scene = [host hostedScene]; } @catch (NSException *e) { scene = nil; }
-    if (!scene) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=no-scene", bundle);
-        return NO;
-    }
-    // Identity token for setExternalSceneIdentities: / SBS path.
-    id identityToken = nil;
-    NSString *identStr = nil;
-    @try {
-        if ([scene respondsToSelector:@selector(identityToken)]) {
-            identityToken = ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identityToken));
-        }
-        if (!identityToken && [scene respondsToSelector:@selector(identity)]) {
-            identityToken = ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identity));
-        }
-        if ([identityToken respondsToSelector:@selector(stringRepresentation)]) {
-            identStr = ((id (*)(id, SEL))objc_msgSend)(identityToken, @selector(stringRepresentation));
-        } else if ([identityToken isKindOfClass:NSString.class]) {
-            identStr = (NSString *)identityToken;
-        }
-    } @catch (NSException *e) {}
-    int pid = 0;
-    @try {
-        id client = [scene respondsToSelector:@selector(clientProcess)]
-            ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(clientProcess)) : nil;
-        if (client && [client respondsToSelector:@selector(pid)]) {
-            pid = ((int (*)(id, SEL))objc_msgSend)(client, @selector(pid));
-        }
-    } @catch (NSException *e) {}
-
-    id focus = [self kbfocus801FocusController];
-    // Register as external so the focus controller treats it like cover-sheet.
-    @try {
-        id extObj = identityToken ?: identStr;
-        if (extObj && focus && [focus respondsToSelector:@selector(setExternalSceneIdentities:)]) {
-            NSMutableSet *set = [NSMutableSet set];
-            id existing = [focus respondsToSelector:@selector(externalSceneIdentities)]
-                ? ((id (*)(id, SEL))objc_msgSend)(focus, @selector(externalSceneIdentities)) : nil;
-            if ([existing conformsToProtocol:@protocol(NSFastEnumeration)]) {
-                for (id o in existing) if (o) [set addObject:o];
-            }
-            [set addObject:extObj];
-            ((void (*)(id, SEL, id))objc_msgSend)(focus, @selector(setExternalSceneIdentities:), set);
-        }
-    } @catch (NSException *e) {}
-
-    __block BOOL accepted = NO;
-    __block BOOL finished = NO;
-    NSString *reason = @"DynamicStage kbfocus801";
-
-    // Path A: SBWorkspaceKeyboardFocusController userFocusRequestForScene:reason:completion:
-    if (focus && [focus respondsToSelector:@selector(userFocusRequestForScene:reason:completion:)]) {
-        @try {
-            typedef void (^Done)(BOOL);
-            Done done = ^(BOOL ok) {
-                accepted = ok;
-                finished = YES;
-                DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=%@ owner=%@ via=SBWorkspaceKeyboardFocusController",
-                                          bundle, ok ? @"ok" : @"refused", bundle);
-            };
-            ((void (*)(id, SEL, id, id, Done))objc_msgSend)(focus, @selector(userFocusRequestForScene:reason:completion:), scene, reason, done);
-        } @catch (NSException *e) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=threw %@ via=SBWorkspaceKeyboardFocusController",
-                                      bundle, e.name ?: @"?");
-        }
-    }
-
-    // Path B: SBSKeyboardFocusService requestKeyboardFocusForSceneIdentity:processID:completion:
-    if (!finished) {
-        @try {
-            Class svcClass = objc_getClass("SBSKeyboardFocusService");
-            id svc = nil;
-            if ([svcClass respondsToSelector:@selector(new)]) {
-                svc = ((id (*)(id, SEL))objc_msgSend)(svcClass, @selector(new));
-            }
-            id token = identityToken ?: identStr;
-            if (svc && token && [svc respondsToSelector:@selector(requestKeyboardFocusForSceneIdentity:processID:completion:)]) {
-                typedef void (^Done)(BOOL);
-                Done done = ^(BOOL ok) {
-                    accepted = ok;
-                    finished = YES;
-                    DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=%@ owner=%@ via=SBSKeyboardFocusService pid=%d",
-                                              bundle, ok ? @"ok" : @"refused", bundle, pid);
-                };
-                ((void (*)(id, SEL, id, int, Done))objc_msgSend)(svc, @selector(requestKeyboardFocusForSceneIdentity:processID:completion:), token, pid, done);
-            } else if (!focus) {
-                DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=no-controller", bundle);
-            }
-        } @catch (NSException *e) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=threw %@ via=SBSKeyboardFocusService",
-                                      bundle, e.name ?: @"?");
-        }
-    }
-
-    if (!finished && focus && ![focus respondsToSelector:@selector(userFocusRequestForScene:reason:completion:)]) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=no-selector", bundle);
-        return NO;
-    }
-
-    // Completion is usually sync on main; wait briefly if not.
-    if (!finished) {
-        CFAbsoluteTime until = CFAbsoluteTimeGetCurrent() + 0.35;
-        while (!finished && CFAbsoluteTimeGetCurrent() < until) {
-            [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
-        }
-    }
-    if (!finished) {
-        accepted = YES; // assume requested; completion will log
-        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: request %@ result=pending owner=%@", bundle, bundle);
-    }
-    if (accepted) {
-        _kbfocus801Active = YES;
-        _kbfocus801Bundle = [bundle copy];
-        CGRect keys = DSVisibleKeyboardFrameOnScreen();
-        if (!CGRectIsNull(keys) && CGRectGetHeight(keys) >= 150.0) {
-            [self noteKeyboardFrame:keys source:bundle duration:0.2];
-        } else {
-            // Poll briefly for the real keyboard frame (SBMedusaHostedKeyboardWindow).
-            __weak __typeof(self) weakSelf = self;
-            NSString *b = [bundle copy];
-            for (NSNumber *delay in @[ @0.15, @0.35, @0.7 ]) {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
-                               dispatch_get_main_queue(), ^{
-                    __strong __typeof(weakSelf) strongSelf = weakSelf;
-                    if (!strongSelf || !strongSelf->_kbfocus801Active) return;
-                    if (![strongSelf->_kbfocus801Bundle isEqualToString:b]) return;
-                    CGRect k = DSVisibleKeyboardFrameOnScreen();
-                    if (!CGRectIsNull(k) && CGRectGetHeight(k) >= 150.0) {
-                        [strongSelf noteKeyboardFrame:k source:b duration:0.2];
-                        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: keyboard owner=%@ (show frame h=%.0f)", b, CGRectGetHeight(k));
-                    }
-                });
-            }
-        }
-        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: keyboard owner=%@ (show)", bundle);
-    } else {
-        // Gate note: if focus refuses for apps without our dylib, stand-in remains.
-        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: refused for %@ - falling back to stand-in/keyring", bundle);
-    }
-    return accepted;
 }
 
 - (void)kbfocus801ReleaseIfNeeded:(NSString *)why {
@@ -3229,12 +3080,6 @@ static void DSKeys697Log(NSString *key, NSString *line) {
     }
     if ([self cardIsParked:[self containerForSlot:slot]]) {
         DSDiagnosticsRecordFormat(@"SpringBoard: staged keyboard stayed down, %@ is parked", bundle);
-        return;
-    }
-    // 4.5.801 kbfocus801: real focus first for EVERY staged app (incl. Messages).
-    // Stand-in / keyring795 / msg742 / hosted-textfield path only as fallback.
-    if ([self kbfocus801On] && [self kbfocus801RequestForBundle:bundle]) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: bypassed stand-in for %@", bundle);
         return;
     }
     if ([self kbfocus802On]) {
@@ -4447,7 +4292,26 @@ static BOOL DSKbNan754On(void) {
         // arbiter on) is the app's stale frame (801 01:13:22.659 Beeper
         // lift=-123 7 ms after arbiter on=0). Taken as hidden. Messages keeps
         // msg742's own path. Off: lift802-off / core802-off (latch lift802).
-        if (!CGRectIsEmpty(keyboard) && source.length && ![source isEqualToString:@"SpringBoard"] &&
+        // 4.5.803 lift803: state rule, no time window. An app's keyboard "up"
+        // is ignored while the keyboard system's last word for that app was
+        // keys-down (set at the arbiter callback, cleared by its next keys-up).
+        // Off: lift803-off / core803-off (then 802's 1 s rule).
+        BOOL lift803 = DS803On("lift803");
+        if (lift803 && !CGRectIsEmpty(keyboard) && source.length && ![source isEqualToString:@"SpringBoard"] &&
+            ![source isEqualToString:@"com.apple.MobileSMS"] && [source isEqualToString:DS803KeysDownFor()] &&
+            [self isHostingBundleIdentifier:source]) {
+            static NSString *saidKey = nil;
+            static BOOL marked = NO;
+            if (!marked) { marked = YES; DSFeature699MarkTrying("lift803"); }
+            DSFeature719MarkAction("lift803");
+            NSString *k = [NSString stringWithFormat:@"%@|%@", source, NSStringFromCGRect(keyboard)];
+            if (![k isEqualToString:saidKey]) {
+                saidKey = k;
+                DSDiagnosticsRecordFormat(@"SpringBoard: lift803 ignored %@ keyboard up %@: the keyboard system said its keys are down (no lift)",
+                                          source, NSStringFromCGRect(keyboard));
+            }
+            keyboard = CGRectZero;
+        } else if (!lift803 && !CGRectIsEmpty(keyboard) && source.length && ![source isEqualToString:@"SpringBoard"] &&
             ![source isEqualToString:@"com.apple.MobileSMS"] && [self isHostingBundleIdentifier:source] &&
             !DSKbVis768ArbiterIsOn() && DSKbVis768ArbiterOffTime() > 0.0 && [self lift802KeysJustWentDown:1.0]) {
             static CFAbsoluteTime saidFor = 0;
@@ -16210,6 +16074,7 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
 - (BOOL)lift802KeysJustWentDown:(CFAbsoluteTime)window {
     if (!DS802On("lift802")) return NO;
     if (_sync725HideAt > 0.0) return YES;
+    if (DS803On("lift803")) return NO;   // 4.5.803: no time window; only the pending spring-back counts
     if (DSKbVis768ArbiterIsOn()) return NO;
     CFAbsoluteTime off = DSKbVis768ArbiterOffTime(), now = CFAbsoluteTimeGetCurrent();
     return off > 0.0 && now >= off && now - off < window;

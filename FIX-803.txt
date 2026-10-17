@@ -1,0 +1,9 @@
+## 4.5.803
+- medusa803: the Medusa level is held only from keys-up (arbiter on) of a staged non-Messages app until the first keys-down. Raise/hold never take it. Direct level writes, the pin and restore are gone, and so are keep776's 0.6 s hand-back and keep802's re-show.
+- lift803: state rule with no timer. After keys-down for app X, X's keyboard-up frames are ignored until X's next keys-up. The state is recorded at the arbiter callback.
+- typing803: the keyboard owned by the global owner is never ignored as foreign.
+- noise803: one "told Messages" line per state change, and one "touch above the keys" line per point.
+- kbfocus801 removed (kbfocus802 kept).
+- strip803: log-only trace of the Messages strip (shouldShowAppStrip changes plus the switch states at the first chat).
+- Off files: core803-off (back to 802), medusa803-off, lift803-off, typing803-off, noise803-off, keep803-off, strip803-off.
+

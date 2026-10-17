@@ -394,6 +394,7 @@ static int DS796Group(const char *name) {
         // did nothing. core801 / core802 are live masters again.
         if (strcmp(name, "core801") == 0) return -1;
         if (strcmp(name, "core802") == 0) return -1;
+        if (strcmp(name, "core803") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -969,6 +970,11 @@ BOOL DS801On(const char *name) {
 // 4.5.802: master core802-off returns every 802 change to 4.5.801.
 BOOL DS802On(const char *name) {
     return DSFeature699On("core802") && DSFeature699On(name);
+}
+
+// 4.5.803: master core803-off returns every 803 change to 4.5.802.
+BOOL DS803On(const char *name) {
+    return DSFeature699On("core803") && DS802On("core802") && DSFeature699On(name);
 }
 
 // 4.5.802: opt-in features (off unless /var/mobile/.dynamicstage-<name>-on).

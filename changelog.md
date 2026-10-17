@@ -1,3 +1,12 @@
+## 4.5.803
+- medusa803: the Medusa level is held only from keys-up (arbiter on) of a staged non-Messages app until the first keys-down. Raise/hold never take it. Direct level writes, the pin and restore are gone, and so are keep776's 0.6 s hand-back and keep802's re-show.
+- lift803: state rule with no timer. After keys-down for app X, X's keyboard-up frames are ignored until X's next keys-up. The state is recorded at the arbiter callback.
+- typing803: the keyboard owned by the global owner is never ignored as foreign.
+- noise803: one "told Messages" line per state change, and one "touch above the keys" line per point.
+- kbfocus801 removed (kbfocus802 kept).
+- strip803: log-only trace of the Messages strip (shouldShowAppStrip changes plus the switch states at the first chat).
+- Off files: core803-off (back to 802), medusa803-off, lift803-off, typing803-off, noise803-off, keep803-off, strip803-off.
+
 ## 4.5.802
 - kbfocus802 (opt-in, replaces kbfocus801): one SBWorkspaceKeyboardFocusController request per focus, no setExternalSceneIdentities:, no 0.35 s spin, no polls. The stand-in / keyring795 / msg742 path stays fully active; focus only counts as granted once kbvis768 proves the keys visible for that owner in the current show, after which later taps skip the stand-in. Logs "kbfocus802: request / result / proof=keys-visible | proof=none -> fallback". On: /var/mobile/.dynamicstage-kbfocus802-on (kbfocus802-off + crash latch still win). kbfocus801 is off while core802 is on.
 - medusa802: Medusa's level 20 is SpringBoard's own default level assertion (priority 0, Normal+5+15; proven from 20F75). While a staged app (not Messages) owns the keys, take SpringBoard's own assertion (newWindowLevelAssertionWithPriority:3 windowLevel:StatusBar+5000) and invalidate it on keys off / restore; our direct Medusa level writes, setWindowLevel: pin and restore are skipped. Off: medusa802-off + latch.

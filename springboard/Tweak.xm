@@ -1975,6 +1975,11 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
             ? CGPointMake(inLogged.x + CGRectGetMinX(loggedWindow.frame),
                           inLogged.y + CGRectGetMinY(loggedWindow.frame))
             : point;
+        // 4.5.803 noise803: hitTest runs several times per touch; one line per point.
+        static CGPoint lastPassed803 = {-1, -1};
+        BOOL same803 = DS803On("noise803") && CGPointEqualToPoint(lastPassed803, onLogged);
+        lastPassed803 = onLogged;
+        if (!same803)
         DSDiagnosticsRecordFormat(@"SpringBoard: a touch above the keys passed through local=%@ screen=%@ window=%@",
                                   NSStringFromCGPoint(inLogged),
                                   NSStringFromCGPoint(onLogged),
@@ -2752,6 +2757,12 @@ static void DSWhy775Install(void) {
     }
     (void)handler;
     DSTraceFormat(@"arbiter on=%d src=%@ frame=%@", onScreen, source ?: @"?", NSStringFromCGRect(frame));
+    // 4.5.803: the one keyboard model is set from here (earliest signal).
+    if (DSStageReady()) {
+        BOOL on803 = onScreen;
+        NSString *src803 = [source copy];
+        dispatch_async(dispatch_get_main_queue(), ^{ DS803NoteArbiter(on803, src803); });
+    }
     // 4.5.743 fast743: the arbiter's on=0 is the earliest hide signal.
     if (!onScreen && DSStageReady()) {
         dispatch_async(dispatch_get_main_queue(), ^{

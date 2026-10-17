@@ -1,3 +1,11 @@
+## 4.5.800
+- reason800: re-append our SBAppViewController._identifier to FBSMutableSceneSettings.ignoreOcclusionReasons on every staged-app settings update path (FBScene updateSettings: / updateSettingsWithBlock:, and SBAppViewController sceneHandle:didUpdateSettingsWithDiff: before occl798). Covers the home/layout path that bypassed reg799's contributor (Buddha 799 23:28:17.984: empty reasons, occl798 drop). In-place addObject when mutable; otherwise FBScene updateSettingsWithBlock:. occl798 stays as alarm and should never drop. Off: reason800-off + crash latch. core800-off returns to 799.
+- fg800: when SpringBoard backgrounds a staged scene while currentMode is Live (2), leave Live for Static (1) via setRequestedMode: and _setCurrentMode: (automatesLifecycle is still NO) before %orig — same shape as cover-sheet / in-call hosts. Restore Live on foreground return and on activateHostedAppWhenMediaAllows. Stops the "foreground status out from underneath us (current mode: Live)" assertion and the WillActivate storm. Logs "fg800: …". WillActivate logging rate-limited. Off: fg800-off + crash latch.
+- camera658 layout move: old display-layout element out, then new in (was new-in-then-old-out; left duplicate MobileSMS elements).
+- why775: capture isForeground before %orig (arm64 clobbered the BOOL → garbage 1872386623).
+- tree765: clear append-only log when it belongs to an older build so the header is not stale.
+- Holds stay (true holds-removal is later).
+
 ## 4.5.799
 - reg799: each staged card now registers the way SpringBoard's own hosted apps do (cover sheet and in-call). We set the SBAppViewController's delegate, call addSceneUpdateContributer: on its scene handle, and on every settings rebuild our applicationSceneHandle:appendToSceneSettings:fromRequestContext:entity: puts the app-view identifier into ignoreOcclusionReasons. That is the real form of the crash fix; occl798 stays as a safety net and now logs "occl798 ok reason present" when the claim is held. Display-layout publish is log-only in 799. Off: reg799-off, plus a crash latch. core799-off undoes 799.
 - Holds are unchanged (that is 800).

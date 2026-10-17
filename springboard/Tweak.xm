@@ -124,35 +124,6 @@ extern "C" NSString *DSFocus755LastFor(NSString *bundle, CFAbsoluteTime *at) {
     return nil;
 }
 
-static void DSFocus755Note(id handle, NSString *text, NSString *holdWhy) {
-    if (!DSFeature699On("core755") || !DSFeature699On("focus755")) return;
-    if (![text isKindOfClass:NSString.class]) return;
-    NSRange r = [text rangeOfString:@"targetOfEventDeferringEnvironments"];
-    BOOL kf = [text rangeOfString:@"keyboardFocus" options:NSCaseInsensitiveSearch].location != NSNotFound;
-    if (r.location == NSNotFound && !kf) return;
-    id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-    NSString *sid = [scene respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identifier)) : nil;
-    if (![sid isKindOfClass:NSString.class]) sid = @"?";
-    NSString *list = @"";
-    if (r.location != NSNotFound) {
-        list = [text substringFromIndex:r.location];
-        list = [[list componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
-        while ([list rangeOfString:@"  "].location != NSNotFound) list = [list stringByReplacingOccurrencesOfString:@"  " withString:@" "];
-        if (list.length > 200) list = [list substringToIndex:200];
-    }
-    BOOL empty = r.location != NSNotFound &&
-                 ([list rangeOfString:@"(empty)"].location != NSNotFound || [list rangeOfString:@"= ()"].location != NSNotFound ||
-                  [list rangeOfString:@"= (null)"].location != NSNotFound || [list rangeOfString:@"[]"].location != NSNotFound ||
-                  [list rangeOfString:@"count = 0"].location != NSNotFound);
-    NSString *line = [NSString stringWithFormat:@"%@%@%@ %@", holdWhy ? @"held" : @"passed",
-                      empty ? @" EMPTY" : @"", kf ? @" keyboardFocus" : @"", list];
-    if (!DSFocus755Last) DSFocus755Last = [NSMutableDictionary dictionary];
-    DSFocus755Last[sid] = @[ @(CFAbsoluteTimeGetCurrent()), line ];
-    DSFeature719MarkAction("focus755");
-    if (empty) DSDiagnosticsRecordFormat(@"SpringBoard: focus755 empty-list focus update for %@ %@ (%@)", sid,
-                                         holdWhy ? @"held" : @"passed", holdWhy ?: @"-");
-}
-
 %hook SpringBoard
 
 - (void)applicationDidFinishLaunching:(id)application {
@@ -206,30 +177,16 @@ static NSString *DSAnySceneIdentifier(id scene) {
 // SpringBoard's own -[SBAppViewController sceneHandle:didUpdateSettingsWithDiff:
 // previousSettings:] right after we had held, dropped or replayed an earlier
 // update for the same app view.
-// Off: pass795-off / core795-off (crash latch pass795) brings back 794's holds.
-static BOOL DS795PassOn(void) { return DS795On("pass795"); }
+// 4.5.808 holds808: the 794 holds (holds-on, pass795-off, core795-off, latch
+// pass795) are deleted; SpringBoard's updates always pass. No feature name is
+// left for a latch to target, so this only logs.
 static void DS795NoteWouldHold(NSString *what) {
-    DSFeature719MarkAction("pass795");
     static CFAbsoluteTime last = 0;
     static NSString *lastWhat = nil;
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     if (now - last > 1.0 || now < last || ![what isEqualToString:lastWhat]) {
         last = now; lastWhat = [what copy];
         DSDiagnosticsRecordFormat(@"SpringBoard: pass795 passed to SpringBoard (794 would have held it: %@)", what);
-    }
-}
-
-// 4.5.704 sweep704: "held a minimized stage scene update" was written up to
-// once a second for as long as the home gesture / a held scene kept sending
-// updates (123 lines in one uploaded log). One line per 10 s with a count.
-static void DSSweep704NoteHeldUpdate(void) {
-    NSUInteger held = 0;
-    if (!DSLogGate(@"sweep704-held", @"held", 10.0, &held)) return;
-    if (held > 0) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: held a minimized stage scene update so another app can open (+%lu more in the last 10 s)",
-                                  (unsigned long)held);
-    } else {
-        DSDiagnosticsRecord(@"SpringBoard: held a minimized stage scene update so another app can open");
     }
 }
 
@@ -418,16 +375,7 @@ static BOOL DSPerf706SceneTraceWanted(NSString *identifier, int fg, long depth, 
         BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:identifier] || DSAsk(^BOOL(DSStageManager *manager) {
             return [manager isHostingSceneIdentifier:identifier];
         });
-        if (hosted && DS795PassOn()) {
-            DS795NoteWouldHold(@"minimized / home scene update");
-        } else if (hosted) {
-            DSSweep704NoteHeldUpdate();
-            if (completion) {
-                void (^done)(BOOL) = (void (^)(BOOL))completion;
-                done(YES);
-            }
-            return;
-        }
+        if (hosted) DS795NoteWouldHold(@"minimized / home scene update");   // 4.5.808: always passed (holds gone)
     }
     // A video updates its scene constantly. Snapshotting or laying out the
     // card from inside this call updates the scene again, and that re-entry
@@ -569,12 +517,7 @@ static BOOL DSPerf706SceneTraceWanted(NSString *identifier, int fg, long depth, 
         BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:incomingIdentifier] || DSAsk(^BOOL(DSStageManager *manager) {
             return [manager isHostingSceneIdentifier:incomingIdentifier];
         });
-        if (hosted && DS795PassOn()) {
-            DS795NoteWouldHold(@"minimized / home scene block update");
-        } else if (hosted) {
-            DSSweep704NoteHeldUpdate();
-            return;
-        }
+        if (hosted) DS795NoteWouldHold(@"minimized / home scene block update");   // 4.5.808: always passed (holds gone)
     }
 
     __weak __typeof(self) weakSelf = self;
@@ -688,24 +631,6 @@ static BOOL DSPerf706SceneTraceWanted(NSString *identifier, int fg, long depth, 
 // ---- 4.5.765 corner765 -------------------------------------------------------
 // Off: corner765-off / core765-off (crash latch corner765).
 static CFAbsoluteTime DSCorner765At = 0;
-static BOOL DSCorner765On(void) {
-    return DSFeature699On("core765") && DSFeature699On("corner765");
-}
-static void DSCorner765NoteRestoreHold(void) {
-    if (!DSCorner765On()) return;
-    DSFeature719MarkAction("corner765");
-    DSCorner765At = CFAbsoluteTimeGetCurrent();
-}
-static BOOL DSCorner765Holding(void) {
-    if (DSCorner765At <= 0) return NO;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    // 4.5.767 corner767: 2.5 s, so the window always outlasts hold740's
-    // 1.5 s restore hold plus its 0.3 s re-checks (Resssj 21:43:31: both were
-    // 1.5 s and the replay passed the moment the window shut).
-    double window = DS767On("corner767") ? 2.5 : 1.5;
-    if (now < DSCorner765At || now - DSCorner765At >= window) return NO;
-    return DSCorner765On();
-}
 
 // 4.5.740 hold740: generation of the pending held Live update (main thread).
 static NSUInteger DSHold740Gen = 0;
@@ -739,45 +664,6 @@ static NSString *DSFocus769Key(id handle) {
         if ([ident isKindOfClass:NSString.class]) return ident;
     } @catch (NSException *exception) {}
     return @"?";
-}
-
-static NSString *DSFocus769Name(NSInteger s) {
-    return s == 1 ? @"keyboardFocus" : (s == 2 ? @"empty" : @"unknown");
-}
-
-static NSInteger DSFocus769Get(NSMutableDictionary *d, NSString *key) {
-    return [d[key] integerValue];
-}
-
-static void DSFocus769Set(NSMutableDictionary * __strong *d, NSString *key, NSInteger s) {
-    if (!*d) *d = [NSMutableDictionary dictionary];
-    if (s) (*d)[key] = @(s);
-}
-
-// Would the app-view hook hold an update for this controller right now?
-static BOOL DSHold740StillHolding(id controller, id handle) {
-    @try {
-        if ([DSSceneHost homeGestureIsActive] || [DSSceneHost appViewControllerStaysBackgrounded:controller]) return YES;
-        // 4.5.765 corner765: a replay waits out the post-restore window too.
-        if (DSCorner765Holding()) return YES;
-        if (DSCallGuardActive()) return YES;
-        if (DSStageDragSettlingFast(1.2)) return YES;
-        if (DSPS696Enabled(0) && DSPS696DeviceLocked()) return YES;
-        if (DSCameraLayoutChangedRecently(1.0)) return YES;
-        if (DSFeature699On("drag706") && DSStageRestoreSettlingFast(1.5)) return YES;
-        if (DSPhoneSize675ChangedRecently(1.0)) return YES;
-        id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-        id current = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
-        if (!current) return YES;
-        if ([current respondsToSelector:@selector(deactivationReasons)] &&
-            ((long long (*)(id, SEL))objc_msgSend)(current, @selector(deactivationReasons)) != 0) return YES;
-        BOOL known = NO;
-        BOOL fg = [DSSceneHost readForegroundFlag:current known:&known];
-        if (known && !fg) return YES;
-    } @catch (NSException *exception) {
-        return YES;
-    }
-    return NO;
 }
 
 
@@ -906,7 +792,8 @@ static void DS798Focus(id self, id handle, id diff) {
             DSTrace(@"app-view settings update");
         }
         // 4.5.795 pass795: always %orig, at once (see the helper above).
-        if (DS795PassOn()) {
+        // 4.5.808 holds808: the 794 hold / skip / replay path below it is gone.
+        {
             NSString *would = nil;
             if ([DSSceneHost homeGestureIsActive] || [DSSceneHost appViewControllerStaysBackgrounded:self]) would = @"home gesture / stays backgrounded";
             else if (DSCallGuardActive()) would = @"call";
@@ -948,462 +835,6 @@ static void DS798Focus(id self, id handle, id diff) {
             if (traceThis) DSTrace(@"app-view settings update done");
             return;
         }
-        // SIGTRAP, not an exception: the home transition updates this host and
-        // the original method asserts. Holding the update is what keeps
-        // SpringBoard alive. The scene itself still changes underneath.
-        if ([DSSceneHost homeGestureIsActive] || [DSSceneHost appViewControllerStaysBackgrounded:self]) {
-            static CFAbsoluteTime DSLastHeldSceneLog = 0;
-            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-            if (now - DSLastHeldSceneLog > 1.0) {
-                DSLastHeldSceneLog = now;
-                DSDiagnosticsRecord(@"SpringBoard: held a minimized app view update so another app can open");
-            }
-            if (DSGest770On()) DSGest770FirstAfterRestore(self, handle, @"HELD (home gesture / stays backgrounded)");   // 4.5.770
-            return;
-        }
-        // 4.5.653: a phone call. The call screen comes up as the main-layout
-        // app and SpringBoard re-describes the hosted scene; this original
-        // method then asserted (SIGTRAP, the safe mode when calling from the
-        // staged Phone). Held the same way as the home gesture: the scene
-        // still changes underneath and the app view stays Live, which is
-        // what it is again once the call screen has gone.
-        if (DSCallGuardActive() || DSCall758AppViewHold()) {
-            DSCallGuardNoteHeldUpdate();
-            static CFAbsoluteTime DSLastCallHoldLog = 0;
-            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-            if (now - DSLastCallHoldLog > 2.0) {
-                DSLastCallHoldLog = now;
-                NSString *text = [diff description] ?: @"";
-                text = [[text componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
-                if (text.length > 240) text = [text substringToIndex:240];
-                DSDiagnosticsRecordFormat(@"SpringBoard: %@ held a staged app view update during a call: %@",
-                                          DSCall758AppViewHold() && !DSCallGuardActive() ? @"call758" : @"call653", text);
-            }
-            return;
-        }
-        // The app view is already Live. Letting it apply a foreground change
-        // throws "out from underneath us" and the card goes black.
-        NSInteger displayMode = -1;
-        if ([self respondsToSelector:@selector(displayMode)]) {
-            displayMode = ((NSInteger (*)(id, SEL))objc_msgSend)(self, @selector(displayMode));
-        }
-        // 4.5.650: describing the diff (a large string) on every update was
-        // per-frame work during the switcher; only the Live mode needs it.
-        NSString *diffText = displayMode == 4 ? ([diff description] ?: @"") : @"";
-        // 4.5.668: the foreground flag itself, not only the word in the diff
-        // text (a diff that flips it under another key name got through).
-        BOOL foregroundFlip = NO;
-        if (displayMode == 4) {
-            @try {
-                id current = nil;
-                if ([handle respondsToSelector:@selector(scene)]) {
-                    id scene = ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene));
-                    if ([scene respondsToSelector:@selector(settings)]) current = ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings));
-                }
-                BOOL knownBefore = NO, knownNow = NO;
-                BOOL before = previousSettings ? [DSSceneHost readForegroundFlag:previousSettings known:&knownBefore] : NO;
-                BOOL after = current ? [DSSceneHost readForegroundFlag:current known:&knownNow] : NO;
-                foregroundFlip = knownBefore && knownNow && before != after;
-            } @catch (NSException *exception) {
-            }
-        }
-        // 4.5.668 crash forensics: the last diffs an owned app view applied
-        // go into the recent-lines ring the crash log prints, so a SIGTRAP in
-        // the %orig below names the update that caused it.
-        {
-            static CFAbsoluteTime DSLastDiffLog = 0;
-            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-            if (now - DSLastDiffLog > 0.5) {
-                DSLastDiffLog = now;
-                NSString *text = diffText.length ? diffText : ([diff description] ?: @"");
-                text = [[text componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
-                while ([text rangeOfString:@"  "].location != NSNotFound) text = [text stringByReplacingOccurrencesOfString:@"  " withString:@" "];
-                // 4.5.670: the crash ring cuts lines short; drop the
-                // "<FBSSceneSettingsDiff: 0x...> { settingsClass = ...;" head
-                // so the changed keys are what survives.
-                NSRange changes = [text rangeOfString:@"changes" options:NSCaseInsensitiveSearch];
-                if (changes.location != NSNotFound && changes.location > 0) text = [text substringFromIndex:changes.location];
-                if (text.length > 220) text = [text substringToIndex:220];
-                NSString *bundle = @"?";
-                @try {
-                    id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-                    if ([scene respondsToSelector:@selector(identifier)]) bundle = ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identifier)) ?: @"?";
-                } @catch (NSException *exception) {
-                }
-                DSDiagnosticsRecordFormat(@"SpringBoard: appview670 %@ mode=%ld flip=%d update: %@",
-                                          bundle, (long)displayMode, foregroundFlip, text);
-            }
-        }
-        // 4.5.670 SIGTRAP fix: the 4.5.669 crash (222.txt) is this same
-        // %orig (frame 2 = Tweak.xm:714 in the 669 dSYM), reached right after
-        // the card was dragged while the scene had deactivation reasons set
-        // (0x20) and the stage had just republished its display-layout
-        // element. While Live, the app view does not get SpringBoard's
-        // updates during a card drag (and 1.2 s after), within 1 s of a
-        // stage display-layout change, or while the scene is deactivated
-        // (before or after this diff). The scene itself still changes
-        // underneath, as with the home-gesture and call holds.
-        if (displayMode == 4) {
-            NSString *holdWhy = nil;
-            // 4.5.740 hold740: the 0x20 -> 0x0 reactivation is never held (Needs
-            // patching log: every 0x20->0x0 diff was held, SpringBoard's own
-            // app-view state drifted, and the next passed update trapped).
-            BOOL hold740 = DSFeature699On("hold740");
-            // 4.5.742 msg742: a Messages scene keeps 739's handling (holds as before,
-            // no replay, reactivation not special-cased).
-            if (hold740 && DSStage742MessagesStaged() && [handle respondsToSelector:@selector(scene)]) {
-                @try {
-                    id sc742 = ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene));
-                    NSString *id742 = [sc742 respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(sc742, @selector(identifier)) : nil;
-                    if ([id742 isKindOfClass:NSString.class] && [id742 rangeOfString:@"MobileSMS"].location != NSNotFound) hold740 = NO;
-                } @catch (NSException *exception) {
-                }
-            }
-            BOOL react740 = NO;
-            if (hold740) {
-                @try {
-                    long long rb = -1, rn = -1;
-                    if ([previousSettings respondsToSelector:@selector(deactivationReasons)]) {
-                        rb = ((long long (*)(id, SEL))objc_msgSend)(previousSettings, @selector(deactivationReasons));
-                    }
-                    id sc = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-                    id cur = [sc respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(sc, @selector(settings)) : nil;
-                    if ([cur respondsToSelector:@selector(deactivationReasons)]) {
-                        rn = ((long long (*)(id, SEL))objc_msgSend)(cur, @selector(deactivationReasons));
-                    }
-                    react740 = rb > 0 && rn == 0;
-                } @catch (NSException *exception) {
-                    react740 = NO;
-                }
-            }
-            // 4.5.758 react758: safety — Yoop's SIGTRAP was hold740 passing
-            // Signal's reactivation, then Beeper's next focus Live %orig. When
-            // call758 just armed (systemAnimation on a Signal/Phone card), do
-            // not take the reactivation bypass; hold like any other 0x20 update.
-            // Off: react758-off / core758-off.
-            if (react740 && DSFeature699On("core758") && DSFeature699On("react758") && DSCall758RecentlyArmed()) {
-                DSFeature719MarkAction("react758");
-                react740 = NO;
-                DSDiagnosticsRecord(@"SpringBoard: react758 held a scene reactivation (call758 systemAnimation still armed)");
-            }
-            if (react740) {
-                DSFeature719MarkAction("hold740");
-                DSDiagnosticsRecord(@"SpringBoard: hold740 passed a scene reactivation (deactivation -> 0x0) without holding it");
-            } else {
-            if (DSStageDragSettlingFast(1.2)) holdWhy = @"card drag";
-            // 4.5.696 blackout: the lock screen backgrounds every app; applying
-            // that to the Live staged app view is the "out from underneath us"
-            // exception after which the card stayed black (Blackout log).
-            else if (DSPS696Enabled(0) && DSPS696DeviceLocked()) {
-                holdWhy = @"phone locked (696)";
-                DSPS696MarkTrying(0);
-            }
-            else if (DSCameraLayoutChangedRecently(1.0)) holdWhy = @"stage display-layout change";
-            // 4.5.706 drag706: the Saferestmode SIGTRAP (4.5.704) was this %orig
-            // right after a corner restore grew Beeper back to its card. Held
-            // like a card drag while the pull / restore runs and 1.5 s after.
-            else if (DSFeature699On("drag706") && DSStageRestoreSettlingFast(1.5)) {
-                holdWhy = @"corner restore (706)";
-                DSCorner765NoteRestoreHold();
-            }
-            // 4.5.765 corner765: Shdhb (759) SIGTRAPs 06:02:01 and 06:37:59 NZDT
-            // 16 Oct: one update held as "corner restore (706)", the very next
-            // focus update passed (appview699) and SpringBoard trapped. Hold
-            // every Live update for 1.5 s after the last corner-restore hold.
-            else if (DSCorner765Holding()) {
-                holdWhy = @"after a corner restore (765)";
-                DSFeature719MarkAction("corner765");
-            }
-            // 4.5.675: the stage just switched this scene between card size
-            // and phone size (phonesize675). Same hold as a card drag.
-            else if (DSPhoneSize675ChangedRecently(1.0)) holdWhy = @"phonesize675 scene size change";
-            else {
-                long long reasonsBefore = 0, reasonsNow = 0;
-                @try {
-                    if ([previousSettings respondsToSelector:@selector(deactivationReasons)]) {
-                        reasonsBefore = ((long long (*)(id, SEL))objc_msgSend)(previousSettings, @selector(deactivationReasons));
-                    }
-                    id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-                    id current = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
-                    if ([current respondsToSelector:@selector(deactivationReasons)]) {
-                        reasonsNow = ((long long (*)(id, SEL))objc_msgSend)(current, @selector(deactivationReasons));
-                    }
-                } @catch (NSException *exception) {
-                }
-                if ((reasonsBefore & 0x20) || (reasonsNow & 0x20)) {
-                    NSString *sid758 = nil;
-                    @try {
-                        id sc758 = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-                        sid758 = [sc758 respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(sc758, @selector(identifier)) : nil;
-                    } @catch (NSException *exception) {}
-                    DSCall758NoteSystemAnimation(sid758);
-                }
-                if (reasonsBefore != 0 || reasonsNow != 0) {
-                    holdWhy = [NSString stringWithFormat:@"scene deactivated 0x%llx->0x%llx", reasonsBefore, reasonsNow];
-                } else if (DSFeature699On("crash699")) {
-                    // 4.5.699 crash699: the Blackoutagain SIGTRAP (4.5.697,
-                    // 14:36:28): frame 2 = this method's Live %orig (return
-                    // 0xa8f0 in the 697 dylib), frames 0/1 = SpringBoard's own
-                    // handler trapping (same instruction as the 667-674 traps).
-                    // The card had come back from minimised after the phone was
-                    // locked: its scene was still in the background (black card)
-                    // with no deactivation reasons, so nothing above held it.
-                    // A Live app view whose scene is in the background (before or
-                    // after this diff) does not get SpringBoard's update; the wake
-                    // (blackout699 / 696) brings the scene back to the foreground,
-                    // and that flip is left alone below as before.
-                    @try {
-                        id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-                        id current = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
-                        BOOL knownBefore = NO, knownNow = NO;
-                        BOOL fgBefore = previousSettings ? [DSSceneHost readForegroundFlag:previousSettings known:&knownBefore] : YES;
-                        BOOL fgNow = current ? [DSSceneHost readForegroundFlag:current known:&knownNow] : YES;
-                        if ((knownBefore && !fgBefore) || (knownNow && !fgNow)) {
-                            holdWhy = [NSString stringWithFormat:@"scene in the background fg %d->%d (699)", fgBefore, fgNow];
-                            DSFeature699MarkTrying("crash699");
-                        }
-                    } @catch (NSException *exception) {
-                    }
-                }
-            }
-            // 4.5.748 focus748: the system's own focus change (keyboard focus /
-            // event deferring only, no frame, no activation change) is never held
-            // for our own layout or scene-size changes. Card drags, deactivated or
-            // background scenes, lock and restore keep their holds (crash cases).
-            // Messages exempt. Off: focus748-off / core748-off (crash latch focus748).
-            if (holdWhy && DSFeature699On("core748") && DSFeature699On("focus748") &&
-                ([holdWhy isEqualToString:@"stage display-layout change"] || [holdWhy hasPrefix:@"phonesize675"])) {
-                @try {
-                    NSString *t748 = diffText.length ? diffText : ([diff description] ?: @"");
-                    BOOL focusOnly = ([t748 rangeOfString:@"targetOfEventDeferringEnvironments"].location != NSNotFound ||
-                                      [t748 rangeOfString:@"keyboardFocus" options:NSCaseInsensitiveSearch].location != NSNotFound) &&
-                                     [t748 rangeOfString:@"frame" options:NSCaseInsensitiveSearch].location == NSNotFound &&
-                                     [t748 rangeOfString:@"deactivation" options:NSCaseInsensitiveSearch].location == NSNotFound &&
-                                     [t748 rangeOfString:@"foreground" options:NSCaseInsensitiveSearch].location == NSNotFound &&
-                                     [t748 rangeOfString:@"MobileSMS"].location == NSNotFound;
-                    id sc748 = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
-                    NSString *id748 = [sc748 respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(sc748, @selector(identifier)) : nil;
-                    if ([id748 isKindOfClass:NSString.class] && [id748 rangeOfString:@"MobileSMS"].location != NSNotFound) focusOnly = NO;
-                    if (focusOnly) {
-                        DSFeature719MarkAction("focus748");
-                        DSDiagnosticsRecordFormat(@"SpringBoard: focus748 passed a focus-only update instead of holding it (%@)", holdWhy);
-                        holdWhy = nil;
-                    }
-                } @catch (NSException *exception) {
-                }
-            }
-            // 4.5.769 focus769 (see the helpers above).
-            // Messages keeps msg742 (exempt).
-            if (DS769On("focus769") && [DSFocus769Key(handle) rangeOfString:@"MobileSMS"].location == NSNotFound) {
-                NSString *t769 = diffText.length ? diffText : ([diff description] ?: @"");
-                NSInteger state769 = DSFocus769StateOf(t769);
-                if (state769) {
-                    NSString *key769 = DSFocus769Key(handle);
-                    NSInteger latest769 = DSFocus769Get(DSFocus769Latest, key769);
-                    NSInteger delivered769 = DSFocus769Get(DSFocus769Delivered, key769);
-                    DSFocus769Set(&DSFocus769Latest, key769, state769);
-                    // (a) keyboardFocus is never held for the corner / layout /
-                    // scene-size holds: passed straight through.
-                    if (holdWhy && state769 == 1 && !DSHold740Replaying &&
-                        ([holdWhy rangeOfString:@"corner restore"].location != NSNotFound ||
-                         [holdWhy isEqualToString:@"stage display-layout change"] || [holdWhy hasPrefix:@"phonesize675"])) {
-                        DSFeature719MarkAction("focus769");
-                        DSDiagnosticsRecordFormat(@"SpringBoard: focus769 passed keyboardFocus for %@ instead of holding it (%@)", key769, holdWhy);
-                        holdWhy = nil;
-                    }
-                    // (b) an empty-focus update never passes while what SpringBoard
-                    // last got differs from the app's latest focus: dropped (a
-                    // replayed stale diff is what trapped in Resssj).
-                    if (!holdWhy && state769 == 2 && latest769 && delivered769 && latest769 != delivered769) {
-                        DSFeature719MarkAction("focus769");
-                        DSDiagnosticsRecordFormat(@"SpringBoard: focus769 DROPPED an empty-focus update for %@: SpringBoard last got %@, app's latest was %@",
-                                                  key769, DSFocus769Name(delivered769), DSFocus769Name(latest769));
-                        return;
-                    }
-                    if (holdWhy) {
-                        // Always logged, never throttled.
-                        DSDiagnosticsRecordFormat(@"SpringBoard: focus769 HELD a %@ focus update for %@ (%@); SpringBoard last got %@",
-                                                  DSFocus769Name(state769), key769, holdWhy, DSFocus769Name(delivered769));
-                        // (c) a held keyboardFocus is delivered when the hold ends,
-                        // if it is still the app's latest and SpringBoard lacks it.
-                        if (state769 == 1 && !DSHold740Replaying) {
-                            NSUInteger gen769 = ++DSFocus769PendingGen;
-                            id h769 = handle, d769 = diff, p769 = previousSettings;
-                            __weak SBAppViewController *weak769 = self;
-                            CFAbsoluteTime at769 = CFAbsoluteTimeGetCurrent();
-                            __block void (^retry769)(void) = nil;
-                            void (^attempt769)(void) = ^{
-                                if (gen769 != DSFocus769PendingGen) return;
-                                SBAppViewController *c769 = weak769;
-                                if (!c769 || ![DSSceneHost ownsAppViewController:c769]) return;
-                                if (DSFocus769Get(DSFocus769Latest, key769) != 1 || DSFocus769Get(DSFocus769Delivered, key769) == 1) return;
-                                if (CFAbsoluteTimeGetCurrent() - at769 > 6.0) {
-                                    DSDiagnosticsRecordFormat(@"SpringBoard: focus769 gave up delivering keyboardFocus for %@ after 6 s (still held)", key769);
-                                    return;
-                                }
-                                if (DSHold740StillHolding(c769, h769)) {
-                                    if (retry769) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry769);
-                                    return;
-                                }
-                                DSDiagnosticsRecordFormat(@"SpringBoard: focus769 delivering the latest keyboardFocus for %@ now the hold ended", key769);
-                                @try {
-                                    DSHold740Replaying = YES;
-                                    SEL s769 = @selector(sceneHandle:didUpdateSettingsWithDiff:previousSettings:);
-                                    if (DS793On("log793")) DSCrash793Crumb([NSString stringWithFormat:@"focus769 replay handle=%p ctrl=%p diff=%p", h769, c769, d769].UTF8String);
-                                    if ([c769 respondsToSelector:s769]) ((void (*)(id, SEL, id, id, id))objc_msgSend)(c769, s769, h769, d769, p769);
-                                    if (DS793On("log793")) DSCrash793Crumb("focus769 replay returned");
-                                    DSHold740Replaying = NO;
-                                } @catch (NSException *exception) {
-                                    DSHold740Replaying = NO;
-                                    DSDiagnosticsRecordFormat(@"SpringBoard: focus769 delivery threw %@", exception.reason ?: exception.name ?: @"?");
-                                }
-                            };
-                            retry769 = [attempt769 copy];
-                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry769);
-                        }
-                    }
-                }
-            }
-            // 4.5.755 focus755 (log only): remember the last focus update per scene.
-            @try { DSFocus755Note(handle, diffText.length ? diffText : ([diff description] ?: @""), holdWhy); } @catch (NSException *exception) {}
-            if (holdWhy) {
-                static CFAbsoluteTime DSLastHold670Log = 0;
-                static NSString *DSLastHold670Why = nil;
-                CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-                // 4.5.699: a new reason is always logged (the 1 s throttle hid
-                // which updates were held right before the trap).
-                BOOL newWhy = ![holdWhy isEqualToString:DSLastHold670Why];
-                if (now - DSLastHold670Log > 1.0 || newWhy) {
-                    DSLastHold670Log = now;
-                    DSLastHold670Why = [holdWhy copy];
-                    DSDiagnosticsRecordFormat(@"SpringBoard: appview670 held a Live app view update (%@)", holdWhy);
-                }
-                // 4.5.767 corner767: an update held for a corner restore is dropped,
-                // not replayed. Resssj (766) 21:43:31 SIGTRAP: the held diff
-                // 0x28311e0d0 was replayed 1.5 s later and SpringBoard trapped;
-                // Shdhb (759) 06:02 / 06:37: the first update to pass after the
-                // corner hold trapped. The next fresh update carries the state.
-                // Off: corner767-off / core767-off (latch corner767).
-                BOOL corner767Drop = hold740 && !DSHold740Replaying && [holdWhy rangeOfString:@"corner restore"].location != NSNotFound && DS767On("corner767");
-                if (corner767Drop) {
-                    DSFeature719MarkAction("corner767");
-                    DSHold740Gen++;   // cancels any earlier pending replay too
-                    static CFAbsoluteTime said767 = 0;
-                    CFAbsoluteTime t767 = CFAbsoluteTimeGetCurrent();
-                    if (t767 - said767 > 1.0 || t767 < said767 || (DS769On("focus769") && DSFocus769StateOf(diffText.length ? diffText : ([diff description] ?: @"")))) {
-                        said767 = t767;
-                        DSDiagnosticsRecordFormat(@"SpringBoard: corner767 dropped a held Live update (%@): no replay, the next fresh update carries the state", holdWhy);
-                    }
-                }
-                if (hold740 && !DSHold740Replaying && !corner767Drop) {
-                    // 4.5.740 hold740: the held update is not dropped. The latest one is
-                    // kept and passed once nothing holds it any more (checked every
-                    // 0.3 s); a newer update that passes on its own replaces it. The
-                    // hold always ends: after 4 s the pending update is let go.
-                    DSFeature719MarkAction("hold740");
-                    NSUInteger gen = ++DSHold740Gen;
-                    id h = handle, d = diff, ps = previousSettings;
-                    __weak SBAppViewController *weakController = self;
-                    CFAbsoluteTime heldAt = CFAbsoluteTimeGetCurrent();
-                    __block void (^retry)(void) = nil;
-                    void (^attempt)(void) = ^{
-                        if (gen != DSHold740Gen) return;
-                        SBAppViewController *controller = weakController;
-                        if (!controller || ![DSSceneHost ownsAppViewController:controller]) return;
-                        CFAbsoluteTime now740 = CFAbsoluteTimeGetCurrent();
-                        if (now740 - heldAt > 4.0) {
-                            DSHold740Gen++;
-                            DSDiagnosticsRecord(@"SpringBoard: hold740 let a held Live update go after 4 s (still not safe to pass; the next update carries the state)");
-                            return;
-                        }
-                        if (DSHold740StillHolding(controller, h)) {
-                            if (retry) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry);
-                            return;
-                        }
-                        DSHold740Gen++;
-                        DSDiagnosticsRecordFormat(@"SpringBoard: hold740 passed the latest held Live update %.1f s later", now740 - heldAt);
-                        if (DS793On("log793")) {
-                            NSString *dd = [[[d description] ?: @"" componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
-                            if (dd.length > 160) dd = [dd substringToIndex:160];
-                            NSString *crumb = [NSString stringWithFormat:@"hold740 replay age=%.1fs handle=%@<%p> ctrl=%p owned=%d diff=%p %@",
-                                               now740 - heldAt, NSStringFromClass([h class]), h, controller, [DSSceneHost ownsAppViewController:controller], d, dd];
-                            DSDiagnosticsRecordFormat(@"SpringBoard: log793 %@", crumb);
-                            DSCrash793Crumb(crumb.UTF8String);
-                        }
-                        @try {
-                            DSHold740Replaying = YES;
-                            SEL sel740 = @selector(sceneHandle:didUpdateSettingsWithDiff:previousSettings:);
-                            if ([controller respondsToSelector:sel740]) ((void (*)(id, SEL, id, id, id))objc_msgSend)(controller, sel740, h, d, ps);
-                            DSHold740Replaying = NO;
-                            if (DS793On("log793")) DSCrash793Crumb("hold740 replay returned");
-                        } @catch (NSException *exception) {
-                            DSHold740Replaying = NO;
-                            DSDiagnosticsRecordFormat(@"SpringBoard: hold740 replay threw %@", exception.reason ?: exception.name ?: @"?");
-                        }
-                    };
-                    retry = [attempt copy];
-                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry);
-                }
-                return;
-            }
-            }   // 4.5.740 react740 else
-        }
-        if (displayMode == 4 && (foregroundFlip ||
-            [diffText rangeOfString:@"foreground" options:NSCaseInsensitiveSearch].location != NSNotFound)) {
-            static CFAbsoluteTime DSLastLiveLog = 0;
-            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-            if (now - DSLastLiveLog > 1.0) {
-                DSLastLiveLog = now;
-                DSDiagnosticsRecord(@"SpringBoard: left the live scene alone so a foreground change does not black the card");
-            }
-            return;
-        }
-        // 4.5.699 forensics: the crash ring names the last update that went
-        // through to SpringBoard's own handler (mode + foreground), max 2/s.
-        if (displayMode == 4) {
-            static CFAbsoluteTime DSLastPass699 = 0;
-            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-            if (now - DSLastPass699 > 0.5) {
-                DSLastPass699 = now;
-                DSDiagnosticsRecordFormat(@"SpringBoard: appview699 Live update passed to SpringBoard (mode=%ld drag=%d)",
-                                          (long)displayMode, DSStageDragSettlingFast(0.0));
-            }
-        }
-        if (displayMode == 4) DSHold740Gen++;   // 4.5.740: a newer update passed; drop the pending replay
-        // 4.5.769 focus769: what SpringBoard is about to get.
-        if (displayMode == 4 && DS769On("focus769")) {
-            @try {
-                NSInteger s769 = DSFocus769StateOf(diffText);
-                if (s769) {
-                    NSString *k769 = DSFocus769Key(handle);
-                    DSFocus769Set(&DSFocus769Delivered, k769, s769);
-                    DSFocus769Set(&DSFocus769Latest, k769, s769);
-                }
-            } @catch (NSException *exception) {}
-        }
-        if (displayMode == 4 && DSGest770On()) {   // 4.5.770 gest770
-            NSString *d770 = [[diffText componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
-            if (d770.length > 200) d770 = [d770 substringToIndex:200];
-            DSGest770FirstAfterRestore(self, handle, [NSString stringWithFormat:@"PASSED to SpringBoard (%@)", d770]);
-        }
-        if (DS793On("log793")) {
-            NSString *dd = [[diffText componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
-            if (dd.length > 160) dd = [dd substringToIndex:160];
-            static NSString *lastHold793 = nil;
-            NSString *crumb = [NSString stringWithFormat:@"appview pass mode=%ld replay=%d handle=%@<%p> ctrl=%p diff=%p prev=%p %@",
-                               (long)displayMode, DSHold740Replaying, NSStringFromClass([handle class]), handle, self, diff, previousSettings, dd];
-            DSCrash793Crumb(crumb.UTF8String);
-            if (displayMode == 4 && ![crumb isEqualToString:lastHold793]) { lastHold793 = [crumb copy]; DSDiagnosticsRecordFormat(@"SpringBoard: log793 %@", crumb); }
-        }
-        @try {
-            %orig;
-            if (DS793On("log793")) DSCrash793Crumb("appview pass returned");
-        } @catch (NSException *exception) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: contained a scene update from the staged app (%@)",
-                                      exception.reason ?: exception.name ?: @"?");
-        }
-        if (traceThis) DSTrace(@"app-view settings update done");
-        return;
     }
     %orig;
 }

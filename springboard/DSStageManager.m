@@ -833,6 +833,38 @@ extern NSString *DSFocus755LastFor(NSString *bundle, CFAbsoluteTime *at);
 
 void DSGest770NoteEvent(NSString *why);
 
+
+// 4.5.808 lock808 observer (kept alive by a static; SpringBoard's observer list
+// may be weak).
+@interface DSLock808Observer : NSObject
+@end
+@implementation DSLock808Observer
+- (void)backlightController:(id)controller didTransitionToBacklightState:(long long)state source:(long long)source {
+    @try {
+        if (!NSThread.isMainThread) {
+            dispatch_async(dispatch_get_main_queue(), ^{ [[DSStageManager sharedManager] lock808NoteBacklight:state source:source]; });
+            return;
+        }
+        [[DSStageManager sharedManager] lock808NoteBacklight:state source:source];
+    } @catch (NSException *exception) {}
+}
+@end
+
+static void DSLock808Install(void) {
+    static DSLock808Observer *observer = nil;
+    if (observer || !DS808On("lock808")) return;
+    @try {
+        Class cls = objc_getClass("SBBacklightController");
+        id bl = [cls respondsToSelector:@selector(sharedInstance)] ? ((id (*)(id, SEL))objc_msgSend)(cls, @selector(sharedInstance)) : nil;
+        if (![bl respondsToSelector:@selector(addObserver:)]) { DSDiagnosticsRecord(@"SpringBoard: lock808 not installed (SBBacklightController addObserver: not found)"); return; }
+        observer = [DSLock808Observer new];
+        ((void (*)(id, SEL, id))objc_msgSend)(bl, @selector(addObserver:), observer);
+        DSDiagnosticsRecord(@"SpringBoard: lock808 installed (SBBacklightController observer)");
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: lock808 install threw %@", exception.name ?: @"?");
+    }
+}
+
 @implementation DSStageManager {
     NSString *_type755Owner;
     NSMutableDictionary<NSString *, NSNumber *> *_full756KeysY;   // coalesce756: full keys top per app
@@ -5598,6 +5630,7 @@ static BOOL DSKbNan754On(void) {
 - (void)blackout696ScheduleTickAfter:(NSTimeInterval)forced {
     __weak __typeof(self) weakSelf = self;
     [self battery701ListenForUnlock];
+    DSLock808Install();   // 4.5.808 (once; main thread)
     NSTimeInterval delay = forced >= 0.0 ? forced : [self battery701TickDelay];
     _perf706LastDelay = delay;
     NSUInteger tickGen = _perf706TickGen;
@@ -17780,6 +17813,31 @@ static NSInteger DSHomeGestureGeneration = 0;
     // 4.5.652: a locked phone takes the staged camera's card out of the layout.
     [DSCameraArbiter refreshSoon];
     if (self.isStageVisible) [self minimizeAnimated:NO];
+}
+
+// 4.5.808 lock808: SpringBoard's own backlight transitions
+// (-[SBBacklightController addObserver:] ->
+// backlightController:didTransitionToBacklightState:source:, 20F75) are logged,
+// and on screen-off the camera presence elements are re-checked at once
+// (the part of noteDisplayDidTurnOff that is safe). The stage is NOT minimised
+// on screen-off: fg801 already moves the app view Live -> Static when the
+// scene backgrounds under the cover sheet, and a minimise here would run the
+// corner-park path under the lock screen, which is what the lock + minimise
+// blackouts came from. Off: lock808-off / core808-off (latch lock808).
+- (void)lock808NoteBacklight:(long long)state source:(long long)source {
+    if (!DS808On("lock808")) return;
+    static BOOL marked = NO;
+    if (!marked) { marked = YES; DSFeature699MarkTrying("lock808"); }
+    DSFeature719MarkAction("lock808");
+    BOOL on = YES;
+    @try {
+        id bl = [objc_getClass("SBBacklightController") respondsToSelector:@selector(sharedInstance)]
+            ? ((id (*)(id, SEL))objc_msgSend)(objc_getClass("SBBacklightController"), @selector(sharedInstance)) : nil;
+        if ([bl respondsToSelector:@selector(screenIsOn)]) on = ((BOOL (*)(id, SEL))objc_msgSend)(bl, @selector(screenIsOn));
+    } @catch (NSException *exception) {}
+    DSDiagnosticsRecordFormat(@"SpringBoard: lock808: screen %@ (backlight state %lld source %lld; stage visible=%d, cards left as they are)",
+                              on ? @"on" : @"off", state, source, self.isStageVisible);
+    if (!on) [DSCameraArbiter refreshSoon];
 }
 
 #pragma mark - Intro

@@ -53,6 +53,7 @@ FOUNDATION_EXPORT void DSPhoneSize683RestoreKeyCopies(NSString *why);
 // Put the live card back inside its frame without backgrounding it.
 - (void)keepOnScreenStageInsideCardForSceneIdentifier:(NSString *)identifier;
 - (void)noteDisplayDidTurnOff;
+- (void)lock808NoteBacklight:(long long)state source:(long long)source;
 
 - (void)showIntroIfNeeded;
 // Opens the stage as though the corner had been pulled all the way up.

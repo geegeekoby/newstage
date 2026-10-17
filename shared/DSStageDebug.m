@@ -356,8 +356,7 @@ static int DS699Index(const char *name) {
 //   core796-off  undoes 796's own changes (groups, verbose gate, poll sleep).
 //   kb-off       every keyboard feature (kb*, keys*, reopen*, strip*, caret*,
 //                swipe*, return*, backspace*, keyfocus*, rekey*, lift*, ...)
-//   holds-on     brings back 794's held / replayed SpringBoard updates
-//                (pass795 off); holds are off by default.
+//   holds-on     (removed in 4.5.808: the 794 holds are deleted)
 //   keyring-off  keys go back to the 794 file (keyring795 off)
 //   verbose-on   turns on the log-only probes (log792 / strip792 window,
 //                trace766, tree765-767, scene773, msgdiag714)
@@ -399,6 +398,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core805") == 0) return -1;
         if (strcmp(name, "core806") == 0) return -1;
         if (strcmp(name, "core807") == 0) return -1;
+        if (strcmp(name, "core808") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -406,9 +406,8 @@ static int DS796Group(const char *name) {
         "keyfocus", "rekey", "kbshow", "kbhide", "kbnan", "kbown", "kbmin", "kbdrag", "kbguard", "sbkb",
         "keep", "ghost", "type", "leave", "entry", "resign", "flicker", "msgfit", "ks", "lift", "src", NULL };
     static const char *const verbose[] = { "log792", "trace766", "tree765", "tree766", "tree767", "scene773", "msgdiag714", NULL };
-    static volatile CFAbsoluteTime kbAt = 0, vAt = 0, hAt = 0, rAt = 0;
-    static volatile BOOL kbOff = NO, vOn = NO, hOn = NO, rOff = NO;
-    if (strcmp(name, "pass795") == 0) return DS796File("holds-on", &hAt, &hOn) ? 0 : -1;
+    static volatile CFAbsoluteTime kbAt = 0, vAt = 0, rAt = 0;
+    static volatile BOOL kbOff = NO, vOn = NO, rOff = NO;
     if (strcmp(name, "keyring795") == 0) return DS796File("keyring-off", &rAt, &rOff) ? 0 : -1;
     BOOL isVerbose = NO;
     for (int k = 0; verbose[k]; k++) if (strcmp(name, verbose[k]) == 0) isVerbose = YES;
@@ -995,6 +994,12 @@ BOOL DS806On(const char *name) {
 // 4.5.807: master core807-off returns every 807 change to 4.5.806.
 BOOL DS807On(const char *name) {
     return DSFeature699On("core807") && DS806On("core806") && DSFeature699On(name);
+}
+
+// 4.5.808: master core808-off returns every 808 change to 4.5.807
+// (holds808 is a deletion and stays deleted).
+BOOL DS808On(const char *name) {
+    return DSFeature699On("core808") && DS807On("core807") && DSFeature699On(name);
 }
 
 // 4.5.804: master core804-off returns every 804 change to 4.5.803.

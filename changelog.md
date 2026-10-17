@@ -1,3 +1,10 @@
+## 4.5.805
+- predict805 (opt-in: /var/mobile/.dynamicstage-predict805-on). SpringBoard's staged keyboard keeps UIKit's default autocorrection and spell check, so the QuickType row shows. Accepted suggestions (replace range / replaceRange:withText:) are logged and not sent to the app. The keyboard height is logged as measured, along with what the lift uses.
+- Removed hooks on classes and selectors that don't exist on 16.5.1 (arch799/audit794): FBApplicationInfo isMedusaCapable, SBWindowScene _shouldAutorotate, SBLockScreenManager _shouldAutoLock, SBBacklightController _setBacklightFactorForCurrentState, UIKeyboardWindow / UIKeyboardLayerHostView / UIKeyboardRemoteControlView, UIKeyboardImpl isUsingRemoteKeyboard (class and instance), UIScreen _unjailedBounds, UIInputWindowController updateRootViewConstraintsForSceneFrame:bounds:, setContentReferenceSize:withInterfaceOrientation:, and nowPlayingApplicationDisplayID. Also removed pass-through UIInputWindowController / Hosting hooks and two unused functions. 313 lines removed.
+- poll805: the gest770 layout line is written from SpringBoard events (host750, home gesture, edge pull) instead of a 4 Hz timer.
+- Medusa log lines now read medusa803 while medusa803 is on.
+- Off files: core805-off (back to 804), predict805-off, poll805-off.
+
 ## 4.5.804
 - strip804 (log only): the 803 log shows Messages' own _showAppStrip stays 0 the whole time. In ChatKit 20F75 that flag is set only when CKShowAppStripInEntryView() is YES, which reads the com.apple.MobileSMS preference AppStripEnabled (tapping the apps button flips and saves it). 804 logs that value at the first chat, every updateAppStripVisibility: result, and each apps-button tap.
 - lift804: one lift line per keys-down instead of one per frame value.

@@ -173,10 +173,6 @@
     SBMediaController *controller = [mediaControllerClass sharedInstance];
     if (![controller respondsToSelector:@selector(isPlaying)] || !controller.isPlaying) return NO;
 
-    if ([controller respondsToSelector:@selector(nowPlayingApplicationDisplayID)]) {
-        NSString *identifier = [controller nowPlayingApplicationDisplayID];
-        if (identifier.length) return [identifier isEqualToString:bundleIdentifier];
-    }
     if ([controller respondsToSelector:@selector(nowPlayingProcessPID)]) {
         SBApplication *application = [[objc_getClass("SBApplicationController") sharedInstance] applicationWithBundleIdentifier:bundleIdentifier];
         if ([application respondsToSelector:@selector(pid)]) {

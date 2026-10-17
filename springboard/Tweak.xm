@@ -1641,47 +1641,6 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
 
 %end
 
-%hook FBApplicationInfo
-
-- (BOOL)isMedusaCapable {
-    if (DSShouldForceMedusaForIdentifier([self respondsToSelector:@selector(bundleIdentifier)] ? [self bundleIdentifier] : nil)) {
-        return YES;
-    }
-    return %orig;
-}
-
-%end
-
-%hook SBWindowScene
-
-- (BOOL)_shouldAutorotate {
-    if (DSStageReady() && DSStageVisibleFast()) return NO;
-    return %orig;
-}
-
-%end
-
-%hook SBLockScreenManager
-
-- (BOOL)_shouldAutoLock {
-    if (DSStageReady() && DSStageVisibleFast()) return NO;
-    return %orig;
-}
-
-%end
-
-%hook SBBacklightController
-
-- (void)_setBacklightFactorForCurrentState {
-    %orig;
-    if (![self respondsToSelector:@selector(screenIsOn)] || [self screenIsOn]) return;
-    DSTell(^(DSStageManager *manager) {
-        [manager noteDisplayDidTurnOff];
-    });
-}
-
-%end
-
 // 4.5.416 left this view out of every staged app so the keys stayed on the
 // remote keyboard, which is then raised above the stage. Messages still gets
 // the view, because that is the keyboard that is already working.

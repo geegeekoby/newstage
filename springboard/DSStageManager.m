@@ -294,6 +294,22 @@ static NSString *DSStagedKeyboardFiller(void) {
     return filler;
 }
 
+// 4.5.805 predict805 (opt-in: /var/mobile/.dynamicstage-predict805-on, off
+// file predict805-off, latch predict805). SpringBoard's keyboard shows its
+// QuickType row: the hidden field keeps UIKit's default autocorrection and
+// spell checking. Accepted suggestions arrive here as a replacement
+// (range.length > 0 with text); they are logged and NOT sent on, because no
+// verified way to replace a word in the staged app exists yet. Plain typing
+// (range.length == 0) and deletes go on exactly as before.
+static BOOL DS805PredictOn(void) {
+    static int on = -1;
+    if (on < 0) {
+        on = (access("/var/mobile/.dynamicstage-predict805-on", F_OK) == 0 && DS805On("predict805")) ? 1 : 0;
+        if (on) DSFeature699MarkTrying("predict805");
+    }
+    return on == 1;
+}
+
 @implementation DSStagedKeyboardField
 
 - (BOOL)hasText {
@@ -316,6 +332,7 @@ static NSString *DSStagedKeyboardFiller(void) {
 
 - (void)insertText:(NSString *)text {
     if (self.forwardingEdit || text.length == 0) return;
+    if (DS805PredictOn()) DSDiagnosticsRecordFormat(@"SpringBoard: predict805 insertText %lu chars", (unsigned long)text.length);
     if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardInsertText:)]) {
         [self.keyTarget stagedKeyboardInsertText:text];
     }
@@ -334,6 +351,18 @@ static NSString *DSStagedKeyboardFiller(void) {
     (void)textField;
     // Clearing this field after a letter must not be forwarded as deletes.
     if (self.forwardingEdit) return YES;
+    if (DS805PredictOn() && string.length > 0 && range.length > 0) {
+        DSFeature719MarkAction("predict805");
+        DSDiagnosticsRecordFormat(@"SpringBoard: predict805 replace range={%lu,%lu} with %lu chars (a suggestion / autocorrect): logged, not sent to the app",
+                                  (unsigned long)range.location, (unsigned long)range.length, (unsigned long)string.length);
+        self.forwardingEdit = YES;
+        self.text = DSStagedKeyboardFiller();
+        self.forwardingEdit = NO;
+        return NO;
+    }
+    if (DS805PredictOn() && string.length > 1) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: predict805 insert of %lu chars at the caret (sent on as typed)", (unsigned long)string.length);
+    }
     self.forwardingEdit = YES;
     if (string.length > 0) {
         if ([self.keyTarget respondsToSelector:@selector(stagedKeyboardInsertText:)]) {
@@ -362,6 +391,15 @@ static NSString *DSStagedKeyboardFiller(void) {
         [self.keyTarget stagedKeyboardInsertText:@"\n"];
     }
     return NO;
+}
+
+- (void)replaceRange:(UITextRange *)range withText:(NSString *)text {
+    if (DS805PredictOn()) {
+        DSFeature719MarkAction("predict805");
+        DSDiagnosticsRecordFormat(@"SpringBoard: predict805 replaceRange:withText: %lu chars (logged, not sent to the app)", (unsigned long)text.length);
+        return;
+    }
+    [super replaceRange:range withText:text];
 }
 
 - (BOOL)resignFirstResponder {
@@ -792,6 +830,8 @@ static BOOL DSCore759On(void) { return DSFeature699On("core759"); }
 static BOOL DS759On(const char *name) { return DSCore759On() && DSFeature699On(name); }
 // Filled by the appview670 hook in Tweak.xm (focus755 diagnostic, log only).
 extern NSString *DSFocus755LastFor(NSString *bundle, CFAbsoluteTime *at);
+
+void DSGest770NoteEvent(NSString *why);
 
 @implementation DSStageManager {
     NSString *_type755Owner;
@@ -2726,9 +2766,11 @@ static void DSKeys697Log(NSString *key, NSString *line) {
     field.keyTarget = self;
     field.alpha = 0.02;
     field.delegate = field;
-    field.autocorrectionType = UITextAutocorrectionTypeNo;
+    BOOL predict = DS805PredictOn();
+    field.autocorrectionType = predict ? UITextAutocorrectionTypeDefault : UITextAutocorrectionTypeNo;
     field.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    field.spellCheckingType = UITextSpellCheckingTypeNo;
+    field.spellCheckingType = predict ? UITextSpellCheckingTypeDefault : UITextSpellCheckingTypeNo;
+    if (predict) DSDiagnosticsRecord(@"SpringBoard: predict805 on: the staged keyboard field keeps UIKit's default autocorrection and spell checking (QuickType row)");
     field.smartQuotesType = UITextSmartQuotesTypeNo;
     field.smartDashesType = UITextSmartDashesTypeNo;
     field.smartInsertDeleteType = UITextSmartInsertDeleteTypeNo;
@@ -4159,6 +4201,7 @@ BOOL DSFold752On(void) {
         if (hosts[i].isHosting && hosts[i].bundleIdentifier) _host754Bundle[key] = hosts[i].bundleIdentifier;
         else if ([now isEqualToString:@"detached"]) [_host754Bundle removeObjectForKey:key];
         DSDiagnosticsRecordFormat(@"SpringBoard: host750 %@ card %@: %@ -> %@", key, bundle ?: hosts[i].bundleIdentifier ?: @"-", was, now);
+        DSGest770NoteEvent(@"host750");
         if (DSGest770On() && ![bundle isEqualToString:@"com.apple.MobileSMS"] && ([now isEqualToString:@"minimised"] || [was isEqualToString:@"minimised"])) {   // 4.5.770 gest770
             @try { DSDiagnosticsRecordFormat(@"SpringBoard: gest770 %@ %@ -> %@ app view: %@", bundle ?: @"-", was, now, [hosts[i] gest770State]); } @catch (NSException *exception) {}
             if ([was isEqualToString:@"minimised"] && [now isEqualToString:@"live"]) DSGest770MarkRestored(bundle);
@@ -4808,6 +4851,15 @@ static BOOL DSKbNan754On(void) {
         _notedKeyboardOnce = YES;
         DSDiagnosticsRecordFormat(@"SpringBoard: %@ put a keyboard up at %@ (the display is %@)",
                                   source, NSStringFromCGRect(keyboard), NSStringFromCGRect(screen));
+    }
+    if (DS805PredictOn() && !CGRectIsEmpty(keyboard)) {
+        static CGFloat lastH = 0;
+        if (fabs(lastH - CGRectGetHeight(keyboard)) > 0.5) {
+            lastH = CGRectGetHeight(keyboard);
+            CGRect lift = [self keyboardFrameForLift:keyboard];
+            DSDiagnosticsRecordFormat(@"SpringBoard: predict805 keyboard from %@ measured %.0f pt tall (lift uses %.0f pt)",
+                                      source ?: @"?", CGRectGetHeight(keyboard), CGRectGetHeight(lift));
+        }
     }
 
     if (!self.isStageVisible) return;
@@ -17379,6 +17431,7 @@ static NSInteger DSHomeGestureGeneration = 0;
     DSHomeGestureGeneration += 1;
     [DSSceneHost setHomeGestureActive:NO];
     DSDiagnosticsRecord(@"SpringBoard: home gesture ended");
+    DSGest770NoteEvent(@"home ended");
     __weak __typeof(self) weakSelf = self;
     // Quiet lasts 1.15s. This has to run before that ends, so the property
     // write is held with the rest of the home transition.

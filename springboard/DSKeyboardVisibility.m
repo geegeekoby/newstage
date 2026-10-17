@@ -30,25 +30,6 @@ static BOOL DSClassNameLooksLikeKeyboard(NSString *name) {
     return NO;
 }
 
-static BOOL DSViewLooksLikeKeyboardInstance(NSString *name) {
-    if (name.length == 0) return NO;
-    if ([name rangeOfString:@"KeyboardRemoteControl"].location != NSNotFound) return YES;
-    if ([name rangeOfString:@"KeyboardLayerHost"].location != NSNotFound) return YES;
-    if ([name hasPrefix:@"UIKeyboard"]) return YES;
-    if ([name hasPrefix:@"UIInputSet"]) return YES;
-    if ([name hasPrefix:@"UIKB"]) return YES;
-    if ([name hasPrefix:@"UIRemoteKeyboard"]) return YES;
-    if ([name hasPrefix:@"TUIKeyboard"]) return YES;
-    if ([name hasPrefix:@"UICandidate"]) return YES;
-    if ([name hasPrefix:@"UIPrediction"]) return YES;
-    if ([name rangeOfString:@"Keyboard"].location != NSNotFound) return YES;
-    if ([name rangeOfString:@"InputSet"].location != NSNotFound) return YES;
-    if ([name rangeOfString:@"TextEffects"].location != NSNotFound) return YES;
-    if ([name rangeOfString:@"InputAssistant"].location != NSNotFound) return YES;
-    if ([name rangeOfString:@"Candidate"].location != NSNotFound) return YES;
-    return NO;
-}
-
 static BOOL DSDockingKeyboard = NO;
 static __weak UIWindow *DSDockedKeyboardWindow = nil;
 
@@ -897,10 +878,10 @@ void DSMedusa802Take(UIWindow *medusa, NSString *why) {
                                                                      3L, (double)DSKeyboardWindowLevelAboveStage());
         DSMedusa802Assertion = assertion;
         DSMedusa802Window = medusa;
-        DSDiagnosticsRecordFormat(@"SpringBoard: medusa802 took SpringBoard's Medusa level assertion (priority 3, level %.0f; was %.0f) for %@",
+        DSDiagnosticsRecordFormat(@"SpringBoard: %s took SpringBoard's Medusa level assertion (priority 3, level %.0f; was %.0f) for %@", DS803On("medusa803") ? "medusa803" : "medusa802",
                                   DSKeyboardWindowLevelAboveStage(), before, why ?: @"?");
     } @catch (NSException *exception) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: medusa802 take threw %@", exception.name ?: @"?");
+        DSDiagnosticsRecordFormat(@"SpringBoard: %s take threw %@", DS803On("medusa803") ? "medusa803" : "medusa802", exception.name ?: @"?");
     }
 }
 
@@ -911,7 +892,7 @@ void DSMedusa802Release(NSString *why) {
         DSMedusa802Assertion = nil;
         DSMedusa802Window = nil;
         if ([a respondsToSelector:@selector(invalidate)]) ((void (*)(id, SEL))objc_msgSend)(a, @selector(invalidate));
-        DSDiagnosticsRecordFormat(@"SpringBoard: medusa802 released the Medusa level assertion (%@)", why ?: @"?");
+        DSDiagnosticsRecordFormat(@"SpringBoard: %s released the Medusa level assertion (%@)", DS803On("medusa803") ? "medusa803" : "medusa802", why ?: @"?");
     } @catch (NSException *exception) {
     }
 }

@@ -167,11 +167,6 @@
 
 // FrontBoard's own copy of the same record; which one SpringBoard consults for
 // the multitasking flag moved between iOS versions, so both are hooked.
-@interface FBApplicationInfo : NSObject
-@property (nonatomic, readonly) NSString *bundleIdentifier;
-- (BOOL)isMedusaCapable;
-@end
-
 @interface SBApplication : NSObject
 @property (nonatomic, readonly) NSString *bundleIdentifier;
 @property (nonatomic, readonly) NSString *displayName;
@@ -291,5 +286,4 @@
 + (instancetype)sharedInstance;
 - (BOOL)isPlaying;
 - (NSInteger)nowPlayingProcessPID;
-- (NSString *)nowPlayingApplicationDisplayID;
 @end

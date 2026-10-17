@@ -337,7 +337,6 @@ static BOOL DSMessagesChatOnScreen = NO;
 static CFAbsoluteTime DSMessagesChatReadyAt = 0;
 static CFAbsoluteTime DSMessagesHandoffCooldownUntil = 0;
 // Counted every time UIKit asks, including after the once-only path report.
-static int DSRemoteImplAsks = 0;
 static int DSRemoteSceneAsks = 0;
 
 static BOOL DSMessagesFieldIsEditing = NO;
@@ -2205,12 +2204,6 @@ static BOOL DSNameLooksLikeCameraUI(NSString *name) {
 }
 
 - (CGRect)_unjailedReferenceBounds {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
-    if (DSStaged() && self == UIScreen.mainScreen) return DSStageBounds();
-    return %orig;
-}
-
-- (CGRect)_unjailedBounds {
     if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
     if (DSStaged() && self == UIScreen.mainScreen) return DSStageBounds();
     return %orig;
@@ -6473,124 +6466,6 @@ static void DSShellSetBounds(UIView *view, CGRect bounds) {
 
 %end
 
-%hook UIKeyboardRemoteControlView
-
-- (void)didMoveToWindow {
-    %orig;
-    if (DSIsBeeper()) return;
-    if (DSStaged()) DSLayoutKeyboardRemoteControlView(self);
-}
-
-- (void)layoutSubviews {
-    %orig;
-    if (DSIsBeeper()) return;
-    if (DSStaged()) DSLayoutKeyboardRemoteControlView(self);
-}
-
-- (void)setFrame:(CGRect)frame {
-    if (DSIsBeeper()) {
-        %orig(frame);
-        return;
-    }
-    if (DSStaged() && self.superview) {
-        CGRect bounds = self.superview.bounds;
-        CGFloat band = MIN(340.0, CGRectGetHeight(bounds));
-        frame = CGRectMake(0.0, CGRectGetHeight(bounds) - band, CGRectGetWidth(bounds), band);
-    }
-    %orig;
-}
-
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    return %orig;
-}
-
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    return %orig;
-}
-
-%end
-
-%hook UIKeyboardLayerHostView
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    return %orig;
-}
-
-- (instancetype)initWithCoder:(NSCoder *)coder {
-    return %orig;
-}
-
-- (void)didMoveToWindow {
-    %orig;
-    if (DSIsBeeper()) return;
-    if (DSStaged() && DSHideKeysInThisWindow(self.window)) DSStripKeyboardLayerHostView(self);
-}
-
-- (void)layoutSubviews {
-    %orig;
-    if (DSIsBeeper()) return;
-    if (DSStaged() && DSHideKeysInThisWindow(self.window)) DSStripKeyboardLayerHostView(self);
-}
-
-- (void)willMoveToSuperview:(UIView *)newSuperview {
-    if (DSIsBeeper()) {
-        %orig;
-        return;
-    }
-    UIWindow *destination = newSuperview.window;
-    if (DSStaged() && !DSMessagesKeepsOwnKeys() && newSuperview && DSHideKeysInThisWindow(destination)) {
-        DSKillHostedKeyboardView(self);
-        return;
-    }
-    %orig;
-}
-
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    if (DSIsBeeper()) return %orig;
-    if (DSStaged() && !DSMessagesKeepsOwnKeys() && DSHideKeysInThisWindow(self.window)) return nil;
-    return %orig;
-}
-
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    if (DSIsBeeper()) return %orig;
-    if (DSStaged() && !DSMessagesKeepsOwnKeys() && DSHideKeysInThisWindow(self.window)) return NO;
-    return %orig;
-}
-
-%end
-
-%hook UIKeyboardWindow
-
-- (void)setUserInteractionEnabled:(BOOL)enabled {
-    if (DSIsBeeper()) {
-        %orig(enabled);
-        return;
-    }
-    if (DSStaged() && !DSMessagesKeepsOwnKeys()) %orig(NO);
-    else %orig;
-}
-
-- (void)setHidden:(BOOL)hidden {
-    if (DSIsBeeper()) {
-        %orig(hidden);
-        return;
-    }
-    if (DSStaged() && !DSMessagesKeepsOwnKeys()) %orig(YES);
-    else %orig;
-}
-
-- (void)didMoveToWindow {
-    %orig;
-    if (DSIsBeeper()) return;
-    if (DSStaged() && !DSMessagesKeepsOwnKeys()) {
-        DSKillHostedKeyboardView(self);
-        self.userInteractionEnabled = NO;
-        self.hidden = YES;
-    }
-}
-
-%end
-
 %hook _UIRemoteKeyboardPlaceholderView
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
@@ -6608,34 +6483,6 @@ static void DSShellSetBounds(UIView *view, CGRect bounds) {
 %end
 
 %hook UIKeyboardImpl
-
-// Keys drawn in this process land inside the card. The same answer the other
-// staged apps use sends those keys to SpringBoard's keyboard. Reported once,
-// so a layout pass cannot post another show.
-+ (BOOL)isUsingRemoteKeyboard {
-    // This has to be YES while the keyboard is created. Messages turns it on
-    // only for the focus that replaces the in-card keyboard. The reply bar is
-    // already anchored, so the conversation is not free to slide off the card.
-    if (DSMessagesWantsRemoteKeyboard()) {
-        DSRemoteImplAsks++;
-        DSReportRemotePath(8, YES);
-        return YES;
-    }
-    return %orig;
-}
-
-- (BOOL)isUsingRemoteKeyboard {
-    if (DSMessagesWantsRemoteKeyboard()) {
-        DSRemoteImplAsks++;
-        DSReportRemotePath(8, YES);
-        return YES;
-    }
-    return %orig;
-}
-
-+ (instancetype)sharedInstance {
-    return %orig;
-}
 
 - (void)showKeyboard {
     if (DSMessagesOwnsKeyboard()) {
@@ -7264,7 +7111,6 @@ static void DSInstallMessagesBehaviorHooks(void) {
 // The input window is the keyboard scene. Forcing it to the card draws the
 // keys inside the stage and nests that scene update inside the conversation push.
 @interface UIInputWindowController : UIViewController
-- (void)updateRootViewConstraintsForSceneFrame:(CGRect)sceneFrame bounds:(CGRect)bounds;
 - (void)hostAppSceneBoundsChanged;
 - (CGRect)_boundsForOrientation:(NSInteger)orientation;
 - (CGRect)_defaultInitialViewFrame;
@@ -7274,48 +7120,8 @@ static void DSInstallMessagesBehaviorHooks(void) {
 
 %hook UIInputWindowController
 
-- (void)updateRootViewConstraintsForSceneFrame:(CGRect)sceneFrame bounds:(CGRect)bounds {
-    %orig(sceneFrame, bounds);
-}
-
-- (CGRect)_boundsForOrientation:(NSInteger)orientation {
-    return %orig;
-}
-
-- (CGRect)_defaultInitialViewFrame {
-    return %orig;
-}
-
-- (CGRect)_viewFrameInWindowForContentOverlayInsetsCalculation {
-    return %orig;
-}
-
-- (UIEdgeInsets)_viewSafeAreaInsetsFromScene {
-    return %orig;
-}
-
-- (void)hostAppSceneBoundsChanged {
-    %orig;
-}
-
-- (void)updateViewConstraints {
-    %orig;
-}
-
 - (void)viewDidLayoutSubviews {
     if (DSStaged()) DSTrace(@"app input window laid out");
-    %orig;
-}
-
-%end
-
-@interface UIInputWindowControllerHosting : NSObject
-- (void)updateViewConstraints;
-@end
-
-%hook UIInputWindowControllerHosting
-
-- (void)updateViewConstraints {
     %orig;
 }
 
@@ -7883,23 +7689,6 @@ static void DSStartObserving(void) {
 // If this file appears and the ctor line does not, the image loaded and then
 // died before %ctor. If neither appears, ElleKit never loaded the image.
 __attribute__((constructor(101)))
-static void DSImageMapped(void) {
-    NSString *identifier = @"";
-    @try {
-        identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
-    } @catch (NSException *exception) {
-    }
-    char line[512];
-    snprintf(line, sizeof(line), "mapped bundle=%s pid=%d build=%s\n", identifier.UTF8String ?: "?", (int)getpid(), kDSBuildVersionString);
-    DSWriteFile("/var/tmp/com.recreated.dynamicstage.mapped", line);
-    DSWriteFile("/var/jb/tmp/com.recreated.dynamicstage.mapped", line);
-    // 4.5.668: a sandboxed App Store app (Beeper, Messenger, Signal) cannot
-    // write either of those. Its own container can; SpringBoard's relay
-    // (springboard/DSAppTraceRelay.m) reads these markers, so a log now says
-    // whether this image ever mapped in that app at all.
-    DSWriteContainerMarker("com.recreated.dynamicstage.mapped", line);
-}
-
 %ctor {
     @autoreleasepool {
         int reason = 0;

@@ -1839,6 +1839,7 @@ static void DSPhoneSize690SetBool(id object, NSString *setter, BOOL value) {
 // needed; NO means "asked, now wait and see".
 typedef BOOL (^DSSceneHostAttempt)(void);
 
+void DSGest770NoteEvent(NSString *why);
 @implementation DSSceneHost {
     FBScene *_scene;
     FBSceneHostManager *_hostManager;
@@ -3186,12 +3187,7 @@ static BOOL DSTrace754Fresh(NSString *line, int kind) {
     CGRect frame = [self logicalFrame];
     if (CGRectIsEmpty(frame) || !controller) return;
     @try {
-        SEL selector = @selector(setContentReferenceSize:withInterfaceOrientation:);
-        if ([controller respondsToSelector:selector]) {
-            ((void (*)(id, SEL, CGSize, long long))objc_msgSend)(controller, selector, frame.size,
-                                                                (long long)UIInterfaceOrientationPortrait);
-            return;
-        }
+        // 4.5.805: the two-argument form does not exist on 16.5.1 (arch799); only the real three-argument selector.
         SEL both = NSSelectorFromString(@"setContentReferenceSize:withContentOrientation:andContainerOrientation:");
         if ([controller respondsToSelector:both]) {
             ((void (*)(id, SEL, CGSize, long long, long long))objc_msgSend)(controller, both, frame.size,
@@ -7579,6 +7575,7 @@ static void DSRunAfterTransitionBlocks(void) {
         DSHomeGestureEndedAt = CFAbsoluteTimeGetCurrent();
     }
     if (changed) DSPostSystemGestureState();
+    if (changed && NSThread.isMainThread) DSGest770NoteEvent(active ? @"home began" : @"home ended");
 }
 
 + (BOOL)homeGestureIsActive {
@@ -7947,6 +7944,8 @@ static void DSRunAfterTransitionBlocks(void) {
 // controller queries), the app view's state on every minimise / restore and the
 // first Live update after a restore. Changes only. Never for Messages.
 static void DSGest770StartPoll(void);
+void DSGest770LogLayout(NSString *why);
+void DSGest770NoteEvent(NSString *why);
 static BOOL DSGest770PollAsleep = NO;
 BOOL DSGest770On(void) {
     static BOOL marked = NO;
@@ -8088,6 +8087,7 @@ static NSString *DSGest770SwitcherSummary(void) {
     } @catch (NSException *exception) {}
     [gesture removeTarget:self action:@selector(pullChanged:)];
     objc_setAssociatedObject(gesture, @selector(pullChanged:), nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    DSGest770NoteEvent(@"pull ended");
 }
 @end
 
@@ -8117,7 +8117,32 @@ void DSGest770NoteSuppressed(CGPoint point, NSString *who) {
     DSDiagnosticsRecordFormat(@"SpringBoard: gest770 %@ refused a system gesture at %.0f,%.0f (the stage keeps the touch)", who, point.x, point.y);
 }
 
+// 4.5.805 poll805: the gest770 layout line (log only) is written from the
+// SpringBoard events that change it - a card's host750 state change, the home
+// gesture starting / ending and each edge pull - instead of a 4 Hz timer.
+// Off: poll805-off (back to the 0.25 s poll).
+void DSGest770LogLayout(NSString *why) {
+    static NSString *lastSig = nil;
+    if (!NSThread.isMainThread) return;
+    @try {
+        NSString *sig = [NSString stringWithFormat:@"switcher=%@ home=%d busy=%d stage visible=%d parked=%d",
+                         DSGest770SwitcherSummary(), [DSSceneHost homeGestureIsActive], [DSSceneHost systemTransitionBusy],
+                         DSStageVisibleFast(), DSStageHasParkedCardFast()];
+        if ([sig isEqualToString:lastSig]) return;
+        lastSig = sig;
+        DSDiagnosticsRecordFormat(@"SpringBoard: gest770 layout %@", sig);
+    } @catch (NSException *exception) {}
+}
+void DSGest770NoteEvent(NSString *why) {
+    if (!DS805On("poll805") || !DSGest770On()) return;
+    static BOOL marked = NO;
+    if (!marked) { marked = YES; DSFeature699MarkTrying("poll805"); }
+    DSFeature719MarkAction("poll805");
+    DSGest770LogLayout(why);
+}
+
 static void DSGest770StartPoll(void) {
+    if (DS805On("poll805")) return;   // 4.5.805: events instead (DSGest770NoteEvent)
     static dispatch_source_t timer = nil;
     if (timer) {
         if (DSGest770PollAsleep) { DSGest770PollAsleep = NO; dispatch_resume(timer); }
@@ -8126,20 +8151,12 @@ static void DSGest770StartPoll(void) {
     timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
     dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, 0), (uint64_t)(0.25 * NSEC_PER_SEC), (uint64_t)(0.05 * NSEC_PER_SEC));
     dispatch_source_set_event_handler(timer, ^{
-        static NSString *lastSig = nil;
         if (!DSStageHasParkedCardFast() && !DSStageVisibleFast() && !DSStageHasSceneHostFast()) {
             // 4.5.796: nothing staged, so the 4 Hz poll sleeps until the next gest770 use.
             if (DS796CoreOn() && !DSGest770PollAsleep) { DSGest770PollAsleep = YES; dispatch_suspend(timer); }
             return;
         }
-        @try {
-            NSString *sig = [NSString stringWithFormat:@"switcher=%@ home=%d busy=%d stage visible=%d parked=%d",
-                             DSGest770SwitcherSummary(), [DSSceneHost homeGestureIsActive], [DSSceneHost systemTransitionBusy],
-                             DSStageVisibleFast(), DSStageHasParkedCardFast()];
-            if ([sig isEqualToString:lastSig]) return;
-            lastSig = sig;
-            DSDiagnosticsRecordFormat(@"SpringBoard: gest770 layout %@", sig);
-        } @catch (NSException *exception) {}
+        DSGest770LogLayout(@"poll");
     });
     dispatch_resume(timer);
 }

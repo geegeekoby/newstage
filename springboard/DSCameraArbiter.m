@@ -1648,9 +1648,20 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
 
 @implementation DSCameraArbiter
 
+// 4.5.809 camera809: one group switch for every camera path (the 1 Hz presence
+// refresh, the per-app camera channels, display-layout presence). Default on.
+// Off: /var/mobile/.dynamicstage-camera-off (latch camera). core809-off keeps
+// 808 behaviour (camera always on).
+static BOOL DSCamera809Started = NO;
 + (void)start {
+    if (DSFeature699On("core809") && !DSFeature699On("camera")) {
+        DSDiagnosticsRecord(@"SpringBoard: camera809 camera paths off (camera-off file or latch)");
+        return;
+    }
+    if (DSFeature699On("core809")) DSFeature699MarkTrying("camera");
     static dispatch_once_t once;
     dispatch_once(&once, ^{
+        DSCamera809Started = YES;
         DSCameraClaims = [NSMutableDictionary dictionary];
         DSCameraInstallPublisherHook();
         // 4.5.670 presence670: find SpringBoard's publisher now, not on the
@@ -1922,6 +1933,7 @@ static void DSCam668UpdateCameraTall(DSStageManager *manager, NSArray<NSString *
 }
 
 + (void)refresh {
+    if (!DSCamera809Started) return;   // 4.5.809 camera809: never started (camera-off)
     if (!DSCameraClaims) return;
     // Nothing during the home / switcher gesture or inside a scene update:
     // come back when it is over.

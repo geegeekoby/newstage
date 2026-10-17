@@ -1842,7 +1842,6 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 void DSGest770NoteEvent(NSString *why);
 @implementation DSSceneHost {
     FBScene *_scene;
-    FBSceneHostManager *_hostManager;
     UIView *_hostView;
     // SpringBoard's own app view, when it could be had.
     SBAppViewController *_appViewController;
@@ -3536,34 +3535,11 @@ static BOOL DSTrace754Fresh(NSString *line, int kind) {
 #pragma mark - Hosting
 
 - (void)beginHosting {
+    // 4.5.809: FBScene hostManagerForRequester: / hostViewForRequester:enableAndOrderFront:
+    // do not exist on 20F75, so this path only ever logged and returned. The
+    // app-view path does the hosting.
     if (!_scene || _hostView) return;
-    if (![_scene respondsToSelector:@selector(hostManagerForRequester:)]) {
-        DSDiagnosticsRecord(@"SpringBoard: this build's scenes cannot be hosted by a requester");
-        return;
-    }
-
-    @try {
-        _hostManager = [_scene hostManagerForRequester:kDSRequester];
-        if (![_hostManager respondsToSelector:@selector(hostViewForRequester:enableAndOrderFront:)]) {
-            DSDiagnosticsRecord(@"SpringBoard: the scene host manager has no host view to give");
-            return;
-        }
-        _hostView = [_hostManager hostViewForRequester:kDSRequester enableAndOrderFront:YES];
-        _hostView.clipsToBounds = YES;
-        _hostView.opaque = YES;
-        if (@available(iOS 13.0, *)) {
-            _hostView.backgroundColor = UIColor.systemBackgroundColor;
-        } else {
-            _hostView.backgroundColor = UIColor.whiteColor;
-        }
-        if (!_hostView) DSDiagnosticsRecordFormat(@"SpringBoard: hosting %@ gave back no view", _bundleIdentifier);
-        else [self holdRunningAssertion];
-    } @catch (NSException *exception) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: hosting %@ threw %@ - %@",
-                                  _bundleIdentifier, exception.name ?: @"?", exception.reason ?: @"?");
-        _hostManager = nil;
-        _hostView = nil;
-    }
+    DSDiagnosticsRecord(@"SpringBoard: this build's scenes cannot be hosted by a requester");
 }
 
 - (BOOL)isHosting {
@@ -6208,15 +6184,9 @@ static BOOL DSViewIsSystemChrome(UIView *view) {
     ]);
 }
 
+// 4.5.809: the 1-arg allWindowsIncludingInternalWindows: never existed on 20F75,
+// so this always fell through to the app's windows; that is all it does now.
 static NSArray<UIWindow *> *DSAllWindows(void) {
-    SEL all = NSSelectorFromString(@"allWindowsIncludingInternalWindows:");
-    if ([UIWindow respondsToSelector:all]) {
-        @try {
-            NSArray *windows = ((NSArray * (*)(id, SEL, BOOL))objc_msgSend)([UIWindow class], all, YES);
-            if (windows.count > 0) return windows;
-        } @catch (NSException *exception) {
-        }
-    }
     return UIApplication.sharedApplication.windows ?: @[];
 }
 
@@ -7378,7 +7348,6 @@ static dispatch_queue_t DS719Queue(void) {
         _ownSceneIdentifier = nil;
         _presenter = nil;
         _hostView = nil;
-        _hostManager = nil;
         _scene = nil;
         _tookOverForegroundLaunch = NO;
 
@@ -7424,16 +7393,8 @@ static dispatch_queue_t DS719Queue(void) {
         }
     }];
 
-    @try {
-        if ([_hostManager respondsToSelector:@selector(disableHostingForRequester:)]) {
-            [_hostManager disableHostingForRequester:kDSRequester];
-        }
-    } @catch (NSException *exception) {
-    }
-
     [_hostView removeFromSuperview];
     _hostView = nil;
-    _hostManager = nil;
     _scene = nil;
     _tookOverForegroundLaunch = NO;
 }

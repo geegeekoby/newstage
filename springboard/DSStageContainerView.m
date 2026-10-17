@@ -234,7 +234,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
     // 4.5.731 rim731: no rim catcher inside the card (they took taps at the
     // app's edges); the grab is the band outside the card. Off: -rim731-off.
     DSLayoutRimCatchers(_rimCatchers, self, bounds, CGRectInset(bounds, kDSRimInnerCatch, kDSRimInnerCatch), cut,
-                        !self.hidden && !DSFeature699On("rim731"));
+                        !self.hidden && !DS809Latched("rim731"));
 }
 
 - (NSString *)rimCatcherName {
@@ -864,7 +864,7 @@ static void DSSame752Note(void) {
     // The outer band is the drag rim. A hosted scene that is still the size of
     // the screen sits on top of that band and swallows the touch, so the rim
     // never starts a drag. Claiming the band here keeps it above the app.
-    CGFloat band731 = DSFeature699On("rim731") ? 0.0 : kDSStageRimGrabBand;   // 4.5.731 rim731
+    CGFloat band731 = DS809Latched("rim731") ? 0.0 : kDSStageRimGrabBand;   // 4.5.731 rim731
     CGRect interior = CGRectInset(self.bounds, band731, band731);
     if (band731 > 0.0 && CGRectGetWidth(interior) >= 40.0 && CGRectGetHeight(interior) >= 40.0 &&
         !CGRectContainsPoint(interior, point)) {

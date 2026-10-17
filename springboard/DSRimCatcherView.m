@@ -10,7 +10,7 @@ extern CGPoint DSRim740StripPoint;
 // width), so a touch at x = 0 still lands on the rim. Only the area outside the
 // card grows; the app is never covered. Off: -edge741-off (latch).
 CGRect DSEdge741Outer(CGRect outer, CGRect card, UIView *parent) {
-    if (!parent.window || !DSFeature699On("edge741")) return outer;
+    if (!parent.window || !DS809Latched("edge741")) return outer;
     @try {
         CGRect inWin = [parent convertRect:card toView:nil];
         CGFloat w = CGRectGetWidth(parent.window.bounds);

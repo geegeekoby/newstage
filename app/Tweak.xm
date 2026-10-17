@@ -2223,14 +2223,6 @@ static BOOL DSNameLooksLikeCameraUI(NSString *name) {
     return %orig;
 }
 
-- (CGRect)_applicationFrameWithoutOverscanForInterfaceOrientation:(NSInteger)orientation
-                                             usingStatusbarHeight:(CGFloat)height
-                                                  ignoreStatusBar:(BOOL)ignore {
-    if (DSIsBeeper() || DSPhoneKeepsRealScreen() || DSCameraKeepsRealScreen()) return %orig;
-    if (DSStaged()) return DSStageBounds();
-    return %orig;
-}
-
 - (UIInterfaceOrientation)statusBarOrientation {
     if (DSIsBeeper()) return %orig;
     if (DSStaged()) return UIInterfaceOrientationPortrait;
@@ -6971,8 +6963,6 @@ typedef struct {
     Class cls;
     DSBehaviorMsg transcriptWidth;
     DSBehaviorMsg transcriptHeight;
-    DSBehaviorMsg columnWidth;
-    DSBehaviorOrientMsg columnWidthForOrientation;
     DSBehaviorMsg previewWidth;
 } DSBehaviorSlot;
 
@@ -6999,28 +6989,6 @@ static CGFloat DSHookTranscriptHeight(id self, SEL cmd) {
         }
     }
     return DSMessagesHeight(0);
-}
-
-static CGFloat DSHookColumnWidth(id self, SEL cmd) {
-    for (Class cls = object_getClass(self); cls; cls = class_getSuperclass(cls)) {
-        for (int i = 0; i < DSBehaviorSlotCount; i++) {
-            if (DSBehaviorSlots[i].cls == cls && DSBehaviorSlots[i].columnWidth) {
-                return DSMessagesWidth(DSBehaviorSlots[i].columnWidth(self, cmd));
-            }
-        }
-    }
-    return DSMessagesWidth(0);
-}
-
-static CGFloat DSHookColumnWidthForOrientation(id self, SEL cmd, NSInteger orientation) {
-    for (Class cls = object_getClass(self); cls; cls = class_getSuperclass(cls)) {
-        for (int i = 0; i < DSBehaviorSlotCount; i++) {
-            if (DSBehaviorSlots[i].cls == cls && DSBehaviorSlots[i].columnWidthForOrientation) {
-                return DSMessagesWidth(DSBehaviorSlots[i].columnWidthForOrientation(self, cmd, orientation));
-            }
-        }
-    }
-    return DSMessagesWidth(0);
 }
 
 static CGFloat DSHookPreviewWidth(id self, SEL cmd) {
@@ -7075,17 +7043,10 @@ static void DSInstallMessagesBehaviorHooks(void) {
             if (DSClassImplements(cls, @selector(maxTranscriptPortraitHeight))) {
                 DSReplaceMethod(cls, @selector(maxTranscriptPortraitHeight), (IMP)DSHookTranscriptHeight, (IMP *)&slot->transcriptHeight);
             }
-            if (DSClassImplements(cls, @selector(maxPrimaryColumnWidth))) {
-                DSReplaceMethod(cls, @selector(maxPrimaryColumnWidth), (IMP)DSHookColumnWidth, (IMP *)&slot->columnWidth);
-            }
-            if (DSClassImplements(cls, @selector(maxPrimaryColumnWidthForInterfaceOrientation:))) {
-                DSReplaceMethod(cls, @selector(maxPrimaryColumnWidthForInterfaceOrientation:), (IMP)DSHookColumnWidthForOrientation, (IMP *)&slot->columnWidthForOrientation);
-            }
             if (DSClassImplements(cls, @selector(previewMaxWidth))) {
                 DSReplaceMethod(cls, @selector(previewMaxWidth), (IMP)DSHookPreviewWidth, (IMP *)&slot->previewWidth);
             }
-            if (slot->transcriptWidth || slot->transcriptHeight || slot->columnWidth ||
-                slot->columnWidthForOrientation || slot->previewWidth) {
+            if (slot->transcriptWidth || slot->transcriptHeight || slot->previewWidth) {
                 DSBehaviorSlotCount += 1;
             }
         }

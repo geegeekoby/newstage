@@ -64,18 +64,11 @@
 
 // FrontBoard ----------------------------------------------------------------
 
-@interface FBSceneHostManager : NSObject
-- (UIView *)hostViewForRequester:(NSString *)requester enableAndOrderFront:(BOOL)enableAndOrderFront;
-- (void)enableHostingForRequester:(NSString *)requester priority:(NSUInteger)priority;
-- (void)disableHostingForRequester:(NSString *)requester;
-@end
-
 @interface FBScene : NSObject
 @property (nonatomic, readonly) NSString *identifier;
 @property (nonatomic, readonly) FBSSceneSettings *settings;
 @property (nonatomic, readonly) FBSSceneClientSettings *clientSettings;
 @property (nonatomic, readonly) id clientProcess;
-- (FBSceneHostManager *)hostManagerForRequester:(NSString *)requester;
 - (void)updateSettings:(FBSSceneSettings *)settings withTransitionContext:(FBSSceneTransitionContext *)context completion:(void (^)(BOOL))completion;
 - (void)updateSettingsWithBlock:(void (^)(FBSMutableSceneSettings *settings))block;
 - (void)updateClientSettingsWithBlock:(void (^)(FBSMutableSceneClientSettings *settings))block;

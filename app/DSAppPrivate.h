@@ -59,7 +59,4 @@
 - (CGRect)_applicationFrameForInterfaceOrientation:(NSInteger)orientation
                               usingStatusbarHeight:(CGFloat)height
                                    ignoreStatusBar:(BOOL)ignore;
-- (CGRect)_applicationFrameWithoutOverscanForInterfaceOrientation:(NSInteger)orientation
-                                             usingStatusbarHeight:(CGFloat)height
-                                                  ignoreStatusBar:(BOOL)ignore;
 @end

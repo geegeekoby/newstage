@@ -1292,7 +1292,7 @@ BOOL DSRaiseKeyboardWindowAboveStage(void) {
     // Off: /var/mobile/.dynamicstage-raise740-off.
     static CGRect lastKeys740 = {{0, 0}, {0, 0}};
     static CFAbsoluteTime lastAct740 = 0;
-    if ([NSThread isMainThread] && DSFeature699On("raise740") && !DSStage742MessagesStaged()) {
+    if ([NSThread isMainThread] && DS809Latched("raise740") && !DSStage742MessagesStaged()) {
         CGRect keys = CGRectNull;
         @try {
             keys = DSVisibleKeyboardFrameOnScreen();

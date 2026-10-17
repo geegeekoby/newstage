@@ -1,0 +1,13 @@
+## 4.5.809 (clean-up)
+- Wrong selectors and classes (checked against 20F75: allmethods.txt and the class dumps). Each one was dead, so it's deleted and behaviour is unchanged:
+  - UIApplication _applicationFrameWithoutOverscanForInterfaceOrientation:… hook (that selector exists only on UIScreen).
+  - The 1-arg allWindowsIncludingInternalWindows: (always fell back to the app's windows, which is all it does now).
+  - CKUIBehavior maxPrimaryColumnWidth / maxPrimaryColumnWidthForInterfaceOrientation: replacements and their hooks.
+  - FBScene hostManagerForRequester: / hostViewForRequester:enableAndOrderFront: / disableHostingForRequester: (beginHosting only ever logged "cannot be hosted by a requester"; it still logs that). Also the FBSceneHostManager declarations, the _hostManager ivar and kDSRequester.
+  - setKeyboardUIHandler: (the real setKeyboardUIHandle: stays).
+  - The SBStatusBarWindow lookup (UIStatusBarWindow stays).
+  - UIKBVisualEffectView is kept: it does exist in 20F75 UIKitCore, so the review was wrong there.
+- latch809: crash latch (one798 mechanism) for the SpringBoard behaviour features that had none: anim748, edge740, edge741, kbguard740, pos750, raise740, rim731. Off: latch809-off.
+- camera809: camera-off group switch (default on) stops every camera path: the arbiter start, the 1 Hz presence refresh, the per-app channels and the publisher hook. Latch: camera. core809-off keeps the camera always on, as in 808.
+- OFFFILES.md: table of every switch file the 809 code reads (232 gated names, 118 explicit paths).
+- Off files: core809-off (back to 808, except the deletions), latch809-off, camera-off.

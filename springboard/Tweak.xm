@@ -1688,8 +1688,7 @@ static void DSAttachStatusBarPeek(UIWindow *window) {
 
 static void DSCaptureSystemStatusBar(void) {
     if (DSSystemStatusBar.window) return;
-    Class windowClass = objc_getClass("SBStatusBarWindow");
-    if (!windowClass) windowClass = objc_getClass("UIStatusBarWindow");
+    Class windowClass = objc_getClass("UIStatusBarWindow");   // 4.5.809: no SBStatusBarWindow on 20F75
     if (!windowClass) return;
     for (UIWindow *window in UIApplication.sharedApplication.windows) {
         if (![window isKindOfClass:windowClass]) continue;
@@ -1911,12 +1910,9 @@ static BOOL DSBundleIsStaged(NSString *bundle) {
 }
 
 static void DSSetKeyboardUIHandle(id arbiter, id handle) {
-    SEL setHandler = @selector(setKeyboardUIHandler:);
-    SEL setHandle = @selector(setKeyboardUIHandle:);
+    SEL setHandle = @selector(setKeyboardUIHandle:);   // 4.5.809: setKeyboardUIHandler: does not exist (20F75)
     @try {
-        if ([arbiter respondsToSelector:setHandler]) {
-            ((void (*)(id, SEL, id))objc_msgSend)(arbiter, setHandler, handle);
-        } else if ([arbiter respondsToSelector:setHandle]) {
+        if ([arbiter respondsToSelector:setHandle]) {
             ((void (*)(id, SEL, id))objc_msgSend)(arbiter, setHandle, handle);
         }
         if ([arbiter respondsToSelector:@selector(checkHostingState)]) {

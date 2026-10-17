@@ -399,6 +399,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core806") == 0) return -1;
         if (strcmp(name, "core807") == 0) return -1;
         if (strcmp(name, "core808") == 0) return -1;
+        if (strcmp(name, "core809") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -1000,6 +1001,22 @@ BOOL DS807On(const char *name) {
 // (holds808 is a deletion and stays deleted).
 BOOL DS808On(const char *name) {
     return DSFeature699On("core808") && DS807On("core807") && DSFeature699On(name);
+}
+
+// 4.5.809: master core809-off returns every 809 change to 4.5.808
+// (the dead-selector deletions stay deleted).
+BOOL DS809On(const char *name) {
+    return DSFeature699On("core809") && DS808On("core808") && DSFeature699On(name);
+}
+
+// 4.5.809 latch809: a SpringBoard behaviour feature that had an off file but
+// no crash latch is marked "trying" (one798 mechanism, once per process) the
+// first time its gate answers on, so a crash while it runs latches it off.
+// Off: latch809-off / core809-off (back to 808: no marker).
+BOOL DS809Latched(const char *name) {
+    BOOL on = DSFeature699On(name);
+    if (on && DSFeature699On("core809") && DSFeature699On("latch809")) DSFeature699MarkTrying(name);
+    return on;
 }
 
 // 4.5.804: master core804-off returns every 804 change to 4.5.803.

@@ -4279,7 +4279,7 @@ static void DSPub807Check(NSString *bundle, DSSceneHost *host, NSString *state) 
 }
 
 - (BOOL)anim748On {
-    return [self core748On] && DSFeature699On("anim748");
+    return [self core748On] && DS809Latched("anim748");
 }
 
 // scene748: one place that settles a hosted scene when its card comes back
@@ -6937,7 +6937,7 @@ static double DSPS682AskPausedUntil = 0;
     // (Needs-patching log: Messenger at card size, three forced raises, then
     // the SIGTRAP) or while its scene is inactive (deactivation reasons set);
     // log why the keys are not showing instead. Off: -kbguard740-off.
-    if (DSFeature699On("kbguard740")) {
+    if (DS809Latched("kbguard740")) {
         NSString *why740 = nil;
         if (!DSPhoneSize675Allowed(bundle) && ![bundle isEqualToString:@"com.apple.MobileSMS"]) why740 = @"the app is not allowlisted (it runs at card size; its own keyboard path decides)";
         else {
@@ -8945,7 +8945,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
     // (not a same-place layout pass, not while kb707 holds a typing card)
     // ends a keyboard move in flight cleanly first. Off: pos750-off (latch).
     @try {
-        if ([self core750On] && DSFeature699On("pos750") && ![self kb720Typing]) {
+        if ([self core750On] && DS809Latched("pos750") && ![self kb720Typing]) {
             CGRect resting = (card == _container) ? [self primaryCardFrameInRoot] : [self frameWithoutKeyboardShift:card];
             if (!DSKb720Close(resting, frame)) [self move747Cancel:@"card placed somewhere new (pos750)"];
         }
@@ -12752,7 +12752,7 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
         }
         // 4.5.750 pos750: stuck727 is a backstop. It says so loudly at once and
         // only snaps the card (the safety) if it is still off after 2 s.
-        if ([self core750On] && DSFeature699On("pos750")) {
+        if ([self core750On] && DS809Latched("pos750")) {
             if (_stuck750SeenAt[i] <= 0.0 || now < _stuck750SeenAt[i]) {
                 _stuck750SeenAt[i] = now;
                 DSDiagnosticsRecordFormat(@"SpringBoard: STUCK750 BACKSTOP %@ card off its resting frame (%@): a move bypassed the one path; safety snap in 2 s if it stays",
@@ -14589,7 +14589,7 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
 - (CGFloat)rimGrabBandForCard:(DSStageContainerView *)card {
     // 4.5.731 rim731: the grab never reaches inside the card; the drag starts
     // only on the band outside it (the drag shell / rim views). Off: -rim731-off.
-    if (DSFeature699On("rim731")) return 0.0;
+    if (DS809Latched("rim731")) return 0.0;
     if (card && card == [self frontStageCard]) return 40.0;
     return kDSStageRimGrabBand;
 }
@@ -15712,7 +15712,7 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
             // It now applies only to the phone's bottom-right corner it was for.
             // Off: /var/mobile/.dynamicstage-edge740-off.
             if (dragStartScreen.x > CGRectGetWidth(screen) - 44.0 &&
-                (!DSFeature699On("edge740") || [self pointIsPhoneRightCorner:dragStartScreen]) &&
+                (!DS809Latched("edge740") || [self pointIsPhoneRightCorner:dragStartScreen]) &&
                 [self gestureMovesLeftAlongTheBottom:translation velocity:[recognizer velocityInView:nil]]) {
                 dragging = NO;
                 _stageDragActive = NO;

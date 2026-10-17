@@ -9317,6 +9317,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 - (void)presentPickerOnCard:(DSStageContainerView *)card picker:(DSAppPickerViewController *)picker {
     _kb723QuietUntil = CFAbsoluteTimeGetCurrent() + 0.6;   // 4.5.723: kb723 stays out (create / picker / teardown)
     if (!card || !picker) return;
+    [picker activate819];   // 4.5.819 picker819: built on first show only, never at launch
     [self refreshPickerAvailability];
     picker.darkMode = card.darkMode;
     UIView *pickerView = picker.view;
@@ -11459,6 +11460,33 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
 - (void)appPicker:(DSAppPickerViewController *)picker didSelectEntry:(DSAppEntry *)entry fromView:(UIView *)view {
     [picker dismissKeyboard];
     [self launchEntry:entry slot:[self slotForPicker:picker]];
+}
+
+- (NSArray<NSDictionary *> *)appPickerSlotChoices819:(DSAppPickerViewController *)picker {
+    NSMutableArray *out = [NSMutableArray array];
+    @try {
+        NSInteger own = [self slotForPicker:picker];
+        for (NSInteger slot = 0; slot <= 1; slot++) {
+            if (slot != own && ![self pickerVisibleOnSlot:slot]) continue;
+            DSStageContainerView *card = slot == 0 ? _container : _topContainer;
+            if (!card) continue;
+            BOOL upper = card == [self cardOnHalf:1];
+            [out addObject:@{ @"slot": @(slot), @"here": @(slot == own),
+                              @"title": upper ? @"Open on Top Card" : @"Open on Bottom Card" }];
+        }
+    } @catch (NSException *exception) {}
+    return out;
+}
+
+- (void)appPicker:(DSAppPickerViewController *)picker didChooseEntry:(DSAppEntry *)entry slot819:(NSInteger)slot fromView:(UIView *)view {
+    [picker dismissKeyboard];
+    NSInteger own = [self slotForPicker:picker];
+    if (slot != own) {
+        if (slot < 0 || slot > 1 || ![self pickerVisibleOnSlot:slot]) slot = own;   // that card filled meanwhile
+        else [[self pickerForSlot:slot] dismissKeyboard];
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: picker819 menu: %@ on slot %ld (picker slot %ld)", entry.bundleIdentifier ?: @"?", (long)slot, (long)own);
+    [self launchEntry:entry slot:slot];
 }
 
 - (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view {

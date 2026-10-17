@@ -1,3 +1,14 @@
+## 4.5.819 (new app picker back, boot-safe)
+- picker819: the redesigned picker from 4.5.817 is back, rebuilt so that nothing of it runs while SpringBoard starts.
+  - At launch the stage builds the classic picker exactly as in 4.5.818. The new picker is created only the first time you open a picker, after SpringBoard has passed its "stayed up" check (about 8 s after a respring). Until then you see the classic picker.
+  - No background threads: app icons load one at a time on the main thread, only for apps on screen, and are cached.
+  - The app list is read when the stage opens; typing in search filters it in memory.
+  - Pins, hidden apps and usage live in /var/mobile/.dynamicstage-picker819.plist, read on first open and written only on change. It is a new file; 817's file is not used.
+  - Hang protection: a marker file is written just before the new picker is first built and removed once it has been drawn. If a later SpringBoard start finds the marker, the new picker is switched off for good (picker819-crashed) and the classic picker is used. The crash latch also applies.
+  - Same features as 817: Suggested row, A–Z with letter index and haptic ticks, smart accent-insensitive search, iOS 16 blur and SF Symbols, long-press menu (top/bottom card, full screen, pin, hide), VoiceOver actions, Dynamic Type.
+- search819: the classic picker filters in memory while you type, instead of re-reading every installed app on each key. A removed app left in the recents or pinned list no longer triggers a full app re-read per entry: at most one every 2 s.
+- Off: picker819-off (classic picker), search819-off, core819-off (back to 4.5.818).
+
 ## 4.5.818 (safety: 4.5.817 removed)
 - After 4.5.817 was installed, the jailbreak broke. Everything from 4.5.817 is removed: the new app picker (picker817) and the search change (search817). This build is 4.5.816 with a new version number; the classic picker is back as it was.
 - picker817 was the only 817 change that ran while SpringBoard starts up (the picker is built with the stage window), including loading app icons on a background thread. 4.5.816's changes only run while typing.

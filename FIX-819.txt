@@ -1,0 +1,11 @@
+4.5.819 on 4.5.818 (= 816): picker817 re-added boot-safe as picker819.
+Boot safety versus 817:
+ - 817: DSNewAppPicker817() at buildWindow (SpringBoard launch) allocated DSPicker817ViewController; its viewDidLoad ran an LS walk, built the table, read the store plist and started background-thread +[UIImage _applicationIconImageForBundleIdentifier:format:scale:].
+ - 819: _picker/_topPicker/_floatPicker are classic DSAppPickerViewController again (818 code). -[DSStageManager presentPickerOnCard:picker:] calls -[DSAppPickerViewController activate819]; it builds the new picker as a child VC only when: main thread, DSStayedUp819 (set in springboard/Tweak.xm right after DSBootstrapMarkLaunchSucceeded / "stayed up, boot guard cleared"), view loaded, DS819On(picker819), no -crashed file, no stale -opening marker (hang latch), DS809Latched(picker819). Class looked up with NSClassFromString; nothing of DSPicker819*/store touched before.
+ - hang latch: /var/mobile/.dynamicstage-picker819-opening written before the first build, unlinked in a CATransaction completion after the first draw. Found at the next start (not written this start) -> -crashed written, classic picker.
+ - icons: main queue only, one dispatch_async per icon, via DSAppLibrary -iconForBundleIdentifier: (the classic picker's call, cached) + NSCache 400. No dispatch queues / threads in the file.
+ - store: read on first use (first open), save coalesced to one main-queue write per turn, on change only.
+ - app list: child -reloadContent rebuilds from memory; -loadApps819 ([DSAppLibrary reload]) on build and on each later presentPickerOnCard (once per stage open). Search filters in memory.
+ - parent forwards public API to the child and is the child's delegate, re-sending as itself (slotForPicker: sees the stage's own picker object).
+Main-thread audit of the picker path: DSAppLibrary -entryForBundleIdentifier: re-walked all apps for every unknown id (stale recents/pins, called by the classic reloadContent) -> throttled to one walk per 2 s (search819). DSAppLibrary -reload (allInstalledApplications + SBApplicationController per app) is the remaining main-thread loop; same as 812-1, now once per stage open instead of per key. Old picker per-key reload removed (search819).
+core819 in DS796Group list; DS819On(name) = DS815On(core819) && DS816On(core816) && name.

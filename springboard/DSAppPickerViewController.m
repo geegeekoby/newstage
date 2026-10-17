@@ -1,3 +1,5 @@
+#import <unistd.h>
+#import <QuartzCore/QuartzCore.h>
 #import "DSAppPickerViewController.h"
 #import "DSAppCellContentView.h"
 #import "DSSearchFieldView.h"
@@ -28,7 +30,8 @@
 // on the stage.
 static const NSTimeInterval kDSHoldDuration = 0.55;
 
-@interface DSAppPickerViewController () <UIScrollViewDelegate, DSSearchFieldDelegate>
+@interface DSAppPickerViewController () <UIScrollViewDelegate, DSSearchFieldDelegate, DSAppPickerDelegate>
+- (void)loadApps819;
 @end
 
 @implementation DSAppPickerViewController {
@@ -44,6 +47,8 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     NSArray<DSAppEntry *> *_recents;
     NSArray<DSAppEntry *> *_library;
     NSString *_query;
+    BOOL _noReload819;
+    DSAppPickerViewController *_child819;   // 4.5.819 picker819, built on first show
 
     DSAppCellContentView *_heldCell;
     NSTimer *_holdTimer;
@@ -140,8 +145,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 #pragma mark - Content
 
 - (void)reloadContent {
+    if (_child819) { [_child819 reloadContent]; return; }
     DSAppLibrary *library = [DSAppLibrary sharedLibrary];
-    [library reload];
+    // 4.5.819 search819: a keystroke filters the list already loaded (the
+    // whole LaunchServices walk ran on every key). Off: search819-off.
+    if (!(_noReload819 && library.applications.count > 0 && DS819On("search819"))) [library reload];
+    _noReload819 = NO;
 
     if (_query.length > 0) {
         _recents = @[];
@@ -300,30 +309,37 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 - (void)setDarkMode:(BOOL)darkMode {
     _darkMode = darkMode;
+    if (_child819) _child819.darkMode = darkMode;
     if (self.isViewLoaded) [self applyAppearance];
 }
 
 - (void)resetScrollPosition {
+    if (_child819) { [_child819 resetScrollPosition]; return; }
     [_scrollView setContentOffset:CGPointZero animated:NO];
 }
 
 - (void)dismissKeyboard {
+    if (_child819) { [_child819 dismissKeyboard]; return; }
     [_searchField endEditing:YES];
 }
 
 - (void)reassertSearchEditing {
+    if (_child819) { [_child819 reassertSearchEditing]; return; }
     [_searchField reassertEditing];
 }
 
 - (void)restartSearchEditing {
+    if (_child819) { [_child819 restartSearchEditing]; return; }
     [_searchField restartEditing];
 }
 
 - (BOOL)searchFieldIsEditing {
+    if (_child819) return [_child819 searchFieldIsEditing];
     return [_searchField isEditingNow];
 }
 
 - (NSString *)searchEditingDebugSummary {
+    if (_child819) return [_child819 searchEditingDebugSummary];
     return [_searchField editingDebugSummary] ?: @"fr=?";
 }
 
@@ -331,12 +347,14 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 - (void)searchField:(DSSearchFieldView *)field didChangeText:(NSString *)text {
     _query = text ?: @"";
+    _noReload819 = YES;
     [self reloadContent];
     [_scrollView setContentOffset:CGPointZero animated:NO];
 }
 
 - (void)searchFieldDidCancel:(DSSearchFieldView *)field {
     _query = @"";
+    _noReload819 = YES;
     [self reloadContent];
 }
 
@@ -360,6 +378,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 #pragma mark - Selection and hold
 
 - (void)setUnavailableBundleIdentifiers:(NSSet<NSString *> *)unavailableBundleIdentifiers {
+    if (_child819) _child819.unavailableBundleIdentifiers = unavailableBundleIdentifiers;
     _unavailableBundleIdentifiers = [unavailableBundleIdentifiers copy];
     for (NSArray<DSAppCellContentView *> *group in @[ _recentCells, _libraryCells ]) {
         for (DSAppCellContentView *cell in group) {
@@ -407,6 +426,103 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     _holdTimer = nil;
     [_heldCell setHoldProgress:0.0 animated:YES duration:0.18];
     _heldCell = nil;
+}
+
+#pragma mark - 4.5.819 picker819 (boot-safe host)
+
+// Base class: nothing to load (the redesigned picker overrides it).
+- (void)loadApps819 {
+}
+
+// Rules: never at SpringBoard launch (only after "stayed up"), main thread
+// only, picker819-off / core819-off / crash latch / hang latch respected.
+// Hang latch: /var/mobile/.dynamicstage-picker819-opening is written before
+// the first build and removed once that build has been drawn; finding it
+// left over from an earlier SpringBoard means that start never got there,
+// so picker819 latches off (-crashed) and the classic picker stays.
+- (void)activate819 {
+    if (![self isMemberOfClass:DSAppPickerViewController.class]) return;
+    if (_child819) { [_child819 loadApps819]; return; }   // one app-list read per stage open
+    if (![NSThread isMainThread] || !DSStayedUp819 || !self.isViewLoaded) return;
+    static BOOL refused = NO, markedThisBoot = NO;
+    if (refused || !DS819On("picker819")) return;
+    static const char *marker = "/var/mobile/.dynamicstage-picker819-opening";
+    static const char *crashed = "/var/mobile/.dynamicstage-picker819-crashed";
+    if (access(crashed, F_OK) == 0) {
+        refused = YES;
+        DSDiagnosticsRecord(@"SpringBoard: picker819 latched off (delete /var/mobile/.dynamicstage-picker819-crashed to allow it): classic picker");
+        return;
+    }
+    if (!markedThisBoot && access(marker, F_OK) == 0) {
+        unlink(marker);
+        FILE *f = fopen(crashed, "w");
+        if (f) fclose(f);
+        refused = YES;
+        DSDiagnosticsRecord(@"SpringBoard: picker819 HANG LATCH: an earlier SpringBoard never finished showing the new picker; latched off, classic picker");
+        return;
+    }
+    if (!DS809Latched("picker819")) return;
+    Class cls = NSClassFromString(@"DSPicker819ViewController");
+    if (!cls) { refused = YES; return; }
+    if (!markedThisBoot) {
+        markedThisBoot = YES;
+        FILE *f = fopen(marker, "w");
+        if (f) fclose(f);
+    }
+    @try {
+        DSAppPickerViewController *child = [cls new];
+        child.delegate = self;
+        child.darkMode = self.darkMode;
+        child.unavailableBundleIdentifiers = self.unavailableBundleIdentifiers;
+        [self addChildViewController:child];
+        child.view.frame = self.view.bounds;
+        child.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [self.view addSubview:child.view];
+        [child didMoveToParentViewController:self];
+        _child819 = child;
+        _scrollView.hidden = YES;
+        [_searchField endEditing:YES];
+        [child loadApps819];
+        DSDiagnosticsRecord(@"SpringBoard: picker819 new picker built on first show (off: picker819-off)");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [CATransaction begin];
+            [CATransaction setCompletionBlock:^{
+                unlink(marker);
+                DSDiagnosticsRecord(@"SpringBoard: picker819 first show drawn, hang marker cleared");
+            }];
+            [CATransaction commit];
+        });
+    } @catch (NSException *exception) {
+        refused = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: picker819 build failed (%@): classic picker", exception.reason ?: @"?");
+    }
+}
+
+// The new picker reports through this one, so the stage sees the same picker
+// object it created (slotForPicker: etc.).
+- (void)appPicker:(DSAppPickerViewController *)picker didSelectEntry:(DSAppEntry *)entry fromView:(UIView *)view {
+    [self.delegate appPicker:self didSelectEntry:entry fromView:view];
+}
+- (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view {
+    [self.delegate appPicker:self didHoldEntry:entry fromView:view];
+}
+- (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker {
+    if ([self.delegate respondsToSelector:@selector(appPickerNeedsKeyWindowForSearch:)]) [self.delegate appPickerNeedsKeyWindowForSearch:self];
+}
+- (void)appPickerDidEndSearch:(DSAppPickerViewController *)picker {
+    if ([self.delegate respondsToSelector:@selector(appPickerDidEndSearch:)]) [self.delegate appPickerDidEndSearch:self];
+}
+- (BOOL)appPickerShouldWaitBeforeSearchEditing:(DSAppPickerViewController *)picker {
+    if (![self.delegate respondsToSelector:@selector(appPickerShouldWaitBeforeSearchEditing:)]) return NO;
+    return [self.delegate appPickerShouldWaitBeforeSearchEditing:self];
+}
+- (NSArray<NSDictionary *> *)appPickerSlotChoices819:(DSAppPickerViewController *)picker {
+    if (![self.delegate respondsToSelector:@selector(appPickerSlotChoices819:)]) return @[];
+    return [self.delegate appPickerSlotChoices819:self];
+}
+- (void)appPicker:(DSAppPickerViewController *)picker didChooseEntry:(DSAppEntry *)entry slot819:(NSInteger)slot fromView:(UIView *)view {
+    if ([self.delegate respondsToSelector:@selector(appPicker:didChooseEntry:slot819:fromView:)]) [self.delegate appPicker:self didChooseEntry:entry slot819:slot fromView:view];
+    else [self.delegate appPicker:self didSelectEntry:entry fromView:view];
 }
 
 #pragma mark - UIScrollViewDelegate

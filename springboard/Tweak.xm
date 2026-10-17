@@ -2674,6 +2674,7 @@ static void DSInstallRemainingHooks(void) {
                            dispatch_get_main_queue(), ^{
                 if (DSKillSwitchPresent() || !DSFullInstallLive) return;
                 DSBootstrapMarkLaunchSucceeded();
+                DSStayedUp819 = YES;   // 4.5.819: picker819 may be built from now on
                 DSDiagnosticsRecord(@"SpringBoard: stayed up, boot guard cleared");
             });
 

@@ -405,6 +405,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core812") == 0) return -1;
         if (strcmp(name, "core815") == 0) return -1;
         if (strcmp(name, "core816") == 0) return -1;
+        if (strcmp(name, "core819") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -1100,6 +1101,14 @@ BOOL DS815On(const char *name) {
 BOOL DS816On(const char *name) {
     return DS815On("core816") && DS815On("core815") && DSFeature699On(name);
 }
+
+// 4.5.819: master core819-off returns picker819 / search819 to 818.
+BOOL DS819On(const char *name) {
+    return DS815On("core819") && DS816On("core816") && DSFeature699On(name);
+}
+
+// 4.5.819: set on SpringBoard's main thread once it has stayed up (boot guard cleared).
+BOOL DSStayedUp819 = NO;
 
 // 4.5.815 perf815: hot-path gate read at most every 2 s per process.
 BOOL DSPerf815Fast(void) {

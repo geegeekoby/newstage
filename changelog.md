@@ -1,3 +1,11 @@
+## 4.5.795
+- pass795: SpringBoard's own scene and app-view updates for a staged app always reach SpringBoard, straight away and in order. Removed: the 7 hold/skip paths in the SBAppViewController hook (home/background, call653/call758, hold740 replay and its 4 s give-up, corner767 drop, focus769 drop/replay, foreground "left alone", every other hold reason), and completion(YES) without %orig in both FBScene update hooks. Every SIGTRAP since 4.5.667 trapped at the same SpringBoard instruction inside that method, mostly right after one of these paths. A "pass795 passed to SpringBoard (794 would have held it: …)" line is logged instead. Off: pass795-off, plus a pass795 crash latch.
+- sig795: the crash handler no longer calls dladdr/access; image ranges are recorded at load. Off: sig795-off.
+- keyring795: typed keys no longer go into the 0666 /var/tmp keyboard plist. They travel in memory-only notify-state slots, and the old file is deleted. Off: keyring795-off, plus a keyring795 crash latch.
+- register795: the register774 ivar probe is now opt-in (register774-on).
+- tools/publish_pages.sh is disabled.
+- core795-off returns to 794. table794, log792 and log793 are kept.
+
 ## 4.5.794
 - table794: the feature switch table had 128 slots but SpringBoard uses 178 names, so every name asked for after the 128th was silently off (proven: log793 never ran in SpringBoard in the 793 log). The table now has 512 slots. table794-off or core794-off (or a table794 crash latch) cap it at 128 again, as in 4.5.793.
 

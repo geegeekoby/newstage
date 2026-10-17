@@ -335,6 +335,8 @@ static BOOL DSMessagesFieldIsEditing = NO;
 // Set for the tap that wants SpringBoard's keyboard. A resign in this window
 // is the stage taking the key, not the user leaving the field.
 static BOOL DSStageKeyboardWanted = NO;
+// 4.5.812 tap812: YES once this app asked SpringBoard for the keys, NO on every hide.
+static BOOL DSTap812Shown = NO;
 static BOOL DSCaret778Dropping = NO;   // 4.5.778: our own drop after SpringBoard's hide
 
 static BOOL DSMessagesKeepsOwnKeys(void) {
@@ -597,8 +599,9 @@ static void DSRequestSpringBoardKeyboard(BOOL show) {
     if (show) {
         DSStageKeyboardWanted = YES;
         DSStageKeyboardGuardUntil = CFAbsoluteTimeGetCurrent() + 1.5;
+        DSTap812Shown = YES;
     } else {
-        DSStageKeyboardWanted = NO;
+        DSStageKeyboardWanted = NO; DSTap812Shown = NO;
         DSStageKeyboardGuardUntil = 0;
         DSClearEntryAnchor();
     }
@@ -1174,6 +1177,25 @@ static void DSArmStageKeyboard(UIResponder *responder) {
     // Same keyboard as the picker search: SpringBoard shows it. No blank
     // input view, so the message field and the app strip stay.
     if (DSMessagesOwnsKeyboard()) {
+        // 4.5.812 tap812: a tap on the message box is one plain request. The
+        // first tap asks SpringBoard for the keys; a repeat tap while the keys
+        // are already asked for does nothing extra (no second request, no bar
+        // move, no 0.25 s re-run). The bar is never moved from the tap path;
+        // a parked container is left to reopen783 / unpark811.
+        // Off: tap812-off / core812-off (crash latch tap812).
+        if (DSIsMessageBox781(responder) && DS812On("tap812") && DS809Latched("tap812")) {
+            static NSInteger taps = 0;
+            taps++;
+            BOOL repeat = DSTap812Shown;
+            DSFeature719MarkAction("tap812");
+            DSTraceFormat(@"tap812 tap %ld on %@: %@", (long)taps, NSStringFromClass(responder.class),
+                          repeat ? @"keys already asked for, nothing extra" : @"first tap, asking SpringBoard for the keys (bar left where it is)");
+            DSStageKeyboardWanted = YES;
+            DSStageKeyboardGuardUntil = CFAbsoluteTimeGetCurrent() + 1.5;
+            if (!repeat) DSRequestSpringBoardKeyboard(YES);
+            DSEntry811Log([NSString stringWithFormat:@"tap812 tap %ld", (long)taps]);
+            return;
+        }
         DSStageKeyboardWanted = YES;
         DSStageKeyboardGuardUntil = CFAbsoluteTimeGetCurrent() + 1.5;
         if ([NSStringFromClass(responder.class) rangeOfString:@"SearchBar"].location == NSNotFound) {
@@ -1246,7 +1268,7 @@ static IMP DSSearchCancelOrig = NULL;
 static void DSSearchCancel(id self, SEL cmd) {
     DSShipKeyboardTrace(@"search cancel button");
     DSRecordKeyboardWhy(@"cancel=1");
-    DSStageKeyboardWanted = NO;
+    DSStageKeyboardWanted = NO; DSTap812Shown = NO;
     DSStageKeyboardGuardUntil = 0;
     DSRequestSpringBoardKeyboard(NO);
     if (DSSearchCancelOrig) ((void (*)(id, SEL))DSSearchCancelOrig)(self, cmd);
@@ -1283,7 +1305,7 @@ static void DSNoteStageKeyboardResign(UIResponder *responder) {
         DSRecordKeyboardWhy(cancel ? @"cancel=1" : why);
         DSShipKeyboardTrace(why);
         if (blocked) return;
-        DSStageKeyboardWanted = NO;
+        DSStageKeyboardWanted = NO; DSTap812Shown = NO;
         DSRequestSpringBoardKeyboard(NO);
         return;
     }
@@ -2863,7 +2885,7 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
             if (DSIsMessageBox781(target) && target.isFirstResponder) {
                 DSFeature719MarkAction("leave781");
                 DSTrace(@"leave781: chat closing, releasing the message box before Messages saves it");
-                DSStageKeyboardWanted = NO;
+                DSStageKeyboardWanted = NO; DSTap812Shown = NO;
                 DSStageKeyboardGuardUntil = 0;
                 DSCaret778Dropping = YES;
                 [target resignFirstResponder];
@@ -6884,7 +6906,7 @@ static void DSOnSpringBoardKeyboardShown(void) {
         // leave together.
         if (!shown && DSCaret778Enabled()) {
             @try {
-                DSStageKeyboardWanted = NO;
+                DSStageKeyboardWanted = NO; DSTap812Shown = NO;
                 DSStageKeyboardGuardUntil = 0;
                 UIResponder *target = DSKeyboardTarget;
                 if (target && target.isFirstResponder) {
@@ -6911,7 +6933,7 @@ static void DSOnSpringBoardKeyboardShown(void) {
         DSTrace(@"app Messages keyboard is SpringBoard's, in-card keys hidden, field stays");
         return;
     }
-    DSStageKeyboardWanted = NO;
+    DSStageKeyboardWanted = NO; DSTap812Shown = NO;
     if (!DSMessagesLocalKeysHidden) return;
     DSMessagesLocalKeysHidden = NO;
     DSShowMessagesLocalKeys();

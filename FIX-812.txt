@@ -1,0 +1,25 @@
+DynamicStage 4.5.812 - staged Messages tap fix (built on 4.5.811; backup ../bak812)
+
+(a) tap812 (app/Tweak.xm DSArmStageKeyboard, message box only). Found: every tap re-runs
+UIResponder becomeFirstResponder -> DSArmStageKeyboard (the box resigns after each keyboard handoff
+with caret778 off, so every tap is a new "become"). Each run: DSShowMessageEntryAboveKeyboard now,
+again 0.25 s later (dispatch_after), and a new SpringBoard show request. Spam taps = stacked requests
+and stacked bar checks/moves (the parked path does entry.transform += ty and clears clipsToBounds on
+every ancestor). Rule: first tap -> one request; repeat tap while DSTap812Shown (set by the show
+request, cleared by every hide / every DSStageKeyboardWanted = NO) -> nothing extra. The tap path no
+longer moves the bar or schedules the 0.25 s re-run. Search bar and other apps unchanged.
+Log: "tap812 tap N on <class>: first tap ... / keys already asked for, nothing extra" + entry811 line.
+Off: tap812-off (latch tap812), core812-off.
+Risk: if SpringBoard hides the keys without telling the app, a tap would not re-request. Every known
+hide path clears the flag; the next log will show it (tap line "already asked" with no keys).
+
+(b) App strip on SpringBoard's keyboard: NOT built, not safe.
+- The keys the user sees are SpringBoard's (remote keyboard in SpringBoard's Medusa window). The strip
+  (CKBrowserSwitcherFooterView, inside CKMessageEntryView, with its app icons / extension plugins) is a
+  view in the Messages process. A UIView cannot move between processes; SpringBoard has no strip data or
+  the plugin hosts. Options are layer-hosting Messages' strip into SpringBoard (touches would not route
+  back), or rebuilding a fake strip in SpringBoard (no data, wrong taps). Neither fits the rules.
+- Native iOS 16.5: the strip is not in the QuickType/prediction bar. It is part of Messages' entry view,
+  which is the chat's input accessory and sits directly on top of the keyboard, so it looks like part of
+  the keyboard. The prediction bar is UIKit's keyboard (different process in our setup).
+- predict805 stays opt-in (the stand-in field has no real text to predict).

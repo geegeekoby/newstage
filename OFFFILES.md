@@ -5,7 +5,7 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 ## Rules
 - `<feature>-off` turns a feature off; default is ON unless marked opt-in.
 - Opt-in features need `<feature>-on` (or the named on file).
-- `coreNNN-off` returns every change of build NNN to build NNN-1 (core796..core811 are live masters; older core masters are retired and forced on unless `core796-off`).
+- `coreNNN-off` returns every change of build NNN to build NNN-1 (core796..core812 are live masters; older core masters are retired and forced on unless `core796-off`).
 - Group switches (DS796Group): `kb-off` (keyboard model features: kb, keys, reopen, strip, caret, swipe, return, backspace, keyfocus, rekey, kbshow, kbhide, kbnan, kbown, kbmin, kbdrag, kbguard, sbkb, keep, ghost, type, leave, entry, resign, flicker, msgfit, ks, lift, src), `verbose-on` (log792, trace766, scene773, msgdiag714 are off unless this exists), `keyring-off` (keyring795), `camera-off` (4.5.809: all camera paths).
 - A crash while a feature is marked "trying" latches it off (`<feature>-latched`); latch749 reports them at start.
 
@@ -365,3 +365,4 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - New: `core810-off` (810's log changes back to 809), `quiet810-off` (occl798 "ok" line written every time again, as in 809), `switch810-off` (gest770 switcher field back to "unreadable").
 - Removed with their code (files are no longer read): tree765-on / tree765-off / tree766-off / tree767-off, register774-on / register774-off, strip803-off, strip804-off, kbcap797-off; log792 no longer adds the strip792 hooks (log792 itself still gates the trace window).
 - New (4.5.811): `core811-off` (all 811 changes back to 810), `unpark811-off` (staged Messages: parked input container is only signalled once the box was focused, as in 810), `entry811-off` (no entry811 bar/strip position lines), `pass811-off` (no "pass811 ... no rim651 hit followed" crumb), `switch811-off` (no gest770 re-read when SBMainSwitcherWindow is the key/other window), `quiet811-off` (why806 for every app again and why775 after the kbvis768 sample has ended, as in 810).
+- New (4.5.812): `core812-off` (812 back to 811), `tap812-off` (a tap on the staged Message box runs the old arm path again: request + bar check + 0.25 s re-run on every tap). Latch: tap812.

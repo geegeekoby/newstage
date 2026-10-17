@@ -1,3 +1,9 @@
+## 4.5.812 (Messages tap fix)
+- tap812: tapping the staged Messages box is one plain request. The first tap asks SpringBoard for the keys; repeat taps while the keys are already asked for do nothing extra (no second request, no reply-bar move, no 0.25 s re-run). The reply bar is left where it sits.
+- Each tap is logged ("tap812 tap N ...") with the bar and app strip frames (entry811).
+- The app strip stays in the reply bar (moving it onto SpringBoard's keyboard is not possible across processes; see FIX-812.txt).
+- Off files: core812-off, tap812-off.
+
 ## 4.5.811 (Messages reply bar fix + log fixes)
 - Fix (unpark811): in a staged Messages chat opened without tapping the box, the input container stayed parked 4000 pt below the card, so the reply bar and app strip were missing. The parked container is now signalled back with the chat's own message box (same signal as before, no focus change).
 - entry811: logs where the reply bar and app strip really are against the card (window/screen frames, clipping ancestor, inCard).

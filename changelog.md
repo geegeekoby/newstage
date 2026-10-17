@@ -1,3 +1,8 @@
+## 4.5.796
+- switch796: a few group files now cover every feature switch. kb-off turns off all keyboard features. holds-on brings back 794's held and replayed updates (holds are off by default). keyring-off goes back to the key file. verbose-on turns on the log-only probes. phonesize-off turns off the phone-size scene path. core796-off undoes 796. The coreNNN-off masters below 796 are retired: the previous .deb is the rollback. The old per-name -off files still work.
+- verbose: log792 (including the strip792 UIView hooks in Messages), trace766, tree765-767, scene773 and msgdiag714 now only run with verbose-on.
+- gest770: the 4 Hz poll sleeps while nothing is staged, and wakes on the next stage gesture or restore.
+
 ## 4.5.795
 - pass795: SpringBoard's own scene and app-view updates for a staged app always reach SpringBoard, straight away and in order. Removed: the 7 hold/skip paths in the SBAppViewController hook (home/background, call653/call758, hold740 replay and its 4 s give-up, corner767 drop, focus769 drop/replay, foreground "left alone", every other hold reason), and completion(YES) without %orig in both FBScene update hooks. Every SIGTRAP since 4.5.667 trapped at the same SpringBoard instruction inside that method, mostly right after one of these paths. A "pass795 passed to SpringBoard (794 would have held it: …)" line is logged instead. Off: pass795-off, plus a pass795 crash latch.
 - sig795: the crash handler no longer calls dladdr/access; image ranges are recorded at load. Off: sig795-off.

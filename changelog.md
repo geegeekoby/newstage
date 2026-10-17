@@ -1,3 +1,6 @@
+## 4.5.793
+- log793 (logging only, no behaviour change), for the 791 SpringBoard SIGTRAP at 08:39:14 (Signal call end, call758 hold -> hold740 replay -> next update passed -> trap): synchronous "last step" breadcrumb before every held-update replay (hold740, focus769) and every update passed to SpringBoard (handle, controller, diff pointers, owned flag, age, diff text); crash section now records pc/lr from the signal context, the DynamicStage load address and image+offset per frame; log745 corrupt lines name their caller. Off: /var/mobile/.dynamicstage-log793-off. core793-off returns to 792. 792 logging kept.
+
 ## 4.5.792
 - log792 (logging only, no behaviour change): strip792 lines when CKBrowserSwitcherFooterView is removed from its superview or hidden, with caller images (DS+ = our code). Messages trace from chat open through 10 taps / 10 s is tagged w792, skips the burst cap, and is exported as its own section so the trace tail can't push it out. Off: /var/mobile/.dynamicstage-log792-off. core792-off returns to 791.
 

@@ -377,3 +377,9 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - New (4.5.821, on 820): `core821-off` (821 back to 820), `kbmin821-off` (medusa803 / keep806 act for a minimised or parked owner again, as 820), `kbback821-off` (keys756 replays the keys and lifts without retaking the assertion or checking visibility, as 820). `kb-off` also turns off kbmin821. Latches: kbmin821, kbback821.
 - New (4.5.822, on 821): `core822-off` (822 back to 821), `corner822-off` (two minimised cards may again end up sharing a corner), `edge822-off` (a corner pull that starts moving down is claimed again, as 821). Latches: corner822, edge822.
 - New (4.5.823, on 822): `style823-off` (the stage app picker goes back to the exact 4.5.822 look, also while running: it applies at the next picker show), `core823-off` (823 back to 822). Latch: style823 (crash), plus the hang marker /var/mobile/.dynamicstage-style823-showing: if a SpringBoard start finds it, /var/mobile/.dynamicstage-style823-crashed is written (delete it to allow style823 again).
+
+## 4.5.824
+- /var/mobile/.dynamicstage-style824-off : 823 picker look (no glass edge/accents/carousel/pill filter/entrance)
+- /var/mobile/.dynamicstage-reload824-off : full app-list reload on every picker show (823 behaviour)
+- /var/mobile/.dynamicstage-core824-off : both of the above
+- Latch: /var/mobile/.dynamicstage-style824-crashed (written if the hang marker /var/mobile/.dynamicstage-style824-showing survives a restart). Delete to re-allow.

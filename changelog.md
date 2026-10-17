@@ -1,3 +1,8 @@
+## 4.5.824
+- style824: more distinctive picker on top of 823 - glass gradient edge, icon-accent tinted tiles with soft glow, Suggested carousel with centre scale, staggered spring entrance, All/Suggested/Pinned pill filter, search focus glow, accent letter pills, light haptics, "Opens in the top/bottom card" header, friendlier empty states. Respects Reduce Motion. style824-off = exact 823 look.
+- reload824: the picker no longer rebuilds the whole app list every time it opens (only when the app count changes); missing-app reloads capped at one per pass.
+- Off files: style824-off, reload824-off, core824-off. Latch: style824-crashed.
+
 ## 4.5.823 (picker restyle, boot-safe)
 - style823: the stage app picker you already have, with a new look. It is the same picker with the same code paths, restyled in place, not a new picker.
   - Frosted blur background that follows the stage's dark / light mode (solid background with Reduce Transparency).

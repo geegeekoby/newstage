@@ -1,0 +1,10 @@
+4.5.824 (on 4.5.823): style824 picker look + reload824 show-path fix.
+style824 (off: /var/mobile/.dynamicstage-style824-off; latch style824-crashed; hang marker style824-showing):
+ glass gradient edge + top sheen following the card radius; icon accent colour (6x6 main-thread sample, cached on the entry)
+ tinting tiles/rows with a shadowPath glow; Suggested carousel scaling 0.92-1 by distance from centre; one-shot staggered
+ spring entrance on show; All/Suggested/Pinned pill filter (selection haptic, in-memory, no reload); search glow on focus;
+ accent letter pills; light tap haptic; "Opens in the top/bottom/floating card" header; symbol empty states.
+ Reduce Motion: no carousel scale, no entrance, no knob spring. style824 off -> exact 823 look.
+reload824 (off: reload824-off): picker show reuses the loaded app list unless the installed-app count changed;
+ missing-app reloads capped at one per content pass. Off -> 823 behaviour (full reload each show).
+core824-off: both off. Only switched on from reloadContent after DSStayedUp823; no new hook/ctor/init/load/thread/boot file.

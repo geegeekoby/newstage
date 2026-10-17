@@ -113,13 +113,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     @try {
         NSMutableString *text = [NSMutableString string];
         NSString *geometry = [[DSStageManager sharedManager] stageGeometryDebugSummary];
-        [text appendFormat:@"%@\n--- log ---\n%@\n--- trace ---\n%@\n--- crash ---\n%@\n--- diagnostics ---\n%@\n--- tree765 ---\n%@\n--- kbvis768 ---\n%@",
+        [text appendFormat:@"%@\n--- log ---\n%@\n--- trace ---\n%@\n--- crash ---\n%@\n--- diagnostics ---\n%@\n--- kbvis768 ---\n%@",
          geometry ?: @"",
          DSLogDump() ?: @"",
          DSTraceRead() ?: @"",
          DSCrashLogRead() ?: @"",
          DSDiagnosticsRead() ?: @"",
-         DSTree765Read() ?: @"",
          DSKbVis768Read() ?: @""];
         UIPasteboard.generalPasteboard.string = text;
         [_copyLogs setTitle:@"Copied" forState:UIControlStateNormal];

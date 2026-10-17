@@ -1240,41 +1240,6 @@ static NSArray *DSCam669Collection(id value, NSInteger depth) {
     return nil;
 }
 
-static NSString *DSCam669ClassShape(id object) {
-    if (!object) return @"nil";
-    NSMutableArray *ivarNames = [NSMutableArray array];
-    @try {
-        for (Class cls = object_getClass(object); cls && cls != NSObject.class; cls = class_getSuperclass(cls)) {
-            unsigned int count = 0;
-            Ivar *ivars = class_copyIvarList(cls, &count);
-            for (unsigned int i = 0; i < count; i++) {
-                const char *name = ivar_getName(ivars[i]);
-                const char *type = ivar_getTypeEncoding(ivars[i]);
-                [ivarNames addObject:[NSString stringWithFormat:@"%s:%s", name ?: "?", type ?: "?"]];
-            }
-            free(ivars);
-        }
-    } @catch (NSException *exception) {
-    }
-    NSMutableArray *answers = [NSMutableArray array];
-    for (NSString *name in @[ @"objects", @"count", @"activeAttributionData", @"recentAttributionData", @"dataAccessAttributions",
-                              @"attributionListData", @"attributions", @"dataAccessType", @"cameraCaptureAttribution",
-                              @"audioRecordingActivityAttribution", @"attributedEntity", @"isRecent", @"bundleIdentifier",
-                              @"activityAttribution", @"pid", @"sensor", @"usedRecently", @"activeSensorActivityAttributions",
-                              @"activeCameraAndMicrophoneActivityAttributions" ]) {
-        if ([object respondsToSelector:NSSelectorFromString(name)]) [answers addObject:name];
-    }
-    return [NSString stringWithFormat:@"%@ ivars=[%@] responds=[%@]", NSStringFromClass(object_getClass(object)),
-            [ivarNames componentsJoinedByString:@","], [answers componentsJoinedByString:@","]];
-}
-
-static NSString *DSCam669OneLine(NSString *text, NSUInteger limit) {
-    text = [[text ?: @"" componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
-    while ([text rangeOfString:@"  "].location != NSNotFound) text = [text stringByReplacingOccurrencesOfString:@"  " withString:@" "];
-    if (text.length > limit) text = [text substringToIndex:limit];
-    return text;
-}
-
 // The bundle of one STUIDataAccessAttribution (attributedEntity.bundleIdentifier,
 // or through cameraCaptureAttribution.activityAttribution), and its pid.
 static NSString *DSCam669BundleOfAttribution(id item, long long *pid) {
@@ -1439,22 +1404,7 @@ static void DSCam661ReadSensorData(id data) {
         }
     } @catch (NSException *exception) {
     }
-    // Once per SpringBoard launch: the shape and the whole text, so a log
-    // proves the format. And once more for the first data with a camera in it.
-    static atomic_int shapeLogs = 0;
-    static atomic_bool cameraLogged = false;
-    BOOL hasCamera = [text containsString:@"type = camera"];
-    NSString *shape = nil;
-    if (atomic_fetch_add(&shapeLogs, 1) == 0 || (hasCamera && !atomic_exchange(&cameraLogged, true))) {
-        id listData = DSCam661Object(data, @"attributionListData");
-        id first = [DSCam669FromCollectionObject(DSCam661Object(data, @"dataAccessAttributions")) firstObject];
-        shape = [NSString stringWithFormat:@"sensor669 domain shape: data=%@ | list=%@ | item=%@ | read via %@ items=%ld cameras=%ld unnamed=%ld found=[%@] | desc=%@",
-                 DSCam669ClassShape(data), DSCam669ClassShape(listData), DSCam669ClassShape(first), how ?: @"nothing",
-                 (long)seen, (long)cameras, (long)unnamed, [camera.allKeys componentsJoinedByString:@","],
-                 DSCam669OneLine(text, 3000)];
-    }
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (shape) DSDiagnosticsRecord([@"SpringBoard: camera661 " stringByAppendingString:shape]);
         DSCam669DomainCamera = [camera copy];
         DSCam669DomainHow = how ?: @"domain-data";
         DSCam669DomainHostPids = [hostPids copy];
@@ -1470,7 +1420,6 @@ static void DSCam669ReadProviderSet(id set, NSString *via) {
     NSArray *items = DSCam669FromCollectionObject(set);
     if (!items) return;
     NSMutableDictionary<NSString *, NSNumber *> *camera = [NSMutableDictionary dictionary];
-    static BOOL itemLogged = NO;
     for (id item in items) {
         long long sensor = -1;
         BOOL hasSensor = DSCam661Integer(item, @"sensor", &sensor);
@@ -1481,11 +1430,6 @@ static void DSCam669ReadProviderSet(id set, NSString *via) {
         BOOL textSaysOther = [text containsString:@"sensor = microphone"] || [text containsString:@"sensor = location"] ||
                              [text containsString:@"sensor = audio"];
         BOOL isCamera = textSaysCamera || (!textSaysOther && hasSensor && sensor == 0);
-        if (!itemLogged) {
-            itemLogged = YES;
-            DSDiagnosticsRecordFormat(@"SpringBoard: camera661 sensor669 SpringBoard attribution shape (%@): %@ sensor=%lld camera=%d | %@",
-                                      via, DSCam669ClassShape(item), sensor, isCamera, DSCam669OneLine([item description], 600));
-        }
         if (!isCamera) continue;
         id bundle = DSCam661Object(item, @"bundleIdentifier");
         if (![bundle isKindOfClass:NSString.class] || [(NSString *)bundle length] == 0) {

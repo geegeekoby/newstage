@@ -2456,16 +2456,6 @@ static void DSKeys697Log(NSString *key, NSString *line) {
         BOOL stageUp768 = _state == DSStageStateOverlay || _state == DSStageStateTracking;
         DSKbVis768NoteArbiter(onScreen, stageUp768, [source isKindOfClass:NSString.class] ? source : nil, frame);
     } @catch (NSException *exception) {}
-    // 4.5.767 tree767: tree765 maps only a staged card's keyboard (stage on
-    // screen, the note from a hosted app). Resssj used all 3 dumps on
-    // full-screen Messages. Off notes always pass. Still log-only.
-    // Off: tree767-off / core767-off (latch tree767).
-    @try {
-        BOOL stageUp767 = _state == DSStageStateOverlay || _state == DSStageStateTracking;
-        BOOL staged767 = stageUp767 && [source isKindOfClass:NSString.class] && source.length && [self isHostingBundleIdentifier:source];
-        if (!onScreen || staged767 || !DS767On("tree767")) DSTree765NoteArbiter(onScreen);
-        else DSFeature719MarkAction("tree767");
-    } @catch (NSException *exception) {}
     @try { [self ks747NoteArbiter:onScreen frame:frame owner:source]; } @catch (NSException *exception) {}
     @try {
         if (DSType755On()) [self type755NoteArbiter:onScreen frame:frame source:source];

@@ -1540,185 +1540,13 @@ NSString *DSKeyboardDebugSnapshot(void) {
 }
 
 
-// ---- 4.5.765 tree765 (log only) ----------------------------------------------
-// A read-only map of every keyboard / text-effects window (plus the stage
-// window) and its view + layer tree on the first 3 keyboard shows, sampled at
-// 0.05, 0.4 and 1.2 s. Writes its own file (not the 12 KB diagnostics ring)
-// and changes nothing: only getters are read. Off: tree765-off / core765-off
-// (crash latch tree765).
-static const char *kDSTree765Path = "/var/mobile/Library/Preferences/com.recreated.dynamicstage.tree765.log";
-static NSInteger DSTree765Shows = 0;
-static BOOL DSTree765WasOn = NO;
-static BOOL DSTree765Cleared = NO;
-
-static BOOL DSTree765On(void) {
-    return DSFeature699On("core765") && DSFeature699On("tree765") && access("/var/mobile/.dynamicstage-tree765-on", F_OK) == 0;   // 4.5.788: opt-in
-}
-
-static NSString *DSTree765Rect(CGRect r) {
-    if (CGRectIsNull(r)) return @"null";
-    return [NSString stringWithFormat:@"%.0f,%.0f %.0fx%.0f", r.origin.x, r.origin.y, r.size.width, r.size.height];
-}
-
-static void DSTree765Append(NSString *text) {
-    if (text.length == 0) return;
-    NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
-    if (!data) return;
-    int fd = open(kDSTree765Path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-    if (fd < 0) return;
-    struct stat st;
-    if (fstat(fd, &st) == 0 && st.st_size > 400 * 1024) { close(fd); return; }
-    (void)write(fd, data.bytes, data.length);
-    close(fd);
-}
-
-static NSString *DSTree765LayerLine(CALayer *layer) {
-    if (!layer) return @"layer=nil";
-    NSMutableString *line = [NSMutableString stringWithFormat:@"L=%@ lh=%d op=%.2f",
-                             NSStringFromClass(layer.class), layer.hidden, layer.opacity];
-    @try {
-        if ([layer respondsToSelector:@selector(contextId)]) {
-            unsigned int cid = ((unsigned int (*)(id, SEL))objc_msgSend)(layer, @selector(contextId));
-            [line appendFormat:@" ctx=%u", cid];
-        }
-    } @catch (NSException *exception) {
-    }
-    return line;
-}
-
-static void DSTree765Layers(CALayer *layer, NSInteger depth, NSMutableString *out, NSInteger *lines) {
-    // Sublayers that do not back a view (layer hosts live here).
-    if (!layer || depth > 14 || *lines >= 400) return;
-    NSArray *subs = [layer.sublayers copy];
-    for (CALayer *sub in subs) {
-        if (*lines >= 400) return;
-        id delegate = sub.delegate;
-        if ([delegate isKindOfClass:UIView.class]) continue;
-        CGRect f = CGRectNull;
-        @try { f = [sub convertRect:sub.bounds toLayer:nil]; } @catch (NSException *exception) {}
-        [out appendFormat:@"%*s- %@ f=%@\n", (int)(depth * 2), "", DSTree765LayerLine(sub), DSTree765Rect(f)];
-        (*lines)++;
-        DSTree765Layers(sub, depth + 1, out, lines);
-    }
-}
-
-static void DSTree765Views(UIView *view, NSInteger depth, NSMutableString *out, NSInteger *lines) {
-    if (!view || depth > 14 || *lines >= 400) return;
-    CGRect f = CGRectNull;
-    @try { f = view.window ? [view convertRect:view.bounds toView:nil] : view.frame; } @catch (NSException *exception) {}
-    [out appendFormat:@"%*s%@ hid=%d a=%.2f f=%@ %@\n", (int)(depth * 2), "", NSStringFromClass(view.class),
-     view.hidden, view.alpha, DSTree765Rect(f), DSTree765LayerLine(view.layer)];
-    (*lines)++;
-    DSTree765Layers(view.layer, depth + 1, out, lines);
-    NSArray *subs = [view.subviews copy];
-    for (UIView *child in subs) {
-        if (*lines >= 400) {
-            [out appendFormat:@"%*s(cut at 400 lines)\n", (int)(depth * 2), ""];
-            return;
-        }
-        DSTree765Views(child, depth + 1, out, lines);
-    }
-}
-
-static void DSTree765Dump(NSInteger show, double after) {
-    if (!DSTree765On()) return;
-    DSFeature719MarkAction("tree765");
-    @try {
-        NSMutableString *out = [NSMutableString string];
-        NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
-        fmt.dateFormat = @"MM-dd HH:mm:ss.SSS";
-        fmt.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
-        [out appendFormat:@"=== tree765 build %s show %ld at +%.2f s (%@) ===\n", kDSBuildVersionString,
-         (long)show, after, [fmt stringFromDate:[NSDate date]]];
-        __block NSInteger windows = 0;
-        DSVisitApplicationWindows(^(UIWindow *window) {
-            NSString *cls = NSStringFromClass(window.class);
-            BOOL keyboard = DSClassNameLooksLikeKeyboard(cls) || [cls rangeOfString:@"TextEffects"].location != NSNotFound;
-            BOOL stage = [cls rangeOfString:@"DSStage"].location != NSNotFound;
-            if (!keyboard && !stage) return;
-            windows++;
-            NSInteger lines = 0;
-            [out appendFormat:@"WINDOW %@ scene=%@ lvl=%.1f hid=%d a=%.2f f=%@ %@\n", cls, DSWindowSceneName(window) ?: @"?",
-             window.windowLevel, window.hidden, window.alpha, DSTree765Rect(window.frame), DSTree765LayerLine(window.layer)];
-            if (stage) return;   // the stage window: header only
-            NSArray *subs = [window.subviews copy];
-            for (UIView *child in subs) DSTree765Views(child, 1, out, &lines);
-            DSTree765Layers(window.layer, 1, out, &lines);
-        });
-        [out appendFormat:@"=== end tree765 show %ld (+%.2f s): %ld window(s) ===\n", (long)show, after, (long)windows];
-        NSString *text = [out copy];
-        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{ DSTree765Append(text); });
-        DSDiagnosticsRecordFormat(@"SpringBoard: tree765 mapped %ld keyboard window(s) for show %ld at +%.2f s (see --- tree765 ---)",
-                                  (long)windows, (long)show, after);
-    } @catch (NSException *exception) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: tree765 dump threw %@", exception.name ?: @"?");
-    }
-}
-
-// 4.5.766 tree766: a dump that was due after the keyboard already went off
-// (Hello log: show 3 at +1.2 s, after typing had ended) is skipped. Still
-// log-only. Off: tree766-off / core766-off (latch tree766).
-static NSUInteger DSTree766Gen = 0;
-
-// 4.5.801: wipe on boot whenever the on-disk dump's build stamp differs.
-// 800 only cleared inside NoteArbiter when tree765-on was set, so Hdidbdh
-// still exported "tree765 build 4.5.787" from the prefs file.
+// 4.5.810: the tree765 / 766 / 767 keyboard-window dump (opt-in probe) is
+// gone. Its old dump file is removed once per boot so it is never exported.
 void DSTree765WipeStaleOnBoot(void) {
     static BOOL once = NO;
     if (once) return;
     once = YES;
-    @try {
-        int rfd = open(kDSTree765Path, O_RDONLY);
-        if (rfd < 0) return;
-        char buf[96] = {0};
-        ssize_t n = read(rfd, buf, sizeof(buf) - 1);
-        close(rfd);
-        if (n <= 0) return;
-        NSString *head = [[NSString alloc] initWithBytes:buf length:(NSUInteger)n encoding:NSUTF8StringEncoding];
-        NSString *want = [NSString stringWithFormat:@"build %s", kDSBuildVersionString];
-        if (head.length && [head rangeOfString:want].location == NSNotFound) {
-            unlink(kDSTree765Path);
-            DSTree765Cleared = YES;
-            DSDiagnosticsRecordFormat(@"SpringBoard: tree765 wiped stale dump on boot (was not %s)", kDSBuildVersionString);
-        }
-    } @catch (NSException *e) {}
-}
-
-void DSTree765NoteArbiter(BOOL on) {
-    BOOL wasOn = DSTree765WasOn;
-    DSTree765WasOn = on;
-    if (!on && wasOn) DSTree766Gen++;
-    if (!on || wasOn) return;
-    DSTree765WipeStaleOnBoot();
-    if (!DSTree765On() || DSTree765Shows >= 3) return;
-    if (!DSTree765Cleared) {
-        DSTree765Cleared = YES;
-        unlink(kDSTree765Path);
-    }
-    NSInteger show = ++DSTree765Shows;
-    for (NSNumber *after in @[ @0.05, @0.4, @1.2 ]) {
-        double a = after.doubleValue;
-        NSUInteger gen = DSTree766Gen;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(a * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if ((gen != DSTree766Gen || !DSTree765WasOn) && DS766On("tree766")) {
-                DSFeature719MarkAction("tree766");
-                DSDiagnosticsRecordFormat(@"SpringBoard: tree766 skipped show %ld +%.2f s dump: the keyboard already went off", (long)show, a);
-                return;
-            }
-            DSTree765Dump(show, a);
-        });
-    }
-}
-
-NSString *DSTree765Read(void) {
-    @try {
-        NSString *text = [NSString stringWithContentsOfFile:[NSString stringWithUTF8String:kDSTree765Path]
-                                                   encoding:NSUTF8StringEncoding error:nil];
-        if (text.length > 300 * 1024) text = [text substringToIndex:300 * 1024];
-        return text.length ? text : @"(none)";
-    } @catch (NSException *exception) {
-        return @"(unreadable)";
-    }
+    unlink("/var/mobile/Library/Preferences/com.recreated.dynamicstage.tree765.log");
 }
 
 // ---- 4.5.768 kbvis768 (log only) ---------------------------------------------
@@ -1800,7 +1628,6 @@ extern NSString *DSFocus755LastFor(NSString *bundle, CFAbsoluteTime *at);
 // Who hides SBMedusaHostedKeyboardWindow while the arbiter is on. Off:
 // hide772-off, master core772-off (crash latch hide772).
 static BOOL DSName773On(void);
-static void DSRegister774Probe(NSString *why);
 static NSString *DSName773Stack(void);
 static BOOL DSScene773On(void);
 static NSString *DSScene773Recent(void);
@@ -1863,7 +1690,6 @@ void DSHide772NoteWindowHidden(UIWindow *window, BOOL hidden) {
                          NSStringFromClass(window.class), DSKbVis768Owner ?: @"?", DSHide772LastStack]);
         if (DSName773On()) DSKbVis768Write([NSString stringWithFormat:@"name773 hide stack: %@", DSName773Stack()]);
         if (DSScene773On()) DSKbVis768Write([NSString stringWithFormat:@"scene773 scene updates in the 0.3 s before the hide: %@", DSScene773Recent()]);
-        if (![DSKbVis768Owner isEqualToString:@"com.apple.MobileSMS"]) DSRegister774Probe(@"hide");
     } @catch (NSException *exception) {}
 }
 
@@ -2177,119 +2003,6 @@ static NSString *DSScene773Recent(void) {
     return out.count ? [out componentsJoinedByString:@" ; "] : @"none (no SpringBoard-sent scene update; a client-side update is not visible to this hook)";
 }
 
-// ---- 4.5.774 register774 (runtime probe, read-only) --------------------------------
-// iOS 16.5.1. Which keyboard-focus classes / selectors exist in SpringBoard, and
-// what they hold at each staged keyboard show and each hide. Only zero-argument
-// getters whose type encoding returns an object or BOOL/integer are called, and
-// only after respondsToSelector:. No writes. Off: register774-off (latch).
-static BOOL DSRegister774On(void) {
-    static BOOL marked = NO;
-    // 4.5.795 register795: the probe read every ivar (weak / unsafe too) of
-    // SpringBoard focus objects on each hide, for logging only. Now opt-in:
-    // /var/mobile/.dynamicstage-register774-on. core795-off returns to 794.
-    if (DSFeature699On("core795") && access("/var/mobile/.dynamicstage-register774-on", F_OK) != 0) return NO;
-    if (!DS774On("register774")) return NO;
-    if (!marked) { marked = YES; DSFeature699MarkTrying("register774"); }
-    return YES;
-}
-static NSString *DSRegister774Short(id v) {
-    if (!v) return @"nil";
-    NSString *d = nil;
-    @try { d = [v isKindOfClass:NSString.class] || [v isKindOfClass:NSNumber.class] ? [v description] : [NSString stringWithFormat:@"<%@ %p>", NSStringFromClass([v class]), v]; } @catch (NSException *e) { d = @"?"; }
-    return d.length > 120 ? [d substringToIndex:120] : d;
-}
-static NSString *DSRegister774Call(id obj, const char *selName) {
-    SEL sel = sel_registerName(selName);
-    if (!obj || ![obj respondsToSelector:sel]) return nil;
-    Method m = class_getInstanceMethod([obj class], sel);
-    if (!m || method_getNumberOfArguments(m) != 2) return nil;
-    char rt[16] = {0};
-    method_getReturnType(m, rt, sizeof(rt));
-    @try {
-        if (rt[0] == '@') return DSRegister774Short(((id (*)(id, SEL))objc_msgSend)(obj, sel));
-        if (rt[0] == 'B' || rt[0] == 'c') return ((BOOL (*)(id, SEL))objc_msgSend)(obj, sel) ? @"YES" : @"NO";
-        if (rt[0] == 'q' || rt[0] == 'Q' || rt[0] == 'i' || rt[0] == 'I') return [NSString stringWithFormat:@"%lld", ((long long (*)(id, SEL))objc_msgSend)(obj, sel)];
-    } @catch (NSException *e) { return @"threw"; }
-    return [NSString stringWithFormat:@"(type %s, not called)", rt];
-}
-static NSString *DSRegister774Ivars(id obj) {
-    if (!obj) return @"";
-    NSMutableArray *out = [NSMutableArray array];
-    for (Class c = [obj class]; c && c != NSObject.class && out.count < 24; c = class_getSuperclass(c)) {
-        unsigned int n = 0;
-        Ivar *iv = class_copyIvarList(c, &n);
-        for (unsigned int i = 0; i < n && out.count < 24; i++) {
-            const char *t = ivar_getTypeEncoding(iv[i]);
-            const char *nm = ivar_getName(iv[i]);
-            if (!t || !nm) continue;
-            if (t[0] == '@') {
-                id v = nil;
-                @try { v = object_getIvar(obj, iv[i]); } @catch (NSException *e) {}
-                [out addObject:[NSString stringWithFormat:@"%s=%@", nm, DSRegister774Short(v)]];
-            } else {
-                [out addObject:[NSString stringWithFormat:@"%s:%s", nm, t]];
-            }
-        }
-        free(iv);
-    }
-    return [out componentsJoinedByString:@" "];
-}
-static NSMutableSet<NSString *> *DSRegister774Listed = nil;
-static void DSRegister774Probe(NSString *why) {
-    if (!DSRegister774On() || !NSThread.isMainThread) return;
-    @try {
-        NSMutableArray *lines = [NSMutableArray array];
-        // 1. Classes that exist (listed once per boot).
-        if (!DSRegister774Listed) {
-            DSRegister774Listed = [NSMutableSet set];
-            static const char *classes[] = { "SBKeyboardFocusCoordinator", "SBKeyboardFocusController", "SBSceneKeyboardFocusTarget",
-                "SBKeyboardFocusTarget", "SBKeyboardFocusArbitrationReason", "SBKeyboardFocusLockAssertion", "SBMedusaHostedKeyboardWindow",
-                "SBMedusaHostedKeyboardWindowController", "SBMedusaHostedKeyboardWindowManager", "SBHostedKeyboardWindowController",
-                "SBMainDisplayLayoutState", "SBSDisplayLayoutElement", "SBDisplayLayoutElement", "FBSDisplayLayoutElement",
-                "SBKeyboardSuppressionManager", "SBInputUISceneController", "SBRemoteKeyboardSceneController", "UIKeyboardSceneDelegate" };
-            NSMutableArray *have = [NSMutableArray array];
-            for (size_t i = 0; i < sizeof(classes) / sizeof(classes[0]); i++) {
-                Class c = objc_getClass(classes[i]);
-                if (!c) { [have addObject:[NSString stringWithFormat:@"%s=NO", classes[i]]]; continue; }
-                unsigned int nm = 0; Method *ms = class_copyMethodList(c, &nm);
-                NSMutableArray *sels = [NSMutableArray array];
-                for (unsigned int j = 0; j < nm && sels.count < 60; j++) [sels addObject:NSStringFromSelector(method_getName(ms[j]))];
-                free(ms);
-                [have addObject:[NSString stringWithFormat:@"%s=YES[%@]", classes[i], [sels componentsJoinedByString:@","]]];
-            }
-            [lines addObject:[NSString stringWithFormat:@"classes: %@", [have componentsJoinedByString:@" | "]]];
-        }
-        // 2. Where the live coordinator is reachable from (SpringBoard app getters).
-        id app = UIApplication.sharedApplication;
-        static const char *appGetters[] = { "keyboardFocusController", "keyboardFocusCoordinator", "_keyboardFocusCoordinator",
-            "keyboardFocusManager", "systemUISceneController", "keyboardSuppressionManager" };
-        for (size_t i = 0; i < sizeof(appGetters) / sizeof(appGetters[0]); i++) {
-            SEL sel = sel_registerName(appGetters[i]);
-            if (![app respondsToSelector:sel]) continue;
-            Method m = class_getInstanceMethod([app class], sel);
-            char rt[8] = {0}; if (m) method_getReturnType(m, rt, sizeof(rt));
-            if (!m || rt[0] != '@' || method_getNumberOfArguments(m) != 2) continue;
-            id obj = nil;
-            @try { obj = ((id (*)(id, SEL))objc_msgSend)(app, sel); } @catch (NSException *e) {}
-            if (!obj) { [lines addObject:[NSString stringWithFormat:@"SpringBoard.%s=nil", appGetters[i]]]; continue; }
-            NSMutableArray *vals = [NSMutableArray array];
-            static const char *getters[] = { "focusTarget", "currentFocusTarget", "keyboardFocusTarget", "_currentFocusTarget", "focusedScene",
-                "keyboardFocusScene", "sceneWithKeyboardFocus", "externalSceneWithFocus", "focusedSceneIdentityToken", "currentFocusedSceneIdentityToken",
-                "lastFocusTarget", "isKeyboardFocusLocked", "hasKeyboardFocusLock", "debugDescription" };
-            for (size_t g = 0; g < sizeof(getters) / sizeof(getters[0]); g++) {
-                NSString *v = DSRegister774Call(obj, getters[g]);
-                if (v) [vals addObject:[NSString stringWithFormat:@"%s=%@", getters[g], v]];
-            }
-            [lines addObject:[NSString stringWithFormat:@"SpringBoard.%s=<%@> %@ | ivars %@", appGetters[i], NSStringFromClass([obj class]),
-                              [vals componentsJoinedByString:@" "], DSRegister774Ivars(obj)]];
-        }
-        DSKbVis768Write([NSString stringWithFormat:@"register774 probe (%@, owner %@): %@", why, DSKbVis768Owner ?: @"?",
-                         lines.count ? [lines componentsJoinedByString:@" || "] : @"no candidate getter on SpringBoard"]);
-    } @catch (NSException *exception) {
-        DSKbVis768Write([NSString stringWithFormat:@"register774 probe threw %@", exception.name]);
-    }
-}
-
 static void DSHide772Report(UIWindow *medusa, UIWindow *stage, NSInteger hostCount, NSString *what) {
     if (!DSHide772On()) return;
     @try {
@@ -2493,7 +2206,6 @@ void DSKbVis768NoteArbiter(BOOL on, BOOL stageOnScreen, NSString *owner, CGRect 
         DSKbVis768SawYes = DSKbVis768SawNo = NO;
         NSUInteger gen = ++DSKbVis768Gen;
         DSKbVis768Write([NSString stringWithFormat:@"kbvis768 show %ld start owner=%@ h=%.0f", (long)DSKbVis768Show, DSKbVis768Owner ?: @"?", CGRectGetHeight(frame)]);
-        if (![DSKbVis768Owner isEqualToString:@"com.apple.MobileSMS"] && ![DSKbVis768Owner isEqualToString:@"com.apple.springboard"]) DSRegister774Probe(@"show start");
         DSKbVis768Sample(gen, NO);
     } @catch (NSException *exception) {
     }

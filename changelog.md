@@ -1,3 +1,12 @@
+## 4.5.810 (sweep clean-up)
+- About 1,040 lines net removed; no behaviour change apart from less log noise.
+- Dead code: 25 unused app functions and 16 unused statics deleted; unused-code warnings are on in the Makefiles (build is warning-free).
+- Log noise: the stale pass795 "794 would have held it" lines, reg799 "would publish", the sensor669 shape dumps and the occl798 repeats (quiet810) are gone.
+- Finished probes deleted: strip792, strip803, strip804, kbcap797, register774, tree765/766/767 (the "--- tree765 ---" export section is gone).
+- gest770 now reads the real switcher state (switch810: SBMainSwitcherControllerCoordinator isAnySwitcherVisible, verified in 20F75).
+- app: the silent catch around DSProcessWindow leaves a window810 breadcrumb; a log-repeat dictionary that could grow forever is capped.
+- Off files: core810-off (quiet810 + switch810 back to 809), quiet810-off, switch810-off.
+
 ## 4.5.809 (clean-up)
 - Wrong selectors and classes (checked against 20F75: allmethods.txt and the class dumps). Each one was dead, so it's deleted and behaviour is unchanged:
   - UIApplication _applicationFrameWithoutOverscanForInterfaceOrientation:… hook (that selector exists only on UIScreen).

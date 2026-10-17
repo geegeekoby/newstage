@@ -322,20 +322,12 @@ static void DSBeeperDebug(NSString *key, NSString *line) {
 
 // Set once UIKit has been asked for a remote keyboard. Until then the in-card
 // keys stay, so a failed handoff still has something to type on.
-static BOOL DSMessagesKeyboardHosted = NO;
-static NSUInteger DSMessagesHandoffToken = 0;
-static NSInteger DSMessagesHandoffDepth = 0;
 // Remote-creation hooks only. Hiding the in-card keys is a separate step.
 static BOOL DSMessagesRemoteHooks = NO;
 // The reply bar is held from the moment the handoff starts.
 static BOOL DSMessagesBarHeld = NO;
 // Keyboard-frame notes are dropped only after the new keyboard has been created.
-static BOOL DSMessagesDropsKeyboardNotes = NO;
-static BOOL DSMessagesHandoffInFlight = NO;
 static BOOL DSMessagesHandoffResign = NO;
-static BOOL DSMessagesChatOnScreen = NO;
-static CFAbsoluteTime DSMessagesChatReadyAt = 0;
-static CFAbsoluteTime DSMessagesHandoffCooldownUntil = 0;
 // Counted every time UIKit asks, including after the once-only path report.
 static int DSRemoteSceneAsks = 0;
 
@@ -364,7 +356,6 @@ static BOOL DSMessagesHoldsReplyBar(void) {
 // In-card key chrome is hidden only after SpringBoard's keyboard view is on
 // screen. Until then the field still has something to type on.
 static BOOL DSMessagesLocalKeysHidden = NO;
-static BOOL DSMessagesPickerAsked = NO;
 
 // Messages keeps the keyboard it built. Every other staged app uses SpringBoard's
 // keyboard, and that window is raised above the stage the way 4.5.416 did it.
@@ -1904,8 +1895,6 @@ static void DSApplyNotifyState(void) {
 }
 
 static BOOL DS795AppKeyringOn(void);
-static int DS804StripPref(void);
-static int DS804StripInEntry(void);
 // Skip every letter already queued. The next notification is a new key.
 static void DSCatchUpKeyboardInput(void) {
     NSDictionary *root = DS795AppKeyringOn() ? nil : [NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath];
@@ -2415,16 +2404,6 @@ static BOOL DSNameIsUnderInputPiece(NSString *name) {
     return NO;
 }
 
-static NSString *DSViewBrief(UIView *view) {
-    if (![view isKindOfClass:UIView.class]) return @"nil";
-    return [NSString stringWithFormat:@"%@ f=%@ ty=%.0f hid=%d a=%.2f",
-            NSStringFromClass(object_getClass(view)),
-            NSStringFromCGRect(view.frame),
-            view.transform.ty,
-            view.hidden,
-            view.alpha];
-}
-
 
 static void DSForgetReplyBarSpot(void) {
 }
@@ -2737,27 +2716,6 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
          [name rangeOfString:@"Message"].location != NSNotFound ||
          [name rangeOfString:@"CK"].location == 0)) {
         DSTraceFormat(@"app willAppear %@", name);
-        // 4.5.803 strip803 (log only): the switches the Messages strip path reads,
-        // as this process sees them, once per process at the first chat.
-        if (DS803On("strip803") && [name isEqualToString:@"CKChatController"]) {
-            static BOOL said = NO;
-            if (!said) {
-                said = YES;
-                DSTraceFormat(@"strip803 switches: caret778=%d caret788=%d reopen783=%d reopen784=%d reopen788=%d reopen789=%d reopen790=%d reopen791=%d strip782=%d strip783=%d strip784=%d strip790=%d entry781=%d leave781=%d resign777=%d stack778become=%d swipe786=%d swipe787=%d keyring795=%d kbleave743=%d kbapp744=%d core783=%d",
-                    DSCaret778Enabled(), DS788On("caret788"), DS783On("reopen783"), DS785On("reopen784"), DS788On("reopen788"), DS789On("reopen789"),
-                    DS790On("reopen790"), DS791On("reopen791"),
-                    DS782On("strip782") && access("/var/mobile/.dynamicstage-strip782-on", F_OK) == 0,
-                    DS783On("strip783") && access("/var/mobile/.dynamicstage-strip783-on", F_OK) == 0,
-                    DS784On("strip784") && access("/var/mobile/.dynamicstage-strip784-on", F_OK) == 0,
-                    DS790On("strip790"), DS781On("entry781"), DS781On("leave781"), DS777On("resign777"), DS778On("stack778become"),
-                    DS786On("swipe786"), DS787On("swipe787"), DS795AppKeyringOn(),
-                    access("/var/mobile/.dynamicstage-kbleave743-off", F_OK) != 0, access("/var/mobile/.dynamicstage-kbapp744-off", F_OK) != 0,
-                    DSFeature699On("core783"));
-                if (DS804On("strip804"))
-                    DSTraceFormat(@"strip804 at first chat: CKShowAppStripInEntryView=%d AppStripEnabled=%d (-1 = unset, default YES)",
-                                  DS804StripInEntry(), DS804StripPref());
-            }
-        }
     }
     if (DSStaged() && [name rangeOfString:@"CKChatController"].location != NSNotFound) { DSChatOpening781 = YES; DSAutoFocus785 = NO; DSTrace792Open(10.0); }
     // The push lays the reply bar out. Sliding it now cancels the push.
@@ -2891,7 +2849,6 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
 // staged, those views are pulled out of the card on every pass UIKit uses to
 // put them back, and again before the run loop sleeps.
 
-static NSUInteger DSBanishHits = 0;
 static BOOL DSBanishFoundChrome = NO;
 
 static BOOL DSNameIsKeyboardLayerHost(NSString *name) {
@@ -2932,22 +2889,6 @@ static BOOL DSWindowIsKeyboardChrome(UIWindow *window) {
     return NO;
 }
 
-static void DSSuppressKeyboardView(UIView *view) {
-    if (DSMessagesKeepsOwnKeys()) return;
-    DSBanishHits++;
-    if (DSBanishHits <= 4) {
-        DSTraceFormat(@"app hid %@. cause=local key chrome after SpringBoard's keyboard is up. parent=%@",
-                      DSViewBrief(view),
-                      view.superview ? NSStringFromClass(object_getClass(view.superview)) : @"none");
-    }
-    [view.layer removeAllAnimations];
-    view.hidden = YES;
-    view.alpha = 0.0;
-    view.userInteractionEnabled = NO;
-    view.layer.hidden = YES;
-    view.layer.opacity = 0.0;
-}
-
 static BOOL DSNameIsMessageChrome(NSString *name) {
     if (name.length == 0) return NO;
     if ([name rangeOfString:@"MessageEntry"].location != NSNotFound) return YES;
@@ -2969,58 +2910,6 @@ static BOOL DSNameIsStageComposer(NSString *name) {
     if ([name rangeOfString:@"InputBar"].location != NSNotFound) return YES;
     if ([name rangeOfString:@"InputAccessory"].location != NSNotFound) return YES;
     return NO;
-}
-
-static void DSBanishKeyboardInView(UIView *view, CGRect windowBounds, BOOL inKeyboardWindow, NSInteger depth) {
-    if (depth > (inKeyboardWindow ? 8 : 3) || ![view isKindOfClass:UIView.class]) return;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if (DSNameIsMessageChrome(name)) {
-        for (UIView *subview in view.subviews) {
-            DSBanishKeyboardInView(subview, windowBounds, inKeyboardWindow, depth + 1);
-        }
-        return;
-    }
-    CGRect frame = view.frame;
-    // A keyboard sitting on the bottom edge of this window, including one that
-    // fills most of a short stage. The caret is too small to match.
-    BOOL bottomSlab = inKeyboardWindow &&
-                      CGRectGetHeight(frame) >= 100.0 &&
-                      CGRectGetWidth(frame) >= CGRectGetWidth(windowBounds) * 0.5 &&
-                      CGRectGetMaxY(frame) >= CGRectGetHeight(windowBounds) - 8.0 &&
-                      CGRectGetMinY(frame) > 40.0 &&
-                      CGRectGetMinY(frame) < 8000.0;
-    if (DSNameIsLocalKeyboard(name) || bottomSlab) {
-        DSSuppressKeyboardView(view);
-        return;
-    }
-    for (UIView *subview in view.subviews) {
-        DSBanishKeyboardInView(subview, windowBounds, inKeyboardWindow, depth + 1);
-    }
-}
-
-static void DSBanishKeyboardLayers(CALayer *layer, CGRect windowBounds) {
-    if (!layer) return;
-    NSString *name = NSStringFromClass(object_getClass(layer));
-    id delegate = layer.delegate;
-    NSString *delegateName = nil;
-    if ([delegate isKindOfClass:UIView.class]) {
-        delegateName = NSStringFromClass(object_getClass((UIView *)delegate));
-    }
-    CGRect frame = layer.frame;
-    BOOL bottomSlab = CGRectGetHeight(frame) >= 100.0 &&
-                      CGRectGetWidth(frame) >= CGRectGetWidth(windowBounds) * 0.5 &&
-                      CGRectGetMaxY(frame) >= CGRectGetHeight(windowBounds) - 8.0 &&
-                      CGRectGetMinY(frame) > 40.0 &&
-                      CGRectGetMinY(frame) < 8000.0;
-    if (DSNameIsLocalKeyboard(name) || DSNameIsLocalKeyboard(delegateName) || bottomSlab) {
-        [layer removeAllAnimations];
-        layer.hidden = YES;
-        layer.opacity = 0.0;
-        return;
-    }
-    for (CALayer *sublayer in layer.sublayers) {
-        DSBanishKeyboardLayers(sublayer, windowBounds);
-    }
 }
 
 static void DSVisitLiveWindows(void (^visitor)(UIWindow *window)) {
@@ -3134,17 +3023,6 @@ static void DSLayoutKeyboardRemoteControlsInTree(UIView *root, NSInteger depth) 
     }
 }
 
-static void DSStripKeyboardLayerHostsInTree(UIView *root, NSInteger depth) {
-    if (!root || depth > 28) return;
-    for (UIView *subview in [root.subviews copy]) {
-        if (DSNameIsKeyboardLayerHost(NSStringFromClass(object_getClass(subview)))) {
-            DSStripKeyboardLayerHostView(subview);
-            continue;
-        }
-        DSStripKeyboardLayerHostsInTree(subview, depth + 1);
-    }
-}
-
 
 // The three long views in the debugger: the text-effects window, the input
 // container, and the input host. The editing overlay is the same kind of
@@ -3161,23 +3039,6 @@ static BOOL DSViewIsStageShell(UIView *view) {
     if ([name rangeOfString:@"InputSetHost"].location != NSNotFound) return YES;
     if ([name rangeOfString:@"EditingOverlay"].location != NSNotFound) return YES;
     return NO;
-}
-
-static CGRect DSStageShellFrame(UIView *view) {
-    CGRect stage = DSStageBounds();
-    if (CGRectGetWidth(stage) < 80.0 || CGRectGetHeight(stage) < 80.0) return CGRectZero;
-    CGRect target = CGRectMake(0.0, 0.0, CGRectGetWidth(stage), CGRectGetHeight(stage));
-    if ([view isKindOfClass:UIWindow.class]) return target;
-    UIView *parent = view.superview;
-    if (!parent) return target;
-    CGFloat parentW = CGRectGetWidth(parent.bounds);
-    CGFloat parentH = CGRectGetHeight(parent.bounds);
-    if (parentW > 40.0 && parentH > 40.0 &&
-        parentW <= CGRectGetWidth(stage) + 24.0 &&
-        parentH <= CGRectGetHeight(stage) + 24.0) {
-        return parent.bounds;
-    }
-    return target;
 }
 
 static void DSClipView(UIView *view) {
@@ -3252,246 +3113,6 @@ static CGFloat DSVisibleCardHeight(UIWindow *effectsWindow) {
     return stageH > 80.0 ? stageH : windowH;
 }
 
-static void DSLiftViewBottomTo(UIView *view, CGFloat cardH) {
-    CGFloat height = CGRectGetHeight(view.bounds);
-    if (height < 1.0) return;
-    CGFloat bottom = view.center.y + height * 0.5;
-    CGFloat ty = cardH - bottom;
-    if (ty > -0.5) {
-        if (!CGAffineTransformIsIdentity(view.transform)) view.transform = CGAffineTransformIdentity;
-        return;
-    }
-    if (fabs(view.transform.ty - ty) < 0.5 && fabs(view.transform.tx) < 0.5) return;
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
-    view.transform = CGAffineTransformMakeTranslation(0.0, ty);
-    [CATransaction commit];
-}
-
-// The three long views stay the height of the phone. Slide each one up so the
-// reply field at its bottom lands on the bottom of the stage. A view inside
-// one that already moved is left where that parent put it.
-static void DSLiftEffectsNode(UIView *view, CGFloat cardH, BOOL ancestorLifted, NSInteger depth) {
-    if (!view || depth > 18) return;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if (depth > 0 && DSNameIsKeyboardRemoteControl(name)) {
-        DSLayoutKeyboardRemoteControlView(view);
-        return;
-    }
-    if (depth > 0 && DSNameIsLocalKeyboard(name)) {
-        DSSuppressKeyboardView(view);
-        return;
-    }
-    // The reply field is shifted onto the card by its own transform. Clearing
-    // that transform puts the field back under the card.
-    if (depth > 0 && DSNameIsStageComposer(name)) return;
-    BOOL lifted = ancestorLifted;
-    if (!ancestorLifted && depth > 0 && ![view isKindOfClass:UIWindow.class]) {
-        CGFloat height = CGRectGetHeight(view.bounds);
-        CGFloat bottom = view.center.y + height * 0.5;
-        BOOL hangs = height > 1.0 && bottom > cardH + 2.0;
-        BOOL shell = DSViewIsStageShell(view);
-        BOOL chrome = DSNameIsMessageChrome(name);
-        if (hangs && (shell || chrome)) {
-            // These stay at the bottom of the phone. A translation here is what
-            // kept trying to drag the reply field up into the card.
-            if (!CGAffineTransformIsIdentity(view.transform)) view.transform = CGAffineTransformIdentity;
-            lifted = YES;
-        } else if (!hangs && !CGAffineTransformIsIdentity(view.transform)) {
-            view.transform = CGAffineTransformIdentity;
-        }
-    } else if (ancestorLifted && depth > 0 && !CGAffineTransformIsIdentity(view.transform)) {
-        view.transform = CGAffineTransformIdentity;
-    }
-    for (UIView *subview in view.subviews) DSLiftEffectsNode(subview, cardH, lifted, depth + 1);
-}
-
-static void DSCompactEffectsNode(UIView *view, NSInteger depth) {
-    if (!view || depth > 16 || !DSStaged()) return;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if (depth > 0 && DSNameIsKeyboardRemoteControl(name)) {
-        DSLayoutKeyboardRemoteControlView(view);
-        return;
-    }
-    if (depth > 0 && DSNameIsLocalKeyboard(name)) {
-        DSSuppressKeyboardView(view);
-        return;
-    }
-    if (DSViewIsStageShell(view)) {
-        CGRect target = DSStageShellFrame(view);
-        DSClipView(view);
-        if (CGRectGetWidth(target) > 40.0 && !CGRectEqualToRect(view.frame, target)) {
-            DSClampingStage = YES;
-            view.transform = CGAffineTransformIdentity;
-            view.frame = target;
-            DSClampingStage = NO;
-        }
-    } else if (depth > 0) {
-        CGRect pinned = DSPinFrameInsideStage(view, view.frame);
-        if (!CGRectEqualToRect(pinned, view.frame)) {
-            DSClampingStage = YES;
-            view.frame = pinned;
-            DSClampingStage = NO;
-        }
-        if ([name rangeOfString:@"MessageEntry"].location != NSNotFound) DSPullMessageBarUp(view);
-    }
-    for (UIView *subview in view.subviews) DSCompactEffectsNode(subview, depth + 1);
-}
-
-// The reply field under the three shells is often a plain UIView plus the
-// blur layers. Those are not shells, so shortening the shells left them
-// hanging out past the bottom. A view that holds that chrome and sticks out
-// of its parent is sat on the parent's bottom.
-static BOOL DSViewHoldsReplyChrome(UIView *view, NSInteger depth) {
-    if (!view || depth > 8) return NO;
-    if ([view isKindOfClass:UIScrollView.class]) return NO;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if (DSNameIsMessageChrome(name)) return YES;
-    if ([name rangeOfString:@"Backdrop"].location != NSNotFound) return YES;
-    if ([name rangeOfString:@"EffectContent"].location != NSNotFound) return YES;
-    for (UIView *subview in view.subviews) {
-        if (DSViewHoldsReplyChrome(subview, depth + 1)) return YES;
-    }
-    return NO;
-}
-
-static BOOL DSShouldSeatInShell(UIView *view) {
-    if (![view isKindOfClass:UIView.class] || DSViewIsStageShell(view)) return NO;
-    if ([view isKindOfClass:UIScrollView.class]) return NO;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if (DSNameIsLocalKeyboard(name) || DSNameIsKeyboardRemoteControl(name)) return NO;
-    if (DSNameIsKeyboardLayerHost(name)) return NO;
-    return DSViewHoldsReplyChrome(view, 0);
-}
-
-static UIView *DSNearestShell(UIView *view) {
-    UIView *cursor = view.superview;
-    for (NSInteger depth = 0; cursor && depth < 12; depth++) {
-        if (DSViewIsStageShell(cursor)) return cursor;
-        cursor = cursor.superview;
-    }
-    return view.superview;
-}
-
-static void DSSeatReplyOnParentBottom(UIView *view) {
-    UIView *parent = view.superview;
-    if (!parent || DSInputReparentDepth > 0) return;
-    UIView *shell = DSNearestShell(view);
-    if (!shell) return;
-    CGFloat parentH = CGRectGetHeight(parent.bounds);
-    CGFloat parentW = CGRectGetWidth(parent.bounds);
-    CGFloat shellH = CGRectGetHeight(shell.bounds);
-    if (parentH < 20.0 || parentW < 40.0 || shellH < 40.0) return;
-    CGFloat height = CGRectGetHeight(view.bounds);
-    if (height < 1.0) height = CGRectGetHeight(view.frame);
-    if (height < 20.0) return;
-
-    // Bottom of the innermost shell, expressed in this view's parent. That is
-    // the bottom of the three views that already fit the card.
-    CGPoint shellBottom = [shell convertPoint:CGPointMake(0.0, shellH) toView:parent];
-    CGFloat targetBottom = shellBottom.y;
-    if (parent != shell) targetBottom = MIN(targetBottom, parentH);
-    CGFloat maxY = CGRectGetMaxY(view.frame);
-    if (maxY <= targetBottom + 1.5 && CGRectGetMinY(view.frame) < targetBottom - 1.0) return;
-
-    CGRect frame = view.frame;
-    frame.origin.y = targetBottom - height;
-    if (CGRectGetWidth(frame) > parentW + 2.0) {
-        frame.origin.x = 0.0;
-        frame.size.width = parentW;
-    }
-    BOOL outer = DSInputReparentDepth == 0;
-    if (outer) DSInputReparentDepth += 1;
-    view.transform = CGAffineTransformIdentity;
-    DSClampingStage = YES;
-    view.frame = frame;
-    DSClampingStage = NO;
-    shell.clipsToBounds = YES;
-    if (CGRectGetMaxY(view.frame) > targetBottom + 2.0) DSLiftViewBottomTo(view, targetBottom);
-    if (outer) DSInputReparentDepth -= 1;
-}
-
-static void DSSeatReplyTree(UIView *view, NSInteger depth) {
-    if (!view || depth > 18) return;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if (depth > 0 && (DSNameIsLocalKeyboard(name) || DSNameIsKeyboardRemoteControl(name))) return;
-    if (depth > 0 && DSShouldSeatInShell(view)) DSSeatReplyOnParentBottom(view);
-    for (UIView *subview in [view.subviews copy]) DSSeatReplyTree(subview, depth + 1);
-}
-
-
-static BOOL DSConstraintPinsShellToParent(NSLayoutConstraint *constraint, UIView *shell) {
-    if (![constraint isKindOfClass:NSLayoutConstraint.class] || !shell) return NO;
-    UIView *parent = shell.superview;
-    id first = constraint.firstItem;
-    id second = constraint.secondItem;
-    if (first == shell && second == nil) {
-        return constraint.firstAttribute == NSLayoutAttributeWidth ||
-               constraint.firstAttribute == NSLayoutAttributeHeight;
-    }
-    if (parent && ((first == shell && second == parent) || (second == shell && first == parent))) return YES;
-    NSString *identifier = constraint.identifier;
-    if (identifier.length > 0 &&
-        [identifier rangeOfString:@"UIInputWindowController"].location != NSNotFound &&
-        (first == shell || second == shell)) {
-        return YES;
-    }
-    return NO;
-}
-
-// UIInputSetContainerView and UIInputSetHostView are stretched to the phone by
-// constraints owned by UITextEffectsWindow. Setting their frame is undone on the
-// next layout pass. Drop those parent pins and give the shell the card's size.
-// The reply field stays constrained to the host, so it lands on the card bottom.
-static void DSFitOneInputShell(UIView *shell, CGRect card) {
-    if (![shell isKindOfClass:UIView.class] || [shell isKindOfClass:UIWindow.class]) return;
-    NSMutableArray<NSLayoutConstraint *> *pins = [NSMutableArray array];
-    @try {
-        for (NSLayoutConstraint *constraint in shell.constraints) {
-            if (DSConstraintPinsShellToParent(constraint, shell)) [pins addObject:constraint];
-        }
-        if (shell.superview) {
-            for (NSLayoutConstraint *constraint in shell.superview.constraints) {
-                if (DSConstraintPinsShellToParent(constraint, shell)) [pins addObject:constraint];
-            }
-        }
-        if (pins.count) [NSLayoutConstraint deactivateConstraints:pins];
-    } @catch (NSException *exception) {
-    }
-    shell.translatesAutoresizingMaskIntoConstraints = YES;
-    shell.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
-    UIView *parent = shell.superview;
-    CGRect target = CGRectMake(0.0, 0.0, CGRectGetWidth(card), CGRectGetHeight(card));
-    if (parent && ![parent isKindOfClass:UIWindow.class]) {
-        CGFloat parentW = CGRectGetWidth(parent.bounds);
-        CGFloat parentH = CGRectGetHeight(parent.bounds);
-        if (parentW > 40.0 && parentH > 40.0 &&
-            parentW <= CGRectGetWidth(card) + 24.0 &&
-            parentH <= CGRectGetHeight(card) + 24.0) {
-            target = parent.bounds;
-        }
-    }
-    shell.clipsToBounds = YES;
-    if (!CGAffineTransformIsIdentity(shell.transform)) shell.transform = CGAffineTransformIdentity;
-    if (!CGRectEqualToRect(shell.frame, target)) {
-        DSClampingStage = YES;
-        shell.frame = target;
-        DSClampingStage = NO;
-    }
-}
-
-static void DSPinShellTree(UIView *view, CGRect card, NSInteger depth) {
-    if (!view || depth > 8) return;
-    for (UIView *subview in [view.subviews copy]) {
-        if (DSViewIsStageShell(subview) && ![subview isKindOfClass:UIWindow.class]) {
-            BOOL tall = CGRectGetHeight(subview.bounds) > CGRectGetHeight(card) + 24.0 ||
-                        CGRectGetMaxY(subview.frame) > CGRectGetHeight(card) + 24.0;
-            BOOL wide = CGRectGetWidth(subview.bounds) > CGRectGetWidth(card) + 24.0;
-            if (tall || wide) DSFitOneInputShell(subview, card);
-        }
-        DSPinShellTree(subview, card, depth + 1);
-    }
-}
 
 
 // The input host stays the height of the phone. Its reply field is a direct
@@ -3566,16 +3187,6 @@ static void DSTranslateComposersInHost(UIView *host) {
     DSComposerShiftDepth -= 1;
 }
 
-static void DSTranslateComposersInTree(UIView *view, NSInteger depth) {
-    if (!view || depth > 6) return;
-    NSString *name = NSStringFromClass(object_getClass(view));
-    if (depth > 0 && [name rangeOfString:@"InputSetHost"].location != NSNotFound) {
-        DSTranslateComposersInHost(view);
-        return;
-    }
-    for (UIView *subview in view.subviews) DSTranslateComposersInTree(subview, depth + 1);
-}
-
 
 // The view the card actually shows. The stage window itself is in SpringBoard,
 // a different process, so the input bar has to join this app's root view.
@@ -3596,40 +3207,6 @@ static UIView *DSStagedAppRoot(void) {
     return found;
 }
 
-
-static void DSShrinkScrollsAbove(UIView *view, UIView *bar, CGFloat barTop, NSInteger depth) {
-    if (!view || view == bar || depth > 10) return;
-    if ([view isKindOfClass:UIScrollView.class]) {
-        UIScrollView *scroll = (UIScrollView *)view;
-        CGFloat oldH = CGRectGetHeight(scroll.frame);
-        if (oldH > 80.0 && CGRectGetMaxY(scroll.frame) > barTop + 1.0) {
-            CGRect frame = scroll.frame;
-            CGFloat newH = barTop - CGRectGetMinY(frame);
-            if (newH > 40.0 && newH < oldH - 1.0) {
-                BOOL nearBottom = scroll.contentSize.height < 1.0 ||
-                    scroll.contentOffset.y + oldH > scroll.contentSize.height - 80.0;
-                frame.size.height = newH;
-                DSClampingStage = YES;
-                scroll.frame = frame;
-                DSClampingStage = NO;
-                if (nearBottom) {
-                    CGPoint offset = scroll.contentOffset;
-                    offset.y += oldH - newH;
-                    CGFloat maxY = scroll.contentSize.height - newH;
-                    if (maxY < 0) maxY = 0;
-                    if (offset.y > maxY) offset.y = maxY;
-                    if (offset.y < 0) offset.y = 0;
-                    scroll.contentOffset = offset;
-                }
-            }
-        }
-        return;
-    }
-    for (UIView *subview in view.subviews) {
-        if (subview == bar) continue;
-        DSShrinkScrollsAbove(subview, bar, barTop, depth + 1);
-    }
-}
 
 
 
@@ -4005,7 +3582,6 @@ static BOOL DSPhoneViewIsKeypad(UIView *view) {
 static BOOL DSPhoneIsCardRoot(UIView *view);
 static void DSPhoneFindKeypad(UIView *view, NSInteger depth, UIView **best, CGFloat *bestArea);
 
-static void DSPhoneRestoreLifted(UIView *view, NSInteger depth);
 static void DSPhoneWriteFit(NSString *line, CGFloat scale, CGFloat box, CGFloat band);
 
 
@@ -4187,23 +3763,6 @@ static void DSPhoneClearGridLift(UIView *view) {
 }
 
 
-static void DSPhoneRestoreLifted(UIView *view, NSInteger depth) {
-    if (!view || depth > 18 || DSPhoneLayoutFrozen) return;
-    UIView *home = objc_getAssociatedObject(view, DSPhoneHomeKey);
-    if (home) {
-        DSPhoneLayoutFrozen = YES;
-        DSClampingStage = YES;
-        objc_setAssociatedObject(view, DSPhoneLiftFrameKey, nil, OBJC_ASSOCIATION_ASSIGN);
-        objc_setAssociatedObject(view, DSPhoneHomeKey, nil, OBJC_ASSOCIATION_ASSIGN);
-        view.transform = CGAffineTransformIdentity;
-        if (home != view.superview) [home addSubview:view];
-        DSClampingStage = NO;
-        DSPhoneLayoutFrozen = NO;
-    }
-    NSArray<UIView *> *subviews = [view.subviews copy];
-    for (UIView *subview in subviews) DSPhoneRestoreLifted(subview, depth + 1);
-}
-
 static void DSPhoneReapply(UIView *view) {
     if (!view || DSPhoneLayoutFrozen) return;
     NSNumber *scale = objc_getAssociatedObject(view, DSPhoneScaleKey);
@@ -4232,22 +3791,6 @@ static void DSPhoneResetScaled(UIView *view, NSInteger depth) {
     }
     if ([view isKindOfClass:UIScrollView.class]) return;
     for (UIView *subview in view.subviews) DSPhoneResetScaled(subview, depth + 1);
-}
-
-// Put the button grid back before Auto Layout runs, so this pass measures the
-// real keys and the 0.72 scale is applied once. Views that are not the grid
-// (the Add Number bar, the call header) are left where Phone put them.
-static void DSPhoneRestoreNaturalFrames(UIView *view, NSInteger depth) {
-    if (!view || depth > 22) return;
-    if (objc_getAssociatedObject(view, DSPhoneGridPieceKey)) {
-        NSValue *natural = objc_getAssociatedObject(view, DSPhoneNaturalFrameKey);
-        if (natural) {
-            view.transform = CGAffineTransformIdentity;
-            CGRect frame = natural.CGRectValue;
-            if (!CGRectEqualToRect(view.frame, frame)) view.frame = frame;
-        }
-    }
-    for (UIView *subview in view.subviews) DSPhoneRestoreNaturalFrames(subview, depth + 1);
 }
 
 // Disabled: this used to stretch a full-screen child to the card, which
@@ -4379,17 +3922,6 @@ static BOOL DSPhoneIsDialPadControl(UIView *view) {
     // Delete / backspace beside call (when a number is entered).
     if (width >= 36.0 && width <= 120.0 && height >= 28.0 && height <= 72.0) return YES;
     return NO;
-}
-
-static void DSPhoneCollectKeyUnion(UIView *view, UIView *root, CGRect *unionRect, NSInteger *count, NSInteger depth) {
-    if (!view || !root || !unionRect || !count || depth > 22 || DSPhoneIsTabBar(view)) return;
-    if (DSPhoneIsDialPadControl(view)) {
-        CGRect rect = [view convertRect:view.bounds toView:root];
-        if (*count == 0) *unionRect = rect;
-        else *unionRect = CGRectUnion(*unionRect, rect);
-        *count += 1;
-    }
-    for (UIView *subview in view.subviews) DSPhoneCollectKeyUnion(subview, root, unionRect, count, depth + 1);
 }
 
 // Tag the grid and everything in it so the header passes (PullClippedTop,
@@ -5545,39 +5077,6 @@ static void DSPhoneNoteHitTable(UIView *root) {
     DSPhoneRequestPass(root, @"hit-stale");
 }
 
-// The digits and Add Number are short labels. A tall spacer under them is the
-// empty gap the keys need to move up into, so it does not count as the header.
-static void DSPhoneNoteHeader(UIView *view, UIView *host, UIView *pad, CGFloat padTop, CGFloat *bottom, NSInteger depth) {
-    if (!view || !host || !bottom || depth > 8 || view == pad || DSPhoneIsTabBar(view)) return;
-    if ([view isKindOfClass:UIScrollView.class]) return;
-    if (view != host && view.window) {
-        CGRect frame = [view convertRect:view.bounds toView:host];
-        CGFloat height = CGRectGetHeight(frame);
-        CGFloat width = CGRectGetWidth(frame);
-        if (CGRectGetMaxY(frame) <= padTop + 2.0 && width > 36.0 && height >= 14.0 && height <= 72.0) {
-            *bottom = MAX(*bottom, CGRectGetMaxY(frame));
-        }
-    }
-    for (UIView *subview in view.subviews) {
-        DSPhoneNoteHeader(subview, host, pad, padTop, bottom, depth + 1);
-    }
-}
-
-static void DSPhoneCollectRounds(UIView *view, NSMutableArray<UIView *> *buttons, NSInteger depth) {
-    if (!view || !buttons || depth > 6 || DSPhoneIsTabBar(view)) return;
-    if ([view isKindOfClass:UIScrollView.class]) return;
-    for (UIView *subview in view.subviews) {
-        CGFloat width = CGRectGetWidth(subview.bounds);
-        CGFloat height = CGRectGetHeight(subview.bounds);
-        if (width >= 36.0 && height >= 36.0 && width <= 170.0 && height <= 170.0 &&
-            fabs(width - height) <= MAX(width, height) * 0.35) {
-            [buttons addObject:subview];
-        } else {
-            DSPhoneCollectRounds(subview, buttons, depth + 1);
-        }
-    }
-}
-
 
 static BOOL DSPhoneIsCardRoot(UIView *view) {
     if (!DSIsMobilePhone() || !view || DSPhoneLayoutFrozen || DSClampingStage) return NO;
@@ -5906,6 +5405,14 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
     @try {
         DSProcessWindow((UIWindow *)self);
     } @catch (NSException *exception) {
+        // 4.5.810: was silent. One breadcrumb per exception name (no change to the call).
+        static NSMutableSet<NSString *> *seen810 = nil;
+        NSString *n810 = exception.name ?: @"?";
+        if (!seen810) seen810 = [NSMutableSet set];
+        if (seen810.count < 8 && ![seen810 containsObject:n810]) {
+            [seen810 addObject:n810];
+            DSTraceFormat(@"app: window810 DSProcessWindow threw %@ (%@) on %@", n810, exception.reason ?: @"", NSStringFromClass([self class]));
+        }
     }
 }
 
@@ -6106,18 +5613,6 @@ static BOOL DSMessagesAssistantName(NSString *name) {
     if ([name rangeOfString:@"InputSwitcher"].location != NSNotFound) return YES;
     if ([name rangeOfString:@"KeyboardDock"].location != NSNotFound) return YES;
     return NO;
-}
-
-static UIView *DSFindMessagesKeyboard(UIView *view, NSInteger depth) {
-    if (!view || depth > 14) return nil;
-    if (DSViewIsMessagesKeySlab(view) && CGRectGetHeight(view.bounds) >= 160.0) return view;
-    UIView *best = nil;
-    for (UIView *subview in view.subviews) {
-        UIView *found = DSFindMessagesKeyboard(subview, depth + 1);
-        if (!found) continue;
-        if (!best || CGRectGetHeight(found.bounds) > CGRectGetHeight(best.bounds)) best = found;
-    }
-    return best;
 }
 
 
@@ -7090,30 +6585,6 @@ static void DSInstallMessagesBehaviorHooks(void) {
 
 %hook CKMessageEntryView
 
-- (BOOL)shouldShowAppStrip {
-    // StageDuo shows this strip with the phone-sized keyboard, under the
-    // field. Forcing it on while the field is editing drew it above the field.
-    BOOL r = %orig;
-    // 4.5.803 strip803 (log only): Messages' own answer, each time it changes,
-    // with what it can see. 791 showed the strip (entry 81 pt) from chat open;
-    // 799-802 show 44 pt from chat open, before any tap. Off: strip803-off.
-    @try {
-        if (DSStaged() && DS803On("strip803")) {
-            static int last = -1;
-            if (last != (int)r) {
-                last = (int)r;
-                UIView *me = (UIView *)self;
-                UIResponder *fr = nil;
-                for (UIWindow *w in UIApplication.sharedApplication.windows) if (w.isKeyWindow) { fr = [w valueForKey:@"firstResponder"]; break; }
-                DSTraceFormat(@"strip803 shouldShowAppStrip=%d entry=%@ win=%@ fr=%@ keysWanted=%d ownsKeys=%d",
-                              r, NSStringFromCGRect(me.frame), me.window ? NSStringFromClass(me.window.class) : @"none",
-                              fr ? NSStringFromClass(fr.class) : @"none", DSStageKeyboardWanted, DSMessagesOwnsKeyboard());
-            }
-        }
-    } @catch (NSException *e) {}
-    return r;
-}
-
 - (UIEdgeInsets)safeAreaInsets {
     if (!DSStaged()) return %orig;
     UIEdgeInsets insets = %orig;
@@ -7189,59 +6660,6 @@ static void DSInstallMessagesBehaviorHooks(void) {
 
 // Safari view service lays its navigation bar out from the screen width.
 
-// 4.5.804 strip804 (log only). ChatKit 20F75 (verified by disassembly):
-//   -[CKMessageEntryView shouldShowAppStrip] just reads _showAppStrip;
-//   -[CKChatController updateAppStripVisibility:animated:] sets it only when
-//   CKShowAppStripInEntryView() is YES, which is the com.apple.MobileSMS
-//   preference "AppStripEnabled" (default YES). Tapping the apps button
-//   (-shouldMessageEntryViewReportBrowserButtonHitToInputDelegate:) flips and
-//   saves that preference. These lines show which of those keeps it at 0.
-static int DS804StripPref(void) {
-    CFPropertyListRef v = CFPreferencesCopyAppValue(CFSTR("AppStripEnabled"), CFSTR("com.apple.MobileSMS"));
-    if (!v) return -1;
-    int r = (CFGetTypeID(v) == CFBooleanGetTypeID()) ? (CFBooleanGetValue((CFBooleanRef)v) ? 1 : 0)
-          : ([(__bridge id)v respondsToSelector:@selector(boolValue)] ? [(__bridge id)v boolValue] : -2);
-    CFRelease(v);
-    return r;
-}
-static int DS804StripInEntry(void) {
-    static BOOL (*fn)(void) = NULL;
-    static BOOL looked = NO;
-    if (!looked) { looked = YES; fn = (BOOL (*)(void))dlsym(RTLD_DEFAULT, "CKShowAppStripInEntryView"); }
-    return fn ? (fn() ? 1 : 0) : -1;
-}
-static BOOL DS804StripLogOn(void) { return DSStaged() && DS804On("strip804"); }
-
-%hook CKChatController
-- (void)updateAppStripVisibility:(BOOL)visible animated:(BOOL)animated {
-    BOOL log = NO;
-    @try { log = DS804StripLogOn(); } @catch (NSException *e) {}
-    %orig;
-    if (!log) return;
-    @try {
-        id ev = [(id)self valueForKey:@"entryView"];
-        BOOL now = [ev respondsToSelector:@selector(shouldShowAppStrip)] ? ((BOOL (*)(id, SEL))objc_msgSend)(ev, @selector(shouldShowAppStrip)) : NO;
-        static NSString *last = nil;
-        NSString *line = [NSString stringWithFormat:@"strip804 updateAppStripVisibility:%d -> shouldShowAppStrip=%d | CKShowAppStripInEntryView=%d AppStripEnabled=%d (-1 = unset, default YES)",
-                          visible, now, DS804StripInEntry(), DS804StripPref()];
-        if (![line isEqualToString:last]) { last = line; DSTraceFormat(@"%@", line); }
-    } @catch (NSException *e) {}
-}
-- (BOOL)shouldMessageEntryViewReportBrowserButtonHitToInputDelegate:(id)entryView {
-    BOOL log = NO;
-    int before = 0;
-    @try { log = DS804StripLogOn(); if (log) before = DS804StripPref(); } @catch (NSException *e) {}
-    BOOL r = %orig;
-    if (log) {
-        @try {
-            DSTraceFormat(@"strip804 apps button tapped: AppStripEnabled %d -> %d, CKShowAppStripInEntryView=%d (Messages saves this; it hides the strip in every chat)",
-                          before, DS804StripPref(), DS804StripInEntry());
-        } @catch (NSException *e) {}
-    }
-    return r;
-}
-%end
-
 %hook _SFBrowserNavigationBar
 
 - (void)layoutSubviews {
@@ -7262,41 +6680,6 @@ static BOOL DS804StripLogOn(void) { return DSStaged() && DS804On("strip804"); }
 // window is the one SpringBoard already uses for the picker, on the
 // remote-keyboard scene. Nothing here hides a view, moves a window, or talks
 // to the arbiter.
-// 4.5.792 log792: log when Messages' app strip is removed or hidden, with the
-// caller images (DS+ = our code). Logging only. Off: -log792-off.
-static void DS792StripLog(UIView *v, NSString *what) {
-    static Class footer = Nil;
-    if (!footer) footer = objc_getClass("CKBrowserSwitcherFooterView");
-    if (!footer || ![v isKindOfClass:footer]) return;
-    void *addrs[20];
-    int n = backtrace(addrs, 20);
-    NSMutableArray *imgs = [NSMutableArray array];
-    for (int i = 2; i < n && imgs.count < 14; i++) {
-        Dl_info info; memset(&info, 0, sizeof(info));
-        if (!dladdr(addrs[i], &info) || !info.dli_fname) { [imgs addObject:@"?"]; continue; }
-        const char *img = strrchr(info.dli_fname, '/'); img = img ? img + 1 : info.dli_fname;
-        NSString *s = [NSString stringWithUTF8String:img] ?: @"?";
-        if ([s hasPrefix:@"DynamicStage"]) s = [NSString stringWithFormat:@"DS+0x%lx", (unsigned long)((uintptr_t)addrs[i] - (uintptr_t)info.dli_fbase)];
-        else s = [NSString stringWithFormat:@"%@+0x%lx", s, (unsigned long)((uintptr_t)addrs[i] - (uintptr_t)info.dli_saddr)];
-        [imgs addObject:s];
-    }
-    DSTraceFormat(@"strip792 %@ frame=%@ super=%@ by %@", what, NSStringFromCGRect(v.frame),
-                  v.superview ? NSStringFromClass(v.superview.class) : @"none", [imgs componentsJoinedByString:@" < "]);
-}
-
-%group Strip792
-%hook UIView
-- (void)removeFromSuperview {
-    if (self.superview) DS792StripLog(self, @"removeFromSuperview");
-    %orig;
-}
-- (void)setHidden:(BOOL)hidden {
-    if (hidden && !self.hidden) DS792StripLog(self, @"setHidden:YES");
-    %orig;
-}
-%end
-%end
-
 %group RemoteKeys
 
 %hook _UIRemoteKeyboards
@@ -7376,44 +6759,7 @@ static void DSInstallRemoteKeyboardHooks(void) {
         }
         %init(RemoteKeys);
         DSReportRemoteArmed();
-        if (DS792On("log792") && objc_getClass("CKBrowserSwitcherFooterView") &&
-            [NSBundle.mainBundle.bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) {
-            %init(Strip792);
-            DSTraceFormat(@"strip792 hooks in (UIView removeFromSuperview / setHidden:, filtered to CKBrowserSwitcherFooterView)");
-        }
     });
-}
-
-// ---- 4.5.797 kbcap797 (decision logging only) ------------------------------------
-// Groundwork for one keyboard model: next to each bundle-id decision, log what
-// the app is observed to do, so a later build can switch the decision to the
-// observed condition with proof that Messages behaves the same. No behaviour.
-// Off: kbcap797-off / core797-off.
-static BOOL DS797FindClass(UIView *v, Class c, int depth) {
-    if (!v || depth > 40) return NO;
-    if ([v isKindOfClass:c]) return YES;
-    for (UIView *sub in v.subviews) if (DS797FindClass(sub, c, depth + 1)) return YES;
-    return NO;
-}
-static void DSKbCap797Log(BOOL shown) {
-    if (!DSFeature699On("core797") || !DSFeature699On("kbcap797")) return;
-    static CFAbsoluteTime last = 0;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (now - last < 2.0 && now >= last) return;
-    last = now;
-    @try {
-        Class footer = objc_getClass("CKBrowserSwitcherFooterView");
-        BOOL strip = NO; int ownKeys = 0; UIWindow *key = nil;
-        for (UIWindow *w in UIApplication.sharedApplication.windows) {
-            if (w.isKeyWindow) key = w;
-            NSString *cls = NSStringFromClass(w.class);
-            if (!w.hidden && w.alpha > 0.01 && ([cls rangeOfString:@"TextEffects"].location != NSNotFound || [cls rangeOfString:@"RemoteKeyboard"].location != NSNotFound)) ownKeys++;
-            if (footer && !strip && !w.hidden) strip = DS797FindClass(w, footer, 0);
-        }
-        DSDiagnosticsRecordFormat(@"app: kbcap797 shown=%d | by bundle: messagesOwnsKeys=%d stageKeyboardApp=%d beeper=%d | seen: stripFooter=%d keyboardWindows=%d keyWindow=%@",
-                                  shown, DSMessagesOwnsKeyboard(), DSUsesStageKeyboard(), DSIsBeeper(), strip, ownKeys,
-                                  key ? NSStringFromClass(key.class) : @"none");
-    } @catch (NSException *e) {}
 }
 
 static void DSOnSpringBoardKeyboardShown(void) {
@@ -7427,7 +6773,6 @@ static void DSOnSpringBoardKeyboardShown(void) {
     uint32_t hash = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
     if ((uint32_t)state != hash) return;
     BOOL shown = (state & kDSStageStateActiveBit) != 0;
-    DSKbCap797Log(shown);
     if (!DSStaged()) return;
     if (DSMessagesOwnsKeyboard()) {
         // 4.5.778 caret778: SpringBoard's keys went down (swipe-down, tap

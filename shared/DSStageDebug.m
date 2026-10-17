@@ -358,8 +358,8 @@ static int DS699Index(const char *name) {
 //                swipe*, return*, backspace*, keyfocus*, rekey*, lift*, ...)
 //   holds-on     (removed in 4.5.808: the 794 holds are deleted)
 //   keyring-off  keys go back to the 794 file (keyring795 off)
-//   verbose-on   turns on the log-only probes (log792 / strip792 window,
-//                trace766, tree765-767, scene773, msgdiag714)
+//   verbose-on   turns on the log-only probes (log792 window, trace766,
+//                scene773, msgdiag714; strip792 / tree765-767 removed in 810)
 //   phonesize-off  the phone-size scene path (= phonesize675-off)
 // The old per-name -off files still work; the old coreNNN-off masters for
 // NNN < 796 are retired (the previous .deb is the rollback).
@@ -400,13 +400,14 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core807") == 0) return -1;
         if (strcmp(name, "core808") == 0) return -1;
         if (strcmp(name, "core809") == 0) return -1;
+        if (strcmp(name, "core810") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
     static const char *const kb[] = { "kb", "keys", "reopen", "strip", "caret", "swipe", "return", "backspace",
         "keyfocus", "rekey", "kbshow", "kbhide", "kbnan", "kbown", "kbmin", "kbdrag", "kbguard", "sbkb",
         "keep", "ghost", "type", "leave", "entry", "resign", "flicker", "msgfit", "ks", "lift", "src", NULL };
-    static const char *const verbose[] = { "log792", "trace766", "tree765", "tree766", "tree767", "scene773", "msgdiag714", NULL };
+    static const char *const verbose[] = { "log792", "trace766", "scene773", "msgdiag714", NULL };
     static volatile CFAbsoluteTime kbAt = 0, vAt = 0, rAt = 0;
     static volatile BOOL kbOff = NO, vOn = NO, rOff = NO;
     if (strcmp(name, "keyring795") == 0) return DS796File("keyring-off", &rAt, &rOff) ? 0 : -1;
@@ -1007,6 +1008,12 @@ BOOL DS808On(const char *name) {
 // (the dead-selector deletions stay deleted).
 BOOL DS809On(const char *name) {
     return DSFeature699On("core809") && DS808On("core808") && DSFeature699On(name);
+}
+
+// 4.5.810: master core810-off returns the 810 log changes (quiet810) to 809.
+// The dead-code deletions stay deleted.
+BOOL DS810On(const char *name) {
+    return DSFeature699On("core810") && DS809On("core809") && DSFeature699On(name);
 }
 
 // 4.5.809 latch809: a SpringBoard behaviour feature that had an off file but

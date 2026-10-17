@@ -572,6 +572,9 @@ static void DSTraceCommit(NSString *message, BOOL force) {
             return;
         }
         if (seenAt.count > 64) [seenAt removeAllObjects];
+        // 4.5.810: a line skipped once and never written again stayed here for
+        // the life of the process. Same cap as seenAt (repeat counts only).
+        if (skipped.count > 64) [skipped removeAllObjects];
         seenAt[message] = @(t);
         NSInteger more = skipped[message].integerValue;
         if (more > 0) {

@@ -3,7 +3,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = DynamicStageApp
 
 DynamicStageApp_FILES = $(wildcard *.xm) $(wildcard *.m) ../shared/DSPreferences.m ../shared/DSExclusions.m ../shared/DSDiagnostics.m ../shared/DSStageDebug.m ../shared/DSBootstrap.m ../shared/DSCrashLog.m
-DynamicStageApp_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-function -I../shared
+DynamicStageApp_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wunused-function -Wunused-variable -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unneeded-internal-declaration -I../shared
 DynamicStageApp_FRAMEWORKS = Foundation
 DynamicStageApp_WEAK_FRAMEWORKS = UIKit CoreGraphics QuartzCore
 DynamicStageApp_LDFLAGS = -Wl,-segalign,4000

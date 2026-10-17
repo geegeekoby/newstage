@@ -9,12 +9,9 @@ extern "C" {
 // UIKeyboard, or CGRectNull when none is on the display. Does not unhide
 // windows or call private selectors on unrelated ones.
 CGRect DSVisibleKeyboardFrameOnScreen(void);
-// 4.5.765 tree765 (log only): map keyboard windows on the first 3 shows.
-void DSTree765NoteArbiter(BOOL on);
 void DSTree765WipeStaleOnBoot(void);
 #ifdef __OBJC__
 @class NSString;
-NSString *DSTree765Read(void);
 // 4.5.768 kbvis768 (log only): keyboard visibility sampler, see .m.
 void DSKbVis768NoteArbiter(BOOL on, BOOL stageOnScreen, NSString *owner, CGRect frame);
 BOOL DSKbVis768ArbiterIsOn(void);

@@ -1,12 +1,12 @@
-# DynamicStage 4.5.809 switch files
+# DynamicStage 4.5.810 switch files
 
-Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/var/jb/var/mobile/...`). Generated from the 4.5.809 source.
+Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/var/jb/var/mobile/...`). Generated from the 4.5.809 source; updated for 4.5.810.
 
 ## Rules
 - `<feature>-off` turns a feature off; default is ON unless marked opt-in.
 - Opt-in features need `<feature>-on` (or the named on file).
-- `coreNNN-off` returns every change of build NNN to build NNN-1 (core796..core809 are live masters; older core masters are retired and forced on unless `core796-off`).
-- Group switches (DS796Group): `kb-off` (keyboard model features: kb, keys, reopen, strip, caret, swipe, return, backspace, keyfocus, rekey, kbshow, kbhide, kbnan, kbown, kbmin, kbdrag, kbguard, sbkb, keep, ghost, type, leave, entry, resign, flicker, msgfit, ks, lift, src), `verbose-on` (log792, trace766, tree765-767, scene773, msgdiag714 are off unless this exists), `keyring-off` (keyring795), `camera-off` (4.5.809: all camera paths).
+- `coreNNN-off` returns every change of build NNN to build NNN-1 (core796..core810 are live masters; older core masters are retired and forced on unless `core796-off`).
+- Group switches (DS796Group): `kb-off` (keyboard model features: kb, keys, reopen, strip, caret, swipe, return, backspace, keyfocus, rekey, kbshow, kbhide, kbnan, kbown, kbmin, kbdrag, kbguard, sbkb, keep, ghost, type, leave, entry, resign, flicker, msgfit, ks, lift, src), `verbose-on` (log792, trace766, scene773, msgdiag714 are off unless this exists), `keyring-off` (keyring795), `camera-off` (4.5.809: all camera paths).
 - A crash while a feature is marked "trying" latches it off (`<feature>-latched`); latch749 reports them at start.
 
 ## Feature switches read through a gate
@@ -29,15 +29,12 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 | `resign777-off` | on | DS777On | app | resign778 rides on resign777-off too |
 | `log791-off` | on | DS791On | app,shared |  |
 | `stack778become-off` | on | DS778On | app |  |
-| `strip803-off` | on | DS803On | app | 4.5.803 strip803 (log only): the switches the Messages strip path reads, |
 | `caret788-off` | on | DS788On | app,shared |  |
 | `reopen784-off` | on | DS785On | app |  |
 | `strip790-off` | on | DS790On | app |  |
 | `leave781-off` | on | DS781On | app |  |
-| `strip804-off` | on | DS804On | app |  |
 | `log792-off` | on | DS792On | app,shared |  |
 | `core797-off` | on (master) | DSFeature699On | app | Off: kbcap797-off / core797-off. |
-| `kbcap797-off` | on | DSFeature699On | app | Off: kbcap797-off / core797-off. |
 | `perf706-off` | on | DSFeature699On | shared,springboard |  |
 | `trace766-off` | on | DS766On | shared | time. Off: trace766-off / core766-off. |
 | `log741-off` | on | DSFeature699On | shared | whole line before it reaches the serial writer. Off: -log741-off. |
@@ -102,8 +99,6 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 | `raise740-off` | on | DS809Latched | springboard | Off: /var/mobile/.dynamicstage-raise740-off. |
 | `raise741-off` | on | DSFeature699On | springboard | Off: -raise741-off. |
 | `core765-off` | on (master) | DSFeature699On | springboard | 4.5.788: opt-in |
-| `tree765-off` | on | DSFeature699On | springboard | 4.5.788: opt-in |
-| `tree766-off` | on | DS766On | springboard |  |
 | `core768-off` | on (master) | DSFeature699On | springboard |  |
 | `kbvis768-off` | on | DSFeature699On | springboard |  |
 | `hide772-off` | on | DS772On | springboard | hide772-off, master core772-off (crash latch hide772). |
@@ -115,7 +110,6 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 | `name773-off` | on | DS773On | springboard |  |
 | `name774-off` | on | DS774On | springboard | 4.5.774: IMPs are signed on arm64e; strip before comparing |
 | `scene773-off` | on | DS773On | springboard | scene773: FBScene -updateSettings:withTransitionContext:completion: (existing |
-| `register774-off` | on | DS774On | springboard | /var/mobile/.dynamicstage-register774-on. core795-off returns to 794. |
 | `keyfocus773-off` | on | DS773On | springboard | 4.5.773 keyfocus773: up to 3 re-asserts per show, each after the |
 | `rekey775-off` | on | DS775On | springboard | 4.5.775: teardown after dismissal is not a recovery |
 | `edge741-off` | on | DS809Latched | springboard | card grows; the app is never covered. Off: -edge741-off (latch). |
@@ -166,7 +160,6 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 | `type756-off` | on | DS756On | springboard | 4.5.756 type756: a typing owner whose card was closed or minimised is |
 | `typing803-off` | on | DS803On | springboard | Spotlight's own keys on a stale typing flag). Off: typing803-off. |
 | `sbkb767-off` | on | DS767On | springboard | Off: sbkb767-off / core767-off (latch sbkb767). |
-| `tree767-off` | on | DS767On | springboard | Off: tree767-off / core767-off (latch tree767). |
 | `keys759-off` | on | DS759On | springboard | / phonesize684 apps so the host sits above the stage. Off: keys759-off. |
 | `noise803-off` | on | DS803On | springboard | written when the state changes. Off: noise803-off. |
 | `kbfocus802-on` | off (opt-in) | DS802OptIn | springboard | kbfocus802-off / core802-off and crash latch kbfocus802 still win. |
@@ -291,8 +284,6 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 | `camera-off` | springboard/DSCameraArbiter.m:1653 |
 | `cam740-off` | springboard/DSCameraArbiter.m:1993 |
 | `raise740-off` | springboard/DSKeyboardVisibility.m:1292 |
-| `tree765-on` | springboard/DSKeyboardVisibility.m:1555 |
-| `register774-on` | springboard/DSKeyboardVisibility.m:2189 |
 | `keys674-off` | springboard/DSKeys674.m:21 |
 | `phonesize675-off` | springboard/DSSceneHost.m:139 |
 | `phonesize-off` | springboard/DSSceneHost.m:140 |
@@ -368,3 +359,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 | `picker740-off` | springboard/DSStageManager.m:16399 |
 | `notch746-off` | springboard/DSStageManager.m:16486 |
 | `core749-off` | springboard/Tweak.xm:2539 |
+
+
+## 4.5.810 changes
+- New: `core810-off` (810's log changes back to 809), `quiet810-off` (occl798 "ok" line written every time again, as in 809), `switch810-off` (gest770 switcher field back to "unreadable").
+- Removed with their code (files are no longer read): tree765-on / tree765-off / tree766-off / tree767-off, register774-on / register774-off, strip803-off, strip804-off, kbcap797-off; log792 no longer adds the strip792 hooks (log792 itself still gates the trace window).

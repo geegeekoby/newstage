@@ -1738,7 +1738,6 @@ static DSPhoneSize690Tune DSPhoneSize690CurrentTune(void) {
     static BOOL initialised = NO;
     if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
     initialised = YES;
-    NSString *text = nil;
     DSPhoneSize690Tune t;
     t.on = YES;
     t.stripTop = 59.0;
@@ -2371,10 +2370,6 @@ static BOOL DSReg799Has(id obj, SEL sel, unsigned expectedArgs, NSString **why) 
                               _bundleIdentifier ?: @"?", handle, ident ?: @"?");
     DSCrash793Crumb([[NSString stringWithFormat:@"reg799 registered %@ handle=%p", _bundleIdentifier ?: @"?", handle] UTF8String]);
 
-    // 3. Display-layout element: log only in 799 (publishing every staged card
-    // risks fighting the camera path and keyboard focus; 803 will do it for real).
-    DSDiagnosticsRecordFormat(@"SpringBoard: reg799: would publish SBSDisplayLayoutElement for %@ ident=%@ (log-only in 799; camera path already publishes when needed)",
-                              _bundleIdentifier ?: @"?", ident ?: @"?");
 }
 
 - (void)reg799Unregister {
@@ -8000,19 +7995,24 @@ static NSString *DSGest770StateName(UIGestureRecognizerState s) {
 // 4.5.772: the real switcher state (the guarded read 4.5.650-656 shipped),
 // asked only from the 0.25 s gest770 poll / pull lines while a card exists.
 static NSString *DSGest772SwitcherState(void) {
-    static const char *names[] = { "SBMainSwitcherController", "SBMainSwitcherViewController" };
-    for (int i = 0; i < 2; i++) {
-        Class c = objc_getClass(names[i]);
-        if (!c || ![c respondsToSelector:@selector(sharedInstance)]) continue;
-        @try {
-            id controller = ((id (*)(id, SEL))objc_msgSend)(c, @selector(sharedInstance));
-            if (!controller || ![controller respondsToSelector:@selector(isMainSwitcherVisible)]) continue;
-            return ((BOOL (*)(id, SEL))objc_msgSend)(controller, @selector(isMainSwitcherVisible)) ? @"OPEN" : @"closed";
-        } @catch (NSException *exception) {
-            return @"?";
-        }
+    // 4.5.810 switch810: SBMainSwitcherController / SBMainSwitcherViewController
+    // have no +sharedInstance / -isMainSwitcherVisible on 20F75, so this always
+    // said "unreadable". Verified in 20F75 (arch799/allmethods.txt):
+    // +[SBMainSwitcherControllerCoordinator sharedInstanceIfExists] and
+    // -[SBMainSwitcherControllerCoordinator isAnySwitcherVisible]. Read-only;
+    // IfExists never creates the coordinator. Off: switch810-off / core810-off.
+    if (!DS810On("switch810")) return @"unreadable";
+    Class c = objc_getClass("SBMainSwitcherControllerCoordinator");
+    SEL shared = sel_registerName("sharedInstanceIfExists");
+    SEL visible = sel_registerName("isAnySwitcherVisible");
+    if (!c || ![c respondsToSelector:shared]) return @"unreadable";
+    @try {
+        id coordinator = ((id (*)(id, SEL))objc_msgSend)(c, shared);
+        if (!coordinator || ![coordinator respondsToSelector:visible]) return @"unreadable";
+        return ((BOOL (*)(id, SEL))objc_msgSend)(coordinator, visible) ? @"OPEN" : @"closed";
+    } @catch (NSException *exception) {
+        return @"?";
     }
-    return @"unreadable";
 }
 
 static NSString *DSGest770SwitcherSummary(void) {

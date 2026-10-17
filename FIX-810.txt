@@ -1,0 +1,38 @@
+DynamicStage 4.5.810 - sweep clean-up (built on 4.5.809; backup ../bak810)
+
+Zero behaviour change apart from less log noise. Deletions can't be switched back;
+core810-off returns the two new log changes (quiet810, switch810) to 809.
+
+1. Dead app functions (compiler "not needed"/"unused", iterated until clean): DSBanishKeyboardInView,
+   DSBanishKeyboardLayers, DSStripKeyboardLayerHostsInTree, DSLiftEffectsNode, DSCompactEffectsNode,
+   DSSeatReplyTree, DSPinShellTree, DSTranslateComposersInTree, DSShrinkScrollsAbove, DSPhoneRestoreLifted,
+   DSPhoneRestoreNaturalFrames, DSPhoneCollectKeyUnion, DSPhoneNoteHeader, DSPhoneCollectRounds,
+   DSFindMessagesKeyboard, then the ones only they used: DSSuppressKeyboardView, DSStageShellFrame,
+   DSShouldSeatInShell, DSSeatReplyOnParentBottom, DSFitOneInputShell, DSConstraintPinsShellToParent,
+   DSLiftViewBottomTo, DSNearestShell, DSViewBrief, DSViewHoldsReplyChrome. -480 lines (app/Tweak.xm).
+2. Unused statics: 9 DSMessages* in app, DSBanishHits, DSCorner765At, DSHold740Gen, DSHold740Replaying,
+   DSFocus769PendingGen, `text` in DSPhoneSize690CurrentTune. -16.
+3. Makefiles: -Wunused-function -Wunused-variable on (reported, not errors). 2 lines changed.
+4. pass795 "794 would have held it" log and the three blocks that only computed it (incl. a sync
+   DSAsk per home-gesture scene update). -38.
+5. Finished probes deleted: strip792 (UIView hooks group), strip803, strip804 (CKChatController
+   updateAppStripVisibility / browser-button hooks and CKMessageEntryView shouldShowAppStrip, all
+   pure %orig + log), kbcap797 (window-tree walk per keyboard show), register774 (unverified
+   getters + ivar reads), reg799 "would publish" line, sensor669 shape dumps (+2 helpers),
+   tree765/766/767 dump (export section "--- tree765 ---" removed; old dump file unlinked on boot). ~-530.
+   Kept: focus791 (keyboard focus breadcrumb), focus798 (crash crumb), strip790, relay668 (dylib check).
+6. quiet810: occl798 "ok reason present" diagnostics line only when it differs from the last one;
+   crash breadcrumb still every time. Off: quiet810-off / core810-off. +6.
+7. verbose-on list: tree765-767 dropped (names no longer read). 3 lines.
+8. 6 old debs (642-648) and FIX-648..790 moved from CursorRepo to ../archive810 (29 files, box only).
+9. switch810: gest770 switcher field read +[SBMainSwitcherControllerCoordinator sharedInstanceIfExists]
+   / -isAnySwitcherVisible (both in arch799/allmethods.txt); the old SBMainSwitcherController(+ViewController)
+   sharedInstance / isMainSwitcherVisible do not exist in 20F75. Log only. Off: switch810-off / core810-off.
+12. app UIWindow setFrame: catch around DSProcessWindow now leaves one "window810" trace line per
+    exception name (max 8). +8.
+13. Timers audited (all stopped or process-lifetime by design): see report.
+14. Collections audited: one unbounded one fixed - DSDiagnostics spam745 `skipped` dict (now capped at 64
+    like seenAt). +3.
+
+Expected log changes: no "pass795 passed", no "reg799: would publish", no sensor669 shape lines,
+no tree765 section, fewer occl798 lines, gest770 switcher=closed/OPEN instead of unreadable.

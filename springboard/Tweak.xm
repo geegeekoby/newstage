@@ -171,24 +171,9 @@ static NSString *DSAnySceneIdentifier(id scene) {
 }
 
 // ---- 4.5.795 pass795 -----------------------------------------------------------
-// Rule: SpringBoard's own scene and app-view updates for a staged app always
-// reach SpringBoard, at once and in order. No hold, no replay, no drop, and
-// no completion(YES) without %orig. Every crash table entry since 667 traps in
-// SpringBoard's own -[SBAppViewController sceneHandle:didUpdateSettingsWithDiff:
-// previousSettings:] right after we had held, dropped or replayed an earlier
-// update for the same app view.
-// 4.5.808 holds808: the 794 holds (holds-on, pass795-off, core795-off, latch
-// pass795) are deleted; SpringBoard's updates always pass. No feature name is
-// left for a latch to target, so this only logs.
-static void DS795NoteWouldHold(NSString *what) {
-    static CFAbsoluteTime last = 0;
-    static NSString *lastWhat = nil;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (now - last > 1.0 || now < last || ![what isEqualToString:lastWhat]) {
-        last = now; lastWhat = [what copy];
-        DSDiagnosticsRecordFormat(@"SpringBoard: pass795 passed to SpringBoard (794 would have held it: %@)", what);
-    }
-}
+// SpringBoard's own scene and app-view updates for a staged app always reach
+// SpringBoard, at once and in order (794 holds deleted in 808). 4.5.810: the
+// "794 would have held it" log is gone too.
 
 // 4.5.706 perf706: an app that is not injected (Signal) had SpringBoard send it
 // ~40 identical scene updates in a few seconds, each one a trace line. The same
@@ -369,14 +354,6 @@ static BOOL DSPerf706SceneTraceWanted(NSString *identifier, int fg, long depth, 
             }
         }
     }
-    if ([DSSceneHost homeGestureIsActive] ||
-        [DSSceneHost sceneIdentifierStaysBackgrounded:([self respondsToSelector:@selector(identifier)] ? self.identifier : nil)]) {
-        NSString *identifier = [self respondsToSelector:@selector(identifier)] ? self.identifier : nil;
-        BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:identifier] || DSAsk(^BOOL(DSStageManager *manager) {
-            return [manager isHostingSceneIdentifier:identifier];
-        });
-        if (hosted) DS795NoteWouldHold(@"minimized / home scene update");   // 4.5.808: always passed (holds gone)
-    }
     // A video updates its scene constantly. Snapshotting or laying out the
     // card from inside this call updates the scene again, and that re-entry
     // is an assertion. A Messages conversation push is the same shape: the
@@ -510,15 +487,6 @@ static BOOL DSPerf706SceneTraceWanted(NSString *identifier, int fg, long depth, 
         %orig;
         return;
     }
-    // Same hold as updateSettings:withTransitionContext:. Applying a home /
-    // minimized update to a hosted stage scene is the SIGTRAP. Do not %orig.
-    if ([DSSceneHost homeGestureIsActive] ||
-        [DSSceneHost sceneIdentifierStaysBackgrounded:incomingIdentifier]) {
-        BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:incomingIdentifier] || DSAsk(^BOOL(DSStageManager *manager) {
-            return [manager isHostingSceneIdentifier:incomingIdentifier];
-        });
-        if (hosted) DS795NoteWouldHold(@"minimized / home scene block update");   // 4.5.808: always passed (holds gone)
-    }
 
     __weak __typeof(self) weakSelf = self;
     [DSSceneHost beginSceneSettingsUpdate];
@@ -630,11 +598,8 @@ static BOOL DSPerf706SceneTraceWanted(NSString *identifier, int fg, long depth, 
 
 // ---- 4.5.765 corner765 -------------------------------------------------------
 // Off: corner765-off / core765-off (crash latch corner765).
-static CFAbsoluteTime DSCorner765At = 0;
 
 // 4.5.740 hold740: generation of the pending held Live update (main thread).
-static NSUInteger DSHold740Gen = 0;
-static BOOL DSHold740Replaying = NO;
 
 // ---- 4.5.769 focus769 -----------------------------------------------------------
 // Cbskh (767) 01:18:17.123: Beeper's keyboardFocus update was held for the
@@ -645,7 +610,6 @@ static BOOL DSHold740Replaying = NO;
 // Off: focus769-off / core769-off (crash latch focus769).
 static NSMutableDictionary<NSString *, NSNumber *> *DSFocus769Latest = nil;
 static NSMutableDictionary<NSString *, NSNumber *> *DSFocus769Delivered = nil;
-static NSUInteger DSFocus769PendingGen = 0;
 
 static NSInteger DSFocus769StateOf(NSString *text) {
     if (text.length == 0) return 0;
@@ -714,7 +678,13 @@ static void DS798Occlusion(id ctrl, id handle) {
                 lastOk = now;
                 NSString *ok = [NSString stringWithFormat:@"occl798 ok reason present %@ ctrl=%p (reg799 holding the claim) card[%@]",
                                 ident ?: @"?", ctrl, DS798Card(ctrl)];
-                DSDiagnosticsRecordFormat(@"SpringBoard: %@", ok);
+                // 4.5.810 quiet810: the log line only when it differs from the last
+                // one (the crash breadcrumb is still written every time).
+                static NSString *lastOkLine = nil;
+                if (!DS810On("quiet810") || ![ok isEqualToString:lastOkLine]) {
+                    lastOkLine = ok;
+                    DSDiagnosticsRecordFormat(@"SpringBoard: %@", ok);
+                }
                 DSCrash793Crumb(ok.UTF8String);
             }
             return;
@@ -794,12 +764,6 @@ static void DS798Focus(id self, id handle, id diff) {
         // 4.5.795 pass795: always %orig, at once (see the helper above).
         // 4.5.808 holds808: the 794 hold / skip / replay path below it is gone.
         {
-            NSString *would = nil;
-            if ([DSSceneHost homeGestureIsActive] || [DSSceneHost appViewControllerStaysBackgrounded:self]) would = @"home gesture / stays backgrounded";
-            else if (DSCallGuardActive()) would = @"call";
-            else if (DSStageDragSettlingFast(1.2)) would = @"card drag";
-            else if (DSStageRestoreSettlingFast(1.5)) would = @"corner restore";
-            if (would) DS795NoteWouldHold(would);
             NSInteger mode795 = [self respondsToSelector:@selector(displayMode)] ? ((NSInteger (*)(id, SEL))objc_msgSend)(self, @selector(displayMode)) : -1;
             static CFAbsoluteTime last795 = 0;
             CFAbsoluteTime now795 = CFAbsoluteTimeGetCurrent();

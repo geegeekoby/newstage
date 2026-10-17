@@ -17,6 +17,10 @@ void DSTree765WipeStaleOnBoot(void);
 NSString *DSTree765Read(void);
 // 4.5.768 kbvis768 (log only): keyboard visibility sampler, see .m.
 void DSKbVis768NoteArbiter(BOOL on, BOOL stageOnScreen, NSString *owner, CGRect frame);
+BOOL DSKbVis768ArbiterIsOn(void);
+CFAbsoluteTime DSKbVis768ArbiterOffTime(void);
+// 4.5.802 kbfocus802: called on the main thread with each kbvis768 verdict (YES / NO) for the current show.
+extern void (^DSKbVis802Verdict)(NSString *owner, NSInteger show, BOOL visible);
 NSString *DSKbVis768Read(void);
 #endif
 
@@ -109,6 +113,8 @@ BOOL DSKeyboardWindowShouldPinLevel(id window);
 void DSHoldKeyboardLevelAboveStage(void);
 void DSReleaseKeyboardLevelHold(void);
 CGFloat DSKeyboardWindowLevelAboveStage(void);
+// 4.5.802 medusa802: SpringBoard's own Medusa level assertion instead of direct level writes.
+BOOL DSMedusa802Handles(id window);
 // While a staged keyboard is up, any scene other than the stage's own scene
 // is replaced with that scene. Level alone cannot cross scenes.
 id DSReplacementSceneForKeyboardWindow(id window, id proposedScene);

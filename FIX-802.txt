@@ -1,0 +1,6 @@
+4.5.802 (built on 4.5.801; backup of 801 tree: /workspace/phone-stage-fit/bak802)
+See changelog.md "## 4.5.802". Switches (/var/mobile/.dynamicstage-<name>-off unless noted):
+  core802-off  -> 4.5.801 behaviour (kbfocus801 comes back)   core801-off -> 4.5.800 (now actually works)
+  kbfocus802   OFF by default; enable with .dynamicstage-kbfocus802-on
+  medusa802 keep802 lift802 hide802 trace802 stamp802  (on by default, each has an -off file; medusa802/keep802/lift802/kbfocus802 have crash latches)
+Unchanged: fg801, Messages 673 camera, msg742, card 420x458, no status-bar writes, no tune files, no new holds/replays/timers.

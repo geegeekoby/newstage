@@ -2000,7 +2000,7 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
     // 4.5.416 kept the keyboard above the stage after UIKit tried to drop it
     // back to level 10. The frame and the scene are not changed here.
     if ((DSKeyboardWindowIsDocked(self) || DSKeyboardWindowShouldPinLevel(self)) &&
-        level < DSKeyboardWindowLevelAboveStage()) {
+        level < DSKeyboardWindowLevelAboveStage() && !DSMedusa802Handles(self)) {
         %orig(DSKeyboardWindowLevelAboveStage());
         return;
     }
@@ -2600,11 +2600,12 @@ static NSString *DSWhy775Ident(id obj) {
 
 %group Why775Update
 %hook SBMedusaHostedKeyboardWindowController
-- (void)updateMedusaHostedKeyboardWindowForScene:(id)scene isForeground:(BOOL)isForeground {
-    // 4.5.801: capture into a stack int BEFORE %orig and never re-read the
-    // BOOL parameter afterwards. 800's `BOOL fg = …; fg ? 1 : 0` still printed
-    // isForeground:1868470863 (Hdidbdh) — clang/%orig reused the clobbered reg.
-    volatile int fgLog = ((uint8_t)isForeground) != 0 ? 1 : 0;
+- (void)updateMedusaHostedKeyboardWindowForScene:(id)scene isForeground:(unsigned long)isForeground {
+    // 4.5.802: proven from the 801 .o: clang treats a BOOL argument as already
+    // 0/1 and folds `!= 0 ? 1 : 0` away, storing raw w3. SpringBoard's caller
+    // leaves junk in the upper bits (0x6D3E4C3F). Take the whole register and
+    // test only the low byte (the real BOOL).
+    volatile int fgLog = ((isForeground & 0xffUL) != 0) ? 1 : 0;
     %orig;
     @try {
         id w = [self respondsToSelector:@selector(medusaHostedKeyboardWindow)] ? ((id (*)(id, SEL))objc_msgSend)(self, @selector(medusaHostedKeyboardWindow)) : nil;

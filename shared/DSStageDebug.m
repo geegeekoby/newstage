@@ -1,3 +1,5 @@
+#include <sys/time.h>
+#include <unistd.h>
 #import "DSStageDebug.h"
 #import <stdarg.h>
 #import <stdatomic.h>
@@ -388,6 +390,10 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core798") == 0) return -1;
         if (strcmp(name, "core799") == 0) return -1;
         if (strcmp(name, "core800") == 0) return -1;
+        // 4.5.802: core801 was missing here, so core801-off was forced on and
+        // did nothing. core801 / core802 are live masters again.
+        if (strcmp(name, "core801") == 0) return -1;
+        if (strcmp(name, "core802") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -723,7 +729,8 @@ static BOOL DSLog697Exempt(NSString *line) {
     dispatch_once(&once, ^{
         keys = @[ @"[KEYS]", @"kbvis", @"why775", @"keep776", @"focus", @"stand-in",
                   @"keyboard", @"keyring", @"kbfocus", @"resign", @"takeKey", @"src746",
-                  @"arbiter on", @"fg800", @"fg801", @"reason800", @"occl798" ];
+                  @"arbiter on", @"fg800", @"fg801", @"reason800", @"occl798",
+                  @"medusa802", @"lift802", @"keep802", @"hide802" ];
     });
     for (NSString *k in keys) {
         if ([line rangeOfString:k].location != NSNotFound) return YES;
@@ -764,7 +771,15 @@ void DSLogAppend(NSString *line) {
     @synchronized (DSLogLock()) {
         if (droppedNote) [DSLogBuffer appendFormat:@"%@\n", droppedNote];
         if (!DSLogBuffer) DSLogBuffer = [NSMutableString string];
-        [DSLogBuffer appendFormat:@"%@\n", line];
+        // 4.5.802 stamp802: local HH:mm:ss.SSS on every main log line.
+        // Off: stamp802-off / core802-off.
+        if (DS802On("stamp802")) {
+            struct timeval tv; gettimeofday(&tv, NULL);
+            struct tm tmv; time_t secs = tv.tv_sec; localtime_r(&secs, &tmv);
+            [DSLogBuffer appendFormat:@"%02d:%02d:%02d.%03d %@\n", tmv.tm_hour, tmv.tm_min, tmv.tm_sec, (int)(tv.tv_usec / 1000), line];
+        } else {
+            [DSLogBuffer appendFormat:@"%@\n", line];
+        }
         if (DSLogBuffer.length > kDSLogBufferMaxBytes) {
             NSUInteger cut = DSLogBuffer.length - kDSLogBufferMaxBytes;
             NSRange newline = [DSLogBuffer rangeOfString:@"\n"
@@ -949,6 +964,20 @@ BOOL DS800On(const char *name) {
 // 4.5.801: master core801-off returns every 801 change to 4.5.800.
 BOOL DS801On(const char *name) {
     return DSFeature699On("core801") && DSFeature699On(name);
+}
+
+// 4.5.802: master core802-off returns every 802 change to 4.5.801.
+BOOL DS802On(const char *name) {
+    return DSFeature699On("core802") && DSFeature699On(name);
+}
+
+// 4.5.802: opt-in features (off unless /var/mobile/.dynamicstage-<name>-on).
+BOOL DS802OptIn(const char *name) {
+    if (!name || !DS802On(name)) return NO;
+    char plain[160], jb[180];
+    snprintf(plain, sizeof(plain), "/var/mobile/.dynamicstage-%s-on", name);
+    snprintf(jb, sizeof(jb), "/var/jb/var/mobile/.dynamicstage-%s-on", name);
+    return access(plain, F_OK) == 0 || access(jb, F_OK) == 0;
 }
 
 

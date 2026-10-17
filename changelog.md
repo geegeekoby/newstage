@@ -1,3 +1,13 @@
+## 4.5.802
+- kbfocus802 (opt-in, replaces kbfocus801): one SBWorkspaceKeyboardFocusController request per focus, no setExternalSceneIdentities:, no 0.35 s spin, no polls. The stand-in / keyring795 / msg742 path stays fully active; focus only counts as granted once kbvis768 proves the keys visible for that owner in the current show, after which later taps skip the stand-in. Logs "kbfocus802: request / result / proof=keys-visible | proof=none -> fallback". On: /var/mobile/.dynamicstage-kbfocus802-on (kbfocus802-off + crash latch still win). kbfocus801 is off while core802 is on.
+- medusa802: Medusa's level 20 is SpringBoard's own default level assertion (priority 0, Normal+5+15; proven from 20F75). While a staged app (not Messages) owns the keys, take SpringBoard's own assertion (newWindowLevelAssertionWithPriority:3 windowLevel:StatusBar+5000) and invalidate it on keys off / restore; our direct Medusa level writes, setWindowLevel: pin and restore are skipped. Off: medusa802-off + latch.
+- keep802: a new show cancels keep776's pending 0.6 s hand-back, and re-shows (once) a Medusa window our own hand-back had hidden. Off: keep802-off + latch.
+- lift802: a staged app's keyboard "up" that arrives < 1 s after arbiter off (no new arbiter on) is taken as hidden (801 Beeper lift=-123). drag706 counts "keys just went down / spring-back pending" as keyboard around. Off: lift802-off + latch.
+- why775: proven from the 801 .o that clang folded the BOOL test (raw w3 stored). The hook now takes unsigned long and tests the low byte: prints 0 or 1.
+- trace802: export splits sessions by SpringBoard pid (this boot's lines from the previous file move to "this session") and reads up to 400 KB. stamp802: HH:mm:ss.SSS on main log lines. Off: trace802-off / stamp802-off.
+- hide802: one "hiding the staged keyboard" / "told Messages the keyboard is gone" per resign; ghost745 repeats with the same hide+source+frame print once. Off: hide802-off.
+- core801-off now works (DS796Group forced it on). core802-off returns to 801.
+
 ## 4.5.801
 - fg801: cover-sheet ordering for Live↔Static (automatesLifecycle briefly YES around setRequestedMode); restore Live + displayMode 4 / layerHosts on wake; skip foreground=NO orig when already Static. Fixes the Static assertion and the ~5 s blank card after deep-background corner restore. Off: fg801-off.
 - why775: volatile stack int before %orig so the log prints 0 or 1.

@@ -938,6 +938,9 @@ extern NSString *DSFocus755LastFor(NSString *bundle, CFAbsoluteTime *at);
     BOOL _kbfocus801Marked;
     BOOL _kbfocus801Active;
     NSString *_kbfocus801Bundle;
+    NSString *_kbfocus802Bundle;      // 4.5.802: focus requested (once) for this bundle
+    BOOL _kbfocus802ProofLogged;
+    NSInteger _hide802Generation;     // 4.5.802 hide802: generation after the last staged-keyboard hide
     NSInteger _presentGeneration;
     NSMutableSet<NSNumber *> *_loadedAppHashes;
     NSMutableSet<NSNumber *> *_listeningAppHashes;
@@ -2897,6 +2900,9 @@ static void DSKeys697Log(NSString *key, NSString *line) {
 // uses the real keyboard frame height. Off: kbfocus801-off / core801-off
 // (crash latch kbfocus801).
 - (BOOL)kbfocus801On {
+    // 4.5.802: kbfocus801 (trusted "ok" without visible keys) is replaced by
+    // opt-in kbfocus802. core802-off brings 801's behaviour back.
+    if (DSFeature699On("core802")) return NO;
     if (!DS801On("kbfocus801")) return NO;
     if (!_kbfocus801Marked) {
         _kbfocus801Marked = YES;
@@ -3128,6 +3134,71 @@ static void DSKeys697Log(NSString *key, NSString *line) {
     _kbfocus801Bundle = nil;
 }
 
+// ---- 4.5.802 kbfocus802 ---------------------------------------------------------
+// 801 counted completion "ok" as success: 8x ok for Messages, keys never shown.
+// 802: one focus request per focus (no setExternalSceneIdentities:, no spin, no
+// polls). The stand-in / keyring795 / msg742 path stays fully active. Only
+// once kbvis768 proves the keys are visible for that owner in the current show
+// (Medusa shown, live layer host, above the stage, SpringBoard sees keys - the
+// stand-in uses SpringBoard's own keyboard so it can never satisfy this) does
+// focus count as granted; later taps then skip the stand-in. Proof is cleared
+// on every staged-keyboard hide.
+// Off by default: /var/mobile/.dynamicstage-kbfocus802-on enables it;
+// kbfocus802-off / core802-off and crash latch kbfocus802 still win.
+- (BOOL)kbfocus802On {
+    if (!DS802OptIn("kbfocus802")) return NO;
+    static BOOL marked = NO;
+    if (!marked) { marked = YES; DSFeature699MarkTrying("kbfocus802"); }
+    return YES;
+}
+
+- (void)kbfocus802NoteVerdict:(NSString *)owner show:(NSInteger)show visible:(BOOL)visible {
+    if (!_kbfocus802Bundle || ![owner isEqualToString:_kbfocus802Bundle]) return;
+    if (visible && !_kbfocus801Active) {
+        _kbfocus801Active = YES;
+        _kbfocus801Bundle = [_kbfocus802Bundle copy];
+        _kbfocus802ProofLogged = YES;
+        DSFeature719MarkAction("kbfocus802");
+        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: %@ proof=keys-visible (kbvis show %ld) - real focus granted", owner, (long)show);
+    } else if (!visible && !_kbfocus801Active && !_kbfocus802ProofLogged) {
+        _kbfocus802ProofLogged = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: %@ proof=none -> fallback (stand-in stays; kbvis show %ld)", owner, (long)show);
+    }
+}
+
+- (void)kbfocus802RequestForBundle:(NSString *)bundle {
+    if (bundle.length == 0 || [_kbfocus802Bundle isEqualToString:bundle]) return;   // one request per focus
+    if (!DSKbVis802Verdict) {
+        DSKbVis802Verdict = ^(NSString *owner, NSInteger show, BOOL visible) {
+            [[DSStageManager sharedManager] kbfocus802NoteVerdict:owner show:show visible:visible];
+        };
+    }
+    _kbfocus802Bundle = [bundle copy];
+    _kbfocus802ProofLogged = NO;
+    DSSceneHost *host = [self kbfocus801HostForBundle:bundle];
+    FBScene *scene = nil;
+    @try { scene = [host hostedScene]; } @catch (NSException *e) { scene = nil; }
+    if (!scene) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: request %@ result=%@ -> fallback", bundle, host ? @"no-scene" : @"no-host");
+        return;
+    }
+    id focus = [self kbfocus801FocusController];
+    if (!focus || ![focus respondsToSelector:@selector(userFocusRequestForScene:reason:completion:)]) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: request %@ result=no-controller -> fallback", bundle);
+        return;
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: request %@ via SBWorkspaceKeyboardFocusController", bundle);
+    @try {
+        NSString *b = [bundle copy];
+        void (^done)(BOOL) = ^(BOOL ok) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: result %@ %@ (not trusted until keys are visible)", b, ok ? @"ok" : @"refused");
+        };
+        ((void (*)(id, SEL, id, id, id))objc_msgSend)(focus, @selector(userFocusRequestForScene:reason:completion:), scene, @"DynamicStage kbfocus802", done);
+    } @catch (NSException *e) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: request %@ result=threw %@ -> fallback", bundle, e.name ?: @"?");
+    }
+}
+
 - (void)showStagedKeyboardLikePickerForBundle:(NSString *)bundle {
     if (_searchSlot >= 0) {
         DSDiagnosticsRecord(@"SpringBoard: staged keyboard stayed down, search is open");
@@ -3166,6 +3237,13 @@ static void DSKeys697Log(NSString *key, NSString *line) {
         DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus801: bypassed stand-in for %@", bundle);
         return;
     }
+    if ([self kbfocus802On]) {
+        if (_kbfocus801Active && [_kbfocus801Bundle isEqualToString:bundle]) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: bypassed stand-in for %@ (keys proven visible)", bundle);
+            return;
+        }
+        [self kbfocus802RequestForBundle:bundle];
+    }
     if ([self bundlePrefersHostedTextFieldKeyboard:bundle]) {
         [self raiseSpringBoardKeyboardForHostedBundle:bundle slot:slot];
         return;
@@ -3199,7 +3277,20 @@ static void DSKeys697Log(NSString *key, NSString *line) {
 }
 
 - (void)hideStagedKeyboardLikePicker {
+    // 4.5.802 hide802: one hide per resign. A repeat with nothing new since the
+    // last hide (same keyboard generation, stand-in not first responder, no
+    // staged slot, no hosted request, no kbfocus) is dropped silently, so
+    // "hiding the staged keyboard" / "told Messages the keyboard is gone" print
+    // once. Off: hide802-off / core802-off.
+    if (DS802On("hide802") && _hide802Generation != 0 && _hide802Generation == _stagedKeyboardEnsureGeneration &&
+        _stagedKeyboardWantsHide && _stagedKeyboardSlot < 0 && !_stagedKeyboardField.isFirstResponder &&
+        _hostedKeyboardRequestBundle.length == 0 && !_kbfocus801Active && _kbfocus802Bundle == nil) {
+        DSFeature719MarkAction("hide802");
+        return;
+    }
     if (_kbfocus801Active) [self kbfocus801ReleaseIfNeeded:@"hideStagedKeyboardLikePicker"];
+    else if (_kbfocus802Bundle) DSDiagnosticsRecordFormat(@"SpringBoard: kbfocus802: %@ focus ended (hide) - no proof this focus", _kbfocus802Bundle);
+    _kbfocus802Bundle = nil;
     NSString *hiding = _hostedKeyboardRequestBundle;
     if (hiding.length == 0) hiding = [self hostedBundleForStagedKeyboard];
     _hostedKeyboardRequestBundle = nil;
@@ -3238,7 +3329,7 @@ static void DSKeys697Log(NSString *key, NSString *line) {
     _stagedKeyboardSlot = -1;
     // Resigning the field does not always deliver a keyboard-down. The top
     // card was left shifted, and the keys stayed on screen.
-    [self collapseHostedKeyboardLift];
+    [self collapseHostedKeyboardLift];    _hide802Generation = _stagedKeyboardEnsureGeneration;
 }
 
 // ---- 4.5.744 kbdrag744 / kbhide744 ----------------------------------------------
@@ -3886,6 +3977,12 @@ static void DSKeys697Log(NSString *key, NSString *line) {
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     if (_ghost745HideAt > 0.0 && now - _ghost745HideAt < 0.3 && now >= _ghost745HideAt && _ghost745ShowAt < _ghost745HideAt) {
         DSFeature719MarkAction("ghost745");
+        // 4.5.802: one line per hide + source + frame (801 printed 4 identical).
+        static CFAbsoluteTime lastHide = 0; static NSString *lastKey = nil;
+        NSString *key = [NSString stringWithFormat:@"%@|%@", source, NSStringFromCGRect(keyboard)];
+        BOOL repeat = DS802On("hide802") && lastHide == _ghost745HideAt && [lastKey isEqualToString:key];
+        lastHide = _ghost745HideAt; lastKey = key;
+        if (!repeat)
         DSDiagnosticsRecordFormat(@"SpringBoard: ghost745 ignored %@ keyboard up %@ %.2f s after SpringBoard hid its keys",
                                   source, NSStringFromCGRect(keyboard), now - _ghost745HideAt);
         return YES;
@@ -4345,6 +4442,25 @@ static BOOL DSKbNan754On(void) {
             }
         }
         if ([self ghost745IsGhost:keyboard source:source]) keyboard = CGRectZero;
+        // 4.5.802 lift802: an app's keyboard "up" that arrives after the
+        // keyboard system said the keys are down (arbiter off < 1 s ago, no new
+        // arbiter on) is the app's stale frame (801 01:13:22.659 Beeper
+        // lift=-123 7 ms after arbiter on=0). Taken as hidden. Messages keeps
+        // msg742's own path. Off: lift802-off / core802-off (latch lift802).
+        if (!CGRectIsEmpty(keyboard) && source.length && ![source isEqualToString:@"SpringBoard"] &&
+            ![source isEqualToString:@"com.apple.MobileSMS"] && [self isHostingBundleIdentifier:source] &&
+            !DSKbVis768ArbiterIsOn() && DSKbVis768ArbiterOffTime() > 0.0 && [self lift802KeysJustWentDown:1.0]) {
+            static CFAbsoluteTime saidFor = 0;
+            static BOOL marked = NO;
+            if (!marked) { marked = YES; DSFeature699MarkTrying("lift802"); }
+            DSFeature719MarkAction("lift802");
+            if (saidFor != DSKbVis768ArbiterOffTime()) {
+                saidFor = DSKbVis768ArbiterOffTime();
+                DSDiagnosticsRecordFormat(@"SpringBoard: lift802 ignored %@ keyboard up %@ %.2f s after the keys went down (no lift)",
+                                          source, NSStringFromCGRect(keyboard), CFAbsoluteTimeGetCurrent() - saidFor);
+            }
+            keyboard = CGRectZero;
+        }
         keyboard = [self ks747Resolve:keyboard source:source];
     } @catch (NSException *exception) {
     }
@@ -16084,7 +16200,19 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
 - (BOOL)drag706KeyboardAround {
     return !CGRectIsEmpty(_keyboardFrame) || _keyboardDrawnOutside || _hostedKeyboardRequestBundle.length > 0 ||
         _stagedKeyboardSlot >= 0 || _searchSlot >= 0 ||
-        [self springBoardIsDrawingKeyboard] || DSLiftSlotAt(0)->hasRestingFrame || DSLiftSlotAt(1)->hasRestingFrame;
+        [self springBoardIsDrawingKeyboard] || DSLiftSlotAt(0)->hasRestingFrame || DSLiftSlotAt(1)->hasRestingFrame ||
+        [self lift802KeysJustWentDown:0.6];
+}
+
+// 4.5.802 lift802: the keyboard went down (arbiter off) within `window` s, or
+// a sync725 spring-back is still pending. Used by drag706 (the card is still
+// springing back: not "a shift with no keyboard") and by noteKeyboardFrame.
+- (BOOL)lift802KeysJustWentDown:(CFAbsoluteTime)window {
+    if (!DS802On("lift802")) return NO;
+    if (_sync725HideAt > 0.0) return YES;
+    if (DSKbVis768ArbiterIsOn()) return NO;
+    CFAbsoluteTime off = DSKbVis768ArbiterOffTime(), now = CFAbsoluteTimeGetCurrent();
+    return off > 0.0 && now >= off && now - off < window;
 }
 
 - (NSString *)drag706ProblemForCard:(DSStageContainerView *)card keyboard:(BOOL)keyboard {

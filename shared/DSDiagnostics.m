@@ -860,7 +860,7 @@ static NSString *DSTrace766Merged(NSString *shared) {
     }];
     NSMutableString *out = [NSMutableString stringWithFormat:@"(trace766: merged SpringBoard + %@)\n", [used componentsJoinedByString:@", "]];
     for (NSArray *row in rows) { [out appendString:row[2]]; [out appendString:@"\n"]; }
-    NSUInteger cap = 120 * 1024;
+    NSUInteger cap = DS802On("trace802") ? 400 * 1024 : 120 * 1024;
     if (out.length > cap) {
         NSUInteger start = out.length - cap;
         NSRange nl = [out rangeOfString:@"\n" options:0 range:NSMakeRange(start, out.length - start)];
@@ -870,10 +870,59 @@ static NSString *DSTrace766Merged(NSString *shared) {
     return out;
 }
 
+// 4.5.802 trace802: split sessions by SpringBoard pid. The archive rename runs
+// after the first hooks of a boot have already written, so this boot's opening
+// lines sat in "previous session". Lines whose "SpringBoard pid=N" matches the
+// current file's pid (and the unstamped lines that follow them) move to the top
+// of "this session". The current file is read up to 400 KB (801: 80 KB, which
+// cut this session to its last ~1 min). Off: trace802-off / core802-off.
+static NSString *DSTrace802Pid(NSString *text) {
+    NSRange r = [text rangeOfString:@"SpringBoard pid="];
+    if (r.location == NSNotFound) return nil;
+    NSUInteger i = NSMaxRange(r), j = i;
+    while (j < text.length && [text characterAtIndex:j] >= '0' && [text characterAtIndex:j] <= '9') j++;
+    return j > i ? [text substringWithRange:NSMakeRange(i, j - i)] : nil;
+}
+
+static void DSTrace802Split(NSString **previous, NSString **current) {
+    NSString *pid = DSTrace802Pid(*current);
+    if (!pid.length || (*previous).length == 0) return;
+    NSString *mark = [NSString stringWithFormat:@"SpringBoard pid=%@ ", pid];
+    NSMutableArray<NSString *> *old = [NSMutableArray array], *mine = [NSMutableArray array];
+    BOOL inMine = NO;
+    for (NSString *line in [*previous componentsSeparatedByString:@"\n"]) {
+        if (line.length == 0) continue;
+        BOOL stamped = line.length >= 12 && [line characterAtIndex:2] == ':' && [line characterAtIndex:5] == ':';
+        if (stamped) inMine = [line rangeOfString:mark].location != NSNotFound;
+        [(inMine ? mine : old) addObject:line];
+    }
+    if (mine.count == 0) return;
+    NSString *p = [old componentsJoinedByString:@"\n"];
+    if (p.length > 80 * 1024) {
+        NSUInteger start = p.length - 80 * 1024;
+        NSRange nl = [p rangeOfString:@"\n" options:0 range:NSMakeRange(start, p.length - start)];
+        p = [p substringFromIndex:nl.location != NSNotFound ? nl.location + 1 : start];
+    }
+    *previous = p;
+    *current = [NSString stringWithFormat:@"(trace802: %lu lines of SpringBoard pid=%@ from before the archive)\n%@\n%@",
+                (unsigned long)mine.count, pid, [mine componentsJoinedByString:@"\n"], *current ?: @""];
+}
+
 NSString *DSTraceRead(void) {
     @try {
-        NSString *previous = DSTraceFile(kDSTracePreviousPath, 80 * 1024);
-        NSString *current = DSTraceFile(kDSTracePath, 80 * 1024);
+        BOOL t802 = DS802On("trace802");
+        NSString *previous = DSTraceFile(kDSTracePreviousPath, t802 ? 0 : 80 * 1024);
+        NSString *current = DSTraceFile(kDSTracePath, t802 ? 400 * 1024 : 80 * 1024);
+        if (t802) {
+            NSString *p = previous, *c = current;
+            DSTrace802Split(&p, &c);
+            previous = p; current = c;
+            if (previous.length > 80 * 1024) {
+                NSUInteger start = previous.length - 80 * 1024;
+                NSRange nl = [previous rangeOfString:@"\n" options:0 range:NSMakeRange(start, previous.length - start)];
+                previous = [previous substringFromIndex:nl.location != NSNotFound ? nl.location + 1 : start];
+            }
+        }
         if (DS766On("trace766")) current = DSTrace766Merged(current);
         if (DS792On("log792")) {
             NSMutableArray<NSString *> *paths = [NSMutableArray arrayWithObject:[NSString stringWithUTF8String:kDSTracePath]];

@@ -855,7 +855,74 @@ CGFloat DSKeyboardWindowLevelAboveStage(void) {
     return UIWindowLevelStatusBar + 5000.0;
 }
 
+// ---- 4.5.802 medusa802 -----------------------------------------------------------
+// Proven from 20F75 SpringBoard: -[SBMedusaHostedKeyboardWindow
+// initWithWindowScene:keyboardScene:] takes a default level assertion
+// (priority 0, level UIWindowLevelNormal+5+15 = 20); _updateWindowLevel applies
+// the highest-priority assertion (Library = 1, Spotlight = 2). So 20 is
+// SpringBoard's own level, not a drop: the 6000 seen before came only from our
+// direct writes (raise / hold / setWindowLevel: pin), and our restore wrote 20
+// back. Any SpringBoard _updateWindowLevel then put it back to 20, under the
+// stage (998). medusa802 instead takes SpringBoard's own assertion
+// (newWindowLevelAssertionWithPriority:3 windowLevel:StatusBar+5000) while a
+// staged app owns the keys, and invalidates it when the keys go off, so
+// SpringBoard itself keeps the level. Our direct Medusa level writes, pin and
+// restore are skipped while on. Messages-up keeps the old path (msg742).
+// Off: medusa802-off / core802-off (crash latch medusa802).
+static id DSMedusa802Assertion = nil;
+static __weak UIWindow *DSMedusa802Window = nil;
+
+BOOL DSMedusa802Handles(id window) {
+    if (![window isKindOfClass:UIWindow.class] || DSMessagesKeyboardIsUp) return NO;
+    if ([NSStringFromClass([window class]) rangeOfString:@"MedusaHostedKeyboardWindow"].location == NSNotFound) return NO;
+    if (![window respondsToSelector:@selector(newWindowLevelAssertionWithPriority:windowLevel:)]) return NO;
+    return DS802On("medusa802");
+}
+
+void DSMedusa802Take(UIWindow *medusa, NSString *why) {
+    @try {
+        if (!NSThread.isMainThread || !DSMedusa802Handles(medusa)) return;
+        if (DSMedusa802Assertion && DSMedusa802Window == medusa) return;
+        if (DSMedusa802Assertion && [DSMedusa802Assertion respondsToSelector:@selector(invalidate)])
+            ((void (*)(id, SEL))objc_msgSend)(DSMedusa802Assertion, @selector(invalidate));
+        static BOOL marked = NO;
+        if (!marked) { marked = YES; DSFeature699MarkTrying("medusa802"); }
+        DSFeature719MarkAction("medusa802");
+        CGFloat before = medusa.windowLevel;
+        // Returns +1 (new...); stored in a strong static.
+        id assertion = ((id (*)(id, SEL, long, double))objc_msgSend)(medusa, @selector(newWindowLevelAssertionWithPriority:windowLevel:),
+                                                                     3L, (double)DSKeyboardWindowLevelAboveStage());
+        DSMedusa802Assertion = assertion;
+        DSMedusa802Window = medusa;
+        DSDiagnosticsRecordFormat(@"SpringBoard: medusa802 took SpringBoard's Medusa level assertion (priority 3, level %.0f; was %.0f) for %@",
+                                  DSKeyboardWindowLevelAboveStage(), before, why ?: @"?");
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: medusa802 take threw %@", exception.name ?: @"?");
+    }
+}
+
+void DSMedusa802Release(NSString *why) {
+    @try {
+        if (!DSMedusa802Assertion) return;
+        id a = DSMedusa802Assertion;
+        DSMedusa802Assertion = nil;
+        DSMedusa802Window = nil;
+        if ([a respondsToSelector:@selector(invalidate)]) ((void (*)(id, SEL))objc_msgSend)(a, @selector(invalidate));
+        DSDiagnosticsRecordFormat(@"SpringBoard: medusa802 released the Medusa level assertion (%@)", why ?: @"?");
+    } @catch (NSException *exception) {
+    }
+}
+
+static UIWindow *DSMedusa802FindWindow(void) {
+    __block UIWindow *medusa = nil;
+    DSVisitApplicationWindows(^(UIWindow *window) {
+        if (!medusa && [NSStringFromClass(window.class) rangeOfString:@"MedusaHostedKeyboardWindow"].location != NSNotFound) medusa = window;
+    });
+    return medusa;
+}
+
 BOOL DSKeyboardWindowShouldPinLevel(id window) {
+    if (DSMedusa802Handles(window)) return NO;   // 4.5.802: SpringBoard's own assertion holds the level
     if (DSMessagesKeyboardCoverLifted) return NO;
     if (!DSKeyboardLevelHeld && !DSExternalKeyboardRaised) return NO;
     if (![window isKindOfClass:UIWindow.class]) return NO;
@@ -880,6 +947,7 @@ void DSHoldKeyboardLevelAboveStage(void) {
         if (DSWindowIsSystemChromeScene(window)) return;
         if (DSLeaveTextEffectsInPlace && DSWindowIsTextEffects(window)) return;
         if (DSLeaveTextEffectsInPlace && !DSWindowContainsFullKeyboard(window)) return;
+        if (DSMedusa802Handles(window)) { DSMedusa802Take(window, @"hold"); return; }
         @try {
             if (window.windowLevel < DSKeyboardWindowLevelAboveStage()) {
                 window.windowLevel = DSKeyboardWindowLevelAboveStage();
@@ -969,6 +1037,7 @@ void DSRestoreRemoteKeyboardPlacement(void) {
     // window at 6000 while the flag is set, including the restore itself.
     DSExternalKeyboardRaised = NO;
     DSKeyboardLevelHeld = NO;
+    DSMedusa802Release(@"restore");
     NSMapTable *table = DSKeyboardPlacements;
     NSArray<UIWindow *> *windows = table ? [table.keyEnumerator.allObjects copy] : @[];
     if (windows.count == 0) return;
@@ -980,7 +1049,7 @@ void DSRestoreRemoteKeyboardPlacement(void) {
             if ([scene isKindOfClass:UIWindowScene.class] && window.windowScene != scene) {
                 window.windowScene = scene;
             }
-            window.windowLevel = level;
+            if (!DSMedusa802Handles(window)) window.windowLevel = level;
         } @catch (NSException *exception) {
         }
     }
@@ -1319,14 +1388,16 @@ static BOOL DSRaiseKeyboardWindowAboveStageNow(void) {
         BOOL hasKeys = DSKeyboardFrameIsOnScreen(keys, screen);
         NSString *before = DSWindowSceneName(window);
         @try {
-            DSRememberKeyboardWindow(window);
+            BOOL medusa802 = DSMedusa802Handles(window);
+            if (!medusa802) DSRememberKeyboardWindow(window);
             if (window.hidden || window.alpha < 0.01) {
                 window.alpha = 1.0;
                 window.hidden = NO;
             }
             // Level only, the same as 4.5.416. Assigning the scene or the frame
             // here is the SIGTRAP, and lowering a keyboard window is the SIGSEGV.
-            window.windowLevel = DSKeyboardWindowLevelAboveStage();
+            if (medusa802) DSMedusa802Take(window, @"raise");
+            else window.windowLevel = DSKeyboardWindowLevelAboveStage();
             window.clipsToBounds = NO;
             window.layer.masksToBounds = NO;
             raised++;
@@ -1863,15 +1934,26 @@ void DSKeep776NoteBlocked(UIWindow *medusa) {
                          (long)DSKbVis768Show, DSKbVis768Owner ?: @"?", (long)count]);
 }
 
+// 4.5.802 keep802: 801 show 11 began with Medusa hid=1 because OUR 0.6 s
+// hand-back above had hidden it after the previous show. A new show cancels a
+// pending hand-back, and if the hand-back already ran, the window we hid is
+// shown again once (only that window, only if still hidden, only for a staged
+// owner keep776 covers). Off: keep802-off / core802-off.
+static NSUInteger DSKeep802Gen = 0;
+static __weak UIWindow *DSKeep802HandedBack = nil;
+
 static void DSKeep776ArbiterOff(void) {
     if (!DSKeep776Owed) return;
     DSKeep776Owed = NO;
+    NSUInteger gen802 = DSKeep802Gen;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         @try {
             UIWindow *w = DSKeep776Medusa;
             if (!w || w.hidden || DSKbVis768On_ || !DSKeep776ApplyHide) return;
+            if (gen802 != DSKeep802Gen && DS802On("keep802")) return;
             DSKbVis768Write(@"keep776: keys off; handing SpringBoard's kept-out Medusa hide back");
             DSKeep776ApplyHide(w);
+            DSKeep802HandedBack = w;
         } @catch (NSException *exception) {
         }
     });
@@ -2238,6 +2320,7 @@ static void DSKbVis768Sample(NSUInteger gen, BOOL final) {
         BOOL sbOwns772 = DS772On("hide772") && [DSKbVis768Owner isEqualToString:@"com.apple.springboard"];   // 4.5.772: SpringBoard's own keys are not in Medusa
         if (DSKbVis768On_ && t >= 0.5 && !sbOwns772) {
             if (yes) DSKbVis768SawYes = YES; else DSKbVis768SawNo = YES;
+            if (DSKbVis802Verdict) DSKbVis802Verdict(DSKbVis768Owner, DSKbVis768Show, yes);
             NSString *verdict = yes ? @"YES" : [NSString stringWithFormat:@"NO (%@)", [why componentsJoinedByString:@"; "]];
             if (![verdict isEqualToString:DSKbVis768LastVerdict]) {
                 DSKbVis768LastVerdict = verdict;
@@ -2264,6 +2347,10 @@ static void DSKbVis768Sample(NSUInteger gen, BOOL final) {
     });
 }
 
+void (^DSKbVis802Verdict)(NSString *owner, NSInteger show, BOOL visible) = nil;
+BOOL DSKbVis768ArbiterIsOn(void) { return DSKbVis768On_; }
+CFAbsoluteTime DSKbVis768ArbiterOffTime(void) { return DSKbVis768OffAt; }
+
 void DSKbVis768NoteArbiter(BOOL on, BOOL stageOnScreen, NSString *owner, CGRect frame) {
     @try {
         if (!NSThread.isMainThread) return;
@@ -2271,10 +2358,32 @@ void DSKbVis768NoteArbiter(BOOL on, BOOL stageOnScreen, NSString *owner, CGRect 
         DSKbVis768On_ = on;
         DSKbVis776StageOn = stageOnScreen;
         if (!on && was) DSKeep776ArbiterOff();
+        if (!on) DSMedusa802Release(@"keys off");
+        else if (stageOnScreen && [owner isKindOfClass:NSString.class] && owner.length &&
+                 ![owner isEqualToString:@"com.apple.springboard"] && ![owner isEqualToString:@"com.apple.MobileSMS"] &&
+                 !DSStage742MessagesStaged() && DS802On("medusa802") &&
+                 [[DSStageManager sharedManager] isHostingBundleIdentifier:owner]) {
+            UIWindow *medusa = DSMedusa802FindWindow();
+            if (medusa) DSMedusa802Take(medusa, owner);
+        } else {
+            DSMedusa802Release(@"keys not owned by a staged app");
+        }
         if (on) {
             if ([owner isKindOfClass:NSString.class] && owner.length) DSKbVis768Owner = [owner copy];
             DSKbVis768Frame = frame;
             DSKbVis768OffAt = 0;
+            if (!was && DS802On("keep802")) {
+                DSKeep802Gen++;
+                UIWindow *mine = DSKeep802HandedBack;
+                DSKeep802HandedBack = nil;
+                if (mine && mine.hidden && DSKeep776Active()) {
+                    DSFeature699MarkTrying("keep802");
+                    DSFeature719MarkAction("keep802");
+                    DSKbVis768Write([NSString stringWithFormat:@"keep802: new show for %@; re-showing the Medusa window our hand-back hid", DSKbVis768Owner ?: @"?"]);
+                    DSDiagnosticsRecordFormat(@"SpringBoard: keep802 re-showed Medusa (our hand-back) for %@", DSKbVis768Owner ?: @"?");
+                    mine.hidden = NO;
+                }
+            }
         } else if (was) {
             DSKbVis768OffAt = CFAbsoluteTimeGetCurrent();
         }

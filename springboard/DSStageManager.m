@@ -13702,6 +13702,14 @@ static void DSKb723Breadcrumb(const char *what) {
         DSFeature719MarkAction("lift755");
         lift = 0.0;
     }
+    // 4.5.816 topstay816: the top card stays where it is while typing in it
+    // (815 log: "kept (already clear) 140 pt" moved it {{5, 5}} -> {{5, 145}}).
+    // The bottom card still moves just above the keyboard; the other card's
+    // slide-aside is unchanged. Off: /var/mobile/.dynamicstage-topstay816-off.
+    if (fabs(lift) > 0.5 && owner == [self cardOnHalf:1] && DS816On("topstay816") && DS809Latched("topstay816")) {
+        DSFeature719MarkAction("topstay816");
+        lift = 0.0;
+    }
     CGFloat side = 0.0;
     if (other) {
         // The other card makes room only when the typing card (at its lifted
@@ -13753,7 +13761,7 @@ static void DSKb723Breadcrumb(const char *what) {
         _kb707Logged = line;
         DSDiagnosticsRecordFormat(@"SpringBoard: kb707 typing in the %@ card (%@, %@): %@ %.0f pt to the keyboard%@",
                                   owner == [self cardOnHalf:1] ? @"upper" : @"lower", what ?: @"?", why ?: @"?",
-                                  lift > 0.5 ? @"lifted" : @"kept (already clear)", fabs(lift),
+                                  lift > 0.5 ? @"lifted" : (lift < -0.5 ? @"lowered" : @"kept (already clear)"), fabs(lift),
                                   other ? [NSString stringWithFormat:@", the other card slid %@ %.0f pt", side < 0 ? @"left" : @"right", fabs(side)] : @"");
     }
 }

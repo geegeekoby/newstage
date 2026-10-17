@@ -6812,6 +6812,74 @@ static void DSPin815Layout(void) {
     } @catch (NSException *exception) {}
 }
 
+// 4.5.816 grow816: with the stand-in keys the message box is not first
+// responder (fr=0), so UIKit posts no keyboard-frame change when the reply
+// bar grows (815 log: bar h=81 -> 217 at 09:07:11.680, inCard=YES) and
+// CKChatController's keyboard-driven inset path never runs: the transcript
+// kept its 81 pt bottom inset and the last messages went under the bar.
+// Rule, on the input window's own layout (it lays out on every height
+// change): the transcript's bottom inset covers the part of it under the
+// reply bar, and a transcript that was at the bottom stays at the bottom.
+// Only the amount added is ours; when Messages sets its own inset it wins.
+// Off: grow816-off / core816-off (crash latch grow816).
+static const void *DSGrow816AddedKey = &DSGrow816AddedKey;
+static const void *DSGrow816SetKey = &DSGrow816SetKey;
+static BOOL DSGrow816On(void) {
+    return DSStaged() && DSMessagesOwnsKeyboard() && DS816On("grow816") && DS809Latched("grow816");
+}
+static void DSGrow816Layout(void) {
+    static __weak UIView *lastEntry = nil;
+    static __weak UIScrollView *lastList = nil;
+    @try {
+        UIView *entry = lastEntry;
+        UIScrollView *list = lastList;
+        if (!entry.window || !list.window) {
+            entry = nil; list = nil;
+            for (UIWindow *w in UIApplication.sharedApplication.windows) {
+                if (!entry) entry = DSEntry811Find(w, @"CKMessageEntryView", 0);
+                if (!list) {
+                    UIView *v = DSEntry811Find(w, @"CKTranscriptCollectionView", 0);
+                    if ([v isKindOfClass:UIScrollView.class]) list = (UIScrollView *)v;
+                }
+                if (entry && list) break;
+            }
+            lastEntry = entry; lastList = list;
+        }
+        if (!entry || !list || !entry.window || !list.window) return;
+        id<UICoordinateSpace> space = list.window.screen.coordinateSpace;
+        if (!space) return;
+        CGRect e = [entry convertRect:entry.bounds toCoordinateSpace:space];
+        CGRect l = [list convertRect:list.bounds toCoordinateSpace:space];
+        CGFloat overlap = CGRectGetMaxY(l) - CGRectGetMinY(e);
+        if (!isfinite(overlap) || CGRectGetMinY(e) > CGRectGetMaxY(l) + 600.0) overlap = 0.0;   // parked bar
+        overlap = MAX(0.0, MIN(overlap, CGRectGetHeight(l) * 0.8));
+        UIEdgeInsets inset = list.contentInset;
+        CGFloat added = [objc_getAssociatedObject(list, DSGrow816AddedKey) doubleValue];
+        NSNumber *setTo = objc_getAssociatedObject(list, DSGrow816SetKey);
+        if (!setTo || fabs(setTo.doubleValue - inset.bottom) > 0.5) added = 0.0;   // Messages set its own
+        CGFloat baseAdj = list.adjustedContentInset.bottom - added;
+        CGFloat want = MAX(0.0, overlap - baseAdj);
+        if (fabs(want - added) <= 0.5) return;
+        CGFloat bottomY = list.contentSize.height + list.adjustedContentInset.bottom - CGRectGetHeight(list.bounds);
+        BOOL atBottom = list.contentOffset.y >= bottomY - 24.0;
+        inset.bottom = inset.bottom - added + want;
+        DSFeature719MarkAction("grow816");
+        list.contentInset = inset;
+        UIEdgeInsets ind = list.verticalScrollIndicatorInsets;
+        ind.bottom = MAX(0.0, ind.bottom - added + want);
+        list.verticalScrollIndicatorInsets = ind;
+        objc_setAssociatedObject(list, DSGrow816AddedKey, @(want), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(list, DSGrow816SetKey, @(inset.bottom), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (atBottom) {
+            CGFloat y = list.contentSize.height + list.adjustedContentInset.bottom - CGRectGetHeight(list.bounds);
+            y = MAX(y, -list.adjustedContentInset.top);
+            [list setContentOffset:CGPointMake(list.contentOffset.x, y) animated:NO];
+        }
+        DSTraceFormat(@"grow816: reply bar top %.0f, transcript bottom %.0f: inset +%.0f (was +%.0f)%@",
+                      CGRectGetMinY(e), CGRectGetMaxY(l), want, added, atBottom ? @", kept at the bottom" : @"");
+    } @catch (NSException *exception) {}
+}
+
 %hook UIInputWindowController
 
 - (void)viewDidLayoutSubviews {
@@ -6821,6 +6889,7 @@ static void DSPin815Layout(void) {
     if (!staged) return;
     DSEntry811Log(@"input window laid out");
     if (DSPin815On()) DSPin815Layout();
+    if (DSGrow816On()) DSGrow816Layout();
 }
 
 %end

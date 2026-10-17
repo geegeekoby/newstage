@@ -369,3 +369,4 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - New (4.5.813): `realkb813-on` (opt-in, Messages uses its own real keyboard), `realkb813-off`, `core813-off` (813 back to 812-1). Latch: realkb813.
 - New (4.5.814): realkb814 is ON by default. `realkb814-off` (staged Messages back to the stand-in keyboard), `core814-off` (814 back to 813). Latch: realkb814.
 - New (4.5.815): realkb813/814 removed (their files do nothing). `core815-off` (815 back to 812-1), `pin815-off` (strip/bar pin and hand-over/unpark), `kbrule815-off` (812-1 keyboard shift rule), `perf815-off` (815 speed-ups). Latches: pin815, kbrule815.
+- New (4.5.816): `core816-off` (816 back to 815), `grow816-off` (transcript inset follows the growing reply bar), `topstay816-off` (top card moves to the keyboard again, as 815). Latches: grow816, topstay816.

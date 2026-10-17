@@ -1,3 +1,8 @@
+## 4.5.816 (growing reply bar, top card stays put)
+- grow816: when the Messages reply bar grows to several lines on a card, the conversation now makes room above it and stays scrolled to the bottom, like normal Messages. Before, the last messages went under the taller bar. Off: grow816-off.
+- topstay816: typing in the TOP card no longer moves that card down to the keyboard. It stays where it is. The bottom card still moves just above the keyboard, and the other card still slides aside as before. Off: topstay816-off.
+- core816-off returns everything to 4.5.815.
+
 ## 4.5.815 (revert real keyboard, pin the Messages bar, lag fixes)
 - Reverted 4.5.813/814 (real Messages keyboard) completely: staged Messages is back on the 812-1 stand-in keyboard, card clipping and scene sizing exactly as 812-1.
 - pin815: the Messages app strip and reply bar stay put. Focus and typing no longer hide the strip (no 81 -> 44 collapse). If Messages opens with its own keyboard already up, the box hands over to the stage keyboard instead of leaving the bar off the card. A parked input bar is brought back right away instead of waiting for the next chat open. Off: pin815-off.

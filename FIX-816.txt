@@ -1,0 +1,7 @@
+4.5.816
+Log 815 (Bdisbdbd, 09:06-09:07 NZDT): no crash, "latch749: no feature is latched off", perf812 22438 gate calls / 41 s.
+grow816 (app/Tweak.xm, DSGrow816On = staged Messages stand-in && DS816On(grow816) && latch):
+ - cause: stand-in keys => box fr=0, so no UIKit keyboard-frame notification when the input accessory grows; CKChatController keyboardWillChangeFrame:/inset path never runs. Bar grew 81 -> 217 (09:07:11.680 inCard=YES) with the transcript inset unchanged.
+ - on UIInputWindowController viewDidLayoutSubviews: overlap = transcript (CKTranscriptCollectionView) maxY - CKMessageEntryView minY (screen space); contentInset.bottom / verticalScrollIndicatorInsets += max(0, overlap - (adjusted bottom - ours)); only our part tracked (assoc), Messages' own inset write wins; at-bottom transcript kept at bottom. Public UIScrollView API only. Trace "grow816: ...".
+topstay816 (springboard/DSStageManager.m kb707 apply): owner == cardOnHalf:1 => lift = 0 (815: "kept (already clear) 140 pt" moved {{5,5}} -> {{5,145}} at 09:06:33.737). Lower card / other-card slide unchanged. kb707 log now says "lowered" for negative lift.
+core816 in DS796Group list; DS816On(name) = DS815On(core816) && DS815On(core815) && name.

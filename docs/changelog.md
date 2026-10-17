@@ -1,3 +1,9 @@
+## 4.5.814 (experimental: real Messages keyboard, ON by default)
+- realkb814: staged Messages now uses its own real keyboard, reply bar and app strip, drawn outside the card at the normal keyboard position. The Messages scene is made phone-size and lined up with the screen; SpringBoard shows only the card plus the keyboard area. The chat stays in the card.
+- If anything doesn't check out (no phone-size scene, mask not applied, scene write never safe), that card falls back to the old stand-in keyboard by itself and the log says why ("realkb814 FALLBACK ...").
+- Off: realkb814-off (old stand-in keyboard), core814-off (back to 4.5.813). Crash-latched.
+- Logs "realkb814 ..." on change only (scene, mask, keyboard rect, safe area, clipping views, fallback reasons).
+
 ## 4.5.813 (experimental: realkb813, OFF by default)
 - realkb813: opt-in test where staged Messages uses its own real keyboard, reply bar and app strip instead of SpringBoard's stand-in keys. Turn on: create /var/mobile/.dynamicstage-realkb813-on, respring. Off: delete it, or realkb813-off / core813-off. Crash-latched.
 - The stand-in keyboard path is kept untouched as the fallback (default).

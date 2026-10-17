@@ -962,6 +962,70 @@ static const void *DSPresentationKey = &DSPresentationKey;
 static const void *DSContainingKey = &DSContainingKey;
 static const void *DSCardHostKey = &DSCardHostKey;
 
+@interface DSSceneHost (RealKb814)
+- (void)layoutHostView;
+@end
+static __weak DSSceneHost *DSRK814Host = nil;
+static CGRect DSRK814AppKeys;
+static CGRect DSRK814MgrKeys;
+
+static void DSRK814Log(NSString *key, NSString *line) {
+    static NSMutableDictionary<NSString *, NSString *> *last = nil;
+    if (!last) last = [NSMutableDictionary dictionary];
+    if (!key || !line || [last[key] isEqualToString:line]) return;
+    if (last.count > 40) [last removeAllObjects];
+    last[key] = line;
+    DSDiagnosticsRecordFormat(@"SpringBoard: realkb814 %@", line);
+}
+
+static void DSRK814Publish(uint32_t value, NSString *why) {
+    static int token = NOTIFY_TOKEN_INVALID;
+    static uint64_t last = UINT64_MAX;
+    if (token == NOTIFY_TOKEN_INVALID) notify_register_check(kDSRealKb814PhoneNotify, &token);
+    if (token == NOTIFY_TOKEN_INVALID || last == value) return;
+    last = value;
+    notify_set_state(token, value);
+    notify_post(kDSRealKb814PhoneNotify);
+    DSRK814Log(@"publish", [NSString stringWithFormat:@"told Messages %@ (%@)", value ? @"phone-size + real keyboard (unstaged hooks)" : @"staged again (stand-in path)", why ?: @"?"]);
+}
+
+// notifyd keeps the state across a respring: a still-running Messages must
+// not stay unstaged for a SpringBoard that has no phone-size scene.
+__attribute__((constructor)) static void DSRK814Boot(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{ DSRK814Publish(0, @"SpringBoard started"); });
+}
+
+static void DSRK814EnsureRelay(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        static int token = NOTIFY_TOKEN_INVALID;
+        notify_register_dispatch(kDSRealKb814KbNotify, &token, dispatch_get_main_queue(), ^(int t) {
+            uint64_t state = 0;
+            notify_get_state(t, &state);
+            CGRect keys = CGRectZero;
+            if (state) {
+                CGFloat y = (CGFloat)(state >> 32) / 2.0, h = (CGFloat)(state & 0xffffffffULL) / 2.0;
+                CGFloat w = CGRectGetWidth(UIScreen.mainScreen.bounds);
+                if (h > 1.0 && w > 100.0) keys = CGRectMake(0.0, y, w, h);
+            }
+            DSRK814AppKeys = keys;
+            DSRK814Log(@"appkeys", [NSString stringWithFormat:@"Messages keyboard (relayed) %@", CGRectIsEmpty(keys) ? @"gone" : NSStringFromCGRect(keys)]);
+            DSSceneHost *host = DSRK814Host;
+            if (host) [host layoutHostView];
+        });
+    });
+}
+
+void DSRealKb814ManagerNote(CGRect frame, NSString *source) {
+    if (![source isKindOfClass:NSString.class] || ![source isEqualToString:@"com.apple.MobileSMS"]) return;
+    DSSceneHost *host = DSRK814Host;
+    if (!host) return;
+    DSRK814MgrKeys = frame;
+    DSRK814Log(@"mgrkeys", [NSString stringWithFormat:@"stage keyboard note from Messages %@", CGRectIsEmpty(frame) ? @"gone" : NSStringFromCGRect(frame)]);
+    [host layoutHostView];
+}
+
+
 // 4.5.710 bisect step 1 (beeper707 alone on 4.5.706): every 707 drawing change,
 // including the change-only round / chrome writes that 4.5.707 ran with no
 // switch, sits behind /var/mobile/.dynamicstage-beeper707-off and its crash
@@ -1869,6 +1933,13 @@ void DSGest770NoteEvent(NSString *why);
     // keyboard is up; the host shows it at the card width with scene y =
     // _phoneSizeKeyTop on the card's bottom edge.
     BOOL _phoneSize;
+    // 4.5.814 realkb814
+    BOOL _rk814, _rk814Failed, _rk814Confirmed, _rk814Pending, _rk814InsetsPending;
+    NSString *_rk814FailWhy;
+    NSInteger _rk814Layouts;
+    UIEdgeInsets _rk814Insets;
+    CAShapeLayer *_rk814Mask;
+    CGRect _rk814MaskCard, _rk814MaskKeys;
     CGFloat _phoneSizeKeyTop;
     NSInteger _phoneSizeGeneration;
     BOOL _phoneSizeParentClipped;
@@ -3327,6 +3398,19 @@ static BOOL DSTrace754Fresh(NSString *line, int kind) {
 // The app view controller asserts in dealloc if it is released while still showing
 // a live app, so it is stood down in order first.
 - (void)tearDownAppViewController {
+    if (_rk814) {
+        // 4.5.814: the app view goes; Messages is told it is not phone-size.
+        _rk814 = NO;
+        _phoneSize = NO;
+        if (_rk814Mask && _hostView.layer.mask == _rk814Mask) _hostView.layer.mask = nil;
+        _rk814Mask = nil;
+        UIView *p814 = _hostView.superview;
+        if ([p814.superview isKindOfClass:DSStageContainerView.class]) ((DSStageContainerView *)p814.superview).realKb814Unclipped = NO;
+        if (DSRK814Host == self) DSRK814Host = nil;
+        DSRK814Publish(0, @"app view torn down");
+    }
+    _rk814Failed = NO;
+    _rk814FailWhy = nil;
     [self reg799Unregister];
     [self phoneSize690RemoveStrip:@"app view torn down"];
     DSClose741Note(_bundleIdentifier);
@@ -3777,12 +3861,14 @@ BOOL DSClose741Recent(NSString *sceneIdentifier) {
 }
 
 - (BOOL)isPhoneSize675 {
+    if (_rk814) return NO;   // 4.5.814: realkb814's phone size is not a 675 session (the stage leaves it alone)
     return _phoneSize;
 }
 
 // The safe area the scene is given: the screen's own while phone-size (what
 // the app gets full screen), otherwise the card's (the 4.5.674 value).
 - (UIEdgeInsets)insetsForScene {
+    if (_rk814 && _phoneSize) return _rk814Insets;   // 4.5.814 realkb814
     if (!_phoneSize) return _safeAreaInsets;
     if ([self isPhoneSize684]) return [self phoneSize684Insets];
     UIEdgeInsets insets = _phoneSizeInsets;
@@ -3860,6 +3946,12 @@ BOOL DSClose741Recent(NSString *sceneIdentifier) {
 }
 
 - (void)setPhoneSize675:(BOOL)on keyboardTop:(CGFloat)keyTop why:(NSString *)why {
+    // 4.5.814 realkb814 owns this scene's phone size: keyboard tops are not
+    // mapped (the scene is screen-aligned); an off becomes the realkb814 stop.
+    if (_rk814) {
+        if (!on) [self realKb814Stop:why ?: @"phone size off"];
+        return;
+    }
     NSString *bundle = _bundleIdentifier ?: @"?";
     UIView *parent = _hostView.superview;
     if (on) {
@@ -6442,6 +6534,7 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
     UIView *host = _hostView;
     if (!host) return;
     if (_beeper707Flat) return;   // 4.5.707 beeper707: the card clips a phone-size host
+    if (_rk814) return;           // 4.5.814 realkb814: the host's mask carries the card corners
     DSPerfCount(DSPerfCounterRoundPasses);
     UIView *source = host.superview;
     CGFloat radius = 0.0;
@@ -6519,6 +6612,208 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
     }
 }
 
+// ---- 4.5.814 realkb814 ---------------------------------------------------------
+// Staged Messages keeps its own real keyboard. Its scene is the phone's size,
+// screen-aligned (scene point = screen point), so UIKit draws the keys and the
+// input bar/app strip exactly where SpringBoard's keyboard sits. The card and
+// its content view stop clipping; the host carries a mask = the card's rounded
+// rect + Messages' live keyboard rect (relayed by the app, or the stage
+// manager's note from Messages). Safe area top/bottom = the card's edges, so
+// the chat stays in the card. Any failed check (no scene, no phone-size
+// read-back, mask not taken, write never safe) hands the card back to the
+// preserved stand-in (state 0 -> the app is staged again) and says why.
+// Off: realkb814-off / core814-off. Latch: realkb814.
+- (BOOL)isRealKb814 {
+    return _rk814;
+}
+
+- (BOOL)realKb814Wanted:(NSString **)why {
+    NSString *no = nil;
+    UIView *parent = _hostView.superview;
+    if (!DSRealKb814On()) no = @"realkb814 off (realkb814-off / core814-off / latched)";
+    else if (_rk814Failed) no = [NSString stringWithFormat:@"fell back earlier on this card: %@", _rk814FailWhy ?: @"?"];
+    else if (_cameraTall) no = @"camera layout on";
+    else if (_revealingTallContent) no = @"card uncovering a tall layout";
+    else if (!_appViewController) no = @"no app view yet";
+    else if (!parent || !parent.window) no = @"not in a card";
+    else if (parent.tag == 9158 || CGRectGetWidth(parent.bounds) < 80.0 || CGRectGetHeight(parent.bounds) < 80.0) no = @"card minimized";
+    else if (![parent.superview isKindOfClass:DSStageContainerView.class]) no = @"card container not found";
+    if (why) *why = no;
+    return no == nil;
+}
+
+- (UIEdgeInsets)realKb814InsetsForCard:(CGRect)card {
+    CGFloat h = [self phoneSize675SceneSize].height;
+    UIEdgeInsets in = UIEdgeInsetsZero;
+    in.top = round(MAX(0.0, CGRectGetMinY(card)));
+    in.bottom = round(MAX(0.0, h - CGRectGetMaxY(card)));
+    return in;
+}
+
+- (void)realKb814Start {
+    NSString *why = nil;
+    if (_rk814 || _phoneSize) return;
+    if (![self realKb814Wanted:&why]) { DSRK814Log(@"skip", [NSString stringWithFormat:@"not started: %@", why]); return; }
+    if (DSSceneWriteWouldTrap()) { DSRK814Log(@"skip", @"not started yet: scene update in progress (next layout tries again)"); return; }
+    if (![self appViewScene]) { [self realKb814Fail:@"no scene to make phone-size"]; return; }
+    UIView *parent = _hostView.superview;
+    DSStageContainerView *card = (DSStageContainerView *)parent.superview;
+    CGRect cardRect = [parent convertRect:parent.bounds toView:nil];
+    DSRK814EnsureRelay();
+    DSRK814Host = self;
+    DSRK814AppKeys = CGRectZero;
+    DSRK814MgrKeys = CGRectZero;
+    // Tell the app first, so it is unstaged before the phone size lands.
+    DSRK814Publish(DSIdentifierHash(_bundleIdentifier), @"card shown");
+    _rk814 = YES;
+    _rk814Confirmed = NO;
+    _rk814Layouts = 0;
+    _rk814MaskCard = CGRectNull;
+    _rk814MaskKeys = CGRectNull;
+    _phoneSizeWidth = [self cameraTallSize].width;
+    _phoneSize = YES;
+    _phoneSizePreGrown = NO;
+    _rk814Insets = [self realKb814InsetsForCard:cardRect];
+    card.realKb814Unclipped = YES;
+    DSFeature699MarkTrying("realkb814");
+    CGSize phone = [self phoneSize675SceneSize];
+    DSRK814Log(@"start", [NSString stringWithFormat:@"ON for Messages: scene %.0fx%.0f screen-aligned, card %@, safe area %@ (chat in the card), card clip off, host masked to card + keyboard",
+                          phone.width, phone.height, NSStringFromCGRect(cardRect), NSStringFromUIEdgeInsets(_rk814Insets)]);
+    _phoneSizeGeneration += 1;
+    [self phoneSize675WriteGeometry:_phoneSizeGeneration attempt:0];
+}
+
+- (void)realKb814Fail:(NSString *)why {
+    _rk814Failed = YES;
+    _rk814FailWhy = [why copy];
+    DSRK814Log(@"fail", [NSString stringWithFormat:@"FALLBACK to the stand-in keyboard for this card: %@", why ?: @"?"]);
+    if (_rk814) [self realKb814Stop:why];
+    else DSRK814Publish(0, why);
+}
+
+- (void)realKb814Stop:(NSString *)why {
+    if (!_rk814) return;
+    _rk814 = NO;
+    _phoneSize = NO;
+    _phoneSizeWidth = 0.0;
+    if (DSRK814Host == self) DSRK814Host = nil;
+    DSRK814Publish(0, why);
+    if (_rk814Mask && _hostView.layer.mask == _rk814Mask) _hostView.layer.mask = nil;
+    _rk814Mask = nil;
+    UIView *parent = _hostView.superview;
+    if ([parent.superview isKindOfClass:DSStageContainerView.class]) ((DSStageContainerView *)parent.superview).realKb814Unclipped = NO;
+    if (parent) {
+        parent.clipsToBounds = YES;
+        parent.layer.masksToBounds = YES;
+    }
+    DSRK814Log(@"start", [NSString stringWithFormat:@"OFF (%@): scene back to card size, card clips again", why ?: @"?"]);
+    _phoneSizeGeneration += 1;
+    if (_appViewController) [self phoneSize675WriteGeometry:_phoneSizeGeneration attempt:0];
+    else [self layoutHostView];
+}
+
+// The layout for a realkb814 host. NO = not handled (normal layout runs).
+- (BOOL)realKb814LayoutInParent:(UIView *)parent {
+    NSString *why = nil;
+    if (![self realKb814Wanted:&why]) {
+        __weak __typeof(self) weakSelf = self;
+        NSString *reason = why ?: @"?";
+        dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf realKb814Stop:reason]; });
+        return NO;
+    }
+    CGSize phone = [self phoneSize675SceneSize];
+    UIView *host = _hostView;
+    if (host.autoresizingMask != UIViewAutoresizingNone) host.autoresizingMask = UIViewAutoresizingNone;
+    if (!host.autoresizesSubviews) host.autoresizesSubviews = YES;
+    if (!CGAffineTransformIsIdentity(host.transform)) host.transform = CGAffineTransformIdentity;
+    CGRect phoneBounds = CGRectMake(0.0, 0.0, phone.width, phone.height);
+    if (!CGRectEqualToRect(host.bounds, phoneBounds)) host.bounds = phoneBounds;
+    // Screen-aligned: host (0,0) on the screen's (0,0).
+    CGPoint origin = [parent convertPoint:CGPointZero fromView:nil];
+    CGPoint center = CGPointMake(origin.x + phone.width / 2.0, origin.y + phone.height / 2.0);
+    if (fabs(host.center.x - center.x) > 0.01 || fabs(host.center.y - center.y) > 0.01) host.center = center;
+    objc_setAssociatedObject(host, DSCardHostKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (host.hidden) host.hidden = NO;
+    if (host.clipsToBounds) host.clipsToBounds = NO;
+    if (parent.clipsToBounds || parent.layer.masksToBounds) { parent.clipsToBounds = NO; parent.layer.masksToBounds = NO; }
+    if (parent.layer.mask) parent.layer.mask = nil;
+    DSStageContainerView *card = (DSStageContainerView *)parent.superview;
+    if (!card.realKb814Unclipped) card.realKb814Unclipped = YES;
+    // Mask = card (rounded) + keyboard, in host coordinates.
+    CGRect cardRect = [parent convertRect:parent.bounds toView:host];
+    CGRect keysScreen = !CGRectIsEmpty(DSRK814AppKeys) ? DSRK814AppKeys : DSRK814MgrKeys;
+    CGRect keys = CGRectIsEmpty(keysScreen) ? CGRectNull : [host convertRect:keysScreen fromView:nil];
+    if (!_rk814Mask) {
+        _rk814Mask = [CAShapeLayer layer];
+        _rk814Mask.fillColor = UIColor.blackColor.CGColor;
+    }
+    if (!CGRectEqualToRect(_rk814Mask.frame, host.bounds)) _rk814Mask.frame = host.bounds;
+    if (!CGRectEqualToRect(cardRect, _rk814MaskCard) || !CGRectEqualToRect(keys, _rk814MaskKeys)) {
+        _rk814MaskCard = cardRect;
+        _rk814MaskKeys = keys;
+        CGFloat radius = MAX(0.0, card.cornerRadius);
+        UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:cardRect cornerRadius:radius];
+        if (!CGRectIsNull(keys)) [path appendPath:[UIBezierPath bezierPathWithRect:keys]];
+        _rk814Mask.fillRule = kCAFillRuleNonZero;
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        _rk814Mask.path = path.CGPath;
+        [CATransaction commit];
+        DSRK814Log(@"mask", [NSString stringWithFormat:@"mask = card %@ r%.0f + keyboard %@ (%@)", NSStringFromCGRect(cardRect), radius,
+                             CGRectIsNull(keys) ? @"none" : NSStringFromCGRect(keys),
+                             !CGRectIsEmpty(DSRK814AppKeys) ? @"relayed by Messages" : (!CGRectIsEmpty(DSRK814MgrKeys) ? @"stage note" : @"keys down")]);
+    }
+    if (host.layer.mask != _rk814Mask) host.layer.mask = _rk814Mask;
+    if (host.layer.mask != _rk814Mask) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf realKb814Fail:@"mask was not taken by the host layer"]; });
+        return NO;
+    }
+    // Clipping ancestors above the card (logged; a clip there would cut the keys).
+    {
+        NSMutableArray *clips = [NSMutableArray array];
+        UIView *v = card.superview;
+        for (NSInteger depth = 0; v && depth < 8 && ![v isKindOfClass:UIWindow.class]; depth++, v = v.superview) {
+            if (v.layer.masksToBounds || v.layer.mask) [clips addObject:[NSString stringWithFormat:@"%@%@", NSStringFromClass(v.class), NSStringFromCGRect([v convertRect:v.bounds toView:nil])]];
+        }
+        DSRK814Log(@"clips", [NSString stringWithFormat:@"clipping views above the card: %@", clips.count ? [clips componentsJoinedByString:@", "] : @"none"]);
+    }
+    // Safe area follows the card edges (chat in the card); written on change, not mid-drag.
+    CGRect cardScreen = [parent convertRect:parent.bounds toView:nil];
+    UIEdgeInsets want = [self realKb814InsetsForCard:cardScreen];
+    if ((fabs(want.top - _rk814Insets.top) > 1.0 || fabs(want.bottom - _rk814Insets.bottom) > 1.0) && !_rk814InsetsPending &&
+        !DSStageDragSettlingFast(0.25) && !DSSceneWriteWouldTrap()) {
+        _rk814InsetsPending = YES;
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) s = weakSelf;
+            if (!s) return;
+            s->_rk814InsetsPending = NO;
+            if (!s->_rk814 || DSSceneWriteWouldTrap()) return;
+            UIView *p = s->_hostView.superview;
+            if (!p) return;
+            UIEdgeInsets now = [s realKb814InsetsForCard:[p convertRect:p.bounds toView:nil]];
+            DSRK814Log(@"insets", [NSString stringWithFormat:@"safe area %@ -> %@ (card moved)", NSStringFromUIEdgeInsets(s->_rk814Insets), NSStringFromUIEdgeInsets(now)]);
+            s->_rk814Insets = now;
+            [s forceSceneGeometry];
+        });
+    }
+    // Read-back: the scene has to really be phone-size.
+    if (!_rk814Confirmed) {
+        CGRect got = CGRectZero;
+        NSString *summary = [self phoneSize676SceneSummary:&got];
+        if (CGRectGetHeight(got) >= phone.height - 2.0 && CGRectGetWidth(got) >= phone.width - 3.0) {
+            _rk814Confirmed = YES;
+            DSRK814Log(@"confirm", [NSString stringWithFormat:@"scene confirmed phone-size after %ld layouts: %@", (long)_rk814Layouts, summary]);
+        } else if (++_rk814Layouts > 60) {
+            NSString *reason = [NSString stringWithFormat:@"scene never became phone-size (%@)", summary];
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf realKb814Fail:reason]; });
+        }
+    }
+    return YES;
+}
+
 - (void)layoutHostView {
     DS_PERF_BEGIN();
     [self layoutHostView697Body];
@@ -6545,6 +6840,24 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
     }
     UIView *parent = _hostView.superview;
     CGFloat scale = _contentScale > 0 ? _contentScale : 1.0;
+    // 4.5.814 realkb814 (Messages only; one cached gate read otherwise).
+    if (_rk814) {
+        if ([self realKb814LayoutInParent:parent]) return;
+    } else if (!_rk814Pending && !_phoneSize && !_rk814Failed && [_bundleIdentifier isEqualToString:@"com.apple.MobileSMS"] && DSRealKb814On()) {
+        NSString *why814 = nil;
+        if ([self realKb814Wanted:&why814]) {
+            _rk814Pending = YES;
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                __strong __typeof(weakSelf) s = weakSelf;
+                if (!s) return;
+                s->_rk814Pending = NO;
+                [s realKb814Start];
+            });
+        } else {
+            DSRK814Log(@"skip", [NSString stringWithFormat:@"waiting: %@", why814 ?: @"?"]);
+        }
+    }
     @try {
         [self phoneSize696UpdateKeysSceneForParent:parent];
     } @catch (NSException *exception) {

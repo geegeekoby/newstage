@@ -6,6 +6,7 @@
 @interface DSStageContainerView : UIView
 
 @property (nonatomic, readonly) UIView *contentView;   // picker view or hosted app
+@property (nonatomic, assign) BOOL realKb814Unclipped;   // 4.5.814: card + content view do not clip (Messages host masks itself)
 @property (nonatomic, assign) BOOL darkMode;
 @property (nonatomic, assign) CGFloat cornerRadius;
 // How far the card is being held up out of the keyboard's way.

@@ -1,0 +1,9 @@
+4.5.813 realkb813 (experimental, OFF by default)
+Gate: DSRealKb813On = core813 && DS812On && realkb813 (not off, not latched) && /var/mobile/.dynamicstage-realkb813-on. Decided once per process; marks realkb813 trying (crash latch).
+App (Messages only, DSRealKb813Messages): DSMessagesOwnsKeyboard=NO, DSUsesStageKeyboard chat=NO, DSMessagesKeepsOwnKeys=YES,
+kbapp744 dismiss applies to Messages too. All stand-in hooks therefore fall through to stock UIKit. tap812 is inert (needs OwnsKeyboard).
+PRESERVED FALLBACK: stand-in code (DSRequestSpringBoardKeyboard, msg742, caret778, tap812, reopen783, unpark811) untouched, default path.
+Logging: entry811 runs in realkb mode, tagged "realkb813", change-only, 0.2 s throttle: bar, strip, UIKeyboardLayoutStar frames+inCard, keyboard windows, first responder.
+Not built (blocked): showing the keys outside the card. SpringBoard clips the hosted scene at many re-applied points (DSStageContainerView,
+DSApplyRoundInfo, DSClearSceneChrome); phone-size scene hosting + mask + touch routing need device geometry from realkb813 logs first.
+SpringBoard and camera/msg742 unchanged. No timers/holds/replays. No hot-path cost when off (cached once).

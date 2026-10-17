@@ -108,6 +108,7 @@ static const CGFloat kDSGrabberWidth = 124.0;
 static const CGFloat kDSGrabberPillHeight = 5.0;
 
 @implementation DSStageContainerView {
+    BOOL _realKb814Unclipped;
     UIView *_shadowView;
     UIVisualEffectView *_backdrop;
     UIView *_contentView;
@@ -288,7 +289,7 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         self.clipsToBounds = NO;
         self.layer.masksToBounds = NO;
         self.opaque = NO;
-        _contentView.clipsToBounds = YES;
+        _contentView.clipsToBounds = !_realKb814Unclipped;   // 4.5.814: the host's mask clips instead
         _contentView.opaque = NO;
         if (!keepMask) _contentView.layer.mask = nil;
         _contentView.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(bounds), MAX(appHeight, 0.0));
@@ -305,12 +306,14 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
         _backdrop.frame = bounds;
         // The keyboard is a SpringBoard window above this card. The card must
         // not clip it. The app itself stays inside the content view.
-        self.clipsToBounds = _clipsContents;
-        self.layer.masksToBounds = _clipsContents;
+        self.clipsToBounds = _clipsContents && !_realKb814Unclipped;
+        self.layer.masksToBounds = _clipsContents && !_realKb814Unclipped;
         // The hosted scene ignores a clip on this card. The content view has to
         // carry the same continuous corner, or the app stays a square.
-        _contentView.clipsToBounds = YES;
-        _contentView.layer.masksToBounds = YES;
+        // 4.5.814 realkb814: no clip here; the Messages host's own mask (card + keyboard) clips.
+        _contentView.clipsToBounds = !_realKb814Unclipped;
+        _contentView.layer.masksToBounds = !_realKb814Unclipped;
+        if (_realKb814Unclipped) _contentView.layer.mask = nil;
         if (!keepMask) _contentView.layer.mask = nil;
         _contentView.layer.cornerRadius = _cornerRadius;
         _contentView.layer.cornerCurve = kCACornerCurveContinuous;
@@ -371,10 +374,28 @@ static const CGFloat kDSGrabberPillHeight = 5.0;
 
 // The keyboard is a separate window above the stage. Turning this clip off
 // left the picker as a square plate with the rounded outline floating outside it.
+- (BOOL)realKb814Unclipped { return _realKb814Unclipped; }
+- (void)setRealKb814Unclipped:(BOOL)on {
+    if (_realKb814Unclipped == on) return;
+    _realKb814Unclipped = on;
+    [self applyCardCornerClip];
+    [self setNeedsLayout];
+}
+
 - (void)applyCardCornerClip {
     CGFloat radius = _cornerRadius;
     if (radius < 20.0) radius = 20.0;
     _cornerRadius = radius;
+    if (_realKb814Unclipped) {
+        // 4.5.814 realkb814: the Messages host draws outside the card (its
+        // keyboard); its own mask is the card's rounded rect + the keyboard.
+        self.clipsToBounds = NO;
+        self.layer.masksToBounds = NO;
+        _contentView.clipsToBounds = NO;
+        _contentView.layer.masksToBounds = NO;
+        _contentView.layer.mask = nil;
+        return;
+    }
     self.opaque = NO;
     self.clipsToBounds = YES;
     self.layer.masksToBounds = YES;

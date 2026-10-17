@@ -403,6 +403,8 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core810") == 0) return -1;
         if (strcmp(name, "core811") == 0) return -1;
         if (strcmp(name, "core812") == 0) return -1;
+        if (strcmp(name, "core813") == 0) return -1;
+        if (strcmp(name, "core814") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -1068,6 +1070,32 @@ BOOL DS811On(const char *name) {
 // 4.5.812: master core812-off returns tap812 to 811.
 BOOL DS812On(const char *name) {
     return DSFeature699On("core812") && DS811On("core811") && DSFeature699On(name);
+}
+
+// 4.5.813 realkb813 (EXPERIMENTAL, opt-in): staged Messages keeps its own real
+// UIKit keyboard instead of SpringBoard's stand-in. Decided once per process so
+// a process never switches method mid-run. On only with
+// /var/mobile/.dynamicstage-realkb813-on, not with realkb813-off / core813-off,
+// and not after a crash while it was on (crash latch realkb813).
+BOOL DSRealKb813On(void) {
+    static int decided = -1;
+    if (decided >= 0) return decided == 1;
+    BOOL on = DSFeature699On("core813") && DS812On("core812") && DSFeature699On("realkb813") &&
+              (access("/var/mobile/.dynamicstage-realkb813-on", F_OK) == 0 || access("/var/jb/var/mobile/.dynamicstage-realkb813-on", F_OK) == 0);
+    if (on) DSFeature699MarkTrying("realkb813");
+    decided = on ? 1 : 0;
+    return on;
+}
+
+// 4.5.814 realkb814: ON by default. Staged Messages keeps its real keyboard
+// in a phone-size scene, masked to card + keyboard (SpringBoard side).
+// Off: realkb814-off (back to the preserved stand-in) / core814-off (813).
+// Crash latch: realkb814. Cheap: DSFeature699On is the 1 s perf812 cache.
+BOOL DSRealKb814On(void) {
+    BOOL on = DSFeature699On("core814") && DSFeature699On("core813") && DS812On("core812") && DSFeature699On("realkb814");
+    static BOOL marked = NO;
+    if (on && !marked) { marked = YES; DSFeature699MarkTrying("realkb814"); }
+    return on;
 }
 
 // 4.5.809 latch809: a SpringBoard behaviour feature that had an off file but

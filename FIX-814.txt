@@ -1,0 +1,15 @@
+4.5.814 realkb814 (default ON; realkb814-off / core814-off; latch realkb814)
+Gate DSRealKb814On = core814 && core813 && DS812On && realkb814 (perf812 cache). core814-off = 813 (realkb813 opt-in, in-card).
+SpringBoard (DSSceneHost): Messages host, card visible -> realKb814Start (one main-queue hop out of layout):
+  publish com.recreated.dynamicstage.realkb814.phone = hash(MobileSMS) FIRST (app unstages), then _phoneSize scene 430x931
+  via phoneSize675WriteGeometry (existing deferral). Host bounds = scene, identity transform, screen-aligned.
+  Container + content view clip off (DSStageContainerView.realKb814Unclipped, honoured in layoutSubviews697 and applyCardCornerClip);
+  roundHostedSceneToCard (DSApplyRoundInfo/DSClearSceneChrome) skipped. Host CAShapeLayer mask = rounded card + keyboard rect.
+  Keyboard rect: app relay (com.recreated.dynamicstage.realkb814.kb, UIKeyboard end frame incl. input accessory) else stage note from Messages.
+  Safe area = (card top, 0, sceneH - card bottom, 0): chat in the card; rewritten on card change, not while dragging.
+  isPhoneSize675 = NO for this host and setPhoneSize675 is routed (675/680/684 sessions leave it alone).
+  Checks -> fallback (state 0 -> app staged -> preserved stand-in) for this card: no scene, mask not taken, read-back not phone-size after 60 layouts.
+  Stop on minimize/off/teardown: state 0, mask removed, clips back, card-size write. SpringBoard boot publishes 0.
+App: DSStageContext.staged = NO while state names us (all stage hooks fall through: stock Messages). DSRealKb813Messages is live.
+Touch routing (inferred): keyboard area is the Messages context, unclipped; the stage window claims nothing there.
+Global keyboard rule: the stage's existing keyboard note from Messages (card above the keys, others aside).

@@ -38,14 +38,31 @@ static BOOL DSStaged(void) {
 
 static BOOL DSMessagesInputIsTransitioning(UIView *view, CGRect frame);
 static BOOL DSMessagesInputFrameIsParkedOffScreen(CGRect frame);
+// 4.5.813 realkb813 (opt-in): Messages keeps its real keyboard. The stand-in
+// method below is untouched and is what runs whenever realkb813 is off
+// (PRESERVED FALLBACK: DSMessagesOwnsKeyboard / DSUsesStageKeyboard paths).
+FOUNDATION_EXTERN BOOL DSRealKb814PhoneLive(void);
+static BOOL DSIsMessagesApp(void) {
+    static int sms = -1;
+    if (sms < 0) sms = [NSBundle.mainBundle.bundleIdentifier ?: @"" isEqualToString:@"com.apple.MobileSMS"] ? 1 : 0;
+    return sms == 1;
+}
+// 4.5.814: realkb814 (default on) = real keys while SpringBoard holds the
+// scene phone-size (live, per show; 0 = stand-in fallback). core814-off =
+// the 813 rule (opt-in file, in-card real keys).
+static BOOL DSRealKb813Messages(void) {
+    if (!DSIsMessagesApp()) return NO;
+    static int on814 = -1;
+    if (on814 < 0) on814 = DSRealKb814On() ? 1 : 0;   // decided per launch
+    if (on814 == 1) return DSRealKb814PhoneLive();
+    static int cached = -1;
+    if (cached < 0) cached = DSRealKb813On() ? 1 : 0;
+    return cached == 1;
+}
+
 static BOOL DSMessagesOwnsKeyboard(void) {
     if (!DSStaged()) return NO;
-    static int messages = -1;
-    if (messages < 0) {
-        NSString *bundle = NSBundle.mainBundle.bundleIdentifier ?: @"";
-        messages = [bundle isEqualToString:@"com.apple.MobileSMS"] ? 1 : 0;
-    }
-    return messages == 1;
+    return DSIsMessagesApp() && !DSRealKb813Messages();
 }
 
 // Staged chat apps use SpringBoard's phone-width keyboard, not an in-card copy.
@@ -59,6 +76,7 @@ static BOOL DSUsesStageKeyboard(void) {
                     [bundle isEqualToString:@"com.beeper.chat.ios"];
         cached = chat ? 1 : 0;
     }
+    if (cached == 1 && DSRealKb813Messages()) return NO;   // 4.5.813/814: real keyboard, no stand-in (live)
     return cached == 1;
 }
 
@@ -340,6 +358,7 @@ static BOOL DSTap812Shown = NO;
 static BOOL DSCaret778Dropping = NO;   // 4.5.778: our own drop after SpringBoard's hide
 
 static BOOL DSMessagesKeepsOwnKeys(void) {
+    if (DSRealKb813Messages()) return YES;   // 4.5.813: the real keys stay
     // SpringBoard's stand-in is the editor for the whole Messages session. The
     // keys inside that card stay hidden for that session. Every other app
     // uses the raised SpringBoard keyboard, the same as 4.5.416.
@@ -868,7 +887,7 @@ static NSString *DSEntry811Describe(NSString *label, UIView *v, CGRect card) {
 static void DSEntry811Log(NSString *why) {
     // 4.5.812 perf812: cheap exits first; layout-driven calls at most every 0.2 s.
     static NSInteger count = 0;
-    if (count > 120 || !NSThread.isMainThread || !DSStaged() || !DSMessagesOwnsKeyboard()) return;
+    if (count > 120 || !NSThread.isMainThread || !DSStaged() || !(DSMessagesOwnsKeyboard() || DSRealKb813Messages())) return;
     static CFAbsoluteTime lastLayout = 0;
     if ([why isEqualToString:@"input window laid out"]) {
         CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
@@ -888,11 +907,29 @@ static void DSEntry811Log(NSString *why) {
         CGRect card = DSStageBounds();
         NSString *sig = [NSString stringWithFormat:@"card=%@ | %@ | %@", NSStringFromCGRect(card),
                          DSEntry811Describe(@"bar", entry, card), DSEntry811Describe(@"strip", strip, card)];
+        if (DSRealKb813Messages()) {
+            // 4.5.813 realkb813: the real keyboard window, its keys and the first responder.
+            NSMutableArray *kw = [NSMutableArray array];
+            UIResponder *fr = nil;
+            for (UIWindow *w in UIApplication.sharedApplication.windows) {
+                NSString *cn = NSStringFromClass(object_getClass(w));
+                if ([cn rangeOfString:@"Keyboard"].location != NSNotFound || [cn rangeOfString:@"TextEffects"].location != NSNotFound)
+                    [kw addObject:[NSString stringWithFormat:@"%@%@ hid=%d", cn, NSStringFromCGRect(w.frame), w.hidden]];
+                if (!fr && w.isKeyWindow) {
+                    SEL frSel = sel_registerName("_firstResponder");   // -[UIWindow _firstResponder], 20F75 allmethods
+                    if ([w respondsToSelector:frSel]) { @try { fr = ((id (*)(id, SEL))objc_msgSend)(w, frSel); } @catch (NSException *e) {} }
+                }
+            }
+            UIView *keys = nil;
+            for (UIWindow *w in UIApplication.sharedApplication.windows) { keys = DSEntry811Find(w, @"UIKeyboardLayoutStar", 0); if (keys) break; }
+            sig = [NSString stringWithFormat:@"%@ | keys %@ | kbwin %@ | fr=%@", sig, DSEntry811Describe(@"layout", keys, card),
+                   [kw componentsJoinedByString:@","], fr ? NSStringFromClass(object_getClass(fr)) : @"nil"];
+        }
         static NSString *last = nil;
         if ([sig isEqualToString:last]) return;
         last = [sig copy];
         if (++count > 120) return;
-        DSTraceFormat(@"entry811 %@: %@", why ?: @"?", sig);
+        DSTraceFormat(@"%@ %@: %@", DSRealKb813Messages() ? @"realkb813" : @"entry811", why ?: @"?", sig);
     } @catch (NSException *exception) {}
 }
 
@@ -7130,7 +7167,7 @@ static void DSInstallHooks(void) {
                 notify_get_state(t, &state);
                 NSString *me = NSBundle.mainBundle.bundleIdentifier ?: @"";
                 if ((uint32_t)state != (uint32_t)DSIdentifierHash(me)) return;
-                if ([me isEqualToString:@"com.apple.MobileSMS"]) return;
+                if ([me isEqualToString:@"com.apple.MobileSMS"] && !DSRealKb813Messages()) return;   // 4.5.813: real keys drop like any app
                 if (access("/var/mobile/.dynamicstage-kbapp744-off", F_OK) == 0) return;
                 DSTrace(@"kbapp744: SpringBoard asked for the keyboard to go");
                 for (UIWindow *w in UIApplication.sharedApplication.windows) [w endEditing:YES];
@@ -7159,8 +7196,55 @@ static void DSStartObserving(void) {
 // If this file appears and the ctor line does not, the image loaded and then
 // died before %ctor. If neither appears, ElleKit never loaded the image.
 __attribute__((constructor(101)))
+// 4.5.814 realkb814: Messages' own keyboard rect (keys + input accessory,
+// screen points), relayed to SpringBoard on change only for the mask.
+static void DSRealKb814InstallRelay(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        for (NSString *name in @[ UIKeyboardWillChangeFrameNotification, UIKeyboardDidChangeFrameNotification,
+                                  UIKeyboardDidShowNotification, UIKeyboardDidHideNotification ]) {
+            [NSNotificationCenter.defaultCenter addObserverForName:name object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) {
+                @try {
+                    if (!DSRealKb814PhoneLive()) return;
+                    CGRect end = CGRectZero;
+                    NSValue *v = note.userInfo[UIKeyboardFrameEndUserInfoKey];
+                    if ([v isKindOfClass:NSValue.class]) end = v.CGRectValue;
+                    CGFloat screenH = CGRectGetHeight([DSStageContext sharedContext].deviceBounds);
+                    if (screenH < 400.0) screenH = 932.0;
+                    BOOL shown = ![note.name isEqualToString:UIKeyboardDidHideNotification] &&
+                                 CGRectGetHeight(end) > 1.0 && CGRectGetMinY(end) < screenH - 1.0;
+                    uint64_t state = 0;
+                    if (shown) {
+                        CGFloat h = MIN(CGRectGetHeight(end), screenH - MAX(0.0, CGRectGetMinY(end)));
+                        state = ((uint64_t)lround(MAX(0.0, CGRectGetMinY(end)) * 2.0) << 32) | (uint64_t)lround(h * 2.0);
+                    }
+                    static uint64_t last = UINT64_MAX;
+                    if (state == last) return;
+                    last = state;
+                    static int token = NOTIFY_TOKEN_INVALID;
+                    if (token == NOTIFY_TOKEN_INVALID) notify_register_check(kDSRealKb814KbNotify, &token);
+                    if (token == NOTIFY_TOKEN_INVALID) return;
+                    notify_set_state(token, state);
+                    notify_post(kDSRealKb814KbNotify);
+                    UIResponder *fr = nil;
+                    for (UIWindow *w in UIApplication.sharedApplication.windows) {
+                        if (!w.isKeyWindow) continue;
+                        SEL frSel = sel_registerName("_firstResponder");   // -[UIWindow _firstResponder], 20F75 allmethods
+                        if ([w respondsToSelector:frSel]) fr = ((id (*)(id, SEL))objc_msgSend)(w, frSel);
+                    }
+                    DSTraceFormat(@"realkb814 app keyboard %@ %@ (%@) fr=%@", shown ? @"rect" : @"gone",
+                                  NSStringFromCGRect(end), note.name, fr ? NSStringFromClass(object_getClass(fr)) : @"nil");
+                } @catch (NSException *e) {
+                }
+            }];
+        }
+    });
+}
+
 %ctor {
     @autoreleasepool {
+        if (DSIsMessagesApp() && !DSRealKb814On() && DSRealKb813Messages()) DSTrace(@"realkb813 on: Messages keeps its own UIKit keyboard (stand-in path bypassed)");
+        if (DSIsMessagesApp() && DSRealKb814On()) DSRealKb814InstallRelay();
         int reason = 0;
         @try {
             if (DSKillSwitchPresent()) reason = 1;

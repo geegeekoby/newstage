@@ -82,6 +82,7 @@ typedef void (^DSSceneHostReadyBlock)(BOOL ready);
 // to the card-size scene (the 4.5.674 geometry). Geometry writes only.
 - (void)setPhoneSize675:(BOOL)on keyboardTop:(CGFloat)keyTop why:(NSString *)why;
 - (BOOL)isPhoneSize675;
+- (BOOL)isRealKb814;
 - (long long)sceneDeactivationReasons740;
 // 4.5.678 phonesize678 (B/C): phone size before any keyboard.
 - (BOOL)isPhoneSize678PreGrown;
@@ -280,6 +281,8 @@ FOUNDATION_EXPORT NSInteger DSSceneHostOverrideCount(void);
 FOUNDATION_EXPORT BOOL DSPhoneSize675ChangedRecently(double window);
 FOUNDATION_EXPORT BOOL DSPhoneSize675Disabled(void);
 FOUNDATION_EXPORT BOOL DSPhoneSize675Allowed(NSString *bundleIdentifier);
+// 4.5.814 realkb814: the stage manager's keyboard note from Messages (mask fallback source).
+FOUNDATION_EXPORT void DSRealKb814ManagerNote(CGRect frame, NSString *source);
 FOUNDATION_EXPORT NSString *DSPhoneSize675AllowlistSummary(void);
 FOUNDATION_EXPORT CGFloat DSPhoneSize675PinOffset(void);
 // 4.5.676 phonesize676: timestamps of one keyboard session (ms since its first

@@ -4325,6 +4325,7 @@ static BOOL DSKbNan754On(void) {
 }
 
 - (void)noteKeyboardFrame:(CGRect)keyboard source:(NSString *)source duration:(NSTimeInterval)duration {
+    @try { DSRealKb814ManagerNote(keyboard, source); } @catch (NSException *e814) {}   // 4.5.814 realkb814 (Messages only)
     DSPerfCount(DSPerfCounterKeyboardNotes);
     if (DSKbNan754Bad(keyboard) && DSKbNan754On()) {
         DSFeature719MarkAction("kbnan754");

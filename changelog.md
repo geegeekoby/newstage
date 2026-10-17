@@ -1,3 +1,7 @@
+## 4.5.799
+- reg799: each staged card now registers the way SpringBoard's own hosted apps do (cover sheet and in-call). We set the SBAppViewController's delegate, call addSceneUpdateContributer: on its scene handle, and on every settings rebuild our applicationSceneHandle:appendToSceneSettings:fromRequestContext:entity: puts the app-view identifier into ignoreOcclusionReasons. That is the real form of the crash fix; occl798 stays as a safety net and now logs "occl798 ok reason present" when the claim is held. Display-layout publish is log-only in 799. Off: reg799-off, plus a crash latch. core799-off undoes 799.
+- Holds are unchanged (that is 800).
+
 ## 4.5.798
 - occl798, the crash fix: SpringBoard (16.5.1) traps when one of its app views says "ignore occlusion" but the app's scene no longer lists that view's reason. Our staged cards always said "ignore occlusion". The reason only gets added when SpringBoard launches the app itself, and when SpringBoard's main screen touches the same app, its own update replaces the list. The next update to our card then hit the check (SpringBoard+0xa1fa8, every SIGTRAP since 667). Now, before each update, a card keeps saying "ignore occlusion" only if the scene really lists its reason. Otherwise it stops saying it, and SpringBoard skips the check instead of failing it. Logged as "occl798 dropped ignoresOcclusions". Off: occl798-off, plus a crash latch.
 - focus798: the card-state line now runs on both update paths, not only with pass795. Every app-view update puts the card state in the crash breadcrumb.

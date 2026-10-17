@@ -1,11 +1,26 @@
-DynamicStage 4.5.812 - staged Messages tap fix (built on 4.5.811; backup ../bak812)
+DynamicStage 4.5.812 - perf812 (lag) + staged Messages tap fix (built on 4.5.811; backup ../bak812)
 
-(a) tap812 (app/Tweak.xm DSArmStageKeyboard, message box only). Found: every tap re-runs
+(P) perf812 (shared/DSStageDebug.m, every process with the tweak): every DSNNNOn gate chains to 802
+(DS812On ~22 DSFeature699On calls); each call ran the DS796Group string ladder + a locked linear strcmp
+scan over up to 512 names. One level added per build since 805, and the gates sit in hot paths (hitTest,
+keyboard-window updates, input layouts). Fix: per-name result cached for 1 s (pointer-keyed, names are
+literals; off files were already 2 s cached, latches once per start -> same answers). Off: perf812-off.
+entry811: cheap exits first, layout-driven runs at most every 0.2 s, nothing after 120 lines.
+Crumb: "perf812 N feature-gate calls (M uncached) in 10 s", only when N > 20000 (checked on rim touches and
+gest770 events, no timer).
+Log Bdisbdj does not prove a hot loop: busiest second 158 lines (08:10:18, spam taps), one
+"main thread is spinning" at 08:28:32.658 (Messages opened with its keyboard up). Cause above is from code.
+
+(a) tap812 (revised after log Bdisbdj) (app/Tweak.xm DSArmStageKeyboard, message box only). Found: every tap re-runs
 UIResponder becomeFirstResponder -> DSArmStageKeyboard (the box resigns after each keyboard handoff
 with caret778 off, so every tap is a new "become"). Each run: DSShowMessageEntryAboveKeyboard now,
 again 0.25 s later (dispatch_after), and a new SpringBoard show request. Spam taps = stacked requests
 and stacked bar checks/moves (the parked path does entry.transform += ty and clears clipsToBounds on
-every ancestor). Rule: first tap -> one request; repeat tap while DSTap812Shown (set by the show
+every ancestor). Proof (Bdisbdj 08:10:10.728-08:10:27.016): ~60 taps, each "app become" -> bar 81 -> 44 + strip=none ->
+~150 ms later "resign ... allowed: caret778 off" -> strip back later; typing works unfocused (fr=0
+key insert changed=1, bar 81 + strip kept, 08:10:06-08:10:08). Final rule: a user tap never focuses the
+staged message box (becomeFirstResponder answered NO, not while the chat is opening); the tap asks
+SpringBoard for the keys once. Old rule kept in DSArmStageKeyboard for other paths: first tap -> one request; repeat tap while DSTap812Shown (set by the show
 request, cleared by every hide / every DSStageKeyboardWanted = NO) -> nothing extra. The tap path no
 longer moves the bar or schedules the 0.25 s re-run. Search bar and other apps unchanged.
 Log: "tap812 tap N on <class>: first tap ... / keys already asked for, nothing extra" + entry811 line.
@@ -23,3 +38,5 @@ hide path clears the flag; the next log will show it (tap line "already asked" w
   which is the chat's input accessory and sits directly on top of the keyboard, so it looks like part of
   the keyboard. The prediction bar is UIKit's keyboard (different process in our setup).
 - predict805 stays opt-in (the stand-in field has no real text to predict).
+
+Version note: 4.5.812 (commit bf65e55, tap-only) was pushed minutes earlier; this build ships as 4.5.812-1 so it updates over it.

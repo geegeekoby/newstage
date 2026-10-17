@@ -78,6 +78,19 @@ void DSPass811NoteThrough(CGPoint screen, BOOL keysUp) {
         DSPass811Point = screen;
     } @catch (NSException *exception) {}
 }
+// 4.5.812 perf812 crumb: gate calls per 10 s, one line only when over 20000.
+void DSPerf812Crumb(void) {
+    if (!NSThread.isMainThread) return;
+    static CFAbsoluteTime start = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (start == 0 || now < start) { start = now; DSPerf812Take(NULL, NULL); return; }
+    if (now - start < 10.0) return;
+    long calls = 0, misses = 0;
+    DSPerf812Take(&calls, &misses);
+    double span = now - start;
+    start = now;
+    if (calls > 20000) DSDiagnosticsRecordFormat(@"SpringBoard: perf812 %ld feature-gate calls (%ld uncached) in %.0f s", calls, misses, span);
+}
 static void DSPass811NoteRimHit(void) {
     if (!NSThread.isMainThread || !DS811On("pass811")) return;
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
@@ -147,7 +160,7 @@ static void DSMakeSolidForWindowServer(UIView *view) {
     if (event && event.timestamp != lastEvent) {
         lastEvent = event.timestamp;
         CGPoint screen = [self convertPoint:point toView:nil];
-        if (event.type == UIEventTypeTouches) DSPass811NoteRimHit();
+        if (event.type == UIEventTypeTouches) { DSPass811NoteRimHit(); DSPerf812Crumb(); }
         // 4.5.741: every rim strip (main shell, top card, float) arms rimwin740.
         if (event.type == UIEventTypeTouches) { DSRim740StripAt = CFAbsoluteTimeGetCurrent(); DSRim740StripPoint = screen; }
         DSRimLog([NSString stringWithFormat:@"hit %@ at %.0f,%.0f -> %@", self.catcherName ?: @"?", screen.x, screen.y, path]);

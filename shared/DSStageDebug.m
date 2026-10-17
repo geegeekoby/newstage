@@ -420,7 +420,48 @@ static int DS796Group(const char *name) {
     return -1;
 }
 
+// 4.5.812 perf812: every DSNNNOn gate chains down to 802 (DS812On = 11 levels,
+// ~22 DSFeature699On calls), and each call did the DS796Group string ladder plus
+// a locked linear strcmp scan of up to 512 names. The chain grows one level per
+// build and sits in hot paths (hitTest, keyboard-window updates, layouts), so the
+// cost grew with every build since 805. Rule: the answer per name (names are
+// string literals, so the pointer is the key) is remembered for 1 s; the off
+// files were already only re-read every 2 s and latches once per start, so the
+// result is the same. Off: perf812-off (back to the uncached path).
+#define DS812_SLOTS 1024
+typedef struct { const char *name; CFAbsoluteTime at; BOOL on; } DS812Slot;
+static DS812Slot DS812Cache[DS812_SLOTS];
+static os_unfair_lock DS812Lock = OS_UNFAIR_LOCK_INIT;
+static BOOL DSFeature699OnSlow(const char *name);
+static volatile CFAbsoluteTime DS812OffAt = 0;
+static volatile BOOL DS812Off = NO;
+// perf812 crumb: gate calls per 10 s, kept in memory (read by DSPerf812Take).
+static volatile long DS812Calls = 0, DS812Misses = 0;
+void DSPerf812Take(long *calls, long *misses) {
+    if (calls) *calls = DS812Calls;
+    if (misses) *misses = DS812Misses;
+    DS812Calls = 0; DS812Misses = 0;
+}
 BOOL DSFeature699On(const char *name) {
+    if (!name) return NO;
+    DS812Calls++;
+    if (DSPerfFileCached("/var/mobile/.dynamicstage-perf812-off", "/var/jb/var/mobile/.dynamicstage-perf812-off", &DS812OffAt, &DS812Off))
+        return DSFeature699OnSlow(name);
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    unsigned idx = (unsigned)(((uintptr_t)name >> 3) ^ ((uintptr_t)name >> 13)) & (DS812_SLOTS - 1);
+    os_unfair_lock_lock(&DS812Lock);
+    DS812Slot slot = DS812Cache[idx];
+    os_unfair_lock_unlock(&DS812Lock);
+    if (slot.name == name && now - slot.at < 1.0 && now >= slot.at) return slot.on;
+    DS812Misses++;
+    BOOL on = DSFeature699OnSlow(name);
+    os_unfair_lock_lock(&DS812Lock);
+    DS812Cache[idx].name = name; DS812Cache[idx].at = now; DS812Cache[idx].on = on;
+    os_unfair_lock_unlock(&DS812Lock);
+    return on;
+}
+
+static BOOL DSFeature699OnSlow(const char *name) {
     if (!name) return NO;
     int g796 = DS796Group(name);
     if (g796 == 0) return NO;

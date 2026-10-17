@@ -866,7 +866,16 @@ static NSString *DSEntry811Describe(NSString *label, UIView *v, CGRect card) {
 }
 
 static void DSEntry811Log(NSString *why) {
-    if (!NSThread.isMainThread || !DSStaged() || !DSMessagesOwnsKeyboard() || !DS811On("entry811")) return;
+    // 4.5.812 perf812: cheap exits first; layout-driven calls at most every 0.2 s.
+    static NSInteger count = 0;
+    if (count > 120 || !NSThread.isMainThread || !DSStaged() || !DSMessagesOwnsKeyboard()) return;
+    static CFAbsoluteTime lastLayout = 0;
+    if ([why isEqualToString:@"input window laid out"]) {
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (now - lastLayout < 0.2 && now >= lastLayout) return;
+        lastLayout = now;
+    }
+    if (!DS811On("entry811")) return;
     static BOOL marked = NO;
     if (!marked) { marked = YES; DSFeature699MarkTrying("entry811"); }
     @try {
@@ -882,7 +891,6 @@ static void DSEntry811Log(NSString *why) {
         static NSString *last = nil;
         if ([sig isEqualToString:last]) return;
         last = [sig copy];
-        static NSInteger count = 0;
         if (++count > 120) return;
         DSTraceFormat(@"entry811 %@: %@", why ?: @"?", sig);
     } @catch (NSException *exception) {}
@@ -6287,9 +6295,39 @@ static void DSNoteFieldFocused(UIResponder *responder) {
     });
 }
 
+// 4.5.812 tap812: log811 (Bdisbdj 08:10:10.728-08:10:27.016) shows every tap on
+// the staged message box as "app become" -> bar 81 -> 44, strip=none -> ~150 ms
+// later "resign ... allowed: caret778 off" -> strip back later. 60 taps = 60
+// focus flips, each one collapsing the bar and dropping the app strip; typing
+// works with the box unfocused (key insert fr=0 changed=1, bar 81 + strip kept).
+// Rule: in staged Messages a user tap never focuses the message box. The tap
+// asks SpringBoard for the keys once (no second request while they are asked
+// for) and the bar stays where it is. Draft auto-focus while the chat opens is
+// left alone. Off: tap812-off / core812-off (crash latch tap812).
+static BOOL DSTap812Refuse(UIResponder *r) {
+    @try {
+        if (!DSStaged() || !DSMessagesOwnsKeyboard() || !DSIsMessageBox781(r) || DSChatOpening781 || r.isFirstResponder) return NO;
+        if (DSDeliveringStageKey || !DS812On("tap812") || !DS809Latched("tap812")) return NO;
+        static NSInteger taps = 0;
+        taps++;
+        BOOL repeat = DSTap812Shown;
+        DSFeature719MarkAction("tap812");
+        DSRememberKeyboardTarget(r);
+        DSStageKeyboardWanted = YES;
+        DSStageKeyboardGuardUntil = CFAbsoluteTimeGetCurrent() + 1.5;
+        if (taps <= 200)
+            DSTraceFormat(@"tap812 tap %ld on %@: focus refused (bar stays), %@", (long)taps, NSStringFromClass(object_getClass(r)),
+                          repeat ? @"keys already asked for, nothing extra" : @"asking SpringBoard for the keys");
+        if (!repeat) DSRequestSpringBoardKeyboard(YES);
+        DSEntry811Log([NSString stringWithFormat:@"tap812 tap %ld", (long)taps]);
+        return YES;
+    } @catch (NSException *exception) { return NO; }
+}
+
 %hook UIResponder
 
 - (BOOL)becomeFirstResponder {
+    if (DSTap812Refuse(self)) return NO;
     if (DSStaged() && DSResponderTakesText(self)) {
         DSTraceFormat(@"app become %@", NSStringFromClass(self.class));
     }
@@ -6407,6 +6445,7 @@ static void DSNoteFieldFocused(UIResponder *responder) {
 }
 
 - (BOOL)becomeFirstResponder {
+    if (DSTap812Refuse(self)) return NO;
     if (DSStaged()) {
         DSTraceFormat(@"app become %@", NSStringFromClass(self.class));
     }

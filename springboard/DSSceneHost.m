@@ -8082,9 +8082,11 @@ void DSGest770NoteSuppressed(CGPoint point, NSString *who) {
 // SpringBoard events that change it - a card's host750 state change, the home
 // gesture starting / ending and each edge pull - instead of a 4 Hz timer.
 // Off: poll805-off (back to the 0.25 s poll).
+extern void DSPerf812Crumb(void);
 void DSGest770LogLayout(NSString *why) {
     static NSString *lastSig = nil;
     if (!NSThread.isMainThread) return;
+    DSPerf812Crumb();
     @try {
         NSString *sig = [NSString stringWithFormat:@"switcher=%@ home=%d busy=%d stage visible=%d parked=%d",
                          DSGest770SwitcherSummary(), [DSSceneHost homeGestureIsActive], [DSSceneHost systemTransitionBusy],

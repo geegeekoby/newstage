@@ -1,3 +1,8 @@
+## 4.5.822 (corner fixes C+D on 4.5.821)
+- corner822: two minimised cards never share a corner. In log 821 (10:01:38) a card that was still sliding away was read as sitting in the left corner, so both cards were filed under the left corner and each left-corner pull brought back only one of them. Now that reading is ignored when it would put both cards in the same corner, and if they ever do share one, the second card goes to the other corner.
+- edge822: a pull from a minimised card's corner is only taken by the stage if it can become a restore. A pull that starts moving down (log 821 10:05:32: the stage took it and nothing happened) is now left to the system (home / switcher). A taken pull that ends without a restore is now logged.
+- Off: corner822-off, edge822-off, core822-off (back to 4.5.821). Crash latches for both.
+
 ## 4.5.821 (keyboard fixes A+B on 4.5.820)
 - kbmin821: a minimised or parked card no longer brings up or keeps its keyboard. From log 821: at 10:01:20 Beeper's keys came up over the home screen while its card was minimised and taps did nothing; at 10:04:13 Beeper was minimised while typing and the keys stayed. Now the keyboard window's level is only raised for a card that is on screen, and when a card minimises while it owns the keys the raise is dropped so SpringBoard hides them as usual.
 - kbback821: a card restored while it still owns the keyboard raises the keys again before the card is lifted, and the card is only lifted if the keys are really visible (log 821 10:04:55: card lifted 341 pt over keys that were under the stage).

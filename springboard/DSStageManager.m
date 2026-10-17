@@ -10137,7 +10137,15 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
     DSDiagnosticsRecordFormat(@"SpringBoard: corner771 claimed pull in parked corner (%@) at %.0f,%.0f", left ? @"left" : @"right", start.x, start.y);
     [self noteStageUse];
     card = [self parkedCardForCornerPoint:start] ?: card;
-    if (![self cardIsParked:card]) return YES;   // claimed, nothing to restore
+    if (![self cardIsParked:card]) {
+        // 4.5.822 edge822: nothing to restore -> the pull stays the system's.
+        if (DS822On("edge822")) {
+            DSFeature719MarkAction("edge822");
+            DSDiagnosticsRecord(@"SpringBoard: edge822 corner pull left to the system: no minimised card to restore");
+            return NO;
+        }
+        return YES;   // claimed, nothing to restore
+    }
     _cornerRestoreCard = card;
     DSStageRestore706Note();
     _systemPull = gesture;
@@ -10214,6 +10222,26 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
     }
 }
 
+// 4.5.822 edge822: a corner pull is only claimed when it can end as a restore.
+// Log 821 10:05:32.094: "edge pull began at 24,908 v=(77,129): claimed by the
+// stage", ended 0.60 s later moved (19,10) with no restore: the stage held the
+// system gesture for nothing. A pull whose first report already moves down
+// (velocity y > 40 pt/s and not up 6 pt) cannot become the upward diagonal
+// restore, so it is left to the system (home / switcher) from the start. A
+// claimed pull can not be handed back to SpringBoard mid-gesture with a
+// verified selector, so the end without a restore is logged. Off: edge822-off.
+- (BOOL)edge822RefusePull:(UIPanGestureRecognizer *)gesture at:(CGPoint)start {
+    if (!gesture || !DS822On("edge822")) return NO;
+    static BOOL marked = NO;
+    if (!marked) { marked = YES; DSFeature699MarkTrying("edge822"); }
+    CGPoint v = [gesture velocityInView:nil];
+    CGPoint t = [gesture translationInView:nil];
+    if (!(v.y > 40.0 && t.y > -6.0)) return NO;
+    DSFeature719MarkAction("edge822");
+    [self restore727Refused:[NSString stringWithFormat:@"edge822: pull moving down (v=%.0f,%.0f), not a restore; left to the system", v.x, v.y] at:start];
+    return YES;
+}
+
 - (void)restore727Refused:(NSString *)why at:(CGPoint)point {
     // 4.5.727: a refused corner pull is logged (only while a card is minimised).
     if (!_primaryParked && !_secondParked) return;
@@ -10241,6 +10269,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
             [self restore727Refused:@"corner771: the same touch as the minimise drag" at:start727];
             return NO;
         }
+        if ([self edge822RefusePull:gesture at:start727]) return NO;
         return [self corner771ClaimPull:gesture card:corner771Card at:start727];
     }
     if (CFAbsoluteTimeGetCurrent() < _ignoreSystemPullUntil) { [self restore727Refused:@"pulls blocked for a moment after a stage move" at:start727]; return NO; }
@@ -10271,6 +10300,7 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
         [self restore727Refused:why at:start];
         return NO;
     }
+    if ([self edge822RefusePull:gesture at:start]) return NO;
     // 4.5.657: stage use. An app killed from the switcher is handled now.
     [self noteStageUse];
     card = [self parkedCardForCornerPoint:start];
@@ -10363,6 +10393,11 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
             case UIGestureRecognizerStateEnded: {
                 CGPoint velocity = [gesture velocityInView:nil];
                 [self releaseSystemPull];
+                if (DS822On("edge822") && ![self gestureIsDiagonalCornerRestore:translation velocity:velocity]) {
+                    DSFeature719MarkAction("edge822");
+                    DSDiagnosticsRecordFormat(@"SpringBoard: edge822 claimed corner pull ended without a restore (moved %.0f,%.0f v=%.0f,%.0f)",
+                                              translation.x, translation.y, velocity.x, velocity.y);
+                }
                 if ([self gestureMovesLeftAlongTheBottom:translation velocity:velocity]) {
                     [self cancelTracking];
                 } else {
@@ -12879,6 +12914,24 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
         [DSSceneHost systemTransitionBusy] || _spam700MinimisePending || _spam700DeferredFinish || _cornerRestoreCard) return;
     // 3. The remembered side must be the corner the card is drawn in.
     CGFloat midScreen = CGRectGetMidX([self screenBounds]);
+    // 4.5.822 corner822: two minimised cards never share a corner. If they do,
+    // the second card takes the other corner (a card drawn in that shared corner
+    // keeps it). Flags only: minimised cards rest off-screen.
+    if (DS822On("corner822") && _primaryParked && _secondParked && _primaryMinimizedLeft == _secondMinimizedLeft) {
+        static BOOL marked822 = NO;
+        if (!marked822) { marked822 = YES; DSFeature699MarkTrying("corner822"); }
+        DSFeature719MarkAction("corner822");
+        BOOL shared = _primaryMinimizedLeft;
+        BOOL secondDrawnThere = NO;
+        if (_topContainer && !_topContainer.hidden && _topContainer.window) {
+            CGRect seen2 = [self visualScreenFrameForCard:_topContainer];
+            secondDrawnThere = !CGRectIsEmpty(seen2) && ((CGRectGetMidX(seen2) < midScreen) == shared);
+        }
+        if (secondDrawnThere) _primaryMinimizedLeft = !shared;
+        else _secondMinimizedLeft = !shared;
+        [self restore726Say:[NSString stringWithFormat:@"corner822 both minimised cards were in the %@ corner: %@ card moved to the %@ corner",
+                             shared ? @"left" : @"right", secondDrawnThere ? @"primary" : @"second", shared ? @"right" : @"left"]];
+    }
     for (NSInteger i = 0; i < 2; i++) {
         DSStageContainerView *card = i == 0 ? _container : _topContainer;
         BOOL parked = i == 0 ? _primaryParked : _secondParked;
@@ -12888,6 +12941,18 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
         BOOL drawnLeft = CGRectGetMidX(seen) < midScreen;
         BOOL remembered = i == 0 ? _primaryMinimizedLeft : _secondMinimizedLeft;
         if (drawnLeft == remembered) continue;
+        // 4.5.822 corner822: never copy a drawn side that puts both minimised
+        // cards in one corner (log 821 10:01:38.320 "primary card is drawn in
+        // the left corner ... fixed" -> both parked left; the card was still
+        // mid-slide, minimised cards rest off-screen).
+        BOOL otherParked = i == 0 ? _secondParked : _primaryParked;
+        BOOL otherLeft = i == 0 ? _secondMinimizedLeft : _primaryMinimizedLeft;
+        if (DS822On("corner822") && otherParked && otherLeft == drawnLeft) {
+            DSFeature719MarkAction("corner822");
+            [self restore726Say:[NSString stringWithFormat:@"corner822 %@ card is drawn in the %@ corner, the other minimised card's corner: side kept (%@)",
+                                 i == 0 ? @"primary" : @"second", drawnLeft ? @"left" : @"right", remembered ? @"left" : @"right"]];
+            continue;
+        }
         DSFeature719MarkAction("restore726");
         if (i == 0) _primaryMinimizedLeft = drawnLeft;
         else _secondMinimizedLeft = drawnLeft;

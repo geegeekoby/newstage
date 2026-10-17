@@ -1,0 +1,4 @@
+## 4.5.806
+- keep806: while medusa803 holds SpringBoard's Medusa level assertion for a staged owner (the arbiter names a staged, hosted, non-Messages app), a setHidden:YES from SpringBoard's updateMedusaHostedKeyboardWindowForScene: is dropped in the same call, whatever the keep776 gates say. When medusa803 takes the assertion and the Medusa window is already hidden, it is unhidden once in that call. Release is unchanged: keys-down releases the assertion and SpringBoard's hides go through. (805 log, Signal shows 14/15: SpringBoard's hide went through with no keep776 line, so the keys were never visible.)
+- why806 (log only): when SpringBoard's update hide goes through while the arbiter names a staged app, one line lists every condition.
+- Off files: core806-off (back to 805), keep806-off, why806-off. Latch: keep806.

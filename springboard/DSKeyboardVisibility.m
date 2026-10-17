@@ -880,6 +880,15 @@ void DSMedusa802Take(UIWindow *medusa, NSString *why) {
         DSMedusa802Window = medusa;
         DSDiagnosticsRecordFormat(@"SpringBoard: %s took SpringBoard's Medusa level assertion (priority 3, level %.0f; was %.0f) for %@", DS803On("medusa803") ? "medusa803" : "medusa802",
                                   DSKeyboardWindowLevelAboveStage(), before, why ?: @"?");
+        // 4.5.806 keep806: the window SpringBoard already hid (end of the previous
+        // show) is shown once, here, in the same call that takes the assertion.
+        if (medusa.hidden && DS803On("medusa803") && DS806On("keep806")) {
+            static BOOL marked806 = NO;
+            if (!marked806) { marked806 = YES; DSFeature699MarkTrying("keep806"); }
+            DSFeature719MarkAction("keep806");
+            medusa.hidden = NO;
+            DSDiagnosticsRecordFormat(@"SpringBoard: keep806 kept the Medusa window shown for %@ (was hidden when medusa803 took the assertion: unhidden)", why ?: @"?");
+        }
     } @catch (NSException *exception) {
         DSDiagnosticsRecordFormat(@"SpringBoard: %s take threw %@", DS803On("medusa803") ? "medusa803" : "medusa802", exception.name ?: @"?");
     }
@@ -1951,6 +1960,55 @@ BOOL DSKeep776Active(void) {
         return YES;
     } @catch (NSException *exception) {
         return NO;
+    }
+}
+
+// ---- 4.5.806 keep806 / why806 -----------------------------------------------------
+// keep806: while medusa803 holds SpringBoard's Medusa level assertion for a
+// staged owner (taken only for a staged, hosted, non-Messages app on keys-up;
+// released on keys-down), a setHidden:YES from SpringBoard's
+// updateMedusaHostedKeyboardWindowForScene: is dropped in that same call,
+// regardless of the keep776 gates. Off: keep806-off / core806-off (latch keep806).
+NSString *DSKeep806HoldingFor(UIWindow *medusa) {
+    @try {
+        if (!NSThread.isMainThread || !DS803On("medusa803") || !DS806On("keep806")) return nil;
+        if (!DSMedusa802Assertion || !medusa || DSMedusa802Window != medusa) return nil;
+        NSString *owner = DS803Owner;
+        if (!owner.length || [owner isEqualToString:@"com.apple.springboard"] || [owner isEqualToString:@"com.apple.MobileSMS"]) return nil;
+        static BOOL marked = NO;
+        if (!marked) { marked = YES; DSFeature699MarkTrying("keep806"); }
+        return owner;
+    } @catch (NSException *exception) {
+        return nil;
+    }
+}
+
+void DSKeep806NoteDropped(NSString *bundle) {
+    DSFeature719MarkAction("keep806");
+    static NSInteger show = -1, count = 0;
+    if (show != DSKbVis768Show) { show = DSKbVis768Show; count = 0; }
+    if (++count <= 6)
+        DSDiagnosticsRecordFormat(@"SpringBoard: keep806 kept the Medusa window shown for %@ (SpringBoard update hide dropped) show %ld #%ld",
+                                  bundle ?: @"?", (long)DSKbVis768Show, (long)count);
+}
+
+// why806 (log only): SpringBoard's update hide went through while the arbiter
+// names a staged app. Off: why806-off.
+void DSWhy806NotePassed(UIWindow *medusa, BOOL wasHidden, BOOL bypass, NSInteger depth) {
+    @try {
+        if (!NSThread.isMainThread || !DS806On("why806")) return;
+        NSString *arb = DS803Owner;
+        if (!arb.length || [arb isEqualToString:@"com.apple.springboard"] || [arb isEqualToString:@"com.apple.MobileSMS"]) return;
+        static BOOL marked = NO;
+        if (!marked) { marked = YES; DSFeature699MarkTrying("why806"); }
+        NSString *owner = DSKbVis768Owner;
+        DSStageManager *m = [DSStageManager sharedManager];
+        BOOL ownerOk = owner.length && ![owner isEqualToString:@"com.apple.springboard"] && ![owner isEqualToString:@"com.apple.MobileSMS"] && !DSStage742MessagesStaged();
+        DSDiagnosticsRecordFormat(@"SpringBoard: why806 SpringBoard update hide went through for %@: wasHidden=%d bypass=%d depth=%ld | keep776 arbOn=%d stageOnScreen=%d keep776on=%d owner=%@ ownerOk=%d stageVisible=%d hosted=%d | medusa803 holding=%d sameWindow=%d | keep806 on=%d",
+            arb, wasHidden, bypass, (long)depth, DSKbVis768On_, DSKbVis776StageOn, DS776On("keep776"), owner ?: @"-", ownerOk,
+            m.isStageVisible, owner.length ? [m isHostingBundleIdentifier:owner] : NO,
+            DSMedusa802Assertion != nil, DSMedusa802Window == medusa, DS806On("keep806"));
+    } @catch (NSException *exception) {
     }
 }
 

@@ -201,6 +201,9 @@ BOOL DSKbVis775ArbiterOn(void);
 void DSWhy775Note(NSString *line);
 // 4.5.776 keep776
 BOOL DSKeep776Active(void);
+NSString *DSKeep806HoldingFor(UIWindow *medusa);
+void DSKeep806NoteDropped(NSString *bundle);
+void DSWhy806NotePassed(UIWindow *medusa, BOOL wasHidden, BOOL bypass, NSInteger depth);
 void DSKeep776NoteBlocked(UIWindow *medusa);
 extern void (^DSKeep776ApplyHide)(UIWindow *medusa);
 #ifdef __cplusplus

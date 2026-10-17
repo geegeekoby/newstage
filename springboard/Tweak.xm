@@ -2640,6 +2640,12 @@ static BOOL DSKeep776Bypass = NO;
     @try {
         drop = hidden && !DSKeep776Bypass && DSKeep776UpdateDepth > 0 && NSThread.isMainThread && !((UIWindow *)self).hidden && DSKeep776Active();
         if (drop) DSKeep776NoteBlocked((UIWindow *)self);
+        // 4.5.806 keep806 / why806 (same synchronous call; no timer).
+        if (!drop && hidden && !DSKeep776Bypass && DSKeep776UpdateDepth > 0 && NSThread.isMainThread) {
+            NSString *held = DSKeep806HoldingFor((UIWindow *)self);
+            if (held) { drop = YES; DSKeep806NoteDropped(held); }
+            else DSWhy806NotePassed((UIWindow *)self, ((UIWindow *)self).hidden, DSKeep776Bypass, DSKeep776UpdateDepth);
+        }
     } @catch (NSException *exception) {
         drop = NO;
     }

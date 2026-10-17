@@ -4304,7 +4304,10 @@ static BOOL DSKbNan754On(void) {
             static BOOL marked = NO;
             if (!marked) { marked = YES; DSFeature699MarkTrying("lift803"); }
             DSFeature719MarkAction("lift803");
-            NSString *k = [NSString stringWithFormat:@"%@|%@", source, NSStringFromCGRect(keyboard)];
+            // 4.5.804 lift804: one line per keys-down (803 wrote one per frame
+            // value, 22 lines for Beeper). Off: lift804-off.
+            NSString *k = DS804On("lift804") ? [NSString stringWithFormat:@"%@|%lu", source, DS804KeysDownSerial()]
+                                              : [NSString stringWithFormat:@"%@|%@", source, NSStringFromCGRect(keyboard)];
             if (![k isEqualToString:saidKey]) {
                 saidKey = k;
                 DSDiagnosticsRecordFormat(@"SpringBoard: lift803 ignored %@ keyboard up %@: the keyboard system said its keys are down (no lift)",

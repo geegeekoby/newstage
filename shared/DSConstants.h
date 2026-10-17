@@ -216,7 +216,7 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 
 // Kept across resprings. postinst deletes it, so a crash from the build that
 // was just replaced is not still sitting there after the next install.
-#define kDSBuildVersionString "4.5.803"
+#define kDSBuildVersionString "4.5.804"
 
 // 4.5.667: a sandboxed app's trace lines land in <its data container>/tmp/
 // under this name; SpringBoard relays new lines into the shared trace.

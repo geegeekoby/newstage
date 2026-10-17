@@ -1,3 +1,8 @@
+## 4.5.804
+- strip804 (log only): the 803 log shows Messages' own _showAppStrip stays 0 the whole time. In ChatKit 20F75 that flag is set only when CKShowAppStripInEntryView() is YES, which reads the com.apple.MobileSMS preference AppStripEnabled (tapping the apps button flips and saves it). 804 logs that value at the first chat, every updateAppStripVisibility: result, and each apps-button tap.
+- lift804: one lift line per keys-down instead of one per frame value.
+- Off files: core804-off (back to 803), strip804-off, lift804-off.
+
 ## 4.5.803
 - medusa803: the Medusa level is held only from keys-up (arbiter on) of a staged non-Messages app until the first keys-down. Raise/hold never take it. Direct level writes, the pin and restore are gone, and so are keep776's 0.6 s hand-back and keep802's re-show.
 - lift803: state rule with no timer. After keys-down for app X, X's keyboard-up frames are ignored until X's next keys-up. The state is recorded at the arbiter callback.

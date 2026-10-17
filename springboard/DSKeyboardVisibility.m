@@ -1926,6 +1926,8 @@ static NSString *DS803DownFor = nil;
 
 NSString *DS803KeyboardOwner(void) { return DS803Owner; }
 NSString *DS803KeysDownFor(void) { return DS803DownFor; }
+static unsigned long DS804DownSerial = 0;   // 4.5.804: counts keys-down signals (log grouping only)
+unsigned long DS804KeysDownSerial(void) { return DS804DownSerial; }
 
 void DS803NoteArbiter(BOOL on, NSString *source) {
     @try {
@@ -1940,6 +1942,7 @@ void DS803NoteArbiter(BOOL on, NSString *source) {
             NSString *was = src ?: DS803Owner;
             if (was) DS803DownFor = was;
             DS803Owner = nil;
+            DS804DownSerial++;
         }
         if (!DS803On("medusa803")) return;
         if (!on) { DSMedusa802Release(@"keys off (arbiter)"); return; }

@@ -1905,6 +1905,8 @@ static void DSApplyNotifyState(void) {
 }
 
 static BOOL DS795AppKeyringOn(void);
+static int DS804StripPref(void);
+static int DS804StripInEntry(void);
 // Skip every letter already queued. The next notification is a new key.
 static void DSCatchUpKeyboardInput(void) {
     NSDictionary *root = DS795AppKeyringOn() ? nil : [NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath];
@@ -2766,6 +2768,9 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
                     DS786On("swipe786"), DS787On("swipe787"), DS795AppKeyringOn(),
                     access("/var/mobile/.dynamicstage-kbleave743-off", F_OK) != 0, access("/var/mobile/.dynamicstage-kbapp744-off", F_OK) != 0,
                     DSFeature699On("core783"));
+                if (DS804On("strip804"))
+                    DSTraceFormat(@"strip804 at first chat: CKShowAppStripInEntryView=%d AppStripEnabled=%d (-1 = unset, default YES)",
+                                  DS804StripInEntry(), DS804StripPref());
             }
         }
     }
@@ -7416,6 +7421,60 @@ static void DSInstallMessagesBehaviorHooks(void) {
 %end
 
 // Safari view service lays its navigation bar out from the screen width.
+
+// 4.5.804 strip804 (log only). ChatKit 20F75 (verified by disassembly):
+//   -[CKMessageEntryView shouldShowAppStrip] just reads _showAppStrip;
+//   -[CKChatController updateAppStripVisibility:animated:] sets it only when
+//   CKShowAppStripInEntryView() is YES, which is the com.apple.MobileSMS
+//   preference "AppStripEnabled" (default YES). Tapping the apps button
+//   (-shouldMessageEntryViewReportBrowserButtonHitToInputDelegate:) flips and
+//   saves that preference. These lines show which of those keeps it at 0.
+static int DS804StripPref(void) {
+    CFPropertyListRef v = CFPreferencesCopyAppValue(CFSTR("AppStripEnabled"), CFSTR("com.apple.MobileSMS"));
+    if (!v) return -1;
+    int r = (CFGetTypeID(v) == CFBooleanGetTypeID()) ? (CFBooleanGetValue((CFBooleanRef)v) ? 1 : 0)
+          : ([(__bridge id)v respondsToSelector:@selector(boolValue)] ? [(__bridge id)v boolValue] : -2);
+    CFRelease(v);
+    return r;
+}
+static int DS804StripInEntry(void) {
+    static BOOL (*fn)(void) = NULL;
+    static BOOL looked = NO;
+    if (!looked) { looked = YES; fn = (BOOL (*)(void))dlsym(RTLD_DEFAULT, "CKShowAppStripInEntryView"); }
+    return fn ? (fn() ? 1 : 0) : -1;
+}
+static BOOL DS804StripLogOn(void) { return DSStaged() && DS804On("strip804"); }
+
+%hook CKChatController
+- (void)updateAppStripVisibility:(BOOL)visible animated:(BOOL)animated {
+    BOOL log = NO;
+    @try { log = DS804StripLogOn(); } @catch (NSException *e) {}
+    %orig;
+    if (!log) return;
+    @try {
+        id ev = [(id)self valueForKey:@"entryView"];
+        BOOL now = [ev respondsToSelector:@selector(shouldShowAppStrip)] ? ((BOOL (*)(id, SEL))objc_msgSend)(ev, @selector(shouldShowAppStrip)) : NO;
+        static NSString *last = nil;
+        NSString *line = [NSString stringWithFormat:@"strip804 updateAppStripVisibility:%d -> shouldShowAppStrip=%d | CKShowAppStripInEntryView=%d AppStripEnabled=%d (-1 = unset, default YES)",
+                          visible, now, DS804StripInEntry(), DS804StripPref()];
+        if (![line isEqualToString:last]) { last = line; DSTraceFormat(@"%@", line); }
+    } @catch (NSException *e) {}
+}
+- (BOOL)shouldMessageEntryViewReportBrowserButtonHitToInputDelegate:(id)entryView {
+    BOOL log = NO;
+    int before = 0;
+    @try { log = DS804StripLogOn(); if (log) before = DS804StripPref(); } @catch (NSException *e) {}
+    BOOL r = %orig;
+    if (log) {
+        @try {
+            DSTraceFormat(@"strip804 apps button tapped: AppStripEnabled %d -> %d, CKShowAppStripInEntryView=%d (Messages saves this; it hides the strip in every chat)",
+                          before, DS804StripPref(), DS804StripInEntry());
+        } @catch (NSException *e) {}
+    }
+    return r;
+}
+%end
+
 %hook _SFBrowserNavigationBar
 
 - (void)layoutSubviews {

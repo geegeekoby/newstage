@@ -1,3 +1,9 @@
+## 4.5.797
+- focus797 (logging only): every keyboard-focus change passed to a staged app view is logged with the card state (minimised, home, busy, stage visible, parked), the app view's window and the key window. The 796 SIGTRAP (18:46:33) happened with pass795 on: Beeper got keyboardFocus 2.8 s after being minimised, while Spotlight's keyboard was up. Holds were not the cause. The exact SpringBoard check that fails is still unproven, so there is no behaviour change. Off: focus797-off.
+- kbcap797 (logging only): when the keyboard shows, each app logs its bundle-id decisions next to what it is actually doing (strip footer present, keyboard windows, key window). This is groundwork for the single keyboard model. Off: kbcap797-off.
+- The crash writer's image table now holds 4096 images (with 1024, the 796 crash lost our own frame's name).
+- core797-off undoes 797.
+
 ## 4.5.796
 - switch796: a few group files now cover every feature switch. kb-off turns off all keyboard features. holds-on brings back 794's held and replayed updates (holds are off by default). keyring-off goes back to the key file. verbose-on turns on the log-only probes. phonesize-off turns off the phone-size scene path. core796-off undoes 796. The coreNNN-off masters below 796 are retired: the previous .deb is the rollback. The old per-name -off files still work.
 - verbose: log792 (including the strip792 UIView hooks in Messages), trace766, tree765-767, scene773 and msgdiag714 now only run with verbose-on.

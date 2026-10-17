@@ -1,0 +1,16 @@
+4.5.827 (on 4.5.826)
+pilllook827 (off: pilllook827-off -> exact 826 tab; latch pilllook827-crashed; hang marker pilllook827-showing;
+core827-off -> 826):
+ the closed right-edge tab is now drawn as a floating 6x52 capsule, 3 pt in from the edge: light capsule in dark
+ mode / dark capsule in light mode, 824-style gradient edge (white -> teal), top sheen, soft shadow (shadowPath).
+ One breathing pulse pair per SpringBoard start (Core Animation scale 1.0 -> 1.3, x2; Reduce Motion: opacity pulse).
+ The 14x64 tab control and its padded hit area are unchanged (the control is just drawn clear). The capsule dims
+ while the strip / panel is open. Switched on only from refreshShelf when DSStayedUp823 is set; the existing
+ 8 s "stayed up, boot guard cleared" block now calls refreshShelf once (pilllook827StayedUp, does nothing when
+ pilllook827 / core827 is off). Nothing at launch: no new hook / ctor / +load / %init / thread / timer.
+drag827 (off: drag827-off; core827-off):
+ the + New Stage item in the 826 strip can be dragged out to open a stage, through the same slotDragHandler /
+ handleNewStageDrag as the old panel (hint while dragging, split zone, top / bottom half). A tap still opens the
+ picker as in 826. hitTest's old-panel drag branch no longer runs while the strip is open.
+Binary: no new undefined symbols, no new system selectors (only this build's own methods / ivars), load commands,
+ plists, file list and constructor body identical to 826.

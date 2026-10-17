@@ -394,3 +394,9 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-pill826-off : old notch panel (New Stage square, drag-to-open)
 - /var/mobile/.dynamicstage-core826-off : all of 826 (back to 825)
 - Latch: /var/mobile/.dynamicstage-pill826-crashed (hang marker /var/mobile/.dynamicstage-pill826-showing)
+
+## 4.5.827
+- /var/mobile/.dynamicstage-pilllook827-off : closed tab drawn as in 826 (no capsule)
+- /var/mobile/.dynamicstage-drag827-off : no drag of + New Stage out of the pill strip
+- /var/mobile/.dynamicstage-core827-off : all of 827 (back to 826)
+- Latch: /var/mobile/.dynamicstage-pilllook827-crashed (hang marker /var/mobile/.dynamicstage-pilllook827-showing)

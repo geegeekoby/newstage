@@ -1,3 +1,8 @@
+## 4.5.827
+- The edge tab now looks like a floating pill: a slim 6x52 glass capsule a little in from the edge (gradient edge, top sheen, soft shadow) with a short breathing pulse after each respring. Same place and same tap area as before. Respects Reduce Motion and dark/light.
+- Drag the + New Stage button out of the pill strip to open a stage where you let go (like the old panel).
+- Off: pilllook827-off (826 tab look), drag827-off (no drag from the strip), core827-off (back to 826). Latch: pilllook827-crashed.
+
 ## 4.5.826
 - The edge tab now opens a morphing glass pill strip: New Stage plus the icons of the top / bottom / floating card apps. Tap a minimised card's icon to bring it back; hold a top/bottom icon to send that card back to the picker. Respects Reduce Motion and dark/light.
 - Off: pill826-off (old notch panel exactly), core826-off (back to 825). Latch: pill826-crashed.

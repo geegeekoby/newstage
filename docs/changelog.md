@@ -1,3 +1,9 @@
+## 4.5.813 (experimental: realkb813, OFF by default)
+- realkb813: opt-in test where staged Messages uses its own real keyboard, reply bar and app strip instead of SpringBoard's stand-in keys. Turn on: create /var/mobile/.dynamicstage-realkb813-on, respring. Off: delete it, or realkb813-off / core813-off. Crash-latched.
+- The stand-in keyboard path is kept untouched as the fallback (default).
+- Logging "realkb813 ..." only on change: bar/strip/keys frames and inCard, keyboard windows, first responder.
+- Known limit: the keys show inside the card (SpringBoard clips the card); showing them outside the card is not built yet.
+
 ## 4.5.812-1 (lag fix + Messages tap fix)
 - perf812: feature switches are answered from a 1 s cache. Every build since 805 added one more level of switch checks to hot paths (touches, keyboard updates, layouts); this removes that cost. Off: perf812-off.
 - entry811 logging is throttled (cheap checks first, at most every 0.2 s).

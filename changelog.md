@@ -1,3 +1,6 @@
+## 4.5.794
+- table794: the feature switch table had 128 slots but SpringBoard uses 178 names, so every name asked for after the 128th was silently off (proven: log793 never ran in SpringBoard in the 793 log). The table now has 512 slots. table794-off or core794-off (or a table794 crash latch) cap it at 128 again, as in 4.5.793.
+
 ## 4.5.793
 - log793 (logging only, no behaviour change), for the 791 SpringBoard SIGTRAP at 08:39:14 (Signal call end, call758 hold -> hold740 replay -> next update passed -> trap): synchronous "last step" breadcrumb before every held-update replay (hold740, focus769) and every update passed to SpringBoard (handle, controller, diff pointers, owned flag, age, diff text); crash section now records pc/lr from the signal context, the DynamicStage load address and image+offset per frame; log745 corrupt lines name their caller. Off: /var/mobile/.dynamicstage-log793-off. core793-off returns to 792. 792 logging kept.
 

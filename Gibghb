@@ -1,0 +1,1437 @@
+build 4.5.793 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(second) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+log refreshed after respring
+SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+[TRACE] ready state=0 split=0 bottom=- top=- hover=-
+SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+SpringBoard: LATCHED OFF 2 feature(s): focus769 (latched 10-17 17:42:26, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-focus769-crashed to allow it); focus755 (latched 10-17 17:41:36, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-focus755-crashed to allow it)
+SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+SpringBoard: camera660 listening for in-app camera events from 5 apps
+SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+SpringBoard: filter at boot ctor=[age=176s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=176s mapped bundle=com.apple.MobileSMS pid=5003 build=4.5.793] libsPlist=[age=3524s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=35...
+SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+SpringBoard: stage window moved back to the foreground scene
+SpringBoard: stage on screen
+[TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+SpringBoard: taking key from SBHomeScreenWindow on this scene
+SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+SpringBoard: opened the top stage
+
+--- trace ---
+=== previous session ===
+ pid=4643 main | SpringBoard: gest770 edge pull began at 307,666 v=(8,-700): left to the system (home / switcher) (parked=1 stage visible=0 home=1 switcher=unreadable)
+17:50:03.327 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:50:03.327 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:50:03.327 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:50:03.392 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.07 s (system's) at 333,580 moved (26,-112) v=(646,-1884) home=1 busy=1 switcher=unreadable
+17:50:03.393 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:50:04.253 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:50:04.301 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+17:50:04.310 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:04.311 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:50:04.314 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+17:50:04.740 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:50:04.827 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 334,910: started on the home bar (primary parked=1 right, second parked=0 right)
+17:50:04.827 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 334,910 v=(-146,-322): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:50:04.828 SpringBoard pid=4643 main | SpringBoard: kbdrag744 dismiss keys (tuckOpenStageAwayForHomeGesture)
+17:50:04.828 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:50:04.829 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:50:04.829 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:50:04.923 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.10 s (system's) at 318,804 moved (-16,-112) v=(-195,-1150) home=1 busy=1 switcher=unreadable
+17:50:04.923 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:50:04.973 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:50:05.380 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:50:05.782 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:50:05.992 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:50:06.002 SpringBoard pid=4643 bg | arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+17:50:06.249 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:50:14.112 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 313,912: started on the home bar (primary parked=1 right, second parked=0 right)
+17:50:14.113 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 313,912 v=(34,-213): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:50:14.114 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:50:14.114 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:50:14.115 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:50:14.243 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.13 s (system's) at 297,837 moved (-16,-82) v=(-18,-130) home=1 busy=1 switcher=unreadable
+17:50:14.243 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:50:14.250 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:50:14.940 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+15 more in the last 10 s)
+17:50:15.094 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:50:15.507 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:50:19.242 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+17:50:19.249 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}} (+1 repeats)
+17:50:19.251 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{inf, inf}, {0, 0}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:20.615 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+17:50:20.627 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:24.727 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+2 repeats)
+17:50:24.747 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:25.725 SpringBoard pid=4643 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+17:50:26.140 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+17:50:27.121 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+17:50:27.137 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:28.211 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+17:50:28.234 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:28.551 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 304,924: started on the home bar (primary parked=1 right, second parked=0 right)
+17:50:28.552 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 304,924 v=(349,-25): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:50:28.553 SpringBoard pid=4643 main | SpringBoard: kbdrag744 dismiss keys (tuckOpenStageAwayForHomeGesture)
+17:50:28.554 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:50:28.556 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:50:28.556 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:50:28.577 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+17:50:28.609 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.06 s (system's) at 360,924 moved (56,0) v=(1215,0) home=1 busy=1 switcher=unreadable
+17:50:28.609 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:50:28.716 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:50:29.062 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 290,911: started on the home bar (primary parked=1 right, second parked=0 right)
+17:50:29.062 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 290,911 v=(387,-331): left to the system (home / switcher) (parked=1 stage visible=0 home=1 switcher=unreadable)
+17:50:29.062 SpringBoard pid=4643 main | SpringBoard: kbdrag744 dismiss keys (tuckOpenStageAwayForHomeGesture)
+17:50:29.063 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:50:29.063 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:50:29.063 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:50:29.066 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+10 more in the last 10 s)
+17:50:29.079 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+1 repeats)
+17:50:29.168 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.11 s (system's) at 391,923 moved (100,10) v=(1255,-21) home=1 busy=1 switcher=unreadable
+17:50:29.168 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:50:29.501 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:50:30.153 SpringBoard | SpringBoard: parked apps stopped following the home transition x2
+17:50:30.154 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:50:30.160 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+17:50:30.473 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:50:42.018 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:50:42.051 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 311,905: started on the home bar (primary parked=1 right, second parked=0 right)
+17:50:42.052 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 311,905 v=(-233,-474): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:50:42.052 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:50:42.053 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:50:42.053 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:50:42.144 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.09 s (system's) at 280,788 moved (-31,-132) v=(-271,-1890) home=1 busy=1 switcher=unreadable
+17:50:42.144 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:50:42.215 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:50:42.339 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+5 more in the last 10 s)
+17:50:42.430 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+17:50:42.440 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:42.693 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+17:50:43.004 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:50:43.476 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:50:44.732 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+17:50:44.752 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:45.830 SpringBoard pid=4643 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+17:50:45.853 SpringBoard pid=4643 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:50:46.306 SpringBoard pid=4643 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+17:50:46.979 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 289,915: started on the home bar (primary parked=1 right, second parked=0 right)
+17:50:46.980 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 289,915 v=(509,-321): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:50:46.981 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:50:46.982 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:50:46.983 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:50:47.075 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.09 s (system's) at 395,923 moved (106,4) v=(1512,-16) home=1 busy=1 switcher=unreadable
+17:50:47.075 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:50:47.219 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:50:47.958 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:50:48.073 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+17:50:48.253 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:50:49.388 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+17:50:49.388 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 408,913 v=(-8,-190): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+17:50:49.463 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.07 s (ours) at 362,784 moved (-46,-139) v=(-496,-3132) home=0 busy=0 switcher=unreadable
+17:50:49.466 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+17:50:50.465 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+17:50:50.466 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:50:51.302 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:50:51.311 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+17:50:51.312 SpringBoard pid=4643 main | app-view settings update
+17:50:51.312 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283f8e160> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+17:50:51.314 SpringBoard pid=4643 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+17:50:51.314 SpringBoard pid=4643 main | SpringBoard: log793 appview pass mode=4 replay=0 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2832bff60 prev=0x281cbaf00 <FBSSceneSettingsDiff: 0x2832bff60> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x283f8e160> 
+17:50:51.314 SpringBoard pid=4643 main | app-view settings update done
+17:50:53.263 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 289,453 (rim)
+17:50:53.267 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 289,453 -> DSStageDragShellView
+17:50:53.347 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 288,465 won by main-shell-pan
+17:50:53.947 SpringBoard pid=4643 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: corner swipe v=(1102,909) moved (116,456) released at 405,921
+17:50:53.965 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+17:50:55.131 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+17:50:55.132 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:50:56.621 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:50:56.622 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+7 more in the last 10 s)
+17:51:10.649 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:51:22.063 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:52:09.962 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:52:20.027 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 309,914: started on the home bar (primary parked=1 right, second parked=0 right)
+17:52:20.028 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 309,914 v=(-14,-223): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:52:20.029 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:52:20.031 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:52:20.032 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:52:20.113 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.09 s (system's) at 285,792 moved (-24,-128) v=(-164,-2972) home=1 busy=1 switcher=unreadable
+17:52:20.113 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:52:20.253 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:52:20.365 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:52:21.003 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:52:21.262 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 307,918: started on the home bar (primary parked=1 right, second parked=0 right)
+17:52:21.262 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 307,918 v=(-29,-109): left to the system (home / switcher) (parked=1 stage visible=0 home=1 switcher=unreadable)
+17:52:21.263 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:52:21.263 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:52:21.263 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:52:21.406 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.14 s (system's) at 291,852 moved (-16,-67) v=(0,-81) home=1 busy=1 switcher=unreadable
+17:52:21.406 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:52:22.150 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+17:52:22.265 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:52:23.027 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+17:52:23.027 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 385,883 v=(-747,-1587): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+17:52:23.037 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:52:23.037 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=1
+17:52:23.179 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.15 s (ours) at 364,800 moved (-40,-123) v=(-727,-1773) home=0 busy=0 switcher=unreadable
+17:52:23.268 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 355,764 v=(-462,-1494): left to the system (home / switcher) (parked=0 stage visible=1 home=0 switcher=unreadable)
+17:52:23.269 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:52:23.269 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:52:23.269 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:52:23.294 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.03 s (system's) at 355,764 moved (0,-156) v=(-462,-1494) home=1 busy=1 switcher=unreadable
+17:52:23.294 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:52:23.302 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:52:23.624 SpringBoard pid=4643 main | SpringBoard: spam700 ignored a stale restore completion (#52): the card was minimised again
+17:52:24.069 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+17:52:24.069 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 402,912 v=(-80,-224): claimed by the stage (parked=1 stage visible=1 home=1 switcher=unreadable)
+17:52:24.141 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.07 s (ours) at 357,798 moved (-49,-127) v=(-1061,-2275) home=1 busy=1 switcher=unreadable
+17:52:24.158 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:52:24.253 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=1 parked=0
+17:52:24.499 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+17:52:24.797 SpringBoard pid=4643 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+17:52:24.917 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:52:25.509 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+17:52:25.509 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:52:27.940 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 273,454 (rim)
+17:52:27.946 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 273,454 -> DSStageDragShellView
+17:52:28.026 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 271,457 won by main-shell-pan
+17:52:28.709 SpringBoard pid=4643 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: finger at the corner v=(141,456) moved (116,458) released at 389,913
+17:52:28.726 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=1
+17:52:29.008 SpringBoard pid=4643 main | SpringBoard: gest770 tap outside the cards at 325,925: nothing done (drag)
+17:52:29.017 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 321,921: started on the home bar (primary parked=1 right, second parked=0 right)
+17:52:29.017 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 321,921 v=(-173,-160): left to the system (home / switcher) (parked=1 stage visible=1 home=0 switcher=unreadable)
+17:52:29.018 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:52:29.018 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:52:29.018 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:52:29.157 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.14 s (system's) at 295,829 moved (-26,-92) v=(59,0) home=1 busy=1 switcher=unreadable
+17:52:29.157 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:52:29.244 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:52:30.012 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:52:30.208 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+17:52:30.208 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:52:30.242 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:52:30.491 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:52:30.619 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+23 more in the last 10 s)
+17:52:50.839 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:53:10.225 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+1 more in the last 10 s)
+17:53:30.116 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+1 more in the last 10 s)
+17:54:02.799 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+1 more in the last 10 s)
+17:54:17.419 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+1 more in the last 10 s)
+17:54:18.696 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+17:54:18.696 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 391,894 v=(-202,-393): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+17:54:18.747 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.05 s (ours) at 367,826 moved (-37,-95) v=(-795,-1911) home=0 busy=0 switcher=unreadable
+17:54:18.844 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+17:54:19.585 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+17:54:19.585 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:54:20.633 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:54:20.642 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+17:54:27.886 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 284,465 (rim)
+17:54:27.892 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 284,465 -> DSStageDragShellView
+17:54:27.987 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 286,469 won by main-shell-pan
+17:54:28.507 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:54:28.514 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+17:54:28.514 SpringBoard pid=4643 main | app-view settings update
+17:54:28.514 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283fecf00> { targetOfEventDeferringEnvironments = (empty); }; }
+17:54:28.514 SpringBoard pid=4643 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+17:54:28.515 SpringBoard pid=4643 main | SpringBoard: log793 appview pass mode=4 replay=0 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2832f7c20 prev=0x281d60800 <FBSSceneSettingsDiff: 0x2832f7c20> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x283fecf00> 
+17:54:28.515 SpringBoard pid=4643 main | app-view settings update done
+17:54:29.366 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 256,456 (rim)
+17:54:29.946 SpringBoard pid=4643 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: corner swipe v=(829,849) moved (151,463) released at 403,923
+17:54:30.095 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+17:54:30.364 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:54:30.414 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 308,921: started on the home bar (primary parked=1 right, second parked=0 right)
+17:54:30.414 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 308,921 v=(-153,-44): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:54:30.414 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:54:30.415 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:54:30.415 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:54:30.433 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+17:54:30.433 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:54:30.483 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.07 s (system's) at 291,805 moved (-17,-116) v=(-492,-2479) home=1 busy=1 switcher=unreadable
+17:54:30.483 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:54:30.570 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:54:31.019 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+2 more in the last 10 s)
+17:54:31.349 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:54:31.636 SpringBoard pid=4643 main | app: com.apple.MobileSMS ctor ok
+17:54:31.830 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:54:32.047 SpringBoard pid=4643 main | app: com.apple.MobileSMS remote keyboard hooks are in
+17:54:32.050 SpringBoard pid=4643 main | app: com.apple.MobileSMS is listening for staged keys
+17:54:32.225 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 301,916: started on the home bar (primary parked=1 right, second parked=0 right)
+17:54:32.226 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 301,916 v=(-75,-107): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:54:32.227 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:54:32.227 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:54:32.228 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:54:32.307 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:54:32.385 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.16 s (system's) at 283,842 moved (-19,-77) v=(-92,-104) home=1 busy=1 switcher=unreadable
+17:54:32.385 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:54:33.101 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+17:54:33.276 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:54:33.598 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:54:33.611 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:54:34.808 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+17:54:42.120 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+17 more in the last 10 s)
+17:54:57.995 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:55:08.268 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:55:59.427 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+1 more in the last 10 s)
+17:56:33.165 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:56:40.748 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+17:56:40.748 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 404,919 v=(-66,-226): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+17:56:40.833 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.09 s (ours) at 355,739 moved (-50,-186) v=(-595,-2714) home=0 busy=0 switcher=unreadable
+17:56:40.837 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+17:56:41.418 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+17:56:41.418 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:56:41.687 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:56:41.696 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+17:56:41.696 SpringBoard pid=4643 main | app-view settings update
+17:56:41.696 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283f1dc20> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+17:56:41.696 SpringBoard pid=4643 main | SpringBoard: appview670 held a Live app view update (corner restore (706))
+17:56:42.634 SpringBoard pid=4643 main | SpringBoard: hold740 passed the latest held Live update 0.9 s later
+17:56:42.635 SpringBoard pid=4643 main | SpringBoard: log793 hold740 replay age=0.9s handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 owned=1 diff=0x2832a5860 <FBSSceneSettingsDiff: 0x2832a5860> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x283f1dc20> 
+17:56:42.635 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283f1dc20> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+17:56:42.635 SpringBoard pid=4643 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+17:56:42.635 SpringBoard pid=4643 main | SpringBoard: log793 appview pass mode=4 replay=1 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2832a5860 prev=0x281ddb500 <FBSSceneSettingsDiff: 0x2832a5860> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x283f1dc20> 
+17:56:46.004 SpringBoard pid=4643 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+17:56:46.211 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:56:46.215 SpringBoard pid=4643 main | app-view settings update
+17:56:46.216 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283f3da10> { targetOfEventDeferringEnvironments = (empty); }; }
+17:56:46.216 SpringBoard pid=4643 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+17:56:46.216 SpringBoard pid=4643 main | SpringBoard: log793 appview pass mode=4 replay=0 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2833b7940 prev=0x281cb4580 <FBSSceneSettingsDiff: 0x2833b7940> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x283f3da10> 
+17:56:46.216 SpringBoard pid=4643 main | app-view settings update done
+17:56:47.148 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 242,465 (rim)
+17:56:47.151 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 242,465 -> DSStageDragShellView
+17:56:47.232 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 242,470 won by main-shell-pan
+17:56:47.684 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:56:47.691 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+17:56:47.692 SpringBoard pid=4643 main | app-view settings update
+17:56:47.692 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283e19140> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+17:56:47.692 SpringBoard pid=4643 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+17:56:47.692 SpringBoard pid=4643 main | SpringBoard: log793 appview pass mode=4 replay=0 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x28336ace0 prev=0x281d3ed80 <FBSSceneSettingsDiff: 0x28336ace0> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x283e19140> 
+17:56:47.692 SpringBoard pid=4643 main | app-view settings update done
+17:56:49.000 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 157,458 (rim)
+17:56:49.718 SpringBoard pid=4643 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: corner swipe v=(964,1162) moved (255,426) released at 412,894
+17:56:49.810 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+17:56:50.733 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+17:56:50.733 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:57:02.886 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+6 more in the last 10 s)
+17:57:16.950 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:58:13.336 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:59:27.931 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:59:27.940 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+17:59:30.878 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+17:59:30.878 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 402,919 v=(-80,-170): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+17:59:30.963 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.08 s (ours) at 348,725 moved (-56,-200) v=(-603,-3439) home=0 busy=0 switcher=unreadable
+17:59:31.067 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+17:59:31.934 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:59:31.939 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+17:59:32.749 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+17:59:32.749 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:59:37.477 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 265,462 (rim)
+17:59:37.481 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 265,462 -> DSStageDragShellView
+17:59:37.561 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 262,467 won by main-shell-pan
+17:59:38.213 SpringBoard pid=4643 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: corner swipe v=(614,1039) moved (159,390) released at 421,857
+17:59:38.271 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+17:59:38.480 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+17:59:38.486 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+1 more in the last 10 s)
+17:59:38.530 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 324,918: started on the home bar (primary parked=1 right, second parked=0 right)
+17:59:38.530 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 324,918 v=(-27,-127): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+17:59:38.530 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+17:59:38.531 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+17:59:38.531 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+17:59:38.552 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+17:59:38.616 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.09 s (system's) at 290,774 moved (-34,-146) v=(-554,-3093) home=1 busy=1 switcher=unreadable
+17:59:38.616 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+17:59:39.024 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+17:59:39.024 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+17:59:39.492 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+17:59:39.779 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+17:59:44.587 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+17:59:44.594 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+17:59:44.594 SpringBoard pid=4643 main | SpringBoard: keys697 UIKit keyboard frame {{0, 631}, {430, 301}} not given to org.whispersystems.signal: its card is minimised / parked (another app is typing)
+17:59:44.599 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:59:44.600 SpringBoard pid=4643 main | SpringBoard: why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0 (previous +2 repeats)
+17:59:44.602 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:59:44.613 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+17:59:48.332 SpringBoard pid=4643 bg | arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+17:59:48.929 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+17:59:48.937 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+17:59:48.938 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:59:48.957 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+18:00:44.059 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 337}}
+18:00:44.063 SpringBoard pid=4643 main | SpringBoard: why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0
+18:00:44.083 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:00:46.421 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+18:00:46.435 SpringBoard pid=4643 main | SpringBoard: keys697 UIKit keyboard frame {{0, 586}, {430, 346}} not given to org.whispersystems.signal: its card is minimised / parked (another app is typing)
+18:00:46.450 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:00:59.951 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+8 more in the last 10 s)
+18:01:03.408 SpringBoard pid=4643 bg | arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+18:01:03.416 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+18:01:03.426 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+18:01:03.428 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 288}} visible={{inf, inf}, {0, 0}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:01:03.440 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 243}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:01:04.202 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 302,895: not within 86 pt of a corner (primary parked=1 right, second parked=0 right)
+18:01:04.203 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 302,895 v=(13,-134): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:01:04.203 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:01:04.204 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:01:04.205 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:01:04.283 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:01:04.376 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.17 s (system's) at 291,857 moved (-11,-43) v=(-80,12) home=1 busy=1 switcher=unreadable
+18:01:04.376 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:01:05.248 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:01:05.550 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:01:05.617 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+18:01:05.617 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 409,919 v=(-20,-170): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+18:01:05.694 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.08 s (ours) at 380,820 moved (-30,-105) v=(-1039,-3142) home=0 busy=0 switcher=unreadable
+18:01:05.818 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+18:01:06.802 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:01:06.813 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+18:01:07.378 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+18:01:07.378 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+18:01:11.795 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 245,464 (rim)
+18:01:11.800 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 245,464 -> DSStageDragShellView
+18:01:11.912 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 246,480 won by main-shell-pan
+18:01:12.361 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 243,465 (rim)
+18:01:13.947 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 234,465 (rim)
+18:01:13.953 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 234,465 -> DSStageDragShellView
+18:01:14.031 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 232,472 won by main-shell-pan
+18:01:14.479 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 369,459 (rim)
+18:01:15.149 SpringBoard pid=4643 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: finger at the corner v=(461,784) moved (52,421) released at 420,888
+18:01:15.319 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+18:01:15.754 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+8 more in the last 10 s)
+18:01:16.237 SpringBoard pid=4643 main | app: com.apple.MobileSMS ctor ok
+18:01:16.648 SpringBoard pid=4643 main | app: com.apple.MobileSMS remote keyboard hooks are in
+18:01:16.654 SpringBoard pid=4643 main | app: com.apple.MobileSMS is listening for staged keys
+18:01:16.740 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+18:01:16.740 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+18:01:20.639 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 323,916: started on the home bar (primary parked=1 right, second parked=0 right)
+18:01:20.639 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 323,916 v=(27,-334): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:01:20.641 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:01:20.642 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:01:20.643 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:01:20.769 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:01:20.821 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.18 s (system's) at 297,810 moved (-26,-109) v=(0,58) home=1 busy=1 switcher=unreadable
+18:01:20.821 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:01:21.553 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+18:01:21.672 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:01:22.068 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:01:22.308 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:01:47.610 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+13 more in the last 10 s)
+18:01:48.003 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:02:00.658 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+1 more in the last 10 s)
+18:02:20.711 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+2 more in the last 10 s)
+18:03:10.295 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+2 more in the last 10 s)
+18:03:40.707 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+18:03:53.606 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:03:54.254 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+18:03:55.461 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+18:03:55.461 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 402,884 v=(-156,-259): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+18:03:55.527 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.07 s (ours) at 355,777 moved (-58,-127) v=(-636,-2252) home=0 busy=0 switcher=unreadable
+18:03:55.530 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+18:03:55.846 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+18:03:55.846 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+18:03:56.898 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:03:56.906 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+18:04:39.109 SpringBoard pid=4643 main | SpringBoard: rim651 system gesture held at 70,464 (rim)
+18:04:39.112 SpringBoard pid=4643 main | SpringBoard: rim651 hit main-outer-top at 70,464 -> DSStageDragShellView
+18:04:39.193 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 73,467 won by main-shell-pan
+18:04:39.660 SpringBoard pid=4643 main | SpringBoard: drag706 org.whispersystems.signal minimised by the drag: corner swipe v=(610,1875) moved (131,258) released at 201,722
+18:04:39.776 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+18:04:40.480 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:04:40.486 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+18:04:40.797 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+18:04:40.797 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+18:04:50.605 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+18:05:37.483 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+18:05:47.789 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 157,918: started on the home bar (primary parked=1 right, second parked=0 right)
+18:05:47.789 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 157,918 v=(0,-153): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:05:47.790 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:05:47.791 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:05:47.792 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:05:47.814 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:05:47.915 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.13 s (system's) at 157,830 moved (0,-89) v=(0,-1438) home=1 busy=1 switcher=unreadable
+18:05:47.915 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:05:48.465 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+18:05:48.792 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:05:49.009 SpringBoard pid=4643 main | app: com.apple.MobileSMS ctor ok
+18:05:49.068 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:05:49.416 SpringBoard pid=4643 main | app: com.apple.MobileSMS remote keyboard hooks are in
+18:05:49.423 SpringBoard pid=4643 main | app: com.apple.MobileSMS is listening for staged keys
+18:05:49.452 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 131,909: started on the home bar (primary parked=1 right, second parked=0 right)
+18:05:49.452 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 131,909 v=(21,-123): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:05:49.452 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:05:49.452 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:05:49.453 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:05:49.529 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:05:49.770 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.32 s (system's) at 135,750 moved (4,-159) v=(-402,-2803) home=1 busy=1 switcher=unreadable
+18:05:49.770 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:05:50.501 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+18:05:50.660 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:05:51.053 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:06:06.454 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+13 more in the last 10 s)
+18:06:07.520 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 243}}
+18:06:07.528 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+18:06:07.529 SpringBoard pid=4643 main | SpringBoard: keys697 UIKit keyboard frame {{0, 631}, {430, 301}} not given to org.whispersystems.signal: its card is minimised / parked (another app is typing)
+18:06:07.543 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:06:07.544 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES (previous +2 repeats)
+18:06:07.545 SpringBoard pid=4643 main | SpringBoard: why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0
+18:06:07.549 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:06:07.564 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+18:06:33.852 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open
+18:06:36.436 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 337}}
+18:06:36.442 SpringBoard pid=4643 main | SpringBoard: why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0
+18:06:36.462 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:06:40.620 SpringBoard pid=4643 bg | arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}} (+1 repeats)
+18:06:42.837 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 297,917: started on the home bar (primary parked=1 right, second parked=0 right)
+18:06:42.838 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 297,917 v=(0,-345): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:06:42.839 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:06:42.841 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:06:42.841 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:06:43.048 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.21 s (system's) at 290,861 moved (-8,-56) v=(-5,-112) home=1 busy=1 switcher=unreadable
+18:06:43.048 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:06:43.085 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:06:43.849 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 303,917: started on the home bar (primary parked=1 right, second parked=0 right)
+18:06:43.849 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 303,917 v=(26,-100): left to the system (home / switcher) (parked=1 stage visible=0 home=1 switcher=unreadable)
+18:06:43.849 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:06:43.849 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:06:43.849 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:06:43.852 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+2 more in the last 10 s)
+18:06:43.942 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:06:44.014 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.17 s (system's) at 285,852 moved (-18,-67) v=(-153,541) home=1 busy=1 switcher=unreadable
+18:06:44.014 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:06:44.866 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:06:44.997 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:06:45.117 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+18:06:45.316 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:06:45.699 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 292}}
+18:06:45.705 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 288}}
+18:06:46.130 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 292}} visible={{0, 582}, {430, 350}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:06:46.131 SpringBoard pid=4643 main | SpringBoard: why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+18:06:46.132 SpringBoard pid=4643 main | SpringBoard: why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0
+18:06:46.140 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 288}} visible={{0, 582}, {430, 350}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:06:49.147 SpringBoard pid=4643 bg | arbiter on=1 src=com.facebook.Messenger frame={{0, 0}, {430, 337}}
+18:06:49.175 SpringBoard pid=4643 main | SpringBoard: src746 up com.facebook.Messenger frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x8a524 < DynamicStage+0x80bd8 < DynamicStage+0x80210 < DynamicStage+0x17b80 < DynamicStage+0x6590 < DynamicStage+0x17b20 < libdispatch+0x2320
+18:06:52.365 SpringBoard pid=4643 bg | arbiter on=0 src=com.facebook.Messenger frame={{0, 0}, {0, 0}}
+18:06:54.759 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 129,909: started on the home bar (primary parked=1 right, second parked=0 right)
+18:06:54.760 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 129,909 v=(36,-230): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:06:54.760 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:06:54.761 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:06:54.761 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:06:54.788 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:06:55.109 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.35 s (system's) at 137,838 moved (8,-78) v=(0,66) home=1 busy=1 switcher=unreadable
+18:06:55.109 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:06:55.834 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+6 more in the last 10 s)
+18:06:56.001 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:06:56.283 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:07:25.591 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 150,911: started on the home bar (primary parked=1 right, second parked=0 right)
+18:07:25.592 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 150,911 v=(98,-183): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:07:25.592 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:07:25.594 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:07:25.595 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:07:25.757 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.16 s (system's) at 156,850 moved (6,-69) v=(75,-90) home=1 busy=1 switcher=unreadable
+18:07:25.757 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:07:25.768 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:07:26.476 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+4 more in the last 10 s)
+18:07:26.649 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:07:27.066 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:07:27.538 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+18:07:27.538 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 383,901 v=(137,-40): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+18:07:27.540 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=1
+18:07:27.544 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.01 s (ours) at 383,901 moved (6,-2) v=(137,-40) home=0 busy=0 switcher=unreadable
+18:07:27.809 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+18:07:30.106 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 149,921: started on the home bar (primary parked=1 right, second parked=0 right)
+18:07:30.107 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 149,921 v=(125,-54): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:07:30.108 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:07:30.109 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:07:30.109 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:07:30.192 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.09 s (system's) at 152,804 moved (4,-117) v=(-27,-2476) home=1 busy=1 switcher=unreadable
+18:07:30.192 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:07:30.294 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:07:31.070 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:07:31.534 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:07:37.567 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+9 more in the last 10 s)
+18:07:39.760 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:08:15.806 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 124,914: started on the home bar (primary parked=1 right, second parked=0 right)
+18:08:15.808 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 124,914 v=(41,-136): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:08:15.809 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:08:15.810 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:08:15.811 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:08:15.834 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:08:16.097 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.29 s (system's) at 133,868 moved (9,-50) v=(0,29) home=1 busy=1 switcher=unreadable
+18:08:16.097 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:08:16.834 SpringBoard pid=4643 main | SpringBoard: held a minimized stage scene update so another app can open (+2 more in the last 10 s)
+18:08:16.989 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:08:17.277 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:08:17.878 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:08:18.636 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 139,917: started on the home bar (primary parked=1 right, second parked=0 right)
+18:08:18.637 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 139,917 v=(32,-73): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:08:18.638 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:08:18.640 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:08:18.640 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:08:18.794 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:08:18.879 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.24 s (system's) at 147,863 moved (7,-57) v=(0,-61) home=1 busy=1 switcher=unreadable
+18:08:18.879 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:08:19.768 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:08:20.067 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:08:20.198 SpringBoard pid=4643 main | SpringBoard: restore726 corner pull refused at 143,891: not within 86 pt of a corner (primary parked=1 right, second parked=0 right)
+18:08:20.198 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 143,891 v=(18,-368): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+18:08:20.199 SpringBoard pid=4643 main | SpringBoard: tucking the open stage for home
+18:08:20.199 SpringBoard pid=4643 main | SpringBoard: org.whispersystems.signal is the only minimized app
+18:08:20.200 SpringBoard pid=4643 main | SpringBoard: home gesture began, stage minimized
+18:08:20.270 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+18:08:20.350 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.15 s (system's) at 139,855 moved (-3,-61) v=(0,106) home=1 busy=1 switcher=unreadable
+18:08:20.350 SpringBoard pid=4643 main | SpringBoard: home gesture ended
+18:08:21.090 SpringBoard pid=4643 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+18:08:21.223 SpringBoard pid=4643 main | SpringBoard: parked apps stopped following the home transition
+18:08:21.564 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+18:08:22.737 SpringBoard pid=4643 main | SpringBoard: corner pull picked up from the system gesture
+18:08:22.737 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull began at 409,912 v=(32,-156): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+18:08:22.775 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=1
+18:08:22.860 SpringBoard pid=4643 main | SpringBoard: gest770 edge pull ended after 0.12 s (ours) at 381,781 moved (-28,-137) v=(-409,-2304) home=0 busy=0 switcher=unreadable
+18:08:23.065 SpringBoard pid=4643 main | SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+18:08:24.157 SpringBoard pid=4643 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+18:08:24.172 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+18:08:24.475 SpringBoard pid=4643 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+18:08:24.475 SpringBoard pid=4643 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=1
+18:08:31.874 SpringBoard pid=4643 main | SpringBoard: rim651 drag began at 37,461 won by main-shell-pan
+18:08:32.057 SpringBoard pid=4643 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+18:08:32.057 SpringBoard pid=4643 main | SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x20 camera=0
+18:08:32.057 SpringBoard pid=4643 main | app-view settings update
+18:08:32.058 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283f57630> { deactivationReasons = systemAnimation; }; }
+18:08:32.058 SpringBoard pid=4643 main | SpringBoard: appview670 held a Live app view update (card drag)
+18:08:32.084 SpringBoard pid=4643 main | SpringBoard: hold740 passed a scene reactivation (deactivation -> 0x0) without holding it
+18:08:32.084 SpringBoard pid=4643 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+18:08:32.085 SpringBoard pid=4643 main | SpringBoard: log793 appview pass mode=4 replay=0 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2834dd740 prev=0x281d1e800 <FBSSceneSettingsDiff: 0x2834dd740> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x28206d110> 
+18:08:32.814 SpringBoard pid=4643 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+18:08:33.332 SpringBoard pid=4643 main | SpringBoard: hold740 passed the latest held Live update 1.2 s later
+18:08:33.332 SpringBoard pid=4643 main | SpringBoard: log793 hold740 replay age=1.2s handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 owned=1 diff=0x2834437c0 <FBSSceneSettingsDiff: 0x2834437c0> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x28207fdb0> 
+18:08:33.332 SpringBoard pid=4643 main | app-view settings update
+18:08:33.333 SpringBoard pid=4643 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28207fdb0> { targetOfEventDeferringEnvironments = (empty); }; }
+18:08:33.333 SpringBoard pid=4643 main | SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+18:08:33.333 SpringBoard pid=4643 main | SpringBoard: log793 appview pass mode=4 replay=1 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2834437c0 prev=0x281e65400 <FBSSceneSettingsDiff: 0x2834437c0> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x28207fdb0> 
+18:08:44.020 SpringBoard pid=5058 main | SpringBoard: call653 guard listening (call screen containment is off)
+18:08:44.021 SpringBoard pid=5058 main | SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var/mobile/.dynamicstage-keys674-all)
+18:08:44.021 SpringBoard pid=5058 main | SpringBoard: keep776 installed (Medusa hide from updateMedusaHostedKeyboardWindowForScene: kept out while a staged app owns the keys)
+18:08:44.021 SpringBoard pid=5058 main | SpringBoard: why775 hooks installed: update,sized,target
+
+=== this session ===
+=== log792 capture window (chat open + 10 taps / 10 s, 0 lines) ===
+(none)
+=== end log792 window ===
+18:08:44.608 SpringBoard pid=5058 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+18:08:44.608 SpringBoard pid=5058 main | ready state=0 split=0 bottom=- top=- hover=-
+18:08:44.609 SpringBoard pid=5058 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+18:08:44.609 SpringBoard pid=5058 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+18:08:44.609 SpringBoard pid=5058 main | SpringBoard: LATCHED OFF 2 feature(s): focus769 (latched 10-17 17:42:26, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-focus769-crashed to allow it); focus755 (latched 10-17 17:41:36, SpringBoard went down within 15 s of its use; delete /var/mobile/.dynamicstage-focus755-crashed to a...
+18:08:44.611 SpringBoard pid=5058 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+18:08:44.611 SpringBoard pid=5058 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+18:08:44.612 SpringBoard pid=5058 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+18:08:44.612 SpringBoard pid=5058 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+18:08:44.613 SpringBoard pid=5058 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+18:08:44.613 SpringBoard pid=5058 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+18:08:44.613 SpringBoard pid=5058 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+18:08:44.613 SpringBoard pid=5058 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+18:08:44.614 SpringBoard pid=5058 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+18:08:44.617 SpringBoard pid=5058 main | SpringBoard: filter at boot ctor=[age=176s ok proc=MobileSMS bundle=com.apple.MobileSMS path=/Applications/MobileSMS.app] mapped=[age=176s mapped bundle=com.apple.MobileSMS pid=5003 build=4.5.793] libsPlist=[age=3524s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signa...
+18:08:46.763 SpringBoard pid=5058 main | SpringBoard: latch754 last SpringBoard exit: crash (crash signal); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+18:08:48.015 SpringBoard pid=5058 main | SpringBoard: stage window moved back to the foreground scene
+18:08:48.016 SpringBoard pid=5058 main | SpringBoard: stage on screen
+18:08:48.016 SpringBoard pid=5058 main | on screen state=2 split=0 bottom=- top=- hover=-
+18:08:48.016 SpringBoard pid=5058 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+18:08:48.016 SpringBoard pid=5058 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+18:08:48.016 SpringBoard pid=5058 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+18:08:48.017 SpringBoard pid=5058 main | SpringBoard: opened the top stage
+
+--- crash ---
+Dynamic Stage crash log
+Build 4.5.793
+Deleted when a new build is installed.
+Path: /var/mobile/Library/Preferences/com.recreated.dynamicstage.crash.log
+
+=== Dynamic Stage crash ===
+build: 4.5.793
+when: 1792212075
+signal: SIGTRAP
+session: BF516F83-D4D6-47F3-BA87-25B5FE83538C
+last step (log793): (none)
+pc: 0x00000001d96b3fa8
+lr: 0x00000001d96b3fa8
+DynamicStage base: 0x0000000107aa8000
+backtrace:
+  0xa1200001f6ce3214 libsystem_platform.dylib+0x0000000000002214
+  0x75110001d96b3fa8 SpringBoard+0x00000000000a1fa8
+  0x822a800107ab38f4 DynamicStage.dylib+0x000000000000b8f4
+  0xef5e800206dac648 SpringBoardUI+0x0000000000005648
+  0xc600000206da9150 SpringBoardUI+0x0000000000002150
+  0x4a57000206da8f5c SpringBoardUI+0x0000000000001f5c
+  0x84608001d963a0e0 SpringBoard+0x00000000000280e0
+  0xf24b0001b43399dc FrontBoard+0x00000000000219dc
+  0x616d8001b432d754 FrontBoard+0x0000000000015754
+  0xd0658001b433e37c FrontBoard+0x000000000002637c
+  0x767c0001b4327f14 FrontBoard+0x000000000000ff14
+  0x1a5100019e624500 BaseBoard+0x0000000000017500
+  0x9a2d80019e621078 BaseBoard+0x0000000000014078
+  0x150300019e61b634 BaseBoard+0x000000000000e634
+  0x4a7a0001b43234fc FrontBoard+0x000000000000b4fc
+  0xa3360001b4326968 FrontBoard+0x000000000000e968
+--- recent stage lines ---
+SpringBoard: gest770 edge pull began at 313,900 v=(-90,-322): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+SpringBoard: tucking the open stage for home
+SpringBoard: org.whispersystems.signal is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: gest770 edge pull ended after 0.08 s (system's) at 290,780 moved (-23,-135) v=(-297,-2822) home=1 busy=1 switcher=unreadable
+SpringBoard: home gesture ended
+SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+SpringBoard: held a minimized stage scene update so another app can open
+SpringBoard: restore726 corner pull refused at 323,916: started on the home bar (primary parked=1 left, second parked=0 right)
+SpringBoard: gest770 edge pull began at 323,916 v=(18,-121): left to the system (home / switcher) (parked=1 stage visible=0 home=1 switcher=unreadable)
+SpringBoard: tucking the open stage for home
+SpringBoard: org.whispersystems.signal is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: gest770 edge pull ended after 0.13 s (system's) at 290,817 moved (-32,-103) v=(-32,-210) home=1 busy=1 switcher=unreadable
+SpringBoard: home gesture ended
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+SpringBoard: held a minimized stage scene update so another app can open (+12 more in the last 10 s)
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: gest770 edge pull began at 32,904 v=(112,-277): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+SpringBoard: gest770 edge pull ended after 0.10 s (ours) at 16,736 moved (-8,-189) v=(-681,-1957) home=0 busy=0 switcher=unreadable
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=1
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=0 parked=1
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: gest770 edge pull began at 20,915 v=(0,-111): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=1
+SpringBoard: gest770 edge pull ended after 0.17 s (ours) at 120,714 moved (100,-206) v=(1094,-2890) home=0 busy=0 switcher=unreadable
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28337fed0> { targetOfEventDeferringE
+SpringBoard: focus769 passed keyboardFocus for sceneID:org.whispersystems.signal-default instead of holding it (corner restore (706))
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+=== end ===
+
+=== Dynamic Stage crash ===
+build: 4.5.793
+when: 1792213713
+signal: SIGTRAP
+session: 5519E7F3-0A96-41A0-90B2-D51ABC4709E6
+last step (log793): appview pass mode=4 replay=1 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2834437c0 prev=0x281e65400 <FBSSceneSettingsDiff: 0x2834437c0> {     settingsClass = UIApplicationSceneSettings;     changes = (none);     subclassChanges = <BSSettingsDiff: 0x28207fdb0> 
+pc: 0x00000001d96b3fa8
+lr: 0x00000001d96b3fa8
+DynamicStage base: 0x000000010778c000
+backtrace:
+  0xe4278001f6ce3214 libsystem_platform.dylib+0x0000000000002214
+  0x342d8001d96b3fa8 SpringBoard+0x00000000000a1fa8
+  0x57470001077978f4 DynamicStage.dylib+0x000000000000b8f4
+  0xda0380010779fe40 DynamicStage.dylib+0x0000000000013e40
+  0xf01d00019e4beeac libdispatch.dylib+0x0000000000003eac
+  0xcf1400019e4c2330 libdispatch.dylib+0x0000000000007330
+  0x5e6880019e4d5908 libdispatch.dylib+0x000000000001a908
+  0xac5680019e4cd5f8 libdispatch.dylib+0x00000000000125f8
+  0xef2f00019e4cd2f4 libdispatch.dylib+0x00000000000122f4
+  0xbc75800197087c28 CoreFoundation+0x0000000000098c28
+  0x771c000197069560 CoreFoundation+0x000000000007a560
+  0x8d0a80019706e3ec CoreFoundation+0x000000000007f3ec
+  0xaa7b8001d250b35c GraphicsServices+0x000000000000135c
+  0x836d8001993fb6e8 UIKitCore+0x000000000039d6e8
+  0x33120001993fb34c UIKitCore+0x000000000039d34c
+  0xd53d0001d96b6d54 SpringBoard+0x00000000000a4d54
+--- recent stage lines ---
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+SpringBoard: restore726 corner pull refused at 143,891: not within 86 pt of a corner (primary parked=1 right, second parked=0 right)
+SpringBoard: gest770 edge pull began at 143,891 v=(18,-368): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=unreadable)
+SpringBoard: tucking the open stage for home
+SpringBoard: org.whispersystems.signal is the only minimized app
+SpringBoard: home gesture began, stage minimized
+SpringBoard: gest770 layout switcher=unreadable home=1 busy=1 stage visible=0 parked=1
+SpringBoard: gest770 edge pull ended after 0.15 s (system's) at 139,855 moved (-3,-61) v=(0,106) home=1 busy=1 switcher=unreadable
+SpringBoard: home gesture ended
+SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+SpringBoard: parked apps stopped following the home transition
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=1 stage visible=0 parked=1
+SpringBoard: corner pull picked up from the system gesture
+SpringBoard: gest770 edge pull began at 409,912 v=(32,-156): claimed by the stage (parked=1 stage visible=1 home=0 switcher=unreadable)
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=1
+SpringBoard: gest770 edge pull ended after 0.12 s (ours) at 381,781 moved (-28,-137) v=(-409,-2304) home=0 busy=0 switcher=unreadable
+SpringBoard: gest770 layout switcher=unreadable home=0 busy=0 stage visible=1 parked=0
+SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[333153065,1746539126,1456624268] view=in-window pid=4345 alive=
+SpringBoard: rim651 drag began at 37,461 won by main-shell-pan
+SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x20 camera=0
+SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283f57630> { deactivationReasons = s
+SpringBoard: appview670 held a Live app view update (card drag)
+SpringBoard: hold740 passed a scene reactivation (deactivation -> 0x0) without holding it
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+SpringBoard: log793 appview pass mode=4 replay=0 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2834dd740 prev=0x281d1e800 <FBSSceneSettingsDiff: 0x283
+SpringBoard: hold740 passed the latest held Live update 1.2 s later
+SpringBoard: log793 hold740 replay age=1.2s handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 owned=1 diff=0x2834437c0 <FBSSceneSettingsDiff: 0x2834437c0> {     
+SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 flip=0 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28207fdb0> { targetOfEventDeferringE
+SpringBoard: appview699 Live update passed to SpringBoard (mode=4 drag=0)
+SpringBoard: log793 appview pass mode=4 replay=1 handle=SBDeviceApplicationSceneHandle<0x109f202a0> ctrl=0x121feb6b0 diff=0x2834437c0 prev=0x281e65400 <FBSSceneSettingsDiff: 0x283
+=== end ===
+
+--- diagnostics ---
+
+--- tree765 ---
+=== tree765 build 4.5.787 show 1 at +0.05 s (10-17 07:31:22.824) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 1 at +0.40 s (10-17 07:31:23.172) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 1 at +1.20 s (10-17 07:31:23.977) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 1 (+1.20 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 2 at +0.05 s (10-17 07:31:28.778) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 2 at +0.40 s (10-17 07:31:29.128) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 2 at +1.20 s (10-17 07:31:29.972) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 2 (+1.20 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 3 at +0.05 s (10-17 07:31:34.417) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+0.05 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 3 at +0.40 s (10-17 07:31:34.768) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+0.40 s): 7 window(s) ===
+=== tree765 build 4.5.787 show 3 at +1.20 s (10-17 07:31:35.610) ===
+WINDOW UITextEffectsWindow scene=SuperHighLevelSystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=SystemAperture lvl=10.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW DSStageWindow scene=com.apple.springboard lvl=998.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.UIKit.remote-keyboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=com.apple.springboard lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,631 430x301 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,631 430x301 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=347,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=374,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=347,863 0x0 L=_UILabelLayer lh=1 op=1.00
+      _UIRemoteKeyboardPlaceholderView hid=0 a=1.00 f=0,631 430x243 L=CALayer lh=0 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW SBMedusaHostedKeyboardWindow scene=com.apple.springboard lvl=6000.0 hid=1 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=1 op=1.00
+  SBFTouchPassThroughView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    _UIScenePresentationView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+WINDOW UITextEffectsWindow scene=176BCF82-20A6-46E1-8D6A-A1DAF1B8A5D3 lvl=6000.0 hid=0 a=1.00 f=0,0 430x932 L=UIWindowLayer lh=0 op=1.00
+  UIInputSetContainerView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+    UIInputSetHostView hid=0 a=1.00 f=0,932 430x0 L=CALayer lh=0 op=1.00
+      UIKeyboardDockView hid=1 a=1.00 f=0,932 0x0 L=CALayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=2,864 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=27,876 32x32 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=2,864 0x0 L=_UILabelLayer lh=1 op=1.00
+        UIKeyboardDockItemButton hid=0 a=1.00 f=-83,863 80x69 L=CALayer lh=0 op=1.00
+          UIImageView hid=0 a=1.00 f=-56,874 27x33 L=CALayer lh=0 op=1.00
+          UIButtonLabel hid=1 a=1.00 f=-83,863 0x0 L=_UILabelLayer lh=1 op=1.00
+    UIEditingOverlayGestureView hid=0 a=1.00 f=0,0 430x932 L=CALayer lh=0 op=1.00
+=== end tree765 show 3 (+1.20 s): 7 window(s) ===
+
+--- kbvis768 ---
+17:42:24.602 kbvis768 show 1 start owner=com.apple.springboard h=243
+17:42:24.603 kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:24.597 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+17:42:24.705 kbvis768 show 1 +0.10s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:24.597 | arb on=1 owner=com.apple.springboard h=243 | sbkeys={{0, 631}, {430, 301}}
+17:42:26.283 kbvis768 show 1 +1.68s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:24.597 | arb on=1 owner=com.apple.springboard h=243 | sbkeys=none
+17:42:26.537 kbvis768 show 1 +1.93s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:24.597 | arb on=0 owner=com.apple.springboard h=243 | sbkeys=none
+17:42:26.798 kbvis768 show 1 ended after 2.2s: keys visible not judged (SpringBoard's own keyboard)
+17:42:48.801 kbvis768 show 2 start owner=org.whispersystems.signal h=288
+17:42:48.806 register774 probe (show start, owner org.whispersystems.signal): classes: SBKeyboardFocusCoordinator=NO | SBKeyboardFocusController=NO | SBSceneKeyboardFocusTarget=NO | SBKeyboardFocusTarget=NO | SBKeyboardFocusArbitrationReason=NO | SBKeyboardFocusLockAssertion=NO | SBMedusaHostedKeyboardWindow=YES[succinctDescription,_shouldControlAutorotation,descriptionWithMultilinePrefix:,newWindowLevelAssertionWithPriority:windowLevel:,succinctDescriptionBuilder,medusaHostedKeyboardWindowWillShow:,.cxx_destruct,windowLevelAssertions,invalidate,initWithWindowScene:keyboardScene:,dealloc,hitTest:withEvent:,setWindowLevelAssertions:,_updateWindowLevel,isActive,descriptionBuilderWithMultilinePrefix:,addWindowLevelAssertion:,description,removeWindowLevelAssertion:,setHidden:,medusaHostedKeyboardWindowWillHide:] | SBMedusaHostedKeyboardWindowController=YES[initWithWindowScene:,scene:didCompleteUpdateWithContext:error:,scene:didUpdateClientSettingsWithDiff:oldClientSettings:transitionContext:,removeObserver:,.cxx_destruct,invalidate,dealloc,shouldKeyboardBeWindowSizedForHostWithIdentity:,addObserver:,_doObserverCalloutWithBlock:,isKeyboardVisibleForSpringBoard,_keyboardLayersClientSettingsDiffInspector,isUsingMedusaHostedKeyboardWindow,medusaHostedKeyboardWindow,newMedusaHostedKeyboardWindowLevelAssertionWithPriority:windowLevel:,updateMedusaHostedKeyboardWindow,updateMedusaHostedKeyboardWindowForScene:isForeground:] | SBMedusaHostedKeyboardWindowManager=NO | SBHostedKeyboardWindowController=NO | SBMainDisplayLayoutState=YES[displayOrdinal,continuousExposeIdentifier,centerConfiguration,invalidateAppLayout,isFullScreen,_layoutAttributesForElementWithIdentifier:,isEqual:,bundleIDShowingAppExpose,_applyElementInterfaceOrientationsToLayoutAttributes,_initWithLayoutState:,.cxx_destruct,layoutAttributesForElement:,spaceConfiguration,isDisplayExternal,windowPickerRole,invalidateFloatingAppLayout,effectivelyRepresentsHomeScreen,floatingAppLayout,_defaultInterfaceOrientation,_initWithLayoutElements:interfaceOrientation:interfaceOrientationByLayoutElement:,_updateSizingPoliciesForLayoutElements:,displayItemLayoutAttributesMap,peekConfiguration,descriptionBuilderWithMultilinePrefix:,unlockedEnvironmentMode,floatingConfiguration,description,_initWithLayoutElements:interfaceOrientation:interfaceOrientationByLayoutElement:spaceConfiguration:floatingConfiguration:unlockedEnvironmentMode:floatingSwitcherVisible:centerConfiguration:centerEntityModal:peekConfiguration:bundleIDShowingAppExpose:windowPickerRole:displayOrdinal:isDisplayExternal:,isFloatingSwitcherVisible,_initWithLayoutElements:spaceConfiguration:elementIdentifiersToLayoutAttributes:floatingConfiguration:unlockedEnvironmentMode:floatingSwitcherVisible:centerConfiguration:centerEntityModal:peekConfiguration:bundleIDShowingAppExpose:windowPickerRole:displayOrdinal:isDisplayExternal:,_setLayoutAttributes:forLayoutElement:,_initWithLayoutElements:interfaceOrientation:interfaceOrientationByLayoutElement:spaceConfiguration:elementIdentifiersToLayoutAttributes:floatingConfiguration:unlockedEnvironmentMode:floatingSwitcherVisible:centerConfiguration:centerEntityModal:peekConfiguration:bundleIDShowingAppExpose:windowPickerRole:displayOrdinal:isDisplayExternal:,appLayout,isCenterEntityModal,elementIdentifiersToLayoutAttributes,setInterfaceOrientationByLayoutElementIdentifier:,hash,isSplitView,_initWithLayoutElements:spaceConfiguration:floatingConfiguration:unlockedEnvironmentMode:floatingSwitcherVisible:centerConfiguration:centerEntityModal:peekConfiguration:bundleIDShowingAppExpose:windowPickerRole:displayOrdinal:isDisplayExternal:] | SBSDisplayLayoutElement=YES[succinctDescriptionBuilder,sb_setTransitioning:,layoutRole,setLayoutRole:,sb_setStashedPIP:,sb_isStashedPIP,isSpringBoardElement,initWithIdentifier:layoutRole:,sb_isTransitioning] | SBDisplayLayoutElement=NO | FBSDisplayLayoutElement=YES[layoutRole,sb_isStashedPIP,isSpringBoardElement,sb_isTransitioning,_intents_isSiri,_intents_SpringBoardElement,_intents_isExpectedElement,setLevel:,setReferenceFrame:,isEqual:,succinctDescription,descriptionWithMultilinePrefix:,valueDescriptionForFlag:object:ofSetting:,succinctDescriptionBuilder,identifier,keyDescriptionForSetting:,fallbackXPCEncodableClass,initWithXPCDictionary:,init,.cxx_destruct,initWithIdentifier:,referenceFrame,isUIApplicationElement,setFrame:,encodeWithXPCDictionary:,setIdentifier:,frame,bundleIdentifier,descriptionBuilderWithMultilinePrefix:,description,copyWithZone:,level,setBundleIdentifier:,hasKeyboardFocus,hash,otherSettings,fillsDisplayBounds,setFillsDisplayBounds:,setHasKeyboardFocus:,setOtherSettings:,setUIApplicationElement:] | SBKeyboardSuppressionManager=YES[acquireKeyboardSuppressionAssertionWithReason:predicate:displayIdentity:,_setKeyboardSuppressed:forReason:withPredicate:displayIdentity:,startSuppressingKeyboardWithReason:predicate:displayIdentity:,init,.cxx_destruct,stopSuppressingKeyboardWithReason:,description] | SBInputUISceneController=YES[.cxx_destruct,_keyboardWillShow:,dealloc,_keyboardWillHide:,hostingWindow,windowSceneDidDisconnect:,windowSceneDidConnect:,_traitsPipelineManagerForScene:,_acquireHomeAffordanceAssertionIfAppropriate,_createInputUIScene,_evaluateAvailablePresenters:forSceneControllers:,_relinquishHomeAffordanceAssertionIfNeeded,_targetSceneForKeyboardFocusedSceneIdentity:,focusContextDidChange:,initWithSceneWorkspaceIdentifier:clientProcessIdentity:sceneVendingPolicy:traitsRole:jobLabel:level:,isVisibleForSpringBoard] | SBRemoteKeyboardSceneController=NO | UIKeyboardSceneDelegate=YES[setAutomaticAppearanceEnabled:,setUseHostedInstance:,automaticAppearanceReallyEnabled,isUndocked,_sessionIdentifier,pushAnimationStyle:,_reloadInputViewsForResponder:force:fromBecomeFirstResponder:,_windowScene,_clearPinningResponders,setKeyWindowSceneInputViews:animationStyle:,_removePreservedInputViewSetForInputView:,passthroughViews,inputViews,visualModeManager:didChangeToMode:,containerView,setInputViews:animated:,traitCollectionDidChange,setPreservingInputViews:,minimizeWithAnimationStyle:force:,containerRootController,forceOrderInAutomaticFromDirection:withDuration:,enhancedWindowingModeIsEnabled,_preserveInputViewsWithId:animated:reset:,reloadPlacement,_endDisablingAnimations,hasNullInputView,setAutomaticAppearanceInternalEnabled:,clearAnimationStyleForUserDrivenPresentation,preservingInputViews,maximize,setInputViews:,_placementForDeactivatedKeyboard:currentPlacement:forSuppressionAssertion:,textEntryFocusOnExternalDisplay,setDeactivationCount:,transientInputViews,_preserveMultiDocumentTokenIfNecessary:withId:reset:,_setScene:,_scene:willTransitionToActivationState:withReasonsMask:,restoringInputViews,existingContainerRootController,inputModeChangedForRenderConfig:,orderOutWithAnimationStyle:,removeVisibilityObserver:,setTakingSnapshot:,takingSnapshot,keyboardArbiterClient,hasCustomInputViewController,prepareForAlongsideTransitionWithContext:,_renderConfigForResponder:,minimize,_scene,verticalOverlapForView:usingKeyboardInfo:,setIsKeyboardOnEmbeddedScreen:,window:changedFromLevel:toLevel:,setIgnoresPinning:,setRestoringInputViews:,setRestorableRenderConfig:,_isIgnoringReloadInputViews,maximizeWithAnimationStyle:,_inputViewsForResponder:]
+17:42:48.806 kbvis768 show 2 +0.01s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:24.597 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:42:48.812 why775 show 2: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+17:42:48.812 keep776 show 2: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+17:42:48.819 keep776 show 2: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+17:42:48.819 why775 show 2: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=NO
+17:42:48.912 kbvis768 show 2 +0.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:48.809 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:42:49.022 kbvis768 show 2 +0.22s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@17:42:49.018 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:42:49.332 kbvis768 show 2 +0.53s keys visible? YES (owner org.whispersystems.signal)
+17:42:56.990 why775 show 2: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+17:42:57.099 kbvis768 show 2 +8.30s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:56.996 | arb on=1 owner=org.whispersystems.signal h=337 | sbkeys={{0, 537}, {430, 395}}
+17:42:57.357 kbvis768 show 2 +8.55s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@17:42:57.223 | arb on=1 owner=org.whispersystems.signal h=337 | sbkeys={{0, 537}, {430, 395}}
+17:42:58.133 kbvis768 show 2 +9.33s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:42:58.116 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:42:58.392 kbvis768 show 2 +9.59s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:42:58.237 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:42:58.914 kbvis768 show 2 +10.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@17:42:58.886 | arb on=1 owner=org.whispersystems.signal h=345 | sbkeys={{0, 529}, {430, 403}}
+17:42:59.171 kbvis768 show 2 +10.37s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@17:42:58.990 | arb on=1 owner=org.whispersystems.signal h=345 | sbkeys={{0, 529}, {430, 403}}
+17:43:00.463 kbvis768 show 2 +11.66s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3714339492,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:00.446 | arb on=0 owner=org.whispersystems.signal h=345 | sbkeys=none
+17:43:00.986 kbvis768 show 2 +12.18s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:00.446 | arb on=0 owner=org.whispersystems.signal h=345 | sbkeys=none
+17:43:00.986 kbvis768 show 2 ended after 12.2s: keys visible ALL of the time
+17:43:02.092 kbvis768 show 3 start owner=org.whispersystems.signal h=288
+17:43:02.092 register774 probe (show start, owner org.whispersystems.signal): no candidate getter on SpringBoard
+17:43:02.093 kbvis768 show 3 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:00.446 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:43:02.098 keep776 show 3: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+17:43:02.098 why775 show 3: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+17:43:02.101 keep776 show 3: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+17:43:02.101 why775 show 3: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=NO
+17:43:02.194 kbvis768 show 3 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1640602689,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:43:02.096 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:43:02.402 kbvis768 show 3 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1640602689,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@17:43:02.302 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:43:02.607 kbvis768 show 3 +0.52s keys visible? YES (owner org.whispersystems.signal)
+17:43:12.232 kbvis768 show 3 +10.14s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1640602689,5710226] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=raised->1@17:43:12.206 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:43:12.495 kbvis768 show 3 +10.40s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1640602689,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:12.322 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:43:12.752 kbvis768 show 3 +10.66s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:12.322 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:43:12.752 kbvis768 show 3 ended after 10.7s: keys visible ALL of the time
+17:43:26.314 kbvis768 show 4 start owner=org.whispersystems.signal h=288
+17:43:26.315 register774 probe (show start, owner org.whispersystems.signal): no candidate getter on SpringBoard
+17:43:26.315 kbvis768 show 4 +0.00s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:12.322 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:43:26.323 keep776 show 4: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+17:43:26.324 why775 show 4: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+17:43:26.327 keep776 show 4: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+17:43:26.327 why775 show 4: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=NO
+17:43:26.418 kbvis768 show 4 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3364689660,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:43:26.321 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:43:26.628 kbvis768 show 4 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3364689660,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@17:43:26.522 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:43:26.841 kbvis768 show 4 +0.53s keys visible? YES (owner org.whispersystems.signal)
+17:43:41.114 kbvis768 show 4 +14.80s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3364689660,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:40.981 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:43:41.631 kbvis768 show 4 +15.32s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:43:40.981 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:43:41.632 kbvis768 show 4 ended after 15.3s: keys visible ALL of the time
+17:43:53.524 why775 show 4: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:43:53.528 why775 show 4: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+17:43:54.826 why775 show 4: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:44:56.903 kbvis768 show 5 start owner=org.whispersystems.signal h=288
+17:44:56.903 register774 probe (show start, owner org.whispersystems.signal): no candidate getter on SpringBoard
+17:44:56.904 kbvis768 show 5 +0.00s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@17:43:40.981 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:44:56.913 keep776 show 5: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+17:44:56.913 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+17:44:56.926 keep776 show 5: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+17:44:56.926 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=NO
+17:44:57.009 kbvis768 show 5 +0.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2640026555,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@17:44:56.911 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:44:57.218 kbvis768 show 5 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2640026555,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@17:44:57.115 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+17:44:57.429 kbvis768 show 5 +0.53s keys visible? YES (owner org.whispersystems.signal)
+17:45:26.523 kbvis768 show 5 +29.62s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2640026555,5710226] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=raised->1@17:45:26.470 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:45:26.784 kbvis768 show 5 +29.88s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2640026555,5710226] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:45:26.585 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:45:27.046 kbvis768 show 5 +30.14s medusa lvl=6000 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@17:45:26.585 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+17:45:27.046 kbvis768 show 5 ended after 30.1s: keys visible ALL of the time
+17:50:04.311 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:50:04.315 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+17:50:05.381 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:59:44.600 why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0 (previous +2 repeats)
+17:59:44.614 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+17:59:48.938 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+17:59:48.957 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+18:00:44.063 why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0
+18:06:07.545 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES (previous +2 repeats)
+18:06:07.545 why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0
+18:06:07.564 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1828166207 -> window hidden=YES
+18:06:36.442 why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0
+18:06:46.132 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+18:06:46.133 why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.facebook.Messenger-default> -> 0

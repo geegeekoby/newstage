@@ -1,0 +1,7 @@
+4.5.821 = 4.5.820 + A+B from log 821 (Hdidbbdbdhbsd). Backup: ../bak821 (820 tree).
+A kbmin821 (springboard/DSKeyboardVisibility.m):
+ - DS803NoteArbiter: staged owner whose card keys697CardAwayForBundle: -> release medusa803 assertion, no take (so no keep806 unhide). Proof: 10:01:20.421 medusa803 took / 10:01:20.423 keep806 unhid for com.beeper.chat.ios minimised=1; 10:01:26-37 taps "nothing done (keyboard)".
+ - DSKeep806HoldingFor: owner card away -> release + return nil (SpringBoard's hide goes through). Proof: 10:04:14.298 / 10:04:19.048 keep806 drops after 10:04:13.434 live -> minimised.
+ - host750 live -> minimised: DSKbMin821CardMinimised releases when that app owns the arbiter.
+B kbback821 (DSStageManager keys756Restored): DSKbBack821TakeAndCheck retakes medusa803 assertion and reads kbvis768's getters (hidden / alpha / layer / level vs stage) synchronously; not visible -> no replay, no lift. Proof: 10:04:55.478 keys756 lift 341, 10:04:55.707 "keys visible? NO (Medusa level 20 not above stage 998)" (assertion released 10:04:21.815 for Spotlight).
+Gates: DS821On = core821 && DS815On(core815) && name; core821 in DS796Group list. Verified selectors only (existing: newWindowLevelAssertionWithPriority:windowLevel:, invalidate, keys697CardAwayForBundle: own). No timers/holds/replays added; no status-bar writes.

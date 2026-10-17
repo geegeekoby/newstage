@@ -141,6 +141,8 @@ FOUNDATION_EXPORT void DSPhoneSize683RestoreKeyCopies(NSString *why);
 
 - (void)fast743KeysHiding:(NSString *)why;
 - (void)postMessagesKeyboardShown:(BOOL)shown;
+// 4.5.821: keys697 card check, used by kbmin821.
+- (BOOL)keys697CardAwayForBundle:(NSString *)bundle;
 @end
 
 // ---- 4.5.657: ivar-level answers for SpringBoard hooks ------------------------

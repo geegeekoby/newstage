@@ -404,6 +404,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core811") == 0) return -1;
         if (strcmp(name, "core812") == 0) return -1;
         if (strcmp(name, "core815") == 0) return -1;
+        if (strcmp(name, "core821") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -1093,6 +1094,11 @@ BOOL DS815On(const char *name) {
     cache[slot].name = name; cache[slot].on = on; cache[slot].at = now;
     os_unfair_lock_unlock(&lock);
     return on;
+}
+
+// 4.5.821: master core821-off returns kbmin821 / kbback821 to 820.
+BOOL DS821On(const char *name) {
+    return DSFeature699On("core821") && DS815On("core815") && DSFeature699On(name);
 }
 
 // 4.5.815 perf815: hot-path gate read at most every 2 s per process.

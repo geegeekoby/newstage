@@ -1,3 +1,8 @@
+## 4.5.821 (keyboard fixes A+B on 4.5.820)
+- kbmin821: a minimised or parked card no longer brings up or keeps its keyboard. From log 821: at 10:01:20 Beeper's keys came up over the home screen while its card was minimised and taps did nothing; at 10:04:13 Beeper was minimised while typing and the keys stayed. Now the keyboard window's level is only raised for a card that is on screen, and when a card minimises while it owns the keys the raise is dropped so SpringBoard hides them as usual.
+- kbback821: a card restored while it still owns the keyboard raises the keys again before the card is lifted, and the card is only lifted if the keys are really visible (log 821 10:04:55: card lifted 341 pt over keys that were under the stage).
+- Off: kbmin821-off, kbback821-off, core821-off (back to 4.5.820). Crash latches for both.
+
 ## 4.5.820 (known-good: exact 4.5.815)
 - Exactly the 4.5.815 code that booted cleanly on your phone (log 09:06), rebuilt with only the version number changed. Everything from 4.5.816 to 4.5.819 is not in this build: grow816, topstay816, the new picker (817/819), search817/819 and the app-lookup throttle.
 - Install this first. Later builds will each add back one change.

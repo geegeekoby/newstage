@@ -1768,6 +1768,16 @@ void DS803NoteArbiter(BOOL on, NSString *source) {
         BOOL staged = src && ![src isEqualToString:@"com.apple.springboard"] && ![src isEqualToString:@"com.apple.MobileSMS"] &&
             !DSStage742MessagesStaged() && m.isStageVisible && [m isHostingBundleIdentifier:src];
         if (!staged) { DSMedusa802Release(@"keys not owned by a staged app"); return; }
+        // 4.5.821 kbmin821: a minimised / parked owner (keys697's check) gets
+        // no assertion, so no keep806 unhide; SpringBoard's own hide stands.
+        if (DS821On("kbmin821") && [m keys697CardAwayForBundle:src]) {
+            static BOOL marked821 = NO;
+            if (!marked821) { marked821 = YES; DSFeature699MarkTrying("kbmin821"); }
+            DSFeature719MarkAction("kbmin821");
+            DSMedusa802Release([NSString stringWithFormat:@"kbmin821: owner %@ card minimised / parked", src]);
+            DSDiagnosticsRecordFormat(@"SpringBoard: kbmin821 %@ keyboard on while its card is minimised / parked: no Medusa assertion, no unhide (SpringBoard's hide goes through)", src);
+            return;
+        }
         static BOOL marked = NO;
         if (!marked) { marked = YES; DSFeature699MarkTrying("medusa803"); }
         UIWindow *medusa = DSMedusa802FindWindow();
@@ -1803,6 +1813,12 @@ NSString *DSKeep806HoldingFor(UIWindow *medusa) {
         if (!DSMedusa802Assertion || !medusa || DSMedusa802Window != medusa) return nil;
         NSString *owner = DS803Owner;
         if (!owner.length || [owner isEqualToString:@"com.apple.springboard"] || [owner isEqualToString:@"com.apple.MobileSMS"]) return nil;
+        // 4.5.821 kbmin821: owner's card minimised / parked -> release, let the hide through.
+        if (DS821On("kbmin821") && [[DSStageManager sharedManager] keys697CardAwayForBundle:owner]) {
+            DSFeature719MarkAction("kbmin821");
+            DSMedusa802Release([NSString stringWithFormat:@"kbmin821: owner %@ card minimised / parked, SpringBoard's hide goes through", owner]);
+            return nil;
+        }
         static BOOL marked = NO;
         if (!marked) { marked = YES; DSFeature699MarkTrying("keep806"); }
         return owner;
@@ -1818,6 +1834,54 @@ void DSKeep806NoteDropped(NSString *bundle) {
     if (++count <= 6)
         DSDiagnosticsRecordFormat(@"SpringBoard: keep806 kept the Medusa window shown for %@ (SpringBoard update hide dropped) show %ld #%ld",
                                   bundle ?: @"?", (long)DSKbVis768Show, (long)count);
+}
+
+// ---- 4.5.821 kbmin821 / kbback821 ------------------------------------------------
+// Log 821 (4.5.820): 10:01:20.421 medusa803 took the assertion and keep806
+// unhid the keys for Beeper while its card was minimised (keys stayed over the
+// home screen, taps "nothing done (keyboard)"); 10:04:13.434 Beeper minimised
+// while owning the keys and keep806 kept dropping SpringBoard's hide.
+// kbmin821: when a card goes live -> minimised and its app owns the arbiter,
+// the assertion is released at once (same call, no timer).
+void DSKbMin821CardMinimised(NSString *bundle) {
+    @try {
+        if (!NSThread.isMainThread || !DS821On("kbmin821") || !DS803On("medusa803")) return;
+        if (!DSMedusa802Assertion || !bundle.length || ![DS803Owner isEqualToString:bundle]) return;
+        static BOOL marked = NO;
+        if (!marked) { marked = YES; DSFeature699MarkTrying("kbmin821"); }
+        DSFeature719MarkAction("kbmin821");
+        DSMedusa802Release([NSString stringWithFormat:@"kbmin821: %@ card minimised while owning the keys", bundle]);
+    } @catch (NSException *exception) {
+    }
+}
+
+// kbback821: log 821 10:04:55.478 keys756 replayed the keys for Beeper (lift
+// 341) with no assertion held (released for Spotlight at 10:04:21.815), so the
+// keys stayed at level 20 under the stage: "keys visible? NO (Medusa level 20
+// not above stage 998)". Here the assertion is retaken and the same getters
+// kbvis768's verdict uses are read synchronously; NO means no lift.
+BOOL DSKbBack821TakeAndCheck(NSString *bundle, NSString **whyNot) {
+    NSString *why = nil;
+    @try {
+        if (!NSThread.isMainThread) { why = @"not main thread"; goto done; }
+        static BOOL marked = NO;
+        if (!marked) { marked = YES; DSFeature699MarkTrying("kbback821"); }
+        DSFeature719MarkAction("kbback821");
+        UIWindow *medusa = DSMedusa802FindWindow();
+        if (!medusa) { why = @"no Medusa window"; goto done; }
+        if (DS803On("medusa803")) DSMedusa802Take(medusa, bundle);
+        UIWindow *stage = [DSStageWindow stageWindow];
+        if (medusa.hidden) why = @"Medusa hidden";
+        else if (medusa.alpha < 0.01) why = @"Medusa alpha 0";
+        else if (medusa.layer.hidden || medusa.layer.opacity < 0.01) why = @"Medusa layer hidden/transparent";
+        else if (stage && !stage.hidden && medusa.windowLevel <= stage.windowLevel)
+            why = [NSString stringWithFormat:@"Medusa level %.0f not above stage %.0f", medusa.windowLevel, stage.windowLevel];
+    } @catch (NSException *exception) {
+        why = exception.name ?: @"exception";
+    }
+done:
+    if (whyNot) *whyNot = why;
+    return why == nil;
 }
 
 // why806 (log only): SpringBoard's update hide went through while the arbiter

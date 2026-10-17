@@ -199,6 +199,9 @@ void DSWhy775Note(NSString *line);
 // 4.5.776 keep776
 BOOL DSKeep776Active(void);
 NSString *DSKeep806HoldingFor(UIWindow *medusa);
+// 4.5.821 kbmin821 / kbback821.
+void DSKbMin821CardMinimised(NSString *bundle);
+BOOL DSKbBack821TakeAndCheck(NSString *bundle, NSString **whyNot);
 void DSKeep806NoteDropped(NSString *bundle);
 void DSWhy806NotePassed(UIWindow *medusa, BOOL wasHidden, BOOL bypass, NSInteger depth);
 void DSKeep776NoteBlocked(UIWindow *medusa);

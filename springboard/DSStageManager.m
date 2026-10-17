@@ -4155,6 +4155,16 @@ BOOL DSFold752On(void) {
     if ([self keys697CardAwayForBundle:bundle]) return;
     DSFeature719MarkAction("keys756");
     CGRect keys = _kb723ArbiterKeys;
+    // 4.5.821 kbback821: retake medusa803's assertion first; no replay (no
+    // lift) unless the keys are visible right now.
+    if (DS821On("kbback821")) {
+        NSString *whyNot = nil;
+        if (!DSKbBack821TakeAndCheck(bundle, &whyNot)) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: kbback821 %@ came back owning the keyboard but its keys are not visible (%@): no lift", bundle, whyNot ?: @"?");
+            return;
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: kbback821 %@ came back owning the keyboard: Medusa assertion held, keys visible", bundle);
+    }
     DSDiagnosticsRecordFormat(@"SpringBoard: keys756 %@ came back still owning the keyboard (%@): keys shown again, card lifted", bundle, NSStringFromCGRect(keys));
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -4265,6 +4275,7 @@ static void DSPub807Check(NSString *bundle, DSSceneHost *host, NSString *state) 
         if ([now isEqualToString:@"live"] || [was isEqualToString:@"live"]) DSPub807Check(bundle, hosts[i], now);   // 4.5.807 log only
         if ([now isEqualToString:@"live"]) [self scene748Settle:[NSString stringWithFormat:@"host750 %@ -> live", was] after:0.1];
         if ([now isEqualToString:@"live"] && [was isEqualToString:@"minimised"] && bundle.length) [self keys756Restored:bundle];
+        if ([now isEqualToString:@"minimised"] && [was isEqualToString:@"live"] && bundle.length) DSKbMin821CardMinimised(bundle);
     }
 }
 

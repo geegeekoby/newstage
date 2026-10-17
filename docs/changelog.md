@@ -1,3 +1,10 @@
+## 4.5.815 (revert real keyboard, pin the Messages bar, lag fixes)
+- Reverted 4.5.813/814 (real Messages keyboard) completely: staged Messages is back on the 812-1 stand-in keyboard, card clipping and scene sizing exactly as 812-1.
+- pin815: the Messages app strip and reply bar stay put. Focus and typing no longer hide the strip (no 81 -> 44 collapse). If Messages opens with its own keyboard already up, the box hands over to the stage keyboard instead of leaving the bar off the card. A parked input bar is brought back right away instead of waiting for the next chat open. Off: pin815-off.
+- kbrule815: stages only shift for a keyboard that belongs to an app on a visible, full-size card. Full-screen apps (e.g. Signal), apps not on the stage and minimised cards no longer shift anything. Off: kbrule815-off.
+- perf815: lighter view layout/frame hooks in every injected app when not on a card, cached class checks, no stack symbol reads in SpringBoard on keyboard frames, cached switch chain, cheaper log lines, no per-layout trace line. Off: perf815-off.
+- core815-off returns everything to 812-1.
+
 ## 4.5.814 (experimental: real Messages keyboard, ON by default)
 - realkb814: staged Messages now uses its own real keyboard, reply bar and app strip, drawn outside the card at the normal keyboard position. The Messages scene is made phone-size and lined up with the screen; SpringBoard shows only the card plus the keyboard area. The chat stays in the card.
 - If anything doesn't check out (no phone-size scene, mask not applied, scene write never safe), that card falls back to the old stand-in keyboard by itself and the log says why ("realkb814 FALLBACK ...").

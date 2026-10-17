@@ -403,8 +403,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core810") == 0) return -1;
         if (strcmp(name, "core811") == 0) return -1;
         if (strcmp(name, "core812") == 0) return -1;
-        if (strcmp(name, "core813") == 0) return -1;
-        if (strcmp(name, "core814") == 0) return -1;
+        if (strcmp(name, "core815") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -1072,29 +1071,36 @@ BOOL DS812On(const char *name) {
     return DSFeature699On("core812") && DS811On("core811") && DSFeature699On(name);
 }
 
-// 4.5.813 realkb813 (EXPERIMENTAL, opt-in): staged Messages keeps its own real
-// UIKit keyboard instead of SpringBoard's stand-in. Decided once per process so
-// a process never switches method mid-run. On only with
-// /var/mobile/.dynamicstage-realkb813-on, not with realkb813-off / core813-off,
-// and not after a crash while it was on (crash latch realkb813).
-BOOL DSRealKb813On(void) {
-    static int decided = -1;
-    if (decided >= 0) return decided == 1;
-    BOOL on = DSFeature699On("core813") && DS812On("core812") && DSFeature699On("realkb813") &&
-              (access("/var/mobile/.dynamicstage-realkb813-on", F_OK) == 0 || access("/var/jb/var/mobile/.dynamicstage-realkb813-on", F_OK) == 0);
-    if (on) DSFeature699MarkTrying("realkb813");
-    decided = on ? 1 : 0;
+// 4.5.815: master core815-off returns pin815 / kbrule815 / perf815 to 812-1.
+BOOL DS815On(const char *name) {
+    // 4.5.815 perf815: the whole master chain (core815 -> ... -> core802, about
+    // a dozen cached lookups) is answered from a 1 s per-name cache.
+    if (!name) return NO;
+    enum { N = 64 };
+    static struct { const char *name; BOOL on; CFAbsoluteTime at; } cache[N];
+    static os_unfair_lock lock = OS_UNFAIR_LOCK_INIT;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    unsigned slot = (unsigned)(((uintptr_t)name >> 3) % N);
+    os_unfair_lock_lock(&lock);
+    if (cache[slot].name == name && now - cache[slot].at < 1.0 && now >= cache[slot].at) {
+        BOOL on = cache[slot].on;
+        os_unfair_lock_unlock(&lock);
+        return on;
+    }
+    os_unfair_lock_unlock(&lock);
+    BOOL on = DSFeature699On("core815") && DS812On("core812") && DSFeature699On(name);
+    os_unfair_lock_lock(&lock);
+    cache[slot].name = name; cache[slot].on = on; cache[slot].at = now;
+    os_unfair_lock_unlock(&lock);
     return on;
 }
 
-// 4.5.814 realkb814: ON by default. Staged Messages keeps its real keyboard
-// in a phone-size scene, masked to card + keyboard (SpringBoard side).
-// Off: realkb814-off (back to the preserved stand-in) / core814-off (813).
-// Crash latch: realkb814. Cheap: DSFeature699On is the 1 s perf812 cache.
-BOOL DSRealKb814On(void) {
-    BOOL on = DSFeature699On("core814") && DSFeature699On("core813") && DS812On("core812") && DSFeature699On("realkb814");
-    static BOOL marked = NO;
-    if (on && !marked) { marked = YES; DSFeature699MarkTrying("realkb814"); }
+// 4.5.815 perf815: hot-path gate read at most every 2 s per process.
+BOOL DSPerf815Fast(void) {
+    static BOOL on = YES;
+    static CFAbsoluteTime at = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - at > 2.0 || now < at) { at = now; on = DS815On("perf815"); }
     return on;
 }
 

@@ -583,7 +583,9 @@ static void DSTraceCommit(NSString *message, BOOL force) {
         }
         pthread_mutex_unlock(&DSTraceLock);
     }
-    NSString *process = DSAscii745(NSProcessInfo.processInfo.processName ?: @"?");
+    static NSString *process815 = nil;   // 4.5.815 perf815: the process name never changes
+    NSString *process = process815;
+    if (!process) { process = DSAscii745(NSProcessInfo.processInfo.processName ?: @"?"); if (DSPerf815Fast()) process815 = process; }
     BOOL main = NSThread.isMainThread;
     if (main) DSTraceMainBeat = CFAbsoluteTimeGetCurrent();
 

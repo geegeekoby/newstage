@@ -4325,7 +4325,6 @@ static BOOL DSKbNan754On(void) {
 }
 
 - (void)noteKeyboardFrame:(CGRect)keyboard source:(NSString *)source duration:(NSTimeInterval)duration {
-    @try { DSRealKb814ManagerNote(keyboard, source); } @catch (NSException *e814) {}   // 4.5.814 realkb814 (Messages only)
     DSPerfCount(DSPerfCounterKeyboardNotes);
     if (DSKbNan754Bad(keyboard) && DSKbNan754On()) {
         DSFeature719MarkAction("kbnan754");
@@ -4368,6 +4367,9 @@ static BOOL DSKbNan754On(void) {
                 lastAt = t;
                 NSString *caller = DSSrc746Tag;
                 if (!caller && DSLog754On()) caller = DSCaller754(1, 7, NO);
+                // 4.5.815 perf815: no [NSThread callStackSymbols] (symbolicates
+                // the stack on SpringBoard's main thread for every new keyboard frame).
+                if (!caller && DSPerf815Fast()) caller = @"(stack not read, perf815)";
                 if (!caller) {
                     NSArray<NSString *> *stack = [NSThread callStackSymbols];
                     for (NSUInteger i = 1; i < stack.count && i < 8; i++) {
@@ -4388,6 +4390,35 @@ static BOOL DSKbNan754On(void) {
             }
         }
         if ([self ghost745IsGhost:keyboard source:source]) keyboard = CGRectZero;
+        // 4.5.815 kbrule815: one rule for shifting stages. An app's keyboard
+        // counts only when that app is on a visible, full-size (not minimised)
+        // card on a visible stage. A full-screen app (Signal after its card
+        // closed), an app not on the stage, or a minimised card is taken as
+        // keys hidden, so nothing shifts for it and shifted cards come back.
+        // SpringBoard's own keys (stand-in / picker search) are unchanged.
+        // Off: kbrule815-off / core815-off (812-1); latch kbrule815.
+        if (!CGRectIsEmpty(keyboard) && source.length && ![source isEqualToString:@"SpringBoard"] &&
+            DS815On("kbrule815") && DS809Latched("kbrule815")) {
+            NSString *why815 = nil;
+            NSInteger slot815 = [self slotForHostedBundle:source];
+            if (![self isStageVisible]) why815 = @"stage not on screen";
+            else if (slot815 < 0 || ![self isHostingBundleIdentifier:source]) why815 = @"app is not on a stage card (full screen or closed)";
+            else {
+                DSStageContainerView *card815 = [self containerForSlot:slot815];
+                if (!card815 || !card815.window || card815.hidden || card815.alpha < 0.05 ||
+                    CGRectGetWidth(card815.bounds) < 120.0 || CGRectGetHeight(card815.bounds) < 120.0) why815 = @"its card is minimised / hidden";
+            }
+            if (why815) {
+                static NSString *said815 = nil;
+                NSString *k815 = [NSString stringWithFormat:@"%@|%@", source, why815];
+                if (![k815 isEqualToString:said815]) {
+                    said815 = k815;
+                    DSFeature719MarkAction("kbrule815");
+                    DSDiagnosticsRecordFormat(@"SpringBoard: kbrule815 %@ keyboard %@ ignored: %@ (no stage shift)", source, NSStringFromCGRect(keyboard), why815);
+                }
+                keyboard = CGRectZero;
+            }
+        }
         // 4.5.802 lift802: an app's keyboard "up" that arrives after the
         // keyboard system said the keys are down (arbiter off < 1 s ago, no new
         // arbiter on) is the app's stale frame (801 01:13:22.659 Beeper

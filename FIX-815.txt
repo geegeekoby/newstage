@@ -1,0 +1,10 @@
+4.5.815
+REVERT: source reset to bak813 (= 812-1); realkb813/814 code gone (Tweak.xm, DSStageContext.m, DSSceneHost.*, DSStageContainerView.*, DSStageManager.m, DSStageDebug.*). Clip points / scene sizing = 812-1.
+pin815 (app, DSPin815On = staged Messages stand-in && DS815On(pin815) && latch):
+ - CKMessageEntryView shouldShowAppStrip -> YES; setShowAppStrip:(NO) and setShowAppStrip:NO animated:completion: -> YES (20F75 allmethods).
+ - UIInputWindowController viewDidLayoutSubviews: (a) box first responder with no stand-in wanted (811 08:28:32 launch focus, bar y=560 inCard=NO) -> resign + DSRequestSpringBoardKeyboard(YES), once per episode;
+   (b) container parked and box not focused (811 08:10:47.997 parked wanted=0, nothing ran) -> DSReopen782 (text-changed relayout / unpark811 box), once per park.
+kbrule815 (SpringBoard noteKeyboardFrame): an app keyboard counts only when the stage is visible, the app is hosted on a slot, and that card is on screen, unhidden and >=120x120. Otherwise taken as hidden (cards return). SpringBoard's own keys unchanged.
+perf815: DS815On 1 s chain cache; DSPerf815Fast 2 s gate; UIView layoutSubviews/setFrame fast exit when unstaged and not Phone; per-class cache for the local-keyboard name test in staged setFrame;
+ "app input window laid out" trace dropped; DSUnpark811Box weak cache; src746 no callStackSymbols; trace process name cached.
+Audited, unchanged: camera poll (701 adaptive 1 s/4 s, early return unstaged), SB camera 1 Hz NSTimer (only while claims exist), gest770 poll (event mode since 805), vel752 display link (only while a card animates), beat756 30 s, trace watchdog 0.5-10 s, relay 1.5-30 s; perf812 feature cache kept.

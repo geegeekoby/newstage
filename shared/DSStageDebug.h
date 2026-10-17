@@ -288,12 +288,8 @@ FOUNDATION_EXTERN BOOL DS809Latched(const char *name);
 FOUNDATION_EXTERN BOOL DS810On(const char *name);
 FOUNDATION_EXTERN BOOL DS811On(const char *name);
 FOUNDATION_EXTERN BOOL DS812On(const char *name);
-FOUNDATION_EXTERN BOOL DSRealKb813On(void);
-FOUNDATION_EXTERN BOOL DSRealKb814On(void);
-// 4.5.814: notify names. phone = SpringBoard made the staged Messages scene phone-size
-// (state = DSIdentifierHash(bundle), 0 = not); kb = Messages keyboard rect (minY<<32 | height, points*2).
-#define kDSRealKb814PhoneNotify "com.recreated.dynamicstage.realkb814.phone"
-#define kDSRealKb814KbNotify "com.recreated.dynamicstage.realkb814.kb"
+FOUNDATION_EXTERN BOOL DS815On(const char *name);
+FOUNDATION_EXTERN BOOL DSPerf815Fast(void);
 FOUNDATION_EXTERN void DSPerf812Take(long *calls, long *misses);
 FOUNDATION_EXTERN void DSPass811NoteThrough(CGPoint screen, BOOL keysUp);
 FOUNDATION_EXTERN void DSGest811NoteOther(NSString *otherName);

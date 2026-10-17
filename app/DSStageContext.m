@@ -3,7 +3,6 @@
 #import "DSPreferences.h"
 #import "DSConstants.h"
 #import "DSStageDebug.h"
-#import "DSDiagnostics.h"
 #import <notify.h>
 #import <objc/runtime.h>
 
@@ -71,38 +70,11 @@ static CGRect DSCardRectFromState(NSDictionary *state, NSString *identifier) {
     BOOL _geometryPending;
 }
 
-// 4.5.814 realkb814: SpringBoard says this Messages scene is phone-size with
-// its real keyboard (state = our hash). While it does, the app is not
-// "staged": every stage hook falls through and Messages lays out as on the
-// phone (SpringBoard masks it to the card + keyboard). State 0 = stage again
-// (fallback: the preserved stand-in keyboard).
-static BOOL DSRK814Live = NO;
-BOOL DSRealKb814PhoneLive(void) { return DSRK814Live; }
-
 + (instancetype)sharedContext {
     static DSStageContext *shared;
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         shared = [[DSStageContext alloc] init];
-        NSString *me = NSBundle.mainBundle.bundleIdentifier ?: @"";
-        if ([me isEqualToString:@"com.apple.MobileSMS"] && DSRealKb814On()) {
-            static int rkToken = NOTIFY_TOKEN_INVALID;
-            void (^read)(int) = ^(int t) {
-                uint64_t state = 0;
-                notify_get_state(t, &state);
-                BOOL live = state != 0 && (uint32_t)state == DSIdentifierHash(me) && DSRealKb814On();
-                if (live == DSRK814Live) return;
-                DSRK814Live = live;
-                DSTraceFormat(@"realkb814 app: SpringBoard %@", live ? @"made the scene phone-size: unstaged hooks, real keyboard"
-                                                                    : @"took phone-size back: staged again (stand-in keyboard path)");
-                [shared refresh];
-            };
-            if (notify_register_dispatch(kDSRealKb814PhoneNotify, &rkToken, dispatch_get_main_queue(), ^(int t) { read(t); }) == NOTIFY_STATUS_OK) {
-                uint64_t state = 0;
-                notify_get_state(rkToken, &state);
-                DSRK814Live = state != 0 && (uint32_t)state == DSIdentifierHash(me);
-            }
-        }
     });
     return shared;
 }
@@ -242,7 +214,7 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
     // laying the reply bar out at 426 by 460.
     if (!isUs && !notifyKnown && !fileKnown) isUs = [self sceneLooksLikeStageCard];
 
-    _staged = isUs && preferences.enabled && !DSRK814Live;   // 4.5.814 realkb814
+    _staged = isUs && preferences.enabled;
 
     if (!_staged) {
         _notedCard = CGRectZero;

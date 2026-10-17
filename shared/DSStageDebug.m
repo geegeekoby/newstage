@@ -398,6 +398,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core804") == 0) return -1;
         if (strcmp(name, "core805") == 0) return -1;
         if (strcmp(name, "core806") == 0) return -1;
+        if (strcmp(name, "core807") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -989,6 +990,11 @@ BOOL DS805On(const char *name) {
 // 4.5.806: master core806-off returns every 806 change to 4.5.805.
 BOOL DS806On(const char *name) {
     return DSFeature699On("core806") && DS805On("core805") && DSFeature699On(name);
+}
+
+// 4.5.807: master core807-off returns every 807 change to 4.5.806.
+BOOL DS807On(const char *name) {
+    return DSFeature699On("core807") && DS806On("core806") && DSFeature699On(name);
 }
 
 // 4.5.804: master core804-off returns every 804 change to 4.5.803.

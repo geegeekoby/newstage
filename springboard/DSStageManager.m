@@ -4144,6 +4144,40 @@ BOOL DSFold752On(void) {
     });
 }
 
+
+// 4.5.807 pub807 (log only). 20F75 -[SBSceneManager _addScene:] puts a scene's
+// handle in _externalApplicationSceneHandles only when the scene has no
+// workspaceIdentifier and belongs to another app process; _updateStateForScene:
+// withSettings: then adds that handle to externalForegroundApplicationSceneHandles
+// while the scene is foreground. A display-layout element plays no part in it
+// (and every visible card already has one: camera661 presence). This line
+// shows, on each card state change, where the staged scene really stands.
+// Off: pub807-off / core807-off.
+static void DSPub807Check(NSString *bundle, DSSceneHost *host, NSString *state) {
+    @try {
+        if (!NSThread.isMainThread || !DS807On("pub807") || !bundle.length || !host) return;
+        static BOOL marked = NO;
+        if (!marked) { marked = YES; DSFeature699MarkTrying("pub807"); }
+        DSFeature719MarkAction("pub807");
+        id scene = [host hostedScene];
+        Class coord = objc_getClass("SBSceneManagerCoordinator");
+        id mgr = [coord respondsToSelector:@selector(mainDisplaySceneManager)] ? ((id (*)(id, SEL))objc_msgSend)(coord, @selector(mainDisplaySceneManager)) : nil;
+        id ws = (scene && [scene respondsToSelector:@selector(workspaceIdentifier)]) ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(workspaceIdentifier)) : nil;
+        id handle = (mgr && scene && [mgr respondsToSelector:@selector(existingSceneHandleForScene:)])
+            ? ((id (*)(id, SEL, id))objc_msgSend)(mgr, @selector(existingSceneHandleForScene:), scene) : nil;
+        NSSet *ext = (mgr && [mgr respondsToSelector:@selector(externalApplicationSceneHandles)])
+            ? ((id (*)(id, SEL))objc_msgSend)(mgr, @selector(externalApplicationSceneHandles)) : nil;
+        NSSet *extFg = (mgr && [mgr respondsToSelector:@selector(externalForegroundApplicationSceneHandles)])
+            ? ((id (*)(id, SEL))objc_msgSend)(mgr, @selector(externalForegroundApplicationSceneHandles)) : nil;
+        BOOL inExt = handle && [ext isKindOfClass:NSSet.class] && [ext containsObject:handle];
+        BOOL inFg = handle && [extFg isKindOfClass:NSSet.class] && [extFg containsObject:handle];
+        DSDiagnosticsRecordFormat(@"SpringBoard: pub807: external-foreground now contains %@=%@ (card %@; external=%@ workspace=%@ handle=%@ scene=%@; %lu external-foreground handle(s))",
+            bundle, inFg ? @"YES" : @"NO", state ?: @"?", inExt ? @"YES" : @"NO", ws ?: @"nil", handle ? @"yes" : @"no", scene ? @"yes" : @"no",
+            (unsigned long)([extFg isKindOfClass:NSSet.class] ? extFg.count : 0));
+    } @catch (NSException *exception) {
+    }
+}
+
 - (void)host750Tick {
     if (![self core750On] || !DSFeature699On("host750")) return;
     if (!_host750State) _host750State = [NSMutableDictionary dictionary];
@@ -4206,6 +4240,7 @@ BOOL DSFold752On(void) {
             @try { DSDiagnosticsRecordFormat(@"SpringBoard: gest770 %@ %@ -> %@ app view: %@", bundle ?: @"-", was, now, [hosts[i] gest770State]); } @catch (NSException *exception) {}
             if ([was isEqualToString:@"minimised"] && [now isEqualToString:@"live"]) DSGest770MarkRestored(bundle);
         }
+        if ([now isEqualToString:@"live"] || [was isEqualToString:@"live"]) DSPub807Check(bundle, hosts[i], now);   // 4.5.807 log only
         if ([now isEqualToString:@"live"]) [self scene748Settle:[NSString stringWithFormat:@"host750 %@ -> live", was] after:0.1];
         if ([now isEqualToString:@"live"] && [was isEqualToString:@"minimised"] && bundle.length) [self keys756Restored:bundle];
     }

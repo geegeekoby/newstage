@@ -1,0 +1,14 @@
+4.5.825 (on 4.5.824)
+pin825 (off: pin825-off; latch pin825-crashed; hang marker pin825-showing): the 0.55 s hold in the picker shows an
+ action sheet - Pin / Unpin / Move Pin Earlier / Move Pin Later / Open Full Screen / Open in Top|Bottom Card (only when
+ the other stack card exists and shows its picker; same launchEntry:slot: path as tapping there) / Clear Suggested
+ History / Cancel. Pins are written to com.recreated.dynamicstage.prefs pinnedApplications through CFPreferences on the
+ main thread, this process reloads, the prefs reload notification is posted, then reloadContent (no library reload).
+ Off -> hold opens full screen (824). Empty Pinned text now says how to pin.
+settings825 (prefs only): Settings page (plist, no bundle) gains Pinned Apps help, Remembered Recent Apps (4/8/12/20/30,
+ default 12), Hide Copy Logs Button, feature switches t825_style823/style824/reload824/pin825/notch746/pill826 which
+ SpringBoard maps onto the existing NAME-off files on the reload notification (only once a key exists), and read-only
+ status rows s825_* (On / Off / Latched off) written by SpringBoard when changed (picker open, setting change).
+ Not done: add/remove/reorder list inside Settings - needs a preference bundle, which this toolchain's arm64e output
+ crashed Settings with (see the plist header); pin/unpin/reorder is in the picker hold menu instead.
+core825-off -> 824.

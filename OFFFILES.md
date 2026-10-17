@@ -383,3 +383,9 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-reload824-off : full app-list reload on every picker show (823 behaviour)
 - /var/mobile/.dynamicstage-core824-off : both of the above
 - Latch: /var/mobile/.dynamicstage-style824-crashed (written if the hang marker /var/mobile/.dynamicstage-style824-showing survives a restart). Delete to re-allow.
+
+## 4.5.825
+- /var/mobile/.dynamicstage-pin825-off : hold opens full screen (824), no pin menu
+- /var/mobile/.dynamicstage-settings825-off : Settings switches/status/recents limit/hide Copy Logs ignored
+- /var/mobile/.dynamicstage-core825-off : all of 825
+- Latch: /var/mobile/.dynamicstage-pin825-crashed (hang marker /var/mobile/.dynamicstage-pin825-showing)

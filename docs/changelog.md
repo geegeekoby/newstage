@@ -1,3 +1,8 @@
+## 4.5.825
+- Pin from the picker: hold an app (0.55 s) for a menu - Pin / Unpin / Move Pin Earlier / Later / Open Full Screen / Open in the empty other card / Clear Suggested History.
+- Settings: Remembered Recent Apps (default 12), Hide Copy Logs Button, switches for the main features (mapped onto the existing off files), read-only feature status (On / Off / Latched off).
+- Off: pin825-off (hold = full screen again), core825-off (back to 824). Latch: pin825-crashed.
+
 ## 4.5.824
 - style824: more distinctive picker on top of 823 - glass gradient edge, icon-accent tinted tiles with soft glow, Suggested carousel with centre scale, staggered spring entrance, All/Suggested/Pinned pill filter, search focus glow, accent letter pills, light haptics, "Opens in the top/bottom card" header, friendlier empty states. Respects Reduce Motion. style824-off = exact 823 look.
 - reload824: the picker no longer rebuilds the whole app list every time it opens (only when the app count changes); missing-app reloads capped at one per pass.

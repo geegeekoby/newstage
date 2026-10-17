@@ -405,6 +405,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core812") == 0) return -1;
         if (strcmp(name, "core815") == 0) return -1;
         if (strcmp(name, "core816") == 0) return -1;
+        if (strcmp(name, "core817") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -1099,6 +1100,11 @@ BOOL DS815On(const char *name) {
 // 4.5.816: master core816-off returns grow816 / topstay816 to 815.
 BOOL DS816On(const char *name) {
     return DS815On("core816") && DS815On("core815") && DSFeature699On(name);
+}
+
+// 4.5.817: master core817-off returns picker817 / search817 to 816.
+BOOL DS817On(const char *name) {
+    return DS815On("core817") && DS816On("core816") && DSFeature699On(name);
 }
 
 // 4.5.815 perf815: hot-path gate read at most every 2 s per process.

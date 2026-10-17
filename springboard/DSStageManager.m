@@ -1467,7 +1467,7 @@ void DSStageNoteFrontDisplayChanged(id display) {
     _dragShell.hidden = YES;
     _container.rimCatcherName = @"main-inner";
 
-    _picker = [[DSAppPickerViewController alloc] init];
+    _picker = DSNewAppPicker817();
     _picker.delegate = self;
     [_window.rootViewController addChildViewController:_picker];
     _picker.view.frame = _container.contentView.bounds;
@@ -8122,7 +8122,7 @@ static BOOL DSNative703ReduceMotion(void) {
         [liftSelf syncLiftChrome];
     };
 
-    _topPicker = [[DSAppPickerViewController alloc] init];
+    _topPicker = DSNewAppPicker817();
     _topPicker.delegate = self;
     [_window.rootViewController addChildViewController:_topPicker];
     _topPicker.view.frame = _topContainer.contentView.bounds;
@@ -11461,6 +11461,33 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
     [self launchEntry:entry slot:[self slotForPicker:picker]];
 }
 
+- (NSArray<NSDictionary *> *)appPickerSlotChoices817:(DSAppPickerViewController *)picker {
+    NSMutableArray *out = [NSMutableArray array];
+    @try {
+        NSInteger own = [self slotForPicker:picker];
+        for (NSInteger slot = 0; slot <= 1; slot++) {
+            if (slot != own && ![self pickerVisibleOnSlot:slot]) continue;
+            DSStageContainerView *card = slot == 0 ? _container : _topContainer;
+            if (!card) continue;
+            BOOL upper = card == [self cardOnHalf:1];
+            [out addObject:@{ @"slot": @(slot), @"here": @(slot == own),
+                              @"title": upper ? @"Open on Top Card" : @"Open on Bottom Card" }];
+        }
+    } @catch (NSException *exception) {}
+    return out;
+}
+
+- (void)appPicker:(DSAppPickerViewController *)picker didChooseEntry:(DSAppEntry *)entry slot817:(NSInteger)slot fromView:(UIView *)view {
+    [picker dismissKeyboard];
+    NSInteger own = [self slotForPicker:picker];
+    if (slot != own) {
+        if (slot < 0 || slot > 1 || ![self pickerVisibleOnSlot:slot]) slot = own;   // that card filled meanwhile
+        else [[self pickerForSlot:slot] dismissKeyboard];
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: picker817 menu: %@ on slot %ld (picker slot %ld)", entry.bundleIdentifier ?: @"?", (long)slot, (long)own);
+    [self launchEntry:entry slot:slot];
+}
+
 - (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view {
     [picker dismissKeyboard];
     [self launchFullscreen:entry.bundleIdentifier];
@@ -14647,7 +14674,7 @@ static UIBezierPath *DSTopHalfRim(CGRect rect, CGFloat radius) {
     if (above.superview == root) [root insertSubview:_floatContainer aboveSubview:above];
     else [root addSubview:_floatContainer];
 
-    _floatPicker = [[DSAppPickerViewController alloc] init];
+    _floatPicker = DSNewAppPicker817();
     _floatPicker.delegate = self;
     [_window.rootViewController addChildViewController:_floatPicker];
     _floatPicker.view.frame = _floatContainer.contentView.bounds;

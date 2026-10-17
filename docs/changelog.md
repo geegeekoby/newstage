@@ -1,3 +1,18 @@
+## 4.5.817 (new app picker)
+- picker817: a redesigned stage app picker.
+  - Suggested row: your pinned apps first, then the apps you open most and most recently.
+  - Full A–Z list with a letter index on the right. Scrubbing the index gives a tick per letter.
+  - Smarter search: ignores accents and case, best match first (name, start of a word, initials such as "gm", then anywhere in the name).
+  - iOS 16 look: blur material background, SF Symbols, Dynamic Type, springy taps (off with Reduce Motion, solid background with Reduce Transparency).
+  - Long-press any app: Open on Top Card / Open on Bottom Card (the other card only when it is empty), Open Full Screen, Pin to Suggested / Unpin, Hide from Picker. Hidden apps still show up in search, marked "Hidden", with "Show in Picker" to bring them back.
+  - VoiceOver: the same actions as custom actions.
+  - Pins, hidden apps and usage are saved in /var/mobile/.dynamicstage-picker817.plist, written only when something changes. The first run takes its pins from the old picker settings.
+  - The search keyboard is unchanged (SpringBoard's own keyboard, same rules).
+  - Hold-to-full-screen is replaced by the long-press menu's "Open Full Screen".
+  - Off: picker817-off brings back the old picker. Crash-latched.
+- search817: the picker no longer re-reads every installed app on each key typed in search; it filters the list loaded when the picker opened. This applies to the old picker too. Off: search817-off.
+- core817-off returns everything to 4.5.816.
+
 ## 4.5.816 (growing reply bar, top card stays put)
 - grow816: when the Messages reply bar grows to several lines on a card, the conversation now makes room above it and stays scrolled to the bottom, like normal Messages. Before, the last messages went under the taller bar. Off: grow816-off.
 - topstay816: typing in the TOP card no longer moves that card down to the keyboard. It stays where it is. The bottom card still moves just above the keyboard, and the other card still slides aside as before. Off: topstay816-off.

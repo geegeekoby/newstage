@@ -291,7 +291,6 @@ FOUNDATION_EXTERN BOOL DS812On(const char *name);
 FOUNDATION_EXTERN BOOL DS815On(const char *name);
 FOUNDATION_EXTERN BOOL DSPerf815Fast(void);
 FOUNDATION_EXTERN BOOL DS816On(const char *name);
-FOUNDATION_EXTERN BOOL DS817On(const char *name);
 FOUNDATION_EXTERN void DSPerf812Take(long *calls, long *misses);
 FOUNDATION_EXTERN void DSPass811NoteThrough(CGPoint screen, BOOL keysUp);
 FOUNDATION_EXTERN void DSGest811NoteOther(NSString *otherName);

@@ -12,10 +12,6 @@
 - (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker;
 - (void)appPickerDidEndSearch:(DSAppPickerViewController *)picker;
 - (BOOL)appPickerShouldWaitBeforeSearchEditing:(DSAppPickerViewController *)picker;
-// 4.5.817 picker817: the long-press menu's card choices, each
-// @{@"slot": NSNumber, @"title": NSString, @"here": NSNumber(BOOL)}.
-- (NSArray<NSDictionary *> *)appPickerSlotChoices817:(DSAppPickerViewController *)picker;
-- (void)appPicker:(DSAppPickerViewController *)picker didChooseEntry:(DSAppEntry *)entry slot817:(NSInteger)slot fromView:(UIView *)view;
 @end
 
 // What the stage shows when no app is loaded: a search field, a two column
@@ -38,7 +34,3 @@
 - (NSString *)searchEditingDebugSummary;
 
 @end
-
-// 4.5.817 picker817: the redesigned picker when picker817 is on (and not
-// crash-latched), else the classic one above. Off: picker817-off.
-FOUNDATION_EXTERN DSAppPickerViewController *DSNewAppPicker817(void);

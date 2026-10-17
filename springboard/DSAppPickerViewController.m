@@ -44,7 +44,6 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     NSArray<DSAppEntry *> *_recents;
     NSArray<DSAppEntry *> *_library;
     NSString *_query;
-    BOOL _noReload817;
 
     DSAppCellContentView *_heldCell;
     NSTimer *_holdTimer;
@@ -142,10 +141,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 - (void)reloadContent {
     DSAppLibrary *library = [DSAppLibrary sharedLibrary];
-    // 4.5.817 search817: a keystroke filters the list already loaded (the
-    // whole LaunchServices walk ran on every key). Off: search817-off.
-    if (!(_noReload817 && library.applications.count > 0 && DS817On("search817"))) [library reload];
-    _noReload817 = NO;
+    [library reload];
 
     if (_query.length > 0) {
         _recents = @[];
@@ -335,14 +331,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 - (void)searchField:(DSSearchFieldView *)field didChangeText:(NSString *)text {
     _query = text ?: @"";
-    _noReload817 = YES;
     [self reloadContent];
     [_scrollView setContentOffset:CGPointZero animated:NO];
 }
 
 - (void)searchFieldDidCancel:(DSSearchFieldView *)field {
     _query = @"";
-    _noReload817 = YES;
     [self reloadContent];
 }
 

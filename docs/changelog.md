@@ -1,3 +1,8 @@
+## 4.5.818 (safety: 4.5.817 removed)
+- After 4.5.817 was installed, the jailbreak broke. Everything from 4.5.817 is removed: the new app picker (picker817) and the search change (search817). This build is 4.5.816 with a new version number; the classic picker is back as it was.
+- picker817 was the only 817 change that ran while SpringBoard starts up (the picker is built with the stage window), including loading app icons on a background thread. 4.5.816's changes only run while typing.
+- The picker817/search817/core817 off files now do nothing.
+
 ## 4.5.817 (new app picker)
 - picker817: a redesigned stage app picker.
   - Suggested row: your pinned apps first, then the apps you open most and most recently.

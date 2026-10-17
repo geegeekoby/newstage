@@ -1,0 +1,6 @@
+4.5.818 = 4.5.816 source (bak817) + version bump. 4.5.817 removed entirely after "broke jailbreak".
+Audit 812-1 -> 815 -> 816 -> 817 (built debs + source):
+ - deb: file list, permissions, control (only Version/Installed-Size), postinst/postrm, both filter plists (Bundles com.apple.springboard; app dylib MobileSMS/Messenger/Signal/Beeper/mobilephone) identical to 812-1. No launchd/jailbreakd filter.
+ - Mach-O: load commands / install names (@rpath/DynamicStage.dylib, CydiaSubstrate) / minos 14.0 identical; arm64 + arm64e both; DynamicStageApp undefined symbols identical 812-1 -> 817. DynamicStage 812-1 -> 816 identical; 817 adds only public UIKit/Foundation/libSystem symbols (UITableView, UIContextMenu*, UIListContentConfiguration, UIBackgroundConfiguration, NSCache, log2, dispatch_queue_attr_make_with_qos_class ...), all on iOS 16.
+ - source: no %ctor / +load / constructor / %init / %group / %hook / exit / abort added in 815, 816 or 817.
+ - runtime at SpringBoard launch: only picker817 is new (buildWindow -> DSNewAppPicker817 -> viewDidLoad -> LS walk + UITableView + background-thread +[UIImage _applicationIconImageForBundleIdentifier:format:scale:] during boot). 816 grow816/topstay816 run only while typing; 815 was run cleanly (log815).

@@ -23,6 +23,44 @@
 @end
 #import "DSConstants.h"
 #import <AudioToolbox/AudioToolbox.h>
+#import <fcntl.h>
+#import <unistd.h>
+
+// ---- 4.5.823 style823 ----------------------------------------------------------
+// The classic picker, restyled in place (no second view controller, no new
+// hook / ctor / +load / %init). Nothing changes at SpringBoard launch: the
+// picker is built with the stage window in its plain 822 look, and the new look
+// is switched on from reloadContent (the stage's existing show path) only once
+// SpringBoard's own "stayed up, boot guard cleared" has run (DSStayedUp823).
+// Main thread only, no new plist, no app-list or icon reads beyond what 822
+// already does (typing filters the cached list instead of re-reading it).
+// Hang marker: /var/mobile/.dynamicstage-style823-showing is written just before
+// the first styled layout and removed on the next main-queue turn (drawn). If a
+// later SpringBoard start finds it, style823-crashed is written (latched off).
+// Off: style823-off (exact 822 look, also live), core823-off; crash latch style823.
+static NSString *const kDS823Marker = @"/var/mobile/.dynamicstage-style823-showing";
+static BOOL DS823LatchedLocal = NO;
+
+static BOOL DSStyle823Allowed(void) {
+    if (!NSThread.isMainThread || !DSStayedUp823 || DS823LatchedLocal) return NO;
+    if (!DS823On("style823")) return NO;
+    static BOOL checkedMarker = NO;
+    if (!checkedMarker) {
+        checkedMarker = YES;
+        if (access(kDS823Marker.fileSystemRepresentation, F_OK) == 0) {
+            unlink(kDS823Marker.fileSystemRepresentation);
+            int fd = open("/var/mobile/.dynamicstage-style823-crashed", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (fd >= 0) close(fd);
+            DS823LatchedLocal = YES;
+            DSDiagnosticsRecord(@"SpringBoard: style823 hang marker found from an earlier start: style823 latched off (delete /var/mobile/.dynamicstage-style823-crashed to allow it again)");
+            return NO;
+        }
+    }
+    return YES;
+}
+
+static BOOL DS823ReduceTransparency(void) { return UIAccessibilityIsReduceTransparencyEnabled(); }
+static BOOL DS823ReduceMotion(void) { return UIAccessibilityIsReduceMotionEnabled(); }
 
 // How long the plate has to be held before the app opens fullscreen instead of
 // on the stage.
@@ -49,6 +87,230 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     NSTimer *_holdTimer;
     UIImpactFeedbackGenerator *_feedback;
     UIButton *_copyLogs;
+
+    // 4.5.823 style823
+    BOOL _s823;
+    BOOL _s823Typing;
+    UIView *_bg823;
+    UIImageView *_sugIcon823;
+    UIImageView *_libIcon823;
+    NSMutableArray<UIView *> *_letterHeaders823;
+    NSArray<NSString *> *_letterTitles823;
+    NSArray<NSNumber *> *_letterStarts823;
+}
+
+#pragma mark - 4.5.823 style823
+
+- (UIView *)s823PillWithText:(NSString *)text {
+    UIView *pill;
+    if (DS823ReduceTransparency()) {
+        pill = [[UIView alloc] initWithFrame:CGRectZero];
+        pill.backgroundColor = self.darkMode ? [UIColor colorWithWhite:0.18 alpha:1.0] : [UIColor colorWithWhite:0.92 alpha:1.0];
+    } else {
+        UIVisualEffectView *fx = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterial]];
+        pill = fx;
+    }
+    pill.layer.cornerRadius = 9.0;
+    pill.layer.cornerCurve = kCACornerCurveContinuous;
+    pill.clipsToBounds = YES;
+    pill.userInteractionEnabled = NO;
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
+    label.tag = 823;
+    label.text = text;
+    label.textAlignment = NSTextAlignmentCenter;
+    label.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleFootnote] scaledFontForFont:[UIFont systemFontOfSize:13.0 weight:UIFontWeightBold] maximumPointSize:18.0];
+    label.textColor = self.darkMode ? [UIColor colorWithWhite:1.0 alpha:0.75] : [UIColor colorWithWhite:0.0 alpha:0.6];
+    UIView *host = [pill isKindOfClass:UIVisualEffectView.class] ? ((UIVisualEffectView *)pill).contentView : pill;
+    [host addSubview:label];
+    return pill;
+}
+
+- (void)s823ApplyBackground {
+    [_bg823 removeFromSuperview];
+    _bg823 = nil;
+    if (!_s823) return;
+    if (DS823ReduceTransparency()) {
+        _bg823 = [[UIView alloc] initWithFrame:self.view.bounds];
+        _bg823.backgroundColor = self.darkMode ? [UIColor colorWithWhite:0.11 alpha:1.0] : [UIColor colorWithWhite:0.96 alpha:1.0];
+    } else {
+        _bg823 = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:self.darkMode ? UIBlurEffectStyleSystemMaterialDark : UIBlurEffectStyleSystemMaterialLight]];
+        _bg823.frame = self.view.bounds;
+    }
+    _bg823.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _bg823.userInteractionEnabled = NO;
+    [self.view insertSubview:_bg823 atIndex:0];
+}
+
+- (UIImageView *)s823Symbol:(NSString *)name {
+    UIImageView *iv = [[UIImageView alloc] initWithImage:[[UIImage systemImageNamed:name]
+        imageWithConfiguration:[UIImageSymbolConfiguration configurationWithTextStyle:UIFontTextStyleFootnote scale:UIImageSymbolScaleMedium]]];
+    iv.contentMode = UIViewContentModeScaleAspectFit;
+    iv.userInteractionEnabled = NO;
+    return iv;
+}
+
+// Called from reloadContent (the existing show path); cheap when nothing to do.
+- (void)s823Update {
+    BOOL want = DSStyle823Allowed();
+    if (want == _s823) return;
+    if (want) {
+        static BOOL markedOnce = NO;
+        if (!markedOnce) {
+            markedOnce = YES;
+            DSFeature699MarkTrying("style823");
+            int fd = open(kDS823Marker.fileSystemRepresentation, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (fd >= 0) close(fd);
+            // Drawn: the layout below commits with this run-loop turn; the
+            // marker goes on the next main-queue turn (no timer).
+            dispatch_async(dispatch_get_main_queue(), ^{
+                unlink(kDS823Marker.fileSystemRepresentation);
+                DSDiagnosticsRecord(@"SpringBoard: style823 first styled picker drawn (hang marker cleared)");
+            });
+        }
+        DSFeature719MarkAction("style823");
+        _s823 = YES;
+        _letterHeaders823 = [NSMutableArray array];
+        _sugIcon823 = [self s823Symbol:@"star.fill"];
+        _libIcon823 = [self s823Symbol:@"square.grid.2x2.fill"];
+        [_scrollView addSubview:_sugIcon823];
+        [_scrollView addSubview:_libIcon823];
+        UIFont *hf = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:15.0 weight:UIFontWeightBold] maximumPointSize:20.0];
+        _recentsHeader.font = hf;
+        _libraryHeader.font = hf;
+        _recentsHeader.text = @"Suggested";
+        _libraryHeader.text = @"All Apps";
+        [_copyLogs setImage:[UIImage systemImageNamed:@"doc.on.doc"] forState:UIControlStateNormal];
+        _copyLogs.titleLabel.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleFootnote] scaledFontForFont:[UIFont systemFontOfSize:13.0 weight:UIFontWeightSemibold] maximumPointSize:17.0];
+        _copyLogs.layer.cornerRadius = 15.0;
+        _copyLogs.layer.cornerCurve = kCACornerCurveContinuous;
+        _emptyLabel.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleCallout] scaledFontForFont:[UIFont systemFontOfSize:15.0] maximumPointSize:20.0];
+        _searchField.style823 = YES;
+        DSDiagnosticsRecord(@"SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)");
+    } else {
+        // style823-off (or latched) while running: back to the exact 822 look.
+        _s823 = NO;
+        [_sugIcon823 removeFromSuperview]; _sugIcon823 = nil;
+        [_libIcon823 removeFromSuperview]; _libIcon823 = nil;
+        for (UIView *v in _letterHeaders823) [v removeFromSuperview];
+        _letterHeaders823 = nil; _letterTitles823 = nil; _letterStarts823 = nil;
+        _recentsHeader.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightSemibold];
+        _libraryHeader.font = _recentsHeader.font;
+        _recentsHeader.text = @"Recent";
+        _libraryHeader.text = @"App Library";
+        [_copyLogs setImage:nil forState:UIControlStateNormal];
+        _copyLogs.titleLabel.font = [UIFont systemFontOfSize:15.0 weight:UIFontWeightSemibold];
+        _copyLogs.layer.cornerRadius = 0.0;
+        _copyLogs.backgroundColor = nil;
+        _emptyLabel.font = [UIFont systemFontOfSize:15.0];
+        _searchField.style823 = NO;
+        self.view.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+        for (DSAppCellContentView *cell in _recentCells) { cell.style823 = NO; cell.transform = CGAffineTransformIdentity; }
+        for (DSAppCellContentView *cell in _libraryCells) { cell.style823 = NO; cell.transform = CGAffineTransformIdentity; }
+    }
+    [self s823ApplyBackground];
+}
+
+// A-Z groups over the (already sorted) list; letters only, diacritics folded.
+- (void)s823BuildLetters {
+    for (UIView *v in _letterHeaders823) [v removeFromSuperview];
+    [_letterHeaders823 removeAllObjects];
+    _letterTitles823 = nil;
+    _letterStarts823 = nil;
+    if (!_s823 || _query.length > 0 || _library.count == 0) return;
+    NSMutableArray *titles = [NSMutableArray array], *starts = [NSMutableArray array];
+    NSString *last = nil;
+    for (NSUInteger i = 0; i < _library.count; i++) {
+        NSString *name = _library[i].displayName ?: @"";
+        NSString *letter = @"#";
+        if (name.length > 0) {
+            NSString *first = [[name substringWithRange:[name rangeOfComposedCharacterSequenceAtIndex:0]]
+                stringByFoldingWithOptions:NSDiacriticInsensitiveSearch | NSCaseInsensitiveSearch locale:nil].uppercaseString;
+            unichar ch = first.length ? [first characterAtIndex:0] : '#';
+            if (ch >= 'A' && ch <= 'Z') letter = [NSString stringWithCharacters:&ch length:1];
+        }
+        if ([letter isEqualToString:last]) continue;
+        if ([titles containsObject:letter]) { last = letter; continue; }
+        last = letter;
+        [titles addObject:letter];
+        [starts addObject:@(i)];
+        UIView *pill = [self s823PillWithText:letter];
+        [_scrollView addSubview:pill];
+        [_letterHeaders823 addObject:pill];
+    }
+    _letterTitles823 = titles;
+    _letterStarts823 = starts;
+}
+
+- (void)s823Layout {
+    CGFloat width = CGRectGetWidth(self.view.bounds);
+    CGFloat inset = 18.0;
+    CGFloat contentWidth = width - inset * 2.0;
+    CGFloat y = kDSStageRimGrabBand + 10.0;
+    CGFloat searchH = MAX(44.0, ceil(_searchField.style823 ? 44.0 : kDSSearchFieldHeight));
+    _searchField.frame = CGRectMake(inset, y, contentWidth, searchH);
+    y += searchH + 10.0;
+    CGFloat logsW = MIN(contentWidth, 132.0);
+    _copyLogs.frame = CGRectMake(width - inset - logsW, y, logsW, 30.0);
+    _copyLogs.backgroundColor = self.darkMode ? [UIColor colorWithWhite:1.0 alpha:0.08] : [UIColor colorWithWhite:0.0 alpha:0.05];
+    y += 30.0 + 12.0;
+    CGFloat headerH = MAX(26.0, ceil(_recentsHeader.font.lineHeight) + 6.0);
+    CGFloat sym = 18.0;
+
+    _recentStrip.hidden = _recentsHeader.hidden;
+    _sugIcon823.hidden = _recentsHeader.hidden;
+    if (!_recentsHeader.hidden) {
+        _sugIcon823.frame = CGRectMake(inset, y + (headerH - sym) / 2.0, sym, sym);
+        _recentsHeader.frame = CGRectMake(inset + sym + 6.0, y, contentWidth - sym - 6.0, headerH);
+        y += headerH + 6.0;
+        CGFloat tileW = 86.0, gap = 10.0;
+        CGFloat tileH = MAX(112.0, 84.0 + ceil(_recentCells.firstObject ? 2.0 * [[UIFontMetrics metricsForTextStyle:UIFontTextStyleCaption1] scaledValueForValue:15.0] : 30.0));
+        _recentStrip.frame = CGRectMake(0.0, y, width, tileH);
+        [_recentCells enumerateObjectsUsingBlock:^(DSAppCellContentView *cell, NSUInteger index, BOOL *stop) {
+            cell.frame = CGRectMake(inset + index * (tileW + gap), 0.0, tileW, tileH);
+        }];
+        CGFloat stripWidth = inset * 2.0 + (_recentCells.count ? _recentCells.count * tileW + (_recentCells.count - 1) * gap : 0.0);
+        _recentStrip.contentSize = CGSizeMake(MAX(stripWidth, width), tileH);
+        y += tileH + 16.0;
+    }
+
+    _libIcon823.hidden = _libraryHeader.hidden;
+    if (!_libraryHeader.hidden) {
+        _libraryHeader.text = _query.length > 0 ? @"Results" : @"All Apps";
+        _libIcon823.frame = CGRectMake(inset, y + (headerH - sym) / 2.0, sym, sym);
+        _libraryHeader.frame = CGRectMake(inset + sym + 6.0, y, contentWidth - sym - 6.0, headerH);
+        y += headerH + 4.0;
+        CGFloat rowH = MAX(54.0, ceil([[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledValueForValue:54.0]));
+        CGFloat gap = 6.0;
+        NSUInteger next = 0;
+        for (NSUInteger i = 0; i < _libraryCells.count; i++) {
+            if (next < _letterStarts823.count && _letterStarts823[next].unsignedIntegerValue == i) {
+                UIView *pill = _letterHeaders823[next];
+                UILabel *label = [pill viewWithTag:823];
+                CGFloat ph = MAX(22.0, ceil(label.font.lineHeight) + 6.0);
+                pill.frame = CGRectMake(inset, y + 6.0, MAX(30.0, ph + 8.0), ph);
+                label.frame = pill.bounds;
+                y += ph + 12.0;
+                next++;
+            }
+            _libraryCells[i].frame = CGRectMake(inset, y, contentWidth, rowH);
+            y += rowH + gap;
+        }
+    }
+
+    if (!_emptyLabel.hidden) {
+        _emptyLabel.frame = CGRectMake(inset + 16.0, y + 30.0, contentWidth - 32.0, 80.0);
+        y += 130.0;
+    }
+    _scrollView.contentSize = CGSizeMake(width, y + 16.0);
+}
+
+- (void)s823Press:(DSAppCellContentView *)cell down:(BOOL)down {
+    if (!_s823 || !cell) return;
+    CGAffineTransform t = down ? CGAffineTransformMakeScale(0.95, 0.95) : CGAffineTransformIdentity;
+    if (DS823ReduceMotion()) { cell.transform = CGAffineTransformIdentity; return; }
+    [UIView animateWithDuration:down ? 0.18 : 0.42 delay:0.0 usingSpringWithDamping:down ? 1.0 : 0.55 initialSpringVelocity:0.0
+                        options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
+                     animations:^{ cell.transform = t; } completion:nil];
 }
 
 - (void)viewDidLoad {
@@ -140,8 +402,10 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 #pragma mark - Content
 
 - (void)reloadContent {
+    @try { [self s823Update]; } @catch (NSException *exception) {}
     DSAppLibrary *library = [DSAppLibrary sharedLibrary];
-    [library reload];
+    // 4.5.823: while typing, filter the list already loaded (no per-key reload).
+    if (!(_s823 && _s823Typing)) [library reload];
 
     if (_query.length > 0) {
         _recents = @[];
@@ -153,13 +417,16 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
         NSMutableSet<NSString *> *seen = [NSMutableSet set];
         NSInteger rows = MAX([DSPreferences sharedPreferences].pinnedRows, 1);
         NSInteger capacity = rows * 2;
-        for (DSAppEntry *entry in [library recentApplicationsLimitedTo:capacity]) {
+        // 4.5.823: Suggested = pins first, then recents (same data, same capacity).
+        NSArray<DSAppEntry *> *firstList = _s823 ? [library pinnedApplications] : [library recentApplicationsLimitedTo:capacity];
+        NSArray<DSAppEntry *> *secondList = _s823 ? [library recentApplicationsLimitedTo:capacity] : [library pinnedApplications];
+        for (DSAppEntry *entry in firstList) {
             if (grid.count >= (NSUInteger)capacity) break;
             if (entry.bundleIdentifier.length == 0 || [seen containsObject:entry.bundleIdentifier]) continue;
             [seen addObject:entry.bundleIdentifier];
             [grid addObject:entry];
         }
-        for (DSAppEntry *entry in [library pinnedApplications]) {
+        for (DSAppEntry *entry in secondList) {
             if (grid.count >= (NSUInteger)capacity) break;
             if (entry.bundleIdentifier.length == 0 || [seen containsObject:entry.bundleIdentifier]) continue;
             [seen addObject:entry.bundleIdentifier];
@@ -195,6 +462,10 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
         cell.showsNowPlaying = [library isNowPlayingApplication:entry.bundleIdentifier];
         cell.unavailable = [self->_unavailableBundleIdentifiers containsObject:entry.bundleIdentifier];
     }];
+
+    for (DSAppCellContentView *cell in _recentCells) cell.style823 = _s823;
+    for (DSAppCellContentView *cell in _libraryCells) cell.style823 = _s823;
+    [self s823BuildLetters];
 
     _recentsHeader.hidden = _recents.count == 0;
     _libraryHeader.hidden = _library.count == 0;
@@ -234,6 +505,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
+    if (_s823) { [self s823Layout]; return; }
 
     CGFloat width = CGRectGetWidth(self.view.bounds);
     CGFloat contentWidth = width - kDSContentInset * 2.0;
@@ -296,6 +568,24 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     _searchField.darkMode = self.darkMode;
     for (DSAppCellContentView *cell in _recentCells) cell.darkMode = self.darkMode;
     for (DSAppCellContentView *cell in _libraryCells) cell.darkMode = self.darkMode;
+    if (_s823) {
+        // Follows the stage's dark / light.
+        self.view.overrideUserInterfaceStyle = self.darkMode ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+        UIColor *tint = self.darkMode ? [UIColor colorWithWhite:1.0 alpha:0.9] : [UIColor colorWithWhite:0.0 alpha:0.8];
+        _recentsHeader.textColor = tint;
+        _libraryHeader.textColor = tint;
+        _sugIcon823.tintColor = UIColor.systemYellowColor;
+        _libIcon823.tintColor = headerColor;
+        if ([_bg823 isKindOfClass:UIVisualEffectView.class]) {
+            ((UIVisualEffectView *)_bg823).effect = [UIBlurEffect effectWithStyle:self.darkMode ? UIBlurEffectStyleSystemMaterialDark : UIBlurEffectStyleSystemMaterialLight];
+        } else if (_bg823) {
+            _bg823.backgroundColor = self.darkMode ? [UIColor colorWithWhite:0.11 alpha:1.0] : [UIColor colorWithWhite:0.96 alpha:1.0];
+        }
+        for (UIView *pill in _letterHeaders823) {
+            UILabel *label = [pill viewWithTag:823];
+            label.textColor = self.darkMode ? [UIColor colorWithWhite:1.0 alpha:0.75] : [UIColor colorWithWhite:0.0 alpha:0.6];
+        }
+    }
 }
 
 - (void)setDarkMode:(BOOL)darkMode {
@@ -331,7 +621,8 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 
 - (void)searchField:(DSSearchFieldView *)field didChangeText:(NSString *)text {
     _query = text ?: @"";
-    [self reloadContent];
+    _s823Typing = YES;
+    @try { [self reloadContent]; } @finally { _s823Typing = NO; }
     [_scrollView setContentOffset:CGPointZero animated:NO];
 }
 
@@ -371,6 +662,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 - (void)cellTouchDown:(DSAppCellContentView *)cell {
     if (cell.unavailable) return;
     [self cancelHold];
+    [self s823Press:cell down:YES];
     _heldCell = cell;
     [_feedback prepare];
     [cell setHoldProgress:1.0 animated:YES duration:kDSHoldDuration];
@@ -380,11 +672,13 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 }
 
 - (void)cellTouchCancelled:(DSAppCellContentView *)cell {
+    [self s823Press:cell down:NO];
     [self cancelHold];
 }
 
 - (void)cellTapped:(DSAppCellContentView *)cell {
     BOOL committed = _holdTimer == nil && _heldCell == cell;
+    [self s823Press:cell down:NO];
     [self cancelHold];
     if (committed) return;   // the hold already took the app fullscreen
     if (!cell.entry || cell.unavailable) return;
@@ -412,6 +706,7 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
 #pragma mark - UIScrollViewDelegate
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    [self s823Press:_heldCell down:NO];
     [self cancelHold];
 }
 

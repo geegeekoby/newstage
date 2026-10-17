@@ -26,6 +26,8 @@ CFAbsoluteTime DSSearchFieldLastUserTap(void);
 // The stage's search field: translucent plate, leading magnifier, trailing clear
 // button once there is text.
 @interface DSSearchFieldView : UIView
+// 4.5.823 style823: capsule plate, Dynamic Type font. NO = the 822 look.
+@property (nonatomic, assign) BOOL style823;
 
 @property (nonatomic, weak) id<DSSearchFieldDelegate> delegate;
 @property (nonatomic, assign) BOOL darkMode;

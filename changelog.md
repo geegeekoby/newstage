@@ -1,3 +1,15 @@
+## 4.5.823 (picker restyle, boot-safe)
+- style823: the stage app picker you already have, with a new look. It is the same picker with the same code paths, restyled in place, not a new picker.
+  - Frosted blur background that follows the stage's dark / light mode (solid background with Reduce Transparency).
+  - Rounded capsule search field with a larger, Dynamic Type font.
+  - "Suggested" row of large app tiles (big icon, name underneath): your pinned apps first, then recently opened.
+  - "All Apps" list split into A–Z sections with small frosted letter headers; roomier rows with larger icons; "Results" while searching.
+  - SF Symbols on the section headers and the Copy Logs button, which is now a small rounded pill.
+  - Springy press feedback on tiles and rows (off with Reduce Motion). Text sizes follow Dynamic Type.
+  - Typing in search filters the app list already loaded instead of re-reading every installed app on each key.
+- Boot safety: nothing new runs while SpringBoard starts. The picker starts in the old look and switches to the new one the first time it is shown after SpringBoard's "stayed up" check (about 8 s after a respring). No new hooks, no background threads, no new files read at launch. A hang marker switches the new look off for good if SpringBoard ever goes down while first showing it.
+- Off: style823-off (exact 4.5.822 look), core823-off (back to 4.5.822). Crash latch style823.
+
 ## 4.5.822 (corner fixes C+D on 4.5.821)
 - corner822: two minimised cards never share a corner. In log 821 (10:01:38) a card that was still sliding away was read as sitting in the left corner, so both cards were filed under the left corner and each left-corner pull brought back only one of them. Now that reading is ignored when it would put both cards in the same corner, and if they ever do share one, the second card goes to the other corner.
 - edge822: a pull from a minimised card's corner is only taken by the stage if it can become a restore. A pull that starts moving down (log 821 10:05:32: the stage took it and nothing happened) is now left to the system (home / switcher). A taken pull that ends without a restore is now logged.

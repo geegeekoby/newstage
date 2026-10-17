@@ -87,6 +87,7 @@ static const NSInteger kDSSearchSettleWaitLimit = 6;
 
     CGRect bounds = self.bounds;
     _plate.frame = bounds;
+    _plate.layer.cornerRadius = _style823 ? CGRectGetHeight(bounds) / 2.0 : kDSSearchFieldRadius;
 
     CGFloat side = 20.0;
     _magnifier.frame = CGRectMake(kDSSearchGlyphInset, (CGRectGetHeight(bounds) - side) / 2.0, side, side);
@@ -104,10 +105,19 @@ static const NSInteger kDSSearchSettleWaitLimit = 6;
     return _field.text ?: @"";
 }
 
+- (void)setStyle823:(BOOL)style823 {
+    if (_style823 == style823) return;
+    _style823 = style823;
+    _field.font = style823 ? [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0 weight:UIFontWeightRegular] maximumPointSize:22.0]
+                           : [UIFont systemFontOfSize:16.0 weight:UIFontWeightRegular];
+    [self setDarkMode:_darkMode];
+    [self setNeedsLayout];
+}
+
 - (void)setDarkMode:(BOOL)darkMode {
     _darkMode = darkMode;
-    _plate.backgroundColor = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.1]
-                                      : [UIColor colorWithWhite:0.0 alpha:0.07];
+    _plate.backgroundColor = _style823 ? (darkMode ? [UIColor colorWithWhite:1.0 alpha:0.13] : [UIColor colorWithWhite:0.0 alpha:0.06])
+                                       : (darkMode ? [UIColor colorWithWhite:1.0 alpha:0.1] : [UIColor colorWithWhite:0.0 alpha:0.07]);
     UIColor *placeholder = darkMode ? [UIColor colorWithWhite:1.0 alpha:0.42]
                                     : [UIColor colorWithWhite:0.0 alpha:0.38];
     _magnifier.tintColor = placeholder;

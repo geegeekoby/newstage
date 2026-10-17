@@ -131,6 +131,25 @@
     CGRect bounds = self.bounds;
     _plate.frame = bounds;
     _holdFill.frame = bounds;
+    if (_style823 && _chipStyle) {
+        CGFloat side = 56.0;
+        _icon.layer.cornerRadius = 13.0;
+        _icon.frame = CGRectMake((CGRectGetWidth(bounds) - side) / 2.0, 10.0, side, side);
+        CGFloat ty = CGRectGetMaxY(_icon.frame) + 6.0;
+        _title.frame = CGRectMake(6.0, ty, CGRectGetWidth(bounds) - 12.0, MAX(CGRectGetHeight(bounds) - ty - 4.0, 0.0));
+        _waveform.frame = CGRectMake(CGRectGetMaxX(_icon.frame) - 10.0, CGRectGetMaxY(_icon.frame) - 8.0, 12.0, 10.0);
+        return;
+    }
+    if (_style823) {
+        CGFloat side = 36.0;
+        _icon.layer.cornerRadius = 8.5;
+        _icon.frame = CGRectMake(10.0, (CGRectGetHeight(bounds) - side) / 2.0, side, side);
+        CGFloat titleX = CGRectGetMaxX(_icon.frame) + 12.0;
+        CGFloat titleRight = CGRectGetWidth(bounds) - 14.0 - (_waveform.hidden ? 0.0 : 22.0);
+        _title.frame = CGRectMake(titleX, 0.0, MAX(titleRight - titleX, 0.0), CGRectGetHeight(bounds));
+        _waveform.frame = CGRectMake(CGRectGetWidth(bounds) - 28.0, (CGRectGetHeight(bounds) - 12.0) / 2.0, 14.0, 12.0);
+        return;
+    }
     if (_chipStyle) {
         CGFloat side = 32.0;
         _icon.layer.cornerRadius = 8.0;
@@ -148,6 +167,13 @@
     CGFloat titleRight = CGRectGetWidth(bounds) - 12.0 - (showsWaveform ? 22.0 : 0.0);
     _title.frame = CGRectMake(titleX, 0.0, MAX(titleRight - titleX, 0.0), CGRectGetHeight(bounds));
     _waveform.frame = CGRectMake(CGRectGetWidth(bounds) - 26.0, (CGRectGetHeight(bounds) - 12.0) / 2.0, 14.0, 12.0);
+}
+
+- (void)setStyle823:(BOOL)style823 {
+    if (_style823 == style823) return;
+    _style823 = style823;
+    [self setDarkMode:_darkMode];
+    [self setNeedsLayout];
 }
 
 - (void)setChipStyle:(BOOL)chipStyle {
@@ -195,6 +221,19 @@
         _title.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightMedium];
         _title.textAlignment = NSTextAlignmentLeft;
         _title.numberOfLines = 1;
+    }
+    if (_style823) {
+        // 4.5.823: tiles get a soft plate, rows a lighter one; Dynamic Type fonts.
+        UIFont *base = _chipStyle ? [UIFont systemFontOfSize:12.0 weight:UIFontWeightMedium]
+                                  : [UIFont systemFontOfSize:17.0 weight:UIFontWeightMedium];
+        UIFontMetrics *metrics = [UIFontMetrics metricsForTextStyle:_chipStyle ? UIFontTextStyleCaption1 : UIFontTextStyleBody];
+        _title.font = [metrics scaledFontForFont:base maximumPointSize:_chipStyle ? 16.0 : 24.0];
+        _title.adjustsFontForContentSizeCategory = NO;
+        _plate.layer.cornerRadius = _chipStyle ? 18.0 : 14.0;
+        _plate.backgroundColor = _chipStyle ? (darkMode ? [UIColor colorWithWhite:1.0 alpha:0.10] : [UIColor colorWithWhite:1.0 alpha:0.55])
+                                            : (darkMode ? [UIColor colorWithWhite:1.0 alpha:0.06] : [UIColor colorWithWhite:1.0 alpha:0.45]);
+    } else {
+        _plate.layer.cornerRadius = kDSCellRadius;
     }
     _holdFill.backgroundColor = darkMode ? UIColor.whiteColor : UIColor.blackColor;
     _title.textColor = darkMode ? UIColor.whiteColor : UIColor.blackColor;

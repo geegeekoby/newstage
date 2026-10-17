@@ -2675,6 +2675,7 @@ static void DSInstallRemainingHooks(void) {
                 if (DSKillSwitchPresent() || !DSFullInstallLive) return;
                 DSBootstrapMarkLaunchSucceeded();
                 DSDiagnosticsRecord(@"SpringBoard: stayed up, boot guard cleared");
+                DSStayedUp823 = YES;   // 4.5.823 style823: picker restyle allowed from here on
             });
 
             DSTree765WipeStaleOnBoot();

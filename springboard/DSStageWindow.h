@@ -12,6 +12,12 @@ UIWindow *DSCompetingKeyWindow(UIWindow *window);
 @interface DSStageWindow : UIWindow
 
 @property (nonatomic, copy) BOOL (^touchTest)(CGPoint point);
+// 4.5.707 outside707: told about a touch this window let through to the home
+// screen or app behind (touchTest said NO). Our own window, not a hook.
+@property (nonatomic, copy) void (^outsideTouch)(CGPoint point);
+// 4.5.712: set by the stage manager on each touch test (YES only while a stage
+// is on screen). NO = hitTest returns with no further work.
+@property (nonatomic, assign) BOOL outsideArmed;
 
 + (instancetype)stageWindow;
 // After a respring the first connected scene is not always the one on screen.

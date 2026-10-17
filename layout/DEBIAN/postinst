@@ -15,6 +15,13 @@ rm -rf /var/jb/Library/PreferenceBundles/DynamicStagePrefs.bundle
 rm -f /var/jb/Library/PreferenceLoader/Preferences/DynamicStagePrefs.plist
 rm -rf /Library/PreferenceBundles/DynamicStagePrefs.bundle
 
+# 4.5.704: a feature's "-trying" marker lives for its first 15 s of use. The
+# respring after this install is not a crash: a marker left now would latch
+# that feature off at the next start. The "-crashed" latches are kept.
+for trying in /var/mobile/.dynamicstage-*-trying /var/jb/var/mobile/.dynamicstage-*-trying; do
+	[ -f "$trying" ] && rm -f "$trying" || true
+done
+
 for dir in /var/mobile/Library/Preferences /var/jb/var/mobile/Library/Preferences; do
 	if [ -d "$dir" ]; then
 		: > "$dir/com.recreated.dynamicstage.installed" || true
@@ -61,11 +68,26 @@ elif [ -f "$LIBS/DynamicStageApp.plist" ]; then
 fi
 
 if [ -f "$LIBS/DynamicStageApp.dylib" ] && [ -n "$FILTER_SRC" ]; then
-	cp -f "$FILTER_SRC" "$LIBS/DynamicStageApp.plist" || true
-	if [ -d "$INJECT" ] && [ ! -L "$INJECT" ]; then
-		cp -f "$LIBS/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.dylib" || true
-		cp -f "$FILTER_SRC" "$INJECT/DynamicStageApp.plist" || true
+	if [ ! "$FILTER_SRC" -ef "$LIBS/DynamicStageApp.plist" ]; then
+		cp -f "$FILTER_SRC" "$LIBS/DynamicStageApp.plist" || true
 	fi
+	# 4.5.708: TweakInject gets the filter first and the dylib only once the
+	# filter is really there, so a dylib is never left without its filter
+	# (a filterless dylib can be loaded into every process). Nothing is copied
+	# when TweakInject and DynamicLibraries are the same files (-ef).
+	if [ -d "$INJECT" ] && [ ! -L "$INJECT" ]; then
+		if [ ! "$FILTER_SRC" -ef "$INJECT/DynamicStageApp.plist" ]; then
+			cp -f "$FILTER_SRC" "$INJECT/DynamicStageApp.plist" || true
+		fi
+		if [ -f "$INJECT/DynamicStageApp.plist" ] && [ ! "$LIBS/DynamicStageApp.dylib" -ef "$INJECT/DynamicStageApp.dylib" ]; then
+			cp -f "$LIBS/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.dylib" || true
+		fi
+	fi
+fi
+
+# 4.5.708: never leave our app dylib in TweakInject without its filter plist.
+if [ -d "$INJECT" ] && [ -f "$INJECT/DynamicStageApp.dylib" ] && [ ! -f "$INJECT/DynamicStageApp.plist" ]; then
+	rm -f "$INJECT/DynamicStageApp.dylib" || true
 fi
 
 # Later builds left a daemon behind. This package does not include it.

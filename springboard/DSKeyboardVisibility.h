@@ -9,6 +9,16 @@ extern "C" {
 // UIKeyboard, or CGRectNull when none is on the display. Does not unhide
 // windows or call private selectors on unrelated ones.
 CGRect DSVisibleKeyboardFrameOnScreen(void);
+// 4.5.765 tree765 (log only): map keyboard windows on the first 3 shows.
+void DSTree765NoteArbiter(BOOL on);
+void DSTree765WipeStaleOnBoot(void);
+#ifdef __OBJC__
+@class NSString;
+NSString *DSTree765Read(void);
+// 4.5.768 kbvis768 (log only): keyboard visibility sampler, see .m.
+void DSKbVis768NoteArbiter(BOOL on, BOOL stageOnScreen, NSString *owner, CGRect frame);
+NSString *DSKbVis768Read(void);
+#endif
 
 // A real key strip: at least 160pt tall and nearly the width of the display.
 // A dock strip and an in-card keyboard do not match. CGRectNull when none.
@@ -57,9 +67,6 @@ CGRect DSKeyboardKeysInWindow(id window);
 // just above the stage. Does not create windows.
 BOOL DSRevealSpringBoardKeyboard(void);
 
-// Unhide every keyboard-related window and subview in SpringBoard (ghost layers too).
-void DSRevealAllKeyboardWindowsOnSpringBoard(void);
-void DSReassertKeyboardViewVisibility(id viewObject);
 
 // The system keyboard already lives in the remote-keyboard scene, under the
 // stage. Window level does not cross scenes, so this moves that existing
@@ -73,6 +80,8 @@ BOOL DSPlaceRemoteKeyboardAboveStage(id stageWindow);
 // window in that state safe-modes SpringBoard.
 BOOL DSVideoIsPlayingOnScreen(void);
 NSString *DSNowPlayingBundleIdentifier(void);
+// 4.5.664: the reason behind the last DSVideoIsPlayingOnScreen answer.
+NSString *DSVideoOnScreenDetail(void);
 
 // Raises the keyboard window SpringBoard is already showing so it sits above
 // the stage. A window left on SystemAperture is moved back to the
@@ -151,6 +160,38 @@ NSString *DSPresentedKeyboardWindowStatus(void);
 // editing, and the key rect. Returns a short line for the prefs log.
 NSString *DSKeyboardDebugSnapshot(void);
 
+#ifdef __cplusplus
+}
+#endif
+
+// 4.5.772 hide772 (log only) / keyfocus772.
+@class UIWindow;
+#ifdef __cplusplus
+extern "C" {
+#endif
+void DSHide772NotePath(NSString *name);
+void DSHide772NoteWindowHidden(UIWindow *window, BOOL hidden);
+extern NSString *(^DSHide772StateProvider)(NSString *owner);
+extern BOOL (^DSKeyfocus772Handler)(NSString *owner, NSString *why);
+// 4.5.773
+extern BOOL (^DSKeyfocus773Handler)(NSString *owner, NSInteger attempt, NSString *why);
+BOOL DSScene773Wanted(void);
+void DSScene773Note(NSString *identifier, NSString *summary);
+UIWindow *DSRealKeyWindow773(void);
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+// 4.5.775
+BOOL DSKbVis775ArbiterOn(void);
+void DSWhy775Note(NSString *line);
+// 4.5.776 keep776
+BOOL DSKeep776Active(void);
+void DSKeep776NoteBlocked(UIWindow *medusa);
+extern void (^DSKeep776ApplyHide)(UIWindow *medusa);
 #ifdef __cplusplus
 }
 #endif

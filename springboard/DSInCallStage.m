@@ -5,6 +5,7 @@
 #import "DSConstants.h"
 #import "DSKeyboardVisibility.h"
 #import "DSCameraArbiter.h"
+#import "DSStageDebug.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -50,6 +51,7 @@ static CFAbsoluteTime DSCallGuardArmedUntil = 0;
 static CFAbsoluteTime DSCallGuardArmedAt = 0;
 static CFAbsoluteTime DSCallGuardCheckedAt = 0;
 static CFAbsoluteTime DSCallGuardFlipAt = 0;
+static CFAbsoluteTime DSCall758ArmedUntil = 0;  // 4.5.758 call758
 static BOOL DSCallGuardLastActive = NO;
 static const CFAbsoluteTime kDSCallArmSeconds = 25.0;
 static const CFAbsoluteTime kDSCallHoldDelay = 1.5;
@@ -145,11 +147,77 @@ static void DSCallGuardRefresh(CFAbsoluteTime now) {
     }
 }
 
+// 4.5.758 call758: Yoop crash (4.5.757, ~16:52 NZDT). Ending a Signal VoIP
+// call put systemAnimation (0x20) on the staged Signal and Beeper scenes with
+// no InCallService, so DSCallGuardActive stayed NO. hold740 then passed
+// Signal's 0x20->0x0 reactivation and Beeper's next focus update Live %orig
+// SIGTRAPped (same assertion call653 was built for). Arm the Live hold for
+// 2.5 s when a hosted scene gets 0x20 while Signal/Phone is involved.
+// Off: call758-off / core758-off (crash latch call758).
+static BOOL DSCall758On(void) {
+    return DSFeature699On("core758") && DSFeature699On("call758");
+}
+
+void DSCall758NoteSystemAnimation(NSString *sceneIdentifier) {
+    if (!DSCall758On()) return;
+    NSString *sid = sceneIdentifier ?: @"";
+    // 4.5.759: only the Signal/Phone/InCall scene itself. Arming when Beeper got
+    // 0x20 while Signal was merely hosted made DSCallGuardActive YES and call733
+    // froze movers; it also held Live updates the remote keyboard needs.
+    BOOL callScene = [sid rangeOfString:@"signal" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+                     [sid rangeOfString:@"InCall" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+                     [sid rangeOfString:@"mobilephone" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+                     [sid rangeOfString:@"MobilePhone"].location != NSNotFound;
+    if (!callScene) return;
+    DSFeature719MarkAction("call758");
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    CFAbsoluteTime until = now + 2.5;
+    if (until > DSCall758ArmedUntil) DSCall758ArmedUntil = until;
+    static CFAbsoluteTime saidAt = 0;
+    if (now - saidAt > 2.0 || now < saidAt) {
+        saidAt = now;
+        DSDiagnosticsRecordFormat(@"SpringBoard: call758 systemAnimation on %@: Live app view updates held for 2.5 s (Signal/Phone call end without InCallService)",
+                                  sid.length ? sid : @"?");
+    }
+}
+
+BOOL DSCall758RecentlyArmed(void) {
+    if (!DSCall758On()) return NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    return DSCall758ArmedUntil > 0 && now < DSCall758ArmedUntil + 0.5;
+}
+
+// 4.5.759: call758 holds Live app-view updates only (not call733 / kb707).
+BOOL DSCall758AppViewHold(void) {
+    if (!DSCall758On()) return NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    return DSCall758ArmedUntil > 0 && now < DSCall758ArmedUntil;
+}
+
 BOOL DSCallGuardActive(void) {
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     DSCallGuardRefresh(now);
     if (DSCallGuardLastActive) return YES;
-    if (DSCallGuardFlipAt > 0 && now - DSCallGuardFlipAt < 4.0) return YES;
+    if (DSCallGuardFlipAt > 0 && now - DSCallGuardFlipAt < 4.0) {
+        // 4.5.749 zone749: the 4 s tail after the call screen flips is cut short
+        // once SpringBoard's own state shows no call UI (DSPhoneCallIsActive:
+        // the call windows / front app, already used by the stage) for 0.5 s.
+        // Off: zone749-off / core749-off (crash latch zone749).
+        if (NSThread.isMainThread && now - DSCallGuardFlipAt >= 0.5 && DSFeature699On("core749") && DSFeature699On("zone749")) {
+            BOOL callUI = YES;
+            @try { callUI = DSPhoneCallIsActive(); } @catch (NSException *exception) { callUI = YES; }
+            if (!callUI) {
+                DSFeature719MarkAction("zone749");
+                static CFAbsoluteTime saidAt = 0;
+                if (now - saidAt > 10.0 || now < saidAt) {
+                    saidAt = now;
+                    DSDiagnosticsRecord(@"SpringBoard: zone749 call screen gone (SpringBoard state): call tail ended early");
+                }
+                return NO;
+            }
+        }
+        return YES;
+    }
     // Armed by the staged Phone but no call screen seen yet: let the first
     // 1.5 s through (iOS's switch to the call screen), hold after that.
     return now < DSCallGuardArmedUntil && now - DSCallGuardArmedAt >= kDSCallHoldDelay;

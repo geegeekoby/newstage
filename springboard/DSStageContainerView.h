@@ -10,6 +10,8 @@
 @property (nonatomic, assign) CGFloat cornerRadius;
 // How far the card is being held up out of the keyboard's way.
 @property (nonatomic, readonly) CGFloat liftOffset;
+// 4.5.702 drag702: while the finger holds the card, keyboard lift / side slide writes are held.
+@property (nonatomic) BOOL drag702Frozen;
 // How far the card is slid sideways, off the screen, while another stage is typing.
 @property (nonatomic, readonly) CGFloat sideOffset;
 // The rim lives on another view. It has to follow this translation.
@@ -39,8 +41,6 @@
 @property (nonatomic, assign) CGFloat keyboardBandHeight;
 @property (nonatomic, copy) void (^keyboardBandLayoutHandler)(void);
 
-// Top strip that drags the whole card (put away, overlay).
-- (CGRect)dragAffordanceRect;
 // The bottom-right corner, and a strip up the right-hand edge well clear of the home
 // gesture. Either one starts the same drag: inward leaves the app, down puts the card
 // away. The edge exists because the corner sits in the home gesture's own territory
@@ -63,7 +63,6 @@
 // Top-right control to add another stage card above this one (overlay mode only).
 @property (nonatomic, assign) BOOL showsStackAddButton;
 @property (nonatomic, copy) void (^stackAddHandler)(void);
-- (CGRect)stackAddButtonRect;
 
 // 4.5.651: name used by the rim catchers in the log ("main", "top", "float").
 @property (nonatomic, copy) NSString *rimCatcherName;
@@ -71,4 +70,20 @@
 @property (nonatomic, assign) BOOL showsMinimizeButton;
 @property (nonatomic, copy) void (^minimizeHandler)(void);
 
+// 4.5.705 perf705 gauges.
+- (BOOL)perf705BlurVisible;
+- (BOOL)perf705HasMask;
+// 4.5.706 polish706: the held-card shadow.
+- (void)setHeld706:(BOOL)held;
+- (BOOL)held706;
+- (void)setLiftOffset:(CGFloat)lift sideOffset:(CGFloat)side;
 @end
+
+// 4.5.703 native703: system-look switch and outline style shared by the card
+// shell and the second card's rim. Off: /var/mobile/.dynamicstage-native703-off.
+FOUNDATION_EXTERN BOOL DSNative703On(void);
+FOUNDATION_EXTERN BOOL DSPerf705On(void);
+FOUNDATION_EXTERN void DSNative703SetDark(BOOL dark);
+FOUNDATION_EXTERN CGFloat DSNative703OutlineWidth(void);
+FOUNDATION_EXTERN CGColorRef DSNative703OutlineColor(void);
+FOUNDATION_EXTERN CGFloat DSNative703IconRadius(CGFloat side);

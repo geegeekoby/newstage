@@ -135,7 +135,6 @@ static const CGFloat kDSShelfPanelHeight = 108.0;
     DSShelfSlotView *_topSlot;
     DSShelfSlotView *_bottomSlot;
     NSString *_topBundle;
-    NSString *_bottomBundle;
     BOOL _open;
     BOOL _draggingSlot;
     CGPoint _slotHomeCenter;
@@ -229,7 +228,6 @@ static const CGFloat kDSShelfPanelHeight = 108.0;
 
 - (void)reloadTopBundleIdentifier:(NSString *)top bottomBundleIdentifier:(NSString *)bottom {
     _topBundle = [top copy];
-    _bottomBundle = [bottom copy];
     [self applySlots];
 }
 

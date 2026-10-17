@@ -6,6 +6,7 @@
 #import "DSStageDebug.h"
 #import "DSCrashLog.h"
 #import "DSDiagnostics.h"
+#import "DSKeyboardVisibility.h"
 
 // A plain UIScrollView refuses to cancel a touch that started on a UIControl,
 // so a drag that begins on an app row never scrolls. This one lets the row
@@ -112,12 +113,14 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     @try {
         NSMutableString *text = [NSMutableString string];
         NSString *geometry = [[DSStageManager sharedManager] stageGeometryDebugSummary];
-        [text appendFormat:@"%@\n--- log ---\n%@\n--- trace ---\n%@\n--- crash ---\n%@\n--- diagnostics ---\n%@",
+        [text appendFormat:@"%@\n--- log ---\n%@\n--- trace ---\n%@\n--- crash ---\n%@\n--- diagnostics ---\n%@\n--- tree765 ---\n%@\n--- kbvis768 ---\n%@",
          geometry ?: @"",
          DSLogDump() ?: @"",
          DSTraceRead() ?: @"",
          DSCrashLogRead() ?: @"",
-         DSDiagnosticsRead() ?: @""];
+         DSDiagnosticsRead() ?: @"",
+         DSTree765Read() ?: @"",
+         DSKbVis768Read() ?: @""];
         UIPasteboard.generalPasteboard.string = text;
         [_copyLogs setTitle:@"Copied" forState:UIControlStateNormal];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -174,21 +177,6 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     [self applyAppearance];
     [self.view setNeedsLayout];
     [self.view layoutIfNeeded];
-}
-
-- (CGRect)plateFrameForBundleIdentifier:(NSString *)bundleIdentifier inView:(UIView *)view {
-    if (bundleIdentifier.length == 0) return CGRectNull;
-    for (NSArray<DSAppCellContentView *> *group in @[ _recentCells, _libraryCells ]) {
-        for (DSAppCellContentView *cell in group) {
-            if (cell.hidden) continue;
-            if (![cell.entry.bundleIdentifier isEqualToString:bundleIdentifier]) continue;
-            CGRect frame = [cell convertRect:cell.bounds toView:view];
-            // Plates scrolled out of the stage are no use as a zoom target.
-            if (!CGRectIntersectsRect(frame, view.bounds)) return CGRectNull;
-            return frame;
-        }
-    }
-    return CGRectNull;
 }
 
 - (void)rebuildCells {
@@ -332,12 +320,12 @@ static const NSTimeInterval kDSHoldDuration = 0.55;
     [_searchField restartEditing];
 }
 
-- (NSString *)searchEditingDebugSummary {
-    return [_searchField editingDebugSummary] ?: @"fr=?";
+- (BOOL)searchFieldIsEditing {
+    return [_searchField isEditingNow];
 }
 
-- (BOOL)isSearching {
-    return _query.length > 0;
+- (NSString *)searchEditingDebugSummary {
+    return [_searchField editingDebugSummary] ?: @"fr=?";
 }
 
 #pragma mark - Search field

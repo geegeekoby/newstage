@@ -9,6 +9,7 @@ extern "C" {
 // a new build deletes it.
 
 void DSCrashLogInstallHandlers(void);
+void DSCrashLog754Arm(void);
 
 // The boot guard is set when the last start died before the stage was ready.
 // Copies the stage log that is still on disk. Skips a session already recorded.
@@ -18,6 +19,9 @@ void DSCrashLogNoteUncleanLaunch(void);
 void DSCrashLogRemember(NSString *line);
 
 NSString *DSCrashLogRead(void);
+
+// 4.5.793 log793: synchronous breadcrumb shown as "last step" in a crash.
+void DSCrash793Crumb(const char *text);
 
 #ifdef __cplusplus
 }

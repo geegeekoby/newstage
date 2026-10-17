@@ -1,5 +1,6 @@
 #import "DSCameraArbiter.h"
 #import "DSSceneHost.h"
+#import "DSInCallStage.h"
 #import "DSConstants.h"
 #import "DSPreferences.h"
 #import "DSDiagnostics.h"
@@ -7,6 +8,8 @@
 #import "DSStageDebug.h"
 #import "DSStageManager.h"
 #import "DSStageContainerView.h"
+#import "DSCrashLog.h"
+
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -79,6 +82,20 @@ static NSInteger DSSystemPullDepth = 0;
 // refused by the "kept inside its card" path (see Tweak.xm).
 static NSString *DSActivatingBundle = nil;
 static CFAbsoluteTime DSActivatingUntil = 0;
+// 4.5.716 blackout716: the app the stage just woke (the card-tap wake used by
+// blackout696 / blackout699 / a tap or drag on the card), and until when.
+static NSString *DSWake716Bundle = nil;
+static CFAbsoluteTime DSWake716Until = 0;
+// 4.5.665: SpringBoard's own transition is still finishing for a while after
+// the home gesture ends, after the parked apps are handed back, and while /
+// just after a corner pull adopted from the system gesture runs. A phone-sized
+// update of a hosted scene inside that window is part of SpringBoard's
+// transaction; completing it without applying it is the SIGTRAP.
+static CFAbsoluteTime DSHomeGestureEndedAt = 0;
+static CFAbsoluteTime DSHomeHandBackAt = 0;
+static BOOL DSSystemEdgePullActive = NO;
+static CFAbsoluteTime DSSystemEdgePullStartedAt = 0;
+static CFAbsoluteTime DSSystemEdgePullEndedAt = 0;
 // How many FBScene settings updates are on the stack. A presentation frame
 // written from inside one waits on the update that is waiting on the frame.
 static NSInteger DSSceneSettingsUpdateDepth = 0;
@@ -93,6 +110,727 @@ static BOOL DSAvoidSceneLifecycle(void) {
 // mode. @try does not catch it.
 static BOOL DSSceneWriteWouldTrap(void) {
     return DSAvoidSceneLifecycle() || DSSceneSettingsUpdateDepth > 0;
+}
+
+// ---- 4.5.675 phonesize675 switches ------------------------------------------
+// When the stage last switched a scene between card size and phone size. The
+// app-view hook in Tweak.xm holds SpringBoard's own app-view updates for the
+// staged app for a moment after it, the same as after a card drag (670).
+static CFTimeInterval DSPhoneSize675ChangedAt = 0;
+
+BOOL DSPhoneSize675ChangedRecently(double window) {
+    return DSPhoneSize675ChangedAt > 0 && CACurrentMediaTime() - DSPhoneSize675ChangedAt < window;
+}
+
+static NSString *DSPhoneSize675Path(NSString *name) {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *plain = [@"/var/mobile/" stringByAppendingString:name];
+    if ([fm fileExistsAtPath:plain]) return plain;
+    NSString *jb = [@"/var/jb/var/mobile/" stringByAppendingString:name];
+    if ([fm fileExistsAtPath:jb]) return jb;
+    return nil;
+}
+
+BOOL DSPhoneSize675Disabled(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - at > 2.0 || now < at) {
+        value = DSPhoneSize675Path(@".dynamicstage-phonesize675-off") != nil ||
+                (DS796CoreOn() && DSPhoneSize675Path(@".dynamicstage-phonesize-off") != nil);   // 4.5.796 group file
+        at = now;
+    }
+    return value;
+}
+
+// The allowlist file replaces the default list (Beeper). One bundle id per
+// line; blank lines and lines starting with # are ignored. An empty file
+// allows nothing.
+static NSSet<NSString *> *DSPhoneSize675AllowlistSet(BOOL *fromFile) {
+    static CFAbsoluteTime at = 0;
+    static NSSet<NSString *> *value = nil;
+    static BOOL valueFromFile = NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (!value || now - at > 2.0 || now < at) {
+        at = now;
+        NSString *path = DSPhoneSize675Path(@".dynamicstage-phonesize675-apps");
+        NSString *text = path ? [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL] : nil;
+        if (path) {
+            NSMutableSet *set = [NSMutableSet set];
+            for (NSString *raw in [text ?: @"" componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet]) {
+                NSString *line = [raw stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+                if (line.length == 0 || [line hasPrefix:@"#"]) continue;
+                [set addObject:line];
+            }
+            value = [set copy];
+            valueFromFile = YES;
+        } else {
+            value = [NSSet setWithObject:@"com.beeper.chat.ios"];
+            valueFromFile = NO;
+        }
+    }
+    if (fromFile) *fromFile = valueFromFile;
+    return value;
+}
+
+BOOL DSPhoneSize675Allowed(NSString *bundleIdentifier) {
+    if (bundleIdentifier.length == 0) return NO;
+    return [DSPhoneSize675AllowlistSet(NULL) containsObject:bundleIdentifier];
+}
+
+NSString *DSPhoneSize675AllowlistSummary(void) {
+    BOOL fromFile = NO;
+    NSSet *set = DSPhoneSize675AllowlistSet(&fromFile);
+    NSArray *sorted = [[set allObjects] sortedArrayUsingSelector:@selector(compare:)];
+    return [NSString stringWithFormat:@"%@ (%@)", sorted.count ? [sorted componentsJoinedByString:@","] : @"nobody",
+            fromFile ? @"from .dynamicstage-phonesize675-apps" : @"default"];
+}
+
+// ---- 4.5.676 phonesize676 ----------------------------------------------------
+static double DSPhoneSize676SessionAt = 0;
+
+void DSPhoneSize676StartSession(double mediaTime) {
+    DSPhoneSize676SessionAt = mediaTime > 0 ? mediaTime : CACurrentMediaTime();
+}
+
+double DSPhoneSize676MsAt(double mediaTime) {
+    if (DSPhoneSize676SessionAt <= 0) return -1.0;
+    return (mediaTime - DSPhoneSize676SessionAt) * 1000.0;
+}
+
+double DSPhoneSize676Ms(void) {
+    return DSPhoneSize676MsAt(CACurrentMediaTime());
+}
+
+static BOOL DSPhoneSize676File(NSString *name, CFAbsoluteTime *at, BOOL *value) {
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - *at > 2.0 || now < *at) {
+        DSPerfNoteFileStat();
+        *value = DSPhoneSize675Path(name) != nil;
+        *at = now;
+    }
+    return *value;
+}
+
+// 4.5.677: the focus hook is gone (see Tweak.xm). This file turns off the
+// arbiter on=1 early switch too, leaving the 4.5.675 keyboard-note trigger
+// plus the relayout nudge. Read on the main queue only.
+BOOL DSPhoneSize677EarlyDisabled(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize677-early-off", &at, &value);
+}
+
+// ---- 4.5.678 phonesize678 ----------------------------------------------------
+// A: the relayout nudge changes the scene's WIDTH (430 -> 428 -> 430), so the
+//    app's own keyboard changes size and UIKit re-posts its keyboard frame.
+//    Off: the 4.5.676 height nudge.
+BOOL DSPhoneSize678WidthDisabled(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize678-width-off", &at, &value);
+}
+
+// B: grow before the keyboard exists, on a touch in the card's composer zone.
+BOOL DSPhoneSize678PreGrowDisabled(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize678-pregrow-off", &at, &value);
+}
+
+// B variant: bottom-anchored right at touch-down (no tap-safe phase, no hold).
+BOOL DSPhoneSize678AnchorAtDown(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize678-anchor-at-down", &at, &value);
+}
+
+// ---- 4.5.680 phonesize680: always full screen, the message bar never moves ----
+BOOL DSPhoneSize680Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize680-off", &at, &value);
+}
+
+BOOL DSPhoneSize680NoAnim(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize680-noanim", &at, &value);
+}
+
+// ON unless the 680 off file or the 675 master off file is present.
+BOOL DSPhoneSize680Enabled(void) {
+    BOOL on = !DSPhoneSize680Off() && !DSPhoneSize675Disabled();
+    static int logged = -1;
+    if (logged != (int)on) {
+        logged = (int)on;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize680 build %s is %@", kDSBuildVersionString,
+                                  on ? @"ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard"
+                                     : (DSPhoneSize675Disabled() ? @"OFF (phonesize675 master off file)"
+                                                                 : @"OFF (/var/mobile/.dynamicstage-phonesize680-off): exact 4.5.679 behaviour"));
+    }
+    return on;
+}
+
+// ---- 4.5.683 phonesize683: the app's own keyboard inside the card -------------
+BOOL DSPhoneSize683Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize683-off", &at, &value);
+}
+
+// Test switch: keep SpringBoard's bottom-of-phone copy of the app's keys visible.
+BOOL DSPhoneSize683KeepHost(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize683-keephost", &at, &value);
+}
+
+// 4.5.684: 683 is opt-in (the user reported it did not work).
+BOOL DSPhoneSize683On(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize683-on", &at, &value);
+}
+
+BOOL DSPhoneSize683Enabled(void) {
+    BOOL on = DSPhoneSize683On() && !DSPhoneSize683Off() && DSPhoneSize680Enabled();
+    static int logged = -1;
+    if (logged != (int)on) {
+        logged = (int)on;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize683 build %s is %@", kDSBuildVersionString,
+                                  on ? @"ON (opt-in /var/mobile/.dynamicstage-phonesize683-on): allowlisted apps without the app dylib use their OWN keyboard inside the card (keys674 keeps UIKit's YES), "
+                                       @"the card shows the bottom of the 430x931 scene (bar + keyboard), the stage leaves that keyboard alone, "
+                                       @"SpringBoard's bottom-of-phone copy of the keys is hidden while it is up, no window moves on keyboard show/hide"
+                                     : (!DSPhoneSize683On() ? @"OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)"
+                                        : DSPhoneSize683Off() ? @"OFF (/var/mobile/.dynamicstage-phonesize683-off): 4.5.682 behaviour"
+                                                              : @"OFF (phonesize680/675 off file): 4.5.682 rules for that file"));
+    }
+    return on;
+}
+
+// ---- 4.5.684 phonesize684: safe area = keyboard, the bar never moves ----------
+// The always-full-screen 430x931 scene gets safe area {T, 0, K, 0}: K is the
+// app's keyboard height inside the scene (931 - 586 = 345), so the app's bar
+// sits at 931 - K with the keyboard down AND up (its keyboard top is the same
+// y). T puts the app's top on the card's top edge. The card's window onto the
+// scene is fixed at app y T..(931-K). keys674 answers NO, so the keys stay in
+// SpringBoard's keyboard host at the bottom of the phone. Nothing on
+// SpringBoard's side moves when the keyboard shows or hides.
+BOOL DSPhoneSize684Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize684-off", &at, &value);
+}
+
+BOOL DSPhoneSize684Enabled(void) {
+    BOOL on = !DSPhoneSize684Off() && DSPhoneSize680Enabled() && !DSPhoneSize683Enabled();
+    static int logged = -1;
+    if (logged != (int)on) {
+        logged = (int)on;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 build %s is %@", kDSBuildVersionString,
+                                  on ? @"ON: allowlisted apps without the app dylib get safe area = keyboard in the 430x931 scene (bar fixed), "
+                                       @"the card's window is fixed (no 680-682 chasing), keys at the phone bottom (keys674 NO)"
+                                     : (DSPhoneSize684Off() ? @"OFF (/var/mobile/.dynamicstage-phonesize684-off): exact 4.5.682 behaviour"
+                                        : DSPhoneSize683Enabled() ? @"OFF (683 opt-in file present: 683 mode instead)"
+                                                                  : @"OFF (phonesize680/675 off file)"));
+    }
+    return on;
+}
+
+// /var/mobile/.dynamicstage-phonesize684-tune, key=value lines, re-read every
+// 2 s. Applied at the next card open or 1 s after the keyboard goes down.
+DSPhoneSize684Tune DSPhoneSize684CurrentTune(void) {
+    static DSPhoneSize684Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize684Tune t;
+    t.bottom = 0.0;
+    t.top = -1.0;
+    t.shortMode = NO;
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 tune %@ | in use: bottom=%@ top=%@ mode=%@ (applies at the next card open or 1 s after the keyboard goes down)",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize684-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values",
+                              t.bottom > 0.0 ? [NSString stringWithFormat:@"%.0f", t.bottom] : @"auto (learned, default 345)",
+                              t.top >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.top] : @"auto (card top)",
+                              t.shortMode ? @"short" : @"safe");
+    return t;
+}
+
+// ---- 4.5.686 phonesize685: the card shows the app's top bar and bottom bar ---
+// Photo + log (uploads685, on 684): Beeper's main screen has a top bar that
+// ends at app y ~127 (its buttons sit above, at the phone's own 59 pt top), so
+// with the card showing app y 117..586 only the bar's bottom 10 pt shows; its
+// bottom sheet (search field) is laid out above the 345 pt bottom inset and ends
+// at ~588, flush with / 2 pt past the card bottom (586), under the corners.
+// 686 keeps 684's scene exactly at the bottom (430x931, bottom inset 345, bar
+// line 586: the chat bar and keys are unchanged) and only changes what the card
+// shows: app y 59..600 (view..bar line + margin 14) at x0.847 instead of
+// 117..586 at x0.977 (narrow black/white bars at the sides), with top inset 59.
+// The first 4.5.685 (scene cut to 620, bottom inset 34) is only a tune now
+// (slack=): it moved nothing on the main screen (the sheet sits on the safe
+// bottom either way) and breaks the 684 identity for apps that pad by
+// keyboard height minus the bottom inset.
+// (old 685 notes follow)
+// 684 worked in chats (bar still, keys at the phone bottom) but its 931 pt
+// scene needed a 345 pt bottom safe inset, which Beeper's main-screen bottom bar
+// grows into (a bar extends by the bottom inset), so it fell off the card.
+// 685 keeps the same bar line (scene y 586 = keyboard top) and the same card
+// window (app y 117..586) but ends the scene 34 pt below the bar: scene
+// 430x620, safe area {117, 0, 34, 0}. Bar at rest: 620 - 34 = 586. Keys up:
+// the keyboard (screen y 586) overlaps the window by 620 - 586 = 34 = the inset,
+// so the bar stays at 586. Same zero-movement rule as 684, normal-size inset.
+BOOL DSPhoneSize685Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize685-off", &at, &value);
+}
+
+static BOOL DSPhoneSize686On(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize686-on", &at, &value);
+}
+
+BOOL DSPhoneSize685Enabled(void) {
+    // 4.5.687: 686's shrunken picture is opt-in (/var/mobile/.dynamicstage-phonesize686-on).
+    BOOL on = !DSPhoneSize685Off() && DSPhoneSize686On() && DSPhoneSize684Enabled();
+    static int logged = -1;
+    if (logged != (int)on) {
+        logged = (int)on;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize685 build %s is %@", kDSBuildVersionString,
+                                  on ? @"ON: 684 scene and bar line kept; the card shows app y view(59)..bar line+margin(14) at a smaller scale, top inset = view; "
+                                       @"the app's top bar and bottom bar both on the card"
+                                     : (DSPhoneSize685Off() ? @"OFF (/var/mobile/.dynamicstage-phonesize685-off)"
+                                                            : (!DSPhoneSize686On() ? @"OFF (4.5.687: 686's picture is opt-in, /var/mobile/.dynamicstage-phonesize686-on)"
+                                                                                   : @"OFF (684 is off)")));
+    }
+    return on;
+}
+
+// /var/mobile/.dynamicstage-phonesize685-tune, key=value lines, re-read every 2 s.
+DSPhoneSize685Tune DSPhoneSize685CurrentTune(void) {
+    static DSPhoneSize685Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize685Tune t;
+    t.view = -1.0;
+    t.margin = 14.0;
+    t.slack = -1.0;
+    t.top = -1.0;
+    t.keyTop = 0.0;
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize685 tune %@ | in use: view=%@ margin=%.0f slack=%@ top=%@ keytop=%@ (applies at the next card open or 1.2 s after the keyboard goes down)",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize685-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values",
+                              t.view >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.view] : @"auto (phone top inset, 59)", t.margin,
+                              t.slack >= 0.0 ? [NSString stringWithFormat:@"%.0f (scene cut to bar line + slack)", t.slack] : @"off (684 scene)",
+                              t.top >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.top] : @"auto (= app y on the card top)",
+                              t.keyTop > 0.0 ? [NSString stringWithFormat:@"%.0f", t.keyTop] : @"auto (learned keyboard top, default 586)");
+    return t;
+}
+
+// ---- 4.5.687 phonesize687: top bar on the card at 684's fill -------------------
+// 684: scene 430x931, bottom inset 345, bar line 586 = keyboard top, card shows
+// app y 117..586 at x0.977. Beeper's main-screen top bar sits at app y 59..127
+// (it does not follow the top inset), so it was above the card.
+// The keys are SpringBoard's, at the phone bottom (screen 586..932), apart from
+// the card (screen 5..463): the bar does not have to sit on the keyboard line,
+// it only has to stay still. It stays still while the bottom inset B is at
+// least the keyboard height (346, 301) and the keyboard overlap (931 - 586 =
+// 345): both the inset rule and an app's own "keyboard height - inset" math
+// then leave the bar where it rests. So 687 keeps 931 and x0.977 and raises the
+// bar line: card shows app y 59..528 (view .. view + 458/0.977), bar rests at
+// 528 - 8 = 520, B = 931 - 520 = 411, top inset 59. 411 >= 346: no movement.
+BOOL DSPhoneSize687Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize687-off", &at, &value);
+}
+
+static BOOL DSPhoneSize687On(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize687-on", &at, &value);
+}
+
+BOOL DSPhoneSize687Enabled(void) {
+    // 4.5.688: 687 (raised bar line) moved the chat bar off the card with the keys up; opt-in only.
+    BOOL on = DSPhoneSize687On() && !DSPhoneSize687Off() && DSPhoneSize684Enabled() && !DSPhoneSize685Enabled();
+    static int logged = -1;
+    if (logged != (int)on) {
+        logged = (int)on;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize687 build %s is %@", kDSBuildVersionString,
+                                  on ? @"ON: 684 scene 430x931 and fill x0.977 kept; card shows app y 59..528 (the app's top bar on the card top), "
+                                       @"bar rests 8 pt above the card bottom, bottom inset 931 - bar (>= keyboard height, the bar never moves), top inset 59"
+                                     : (!DSPhoneSize687On() ? @"OFF (4.5.688: opt-in only, /var/mobile/.dynamicstage-phonesize687-on)" :
+                                        DSPhoneSize687Off() ? @"OFF (/var/mobile/.dynamicstage-phonesize687-off): exact 4.5.684 behaviour"
+                                                            : (DSPhoneSize685Enabled() ? @"OFF (686 picture opted in with /var/mobile/.dynamicstage-phonesize686-on)"
+                                                                                       : @"OFF (684 is off)")));
+    }
+    return on;
+}
+
+// /var/mobile/.dynamicstage-phonesize687-tune, key=value lines, re-read every 2 s.
+DSPhoneSize687Tune DSPhoneSize687CurrentTune(void) {
+    static DSPhoneSize687Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize687Tune t;
+    t.view = -1.0;
+    t.margin = 8.0;
+    t.top = -1.0;
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize687 tune %@ | in use: view=%@ margin=%.0f top=%@ (applies at the next card open or 1.2 s after the keyboard goes down)",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize687-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values",
+                              t.view >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.view] : @"auto (phone top inset, 59)", t.margin,
+                              t.top >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.top] : @"auto (= view)");
+    return t;
+}
+
+// ---- 4.5.688 phonesize688 -------------------------------------------------------
+// 687 showed the app puts its bar on the keyboard top (in its window) with the
+// keys up, whatever the bottom inset: the card bottom must be the keyboard top as
+// the app sees it and the bar must rest there (684). 688 keeps that and moves the
+// main screen's top bar (laid out at 59..127, not following the 117 top inset)
+// onto the card - see DSSceneHost.h for the modes.
+BOOL DSPhoneSize688Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize688-off", &at, &value);
+}
+
+static BOOL DSPhoneSize689Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize689-off", &at, &value);
+}
+
+BOOL DSPhoneSize688Enabled(void) {
+    // 4.5.689: .dynamicstage-phonesize689-off does the same as -688-off (exact 684,
+    // which is also the default mode now).
+    BOOL on = !DSPhoneSize688Off() && !DSPhoneSize689Off() && DSPhoneSize684Enabled() && !DSPhoneSize685Enabled() && !DSPhoneSize687Enabled();
+    static int logged = -1;
+    if (logged != (int)on) {
+        logged = (int)on;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize688 build %s is %@", kDSBuildVersionString,
+                                  on ? @"ON: 684 chat geometry; default mode=684 (exact 684); opt-in modes in /var/mobile/.dynamicstage-phonesize688-tune: mode=offset|short|statusbar"
+                                     : ((DSPhoneSize688Off() || DSPhoneSize689Off()) ? @"OFF (/var/mobile/.dynamicstage-phonesize688-off or -689-off): exact 4.5.684 behaviour"
+                                                            : @"OFF (684 off, or 686/687 opted in)"));
+    }
+    return on;
+}
+
+static NSString *DSPhoneSize688ModeName(NSInteger mode) {
+    switch (mode) {
+        case DSPhoneSize688ModeOffset: return @"offset";
+        case DSPhoneSize688ModeShort: return @"short";
+        case DSPhoneSize688Mode684: return @"684";
+        default: return @"statusbar";
+    }
+}
+
+// /var/mobile/.dynamicstage-phonesize688-tune, key=value lines, re-read every 2 s.
+DSPhoneSize688Tune DSPhoneSize688CurrentTune(void) {
+    static DSPhoneSize688Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize688Tune t;
+    t.mode = DSPhoneSize688Mode684;   // 4.5.689: default is exact 684
+    t.view = -1.0;
+    t.offset = -1.0;
+    t.shift = -1000.0;
+    t.statusBar = -1.0;
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize688 tune %@ | in use: mode=%@ view=%@ offset=%@ shift=%@ statusbar=%@ (applies at the next card open or 1.2 s after the keyboard goes down)",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize688-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values",
+                              DSPhoneSize688ModeName(t.mode),
+                              t.view >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.view] : @"auto (57)",
+                              t.offset >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.offset] : @"auto",
+                              t.shift > -500.0 ? [NSString stringWithFormat:@"%.0f", t.shift] : @"auto (measured)",
+                              t.statusBar >= 0.0 ? [NSString stringWithFormat:@"%.0f", t.statusBar] : @"auto (= top inset)");
+    return t;
+}
+
+// The scene's default portrait status bar height (UIApplicationSceneSettings).
+// 4.5.689: 4.5.688 crashed SpringBoard into safe mode on staging Beeper with
+// this write on by default (mode=statusbar); it is opt-in now and fenced:
+// main thread only, the selector's real signature checked (void, double, long
+// long / double, long long), values 20..200 only, a crash latch (a file written
+// before the first raise and removed 15 s later; if SpringBoard comes back with
+// it still there, statusbar mode is switched off for good and logged), and
+// nothing at all is touched unless a raise was asked for or is being undone.
+static NSMutableDictionary<NSString *, NSNumber *> *DSPhoneSize688StatusBarOriginals(void) {
+    static NSMutableDictionary *map = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ map = [NSMutableDictionary dictionary]; });
+    return map;
+}
+
+static BOOL DSPhoneSize688HasStatusBarOriginal(NSString *identifier) {
+    if (identifier.length == 0) return NO;
+    NSMutableDictionary *map = DSPhoneSize688StatusBarOriginals();
+    @synchronized(map) {
+        return map[identifier] != nil;
+    }
+}
+
+static NSString *const DSPhoneSize689TryingPath = @"/var/mobile/.dynamicstage-phonesize689-statusbar-trying";
+static NSString *const DSPhoneSize689CrashedPath = @"/var/mobile/.dynamicstage-phonesize689-statusbar-crashed";
+
+// YES when statusbar mode must not run: latched after a SpringBoard that died
+// with a raise in flight. Main thread only.
+static BOOL DSPhoneSize689StatusBarLatched(void) {
+    static int checked = 0;
+    static BOOL latched = NO;
+    if (!checked) {
+        checked = 1;
+        @try {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            if ([fm fileExistsAtPath:DSPhoneSize689TryingPath]) {
+                [fm removeItemAtPath:DSPhoneSize689TryingPath error:NULL];
+                [fm createFileAtPath:DSPhoneSize689CrashedPath contents:[NSData data] attributes:nil];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize689 statusbar mode LATCHED OFF: SpringBoard went down while a status bar height raise was in flight "
+                                          @"(%@ found). Delete %@ to allow it again.", DSPhoneSize689TryingPath, DSPhoneSize689CrashedPath);
+            }
+            latched = [fm fileExistsAtPath:DSPhoneSize689CrashedPath] ||
+                      [fm fileExistsAtPath:@"/var/jb/var/mobile/.dynamicstage-phonesize689-statusbar-crashed"];
+        } @catch (NSException *exception) {
+            latched = YES;
+        }
+    }
+    return latched;
+}
+
+static void DSPhoneSize689MarkStatusBarTrying(void) {
+    static BOOL marked = NO;
+    if (marked) return;
+    marked = YES;
+    @try {
+        [[NSFileManager defaultManager] createFileAtPath:DSPhoneSize689TryingPath contents:[NSData data] attributes:nil];
+    } @catch (NSException *exception) {
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:DSPhoneSize689TryingPath error:NULL];
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize689 statusbar raise survived 15 s; crash latch cleared");
+    });
+}
+
+static BOOL DSPhoneSize689SignatureIs(NSMethodSignature *sig, const char *ret, const char *arg0, const char *arg1) {
+    if (!sig || sig.numberOfArguments != 4) return NO;
+    const char *r = sig.methodReturnType;
+    const char *a0 = [sig getArgumentTypeAtIndex:2];
+    const char *a1 = [sig getArgumentTypeAtIndex:3];
+    if (!r || !a0 || !a1) return NO;
+    // Skip type qualifiers (r, n, N, o, O, R, V) before comparing.
+    while (*r && strchr("rnNoORV", *r)) r++;
+    while (*a0 && strchr("rnNoORV", *a0)) a0++;
+    while (*a1 && strchr("rnNoORV", *a1)) a1++;
+    BOOL longOk = (a1[0] == arg1[0]) || (arg1[0] == 'q' && (a1[0] == 'l' || a1[0] == 'q'));
+    return r[0] == ret[0] && a0[0] == arg0[0] && longOk;
+}
+
+static void DSPhoneSize688ApplyStatusBar(FBSMutableSceneSettings *settings, NSString *identifier, CGFloat wanted) {
+    if (!settings || identifier.length == 0 || !isfinite(wanted)) return;
+    BOOL undo = wanted <= 0.0;
+    // Nothing to do: never look at the settings object at all.
+    if (undo && !DSPhoneSize688HasStatusBarOriginal(identifier)) return;
+    if (![NSThread isMainThread]) return;
+    if (!undo && (wanted < 20.0 || wanted > 200.0 || DSPhoneSize689StatusBarLatched())) return;
+    static int loggedSupport = -1;
+    SEL setter = NSSelectorFromString(@"setDefaultStatusBarHeight:forOrientation:");
+    SEL getter = NSSelectorFromString(@"defaultStatusBarHeightForOrientation:");
+    @try {
+        BOOL ok = [settings respondsToSelector:setter] && [settings respondsToSelector:getter] &&
+                  DSPhoneSize689SignatureIs([settings methodSignatureForSelector:setter], "v", "d", "q") &&
+                  [settings methodSignatureForSelector:getter].numberOfArguments == 3;
+        if (ok) {
+            NSMethodSignature *g = [settings methodSignatureForSelector:getter];
+            const char *r = g.methodReturnType;
+            const char *a0 = [g getArgumentTypeAtIndex:2];
+            ok = r && a0 && r[0] == 'd' && (a0[0] == 'q' || a0[0] == 'l');
+        }
+        if (!undo && loggedSupport != (int)ok) {
+            loggedSupport = (int)ok;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize689 status bar height %@", ok
+                                      ? @"setting found with the expected signature: mode=statusbar can raise it"
+                                      : @"setting NOT found / unexpected signature on this iOS: mode=statusbar does nothing (exact 684)");
+        }
+        if (!ok) return;
+        NSMutableDictionary *originals = DSPhoneSize688StatusBarOriginals();
+        NSNumber *original = nil;
+        @synchronized(originals) {
+            original = originals[identifier];
+        }
+        if (!undo) {
+            double now = ((double (*)(id, SEL, long long))objc_msgSend)(settings, getter, (long long)UIInterfaceOrientationPortrait);
+            if (!isfinite(now) || now < 0.0 || now > 200.0) return;
+            if (!original) {
+                @synchronized(originals) {
+                    originals[identifier] = @(now);
+                }
+            }
+            if (fabs(now - wanted) > 0.25) {
+                DSPhoneSize689MarkStatusBarTrying();
+                ((void (*)(id, SEL, double, long long))objc_msgSend)(settings, setter, (double)wanted, (long long)UIInterfaceOrientationPortrait);
+            }
+        } else if (original) {
+            double back = original.doubleValue;
+            if (isfinite(back) && back >= 0.0 && back <= 200.0) {
+                ((void (*)(id, SEL, double, long long))objc_msgSend)(settings, setter, back, (long long)UIInterfaceOrientationPortrait);
+            }
+            @synchronized(originals) {
+                [originals removeObjectForKey:identifier];
+            }
+        }
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize689 status bar height write threw %@", exception.reason ?: exception.name ?: @"?");
+    }
+}
+
+// ---- 4.5.681 phonesize681 tune file ------------------------------------------
+// /var/mobile/.dynamicstage-phonesize681-tune, key=value lines, re-read every 2 s.
+static NSString *DSPS681CurveName(NSInteger curve) {
+    switch (curve) {
+        case DSPS681CurveKeyboard: return @"keyboard";
+        case DSPS681CurveEaseInOut: return @"easeinout";
+        case DSPS681CurveEaseOut: return @"easeout";
+        case DSPS681CurveLinear: return @"linear";
+        case DSPS681CurveSpring: return @"spring";
+    }
+    return @"?";
+}
+
+static DSPhoneSize681Tune DSPS681Defaults(void) {
+    DSPhoneSize681Tune t;
+    t.duration = 500.0;      // UIKit's keyboard spring really runs 0.5 s
+    t.delay = 0.0;
+    t.curve = DSPS681CurveKeyboard;
+    t.springDamping = 1.0;
+    t.springVelocity = 0.0;
+    t.targetFinal = YES;
+    t.offset = 0.0;
+    t.hideDuration = 500.0;
+    t.hideCurve = DSPS681CurveKeyboard;
+    t.showInstant = YES;     // 4.5.682: Beeper moves its bar at once; so does the card's window
+    return t;
+}
+
+static NSString *DSPS681Summary(DSPhoneSize681Tune t) {
+    return [NSString stringWithFormat:@"show=%@ duration=%.0f delay=%+.0f curve=%@ spring_damping=%.2f spring_velocity=%.2f target=%@ offset=%+.1f hide_duration=%.0f hide_curve=%@ (duration/delay/curve/spring_* only apply with show=animate)",
+            t.showInstant ? @"instant" : @"animate", t.duration, t.delay, DSPS681CurveName(t.curve), t.springDamping, t.springVelocity, t.targetFinal ? @"final" : @"stepwise",
+            t.offset, t.hideDuration, DSPS681CurveName(t.hideCurve)];
+}
+
+DSPhoneSize681Tune DSPhoneSize681CurrentTune(void) {
+    static DSPhoneSize681Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize681Tune t = DSPS681Defaults();
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize682 tune %@ | in use: %@",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize681-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values",
+                              DSPS681Summary(t));
+    return t;
+}
+
+// C (opt-in): allowlisted apps stay phone-size the whole time they are staged.
+// 4.5.680: always on while phonesize680 is on.
+BOOL DSPhoneSize678Always(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize678-always", &at, &value) || DSPhoneSize680Enabled();
+}
+
+// ---- 4.5.679 phonesize679: scale -----------------------------------------------
+// Default: the phone-size scene is as wide as the card and shown at scale 1.0
+// (no shrink, no side crop). /var/mobile/.dynamicstage-phonesize679-scale
+// (re-read every 2 s): "phone" = the 4.5.678 behaviour (phone width scaled to
+// the card's width), or a scale 0.80-1.00 (scene width = card width / scale).
+CGFloat DSPhoneSize679Scale(BOOL *phoneMode) {
+    static CFAbsoluteTime at = 0;
+    static CGFloat scale = 1.0;
+    static BOOL phone = NO;
+    static NSString *lastDesc = nil;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - at > 2.0 || now < at) {
+        at = now;
+        NSString *path = DSPhoneSize675Path(@".dynamicstage-phonesize679-scale");
+        NSString *text = path ? [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL] : nil;
+        NSString *t = [[text ?: @"" stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] lowercaseString];
+        if (t.length > 32) t = [t substringToIndex:32];
+        BOOL p = NO;
+        CGFloat s = 1.0;
+        NSString *desc = nil;
+        if (!path) {
+            desc = @"default: scene as wide as the card, scale 1.0 (no /var/mobile/.dynamicstage-phonesize679-scale)";
+        } else if ([t isEqualToString:@"phone"]) {
+            p = YES;
+            desc = @"file says \"phone\": 4.5.678 behaviour, phone-width scene scaled to the card's width";
+        } else {
+            double v = t.length ? t.doubleValue : NAN;
+            if (isfinite(v) && v >= 0.80 && v <= 1.00) {
+                s = (CGFloat)v;
+                desc = [NSString stringWithFormat:@"file says scale %.3f: scene width = card width / %.3f", v, v];
+            } else {
+                desc = [NSString stringWithFormat:@"file content \"%@\" not understood (use phone or 0.80-1.00): default, scale 1.0", t];
+            }
+        }
+        phone = p;
+        scale = s;
+        if (![desc isEqualToString:lastDesc]) {
+            lastDesc = desc;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize679 scale mode: %@", desc);
+        }
+    }
+    if (phoneMode) *phoneMode = phone;
+    return scale;
+}
+
+BOOL DSPhoneSize676NudgeDisabled(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize676-nudge-off", &at, &value);
+}
+
+BOOL DSPhoneSize676HoldEnabled(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize676-hold-on", &at, &value);
+}
+
+// Test knob: points added to the keyboard top that is put on the card's bottom
+// edge (positive shows less of the app above the keys). Default 0.
+CGFloat DSPhoneSize675PinOffset(void) {
+    static CFAbsoluteTime at = 0;
+    static CGFloat value = 0.0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - at > 2.0 || now < at) {
+        at = now;
+        NSString *path = DSPhoneSize675Path(@".dynamicstage-phonesize675-pinoffset");
+        NSString *text = path ? [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL] : nil;
+        double v = text.length ? [[text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] doubleValue] : 0.0;
+        if (!isfinite(v)) v = 0.0;
+        value = (CGFloat)MAX(-200.0, MIN(200.0, v));
+    }
+    return value;
 }
 
 static NSLock *DSSceneOverridesLock(void) {
@@ -176,6 +914,16 @@ static NSMutableArray<dispatch_block_t> *DSAfterTransitionBlocks = nil;
 // mutable-copy + transition context form used on older builds.
 static void DSUpdateSceneSettings(FBScene *scene, void (^block)(FBSMutableSceneSettings *settings)) {
     if (!scene || !block || DSSceneWriteWouldTrap()) return;
+    DSPerfCount(DSPerfCounterSceneWrites);
+    if (DSPerfLogOn() && DSStageDragSettlingFast(0.0)) {
+        static CFAbsoluteTime loggedAt = 0;
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (now - loggedAt > 2.0 || now < loggedAt) {
+            loggedAt = now;
+            DSDiagnosticsRecordFormat(@"SpringBoard: perf697 scene settings write during a card drag (%@)",
+                                      [scene respondsToSelector:@selector(identifier)] ? scene.identifier : @"?");
+        }
+    }
     @try {
         if ([scene respondsToSelector:@selector(updateSettingsWithBlock:)]) {
             [scene updateSettingsWithBlock:block];
@@ -214,19 +962,66 @@ static const void *DSPresentationKey = &DSPresentationKey;
 static const void *DSContainingKey = &DSContainingKey;
 static const void *DSCardHostKey = &DSCardHostKey;
 
+// 4.5.710 bisect step 1 (beeper707 alone on 4.5.706): every 707 drawing change,
+// including the change-only round / chrome writes that 4.5.707 ran with no
+// switch, sits behind /var/mobile/.dynamicstage-beeper707-off and its crash
+// latch. Marked "trying" at first use (main thread, once).
+static BOOL DSBeeper710WritesOn(void) {
+    if (!DSFeature699On("beeper707")) return NO;
+    static BOOL marked = NO;
+    if (!marked) {
+        marked = YES;
+        DSFeature699MarkTrying("beeper707");
+    }
+    return YES;
+}
+
 static void DSApplyRoundInfo(UIView *view) {
     NSDictionary *info = objc_getAssociatedObject(view, DSRoundInfoKey);
     if (!info) return;
     CGFloat radius = [info[@"r"] doubleValue];
     if (radius < 1.0) return;
     CACornerMask corners = (CACornerMask)[info[@"c"] unsignedIntegerValue];
-    view.clipsToBounds = YES;
-    view.layer.masksToBounds = YES;
-    view.layer.cornerRadius = radius;
-    if (@available(iOS 13.0, *)) {
-        view.layer.cornerCurve = kCACornerCurveContinuous;
-        view.layer.maskedCorners = corners;
+    CALayer *layer = view.layer;
+    // 4.5.710: the 707 change-only writes are part of beeper707 (off file +
+    // crash latch); switched off = exactly the 4.5.706 writes.
+    if (!DSBeeper710WritesOn()) {
+        view.clipsToBounds = YES;
+        layer.masksToBounds = YES;
+        layer.cornerRadius = radius;
+        if (@available(iOS 13.0, *)) {
+            layer.cornerCurve = kCACornerCurveContinuous;
+            layer.maskedCorners = corners;
+        }
+        return;
     }
+    // 4.5.707: change-only (the scene re-lays out many times a second while an
+    // app like Beeper scrolls or types).
+    if (!layer.masksToBounds) {
+        view.clipsToBounds = YES;
+        layer.masksToBounds = YES;
+    }
+    if (fabs(layer.cornerRadius - radius) > 0.01) layer.cornerRadius = radius;
+    if (@available(iOS 13.0, *)) {
+        if (![layer.cornerCurve isEqualToString:kCACornerCurveContinuous]) layer.cornerCurve = kCACornerCurveContinuous;
+        if (layer.maskedCorners != corners) layer.maskedCorners = corners;
+    }
+}
+
+// 4.5.707 beeper707: drop the rounded clips this tweak put inside a phone-size
+// host. The card's content view already clips with the same continuous corner;
+// a second (and third) rounded masksToBounds under the host's non-uniform
+// squash is an extra offscreen pass per frame and is never seen.
+static NSInteger DSBeeper707Flatten(UIView *view, NSInteger depth) {
+    if (!view || depth > 14) return 0;
+    NSInteger count = 0;
+    if (objc_getAssociatedObject(view, DSRoundInfoKey)) {
+        objc_setAssociatedObject(view, DSRoundInfoKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (view.layer.cornerRadius > 0.0) view.layer.cornerRadius = 0.0;
+        count += 1;
+    }
+    for (UIView *subview in view.subviews) count += DSBeeper707Flatten(subview, depth + 1);
+    return count;
 }
 
 static BOOL DSClassImplementsSelector(Class cls, SEL sel) {
@@ -282,11 +1077,26 @@ static void DSHideStrayPresentation(UIView *view) {
 }
 
 static void DSClearSceneChrome(UIView *view) {
-    view.backgroundColor = UIColor.clearColor;
-    view.opaque = NO;
-    view.layer.backgroundColor = UIColor.clearColor.CGColor;
-    view.clipsToBounds = YES;
-    view.layer.masksToBounds = YES;
+    CALayer *layer = view.layer;
+    if (!DSBeeper710WritesOn()) {   // 4.5.710: off = the 4.5.706 writes
+        view.backgroundColor = UIColor.clearColor;
+        view.opaque = NO;
+        layer.backgroundColor = UIColor.clearColor.CGColor;
+        view.clipsToBounds = YES;
+        layer.masksToBounds = YES;
+        return;
+    }
+    // 4.5.707: this runs after every layout of every scene presentation; only
+    // write what differs (each write dirties the layer for the next commit).
+    if (layer.backgroundColor && CGColorGetAlpha(layer.backgroundColor) > 0.0) {
+        view.backgroundColor = UIColor.clearColor;
+        layer.backgroundColor = UIColor.clearColor.CGColor;
+    }
+    if (view.opaque) view.opaque = NO;
+    if (!layer.masksToBounds) {
+        view.clipsToBounds = YES;
+        layer.masksToBounds = YES;
+    }
 }
 
 static void DSContainScenePresentation(UIView *view) {
@@ -299,8 +1109,18 @@ static void DSContainScenePresentation(UIView *view) {
 }
 
 static void DSAfterHostedLayout(id view) {
-    DSApplyRoundInfo(view);
-    DSContainScenePresentation(view);
+    if (!DSBeeper710WritesOn()) {   // 4.5.710: off = the 4.5.706 double apply
+        DSApplyRoundInfo(view);
+        DSContainScenePresentation(view);
+        return;
+    }
+    // 4.5.707: one apply. DSContainScenePresentation already ends in
+    // DSApplyRoundInfo, so a presentation was rounded twice per layout.
+    if (objc_getAssociatedObject(view, DSPresentationKey) && DSSceneSettingsUpdateDepth <= 0) {
+        DSContainScenePresentation(view);
+    } else {
+        DSApplyRoundInfo(view);
+    }
 }
 
 static void DSInstallRoundHook(Class cls) {
@@ -328,11 +1148,19 @@ static void DSInstallRoundHook(Class cls) {
     objc_setAssociatedObject(cls, DSRoundHookKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+// 4.5.705 perf705: the same round info is not re-allocated on every host layout.
+static BOOL DSRoundInfoAlready(UIView *view, CGFloat radius, CACornerMask corners) {
+    if (!DSPerf705On()) return NO;
+    NSDictionary *info = objc_getAssociatedObject(view, DSRoundInfoKey);
+    if (!info) return NO;
+    return fabs([info[@"r"] doubleValue] - radius) < 0.01 && (CACornerMask)[info[@"c"] unsignedIntegerValue] == corners;
+}
+
 static void DSMarkPresentationsUnder(UIView *view, CGFloat radius, CACornerMask corners, NSInteger depth) {
     if (!view || depth > 14) return;
     if (DSViewIsScenePresentation(view)) {
         objc_setAssociatedObject(view, DSPresentationKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        if (radius > 1.0) {
+        if (radius > 1.0 && !DSRoundInfoAlready(view, radius, corners)) {
             objc_setAssociatedObject(view, DSRoundInfoKey,
                                      @{ @"r" : @(radius), @"c" : @(corners) },
                                      OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -360,17 +1188,30 @@ static BOOL DSViewIsMediaSurface(UIView *view) {
 
 static void DSMarkRounded(UIView *view, CGFloat radius, CACornerMask corners) {
     if (!view || radius < 1.0 || DSViewIsMediaSurface(view)) return;
-    objc_setAssociatedObject(view, DSRoundInfoKey,
-                             @{ @"r" : @(radius), @"c" : @(corners) },
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (!DSRoundInfoAlready(view, radius, corners)) {
+        objc_setAssociatedObject(view, DSRoundInfoKey,
+                                 @{ @"r" : @(radius), @"c" : @(corners) },
+                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
     DSInstallRoundHook(object_getClass(view));
     DSApplyRoundInfo(view);
 }
 
+static BOOL DSGeometryValueOK(CGFloat v, CGFloat lo, CGFloat hi) {
+    return isfinite(v) && v >= lo && v <= hi;
+}
+
 static void DSApplyGeometry(FBSMutableSceneSettings *settings, CGRect frame, UIEdgeInsets insets) {
+    if (!settings) return;
+    // 4.5.689: only sane values reach FrontBoard (finite, positive size, origin
+    // within a few screens, insets 0..2000); a bad field is skipped, not written.
+    BOOL frameOK = DSGeometryValueOK(frame.origin.x, -2000.0, 4000.0) && DSGeometryValueOK(frame.origin.y, -2000.0, 4000.0) &&
+                   DSGeometryValueOK(frame.size.width, 1.0, 4000.0) && DSGeometryValueOK(frame.size.height, 1.0, 4000.0);
+    BOOL insetsOK = DSGeometryValueOK(insets.top, 0.0, 2000.0) && DSGeometryValueOK(insets.left, 0.0, 2000.0) &&
+                    DSGeometryValueOK(insets.bottom, 0.0, 2000.0) && DSGeometryValueOK(insets.right, 0.0, 2000.0);
     @try {
-        settings.frame = frame;
-        if ([settings respondsToSelector:@selector(setSafeAreaInsetsPortrait:)]) {
+        if (frameOK && [settings respondsToSelector:@selector(setFrame:)]) settings.frame = frame;
+        if (insetsOK && [settings respondsToSelector:@selector(setSafeAreaInsetsPortrait:)]) {
             settings.safeAreaInsetsPortrait = insets;
         }
         if ([settings respondsToSelector:@selector(setInterfaceOrientation:)]) {
@@ -379,6 +1220,620 @@ static void DSApplyGeometry(FBSMutableSceneSettings *settings, CGRect frame, UIE
     } @catch (NSException *exception) {
     }
 }
+
+// ---- 4.5.690 phonesize690: Beeper's top bar recreated on top of the card ----
+// 689 = 684 geometry (card shows app y 117..586 at x0.977), which the user wants
+// kept byte for byte. Beeper's top bar sits at app y 59..127, above the card.
+// 690 adds, in SpringBoard only, a strip view at the card top holding a
+// _UIPortalView of the card's own host view (the same live pixels, the way the
+// 4.5.673 camera mirrors Apple's top bar), clipped to app y 59..127 and drawn at
+// the same x0.977 over the first ~66 pt of the card. Nothing is written to the
+// app's scene; the host view, the keyboard path and keys674 are untouched.
+// Touches (tune touch=): forward (default) turns on the portal's own hit testing
+// (CAPortalLayer allowsHitTesting) so the window server can route a tap on the
+// strip through the portal to the app's real top bar; if it does not, the strip
+// (a filled SpringBoard view) keeps the touch, so it never lands on the chat
+// under the strip; every touch SpringBoard gets there is logged. block: the
+// strip always keeps touches (buttons drawn, not tappable). pass: picture
+// only, touches go to whatever is under the strip.
+// Crash latch like 689: a file is written before the first strip of a
+// SpringBoard run and removed 15 s later; found at the next run = strip off for
+// good (/var/mobile/.dynamicstage-phonesize690-crashed, delete to allow again).
+// ---- 4.5.691 phonesize691: content below the recreated top bar ----------------
+// 690's strip covers card y 0..~67 = app y ~118..186 of the real content. 691
+// raises ONLY the top safe-area inset of the 684 scene to the strip's bottom
+// edge in app coordinates (118 -> 186 by default), through the same validated
+// 684 geometry write (keys down, card at rest) that already writes {118,0,345,0}.
+// Frame 430x931, bottom inset 345, bar line 586, keys674, the card mapping and
+// the x0.977 fill are unchanged: the bar's position comes from the keyboard top
+// (keys up) or the bottom inset (keys down), never from the top inset. Views
+// that respect the safe area (scroll views with automatic insets, safe-area
+// padding) then start below the strip; Beeper's top bar ignores the top inset
+// (it stayed at 59..127 with 118), so it does not move and the strip still fits.
+// Tune /var/mobile/.dynamicstage-phonesize691-tune: top_inset=auto|off|N
+// (auto = strip bottom: 684 auto top + place_y/fit + strip_height), plus the 690
+// strip keys (strip_top, strip_height, place_y, on, touch, strip=slim|full),
+// which override /var/mobile/.dynamicstage-phonesize690-tune.
+// Off: /var/mobile/.dynamicstage-phonesize691-off = exact 4.5.690 (the 691 tune
+// file is ignored, top inset back to 684 auto).
+// Crash latch: -phonesize691-trying before the first raised-inset write of a
+// SpringBoard run, removed 15 s later; found at the next run -> -crashed, off.
+// ---- 4.5.694 phonesize694: the real Beeper top bar, card squashed vertically ----
+// The user rejected the copied (fake) bar of 690-693: "remove it show the original
+// just resize it", and approved a non-uniform stretch. 694 (default) shows the
+// real app from app y 59 (the top of Beeper's own top bar) to the bar line 586
+// (527 pt) in the 458 pt card: x scale = card width / 430 (0.977, full width as
+// 684), y scale = 458 / 527 (0.869). The bottom (app y 586) stays exactly on the
+// card bottom, so the chat bar and keyboard behave as in 684. Scene and keyboard
+// geometry are 684's: 430x931, safe area {118,0,345,0} (691's 186 raise is off),
+// keys674 NO. Only the host view's transform/centre on the card change (a
+// mapping, no scene write). The copied strip (690), the 692 patch and the 693
+// cog copy are not made (they come back with mode=691 or the 694 off file).
+// Touches: the scene is shown through the host view's layer transform; the
+// window server maps touches into the app through the inverse of that whole
+// (affine) transform, uniform or not, as it already did for 684's x0.977.
+// Tune /var/mobile/.dynamicstage-phonesize694-tune: mode=squash|691, view_top=
+// (59), sy= (vertical scale override). Off: /var/mobile/.dynamicstage-
+// phonesize694-off = exact 4.5.691. Crash latch: -phonesize694-trying/-crashed.
+typedef struct {
+    BOOL squash;      // mode=squash (default) / 691
+    CGFloat viewTop;  // app y on the card's top edge (59)
+    CGFloat sy;       // < 0 = auto (card height / (bar line - view_top))
+} DSPhoneSize694Tune;
+
+static BOOL DSPhoneSize694Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize694-off", &at, &value);
+}
+
+static DSPhoneSize694Tune DSPhoneSize694CurrentTune(void) {
+    static DSPhoneSize694Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize694Tune t;
+    t.squash = YES;
+    t.viewTop = 59.0;
+    t.sy = -1.0;
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize694 tune %@ | in use: mode=%@ view_top=%.0f sy=%@",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize694-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values",
+                              t.squash ? @"squash" : @"691", t.viewTop, t.sy < 0.0 ? @"auto" : [NSString stringWithFormat:@"%.4f", t.sy]);
+    return t;
+}
+
+static NSString *const DSPhoneSize694TryingPath = @"/var/mobile/.dynamicstage-phonesize694-trying";
+static NSString *const DSPhoneSize694CrashedPath = @"/var/mobile/.dynamicstage-phonesize694-crashed";
+
+static BOOL DSPhoneSize694Latched(void) {
+    static int checked = 0;
+    static BOOL latched = NO;
+    if (!checked) {
+        checked = 1;
+        @try {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            if ([fm fileExistsAtPath:DSPhoneSize694TryingPath]) {
+                [fm removeItemAtPath:DSPhoneSize694TryingPath error:NULL];
+                [fm createFileAtPath:DSPhoneSize694CrashedPath contents:[NSData data] attributes:nil];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize694 squash LATCHED OFF (back to 691): SpringBoard went down within 15 s of the first squash "
+                                          @"(%@ found). Delete %@ to allow it again.", DSPhoneSize694TryingPath, DSPhoneSize694CrashedPath);
+            }
+            latched = [fm fileExistsAtPath:DSPhoneSize694CrashedPath] ||
+                      [fm fileExistsAtPath:@"/var/jb/var/mobile/.dynamicstage-phonesize694-crashed"];
+        } @catch (NSException *exception) {
+            latched = YES;
+        }
+    }
+    return latched;
+}
+
+static void DSPhoneSize694MarkTrying(void) {
+    static BOOL marked = NO;
+    if (marked) return;
+    marked = YES;
+    @try {
+        [[NSFileManager defaultManager] createFileAtPath:DSPhoneSize694TryingPath contents:[NSData data] attributes:nil];
+    } @catch (NSException *exception) {
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:DSPhoneSize694TryingPath error:NULL];
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize694 squash survived 15 s; crash latch cleared");
+    });
+}
+
+// 694 on: squash instead of the 690-693 layers.
+static BOOL DSPhoneSize694Squash(void) {
+    if (DSPhoneSize694Off()) return NO;
+    if (!DSPhoneSize694CurrentTune().squash) return NO;
+    return !DSPhoneSize694Latched();
+}
+
+// ---- 4.5.698 phonesize698: Beeper a little bigger on the card -----------------
+// User on 697: "make the bottom quickbar in beeper a little bigger as its really
+// small or even just make everything a little bit bigger". 694 shows app y 59..586
+// (527 pt) in the 458 pt card at x0.9767 / y0.8691. The 586 bar line must stay on
+// the card bottom (keyboard / chat bar, 684), and Beeper's top bar is fixed at app
+// y 59..127 (it follows the status bar, not the inset), so the only way to make
+// the picture bigger with one live (touchable) view is to show a little less:
+// a few pt of the top bar's empty top band and a few pt at each side.
+// The user: if it can't be bigger while everything still fits, don't change it.
+// It can't (any gain cuts something), so the DEFAULT IS 697's PICTURE (view_top
+// 59, side_crop 0 -> "tune gives 697's picture", nothing applied). Opt-in only:
+// e.g. view_top=72 + side_crop=5 -> x1.0000 / y0.8911 (~2.5% bigger, crops app y
+// 59..72 and 5 pt each side); zoom= multiplies 697's x and y scale (crops more of
+// the top bar: zoom=1.10 shows app y ~107..586).
+// Mapping only (host view transform/centre in layoutHostView, same branch as 694),
+// no scene write, no new hook. Only when 694 is actually squashing.
+// Tune /var/mobile/.dynamicstage-phonesize698-tune (key=value, re-read every 2 s):
+//   view_top=59..200 (59), side_crop=0..40 (0), zoom=off|1.0..1.4 (off),
+//   sx=auto|0.9..1.4, sy=auto|0.5..1.4, x_shift=-40..40 (0; + shows more of the left).
+// Off: /var/mobile/.dynamicstage-phonesize698-off = exact 4.5.697.
+// Crash latch: -phonesize698-trying (15 s after the first use) / -phonesize698-crashed.
+typedef struct {
+    CGFloat viewTop;   // app y on the card top
+    CGFloat sideCrop;  // app pt cut off each side
+    CGFloat zoom;      // <= 0 = off; else multiplies 697's sx and sy
+    CGFloat sx;        // <= 0 = auto
+    CGFloat sy;        // <= 0 = auto
+    CGFloat xShift;    // app pt, + = picture moves right (more of the left side)
+} DSPhoneSize698Tune;
+
+static BOOL DSPhoneSize698Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize698-off", &at, &value);
+}
+
+static DSPhoneSize698Tune DSPhoneSize698CurrentTune(void) {
+    static DSPhoneSize698Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize698Tune t;
+    t.viewTop = 59.0;   // 4.5.698 default = 697's picture (opt-in only, see above)
+    t.sideCrop = 0.0;
+    t.zoom = -1.0;
+    t.sx = -1.0;
+    t.sy = -1.0;
+    t.xShift = 0.0;
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize698 tune %@ | in use: view_top=%.0f side_crop=%.1f zoom=%@ sx=%@ sy=%@ x_shift=%.0f",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize698-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values",
+                              t.viewTop, t.sideCrop,
+                              t.zoom > 0.0 ? [NSString stringWithFormat:@"%.3f", t.zoom] : @"off",
+                              t.sx > 0.0 ? [NSString stringWithFormat:@"%.4f", t.sx] : @"auto",
+                              t.sy > 0.0 ? [NSString stringWithFormat:@"%.4f", t.sy] : @"auto", t.xShift);
+    return t;
+}
+
+static NSString *const DSPhoneSize698TryingPath = @"/var/mobile/.dynamicstage-phonesize698-trying";
+static NSString *const DSPhoneSize698CrashedPath = @"/var/mobile/.dynamicstage-phonesize698-crashed";
+
+static BOOL DSPhoneSize698Latched(void) {
+    static int checked = 0;
+    static BOOL latched = NO;
+    if (!checked) {
+        checked = 1;
+        @try {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            if ([fm fileExistsAtPath:DSPhoneSize698TryingPath]) {
+                [fm removeItemAtPath:DSPhoneSize698TryingPath error:NULL];
+                [fm createFileAtPath:DSPhoneSize698CrashedPath contents:[NSData data] attributes:nil];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize698 bigger picture LATCHED OFF (back to 697): SpringBoard went down within 15 s of the first use "
+                                          @"(%@ found). Delete %@ to allow it again.", DSPhoneSize698TryingPath, DSPhoneSize698CrashedPath);
+            }
+            latched = [fm fileExistsAtPath:DSPhoneSize698CrashedPath] ||
+                      [fm fileExistsAtPath:@"/var/jb/var/mobile/.dynamicstage-phonesize698-crashed"];
+        } @catch (NSException *exception) {
+            latched = YES;
+        }
+    }
+    return latched;
+}
+
+static void DSPhoneSize698MarkTrying(void) {
+    static BOOL marked = NO;
+    if (marked) return;
+    marked = YES;
+    @try {
+        [[NSFileManager defaultManager] createFileAtPath:DSPhoneSize698TryingPath contents:[NSData data] attributes:nil];
+    } @catch (NSException *exception) {
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:DSPhoneSize698TryingPath error:NULL];
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize698 bigger picture survived 15 s; crash latch cleared");
+    });
+}
+
+// ---- 4.5.695 phonesize695 -----------------------------------------------------
+// A 684-mode phone-size card keeps its 430x931 scene and its safe area while it
+// is minimised or off screen, so restore needs no resize and no relayout (693
+// log: every minimise/restore shrank Beeper to 420x458 {0,0,0,0} and grew it
+// back ~320 ms after the card was visible again). No new writes: the shrink is
+// just not asked for. Off file /var/mobile/.dynamicstage-phonesize695-off =
+// exact 694. Crash latch: -phonesize695-trying / -phonesize695-crashed.
+static BOOL DSPhoneSize695Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize695-off", &at, &value);
+}
+
+static NSString *const DSPhoneSize695TryingPath = @"/var/mobile/.dynamicstage-phonesize695-trying";
+static NSString *const DSPhoneSize695CrashedPath = @"/var/mobile/.dynamicstage-phonesize695-crashed";
+
+static BOOL DSPhoneSize695Latched(void) {
+    static int checked = 0;
+    static BOOL latched = NO;
+    if (!checked) {
+        checked = 1;
+        @try {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            // 4.5.701 rearm701: this latch tripped once, on 4.5.697 at 14:36:28
+            // NZDT (Blackoutagain): that SIGTRAP was the SBAppViewController
+            // settings handler (a Live update of a backgrounded scene), which
+            // 4.5.699 crash699 now holds - not the 695 keep. With it latched,
+            // every minimise shrinks Beeper to 420x458 and every restore grows
+            // it back (Beeper bar log: "phonesize675 OFF (keyboard down) ...
+            // back to card size"). Cleared once (marker file); the latch itself
+            // works as before if the keep is ever followed by a crash again.
+            // Off: /var/mobile/.dynamicstage-rearm701-off.
+            if (![fm fileExistsAtPath:DSPhoneSize695TryingPath] && [fm fileExistsAtPath:DSPhoneSize695CrashedPath] &&
+                ![fm fileExistsAtPath:@"/var/mobile/.dynamicstage-rearm701-done"] &&
+                ![fm fileExistsAtPath:@"/var/mobile/.dynamicstage-rearm701-off"] &&
+                ![fm fileExistsAtPath:@"/var/jb/var/mobile/.dynamicstage-rearm701-off"]) {
+                [fm createFileAtPath:@"/var/mobile/.dynamicstage-rearm701-done" contents:[NSData data] attributes:nil];
+                [fm removeItemAtPath:DSPhoneSize695CrashedPath error:NULL];
+                DSDiagnosticsRecord(@"SpringBoard: rearm701 phonesize695 keep-while-minimised allowed again once (its latch came from the 4.5.697 app-view trap that crash699 holds now); "
+                                    @"the latch still trips if SpringBoard goes down within 15 s of a keep");
+            }
+            if ([fm fileExistsAtPath:DSPhoneSize695TryingPath]) {
+                [fm removeItemAtPath:DSPhoneSize695TryingPath error:NULL];
+                [fm createFileAtPath:DSPhoneSize695CrashedPath contents:[NSData data] attributes:nil];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize695 keep-while-minimised LATCHED OFF (back to 694): SpringBoard went down within 15 s of the first keep "
+                                          @"(%@ found). Delete %@ to allow it again.", DSPhoneSize695TryingPath, DSPhoneSize695CrashedPath);
+            }
+            latched = [fm fileExistsAtPath:DSPhoneSize695CrashedPath] ||
+                      [fm fileExistsAtPath:@"/var/jb/var/mobile/.dynamicstage-phonesize695-crashed"];
+        } @catch (NSException *exception) {
+            latched = YES;
+        }
+    }
+    return latched;
+}
+
+static void DSPhoneSize695MarkTrying(void) {
+    static BOOL marked = NO;
+    if (marked) return;
+    marked = YES;
+    @try {
+        [[NSFileManager defaultManager] createFileAtPath:DSPhoneSize695TryingPath contents:[NSData data] attributes:nil];
+    } @catch (NSException *exception) {
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:DSPhoneSize695TryingPath error:NULL];
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize695 keep-while-minimised survived 15 s; crash latch cleared");
+    });
+}
+
+static BOOL DSPhoneSize695Enabled(void) {
+    if (DSPhoneSize695Off()) return NO;
+    return !DSPhoneSize695Latched();
+}
+
+// ---- 4.5.696 phonesize696 -----------------------------------------------------
+// Three fixes, each with its own off file and crash latch:
+//   0 blackout: no Live app-view update while the phone is locked (the "out from
+//     underneath us" exception that left the card black after unlock), and a
+//     watchdog that wakes / reattaches a visible card that is backgrounded,
+//     detached or hidden.
+//   1 keys: SpringBoard's systemAnimation deactivation (0x20) is cleared on a
+//     visible phone-size card's scene (as camera658 does for camera apps), so
+//     the app is already active at the first tap.
+//   2 fit: a phone-size card in the lower slot rises exactly onto the keys (no
+//     28 pt gap, constant 586), and a stale stored resting frame no longer sends
+//     it to the top slot after typing.
+// Off: /var/mobile/.dynamicstage-phonesize696-<blackout|keys|fit>-off.
+static NSString *DSPS696Name(NSInteger fix) {
+    if (fix == 0) return @"blackout";
+    if (fix == 1) return @"keys";
+    return @"fit";
+}
+
+static BOOL DSPS696OffFile(NSInteger fix) {
+    static CFAbsoluteTime at[3] = {0, 0, 0};
+    static BOOL value[3] = {NO, NO, NO};
+    NSInteger i = MAX(0, MIN(2, fix));
+    return DSPhoneSize676File([NSString stringWithFormat:@".dynamicstage-phonesize696-%@-off", DSPS696Name(i)], &at[i], &value[i]);
+}
+
+static NSString *DSPS696LatchPath(NSInteger fix, NSString *kind) {
+    return [NSString stringWithFormat:@"/var/mobile/.dynamicstage-phonesize696-%@-%@", DSPS696Name(fix), kind];
+}
+
+static BOOL DSPS696Latched(NSInteger fix) {
+    static int checked[3] = {0, 0, 0};
+    static BOOL latched[3] = {NO, NO, NO};
+    NSInteger i = MAX(0, MIN(2, fix));
+    if (!checked[i]) {
+        checked[i] = 1;
+        @try {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            NSString *trying = DSPS696LatchPath(i, @"trying");
+            NSString *crashed = DSPS696LatchPath(i, @"crashed");
+            if ([fm fileExistsAtPath:trying]) {
+                [fm removeItemAtPath:trying error:NULL];
+                [fm createFileAtPath:crashed contents:[NSData data] attributes:nil];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize696 %@ LATCHED OFF (back to 695): SpringBoard went down within 15 s of its first use "
+                                          @"(%@ found). Delete %@ to allow it again.", DSPS696Name(i), trying, crashed);
+            }
+            latched[i] = [fm fileExistsAtPath:crashed] ||
+                         [fm fileExistsAtPath:[@"/var/jb" stringByAppendingString:crashed]];
+        } @catch (NSException *exception) {
+            latched[i] = YES;
+        }
+    }
+    return latched[i];
+}
+
+void DSPS696MarkTrying(NSInteger fix) {
+    static BOOL marked[3] = {NO, NO, NO};
+    NSInteger i = MAX(0, MIN(2, fix));
+    if (marked[i]) return;
+    marked[i] = YES;
+    NSString *trying = DSPS696LatchPath(i, @"trying");
+    @try {
+        [[NSFileManager defaultManager] createFileAtPath:trying contents:[NSData data] attributes:nil];
+    } @catch (NSException *exception) {
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:trying error:NULL];
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize696 %@ survived 15 s; crash latch cleared", DSPS696Name(i));
+    });
+}
+
+BOOL DSPS696Enabled(NSInteger fix) {
+    if (DSPS696OffFile(fix)) return NO;
+    return !DSPS696Latched(fix);
+}
+
+BOOL DSPS696DeviceLocked(void) {
+    @try {
+        Class cls = objc_getClass("SBLockScreenManager");
+        id manager = [cls respondsToSelector:@selector(sharedInstance)] ? [cls performSelector:@selector(sharedInstance)] : nil;
+        if ([manager respondsToSelector:@selector(isUILocked)]) {
+            return ((BOOL (*)(id, SEL))objc_msgSend)(manager, @selector(isUILocked));
+        }
+    } @catch (NSException *exception) {
+    }
+    return NO;
+}
+
+// Scene identifiers of visible phone-size (684) cards (fix 1). Guarded by the
+// scene-overrides lock, read from applyOverridesToSettings.
+static NSMutableSet<NSString *> *DSPS696KeysScenes(void) {
+    static NSMutableSet<NSString *> *set = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        set = [NSMutableSet set];
+    });
+    return set;
+}
+
+static BOOL DSPS696IsKeysScene(NSString *identifier) {
+    if (identifier.length == 0) return NO;
+    [DSSceneOverridesLock() lock];
+    BOOL yes = [DSPS696KeysScenes() containsObject:identifier];
+    [DSSceneOverridesLock() unlock];
+    return yes;
+}
+
+typedef struct {
+    NSInteger mode;   // 0 off, 1 auto, 2 fixed
+    CGFloat value;    // fixed top inset
+} DSPhoneSize691Tune;
+
+static BOOL DSPhoneSize691Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize691-off", &at, &value);
+}
+
+static DSPhoneSize691Tune DSPhoneSize691CurrentTune(void) {
+    static DSPhoneSize691Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize691Tune t;
+    t.mode = 1;
+    t.value = 0.0;
+    NSString *note = @"top_inset not set (auto)";
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize691 tune %@: %@ | in use: top_inset=%@",
+                              text ? @"file /var/mobile/.dynamicstage-phonesize691-tune read" : @"no tune file (4.5.702: tune files are no longer read), built-in values", note,
+                              t.mode == 0 ? @"off" : (t.mode == 1 ? @"auto (strip bottom)" : [NSString stringWithFormat:@"%.0f", t.value]));
+    return t;
+}
+
+static NSString *const DSPhoneSize691TryingPath = @"/var/mobile/.dynamicstage-phonesize691-trying";
+static NSString *const DSPhoneSize691CrashedPath = @"/var/mobile/.dynamicstage-phonesize691-crashed";
+
+static BOOL DSPhoneSize691Latched(void) {
+    static int checked = 0;
+    static BOOL latched = NO;
+    if (!checked) {
+        checked = 1;
+        @try {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            if ([fm fileExistsAtPath:DSPhoneSize691TryingPath]) {
+                [fm removeItemAtPath:DSPhoneSize691TryingPath error:NULL];
+                [fm createFileAtPath:DSPhoneSize691CrashedPath contents:[NSData data] attributes:nil];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize691 raised top inset LATCHED OFF: SpringBoard went down within 15 s of the first raised-inset write "
+                                          @"(%@ found). Delete %@ to allow it again.", DSPhoneSize691TryingPath, DSPhoneSize691CrashedPath);
+            }
+            latched = [fm fileExistsAtPath:DSPhoneSize691CrashedPath] ||
+                      [fm fileExistsAtPath:@"/var/jb/var/mobile/.dynamicstage-phonesize691-crashed"];
+        } @catch (NSException *exception) {
+            latched = YES;
+        }
+    }
+    return latched;
+}
+
+static void DSPhoneSize691MarkTrying(void) {
+    static BOOL marked = NO;
+    if (marked) return;
+    marked = YES;
+    @try {
+        [[NSFileManager defaultManager] createFileAtPath:DSPhoneSize691TryingPath contents:[NSData data] attributes:nil];
+    } @catch (NSException *exception) {
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:DSPhoneSize691TryingPath error:NULL];
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize691 raised top inset survived 15 s; crash latch cleared");
+    });
+}
+
+typedef struct {
+    BOOL on;
+    CGFloat stripTop;     // app y where the strip starts (59)
+    CGFloat stripHeight;  // app pt (68)
+    CGFloat placeY;       // card y of the strip's top (0)
+    NSInteger touch;      // 0 forward, 1 block, 2 pass
+} DSPhoneSize690Tune;
+
+static BOOL DSPhoneSize690Off(void) {
+    static CFAbsoluteTime at = 0;
+    static BOOL value = NO;
+    return DSPhoneSize676File(@".dynamicstage-phonesize690-off", &at, &value);
+}
+
+static NSString *DSPhoneSize690TouchName(NSInteger touch) {
+    return touch == 1 ? @"block" : (touch == 2 ? @"pass" : @"forward");
+}
+
+static DSPhoneSize690Tune DSPhoneSize690CurrentTune(void) {
+    static DSPhoneSize690Tune cached;
+    static BOOL initialised = NO;
+    if (initialised) return cached;   // 4.5.766: tune files removed; built-in constants, computed once
+    initialised = YES;
+    NSString *text = nil;
+    DSPhoneSize690Tune t;
+    t.on = YES;
+    t.stripTop = 59.0;
+    t.stripHeight = 68.0;
+    t.placeY = 0.0;
+    t.touch = 0;
+    // 4.5.705: the tune parse loop is gone (text is always nil since 4.5.702).
+    cached = t;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 tune %@ | in use: on=%d strip_top=%.0f strip_height=%.0f place_y=%.0f touch=%@",
+                              @"built-in defaults",
+                              (int)t.on, t.stripTop, t.stripHeight, t.placeY, DSPhoneSize690TouchName(t.touch));
+    return t;
+}
+
+static NSString *const DSPhoneSize690TryingPath = @"/var/mobile/.dynamicstage-phonesize690-trying";
+static NSString *const DSPhoneSize690CrashedPath = @"/var/mobile/.dynamicstage-phonesize690-crashed";
+
+static BOOL DSPhoneSize690Latched(void) {
+    static int checked = 0;
+    static BOOL latched = NO;
+    if (!checked) {
+        checked = 1;
+        @try {
+            NSFileManager *fm = [NSFileManager defaultManager];
+            if ([fm fileExistsAtPath:DSPhoneSize690TryingPath]) {
+                [fm removeItemAtPath:DSPhoneSize690TryingPath error:NULL];
+                [fm createFileAtPath:DSPhoneSize690CrashedPath contents:[NSData data] attributes:nil];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 top-bar strip LATCHED OFF: SpringBoard went down within 15 s of the strip being made "
+                                          @"(%@ found). Delete %@ to allow it again.", DSPhoneSize690TryingPath, DSPhoneSize690CrashedPath);
+            }
+            latched = [fm fileExistsAtPath:DSPhoneSize690CrashedPath] ||
+                      [fm fileExistsAtPath:@"/var/jb/var/mobile/.dynamicstage-phonesize690-crashed"];
+        } @catch (NSException *exception) {
+            latched = YES;
+        }
+    }
+    return latched;
+}
+
+static void DSPhoneSize690MarkTrying(void) {
+    static BOOL marked = NO;
+    if (marked) return;
+    marked = YES;
+    @try {
+        [[NSFileManager defaultManager] createFileAtPath:DSPhoneSize690TryingPath contents:[NSData data] attributes:nil];
+    } @catch (NSException *exception) {
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(15.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        @try {
+            [[NSFileManager defaultManager] removeItemAtPath:DSPhoneSize690TryingPath error:NULL];
+        } @catch (NSException *exception) {
+        }
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 top-bar strip survived 15 s; crash latch cleared");
+    });
+}
+
+static void DSPhoneSize690SetBool(id object, NSString *setter, BOOL value) {
+    SEL sel = NSSelectorFromString(setter);
+    @try {
+        if (object && [object respondsToSelector:sel]) ((void (*)(id, SEL, BOOL))objc_msgSend)(object, sel, value);
+    } @catch (NSException *exception) {
+    }
+}
+
+
+@interface DSPhoneSize690StripView : UIView
+@property (nonatomic, assign) NSInteger touchMode;
+@property (nonatomic, copy) NSString *bundle;
+@property (nonatomic, assign) CGFloat stripTop;
+@property (nonatomic, assign) CGFloat fit;
+@end
+
+@implementation DSPhoneSize690StripView
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (self.hidden || self.alpha < 0.01 || !self.userInteractionEnabled || self.touchMode == 2) return nil;
+    // Keep the touch (forward mode: only touches the portal did not route to
+    // the app reach SpringBoard at all), so it never falls on the app under it.
+    return [self pointInside:point withEvent:event] ? self : nil;
+}
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = touches.anyObject;
+    CGPoint p = touch ? [touch locationInView:self] : CGPointZero;
+    CGFloat fit = self.fit > 0.01 ? self.fit : 1.0;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 %@ touch on the recreated top bar reached SpringBoard at strip %.0f,%.0f (app %.0f,%.0f), touch=%@: %@",
+                              self.bundle ?: @"?", p.x, p.y, p.x / fit, self.stripTop + p.y / fit, DSPhoneSize690TouchName(self.touchMode),
+                              self.touchMode == 0 ? @"the window server did NOT route it through the portal to the app (kept by the strip, nothing under it got it)"
+                                                  : @"kept by the strip (block mode)");
+}
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+}
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+}
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+}
+@end
 
 // Returns YES when the app is already on the stage and no further way in is
 // needed; NO means "asked, now wait and see".
@@ -391,6 +1846,10 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     // SpringBoard's own app view, when it could be had.
     SBAppViewController *_appViewController;
     SBDeviceApplicationSceneEntity *_entity;
+    // 4.5.799 reg799: scene handle we passed to addSceneUpdateContributer:.
+    id _reg799Handle;
+    BOOL _reg799DelegateSet;
+    BOOL _reg799LoggedMissingHandle;
     // Only set when the stage had to create the scene itself, which makes the
     // stage responsible for taking it down again.
     UIScenePresenter *_presenter;
@@ -400,6 +1859,89 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     BOOL _deferredSizeDelivery;
     BOOL _cardFitPending;
     BOOL _revealingTallContent;
+    // 4.5.668 sbcam668: a staged app with no app dylib in it (Beeper) is
+    // using the camera. Its scene is the phone's size, shown scaled to the
+    // card width and bottom-aligned, so its own shutter row lands on the card.
+    BOOL _cameraTall;
+    BOOL _cameraTallParentClipped;
+    BOOL _cameraTallParentWasClipping;
+    NSInteger _cameraTallGeneration;
+    // 4.5.675 phonesize675: the scene is the phone's size while the app's
+    // keyboard is up; the host shows it at the card width with scene y =
+    // _phoneSizeKeyTop on the card's bottom edge.
+    BOOL _phoneSize;
+    CGFloat _phoneSizeKeyTop;
+    NSInteger _phoneSizeGeneration;
+    BOOL _phoneSizeParentClipped;
+    BOOL _phoneSizeParentWasClipping;
+    BOOL _phoneSizeDeferNoted;
+    UIEdgeInsets _phoneSizeInsets;
+    // 4.5.676: the 1 pt relayout nudge (scene 1 pt shorter, safe-area bottom
+    // 1 pt larger) is being sent, and the optional held snapshot.
+    BOOL _phoneSizeNudging;
+    UIView *_phoneSizeHoldView;
+    // 4.5.678 phonesize678
+    BOOL _phoneSizeNudgeWidth;      // the running nudge changes the width (A), not the height
+    BOOL _phoneSizePreGrown;        // phone-size before any keyboard (B/C): mapping is an anchor, not a keyboard top
+    BOOL _phoneSizePreGrowCall;     // set only around the switch phoneSize678PreGrow makes
+    // 4.5.679 phonesize679
+    CGFloat _phoneSizeWidth;        // scene width chosen at the switch (card width / scale, or the phone's)
+    CGFloat _ps679LoggedWidth;
+    CGFloat _ps679LoggedFit;
+    CGFloat _ps679LoggedPin;
+    BOOL _beeper707Flat;     // 4.5.707 beeper707: phone-size host drawn without nested rounded clips
+    BOOL _beeper707Logged;
+    // 4.5.680 phonesize680
+    CFAbsoluteTime _ps680GrowAskAt;
+    int _ps683Logged;
+    // 4.5.684 phonesize684 (fixed at the switch / at a rest-time apply)
+    BOOL _ps684Active;              // this phone-size session uses safe area = keyboard
+    BOOL _ps684Short;               // mode=short: scene ends at the keyboard top
+    CGFloat _ps684K;                // bottom inset = the keyboard's height in the scene
+    CGFloat _ps684TopFixed;         // tune top (<0 = auto)
+    NSString *_ps684KSource;
+    BOOL _ps684KeysUp;              // the app's keyboard is up (arbiter / note)
+    BOOL _ps755Owned;               // 4.5.755 k755: the keyboard system named this app as the owner
+    NSInteger _ps684ApplyToken;
+    CGFloat _ps684CurTop;           // keyboard top (screen y) now, for learning
+    double _ps684CurSince;
+    NSMutableDictionary<NSNumber *, NSNumber *> *_ps684Durations;
+    CGFloat _ps684LoggedTop;
+    double _ps684LoggedArbiterH;
+    CFAbsoluteTime _ps684SkipLogAt;
+    // 4.5.685 phonesize685 (fixed with the 684 state)
+    BOOL _ps685Active;
+    CGFloat _ps685Slack;
+    CGFloat _ps685View;
+    CGFloat _ps685Margin;
+    CGFloat _ps685TopFixed;
+    CGFloat _ps685KeyTop;
+    // 4.5.687 phonesize687 (fixed with the 684 state)
+    BOOL _ps687Active;
+    CGFloat _ps687View;
+    CGFloat _ps687Margin;
+    CGFloat _ps687TopFixed;
+    // 4.5.688 phonesize688 (fixed with the 684 state)
+    BOOL _ps688Active;
+    NSInteger _ps688Mode;
+    CGFloat _ps688View;
+    CGFloat _ps688Offset;
+    CGFloat _ps688Shift;
+    CGFloat _ps688StatusBar;
+    CGFloat _ps688LoggedShift;
+    // 4.5.691 raised top inset (applied state)
+    NSInteger _ps691Mode;           // 0 off, 1 auto (strip bottom), 2 fixed
+    CGFloat _ps691Value;
+    CGFloat _ps691StripH;
+    CGFloat _ps691PlaceY;
+    // 4.5.690 top-bar strip
+    DSPhoneSize690StripView *_ps690Strip;
+    NSString *_ps690LoggedState;
+    NSString *_ps694LoggedState;
+    NSString *_ps698LoggedState;    // 4.5.698: last logged bigger-picture state
+    NSString *_ps696KeysSceneID;    // 4.5.696: scene id in DSPS696KeysScenes, or nil
+    CFAbsoluteTime _ps696WakeAt;    // 4.5.696: last blackout wake
+    NSInteger _ps696BadTicks;       // 4.5.696: consecutive watchdog ticks it looked black
     BOOL _revealSizeSent;
     BOOL _revealWriteQueued;
     CGFloat _growSentHeight;
@@ -425,6 +1967,13 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     // Keeps RunningBoard from suspending a hosted app once its card is off screen.
     id _runningAssertion;
     pid_t _runningAssertionPid;
+    // 4.5.719 bg719 (main thread only).
+    id _bg719Assertion;
+    pid_t _bg719Pid;
+    pid_t _bg719TriedPid;
+    NSUInteger _bg719Gen;
+    BOOL _bg719Busy;
+    BOOL _bg719RetakeAllowed;
     NSInteger _runningAssertionAttempts;
     BOOL _runningAssertionRetry;
     NSInteger _mediaActivateAttempts;
@@ -453,6 +2002,7 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 
 - (void)dealloc {
     [self restoreOwnedStrayPresentations];
+    [self bg719Release:@"card gone"];
     [self releaseRunningAssertion];
     [self removeOverride];
 }
@@ -620,6 +2170,529 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 // of parts - launching the app, finding the scene, hosting its layers, forcing its
 // size, and hoping keyboard focus follows - and simply asking for an app view. It
 // launches the app itself, so nothing needs to be started first.
+
+#pragma mark - 4.5.799 reg799 (cover-sheet / in-call hosting registration)
+
+// Off: reg799-off or core799-off. Crash latch via DSFeature699MarkTrying("reg799").
+static BOOL DSReg799On(void) {
+    if (!DS799On("reg799")) return NO;
+    static BOOL marked = NO;
+    if (!marked) {
+        marked = YES;
+        DSFeature699MarkTrying("reg799");
+    }
+    return YES;
+}
+
+// The app-view identifier SpringBoard asserts on (SBAppViewController._identifier).
+// We pass the bundle id to initWithIdentifier:andApplicationSceneEntity:, so that
+// is the string that must appear in ignoreOcclusionReasons.
+- (NSString *)reg799Identifier {
+    SBAppViewController *controller = _appViewController;
+    if (!controller) return _bundleIdentifier;
+    @try {
+        Ivar iv = class_getInstanceVariable(object_getClass(controller), "_identifier");
+        id ident = iv ? object_getIvar(controller, iv) : nil;
+        if ([ident isKindOfClass:[NSString class]] && [(NSString *)ident length] > 0) return ident;
+    } @catch (NSException *e) {}
+    return _bundleIdentifier;
+}
+
+- (id)reg799SceneHandle {
+    SBAppViewController *controller = _appViewController;
+    if (!controller) return nil;
+    @try {
+        id handle = DSIvar(controller, @"_sceneHandle");
+        if (!handle && [controller respondsToSelector:@selector(sceneHandle)]) {
+            handle = ((id (*)(id, SEL))objc_msgSend)(controller, @selector(sceneHandle));
+        }
+        return handle;
+    } @catch (NSException *e) {
+        return nil;
+    }
+}
+
+// Verify selector exists and has the expected arity (self + _cmd + N args).
+static BOOL DSReg799Has(id obj, SEL sel, unsigned expectedArgs, NSString **why) {
+    if (!obj) { if (why) *why = @"nil target"; return NO; }
+    if (![obj respondsToSelector:sel]) { if (why) *why = [NSString stringWithFormat:@"no %@", NSStringFromSelector(sel)]; return NO; }
+    Method m = class_getInstanceMethod(object_getClass(obj), sel);
+    if (!m) { if (why) *why = [NSString stringWithFormat:@"no Method for %@", NSStringFromSelector(sel)]; return NO; }
+    unsigned n = method_getNumberOfArguments(m);
+    // method_getNumberOfArguments counts self + _cmd.
+    if (n != expectedArgs + 2) {
+        if (why) *why = [NSString stringWithFormat:@"%@ arity %u (want %u)", NSStringFromSelector(sel), n - 2, expectedArgs];
+        return NO;
+    }
+    return YES;
+}
+
+// Add our identifier to a mutable settings' ignoreOcclusionReasons set.
+// Same call SpringBoard's contributor path uses (FBSMutableSceneSettings
+// ignoreOcclusionReasons returns a lazy NSMutableSet).
++ (BOOL)reg799AppendReason:(NSString *)ident toSettings:(id)settings log:(BOOL)log {
+    if (ident.length == 0 || !settings) return NO;
+    @try {
+        if (![settings respondsToSelector:@selector(ignoreOcclusionReasons)]) return NO;
+        id reasons = ((id (*)(id, SEL))objc_msgSend)(settings, @selector(ignoreOcclusionReasons));
+        if (![reasons respondsToSelector:@selector(addObject:)]) return NO;
+        BOOL already = [reasons respondsToSelector:@selector(containsObject:)] && [reasons containsObject:ident];
+        if (!already) [reasons addObject:ident];
+        if (log) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: reg799: contributor appended reason %@ (already=%d, set=%@)",
+                                      ident, already ? 1 : 0,
+                                      [[reasons description] stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+        }
+        return YES;
+    } @catch (NSException *e) {
+        return NO;
+    }
+}
+
+// SBApplicationSceneHandleUpdateContributing — called by
+// -[SBApplicationSceneHandle _createApplicationSceneSettingsFromContext:entity:]
+// on every settings rebuild through the scene handle (cover-sheet / in-call pattern).
+- (void)applicationSceneHandle:(id)handle
+        appendToSceneSettings:(id)settings
+          fromRequestContext:(id)context
+                      entity:(id)entity {
+    if (!DSReg799On()) return;
+    NSString *ident = [self reg799Identifier];
+    [DSSceneHost reg799AppendReason:ident toSettings:settings log:YES];
+    DSCrash793Crumb([[NSString stringWithFormat:@"reg799 append reason %@ handle=%p", ident ?: @"?", handle] UTF8String]);
+}
+
+// Optional transition-context companion on the same protocol (no-op; present so
+// we match the real hosts' conformance surface).
+- (void)applicationSceneHandle:(id)handle
+     appendToTransitionContext:(id)ctx
+           fromRequestContext:(id)context
+                       entity:(id)entity {
+    (void)handle; (void)ctx; (void)context; (void)entity;
+}
+
+#pragma mark - SBAppViewControllerDelegate (reg799)
+
+- (void)appViewControllerWillActivateApplication:(id)controller {
+    if (!DSReg799On()) return;
+    // 4.5.800: rate-limit — a Live/foreground fight used to spam this ~15x.
+    static CFAbsoluteTime last = 0;
+    static NSInteger suppressed = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - last < 1.0) { suppressed++; return; }
+    NSInteger skipped = suppressed;
+    suppressed = 0;
+    last = now;
+    if (skipped > 0) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: reg799: appViewControllerWillActivateApplication %@ (suppressed %ld repeats)", _bundleIdentifier ?: @"?", (long)skipped);
+    } else {
+        DSDiagnosticsRecordFormat(@"SpringBoard: reg799: appViewControllerWillActivateApplication %@", _bundleIdentifier ?: @"?");
+    }
+}
+
+- (void)appViewControllerDidDeactivateApplication:(id)controller {
+    if (!DSReg799On()) return;
+    DSDiagnosticsRecordFormat(@"SpringBoard: reg799: appViewControllerDidDeactivateApplication %@", _bundleIdentifier ?: @"?");
+}
+
+- (void)appViewControllerDidFailToActivateApplication:(id)controller {
+    if (!DSReg799On()) return;
+    DSDiagnosticsRecordFormat(@"SpringBoard: reg799: appViewControllerDidFailToActivateApplication %@", _bundleIdentifier ?: @"?");
+}
+
+- (BOOL)appViewControllerShouldBackgroundApplicationOnDeactivate:(id)controller {
+    // Cover-sheet / in-call answer NO while the host wants the app to stay live.
+    // Minimised cards still run (ignoresOcclusions); only tear-down should allow
+    // backgrounding, and by then we have unregistered.
+    if (!DSReg799On()) return YES;
+    return NO;
+}
+
+- (BOOL)appViewControllerShouldReactivateApplicationOnDestruction:(id)controller {
+    if (!DSReg799On()) return NO;
+    return YES;
+}
+
+- (void)appViewController:(id)controller didTransitionFromMode:(NSInteger)from toMode:(NSInteger)to {
+    if (!DSReg799On()) return;
+    DSDiagnosticsRecordFormat(@"SpringBoard: reg799: mode %ld -> %ld for %@", (long)from, (long)to, _bundleIdentifier ?: @"?");
+}
+
+- (void)reg799TryRegister {
+    if (!DSReg799On()) return;
+    SBAppViewController *controller = _appViewController;
+    if (!controller) return;
+
+    // 1. Delegate (SBAppViewController.setDelegate:)
+    if (!_reg799DelegateSet) {
+        NSString *why = nil;
+        if (DSReg799Has(controller, @selector(setDelegate:), 1, &why)) {
+            ((void (*)(id, SEL, id))objc_msgSend)(controller, @selector(setDelegate:), self);
+            _reg799DelegateSet = YES;
+            DSDiagnosticsRecordFormat(@"SpringBoard: reg799: setDelegate on %@ ctrl=%p", _bundleIdentifier ?: @"?", controller);
+        } else {
+            DSDiagnosticsRecordFormat(@"SpringBoard: reg799: skip setDelegate on %@: %@", _bundleIdentifier ?: @"?", why ?: @"?");
+        }
+    }
+
+    // 2. Scene-update contributor on the scene handle.
+    id handle = [self reg799SceneHandle];
+    if (!handle) {
+        if (!_reg799LoggedMissingHandle) {
+            _reg799LoggedMissingHandle = YES;
+            DSDiagnosticsRecordFormat(@"SpringBoard: reg799: no sceneHandle yet for %@ (will retry)", _bundleIdentifier ?: @"?");
+        }
+        return;
+    }
+    if (_reg799Handle == handle) return; // already registered on this handle
+    if (_reg799Handle && _reg799Handle != handle) {
+        [self reg799Unregister]; // move to the new handle
+    }
+
+    NSString *whyAdd = nil;
+    // addSceneUpdateContributer: — note Apple's spelling (one 'o').
+    SEL addSel = @selector(addSceneUpdateContributer:);
+    if (!DSReg799Has(handle, addSel, 1, &whyAdd)) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: reg799: cannot add contributor on %@: %@", _bundleIdentifier ?: @"?", whyAdd ?: @"?");
+        return;
+    }
+    // Confirm the protocol method we implement has the right arity on our class.
+    NSString *whyAppend = nil;
+    SEL appendSel = @selector(applicationSceneHandle:appendToSceneSettings:fromRequestContext:entity:);
+    if (!DSReg799Has(self, appendSel, 4, &whyAppend)) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: reg799: our append method bad: %@", whyAppend ?: @"?");
+        return;
+    }
+
+    ((void (*)(id, SEL, id))objc_msgSend)(handle, addSel, self);
+    _reg799Handle = handle;
+    NSString *ident = [self reg799Identifier];
+    DSDiagnosticsRecordFormat(@"SpringBoard: reg799: registered contributor on %@ handle=%p ident=%@ (addSceneUpdateContributer:)",
+                              _bundleIdentifier ?: @"?", handle, ident ?: @"?");
+    DSCrash793Crumb([[NSString stringWithFormat:@"reg799 registered %@ handle=%p", _bundleIdentifier ?: @"?", handle] UTF8String]);
+
+    // 3. Display-layout element: log only in 799 (publishing every staged card
+    // risks fighting the camera path and keyboard focus; 803 will do it for real).
+    DSDiagnosticsRecordFormat(@"SpringBoard: reg799: would publish SBSDisplayLayoutElement for %@ ident=%@ (log-only in 799; camera path already publishes when needed)",
+                              _bundleIdentifier ?: @"?", ident ?: @"?");
+}
+
+- (void)reg799Unregister {
+    id handle = _reg799Handle;
+    _reg799Handle = nil;
+    _reg799LoggedMissingHandle = NO;
+    if (!handle) return;
+    NSString *why = nil;
+    SEL remSel = @selector(removeSceneUpdateContributer:);
+    if (DSReg799Has(handle, remSel, 1, &why)) {
+        ((void (*)(id, SEL, id))objc_msgSend)(handle, remSel, self);
+        DSDiagnosticsRecordFormat(@"SpringBoard: reg799: removed contributor from %@ handle=%p", _bundleIdentifier ?: @"?", handle);
+        DSCrash793Crumb([[NSString stringWithFormat:@"reg799 removed %@ handle=%p", _bundleIdentifier ?: @"?", handle] UTF8String]);
+    } else {
+        DSDiagnosticsRecordFormat(@"SpringBoard: reg799: could not remove contributor: %@", why ?: @"?");
+    }
+    // Clear delegate if we set it.
+    SBAppViewController *controller = _appViewController;
+    if (_reg799DelegateSet && controller && [controller respondsToSelector:@selector(setDelegate:)]) {
+        @try {
+            id cur = [controller respondsToSelector:@selector(delegate)] ? ((id (*)(id, SEL))objc_msgSend)(controller, @selector(delegate)) : nil;
+            if (cur == self) ((void (*)(id, SEL, id))objc_msgSend)(controller, @selector(setDelegate:), nil);
+        } @catch (NSException *e) {}
+    }
+    _reg799DelegateSet = NO;
+}
+
+#pragma mark - 4.5.800 reason800 / fg800
+
+// Off: reason800-off or core800-off. Crash latch via DSFeature699MarkTrying("reason800").
+static BOOL DSReason800On(void) {
+    if (!DS800On("reason800")) return NO;
+    static BOOL marked = NO;
+    if (!marked) {
+        marked = YES;
+        DSFeature699MarkTrying("reason800");
+    }
+    return YES;
+}
+
+static BOOL DSFg800On(void) {
+    if (!DS800On("fg800")) return NO;
+    static BOOL marked = NO;
+    if (!marked) {
+        marked = YES;
+        DSFeature699MarkTrying("fg800");
+    }
+    return YES;
+}
+
+static const void *kDSFg800ParkedKey = &kDSFg800ParkedKey;
+
++ (NSString *)reason800IdentifierForAppViewController:(id)controller {
+    if (!controller) return nil;
+    @try {
+        Ivar iv = class_getInstanceVariable(object_getClass(controller), "_identifier");
+        id ident = iv ? object_getIvar(controller, iv) : nil;
+        if ([ident isKindOfClass:[NSString class]] && [(NSString *)ident length] > 0) return ident;
+    } @catch (NSException *e) {}
+    return nil;
+}
+
+// Re-append our app-view identifier onto a mutable settings' ignoreOcclusionReasons.
+// Uses the verified FBSMutableSceneSettings API (lazy NSMutableSet). When the
+// live scene.settings object is immutable (home/layout already committed an
+// empty set), fall back to FBScene updateSettingsWithBlock:.
++ (BOOL)reason800EnsureReasonOnSettings:(id)settings forAppViewController:(id)controller {
+    if (!DSReason800On() || !settings || !controller) return NO;
+    NSString *ident = [self reason800IdentifierForAppViewController:controller];
+    if (ident.length == 0) return NO;
+    static NSInteger depth = 0;
+    if (depth > 0) return NO;
+    @try {
+        id reasons = [settings respondsToSelector:@selector(ignoreOcclusionReasons)]
+            ? ((id (*)(id, SEL))objc_msgSend)(settings, @selector(ignoreOcclusionReasons)) : nil;
+        BOOL has = ident && [reasons respondsToSelector:@selector(containsObject:)] && [reasons containsObject:ident];
+        if (has) return NO; // already present; nothing to do
+        BOOL ok = [self reg799AppendReason:ident toSettings:settings log:NO];
+        const char *how = "in-place";
+        if (!ok) {
+            // Immutable settings: push a block update onto the scene.
+            id handle = DSIvar(controller, @"_sceneHandle");
+            if (!handle && [controller respondsToSelector:@selector(sceneHandle)]) {
+                handle = ((id (*)(id, SEL))objc_msgSend)(controller, @selector(sceneHandle));
+            }
+            id scene = (handle && [handle respondsToSelector:@selector(scene)])
+                ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+            if (scene) {
+                depth++;
+                @try {
+                    DSUpdateSceneSettings((FBScene *)scene, ^(FBSMutableSceneSettings *mutable) {
+                        [DSSceneHost reg799AppendReason:ident toSettings:mutable log:NO];
+                    });
+                    ok = YES;
+                    how = "updateSettingsWithBlock";
+                } @finally {
+                    depth--;
+                }
+            }
+        }
+        if (ok) {
+            static CFAbsoluteTime last = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - last > 0.5) {
+                last = now;
+                NSString *line = [NSString stringWithFormat:@"reason800: re-appended %@ via %s (was missing; home/layout path bypassed contributor) ctrl=%p",
+                                  ident, how, controller];
+                DSDiagnosticsRecordFormat(@"SpringBoard: %@", line);
+                DSCrash793Crumb(line.UTF8String);
+            }
+        }
+        return ok;
+    } @catch (NSException *e) {
+        return NO;
+    }
+}
+
+// For FBScene update paths: find the owned app view for this scene and append.
++ (BOOL)reason800EnsureReasonOnScene:(id)scene settings:(id)settings {
+    if (!DSReason800On() || !scene || !settings) return NO;
+    @try {
+        id match = nil;
+        for (id ctrl in DSOwnedAppViewControllers()) {
+            id handle = nil;
+            @try {
+                handle = DSIvar(ctrl, @"_sceneHandle");
+                if (!handle && [ctrl respondsToSelector:@selector(sceneHandle)]) {
+                    handle = ((id (*)(id, SEL))objc_msgSend)(ctrl, @selector(sceneHandle));
+                }
+            } @catch (NSException *e) { handle = nil; }
+            id sc = (handle && [handle respondsToSelector:@selector(scene)])
+                ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+            if (sc == scene) { match = ctrl; break; }
+        }
+        if (!match) {
+            // Fallback: scene identifier often embeds the bundle id we used as _identifier.
+            NSString *sid = [scene respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identifier)) : nil;
+            if (![sid isKindOfClass:[NSString class]] || sid.length == 0) return NO;
+            for (id ctrl in DSOwnedAppViewControllers()) {
+                NSString *ident = [self reason800IdentifierForAppViewController:ctrl];
+                if (ident.length && [sid rangeOfString:ident].location != NSNotFound) { match = ctrl; break; }
+            }
+        }
+        if (!match) return NO;
+        return [self reason800EnsureReasonOnSettings:settings forAppViewController:match];
+    } @catch (NSException *e) {
+        return NO;
+    }
+}
+
+// Leave Live (SBAppViewControllerMode = 2) for Static (1) before SpringBoard
+// applies a foreground=NO update. Cover-sheet / in-call hosts leave Live via
+// setRequestedMode: when the scene is backgrounded. With automatesLifecycle NO,
+// setRequestedMode: alone only stores _requestedMode — 800 also drove
+// _setCurrentMode:1, which stopped the Live assertion but SpringBoard still
+// soft-asserted with "current mode: Static". 4.5.801 fg801 briefly flips
+// automatesLifecycle YES around setRequestedMode: so _deactivateHostedApp runs
+// the same ordered path as DashBoard / in-call (mode transition owns the
+// foreground change). Restore with fg800RestoreLiveIfNeeded (fg801 also puts
+// displayMode 4 + _activateApp back so layerHosts are not empty).
+static BOOL DSFg801On(void) {
+    if (!DS801On("fg801")) return NO;
+    static BOOL marked = NO;
+    if (!marked) {
+        marked = YES;
+        DSFeature699MarkTrying("fg801");
+    }
+    return YES;
+}
+
++ (void)fg800LeaveLiveIfBackgrounded:(id)controller handle:(id)handle previousSettings:(id)previousSettings {
+    if (!DSFg800On() || !controller) return;
+    @try {
+        NSInteger mode = -1;
+        if ([controller respondsToSelector:@selector(currentMode)]) {
+            mode = ((NSInteger (*)(id, SEL))objc_msgSend)(controller, @selector(currentMode));
+        }
+        // SBAppViewControllerMode: 0 None, 1 Static, 2 Live
+        if (mode != 2) return;
+
+        id scene = nil;
+        if (handle && [handle respondsToSelector:@selector(scene)]) {
+            scene = ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene));
+        }
+        id settings = (scene && [scene respondsToSelector:@selector(settings)])
+            ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+        BOOL knownNow = NO, knownBefore = NO;
+        BOOL after = settings ? [self readForegroundFlag:settings known:&knownNow] : NO;
+        BOOL before = previousSettings ? [self readForegroundFlag:previousSettings known:&knownBefore] : YES;
+        BOOL backgrounded = knownNow && !after;
+        BOOL flippingOff = knownBefore && knownNow && before && !after;
+        if (!backgrounded && !flippingOff) return;
+
+        objc_setAssociatedObject(controller, kDSFg800ParkedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        BOOL fg801 = DSFg801On();
+        BOOL wasAuto = NO;
+        if (fg801 && [controller respondsToSelector:@selector(automatesLifecycle)]) {
+            wasAuto = ((BOOL (*)(id, SEL))objc_msgSend)(controller, @selector(automatesLifecycle));
+            if (!wasAuto && [controller respondsToSelector:@selector(setAutomatesLifecycle:)]) {
+                ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setAutomatesLifecycle:), YES);
+            }
+        }
+        if ([controller respondsToSelector:@selector(setRequestedMode:)]) {
+            ((void (*)(id, SEL, NSInteger))objc_msgSend)(controller, @selector(setRequestedMode:), (NSInteger)1);
+        }
+        // Fallback / 800 path: with automatesLifecycle still NO, setRequestedMode
+        // alone is not enough.
+        if (!fg801 || wasAuto) {
+            if ([controller respondsToSelector:@selector(_setCurrentMode:)]) {
+                ((void (*)(id, SEL, NSInteger))objc_msgSend)(controller, @selector(_setCurrentMode:), (NSInteger)1);
+            }
+        } else if ([controller respondsToSelector:@selector(currentMode)]) {
+            NSInteger now = ((NSInteger (*)(id, SEL))objc_msgSend)(controller, @selector(currentMode));
+            if (now != 1 && [controller respondsToSelector:@selector(_setCurrentMode:)]) {
+                ((void (*)(id, SEL, NSInteger))objc_msgSend)(controller, @selector(_setCurrentMode:), (NSInteger)1);
+            }
+        }
+        if (fg801 && !wasAuto && [controller respondsToSelector:@selector(setAutomatesLifecycle:)]) {
+            ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setAutomatesLifecycle:), NO);
+        }
+        NSString *line = [NSString stringWithFormat:@"%@: Live -> Static (scene backgrounded fg=%d flip=%d auto=%d) ctrl=%p",
+                          fg801 ? @"fg801" : @"fg800", after ? 1 : 0, flippingOff ? 1 : 0, fg801 ? 1 : 0, controller];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@", line);
+        DSCrash793Crumb(line.UTF8String);
+    } @catch (NSException *e) {}
+}
+
++ (void)fg800RestoreLiveIfNeeded:(id)controller {
+    if (!DSFg800On() || !controller) return;
+    @try {
+        NSNumber *parked = objc_getAssociatedObject(controller, kDSFg800ParkedKey);
+        if (!parked.boolValue) return;
+        NSInteger mode = -1;
+        if ([controller respondsToSelector:@selector(currentMode)]) {
+            mode = ((NSInteger (*)(id, SEL))objc_msgSend)(controller, @selector(currentMode));
+        }
+        BOOL fg801 = DSFg801On();
+        if (mode == 2) {
+            // Already Live — still ensure displayMode 4 so layerHosts come back
+            // after a deep-background Static park (Hdidbdh 00:20:55 mode=2 hosts=[]).
+            if (fg801 && [controller respondsToSelector:@selector(setDisplayMode:animationFactory:completion:)]) {
+                NSInteger dm = -1;
+                if ([controller respondsToSelector:@selector(displayMode)]) {
+                    dm = ((NSInteger (*)(id, SEL))objc_msgSend)(controller, @selector(displayMode));
+                }
+                if (dm != 4) {
+                    ((void (*)(id, SEL, NSInteger, id, id))objc_msgSend)(controller, @selector(setDisplayMode:animationFactory:completion:), (NSInteger)4, nil, nil);
+                    SEL activate = NSSelectorFromString(@"_activateApp");
+                    if ([controller respondsToSelector:activate]) {
+                        ((void (*)(id, SEL))objc_msgSend)(controller, activate);
+                    }
+                    NSString *line = [NSString stringWithFormat:@"fg801: Live hosts refresh displayMode %ld -> 4 ctrl=%p", (long)dm, controller];
+                    DSDiagnosticsRecordFormat(@"SpringBoard: %@", line);
+                    DSCrash793Crumb(line.UTF8String);
+                }
+            }
+            objc_setAssociatedObject(controller, kDSFg800ParkedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            return;
+        }
+        BOOL wasAuto = NO;
+        if (fg801 && [controller respondsToSelector:@selector(automatesLifecycle)]) {
+            wasAuto = ((BOOL (*)(id, SEL))objc_msgSend)(controller, @selector(automatesLifecycle));
+            if (!wasAuto && [controller respondsToSelector:@selector(setAutomatesLifecycle:)]) {
+                ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setAutomatesLifecycle:), YES);
+            }
+        }
+        if ([controller respondsToSelector:@selector(setRequestedMode:)]) {
+            ((void (*)(id, SEL, NSInteger))objc_msgSend)(controller, @selector(setRequestedMode:), (NSInteger)2);
+        }
+        if ([controller respondsToSelector:@selector(_setCurrentMode:)]) {
+            ((void (*)(id, SEL, NSInteger))objc_msgSend)(controller, @selector(_setCurrentMode:), (NSInteger)2);
+        }
+        if (fg801 && [controller respondsToSelector:@selector(setDisplayMode:animationFactory:completion:)]) {
+            ((void (*)(id, SEL, NSInteger, id, id))objc_msgSend)(controller, @selector(setDisplayMode:animationFactory:completion:), (NSInteger)4, nil, nil);
+            SEL activate = NSSelectorFromString(@"_activateApp");
+            if ([controller respondsToSelector:activate]) {
+                ((void (*)(id, SEL))objc_msgSend)(controller, activate);
+            }
+        }
+        if (fg801 && !wasAuto && [controller respondsToSelector:@selector(setAutomatesLifecycle:)]) {
+            ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setAutomatesLifecycle:), NO);
+        }
+        objc_setAssociatedObject(controller, kDSFg800ParkedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        NSString *line = [NSString stringWithFormat:@"%@: Static -> Live (restore) ctrl=%p wasMode=%ld hosts=%d",
+                          fg801 ? @"fg801" : @"fg800", controller, (long)mode, fg801 ? 1 : 0];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@", line);
+        DSCrash793Crumb(line.UTF8String);
+    } @catch (NSException *e) {}
+}
+
+// 4.5.801: YES when fg801 just parked this controller and the upcoming
+// foreground=NO update should not run through SpringBoard's Live/Static check
+// (cover-sheet ordering already owned the transition).
++ (BOOL)fg801ShouldSkipForegroundAssertionOrig:(id)controller previousSettings:(id)previousSettings handle:(id)handle {
+    if (!DSFg801On() || !controller) return NO;
+    @try {
+        NSNumber *parked = objc_getAssociatedObject(controller, kDSFg800ParkedKey);
+        // Parked flag is cleared on restore; right after Leave it is YES. Also
+        // accept currentMode already Static with a foreground flip off.
+        NSInteger mode = -1;
+        if ([controller respondsToSelector:@selector(currentMode)]) {
+            mode = ((NSInteger (*)(id, SEL))objc_msgSend)(controller, @selector(currentMode));
+        }
+        id scene = (handle && [handle respondsToSelector:@selector(scene)])
+            ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+        id settings = (scene && [scene respondsToSelector:@selector(settings)])
+            ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+        BOOL knownNow = NO, knownBefore = NO;
+        BOOL after = settings ? [self readForegroundFlag:settings known:&knownNow] : YES;
+        BOOL before = previousSettings ? [self readForegroundFlag:previousSettings known:&knownBefore] : YES;
+        BOOL flippingOff = knownBefore && knownNow && before && !after;
+        if (!flippingOff) return NO;
+        if (mode == 1) return YES; // already Static — our leave owned it
+        if (parked.boolValue) return YES;
+    } @catch (NSException *e) {}
+    return NO;
+}
+
 - (BOOL)hostThroughAppViewController {
     if (_appViewController) return YES;
 
@@ -754,6 +2827,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
             [DSCameraArbiter noteStagedBundle:_bundleIdentifier];
         } @catch (NSException *exception) {
         }
+        // 4.5.799: register as cover-sheet / in-call hosts do. Scene handle may
+        // not exist yet; reportHostingOutcome retries.
+        [self reg799TryRegister];
         return YES;
     } @catch (NSException *exception) {
         DSDiagnosticsRecordFormat(@"SpringBoard: asking for an app view for %@ threw %@ - %@",
@@ -783,6 +2859,14 @@ typedef BOOL (^DSSceneHostAttempt)(void);
                                       isHosting ? @"hosting the app" : @"not hosting anything",
                                       scene ? @"scene present" : @"no scene",
                                       controller.view.superview ? @"in the card" : @"not in the card");
+            // 4.5.678 C (opt-in): an allowlisted app goes phone-size as soon as
+            // its card is hosting it.
+            if (isHosting && scene && controller.view.superview && DSPhoneSize678Always()) {
+                DSStageManager *manager = [DSStageManager sharedManager];
+                if ([manager respondsToSelector:@selector(phoneSize678HostReady:)]) [manager phoneSize678HostReady:strongSelf];
+            }
+            // 4.5.799: scene handle is usually present by now.
+            [strongSelf reg799TryRegister];
         } @catch (NSException *exception) {
         }
     });
@@ -849,6 +2933,29 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         }
     }
     return [self appViewScene] != nil;
+}
+
+// 4.5.754 log754: true when this trace line differs from the last one of its
+// kind or 2 s have passed (repeats are dropped, not counted).
+static BOOL DSTrace754Fresh(NSString *line, int kind) {
+    static NSString *last[2] = { nil, nil };
+    static CFAbsoluteTime at[2] = { 0, 0 };
+    if (!(DSFeature699On("core754") && DSFeature699On("log754"))) return YES;
+    CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+    if ([line isEqualToString:last[kind]] && t - at[kind] < 2.0 && t >= at[kind]) return NO;
+    last[kind] = [line copy];
+    at[kind] = t;
+    return YES;
+}
+
+// 4.5.754 host754: the same three facts the "after two seconds" line reports,
+// asked directly: the app view hosts the app, its scene exists, and the app view
+// is in the card. Read only (no scene writes).
+- (BOOL)host754Ready {
+    if (!self.isHosting) return NO;
+    SBAppViewController *controller = _appViewController;
+    if (!controller || !controller.view.superview || !controller.view.window) return NO;
+    return [self appViewIsShowingContent] && [self appViewScene] != nil;
 }
 
 // Repeating this after the app is already on screen is what flickers the card:
@@ -1107,9 +3214,79 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     [self registerGeometryOnlyOverride];
 
     CGRect frame = [self frameForScene];
-    UIEdgeInsets insets = _safeAreaInsets;
+    UIEdgeInsets insets = [self insetsForScene];
+    CGFloat statusBar = _phoneSize ? [self phoneSize688StatusBarHeight] : 0.0;
+    NSString *sceneIdentifier = [scene respondsToSelector:@selector(identifier)] ? scene.identifier : nil;
+    BOOL statusBarTouched = statusBar > 0.0 || DSPhoneSize688HasStatusBarOriginal(sceneIdentifier);
+    // 4.5.748 geo748: the hosted scene's geometry is written only when it
+    // changes. Every write is a scene update round trip, and each one landing
+    // during a card move was what the appview670 / hold740 holds had to catch.
+    // Skipped only when the scene already has this exact frame and the last
+    // write from here had the same frame, insets and status bar. Messages is
+    // exempt (unchanged). Off: geo748-off / core748-off (crash latch geo748).
+    @try {
+        if (DSFeature699On("core748") && DSFeature699On("geo748") && sceneIdentifier.length &&
+            [sceneIdentifier rangeOfString:@"MobileSMS"].location == NSNotFound) {
+            static NSMutableDictionary<NSString *, NSString *> *last748 = nil;
+            if (!last748) last748 = [NSMutableDictionary dictionary];
+            NSString *want = [NSString stringWithFormat:@"%@|%@|%.1f", NSStringFromCGRect(frame), NSStringFromUIEdgeInsets(insets), statusBar];
+            CGRect have = CGRectNull;
+            id settings = [scene respondsToSelector:@selector(settings)] ? scene.settings : nil;
+            id value = settings ? [settings valueForKey:@"frame"] : nil;
+            if ([value isKindOfClass:NSValue.class]) have = [value CGRectValue];
+            if ([last748[sceneIdentifier] isEqualToString:want] && !CGRectIsNull(have) && CGRectEqualToRect(have, frame)) {
+                DSFeature719MarkAction("geo748");
+                static CFAbsoluteTime saidAt = 0;
+                CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+                if (t - saidAt > 5.0 || t < saidAt) {
+                    saidAt = t;
+                    DSDiagnosticsRecordFormat(@"SpringBoard: geo748 %@ geometry unchanged %@: no scene write", _bundleIdentifier ?: @"?", NSStringFromCGRect(frame));
+                }
+                return;
+            }
+            last748[sceneIdentifier] = want;
+        }
+    } @catch (NSException *exception) {
+    }
     DSUpdateSceneSettings(scene, ^(FBSMutableSceneSettings *settings) {
         DSApplyGeometry(settings, frame, insets);
+        // 4.5.688 mode=statusbar (or putting the original height back).
+        if (statusBarTouched) DSPhoneSize688ApplyStatusBar(settings, sceneIdentifier, statusBar);
+    });
+}
+
+// 4.5.757 msgfit757: the app reported phone-size geometry while the scene
+// says card size. Re-send the frame with a 1 pt nudge then the real frame so
+// the client receives a diff. At most once per 3 s, 3 times per card fit size.
+- (void)msgfit757Nudge {
+    static CFAbsoluteTime at = 0;
+    static NSInteger count = 0;
+    static NSString *lastFor = nil;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - at < 3.0 && now >= at) return;
+    if (![lastFor isEqualToString:_bundleIdentifier ?: @""]) { lastFor = [_bundleIdentifier ?: @"" copy]; count = 0; }
+    if (count >= 3) return;
+    if (DSAvoidSceneLifecycle() || DSSceneSettingsUpdateDepth > 0) return;
+    FBScene *scene = [self appViewScene];
+    if (!scene) return;
+    CGRect frame = [self frameForScene];
+    if (CGRectGetWidth(frame) < 50.0 || CGRectGetHeight(frame) < 50.0) return;
+    if (_phoneSize || CGRectGetWidth(frame) >= CGRectGetWidth(UIScreen.mainScreen.bounds) - 1.0) return; // phone-size scenes are meant to be
+    at = now; count += 1;
+    UIEdgeInsets insets = [self insetsForScene];
+    CGRect nudge = frame; nudge.size.height -= 1.0;
+    DSDiagnosticsRecordFormat(@"SpringBoard: msgfit757 %@ reports phone-size keyboard geometry but its scene is %@: re-sending the card frame (%ld)",
+                              _bundleIdentifier ?: @"?", NSStringFromCGRect(frame), (long)count);
+    DSUpdateSceneSettings(scene, ^(FBSMutableSceneSettings *settings) { DSApplyGeometry(settings, nudge, insets); });
+    __weak typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || DSSceneSettingsUpdateDepth > 0) return;
+        FBScene *sc = [strongSelf appViewScene];
+        if (!sc) return;
+        CGRect f = [strongSelf frameForScene];
+        UIEdgeInsets in = [strongSelf insetsForScene];
+        DSUpdateSceneSettings(sc, ^(FBSMutableSceneSettings *settings) { DSApplyGeometry(settings, f, in); });
     });
 }
 
@@ -1119,6 +3296,8 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     @try {
         id handle = DSIvar(controller, @"_sceneHandle");
         if (!handle && [controller respondsToSelector:@selector(sceneHandle)]) handle = controller.sceneHandle;
+        // 4.5.799: register as soon as the handle first appears.
+        if (handle && DSReg799On() && _reg799Handle != handle) [self reg799TryRegister];
         if ([handle respondsToSelector:@selector(scene)]) {
             return ((FBScene * (*)(id, SEL))objc_msgSend)(handle, @selector(scene));
         }
@@ -1138,10 +3317,17 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     [DSSceneOverridesLock() lock];
     NSMutableDictionary *override = [@{
         @"frame" : [NSValue valueWithCGRect:[self frameForScene]],
-        @"insets" : [NSValue valueWithUIEdgeInsets:_safeAreaInsets],
+        @"insets" : [NSValue valueWithUIEdgeInsets:[self insetsForScene]],
         @"geometryOnly" : @YES,
     } mutableCopy];
+    CGFloat statusBar = _phoneSize ? [self phoneSize688StatusBarHeight] : 0.0;
+    if (statusBar > 0.0) override[@"statusBar"] = @(statusBar);
     if (_staysBackgrounded) override[@"staysBackgrounded"] = @YES;
+    // 4.5.799: so applyOverrides can re-add the occlusion reason.
+    if (DSReg799On()) {
+        NSString *r = [self reg799Identifier];
+        if (r.length) override[@"reg799Reason"] = r;
+    }
     DSSceneOverrides()[identifier] = override;
     DSSceneOverrideCountValue = (NSInteger)DSSceneOverrides().count;
     [DSSceneOverridesLock() unlock];
@@ -1151,13 +3337,27 @@ typedef BOOL (^DSSceneHostAttempt)(void);
 // The app view controller asserts in dealloc if it is released while still showing
 // a live app, so it is stood down in order first.
 - (void)tearDownAppViewController {
+    [self reg799Unregister];
+    [self phoneSize690RemoveStrip:@"app view torn down"];
+    DSClose741Note(_bundleIdentifier);
+    [self phoneSize696SetKeysSceneID:nil];
     [self restoreOwnedStrayPresentations];
     _straySweepScheduled = NO;
+    [self bg719Release:@"left the stage"];
     [self releaseRunningAssertion];
     SBAppViewController *controller = _appViewController;
     _appViewController = nil;
     _entity = nil;
     _deliveredOnce = NO;
+    // 4.5.675: a new app view starts at the card size.
+    if (_phoneSize) {
+        _phoneSize = NO;
+        _phoneSizeGeneration += 1;
+        _phoneSizeParentClipped = NO;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ OFF (app view torn down)", _bundleIdentifier ?: @"?");
+    }
+    _phoneSizeNudging = NO;
+    [self phoneSize676ReleaseHold:@"app view torn down" animated:NO];
     _cardFitPending = NO;
     _cardFitNoted = NO;
     _cardFitAttempts = 0;
@@ -1270,158 +3470,10 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     [springBoard launchApplicationWithIdentifier:_bundleIdentifier suspended:YES];
 }
 
-- (void)launchThroughSystemService {
-    id service = DSSystemService();
-    if (![service respondsToSelector:@selector(openApplication:options:withResult:)]) {
-        DSDiagnosticsRecord(@"SpringBoard: no second way to launch an app on this build");
-        return;
-    }
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ has no scene yet, asking FrontBoard directly", _bundleIdentifier);
-    NSDictionary *options = @{ @"__ActivateSuspended" : @YES };
-    ((void (*)(id, SEL, id, id, id))objc_msgSend)(service, @selector(openApplication:options:withResult:), _bundleIdentifier, options, nil);
-}
 
-// The last thing left to try, and the only one guaranteed to produce a scene:
-// open the app the way tapping its icon does. An app opened this way is briefly
-// the front app, so whoever was in front before is put back once the app's layer
-// has been taken into the card. Not how the stage should open an app - but an app
-// on the stage a moment late beats an app that never arrives.
-- (void)launchInForeground {
-    SpringBoard *springBoard = (SpringBoard *)UIApplication.sharedApplication;
-    if (![springBoard respondsToSelector:@selector(launchApplicationWithIdentifier:suspended:)]) return;
-
-    DSDiagnosticsRecordFormat(@"SpringBoard: %@ would not start in the background, opening it the ordinary way",
-                              _bundleIdentifier);
-    _tookOverForegroundLaunch = YES;
-    [springBoard launchApplicationWithIdentifier:_bundleIdentifier suspended:NO];
-}
 
 #pragma mark - A scene of the stage's own
 
-// When SpringBoard has no scene for an app and will not make one without opening
-// the app full screen, the stage makes its own: a scene created against the app's
-// running process and presented in a view here, which is how every current
-// iPad-style multitasking project does it. The app connects to it and draws into
-// it exactly as it would for one of SpringBoard's.
-- (BOOL)presentSceneOfOwnMaking {
-    if (_hostView) return YES;
-    if (![self isProcessAlive]) return NO;
-
-    NSArray<NSString *> *required = @[
-        @"RBSProcessIdentity", @"RBSProcessPredicate", @"RBSProcessHandle",
-        @"FBSMutableSceneDefinition", @"FBSSceneIdentity", @"FBSSceneClientIdentity",
-        @"UIApplicationSceneSpecification", @"FBSMutableSceneParameters",
-        @"UIMutableApplicationSceneSettings", @"UIMutableApplicationSceneClientSettings",
-        @"FBSceneManager",
-    ];
-    for (NSString *name in required) {
-        if (objc_getClass(name.UTF8String)) continue;
-        DSDiagnosticsRecordFormat(@"SpringBoard: cannot make a scene here, no %@ on this build", name);
-        return NO;
-    }
-
-    @try {
-        RBSProcessIdentity *identity = (RBSProcessIdentity *)[objc_getClass("RBSProcessIdentity")
-            identityForEmbeddedApplicationIdentifier:_bundleIdentifier];
-        RBSProcessPredicate *predicate =
-            (RBSProcessPredicate *)[objc_getClass("RBSProcessPredicate") predicateMatchingIdentity:identity];
-        RBSProcessHandle *process =
-            (RBSProcessHandle *)[objc_getClass("RBSProcessHandle") handleForPredicate:predicate error:nil];
-        if (!process || process.pid <= 0) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@ has no process to make a scene against", _bundleIdentifier);
-            return NO;
-        }
-
-        // The stage's own name for it, never SpringBoard's: two scenes under one
-        // identity is a fight nobody wins.
-        NSString *sceneIdentifier = [NSString stringWithFormat:@"sceneID:%@-dynamicstage", _bundleIdentifier];
-
-        FBSMutableSceneDefinition *definition =
-            (FBSMutableSceneDefinition *)[objc_getClass("FBSMutableSceneDefinition") definition];
-        definition.identity =
-            (FBSSceneIdentity *)[objc_getClass("FBSSceneIdentity") identityForIdentifier:sceneIdentifier];
-        definition.clientIdentity = (FBSSceneClientIdentity *)
-            [objc_getClass("FBSSceneClientIdentity") identityForProcessIdentity:process.identity];
-        definition.specification = [objc_getClass("UIApplicationSceneSpecification") specification];
-
-        FBSMutableSceneParameters *parameters = (FBSMutableSceneParameters *)
-            [objc_getClass("FBSMutableSceneParameters") parametersForSpecification:definition.specification];
-
-        // Guarded one at a time rather than in a block: a setter that moved should
-        // cost the stage that one setting, not the only way it has of opening the
-        // app at all.
-        CGRect frame = CGRectIsEmpty(_stageFrame) ? UIScreen.mainScreen.bounds : [self logicalFrame];
-        FBSMutableSceneSettings *settings = [[objc_getClass("UIMutableApplicationSceneSettings") alloc] init];
-        settings.frame = CGRectMake(0, 0, CGRectGetWidth(frame), CGRectGetHeight(frame));
-        settings.foreground = YES;
-        if ([settings respondsToSelector:@selector(setCanShowAlerts:)]) settings.canShowAlerts = YES;
-        if ([settings respondsToSelector:@selector(setInterfaceOrientation:)]) {
-            settings.interfaceOrientation = UIInterfaceOrientationPortrait;
-        }
-        if ([settings respondsToSelector:@selector(setDeviceOrientation:)]) {
-            settings.deviceOrientation = UIDeviceOrientationPortrait;
-        }
-        if ([settings respondsToSelector:@selector(setLevel:)]) settings.level = 1;
-        if ([settings respondsToSelector:@selector(setStatusBarDisabled:)]) settings.statusBarDisabled = YES;
-        if ([settings respondsToSelector:@selector(setSafeAreaInsetsPortrait:)]) {
-            settings.safeAreaInsetsPortrait = _safeAreaInsets;
-        }
-        if ([settings respondsToSelector:@selector(setDisplayConfiguration:)] &&
-            [UIScreen.mainScreen respondsToSelector:@selector(displayConfiguration)]) {
-            [settings setDisplayConfiguration:[UIScreen.mainScreen displayConfiguration]];
-        }
-        if ([settings respondsToSelector:@selector(setPersistenceIdentifier:)]) {
-            ((void (*)(id, SEL, id))objc_msgSend)(settings, @selector(setPersistenceIdentifier:),
-                                                  NSUUID.UUID.UUIDString);
-        }
-        parameters.settings = settings;
-
-        FBSMutableSceneClientSettings *clientSettings =
-            [[objc_getClass("UIMutableApplicationSceneClientSettings") alloc] init];
-        if ([clientSettings respondsToSelector:@selector(setInterfaceOrientation:)]) {
-            clientSettings.interfaceOrientation = UIInterfaceOrientationPortrait;
-        }
-        parameters.clientSettings = clientSettings;
-
-        FBSceneManager *manager = (FBSceneManager *)[objc_getClass("FBSceneManager") sharedInstance];
-        if (![manager respondsToSelector:@selector(createSceneWithDefinition:initialParameters:)]) {
-            DSDiagnosticsRecord(@"SpringBoard: this build's FrontBoard will not create a scene on request");
-            return NO;
-        }
-
-        FBScene *scene = [manager createSceneWithDefinition:definition initialParameters:parameters];
-        if (!scene) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: making a scene for %@ gave back nothing", _bundleIdentifier);
-            return NO;
-        }
-
-        UIScenePresentationManager *presentation =
-            [scene respondsToSelector:@selector(uiPresentationManager)] ? scene.uiPresentationManager : nil;
-        UIScenePresenter *presenter = [presentation respondsToSelector:@selector(createPresenterWithIdentifier:)]
-            ? [presentation createPresenterWithIdentifier:sceneIdentifier]
-            : nil;
-        UIView *view = presenter.presentationView;
-        if (!view) {
-            DSDiagnosticsRecordFormat(@"SpringBoard: %@'s new scene has nothing to show", _bundleIdentifier);
-            [manager destroyScene:sceneIdentifier withTransitionContext:nil];
-            return NO;
-        }
-
-        [presenter activate];
-
-        _scene = scene;
-        _presenter = presenter;
-        _ownSceneIdentifier = [sceneIdentifier copy];
-        _hostView = view;
-        _hostView.clipsToBounds = YES;
-        [self noteSceneSource:@"a scene the stage made itself"];
-        return YES;
-    } @catch (NSException *exception) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: making a scene for %@ threw %@ - %@",
-                                  _bundleIdentifier, exception.name ?: @"?", exception.reason ?: @"?");
-        return NO;
-    }
-}
 
 // Written down only when every way in has failed, and the point of it is the next
 // build: it names what this version of SpringBoard has to offer for this app, so
@@ -1531,6 +3583,36 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     }
 }
 
+// 4.5.741 close741: the app whose card was just torn down (and its phone-size
+// mode switched off), so the kept-card guard does not refit another card when
+// that closing app sends its last scene update.
+static NSString *DSClose741Bundle = nil;
+static CFAbsoluteTime DSClose741At = 0;
+void DSClose741Note(NSString *bundle) {
+    if (bundle.length == 0) return;
+    DSClose741Bundle = [bundle copy];
+    DSClose741At = CFAbsoluteTimeGetCurrent();
+}
+BOOL DSClose741Recent(NSString *sceneIdentifier) {
+    if (!DSFeature699On("close741") || !DSClose741Bundle || sceneIdentifier.length == 0) return NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - DSClose741At > 1.2 || now < DSClose741At) return NO;
+    return [sceneIdentifier rangeOfString:DSClose741Bundle].location != NSNotFound;
+}
+
+// 4.5.740 kbguard740: the hosted scene's deactivation reasons (-1 unknown).
+- (long long)sceneDeactivationReasons740 {
+    @try {
+        id scene = [self hostedScene];
+        id settings = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+        if ([settings respondsToSelector:@selector(deactivationReasons)]) {
+            return ((long long (*)(id, SEL))objc_msgSend)(settings, @selector(deactivationReasons));
+        }
+    } @catch (NSException *exception) {
+    }
+    return -1;
+}
+
 - (FBScene *)hostedScene {
     if (_appViewController) {
         FBScene *scene = [self appViewScene];
@@ -1593,12 +3675,2042 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     });
 }
 
+- (CGSize)cameraTallSize {
+    CGSize screen = UIScreen.mainScreen.bounds.size;
+    CGFloat width = MIN(screen.width, screen.height);
+    CGFloat height = MAX(screen.width, screen.height);
+    if (width < 200.0 || height < 300.0) return CGSizeMake(430.0, 932.0);
+    return CGSizeMake(width, height);
+}
+
+- (BOOL)isCameraTall {
+    return _cameraTall;
+}
+
+// 4.5.668 sbcam668. On: the scene gets the phone's size and the host view
+// shows it at the card's width, bottom-aligned (the card clips the top), the
+// way the app's own camera is laid out full screen. Off: back to the card.
+// Geometry only (the same writes as a card resize); never lifecycle.
+- (void)setCameraTall:(BOOL)tall why:(NSString *)why {
+    if (tall == _cameraTall) return;
+    if (tall && (_revealingTallContent || !_appViewController || !_hostView.superview)) return;
+    UIView *parent = _hostView.superview;
+    if (tall && (parent.tag == 9158 || CGRectGetWidth(parent.bounds) < 80.0 || CGRectGetHeight(parent.bounds) < 80.0)) return;
+    // 4.5.675: the camera layout wins over phonesize675. Drop the phone-size
+    // state here (no write of its own); the camera write below replaces it.
+    if (tall && _phoneSize) {
+        _phoneSize = NO;
+        _phoneSizeGeneration += 1;
+        if (_phoneSizeParentClipped) {
+            _phoneSizeParentClipped = NO;
+            if (!_phoneSizeParentWasClipping && ![_bundleIdentifier isEqualToString:@"com.apple.mobilephone"]) {
+                parent.clipsToBounds = NO;
+                parent.layer.masksToBounds = NO;
+            }
+        }
+        DSPhoneSize675ChangedAt = CACurrentMediaTime();
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ OFF (camera layout takes over)", _bundleIdentifier ?: @"?");
+    }
+    _cameraTall = tall;
+    _cameraTallGeneration += 1;
+    CGSize phone = [self cameraTallSize];
+    CGFloat cardWidth = CGRectGetWidth(parent.bounds);
+    CGFloat cardHeight = CGRectGetHeight(parent.bounds);
+    CGFloat scale = phone.width > 0 ? cardWidth / phone.width : 1.0;
+    if (tall) {
+        _cameraTallParentWasClipping = parent.clipsToBounds;
+        _cameraTallParentClipped = YES;
+        parent.clipsToBounds = YES;
+        parent.layer.masksToBounds = YES;
+    } else if (_cameraTallParentClipped) {
+        _cameraTallParentClipped = NO;
+        if (parent && !_cameraTallParentWasClipping && ![_bundleIdentifier isEqualToString:@"com.apple.mobilephone"]) {
+            parent.clipsToBounds = NO;
+            parent.layer.masksToBounds = NO;
+        }
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: sbcam669 %@ phone-size camera layout %@ (%@): scene %.0fx%.0f shown at x%.3f, "
+                              @"card %.0fx%.0f, visible part y=%.0f..%.0f of the app",
+                              _bundleIdentifier ?: @"?", tall ? @"ON" : @"OFF", why ?: @"?",
+                              tall ? phone.width : CGRectGetWidth([self logicalFrame]),
+                              tall ? phone.height : CGRectGetHeight([self logicalFrame]),
+                              tall ? scale : 1.0, cardWidth, cardHeight,
+                              tall ? MAX(0.0, phone.height - cardHeight / MAX(scale, 0.01)) : 0.0,
+                              tall ? phone.height : cardHeight);
+    [self layoutHostView];
+    // The size goes to the app the same way a card resize does: one
+    // transaction, then the geometry write. Deferred while a write would trap.
+    _deliveredOnce = NO;
+    [self deliverStageSizeToApp];
+    [self layoutHostView];
+}
+
 - (CGRect)logicalFrame {
+    if (_cameraTall) {
+        CGSize phone = [self cameraTallSize];
+        return CGRectMake(CGRectGetMinX(_stageFrame), CGRectGetMinY(_stageFrame), phone.width, phone.height);
+    }
+    if (_phoneSize) {
+        CGSize phone = [self phoneSize675SceneSize];
+        CGFloat width = phone.width - ((_phoneSizeNudging && _phoneSizeNudgeWidth) ? 2.0 : 0.0);
+        CGFloat height = phone.height - ((_phoneSizeNudging && !_phoneSizeNudgeWidth) ? 1.0 : 0.0);
+        return CGRectMake(CGRectGetMinX(_stageFrame), CGRectGetMinY(_stageFrame), width, height);
+    }
     CGFloat scale = _contentScale > 0 ? _contentScale : 1.0;
     return CGRectMake(CGRectGetMinX(_stageFrame),
                       CGRectGetMinY(_stageFrame),
                       CGRectGetWidth(_stageFrame) * scale,
                       CGRectGetHeight(_stageFrame) * scale);
+}
+
+// ---- 4.5.675 phonesize675 --------------------------------------------------
+// The phone's portrait size, one point short of the bottom edge. A scene that
+// reaches the screen's bottom edge is one iOS may host the keyboard inside
+// (see frameForScene); 1 pt changes nothing the app can see in its layout.
+- (CGSize)phoneSize675SceneSize {
+    CGSize phone = [self cameraTallSize];
+    CGFloat height = phone.height - 1.0;
+    // 4.5.684 mode=short: the scene ends at the keyboard top (931 - K).
+    // 4.5.685: the scene ends slack pt below the bar line (620 = 586 + 34).
+    // 4.5.688 offset/short: the scene is o pt shorter (931 - o).
+    if (_phoneSize && _ps684Active && _ps688Active && !_ps685Active && !_cameraTall &&
+        (_ps688Mode == DSPhoneSize688ModeOffset || _ps688Mode == DSPhoneSize688ModeShort)) height = phone.height - 1.0 - [self phoneSize688O];
+    else if (_phoneSize && _ps684Active && _ps685Active && _ps685Slack >= 0.0 && !_cameraTall) height = [self phoneSize684Pin] + _ps685Slack;
+    else if (_phoneSize && _ps684Active && _ps684Short && !_cameraTall) height = [self phoneSize684Pin];
+    // 4.5.679: the width is fixed at the switch; before it, what a switch now would use.
+    if (_phoneSize && _phoneSizeWidth >= 100.0) return CGSizeMake(_phoneSizeWidth, height);
+    return CGSizeMake([self phoneSize679WidthForNow:NULL], height);
+}
+
+// 4.5.679: the scene width for a switch made now.
+- (CGFloat)phoneSize679WidthForNow:(NSString **)mode {
+    CGSize phone = [self cameraTallSize];
+    if (DSPhoneSize680Enabled()) {
+        if (mode) *mode = @"phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored)";
+        return phone.width;
+    }
+    BOOL phoneMode = NO;
+    CGFloat scale = DSPhoneSize679Scale(&phoneMode);
+    if (phoneMode) {
+        if (mode) *mode = @"phone width, scaled to the card (file: phone)";
+        return phone.width;
+    }
+    CGFloat cardW = CGRectGetWidth(_hostView.superview.bounds);
+    if (!isfinite(cardW) || cardW < 80.0) cardW = CGRectGetWidth(_stageFrame);
+    if (!isfinite(cardW) || cardW < 80.0) {
+        if (mode) *mode = @"no card width yet: phone width";
+        return phone.width;
+    }
+    if (!isfinite(scale) || scale < 0.80 || scale > 1.00) scale = 1.0;
+    CGFloat width = round(cardW / scale);
+    width = MAX(200.0, MIN(phone.width / 0.80, width));
+    if (mode) *mode = fabs(scale - 1.0) < 0.0005 ? @"card width, scale 1.0 (default)"
+                                                 : [NSString stringWithFormat:@"card width / %.3f (file)", scale];
+    return width;
+}
+
+- (BOOL)isPhoneSize675 {
+    return _phoneSize;
+}
+
+// The safe area the scene is given: the screen's own while phone-size (what
+// the app gets full screen), otherwise the card's (the 4.5.674 value).
+- (UIEdgeInsets)insetsForScene {
+    if (!_phoneSize) return _safeAreaInsets;
+    if ([self isPhoneSize684]) return [self phoneSize684Insets];
+    UIEdgeInsets insets = _phoneSizeInsets;
+    if (_phoneSizeNudging && !_phoneSizeNudgeWidth) insets.bottom += 1.0;
+    return insets;
+}
+
+- (UIEdgeInsets)phoneSize675ScreenInsets {
+    UIEdgeInsets insets = UIEdgeInsetsZero;
+    @try {
+        UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
+        if (window) insets = window.safeAreaInsets;
+    } @catch (NSException *exception) {
+    }
+    // The SpringBoard window can answer before it is laid out. A notch or
+    // island phone of this size has a top inset; never hand the app zero.
+    if (insets.top < 1.0 && insets.bottom < 1.0) {
+        CGSize phone = [self cameraTallSize];
+        if (phone.height >= 800.0) insets = UIEdgeInsetsMake(59.0, 0.0, 34.0, 0.0);
+    }
+    insets.left = 0.0;
+    insets.right = 0.0;
+    return insets;
+}
+
+// Scene y that sits on the card's bottom edge: the keyboard's top (plus the
+// test offset), kept where the host still covers the whole card.
+- (CGFloat)phoneSize675PinForCardHeight:(CGFloat)cardHeight fit:(CGFloat)fit {
+    CGSize phone = [self phoneSize675SceneSize];
+    CGFloat pin = _phoneSizeKeyTop + DSPhoneSize675PinOffset();
+    // 4.5.683: the card always shows the bottom of the scene (the app's bar
+    // and, while it is up, its own keyboard). Nothing moves for the keyboard.
+    BOOL ps683 = [self isPhoneSize683];
+    if (ps683) pin = phone.height;
+    // 4.5.684: fixed, keyboard up or down: the app's bar bottom (931 - K).
+    if ([self isPhoneSize684]) pin = [self phoneSize684Pin];
+    // 4.5.686: the card bottom shows margin pt below the bar line.
+    if ([self isPhoneSize685]) pin = [self phoneSize684Pin] + MAX(0.0, _ps685Margin);
+    // 4.5.687: the card bottom is margin pt under the raised bar line.
+    if ([self isPhoneSize687]) pin = [self phoneSize687Bar] + MAX(0.0, _ps687Margin);
+    // 4.5.688 offset/short: host y of the keyboard line (window 586 - o, plus where
+    // the picture sits in the host when the scene origin moves it).
+    if ([self isPhoneSize688Geo]) pin = [self phoneSize688Line] + [self phoneSize688Shift];
+    if (_ps683Logged != (ps683 ? 1 : 2)) {
+        _ps683Logged = ps683 ? 1 : 2;
+        if (ps683 || _phoneSize) {
+            CGFloat lo = fit > 0.01 ? cardHeight / fit : phone.height;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize683 %@ %@", _bundleIdentifier ?: @"?",
+                                      ps683 ? [NSString stringWithFormat:@"window pinned to the scene bottom: card shows app y %.0f..%.0f of %.0fx%.0f at x%.4f, always (keyboard up or down); the app's own keyboard rises inside the card",
+                                               phone.height - lo, phone.height, phone.width, phone.height, fit]
+                                           : @"not in 683 mode (off file, camera, dylib or not allowlisted): 4.5.682 window rules");
+        }
+    }
+    CGFloat lowest = fit > 0.01 ? cardHeight / fit : phone.height;
+    if (pin < lowest) pin = lowest;
+    if (pin > phone.height) pin = phone.height;
+    return pin;
+}
+
+- (NSString *)phoneSize675PlacementSummary {
+    UIView *parent = _hostView.superview;
+    CGSize phone = [self phoneSize675SceneSize];
+    CGFloat width = CGRectGetWidth(parent.bounds);
+    CGFloat height = CGRectGetHeight(parent.bounds);
+    CGFloat fit = [self phoneSize675FitForWidth:width height:height];
+    CGFloat pin = [self phoneSize675PinForCardHeight:height fit:fit];
+    CGRect cardOnScreen = parent ? [parent convertRect:parent.bounds toView:nil] : CGRectZero;
+    return [NSString stringWithFormat:@"scene %.0fx%.0f safeArea %@ shown at x%.4f in card %@ (screen %@); "
+            @"keyboard top y=%.0f%@ -> visible part of the app y=%.0f..%.0f; card point (x,y) = app point (x/%.4f, %.0f + y/%.4f)",
+            phone.width, phone.height, NSStringFromUIEdgeInsets(_phoneSizeInsets), fit,
+            NSStringFromCGSize(CGSizeMake(width, height)), NSStringFromCGRect(cardOnScreen),
+            _phoneSizeKeyTop,
+            fabs(DSPhoneSize675PinOffset()) > 0.1 ? [NSString stringWithFormat:@" (pin offset %+.0f)", DSPhoneSize675PinOffset()] : @"",
+            pin - height / MAX(fit, 0.01), pin, fit, pin - height / MAX(fit, 0.01), fit];
+}
+
+- (void)setPhoneSize675:(BOOL)on keyboardTop:(CGFloat)keyTop why:(NSString *)why {
+    NSString *bundle = _bundleIdentifier ?: @"?";
+    UIView *parent = _hostView.superview;
+    if (on) {
+        NSString *skip = nil;
+        if (_cameraTall) skip = @"camera layout is on";
+        else if (_revealingTallContent) skip = @"card is uncovering a tall layout";
+        else if (!_appViewController) skip = @"no app view yet";
+        else if (!parent) skip = @"not in a card";
+        else if (parent.tag == 9158 || CGRectGetWidth(parent.bounds) < 80.0 || CGRectGetHeight(parent.bounds) < 80.0) skip = @"card minimized";
+        if (skip) {
+            if (_phoneSize) [self setPhoneSize675:NO keyboardTop:0.0 why:skip];
+            static NSString *lastSkip = nil;
+            static CFAbsoluteTime lastSkipAt = 0;
+            NSString *key = [NSString stringWithFormat:@"%@|%@", bundle, skip];
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (![key isEqualToString:lastSkip] || now - lastSkipAt > 5.0 || now < lastSkipAt) {
+                lastSkip = key;
+                lastSkipAt = now;
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ skipped (%@), scene stays card-size", bundle, skip);
+            }
+            return;
+        }
+        if (_phoneSize && [self isPhoneSize684]) {
+            // 4.5.684: the window is fixed; the keyboard top is only learned.
+            [self phoneSize684NoteKeyTop:keyTop why:why];
+            return;
+        }
+        if (_phoneSize && [self isPhoneSize683]) {
+            static CFAbsoluteTime skipLogAt = 0;
+            CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+            if (t - skipLogAt > 5.0 || t < skipLogAt) {
+                skipLogAt = t;
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize683 %@ keyboard top %.0f (%@) ignored: the app's own keyboard is inside the card, the window stays at the scene bottom",
+                                          _bundleIdentifier ?: @"?", keyTop, why ?: @"?");
+            }
+            return;
+        }
+        if (_phoneSize && DSPhoneSize680Enabled()) {
+            // 4.5.680: the scene never changes for the keyboard; the card's
+            // window follows the bar (min(anchor, keyboard top in the scene)).
+            CGFloat sceneKeyTop = keyTop - MAX(0.0, [self cameraTallSize].height - [self phoneSize675SceneSize].height);
+            CGFloat bar = MIN([self phoneSize678BottomAnchor], sceneKeyTop);
+            [self phoneSize680MoveBarBottomTo:bar duration:0.2 curve:7 lag:0.0 why:why ?: @"keyboard note"];
+            return;
+        }
+        if (_phoneSize) {
+            // 4.5.678: every call here comes from the keyboard (note or early
+            // switch). On a pre-grown scene the app already laid out for its
+            // keyboard at the phone size; only the mapping moves.
+            if (_phoneSizePreGrown) {
+                _phoneSizePreGrown = NO;
+                CGFloat was = _phoneSizeKeyTop;
+                _phoneSizeKeyTop = keyTop;
+                [self layoutHostView];
+                [self phoneSize676ReleaseHold:@"keyboard arrived" animated:YES];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ keyboard arrived in the pre-grown phone-size scene t+%.0fms (%@): "
+                                          @"the app laid out for it at %.0fx%.0f; mapping %.0f -> keyboard top %.0f: %@",
+                                          bundle, DSPhoneSize676Ms(), why ?: @"?", [self phoneSize675SceneSize].width,
+                                          [self phoneSize675SceneSize].height, was, keyTop, [self phoneSize675PlacementSummary]);
+                // A, as a safety net: one keyboard-frame re-post once the
+                // keyboard's own show animation is over.
+                NSInteger generation = _phoneSizeGeneration;
+                __weak __typeof(self) weakSelf = self;
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [weakSelf phoneSize676Nudge:1 generation:generation attempt:0 why:@"keyboard showed in the pre-grown scene (safety)"];
+                });
+                return;
+            }
+            if (fabs(keyTop - _phoneSizeKeyTop) > 0.5) {
+                CGFloat was = _phoneSizeKeyTop;
+                _phoneSizeKeyTop = keyTop;
+                [self layoutHostView];
+                DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ keyboard top %.0f -> %.0f (%@): %@",
+                                          bundle, was, keyTop, why ?: @"?", [self phoneSize675PlacementSummary]);
+            }
+            return;
+        }
+    } else if (!_phoneSize) {
+        return;
+    } else if ([self phoneSize695KeepsAway:why]) {
+        // 4.5.695: minimised / off screen; the scene stays the phone size.
+        // A keyboard-down reason still closes the 684 keys-up bookkeeping
+        // (what the 678 rest does for a visible 684 card in 694).
+        if (_ps684KeysUp && ([why hasPrefix:@"keyboard down"] || [why hasPrefix:@"keyboard now belongs to"])) {
+            [self phoneSize684KeysDown:why];
+        }
+        return;
+    }
+
+    NSString *ps679Mode = nil;
+    _phoneSizeWidth = on ? [self phoneSize679WidthForNow:&ps679Mode] : 0.0;
+    _ps679LoggedWidth = 0.0;
+    _ps679LoggedFit = 0.0;
+    _ps679LoggedPin = 0.0;
+    _phoneSize = on;
+    // 4.5.684: the session's mode, K and tune are fixed here (and at a rest-time apply).
+    if (on) [self phoneSize684Configure];
+    else _ps684Active = NO;
+    _phoneSizeGeneration += 1;
+    _phoneSizeDeferNoted = NO;
+    _phoneSizeNudging = NO;
+    _phoneSizePreGrown = on && _phoneSizePreGrowCall;
+    if (on) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize679 %@ switching to %.0fx%.0f (%@)", bundle, _phoneSizeWidth,
+                                  [self phoneSize675SceneSize].height, ps679Mode ?: @"?");
+    } else {
+        CGRect cardNow = parent ? parent.bounds : CGRectZero;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize679 %@ back to card size %.0fx%.0f at scale 1.0 (whole card)",
+                                  bundle, CGRectGetWidth(cardNow), CGRectGetHeight(cardNow));
+    }
+    DSPhoneSize675ChangedAt = CACurrentMediaTime();
+    if (on && !_phoneSizePreGrown) [self phoneSize676HoldPicture];
+    else [self phoneSize676ReleaseHold:@"switched off" animated:NO];
+    if (on) {
+        _phoneSizeKeyTop = keyTop;
+        _phoneSizeInsets = [self phoneSize675ScreenInsets];
+        if (!_phoneSizeParentClipped) {
+            _phoneSizeParentWasClipping = parent.clipsToBounds;
+            _phoneSizeParentClipped = YES;
+        }
+        BOOL realKeys684 = !_phoneSizePreGrowCall && keyTop > 250.0 && keyTop < [self phoneSize684PhoneHeight] - 100.0;
+        if ([self isPhoneSize684]) _phoneSizeKeyTop = [self phoneSize684Pin];
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ ON (%@) t+%.0fms: %@", bundle, why ?: @"keyboard up",
+                                  DSPhoneSize676Ms(), [self phoneSize675PlacementSummary]);
+        if ([self isPhoneSize684]) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 %@ %@", bundle, [self phoneSize684Summary]);
+            if (realKeys684) [self phoneSize684NoteKeyTop:keyTop why:why ?: @"keyboard up at the switch"];
+        }
+    } else {
+        if (_phoneSizeParentClipped) {
+            _phoneSizeParentClipped = NO;
+            if (parent && !_phoneSizeParentWasClipping && !_cameraTall &&
+                ![_bundleIdentifier isEqualToString:@"com.apple.mobilephone"]) {
+                parent.clipsToBounds = NO;
+                parent.layer.masksToBounds = NO;
+            }
+        }
+        CGRect card = [self logicalFrame];
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ OFF (%@) t+%.0fms: scene back to card size %.0fx%.0f safeArea %@ (4.5.674 geometry)",
+                                  bundle, why ?: @"?", DSPhoneSize676Ms(), CGRectGetWidth(card), CGRectGetHeight(card),
+                                  NSStringFromUIEdgeInsets(_safeAreaInsets));
+    }
+    [self phoneSize675WriteGeometry:_phoneSizeGeneration attempt:0];
+}
+
+// Geometry only, the same writes as a corner resize (applyCardFrameQuietly):
+// the app view's content reference size, the override every later SpringBoard
+// settings update for this scene is rewritten to, and the scene's frame and
+// safe area. No transaction. Deferred while a write would trap (670).
+- (void)phoneSize675WriteGeometry:(NSInteger)generation attempt:(NSInteger)attempt {
+    if (generation != _phoneSizeGeneration) return;
+    NSString *bundle = _bundleIdentifier ?: @"?";
+    if (!_appViewController || DSSceneHostBundleDiedPending(_bundleIdentifier)) {
+        if (_phoneSize) {
+            _phoneSize = NO;
+            _phoneSizeGeneration += 1;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ OFF (app view gone before the size was written)", bundle);
+        }
+        [self layoutHostView];
+        return;
+    }
+    if (DSSceneWriteWouldTrap()) {
+        if (attempt >= 15) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ scene write never became safe (depth=%ld)%@",
+                                      bundle, (long)DSSceneSettingsUpdateDepth, _phoneSize ? @", back to card size" : @"");
+            if (_phoneSize) {
+                // Nothing was written: undo the host layout and the override.
+                _phoneSize = NO;
+                _phoneSizeGeneration += 1;
+                if (_scene) [self registerGeometryOnlyOverride];
+            }
+            [self layoutHostView];
+            return;
+        }
+        if (!_phoneSizeDeferNoted) {
+            _phoneSizeDeferNoted = YES;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ scene write deferred (scene update in progress depth=%ld)",
+                                      bundle, (long)DSSceneSettingsUpdateDepth);
+        }
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.08 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf phoneSize675WriteGeometry:generation attempt:attempt + 1];
+        });
+        return;
+    }
+    FBScene *scene = [self appViewScene];
+    if (!scene) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ has no scene to write%@", bundle, _phoneSize ? @", back to card size" : @"");
+        if (_phoneSize) {
+            _phoneSize = NO;
+            _phoneSizeGeneration += 1;
+        }
+        [self layoutHostView];
+        return;
+    }
+    _scene = scene;
+    // Host first, so the picture is already where the new size lands.
+    [self layoutHostView];
+    [self setContentReferenceSizeOnAppView];
+    [self forceSceneGeometry];
+    CGSize size = [self logicalFrame].size;
+    _deliveredOnce = YES;
+    _deliveredWidth = size.width;
+    _deliveredHeight = size.height;
+    [self layoutHostView];
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize675 %@ scene size sent t+%.0fms: frame %@ safeArea %@ (%@)",
+                              bundle, DSPhoneSize676Ms(), NSStringFromCGRect([self frameForScene]),
+                              NSStringFromUIEdgeInsets([self insetsForScene]), _phoneSize ? @"phone size" : @"card size");
+    // 4.5.676: read the scene back once the write has landed; when it is the
+    // phone size, nudge the app into laying out again (phoneSize676Nudge).
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [weakSelf phoneSize676ReadBack:generation attempt:0];
+    });
+}
+
+- (NSString *)phoneSize676SceneSummary:(CGRect *)frameOut {
+    FBScene *now = [self appViewScene];
+    NSString *got = @"no scene";
+    @try {
+        FBSSceneSettings *settings = [now respondsToSelector:@selector(settings)] ? now.settings : nil;
+        if (settings) {
+            NSString *insets = @"?";
+            if ([settings respondsToSelector:@selector(safeAreaInsetsPortrait)]) {
+                UIEdgeInsets value = ((UIEdgeInsets (*)(id, SEL))objc_msgSend)(settings, @selector(safeAreaInsetsPortrait));
+                insets = NSStringFromUIEdgeInsets(value);
+            }
+            if (frameOut) *frameOut = settings.frame;
+            got = [NSString stringWithFormat:@"frame %@ safeArea %@", NSStringFromCGRect(settings.frame), insets];
+        }
+    } @catch (NSException *exception) {
+    }
+    return got;
+}
+
+- (void)phoneSize676ReadBack:(NSInteger)generation attempt:(NSInteger)attempt {
+    if (generation != _phoneSizeGeneration) return;
+    // 4.5.688 offset/short: the picture's place in the host can change once the
+    // new frame lands; lay the host out again now and once more a second later.
+    if ([self isPhoneSize688Geo] && attempt == 0) {
+        [self layoutHostView];
+        __weak __typeof(self) weakSelf688 = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf688) strongSelf = weakSelf688;
+            if (strongSelf && generation == strongSelf->_phoneSizeGeneration && [strongSelf isPhoneSize688Geo]) [strongSelf layoutHostView];
+        });
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize688 %@ %@", _bundleIdentifier ?: @"?", [self phoneSize684Summary]);
+    }
+    CGRect frame = CGRectZero;
+    NSString *got = [self phoneSize676SceneSummary:&frame];
+    UIView *host = _hostView;
+    CGSize phone = [self phoneSize675SceneSize];
+    BOOL landed = _phoneSize ? (fabs(CGRectGetHeight(frame) - phone.height) < 0.5 && fabs(CGRectGetWidth(frame) - phone.width) < 0.5)
+                             : (fabs(CGRectGetHeight(frame) - CGRectGetHeight([self frameForScene])) < 0.5);
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ scene read back t+%.0fms: %@; wanted %@ (%@); host bounds %@ x%.4f center %@ in card %@",
+                              _bundleIdentifier ?: @"?", DSPhoneSize676Ms(), got, NSStringFromCGRect([self frameForScene]),
+                              landed ? @"landed" : @"NOT landed yet",
+                              NSStringFromCGRect(host.bounds), host.transform.a, NSStringFromCGPoint(host.center),
+                              NSStringFromCGRect(host.superview.bounds));
+    if (!_phoneSize) return;
+    if (_phoneSizePreGrown) {
+        // 4.5.678: grown before the keyboard; nothing stale to shake loose yet.
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ pre-grown scene %@ t+%.0fms, no keyboard yet: no nudge",
+                                  _bundleIdentifier ?: @"?", landed ? @"landed" : @"not confirmed", DSPhoneSize676Ms());
+        return;
+    }
+    if (!landed && attempt < 3) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf phoneSize676ReadBack:generation attempt:attempt + 1];
+        });
+        return;
+    }
+    [self phoneSize676Nudge:1 generation:generation attempt:0 why:landed ? @"phone size confirmed" : @"not confirmed after 4 reads, nudging anyway"];
+}
+
+// 4.5.676: the app laid out for the keyboard while its window was still the
+// card's 458pt, and only lays out again on its next keyboard or text change.
+// Make one: the same geometry write as a resize, 1 pt shorter with a 1 pt
+// larger bottom safe area, then the exact phone size again 0.12 s later. Two
+// real size + safe-area changes (the keyboard's placement in the window moves
+// by 1 pt and back), nothing else: no orientation, no lifecycle, no
+// transaction. The 1 s app-view hold is restarted with each write.
+- (void)phoneSize676Nudge:(NSInteger)number generation:(NSInteger)generation attempt:(NSInteger)attempt why:(NSString *)why {
+    if (generation != _phoneSizeGeneration || !_phoneSize) return;
+    NSString *bundle = _bundleIdentifier ?: @"?";
+    if (DSPhoneSize680Enabled()) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize680 %@ nudge #%ld skipped: always full screen, no scene writes for the keyboard (%@)",
+                                  bundle, (long)number, why ?: @"?");
+        return;
+    }
+    if (DSPhoneSize676NudgeDisabled()) {
+        if (number == 1) DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ relayout nudge skipped: /var/mobile/.dynamicstage-phonesize676-nudge-off", bundle);
+        [self phoneSize676ReleaseHold:@"nudge off" animated:YES];
+        return;
+    }
+    NSString *wait = nil;
+    if (DSSceneWriteWouldTrap()) wait = @"scene update in progress";
+    else if (DSStageDragSettlingFast(1.2)) wait = @"card drag settling";
+    else if (!_appViewController || ![self appViewScene]) wait = @"no app view scene";
+    if (wait) {
+        if (attempt < 15) {
+            __weak __typeof(self) weakSelf = self;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [weakSelf phoneSize676Nudge:number generation:generation attempt:attempt + 1 why:why];
+            });
+        } else {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ relayout nudge #%ld given up (%@)", bundle, (long)number, wait);
+            [self phoneSize676ReleaseHold:@"nudge given up" animated:YES];
+        }
+        return;
+    }
+    _phoneSizeNudgeWidth = !DSPhoneSize678WidthDisabled();
+    _phoneSizeNudging = YES;
+    DSPhoneSize675ChangedAt = CACurrentMediaTime();
+    [self setContentReferenceSizeOnAppView];
+    [self forceSceneGeometry];
+    if (_phoneSizeNudgeWidth) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ width nudge #%ld sent t+%.0fms (%@%@): scene %@ safeArea %@ "
+                                  @"(the app's keyboard changes width, so UIKit re-posts its keyboard frame), restoring in 0.12 s",
+                                  bundle, (long)number, DSPhoneSize676Ms(), why ?: @"?",
+                                  attempt > 0 ? [NSString stringWithFormat:@", waited %ld", (long)attempt] : @"",
+                                  NSStringFromCGRect([self frameForScene]), NSStringFromUIEdgeInsets([self insetsForScene]));
+    } else {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ relayout nudge #%ld sent t+%.0fms (%@%@): scene %@ safeArea %@, restoring in 0.12 s "
+                                  @"(height nudge: /var/mobile/.dynamicstage-phonesize678-width-off)",
+                                  bundle, (long)number, DSPhoneSize676Ms(), why ?: @"?",
+                                  attempt > 0 ? [NSString stringWithFormat:@", waited %ld", (long)attempt] : @"",
+                                  NSStringFromCGRect([self frameForScene]), NSStringFromUIEdgeInsets([self insetsForScene]));
+    }
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.12 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [weakSelf phoneSize676Restore:number generation:generation attempt:0];
+    });
+}
+
+- (void)phoneSize676Restore:(NSInteger)number generation:(NSInteger)generation attempt:(NSInteger)attempt {
+    if (generation != _phoneSizeGeneration || !_phoneSize) {
+        // A switch in between wrote its own size and cleared the nudge.
+        return;
+    }
+    NSString *bundle = _bundleIdentifier ?: @"?";
+    if (DSSceneWriteWouldTrap() && attempt < 30) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf phoneSize676Restore:number generation:generation attempt:attempt + 1];
+        });
+        return;
+    }
+    _phoneSizeNudging = NO;
+    if (DSSceneWriteWouldTrap()) {
+        // Never safe for 1.5 s: leave the exact size in the override, which
+        // rewrites SpringBoard's next update for the scene anyway.
+        if (_scene) [self registerGeometryOnlyOverride];
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ relayout nudge #%ld restore deferred to the override (scene update in progress)", bundle, (long)number);
+    } else {
+        DSPhoneSize675ChangedAt = CACurrentMediaTime();
+        [self setContentReferenceSizeOnAppView];
+        [self forceSceneGeometry];
+    }
+    [self layoutHostView];
+    DSDiagnosticsRecordFormat(@"SpringBoard: %@ %@ %@ nudge #%ld restored t+%.0fms: scene %@ safeArea %@",
+                              _phoneSizeNudgeWidth ? @"phonesize678" : @"phonesize676", bundle,
+                              _phoneSizeNudgeWidth ? @"width" : @"relayout",
+                              (long)number, DSPhoneSize676Ms(), NSStringFromCGRect([self frameForScene]),
+                              NSStringFromUIEdgeInsets([self insetsForScene]));
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [weakSelf phoneSize676ReleaseHold:@"relayout nudge done" animated:YES];
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_phoneSizeGeneration != generation || !strongSelf->_phoneSize) return;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ after nudge #%ld read back t+%.0fms: %@",
+                                  strongSelf->_bundleIdentifier ?: @"?", (long)number, DSPhoneSize676Ms(),
+                                  [strongSelf phoneSize676SceneSummary:NULL]);
+    });
+    // One more, after the keyboard's own show animation has certainly ended.
+    if (number == 1) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf phoneSize676Nudge:2 generation:generation attempt:0 why:@"second nudge, after the keyboard animation"];
+        });
+    }
+}
+
+// Optional (hold-on file): the card's current picture held over the switch
+// until the first nudge is back (at most 0.8 s), so the relayout is not seen.
+- (void)phoneSize676HoldPicture {
+    if (!DSPhoneSize676HoldEnabled() || _phoneSizeHoldView) return;
+    UIView *parent = _hostView.superview;
+    if (!parent || CGRectIsEmpty(parent.bounds)) return;
+    UIView *snapshot = nil;
+    @try {
+        snapshot = [parent snapshotViewAfterScreenUpdates:NO];
+    } @catch (NSException *exception) {
+        snapshot = nil;
+    }
+    if (!snapshot) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ picture hold: no snapshot, nothing held", _bundleIdentifier ?: @"?");
+        return;
+    }
+    snapshot.frame = parent.bounds;
+    snapshot.userInteractionEnabled = NO;
+    [parent addSubview:snapshot];
+    _phoneSizeHoldView = snapshot;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ picture hold ON t+%.0fms (card snapshot over the switch, max 0.8 s)",
+                              _bundleIdentifier ?: @"?", DSPhoneSize676Ms());
+    __weak __typeof(self) weakSelf = self;
+    __weak UIView *weakSnapshot = snapshot;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf && strongSelf->_phoneSizeHoldView == weakSnapshot) [strongSelf phoneSize676ReleaseHold:@"0.8 s limit" animated:YES];
+    });
+}
+
+// ---- 4.5.678 phonesize678: grow before the keyboard (B), stay grown (C) -----
+- (BOOL)isPhoneSize678PreGrown {
+    return _phoneSize && _phoneSizePreGrown;
+}
+
+// Scene y put on the card's bottom edge while no keyboard is up: the app's
+// bottom above the home-indicator inset, where its composer sits.
+- (CGFloat)phoneSize678BottomAnchor {
+    // 4.5.684: the bar rests above the K inset (no 120 pt clamp).
+    if ([self isPhoneSize688Geo]) return [self phoneSize688Line];
+    if ([self isPhoneSize687]) return [self phoneSize687Bar];
+    if ([self isPhoneSize684]) return [self phoneSize684Pin];
+    CGSize phone = [self phoneSize675SceneSize];
+    UIEdgeInsets insets = _phoneSize ? _phoneSizeInsets : [self phoneSize675ScreenInsets];
+    CGFloat bottom = isfinite(insets.bottom) ? MAX(0.0, MIN(120.0, insets.bottom)) : 0.0;
+    return phone.height - bottom;
+}
+
+- (NSString *)phoneSize678MappingName:(BOOL)tapSafe {
+    return tapSafe ? @"tap-safe (app top on the card top, so the touched point stays put inside the app while the finger is down)"
+                   : @"bottom-anchored (the app's bottom above the home inset on the card's bottom edge)";
+}
+
+// The card's current picture over the switch while the finger is down, so the
+// tap-safe phase is not seen. Taken before the write. The touch already
+// belongs to the app (it went there at touch-down); the picture takes no touches.
+- (void)phoneSize678HoldForTouch {
+    if (_phoneSizeHoldView) return;
+    UIView *parent = _hostView.superview;
+    if (!parent || CGRectIsEmpty(parent.bounds)) return;
+    UIView *snapshot = nil;
+    @try {
+        snapshot = [parent snapshotViewAfterScreenUpdates:NO];
+    } @catch (NSException *exception) {
+        snapshot = nil;
+    }
+    if (!snapshot) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ touch hold: no snapshot, the tap-safe phase is visible", _bundleIdentifier ?: @"?");
+        return;
+    }
+    snapshot.frame = parent.bounds;
+    snapshot.userInteractionEnabled = NO;
+    [parent addSubview:snapshot];
+    _phoneSizeHoldView = snapshot;
+    __weak __typeof(self) weakSelf = self;
+    __weak UIView *weakSnapshot = snapshot;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf && strongSelf->_phoneSizeHoldView == weakSnapshot) [strongSelf phoneSize676ReleaseHold:@"touch hold 1.2 s limit" animated:YES];
+    });
+}
+
+// B / C: phone size now, before any keyboard. NO when it did not switch
+// (already phone-size for a keyboard, or one of setPhoneSize675's skips).
+- (BOOL)phoneSize678PreGrow:(BOOL)tapSafe why:(NSString *)why {
+    if (_phoneSize) {
+        if (!_phoneSizePreGrown) return NO;
+        if (!tapSafe) [self phoneSize678AnchorBottom:why];
+        return YES;
+    }
+    BOOL hold = tapSafe && _hostView.superview != nil;
+    if (hold) [self phoneSize678HoldForTouch];
+    _phoneSizePreGrowCall = YES;
+    @try {
+        [self setPhoneSize675:YES keyboardTop:(tapSafe ? 0.0 : [self phoneSize678BottomAnchor]) why:why];
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ pre-grow threw %@", _bundleIdentifier ?: @"?", exception.reason ?: exception.name ?: @"?");
+    }
+    _phoneSizePreGrowCall = NO;
+    if (!_phoneSize) {
+        _phoneSizePreGrown = NO;
+        [self phoneSize676ReleaseHold:@"pre-grow did not switch" animated:NO];
+        return NO;
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ pre-grown t+%.0fms: mapping %@%@",
+                              _bundleIdentifier ?: @"?", DSPhoneSize676Ms(), [self phoneSize678MappingName:tapSafe],
+                              hold ? (_phoneSizeHoldView ? @"; card picture held until the finger lifts" : @"") : @"");
+    return YES;
+}
+
+// Tap-safe -> bottom-anchored (the finger lifted). Mapping only, no scene write.
+- (void)phoneSize678AnchorBottom:(NSString *)why {
+    if (!_phoneSize || !_phoneSizePreGrown) return;
+    CGFloat anchor = [self phoneSize678BottomAnchor];
+    if (fabs(anchor - _phoneSizeKeyTop) > 0.5) {
+        CGFloat was = _phoneSizeKeyTop;
+        _phoneSizeKeyTop = anchor;
+        [self layoutHostView];
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ mapping %.0f -> %.0f t+%.0fms (%@): %@",
+                                  _bundleIdentifier ?: @"?", was, anchor, DSPhoneSize676Ms(), why ?: @"?",
+                                  [self phoneSize678MappingName:NO]);
+    }
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.06 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [weakSelf phoneSize676ReleaseHold:@"finger lifted, bottom-anchored" animated:YES];
+    });
+}
+
+// C: the keyboard went down; stay phone-size, bottom-anchored.
+- (void)phoneSize678RestWhy:(NSString *)why {
+    if (_phoneSize && [self isPhoneSize684]) {
+        [self phoneSize684KeysDown:why ?: @"keyboard down"];
+        return;
+    }
+    // 4.5.684: a keys-down moment; 684 may need switching on (off file removed).
+    if (_phoneSize && !_cameraTall) [self phoneSize684ScheduleApply:why ?: @"keyboard down"];
+    if (_phoneSize && DSPhoneSize680Enabled()) {
+        [self phoneSize680MoveBarBottomTo:[self phoneSize678BottomAnchor] duration:0.25 curve:7 lag:0.0 why:why ?: @"keyboard down"];
+        return;
+    }
+    if (_phoneSize && !_phoneSizePreGrown) {
+        _phoneSizePreGrown = YES;
+        CGFloat was = _phoneSizeKeyTop;
+        _phoneSizeKeyTop = [self phoneSize678BottomAnchor];
+        [self layoutHostView];
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize678 %@ always: %@; stays phone-size, mapping %.0f -> %.0f, %@",
+                                  _bundleIdentifier ?: @"?", why ?: @"?", was, _phoneSizeKeyTop, [self phoneSize678MappingName:NO]);
+        return;
+    }
+    if (!_phoneSize) [self phoneSize678PreGrow:NO why:[NSString stringWithFormat:@"phonesize678 always: %@", why ?: @"?"]];
+}
+
+// ---- 4.5.683 phonesize683 -----------------------------------------------------
+- (BOOL)isPhoneSize683 {
+    if (!_phoneSize || _cameraTall || !DSPhoneSize683Enabled()) return NO;
+    NSString *bundle = _bundleIdentifier;
+    if (bundle.length == 0 || !DSPhoneSize675Allowed(bundle)) return NO;
+    @try {
+        DSStageManager *manager = [DSStageManager sharedManager];
+        if ([manager respondsToSelector:@selector(keys671AppHasDylib:)] && [manager keys671AppHasDylib:bundle]) return NO;
+    } @catch (NSException *exception) {
+        return NO;
+    }
+    return YES;
+}
+
+static void DSPS683CensusView(UIView *view, UIView *root, NSInteger depth, NSMutableArray<NSString *> *out) {
+    if (!view || depth > 6 || out.count >= 28) return;
+    CGRect frame = root ? [view convertRect:view.bounds toView:root] : view.frame;
+    [out addObject:[NSString stringWithFormat:@"%@%@ %@%@%@", [@"" stringByPaddingToLength:(NSUInteger)depth withString:@"." startingAtIndex:0],
+                    NSStringFromClass(view.class), NSStringFromCGRect(frame), view.hidden ? @" HIDDEN" : @"",
+                    view.alpha < 0.99 ? [NSString stringWithFormat:@" a=%.2f", view.alpha] : @""]];
+    for (UIView *child in view.subviews) DSPS683CensusView(child, root, depth + 1, out);
+}
+
+- (NSString *)phoneSize683HostCensus {
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+    @try {
+        DSPS683CensusView(_hostView, _hostView, 0, lines);
+    } @catch (NSException *exception) {
+        [lines addObject:@"(census threw)"];
+    }
+    return [lines componentsJoinedByString:@" | "];
+}
+
+// ---- 4.5.684 phonesize684 -----------------------------------------------------
+static NSMutableDictionary<NSString *, NSNumber *> *DSPS684Learned = nil;
+static NSMutableDictionary<NSString *, NSNumber *> *DSPS701PendingK;   // 4.5.701 keys701 // bundle -> K (this SpringBoard run)
+
+- (BOOL)isPhoneSize684 {
+    return _phoneSize && _ps684Active && !_cameraTall;
+}
+
+- (BOOL)isPhoneSize685 {
+    return [self isPhoneSize684] && _ps685Active;
+}
+
+// 4.5.694: the card's vertical scale (= fit when 694 is not squashing).
+- (CGFloat)phoneSize694ScaleYForWidth:(CGFloat)width height:(CGFloat)height fit:(CGFloat)fit keyTop:(CGFloat)keyTop {
+    CGFloat sy = fit;
+    NSString *why = nil;
+    @try {
+        if (!DSPhoneSize694Squash()) why = DSPhoneSize694Off() ? @"694 off file (691)" : (DSPhoneSize694Latched() ? @"crash latch (691)" : @"mode=691");
+        else if (![self isPhoneSize684] || _ps685Active || _ps687Active || [self isPhoneSize688Geo]) why = @"not the 684 geometry";
+        else if (!isfinite(fit) || fit < 0.3 || !isfinite(height) || height < 80.0 || !isfinite(keyTop)) why = @"odd card";
+        else {
+            DSPhoneSize694Tune tune = DSPhoneSize694CurrentTune();
+            CGFloat span = keyTop - tune.viewTop;
+            CGFloat want = tune.sy > 0.0 ? tune.sy : (span > 100.0 ? height / span : fit);
+            if (!isfinite(want)) want = fit;
+            want = MAX(0.5, MIN(1.2, want));
+            if (tune.sy <= 0.0 && want >= fit - 0.0005) {
+                why = @"the card already shows view_top at the uniform scale";
+            } else {
+                sy = want;
+                DSPhoneSize694MarkTrying();
+            }
+        }
+    } @catch (NSException *exception) {
+        sy = fit;
+        why = @"threw";
+    }
+    NSString *state = why ? [@"off:" stringByAppendingString:why] : [NSString stringWithFormat:@"on:%.4f:%.4f:%.0f:%.0f", fit, sy, keyTop, height];
+    if (![state isEqualToString:_ps694LoggedState]) {
+        _ps694LoggedState = state;
+        if (why) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize694 %@ no squash (%@): uniform x%.4f", _bundleIdentifier ?: @"?", why, fit);
+        } else {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize694 %@ squash: card %.0fx%.0f shows the real app y %.0f..%.0f at x%.4f (full width) / y%.4f; "
+                                      @"app y %.0f on the card bottom (bar line, as 684); top inset %.0f, scene/keyboard 684",
+                                      _bundleIdentifier ?: @"?", width, height, keyTop - height / MAX(sy, 0.01), keyTop, fit, sy, keyTop,
+                                      [self phoneSize684Insets].top);
+        }
+    }
+    return sy;
+}
+
+// 4.5.698: a little bigger than 694's squash (see DSPhoneSize698Tune). In: 694's
+// sx (fit) / sy. Out: the scales and the host centre x. App y keyTop stays on the
+// card bottom (the caller's centre y formula uses the returned sy). Never smaller
+// than 694 and never narrower than the card (no margins).
+- (void)phoneSize698ForWidth:(CGFloat)width height:(CGFloat)height phone:(CGSize)phone fit:(CGFloat)fit keyTop:(CGFloat)keyTop
+                          sx:(CGFloat *)sxInOut sy:(CGFloat *)syInOut cx:(CGFloat *)cxOut {
+    CGFloat sx0 = *sxInOut, sy0 = *syInOut;
+    CGFloat sx = sx0, sy = sy0, shift = 0.0;
+    NSString *why = nil;
+    @try {
+        if (DSPhoneSize698Off()) why = @"698 off file (697)";
+        else if (DSPhoneSize698Latched()) why = @"crash latch (697)";
+        else if (![_ps694LoggedState hasPrefix:@"on:"]) why = @"694 squash not in use";
+        else if ([_bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) why = @"Messages";
+        else if (!isfinite(fit) || fit < 0.3 || !isfinite(sy0) || sy0 < 0.3 || !isfinite(height) || height < 80.0 ||
+                 !isfinite(width) || width < 80.0 || !isfinite(keyTop) || phone.width < 100.0) why = @"odd card";
+        else {
+            DSPhoneSize698Tune tune = DSPhoneSize698CurrentTune();
+            if (tune.zoom > 0.0) {
+                sx = sx0 * tune.zoom;
+                sy = sy0 * tune.zoom;
+            } else {
+                CGFloat span = keyTop - tune.viewTop;
+                sy = span > 100.0 ? height / span : sy0;
+                CGFloat shown = phone.width - 2.0 * tune.sideCrop;
+                sx = shown > 100.0 ? width / shown : sx0;
+            }
+            if (tune.sx > 0.0) sx = tune.sx;
+            if (tune.sy > 0.0) sy = tune.sy;
+            if (!isfinite(sx)) sx = sx0;
+            if (!isfinite(sy)) sy = sy0;
+            sx = MAX(sx0, MIN(1.4, sx));
+            sy = MAX(sy0, MIN(1.4, sy));
+            CGFloat maxShift = MAX(0.0, (phone.width * sx - width) / (2.0 * sx));
+            shift = MAX(-maxShift, MIN(maxShift, tune.xShift));
+            if (fabs(sx - sx0) < 0.0005 && fabs(sy - sy0) < 0.0005 && fabs(shift) < 0.05) {
+                why = @"tune gives 697's picture";
+                sx = sx0; sy = sy0; shift = 0.0;
+            } else {
+                DSPhoneSize698MarkTrying();
+            }
+        }
+    } @catch (NSException *exception) {
+        sx = sx0; sy = sy0; shift = 0.0;
+        why = @"threw";
+    }
+    *sxInOut = sx;
+    *syInOut = sy;
+    *cxOut = width / 2.0 + shift * sx;
+    NSString *state = why ? [@"off:" stringByAppendingString:why]
+                          : [NSString stringWithFormat:@"on:%.4f:%.4f:%.1f:%.0f:%.0f:%.0f", sx, sy, shift, keyTop, width, height];
+    if (![state isEqualToString:_ps698LoggedState]) {
+        _ps698LoggedState = state;
+        if (why) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize698 %@ not bigger (%@): 697 picture x%.4f / y%.4f", _bundleIdentifier ?: @"?", why, sx0, sy0);
+        } else {
+            CGFloat halfW = width / (2.0 * sx);
+            CGFloat midX = phone.width / 2.0 - shift;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize698 %@ bigger: card %.0fx%.0f shows app y %.0f..%.0f, x %.1f..%.1f at x%.4f / y%.4f "
+                                      @"(697: y %.0f..%.0f, x 0..%.0f at x%.4f / y%.4f -> %+.1f%% wide, %+.1f%% tall); app y %.0f on the card bottom (bar line), scene/keyboard unchanged",
+                                      _bundleIdentifier ?: @"?", width, height, keyTop - height / sy, keyTop, midX - halfW, midX + halfW, sx, sy,
+                                      keyTop - height / sy0, keyTop, phone.width, sx0, sy0,
+                                      (sx / sx0 - 1.0) * 100.0, (sy / sy0 - 1.0) * 100.0, keyTop);
+        }
+    }
+}
+
+// 4.5.695: is this host a 684-geometry phone-size card (the 694 squash path)?
+- (BOOL)phoneSize695Geometry {
+    if (!_phoneSize || _cameraTall || !_appViewController) return NO;
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return NO;
+    if (![self isPhoneSize684] || _ps685Active || _ps687Active || [self isPhoneSize688Geo]) return NO;
+    return YES;
+}
+
+// 4.5.695: YES = do not shrink the scene back to card size for this reason;
+// the card is only minimised / off screen. Everything else shrinks as in 694.
+- (BOOL)phoneSize695KeepsAway:(NSString *)why {
+    BOOL keep = NO;
+    BOOL away = NO;
+    @try {
+        if (![self phoneSize695Geometry] || !DSPhoneSize695Enabled()) return NO;
+        UIView *parent = _hostView.superview;
+        away = parent && (parent.tag == 9158 ||
+                          (CGRectGetWidth(parent.bounds) < 80.0 && CGRectGetHeight(parent.bounds) < 80.0));
+        if ([why isEqualToString:@"card minimized"] || [why isEqualToString:@"card not on screen"]) keep = YES;
+        else if (away && ([why hasPrefix:@"keyboard now belongs to"] || [why hasPrefix:@"keyboard down"])) keep = YES;
+        if (keep) DSPhoneSize695MarkTrying();
+    } @catch (NSException *exception) {
+        keep = NO;
+    }
+    if (keep) {
+        NSString *key = [NSString stringWithFormat:@"%@|%@|%d", _bundleIdentifier ?: @"?", why ?: @"?", away];
+        // 4.5.706 perf706: the same "kept" line came every ~6 s for as long as another
+        // app typed (85 lines in one log). Same key: once a minute.
+        CFAbsoluteTime quietFor = DSFeature699On("perf706") ? 60.0 : 5.0;
+        if (DSLogGate(@"phonesize695-kept", key, quietFor, NULL)) {
+            CGSize phone = [self phoneSize675SceneSize];
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize695 %@ kept %.0fx%.0f safeArea %@ while %@ (%@): no shrink, no scene write; restore needs no relayout",
+                                      _bundleIdentifier ?: @"?", phone.width, phone.height, NSStringFromUIEdgeInsets([self insetsForScene]),
+                                      away ? @"minimised" : @"off screen", why ?: @"?");
+        }
+    }
+    return keep;
+}
+
+// 4.5.695: the live view is back on its card (restore). The scene is still the
+// phone size, so place it with the 694 squash now, before the next frame (the
+// stage manager's return put it there at identity).
+- (void)phoneSize695ReturnedToCard {
+    @try {
+        if (!_hostView.superview || ![self phoneSize695Geometry] || !DSPhoneSize695Enabled()) return;
+        [self layoutHostView];
+        static CFAbsoluteTime loggedAt = 0;
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (now - loggedAt > 2.0 || now < loggedAt) {
+            loggedAt = now;
+            CGSize phone = [self phoneSize675SceneSize];
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize695 %@ restored: scene still %.0fx%.0f safeArea %@, squash placed on the first frame (card %.0fx%.0f), no resize",
+                                      _bundleIdentifier ?: @"?", phone.width, phone.height, NSStringFromUIEdgeInsets([self insetsForScene]),
+                                      CGRectGetWidth(_hostView.superview.bounds), CGRectGetHeight(_hostView.superview.bounds));
+        }
+    } @catch (NSException *exception) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize695 restore layout threw %@", exception.reason ?: exception.name ?: @"?");
+    }
+}
+
+// ---- 4.5.696 ------------------------------------------------------------------
+- (void)phoneSize696SetKeysSceneID:(NSString *)identifier {
+    if ((identifier == nil && _ps696KeysSceneID == nil) || [identifier isEqualToString:_ps696KeysSceneID]) return;
+    [DSSceneOverridesLock() lock];
+    if (_ps696KeysSceneID) [DSPS696KeysScenes() removeObject:_ps696KeysSceneID];
+    if (identifier) [DSPS696KeysScenes() addObject:identifier];
+    [DSSceneOverridesLock() unlock];
+    _ps696KeysSceneID = [identifier copy];
+}
+
+// Fix 1: the scene counts as a visible phone-size card while the host view
+// sits in a real card (not the hidden holder, not the corner bubble).
+- (void)phoneSize696UpdateKeysSceneForParent:(UIView *)parent {
+    BOOL tiny = CGRectGetWidth(parent.bounds) < 80.0 && CGRectGetHeight(parent.bounds) < 80.0;
+    BOOL want = parent && parent.tag != 9158 && !tiny && !CGRectIsEmpty(parent.bounds) && !_staysBackgrounded &&
+                [self phoneSize695Geometry];
+    NSString *identifier = nil;
+    if (want) {
+        FBScene *scene = _scene ?: [self appViewScene];
+        identifier = [scene respondsToSelector:@selector(identifier)] ? scene.identifier : nil;
+    }
+    [self phoneSize696SetKeysSceneID:identifier.length ? identifier : nil];
+}
+
+// Fix 2: a 684-geometry phone-size card (the lift uses its keys top).
+- (BOOL)phoneSize696FitGeometry {
+    return [self phoneSize695Geometry];
+}
+
+- (CGFloat)phoneSize696KeysTop {
+    return [self phoneSize684Pin];
+}
+
+// Fix 0: a visible card that is backgrounded, not showing its app, hidden or
+// scaled to nothing is put right (the same wake a tap on the card does).
+// Returns what it did, or nil.
+- (NSString *)blackout696Tick {
+    if (!_appViewController || !_hostView) return nil;
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier) || DSSceneWriteWouldTrap() || _revealingTallContent) return nil;
+    UIView *parent = _hostView.superview;
+    if (!parent || parent.tag == 9158 || (CGRectGetWidth(parent.bounds) < 80.0 && CGRectGetHeight(parent.bounds) < 80.0)) return nil;
+    CGAffineTransform t = _hostView.transform;
+    BOOL hiddenView = _hostView.hidden || _hostView.alpha < 0.01 || fabs(t.a) < 0.01 || fabs(t.d) < 0.01;
+    BOOL foreground = YES;
+    BOOL known = NO;
+    @try {
+        FBScene *scene = [self appViewScene];
+        id settings = [scene respondsToSelector:@selector(settings)] ? scene.settings : nil;
+        foreground = settings ? [DSSceneHost readForegroundFlag:settings known:&known] : YES;
+    } @catch (NSException *exception) {
+    }
+    BOOL showing = [self appViewIsShowingContent];
+    if (!hiddenView && !(known && !foreground) && showing) {
+        _ps696BadTicks = 0;
+        return nil;
+    }
+    // Seen on two ticks in a row (about 3 s), so an app that is still opening
+    // or a transition in progress is left alone.
+    if (++_ps696BadTicks < 2) return nil;
+    NSMutableArray<NSString *> *did = [NSMutableArray array];
+    if (hiddenView) {
+        _hostView.hidden = NO;
+        _hostView.alpha = 1.0;
+        [self layoutHostView];
+        [did addObject:@"host view was hidden / scaled to nothing: shown and laid out again"];
+    }
+    if ((known && !foreground) || !showing) {
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (now - _ps696WakeAt >= 4.0 || now < _ps696WakeAt) {
+            _ps696WakeAt = now;
+            [self wakeIfBackgrounded];
+            [did addObject:[NSString stringWithFormat:@"scene %@%@: woken (the card-tap wake)",
+                            (known && !foreground) ? @"backgrounded" : @"foreground", showing ? @"" : @", app view not showing the app"]];
+        }
+    }
+    if (did.count == 0) return nil;
+    DSPS696MarkTrying(0);
+    return [did componentsJoinedByString:@"; "];
+}
+
+- (NSString *)blackout699WakeIfBackgrounded {
+    if (!_appViewController || !_hostView) return nil;
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier) || DSSceneWriteWouldTrap() || _revealingTallContent) return nil;
+    UIView *parent = _hostView.superview;
+    if (!parent || parent.tag == 9158) return nil;
+    BOOL foreground = YES;
+    BOOL known = NO;
+    @try {
+        FBScene *scene = [self appViewScene];
+        id settings = [scene respondsToSelector:@selector(settings)] ? scene.settings : nil;
+        foreground = settings ? [DSSceneHost readForegroundFlag:settings known:&known] : YES;
+    } @catch (NSException *exception) {
+    }
+    if (!(known && !foreground)) return nil;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - _ps696WakeAt < 1.0 && now >= _ps696WakeAt) return nil;
+    _ps696WakeAt = now;
+    _ps696BadTicks = 0;
+    [self wakeIfBackgrounded];
+    return @"scene was in the background on a visible card: woken (the card-tap wake)";
+}
+
+// ---- 4.5.690 top-bar strip (see the notes above DSPhoneSize690StripView) ----
+- (void)phoneSize690RemoveStrip:(NSString *)why {
+    DSPhoneSize690StripView *strip = _ps690Strip;
+    if (!strip) return;
+    _ps690Strip = nil;
+    @try {
+        [strip removeFromSuperview];
+    } @catch (NSException *exception) {
+    }
+    _ps690LoggedState = nil;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 %@ top-bar strip removed (%@)", _bundleIdentifier ?: @"?", why ?: @"?");
+}
+
+- (void)phoneSize690UpdateStripInParent:(UIView *)parent width:(CGFloat)width height:(CGFloat)height fit:(CGFloat)fit cardBottomY:(CGFloat)bottomY {
+    if (![NSThread isMainThread]) return;
+    DSPhoneSize690Tune tune = DSPhoneSize690CurrentTune();
+    UIView *source = _hostView;
+    CGFloat visibleTop = bottomY - height / MAX(fit, 0.01);
+    NSString *skip = nil;
+    if (!tune.on) skip = @"tune on=0";
+    else if (DSPhoneSize694Squash()) skip = @"694 squash: the real top bar is shown (copied bar only with 694 mode=691 or the 694 off file)";
+    else if (DSPhoneSize690Off()) skip = @"/var/mobile/.dynamicstage-phonesize690-off";
+    else if (![self isPhoneSize684] || _ps685Active || _ps687Active || [self isPhoneSize688Geo]) skip = @"not the 684/689 geometry";
+    else if (!parent || !source || source.superview != parent || source.hidden) skip = @"no card";
+    else if (!isfinite(fit) || fit < 0.3 || fit > 2.0 || !isfinite(width) || width < 80.0 || !isfinite(height) || height < 80.0) skip = @"odd card size";
+    else if (tune.stripTop >= visibleTop - 0.5) skip = @"strip already on the card";
+    else if (DSPhoneSize690Latched()) skip = @"crash latch (/var/mobile/.dynamicstage-phonesize690-crashed)";
+    if (skip) {
+        if (_ps690Strip) [self phoneSize690RemoveStrip:skip];
+        NSString *state = [@"skip:" stringByAppendingString:skip];
+        if (![state isEqualToString:_ps690LoggedState]) {
+            _ps690LoggedState = state;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 %@ no top-bar strip (%@)", _bundleIdentifier ?: @"?", skip);
+        }
+        return;
+    }
+    Class portalClass = NSClassFromString(@"_UIPortalView");
+    if (!portalClass || ![portalClass instancesRespondToSelector:NSSelectorFromString(@"setSourceView:")]) {
+        NSString *state = @"skip:no _UIPortalView";
+        if (![state isEqualToString:_ps690LoggedState]) {
+            _ps690LoggedState = state;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 %@ no top-bar strip: _UIPortalView (setSourceView:) missing on this iOS", _bundleIdentifier ?: @"?");
+        }
+        return;
+    }
+    DSPhoneSize690StripView *strip = _ps690Strip;
+    if (strip && strip.superview != parent) {
+        [self phoneSize690RemoveStrip:@"card changed"];
+        strip = nil;
+    }
+    UIView *portal = nil;
+    for (UIView *sub in strip.subviews) {
+        if ([NSStringFromClass(object_getClass(sub)) containsString:@"Portal"]) portal = sub;
+    }
+    BOOL made = NO;
+    if (!strip || !portal) {
+        if (strip) [self phoneSize690RemoveStrip:@"portal lost"];
+        DSPhoneSize690MarkTrying();
+        strip = [[DSPhoneSize690StripView alloc] initWithFrame:CGRectZero];
+        strip.clipsToBounds = YES;
+        strip.layer.masksToBounds = YES;
+        strip.autoresizingMask = UIViewAutoresizingNone;
+        strip.isAccessibilityElement = NO;
+        @try {
+            portal = [[portalClass alloc] initWithFrame:CGRectZero];
+        } @catch (NSException *exception) {
+            portal = nil;
+        }
+        if (!portal) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 %@ _UIPortalView could not be made; no strip", _bundleIdentifier ?: @"?");
+            return;
+        }
+        portal.userInteractionEnabled = NO;
+        portal.autoresizingMask = UIViewAutoresizingNone;
+        DSPhoneSize690SetBool(portal, @"setMatchesPosition:", NO);
+        DSPhoneSize690SetBool(portal, @"setMatchesTransform:", NO);
+        DSPhoneSize690SetBool(portal, @"setMatchesAlpha:", NO);
+        DSPhoneSize690SetBool(portal, @"setHidesSourceView:", NO);
+        DSPhoneSize690SetBool(portal, @"setForwardsClientHitTestingToSourceView:", NO);
+        @try {
+            ((void (*)(id, SEL, id))objc_msgSend)(portal, NSSelectorFromString(@"setSourceView:"), source);
+        } @catch (NSException *exception) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 %@ setSourceView threw %@; no strip", _bundleIdentifier ?: @"?", exception.reason ?: @"?");
+            return;
+        }
+        [strip addSubview:portal];
+        [parent insertSubview:strip aboveSubview:source];
+        _ps690Strip = strip;
+        made = YES;
+    } else {
+        SEL getter = NSSelectorFromString(@"sourceView");
+        id current = [portal respondsToSelector:getter] ? ((id (*)(id, SEL))objc_msgSend)(portal, getter) : nil;
+        if (current != source) ((void (*)(id, SEL, id))objc_msgSend)(portal, NSSelectorFromString(@"setSourceView:"), source);
+        if (parent.subviews.lastObject != strip) {
+            NSUInteger si = [parent.subviews indexOfObject:source];
+            NSUInteger ti = [parent.subviews indexOfObject:strip];
+            if (si != NSNotFound && ti != NSNotFound && ti < si) [parent insertSubview:strip aboveSubview:source];
+        }
+    }
+    // Touch mode: the portal's own (window server) hit testing only in forward.
+    if (strip.touchMode != tune.touch || made) {
+        strip.touchMode = tune.touch;
+        DSPhoneSize690SetBool(portal, @"setAllowsHitTesting:", tune.touch == 0);
+        strip.userInteractionEnabled = tune.touch != 2;
+        // A filled view is what the window server gives to SpringBoard; pass
+        // mode is picture only, so its own layer stays out of hit testing.
+        strip.backgroundColor = tune.touch == 2 ? UIColor.clearColor : (parent.backgroundColor ?: UIColor.blackColor);
+    }
+    strip.bundle = _bundleIdentifier;
+    strip.stripTop = tune.stripTop;
+    strip.fit = fit;
+    // Geometry: strip at card y place_y, card width, strip_height at the card's
+    // scale; the portal shows the host view (scene coordinates) so that app y
+    // strip_top lands on the strip's top edge, at the same x as the card.
+    CGSize scene = source.bounds.size;
+    CGRect frame = CGRectMake(0.0, tune.placeY, width, ceil(tune.stripHeight * fit));
+    if (!CGRectEqualToRect(strip.frame, frame)) strip.frame = frame;
+    if (strip.hidden) strip.hidden = NO;
+    CGRect bounds = CGRectMake(0.0, 0.0, scene.width, scene.height);
+    if (!CGRectEqualToRect(portal.bounds, bounds)) {
+        portal.transform = CGAffineTransformIdentity;
+        portal.bounds = bounds;
+    }
+    CGFloat left = (width - scene.width * fit) / 2.0;
+    CGPoint center = CGPointMake(left + scene.width * fit / 2.0, (scene.height / 2.0 - tune.stripTop) * fit);
+    if (fabs(portal.center.x - center.x) > 0.25 || fabs(portal.center.y - center.y) > 0.25) portal.center = center;
+    CGAffineTransform t = portal.transform;
+    if (fabs(t.a - fit) > 0.0005 || fabs(t.d - fit) > 0.0005) portal.transform = CGAffineTransformMakeScale(fit, fit);
+    NSString *state = [NSString stringWithFormat:@"on:%.0f:%.0f:%.0f:%.4f:%ld:%.0f", tune.stripTop, tune.stripHeight, tune.placeY, fit, (long)tune.touch, width];
+    if (made || ![state isEqualToString:_ps690LoggedState]) {
+        _ps690LoggedState = state;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize690 %@ top-bar strip %@: app y %.0f..%.0f shown at card y %.0f..%.0f (x%.4f, card %.0fx%.0f; the card itself still shows app y %.0f..%.0f, unchanged), touch=%@",
+                                  _bundleIdentifier ?: @"?", made ? @"made" : @"updated", tune.stripTop, tune.stripTop + tune.stripHeight,
+                                  tune.placeY, tune.placeY + CGRectGetHeight(frame), fit, width, height, visibleTop, bottomY,
+                                  DSPhoneSize690TouchName(tune.touch));
+    }
+}
+
+
+- (BOOL)isPhoneSize688Geo {
+    return [self isPhoneSize684] && _ps688Active && !_ps685Active && !_ps687Active &&
+           (_ps688Mode == DSPhoneSize688ModeOffset || _ps688Mode == DSPhoneSize688ModeShort);
+}
+
+// 4.5.688 offset/short: how far the keyboard line moves up in the window (o):
+// card shows window view..view + cardH/fit with the 684 fill; line = 586 - o.
+- (CGFloat)phoneSize688O {
+    if (_ps688Offset >= 0.0) return MIN(150.0, _ps688Offset);
+    UIView *parent = _hostView.superview;
+    CGFloat w = CGRectGetWidth(parent.bounds);
+    CGFloat h = CGRectGetHeight(parent.bounds);
+    if (!isfinite(w) || w < 80.0 || !isfinite(h) || h < 80.0) {
+        w = CGRectGetWidth(_stageFrame);
+        h = CGRectGetHeight(_stageFrame);
+    }
+    CGFloat phoneW = [self cameraTallSize].width;
+    if (!(phoneW > 1.0) || !isfinite(w) || w < 80.0 || !isfinite(h) || h < 80.0) return 0.0;
+    CGFloat view = _ps688View >= 0.0 ? _ps688View : 57.0;
+    CGFloat o = floor([self phoneSize684Pin] - h / (w / phoneW) - view + 0.01);
+    return MAX(0.0, MIN(150.0, o));
+}
+
+- (CGFloat)phoneSize688Line {
+    return [self phoneSize684Pin] - [self phoneSize688O];
+}
+
+// Where the app's picture starts inside the host view (the scene origin can be
+// copied into the presentation view's frame). Measured; tune shift= overrides.
+- (CGFloat)phoneSize688Shift {
+    if (_ps688Shift > -500.0) return _ps688Shift;
+    UIView *host = _hostView;
+    if (!host) return 0.0;
+    CGFloat found = 0.0;
+    NSString *foundName = @"none";
+    @try {
+        NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithArray:host.subviews];
+        UIView *fallback = nil;
+        NSInteger visited = 0;
+        UIView *hit = nil;
+        while (queue.count > 0 && visited < 300) {
+            UIView *view = queue.firstObject;
+            [queue removeObjectAtIndex:0];
+            visited += 1;
+            NSString *name = NSStringFromClass(object_getClass(view));
+            if ([name rangeOfString:@"ScenePresentation"].location != NSNotFound) {
+                hit = view;
+                break;
+            }
+            if (!fallback && [name rangeOfString:@"SceneLayerHost"].location != NSNotFound) fallback = view;
+            [queue addObjectsFromArray:view.subviews];
+        }
+        if (!hit) hit = fallback;
+        if (hit) {
+            CGPoint origin = [hit convertPoint:CGPointZero toView:host];
+            if (isfinite(origin.y) && origin.y > -20.0 && origin.y < 160.0) {
+                found = origin.y;
+                foundName = NSStringFromClass(object_getClass(hit));
+            }
+        }
+    } @catch (NSException *exception) {
+        found = 0.0;
+    }
+    found = round(found * 2.0) / 2.0;
+    if (fabs(found - _ps688LoggedShift) > 0.25) {
+        _ps688LoggedShift = found;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize688 %@ picture starts at host y %.1f (%@); card bottom = host y %.0f = window y %.0f (keyboard line)",
+                                  _bundleIdentifier ?: @"?", found, foundName, [self phoneSize688Line] + found, [self phoneSize688Line]);
+    }
+    return found;
+}
+
+// 4.5.688 mode=statusbar: the status bar height to give the scene (0 = leave it).
+- (CGFloat)phoneSize688StatusBarHeight {
+    if (![self isPhoneSize684] || !_ps688Active || _ps685Active || _ps687Active || _ps688Mode != DSPhoneSize688ModeStatusBar) return 0.0;
+    if (_ps688StatusBar >= 0.0) return _ps688StatusBar;
+    CGFloat top = [self phoneSize684Insets].top;
+    return (isfinite(top) && top > 1.0) ? top : 0.0;
+}
+
+- (BOOL)isPhoneSize687 {
+    return [self isPhoneSize684] && _ps687Active && !_ps685Active;
+}
+
+// 4.5.687: app y on the card's top edge (the phone's own top inset by default).
+- (CGFloat)phoneSize687ViewTop {
+    CGFloat view = _ps687View;
+    if (view < 0.0) {
+        view = [self phoneSize675ScreenInsets].top;
+        if (!isfinite(view) || view < 1.0 || view > 117.0) view = 59.0;
+    }
+    return view;
+}
+
+// 4.5.687: where the app's bar rests (scene y): the card shows app y
+// view..view + cardH/fit at the 684 fill, the bar sits margin pt above the card
+// bottom. Never below the keyboard top (684's line), so the bottom inset stays at
+// least the keyboard height.
+- (CGFloat)phoneSize687Bar {
+    CGSize phone = [self phoneSize675SceneSize];
+    UIView *parent = _hostView.superview;
+    CGFloat w = CGRectGetWidth(parent.bounds);
+    CGFloat h = CGRectGetHeight(parent.bounds);
+    if (!isfinite(w) || w < 80.0 || !isfinite(h) || h < 80.0) {
+        w = CGRectGetWidth(_stageFrame);
+        h = CGRectGetHeight(_stageFrame);
+    }
+    CGFloat line = [self phoneSize684Pin];
+    if (!(phone.width > 1.0) || !isfinite(w) || w < 80.0 || !isfinite(h) || h < 80.0) return line;
+    CGFloat fit = w / phone.width;
+    CGFloat bar = floor([self phoneSize687ViewTop] + h / fit - MAX(0.0, _ps687Margin) + 0.01);
+    return MAX(300.0, MIN(line, bar));
+}
+
+// 4.5.686: app y on the card's top edge (the phone's own top inset by default).
+- (CGFloat)phoneSize685ViewTop {
+    CGFloat view = _ps685View;
+    if (view < 0.0) {
+        view = [self phoneSize675ScreenInsets].top;
+        if (!isfinite(view) || view < 1.0 || view > 120.0) view = 59.0;
+    }
+    return view;
+}
+
+// Scale of the app on the card. Normally the card width over the scene width.
+// 4.5.686 (685 on): small enough that app y view..(bar line + margin) fits the
+// card height; the app is centred, the card's own background fills the sides.
+- (CGFloat)phoneSize675FitForWidth:(CGFloat)width height:(CGFloat)height {
+    CGSize phone = [self phoneSize675SceneSize];
+    CGFloat fit = phone.width > 0.0 && width > 0.0 ? width / phone.width : 1.0;
+    if ([self isPhoneSize685] && isfinite(width) && isfinite(height) && width >= 80.0 && height >= 80.0) {
+        CGFloat bottom = MIN(phone.height, [self phoneSize684Pin] + MAX(0.0, _ps685Margin));
+        CGFloat view = MAX(0.0, MIN(bottom - 200.0, [self phoneSize685ViewTop]));
+        CGFloat span = bottom - view;
+        if (span > 1.0 && height / span < fit) fit = height / span;
+        fit = MAX(0.5, fit);
+    }
+    return fit;
+}
+
+// The phone-size scene's full height (931 on a 932 pt phone).
+- (CGFloat)phoneSize684PhoneHeight {
+    return [self cameraTallSize].height - 1.0;
+}
+
+// Scene y of the app's bar bottom = the keyboard top in the scene.
+- (CGFloat)phoneSize684Pin {
+    CGFloat phoneH = [self phoneSize684PhoneHeight];
+    if (_ps685Active && _ps685KeyTop >= 450.0 && _ps685KeyTop <= phoneH - 100.0) return _ps685KeyTop;
+    CGFloat k = (_ps684K >= 100.0 && _ps684K <= 600.0) ? _ps684K : 345.0;
+    return phoneH - k;
+}
+
+- (BOOL)phoneSize684Eligible {
+    if (_cameraTall || !DSPhoneSize684Enabled()) return NO;
+    NSString *bundle = _bundleIdentifier;
+    if (bundle.length == 0 || !DSPhoneSize675Allowed(bundle)) return NO;
+    @try {
+        DSStageManager *manager = [DSStageManager sharedManager];
+        if ([manager respondsToSelector:@selector(keys671AppHasDylib:)] && [manager keys671AppHasDylib:bundle]) return NO;
+    } @catch (NSException *exception) {
+        return NO;
+    }
+    return YES;
+}
+
+// K: the tune file, else what this app's keyboard settled at, else the
+// default: the 346 pt keyboard at the screen bottom (top 586) = 931 - 586 = 345.
+- (CGFloat)phoneSize684WantedK:(NSString **)source {
+    DSPhoneSize684Tune tune = DSPhoneSize684CurrentTune();
+    if (tune.bottom >= 100.0) {
+        if (source) *source = @"tune file bottom=";
+        return tune.bottom;
+    }
+    NSNumber *learned = _bundleIdentifier ? DSPS684Learned[_bundleIdentifier] : nil;
+    if (learned) {
+        if (source) *source = @"learned from this app's settled keyboard";
+        return (CGFloat)[learned doubleValue];
+    }
+    CGFloat screenH = [self cameraTallSize].height;
+    if (source) *source = @"default (346 pt keyboard, top 586)";
+    return [self phoneSize684PhoneHeight] - (screenH - 346.0);
+}
+
+- (void)phoneSize684Configure {
+    _ps684Active = [self phoneSize684Eligible];
+    _ps684KeysUp = NO;
+    _ps684CurTop = 0.0;
+    _ps684Durations = nil;
+    _ps684LoggedTop = 0.0;
+    _ps684LoggedArbiterH = -1.0;
+    _ps685Active = NO;
+    _ps687Active = NO;
+    _ps688Active = NO;
+    _ps691Mode = 0;
+    if (!_ps684Active) return;
+    NSString *source = nil;
+    _ps684K = [self phoneSize684WantedK:&source];
+    _ps684KSource = source;
+    DSPhoneSize684Tune tune = DSPhoneSize684CurrentTune();
+    _ps684Short = tune.shortMode;
+    _ps684TopFixed = tune.top;
+    _ps685Active = DSPhoneSize685Enabled();
+    DSPhoneSize685Tune t5 = DSPhoneSize685CurrentTune();
+    _ps685Slack = t5.slack;
+    _ps685View = t5.view;
+    _ps685Margin = t5.margin;
+    _ps685TopFixed = t5.top;
+    _ps685KeyTop = t5.keyTop;
+    _ps687Active = !_ps685Active && DSPhoneSize687Enabled();
+    DSPhoneSize687Tune t7 = DSPhoneSize687CurrentTune();
+    _ps687View = t7.view;
+    _ps687Margin = t7.margin;
+    _ps687TopFixed = t7.top;
+    _ps688Active = !_ps685Active && !_ps687Active && DSPhoneSize688Enabled();
+    DSPhoneSize688Tune t8 = DSPhoneSize688CurrentTune();
+    _ps688Mode = t8.mode;
+    _ps688View = t8.view;
+    _ps688Offset = t8.offset;
+    _ps688Shift = t8.shift;
+    _ps688StatusBar = t8.statusBar;
+    _ps688LoggedShift = -9999.0;
+    BOOL geo691 = !_ps685Active && !_ps687Active &&
+                  !(_ps688Active && (_ps688Mode == DSPhoneSize688ModeOffset || _ps688Mode == DSPhoneSize688ModeShort));
+    [self phoneSize691Want:geo691 topTuneAuto:tune.top < 0.0 mode:&_ps691Mode value:&_ps691Value stripH:&_ps691StripH placeY:&_ps691PlaceY];
+    if (_ps691Mode != 0) DSPhoneSize691MarkTrying();
+}
+
+// 4.5.691: what the top inset should be (see DSPhoneSize691Tune).
+- (void)phoneSize691Want:(BOOL)geoOK topTuneAuto:(BOOL)topAuto mode:(NSInteger *)mode value:(CGFloat *)value stripH:(CGFloat *)stripH placeY:(CGFloat *)placeY {
+    NSInteger m = 0;
+    CGFloat v = 0.0, h = 0.0, y = 0.0;
+    @try {
+        if (geoOK && topAuto && !DSPhoneSize691Off() && !DSPhoneSize691Latched() && !DSPhoneSize694Squash()) {
+            DSPhoneSize691Tune t91 = DSPhoneSize691CurrentTune();
+            if (t91.mode == 2) {
+                m = 2;
+                v = t91.value;
+            } else if (t91.mode == 1) {
+                DSPhoneSize690Tune t90 = DSPhoneSize690CurrentTune();
+                if (t90.on && !DSPhoneSize690Off() && !DSPhoneSize690Latched()) {
+                    m = 1;
+                    h = t90.stripHeight;
+                    y = t90.placeY;
+                }
+            }
+        }
+    } @catch (NSException *exception) {
+        m = 0;
+    }
+    if (mode) *mode = m;
+    if (value) *value = v;
+    if (stripH) *stripH = h;
+    if (placeY) *placeY = y;
+}
+
+// {T, 0, K, 0}; T = the scene y on the card's top edge (the app starts there).
+- (UIEdgeInsets)phoneSize684Insets {
+    CGFloat pin = [self phoneSize684Pin];
+    CGFloat top = 0.0;
+    CGFloat topFixed = _ps685Active ? _ps685TopFixed : _ps684TopFixed;
+    if (topFixed >= 0.0) {
+        top = topFixed;
+    } else {
+        UIView *parent = _hostView.superview;
+        CGFloat w = CGRectGetWidth(parent.bounds);
+        CGFloat h = CGRectGetHeight(parent.bounds);
+        // 4.5.695: while minimised the view sits in the full-screen hidden
+        // holder (tag 9158); the top inset is still the card's (118), not 0.
+        BOOL held695 = parent.tag == 9158 && DSPhoneSize695Enabled();
+        if (held695 || !isfinite(w) || w < 80.0 || !isfinite(h) || h < 80.0) {
+            w = CGRectGetWidth(_stageFrame);
+            h = CGRectGetHeight(_stageFrame);
+        }
+        CGFloat sceneW = [self phoneSize675SceneSize].width;
+        CGFloat fit = (sceneW > 1.0 && isfinite(w) && w >= 80.0) ? w / sceneW : 0.0;
+        // 4.5.686: the app y on the card's top edge for the 685 scale (59 by default).
+        CGFloat cardBottom = pin;
+        if (_ps685Active && fit > 0.01 && isfinite(h) && h >= 80.0) {
+            fit = [self phoneSize675FitForWidth:w height:h];
+            cardBottom = MIN([self phoneSize675SceneSize].height, pin + MAX(0.0, _ps685Margin));
+        }
+        if (fit > 0.01 && isfinite(h) && h >= 80.0) top = ceil(cardBottom - h / fit - 0.01);
+        else top = pin - 469.0;
+    }
+    // 4.5.738: top737 removed. The band in IMG_4476 was the 690 copied top-bar
+    // strip, shown only because the 734/735 relay crashes had latched the 694
+    // squash off (Slide log: "phonesize694 squash LATCHED OFF"); with the squash
+    // the real Beeper bar is shown and there is no strip. top737's lower inset
+    // would have put Beeper's content under its real bar.
+    top = MAX(0.0, MIN(pin - 100.0, top));
+    CGFloat bottom = (_ps685Active && _ps685Slack >= 0.0) ? _ps685Slack : (_ps684Short ? 0.0 : [self phoneSize684PhoneHeight] - pin);
+    if ([self isPhoneSize688Geo]) {
+        // 4.5.688 offset/short: {card top window y, 0, K, 0}: bar rests at
+        // (931 - o) - K = 586 - o, the keyboard top in the window.
+        CGFloat line = [self phoneSize688Line];
+        CGFloat w = CGRectGetWidth(_hostView.superview.bounds);
+        CGFloat h = CGRectGetHeight(_hostView.superview.bounds);
+        if (!isfinite(w) || w < 80.0 || !isfinite(h) || h < 80.0) {
+            w = CGRectGetWidth(_stageFrame);
+            h = CGRectGetHeight(_stageFrame);
+        }
+        CGFloat phoneW = [self cameraTallSize].width;
+        CGFloat t = (phoneW > 1.0 && isfinite(w) && w >= 80.0 && isfinite(h) && h >= 80.0) ? ceil(line - h / (w / phoneW) - 0.01) : 59.0;
+        bottom = [self phoneSize684PhoneHeight] - pin;
+        top = MAX(0.0, MIN(line - 100.0, t));
+    }
+    if (_ps687Active && !_ps685Active) {
+        // 4.5.687: bar raised to phoneSize687Bar, inset below it; top = the card's top app y.
+        CGFloat bar = [self phoneSize687Bar];
+        bottom = [self phoneSize684PhoneHeight] - bar;
+        top = _ps687TopFixed >= 0.0 ? _ps687TopFixed : [self phoneSize687ViewTop];
+        top = MAX(0.0, MIN(bar - 100.0, top));
+    }
+    if (_ps691Mode != 0 && topFixed < 0.0 && !_ps685Active && !_ps687Active && ![self isPhoneSize688Geo]) {
+        // 4.5.691: only the top inset moves, to the strip's bottom edge in app y.
+        CGFloat t691 = top;
+        if (_ps691Mode == 2) {
+            t691 = _ps691Value;
+        } else {
+            CGFloat w = CGRectGetWidth(_hostView.superview.bounds);
+            if (!isfinite(w) || w < 80.0) w = CGRectGetWidth(_stageFrame);
+            CGFloat sceneW = [self phoneSize675SceneSize].width;
+            CGFloat fit = (sceneW > 1.0 && isfinite(w) && w >= 80.0) ? w / sceneW : 0.9767;
+            if (!isfinite(fit) || fit < 0.3) fit = 0.9767;
+            t691 = ceil(top + _ps691PlaceY / fit + _ps691StripH - 0.01);
+        }
+        if (isfinite(t691)) top = MAX(0.0, MIN(pin - 100.0, t691));
+    }
+    return UIEdgeInsetsMake(top, 0.0, bottom, 0.0);
+}
+
+- (NSString *)phoneSize684Summary {
+    CGSize phone = [self phoneSize675SceneSize];
+    UIView *parent = _hostView.superview;
+    CGFloat w = CGRectGetWidth(parent.bounds);
+    CGFloat fit = phone.width > 0 && w > 1.0 ? [self phoneSize675FitForWidth:w height:CGRectGetHeight(parent.bounds)] : 0.0;
+    NSString *extra = @"";
+    if (_ps685Active) {
+        extra = [NSString stringWithFormat:@", 685: card shows app y %.0f..bar line %.0f + margin %.0f (scaled to fit, sides filled)%@%@",
+                 [self phoneSize685ViewTop], [self phoneSize684Pin], _ps685Margin,
+                 _ps685Slack >= 0.0 ? [NSString stringWithFormat:@", scene cut %.0f pt below the bar (slack tune)", _ps685Slack] : @"",
+                 _ps685KeyTop > 0.0 ? @" (keytop from the 685 tune)" : @""];
+    } else if (_ps687Active) {
+        extra = [NSString stringWithFormat:@", 687: bar raised to %.0f (keyboard top %.0f), bottom inset %.0f, card shows app y %.0f..%.0f at the 684 fill",
+                 [self phoneSize687Bar], [self phoneSize684Pin], [self phoneSize684PhoneHeight] - [self phoneSize687Bar],
+                 [self phoneSize687ViewTop], [self phoneSize687Bar] + _ps687Margin];
+    } else if ([self isPhoneSize688Geo]) {
+        extra = [NSString stringWithFormat:@", 688 mode=%@: scene frame %@, keyboard line = resting bar = card bottom at window y %.0f (586 - o %.0f), bottom inset %.0f, top inset %.0f",
+                 DSPhoneSize688ModeName(_ps688Mode), NSStringFromCGRect([self frameForScene]), [self phoneSize688Line], [self phoneSize688O],
+                 [self phoneSize684PhoneHeight] - [self phoneSize684Pin], [self phoneSize684Insets].top];
+    } else if (_ps688Active && _ps688Mode == DSPhoneSize688ModeStatusBar) {
+        extra = [NSString stringWithFormat:@", 688 mode=statusbar: 684 geometry + scene status bar height %.0f", [self phoneSize688StatusBarHeight]];
+    } else if (_ps688Active) {
+        extra = @", 688 mode=684 (exact 684)";
+    } else if (_ps684Short) {
+        extra = @", mode=short (scene ends at the keyboard top)";
+    }
+    if (_ps691Mode != 0) {
+        extra = [extra stringByAppendingFormat:@", 691: top inset raised to %.0f (%@) so safe-area content starts below the recreated top bar; frame, bottom inset and bar line as 684",
+                 [self phoneSize684Insets].top, _ps691Mode == 1 ? [NSString stringWithFormat:@"strip bottom: auto + %.0f", _ps691StripH] : @"top_inset tune"];
+    }
+    return [NSString stringWithFormat:@"scene %.0fx%.0f safeArea %@: card shows %@ at x%.4f, fixed (keyboard up or down); K=%.0f (%@)%@; "
+            @"keys stay at the phone bottom (keys674 NO); no 680-682 window moves",
+            phone.width, phone.height, NSStringFromUIEdgeInsets([self phoneSize684Insets]),
+            [self phoneSize680Region:([self isPhoneSize688Geo] ? [self phoneSize688Line] + [self phoneSize688Shift] : [self phoneSize684Pin])], fit,
+            _ps684K, _ps684KSource ?: @"?", extra];
+}
+
+- (void)phoneSize684Accumulate:(double)now {
+    if (_ps684CurTop <= 0.0 || _ps684CurSince <= 0.0) return;
+    double dt = now - _ps684CurSince;
+    if (!isfinite(dt) || dt < 0.0 || dt > 600.0) dt = 0.0;
+    if (!_ps684Durations) _ps684Durations = [NSMutableDictionary dictionary];
+    NSNumber *key = @(_ps684CurTop);
+    _ps684Durations[key] = @([_ps684Durations[key] doubleValue] + dt);
+    _ps684CurSince = now;
+}
+
+- (void)phoneSize684StartKeys {
+    if (_ps684KeysUp) return;
+    _ps684KeysUp = YES;
+    _ps684ApplyToken += 1; // no apply while typing
+    _ps684Durations = [NSMutableDictionary dictionary];
+    _ps684CurTop = 0.0;
+    _ps684CurSince = 0.0;
+}
+
+// Keyboard note (stage keys top, screen y = scene y at origin 0): learned only.
+- (void)phoneSize684NoteKeyTop:(CGFloat)keyTop why:(NSString *)why {
+    CGFloat phoneH = [self phoneSize684PhoneHeight];
+    if (!isfinite(keyTop) || keyTop <= 250.0 || keyTop >= phoneH - 100.0) return;
+    if (!_ps755Owned && DSK755On()) {
+        DSFeature719MarkAction("k755");
+        return;   // another app's keyboard: not this app's K
+    }
+    double now = CACurrentMediaTime();
+    [self phoneSize684StartKeys];
+    [self phoneSize684Accumulate:now];
+    _ps684CurTop = round(keyTop);
+    _ps684CurSince = now;
+    if (fabs(_ps684LoggedTop - keyTop) > 0.5) {
+        _ps684LoggedTop = keyTop;
+        CGFloat pin = [self phoneSize684Pin];
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 %@ keyboard top %.0f (%@): window fixed at %@, no move; %@",
+                                  _bundleIdentifier ?: @"?", keyTop, why ?: @"?", [self phoneSize680Region:pin],
+                                  fabs(keyTop - pin) < 1.5 ? [NSString stringWithFormat:@"matches the bar bottom %.0f (K=%.0f): the app's bar should not move", pin, _ps684K]
+                                                           : [NSString stringWithFormat:@"differs from the bar bottom %.0f by %+.0f pt (K=%.0f): the app's bar may move by that much this time; K is re-learned when the keys go down",
+                                                              pin, keyTop - pin, _ps684K]);
+    }
+}
+
+// 4.5.755 k755: K is learned only from this app's own keyboard. The 754 log
+// learned Beeper's K 300 from Messages' keyboard (16:09:45.347) and moved its
+// bar 45 pt down. The keyboard system calling this method (it names this app
+// as the owner) is now the only thing that starts a keyboard session here;
+// notes from another app's keyboard are not counted.
+// Off: k755-off / core755-off (crash latch k755).
+static BOOL DSK755On(void) {
+    return DSFeature699On("core755") && DSFeature699On("k755");
+}
+
+- (void)phoneSize684ArbiterOn:(BOOL)on height:(CGFloat)height at:(double)mediaTime {
+    if (![self isPhoneSize684]) return;
+    if (on) _ps755Owned = YES;
+    if (on) {
+        BOOL fresh = !_ps684KeysUp;
+        [self phoneSize684StartKeys];
+        if (fresh || fabs(_ps684LoggedArbiterH - height) > 0.5) {
+            _ps684LoggedArbiterH = height;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 %@ arbiter on=1 height %.0f at %.3f: window fixed at %@, no move (684)%@",
+                                      _bundleIdentifier ?: @"?", height, mediaTime, [self phoneSize680Region:[self phoneSize684Pin]],
+                                      fresh ? @"; keys at the phone bottom (keys674 NO)" : @" (height change)");
+        }
+    } else {
+        _ps684LoggedArbiterH = -1.0;
+        [self phoneSize684KeysDown:[NSString stringWithFormat:@"arbiter on=0 at %.3f", mediaTime]];
+    }
+}
+
+- (void)phoneSize684KeysDown:(NSString *)why {
+    if (_ps684KeysUp) {
+        double now = CACurrentMediaTime();
+        [self phoneSize684Accumulate:now];
+        _ps684KeysUp = NO;
+        _ps684CurTop = 0.0;
+        _ps684LoggedTop = 0.0;
+        CGFloat settled = 0.0;
+        double best = -1.0;
+        double total = 0.0;
+        for (NSNumber *top in _ps684Durations) {
+            double d = [_ps684Durations[top] doubleValue];
+            total += d;
+            if (d > best) {
+                best = d;
+                settled = (CGFloat)[top doubleValue];
+            }
+        }
+        NSString *learnedNote = @"no keyboard top seen (no note): K unchanged";
+        if (settled > 0.0 && best >= 0.15) {
+            CGFloat k = round([self phoneSize684PhoneHeight] - settled);
+            k = MAX(200.0, MIN(500.0, k));
+            if (!DSPS684Learned) DSPS684Learned = [NSMutableDictionary dictionary];
+            NSNumber *old = _bundleIdentifier ? DSPS684Learned[_bundleIdentifier] : nil;
+            // 4.5.701 keys701 (Beeper bar log, 15:23:24-15:23:47): one keyboard
+            // that was taller for part of its time (288 -> 337 high, top 586 ->
+            // 537, 1935 of 2897 ms) re-learned K 345 -> 394 at once; the next
+            // keys-down moved the whole picture (bar line 537, card shows app y
+            // 68..537) and every normal keyboard (top 586) then covered the
+            // message bar by 49 pt until two more keyboards learned 345 back.
+            // A K that differs from the one in use by more than 4 pt is now
+            // only taken when the next keyboard settles at the same K; within
+            // 4 pt the K in use is kept (no 1-4 pt churn).
+            // Off: /var/mobile/.dynamicstage-keys701-off.
+            CGFloat base = old ? (CGFloat)[old doubleValue] : (_ps684K > 0.0 ? _ps684K : 0.0);
+            NSString *held701 = nil;
+            if (_bundleIdentifier && base > 0.0 && DSFeature699On("keys701")) {
+                if (!DSPS701PendingK) DSPS701PendingK = [NSMutableDictionary dictionary];
+                NSNumber *pending = DSPS701PendingK[_bundleIdentifier];
+                if (fabs(k - base) <= 4.0) {
+                    [DSPS701PendingK removeObjectForKey:_bundleIdentifier];
+                    if (fabs(k - base) > 0.5) held701 = [NSString stringWithFormat:@"keys701: within 4 pt of %.0f, kept", base];
+                    k = base;
+                } else if (pending && fabs([pending doubleValue] - k) <= 4.0) {
+                    [DSPS701PendingK removeObjectForKey:_bundleIdentifier];
+                    held701 = @"keys701: confirmed by a second keyboard";
+                } else {
+                    DSPS701PendingK[_bundleIdentifier] = @(k);
+                    DSFeature699MarkTrying("keys701");
+                    held701 = [NSString stringWithFormat:@"keys701: K %.0f seen once, K %.0f kept until a second keyboard settles there too", k, base];
+                    k = base;
+                }
+            }
+            if (_bundleIdentifier) DSPS684Learned[_bundleIdentifier] = @(k);
+            learnedNote = [NSString stringWithFormat:@"settled keyboard top %.0f (%.0f of %.0f ms, %lu value%@) -> learned K %.0f (was %@; in use %.0f)%@%@",
+                           settled, best * 1000.0, total * 1000.0, (unsigned long)_ps684Durations.count, _ps684Durations.count == 1 ? @"" : @"s",
+                           k, old ? [NSString stringWithFormat:@"%.0f", [old doubleValue]] : @"none", _ps684K,
+                           held701 ? @"; " : @"", held701 ?: @""];
+        } else if (settled > 0.0) {
+            learnedNote = [NSString stringWithFormat:@"keyboard top %.0f held only %.0f ms: not learned", settled, best * 1000.0];
+        }
+        _ps684Durations = nil;
+        _ps755Owned = NO;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 %@ keyboard down (%@): window fixed, no move; %@",
+                                  _bundleIdentifier ?: @"?", why ?: @"?", learnedNote);
+    }
+    [self phoneSize684ScheduleApply:why];
+}
+
+// A changed K / tune / off file is written only with the keys down for 1.2 s.
+- (void)phoneSize684ScheduleApply:(NSString *)why {
+    [self phoneSize684ScheduleApply:why attempt:0];
+}
+
+- (void)phoneSize684ScheduleApply:(NSString *)why attempt:(NSInteger)attempt {
+    NSInteger token = ++_ps684ApplyToken;
+    __weak __typeof(self) weakSelf = self;
+    NSString *reason = [why copy];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || token != strongSelf->_ps684ApplyToken) return;
+        @try {
+            [strongSelf phoneSize684ApplyIfNeeded:reason attempt:attempt];
+        } @catch (NSException *exception) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 apply threw %@", exception.reason ?: exception.name ?: @"?");
+        }
+    });
+}
+
+- (void)phoneSize684ApplyIfNeeded:(NSString *)why attempt:(NSInteger)attempt {
+    if (!_phoneSize || _cameraTall || !_appViewController || _ps684KeysUp) return;
+    BOOL stageKeys = NO;
+    @try {
+        DSStageManager *manager = [DSStageManager sharedManager];
+        stageKeys = [manager respondsToSelector:@selector(stagedKeyboardIsUp)] && [manager stagedKeyboardIsUp];
+    } @catch (NSException *exception) {
+        stageKeys = NO;
+    }
+    if (stageKeys || DSSceneWriteWouldTrap() || DSStageDragSettlingFast(0.6)) {
+        // Never while some keyboard is up, a scene update runs or a card is dragged.
+        if (attempt < 12) [self phoneSize684ScheduleApply:why attempt:attempt + 1];
+        return;
+    }
+    if (!_ps684Active && [self phoneSize680BarBottom] < [self phoneSize678BottomAnchor] - 0.5) return; // 682 window not at rest
+    BOOL want = [self phoneSize684Eligible];
+    NSString *source = nil;
+    CGFloat k = want ? [self phoneSize684WantedK:&source] : 0.0;
+    DSPhoneSize684Tune tune = DSPhoneSize684CurrentTune();
+    BOOL want685 = want && DSPhoneSize685Enabled();
+    DSPhoneSize685Tune t5 = DSPhoneSize685CurrentTune();
+    BOOL want687 = want && !want685 && DSPhoneSize687Enabled();
+    DSPhoneSize687Tune t7 = DSPhoneSize687CurrentTune();
+    BOOL want688 = want && !want685 && !want687 && DSPhoneSize688Enabled();
+    DSPhoneSize688Tune t8 = DSPhoneSize688CurrentTune();
+    NSInteger m691 = 0;
+    CGFloat v691 = 0.0, h691 = 0.0, y691 = 0.0;
+    if (want) {
+        BOOL geo691 = !want685 && !want687 && !(want688 && (t8.mode == DSPhoneSize688ModeOffset || t8.mode == DSPhoneSize688ModeShort));
+        [self phoneSize691Want:geo691 topTuneAuto:tune.top < 0.0 mode:&m691 value:&v691 stripH:&h691 placeY:&y691];
+    }
+    BOOL changed691 = want && (m691 != _ps691Mode || fabs(v691 - _ps691Value) > 0.5 || fabs(h691 - _ps691StripH) > 0.5 || fabs(y691 - _ps691PlaceY) > 0.5);
+    BOOL changed = changed691 || want != _ps684Active ||
+                   (want && (fabs(k - _ps684K) > 0.5 || tune.shortMode != _ps684Short || fabs(tune.top - _ps684TopFixed) > 0.5)) ||
+                   (want && (want685 != _ps685Active ||
+                             (want685 && (fabs(t5.slack - _ps685Slack) > 0.5 || fabs(t5.view - _ps685View) > 0.5 || fabs(t5.margin - _ps685Margin) > 0.5 || fabs(t5.top - _ps685TopFixed) > 0.5 || fabs(t5.keyTop - _ps685KeyTop) > 0.5)))) ||
+                   (want && (want687 != _ps687Active ||
+                             (want687 && (fabs(t7.view - _ps687View) > 0.5 || fabs(t7.margin - _ps687Margin) > 0.5 || fabs(t7.top - _ps687TopFixed) > 0.5)))) ||
+                   (want && (want688 != _ps688Active ||
+                             (want688 && (t8.mode != _ps688Mode || fabs(t8.view - _ps688View) > 0.5 || fabs(t8.offset - _ps688Offset) > 0.5 ||
+                                          fabs(t8.shift - _ps688Shift) > 0.5 || fabs(t8.statusBar - _ps688StatusBar) > 0.5))));
+    if (!changed) return;
+    NSString *before = _ps684Active ? [NSString stringWithFormat:@"684 K=%.0f%@ top=%@%@", _ps684K, _ps684Short ? @" short" : @"",
+                                       _ps684TopFixed >= 0.0 ? [NSString stringWithFormat:@"%.0f", _ps684TopFixed] : @"auto",
+                                       _ps685Active ? [NSString stringWithFormat:@" + 685 view=%.0f margin=%.0f slack=%.0f top=%@ keytop=%@", _ps685View, _ps685Margin, _ps685Slack,
+                                                       _ps685TopFixed >= 0.0 ? [NSString stringWithFormat:@"%.0f", _ps685TopFixed] : @"auto",
+                                                       _ps685KeyTop > 0.0 ? [NSString stringWithFormat:@"%.0f", _ps685KeyTop] : @"auto"] : @""]
+                                    : @"682 rules";
+    _ps684Active = want;
+    if (want) {
+        _ps684K = k;
+        _ps684KSource = source;
+        _ps684Short = tune.shortMode;
+        _ps684TopFixed = tune.top;
+        _ps685Active = want685;
+        _ps685Slack = t5.slack;
+        _ps685View = t5.view;
+        _ps685Margin = t5.margin;
+        _ps685TopFixed = t5.top;
+        _ps685KeyTop = t5.keyTop;
+        _ps687Active = want687;
+        _ps687View = t7.view;
+        _ps687Margin = t7.margin;
+        _ps687TopFixed = t7.top;
+        _ps688Active = want688;
+        _ps688Mode = t8.mode;
+        _ps688View = t8.view;
+        _ps688Offset = t8.offset;
+        _ps688Shift = t8.shift;
+        _ps688StatusBar = t8.statusBar;
+        _ps688LoggedShift = -9999.0;
+        if (changed691) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize691 %@ top inset %@ -> %@ (only the top inset; frame, bottom inset, bar line unchanged)",
+                                      _bundleIdentifier ?: @"?",
+                                      _ps691Mode == 0 ? @"684 auto" : (_ps691Mode == 1 ? [NSString stringWithFormat:@"auto+strip %.0f", _ps691StripH] : [NSString stringWithFormat:@"%.0f", _ps691Value]),
+                                      m691 == 0 ? @"684 auto" : (m691 == 1 ? [NSString stringWithFormat:@"auto+strip %.0f", h691] : [NSString stringWithFormat:@"%.0f", v691]));
+        }
+        _ps691Mode = m691;
+        _ps691Value = v691;
+        _ps691StripH = h691;
+        _ps691PlaceY = y691;
+        if (_ps691Mode != 0) DSPhoneSize691MarkTrying();
+        _phoneSizeKeyTop = [self phoneSize684Pin];
+    } else {
+        _ps685Active = NO;
+        _ps687Active = NO;
+        _ps688Active = NO;
+        _ps691Mode = 0;
+        _phoneSizeKeyTop = [self phoneSize678BottomAnchor];
+        _phoneSizePreGrown = YES;
+    }
+    _phoneSizeGeneration += 1;
+    _phoneSizeDeferNoted = NO;
+    DSPhoneSize675ChangedAt = CACurrentMediaTime();
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 %@ geometry change with the keys down (%@): %@ -> %@",
+                              _bundleIdentifier ?: @"?", why ?: @"?", before,
+                              want ? [self phoneSize684Summary] : @"682 rules (684 off / not eligible): safe area {59,0,34,0}, window follows the bar");
+    [self phoneSize675WriteGeometry:_phoneSizeGeneration attempt:0];
+}
+
+// ---- 4.5.680 phonesize680 -----------------------------------------------------
+- (void)phoneSize680GrowSoon {
+    if (!DSPhoneSize680Enabled() || !DSPhoneSize675Allowed(_bundleIdentifier)) return;
+    if (!_appViewController || DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - _ps680GrowAskAt < 1.0 && now >= _ps680GrowAskAt) return;
+    _ps680GrowAskAt = now;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_phoneSize) return;
+        @try {
+            DSStageManager *manager = [DSStageManager sharedManager];
+            if ([manager respondsToSelector:@selector(phoneSize678HostReady:)]) [manager phoneSize678HostReady:strongSelf];
+        } @catch (NSException *exception) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize680 grow threw %@", exception.reason ?: exception.name ?: @"?");
+        }
+    });
+}
+
+- (CGFloat)phoneSize680BarBottom {
+    return _phoneSize ? MIN(_phoneSizeKeyTop, [self phoneSize675SceneSize].height) : 0.0;
+}
+
+- (NSString *)phoneSize680Region:(CGFloat)pin {
+    UIView *parent = _hostView.superview;
+    CGSize phone = [self phoneSize675SceneSize];
+    CGFloat width = CGRectGetWidth(parent.bounds);
+    CGFloat height = CGRectGetHeight(parent.bounds);
+    CGFloat fit = phone.width > 0 ? [self phoneSize675FitForWidth:width height:height] : 1.0;
+    CGFloat lowest = fit > 0.01 ? height / fit : phone.height;
+    if ([self isPhoneSize685] && fabs(pin - [self phoneSize684Pin]) < 0.5) pin += MAX(0.0, _ps685Margin);
+    if ([self isPhoneSize687] && fabs(pin - [self phoneSize684Pin]) < 0.5) pin = [self phoneSize687Bar] + MAX(0.0, _ps687Margin);
+    CGFloat p = MAX(lowest, MIN(phone.height, pin));
+    return [NSString stringWithFormat:@"app y %.0f..%.0f", p - height / MAX(fit, 0.01), p];
+}
+
+// The card's window onto the app ends at the bar's bottom: the bar stays on
+// the card's bottom edge while the app moves it. Mapping only (the host view's
+// position); never a scene write.
+// 4.5.681: one explicit additive Core Animation animation of our own (key
+// "ps681"), tuned by /var/mobile/.dynamicstage-phonesize681-tune. The 680 path
+// (UIKit's curve-7 animation copied and re-added with a shifted beginTime) is gone.
+- (void)phoneSize680MoveBarBottomTo:(CGFloat)bar duration:(NSTimeInterval)duration curve:(NSInteger)curve lag:(double)lag why:(NSString *)why {
+    (void)duration;
+    (void)curve;
+    double now = CACurrentMediaTime();
+    [self phoneSize681MoveBarBottomTo:bar hide:(bar >= [self phoneSize678BottomAnchor] - 0.5) signalAt:now - MAX(0.0, MIN(0.12, isfinite(lag) ? lag : 0.0)) offset:YES why:why];
+}
+
+- (void)phoneSize681MoveBarBottomTo:(CGFloat)bar hide:(BOOL)hide signalAt:(double)signalAt offset:(BOOL)applyOffset why:(NSString *)why {
+    [self phoneSize682MoveBarBottomTo:bar hide:hide signalAt:signalAt offset:applyOffset instant:NO why:why];
+}
+
+- (void)phoneSize682MoveBarBottomTo:(CGFloat)bar hide:(BOOL)hide signalAt:(double)signalAt offset:(BOOL)applyOffset instant:(BOOL)forceInstant why:(NSString *)why {
+    if (!_phoneSize || !_hostView) return;
+    if ([self isPhoneSize684]) {
+        // 4.5.684: the window is fixed; no 680-682 chasing.
+        CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+        if (t - _ps684SkipLogAt > 5.0 || t < _ps684SkipLogAt) {
+            _ps684SkipLogAt = t;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize684 %@ 680/681/682 move to bar %.0f (%@) skipped (684 fixed window at app y %@)",
+                                      _bundleIdentifier ?: @"?", bar, why ?: @"?", [self phoneSize680Region:[self phoneSize684Pin]]);
+        }
+        return;
+    }
+    if ([self isPhoneSize683]) {
+        // 4.5.683: no region chasing; the pin is the scene bottom.
+        if (fabs(_phoneSizeKeyTop - bar) >= 0.5) {
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize683 %@ 680-682 window move %.0f -> %.0f (%@) skipped: 683 keeps the window at the scene bottom",
+                                      _bundleIdentifier ?: @"?", _phoneSizeKeyTop, bar, why ?: @"?");
+        }
+        _phoneSizeKeyTop = bar;
+        return;
+    }
+    NSString *bundle = _bundleIdentifier ?: @"?";
+    CGSize phone = [self phoneSize675SceneSize];
+    if (!isfinite(bar)) return;
+    DSPhoneSize681Tune tune = DSPhoneSize681CurrentTune();
+    CGFloat anchor = [self phoneSize678BottomAnchor];
+    // The offset only applies to the keyboard-up position (the rest position is the app's own bottom).
+    CGFloat applied = (applyOffset && !hide && bar < anchor - 0.5) ? tune.offset : 0.0;
+    bar = MAX(0.0, MIN(phone.height, bar - applied));
+    CGFloat was = _phoneSizeKeyTop;
+    BOOL atAnchor = bar >= anchor - 0.5;
+    if (fabs(bar - was) < 0.5) {
+        _phoneSizePreGrown = atAnchor;
+        return;
+    }
+    double now = CACurrentMediaTime();
+    if (!isfinite(signalAt) || signalAt > now || now - signalAt > 1.0) signalAt = now;
+    NSString *before = [self phoneSize680Region:was];
+    CALayer *layer = _hostView.layer;
+    CALayer *shown = layer.presentationLayer ?: layer;
+    CGPoint from = shown.position;
+    // 4.5.682: no implicit actions for any of it; an instant change lands in
+    // this frame's commit.
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    [layer removeAnimationForKey:@"ps681"];
+    _phoneSizeKeyTop = bar;
+    _phoneSizePreGrown = atAnchor;
+    [self layoutHostView];
+    CGPoint to = layer.position;
+    BOOL showInstant = !hide && tune.showInstant;
+    BOOL noAnim = DSPhoneSize680NoAnim() || forceInstant || showInstant;
+    double ms = hide ? tune.hideDuration : tune.duration;
+    NSInteger kind = hide ? tune.hideCurve : tune.curve;
+    double delay = tune.delay / 1000.0;
+    double begin = signalAt + delay;
+    if (begin < now - 0.4) begin = now - 0.4;
+    NSString *how = nil;
+    CGFloat dy = from.y - to.y;
+    if (noAnim || ms < 10.0 || fabs(dy) < 0.5) {
+        how = forceInstant ? @"INSTANT (revert)"
+            : showInstant ? @"INSTANT (show=instant, CATransaction actions off, lands in this frame)"
+            : noAnim ? @"instant (/var/mobile/.dynamicstage-phonesize680-noanim)" : (ms < 10.0 ? @"instant (duration 0)" : @"instant (no distance)");
+    } else {
+        @try {
+            CABasicAnimation *animation = nil;
+            NSString *shape = nil;
+            if (kind == DSPS681CurveKeyboard || kind == DSPS681CurveSpring) {
+                CASpringAnimation *spring = [CASpringAnimation animationWithKeyPath:@"position"];
+                if (kind == DSPS681CurveKeyboard) {
+                    // Exactly what UIKit builds for UIViewAnimationCurve 7 (the
+                    // keyboard): this spring with duration 0.5, ignoring the 0.25
+                    // in the notification. Another duration plays it faster/slower.
+                    spring.mass = 3.0;
+                    spring.stiffness = 1000.0;
+                    spring.damping = 500.0;
+                    spring.initialVelocity = 0.0;
+                    spring.duration = 0.5;
+                    spring.speed = (float)(500.0 / ms);
+                    shape = [NSString stringWithFormat:@"CASpringAnimation mass 3 stiffness 1000 damping 500 velocity 0, duration 0.5 x speed %.3f = %.0f ms (UIKit's curve-7 keyboard spring)",
+                             spring.speed, ms];
+                } else {
+                    double t = ms / 1000.0;
+                    double zeta = tune.springDamping;
+                    spring.mass = 1.0;
+                    spring.stiffness = pow(2.0 * M_PI / t, 2.0);
+                    spring.damping = 4.0 * M_PI * zeta / t;
+                    spring.initialVelocity = tune.springVelocity;
+                    double settle = spring.settlingDuration;
+                    spring.duration = (isfinite(settle) && settle > 0.05) ? MIN(settle, 3.0) : t;
+                    shape = [NSString stringWithFormat:@"CASpringAnimation mass 1 stiffness %.1f damping %.2f (ratio %.2f) velocity %.2f, duration %.0f ms (settling %.0f ms; response %.0f ms)",
+                             spring.stiffness, spring.damping, zeta, spring.initialVelocity, spring.duration * 1000.0, settle * 1000.0, ms];
+                }
+                spring.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
+                animation = spring;
+            } else {
+                CABasicAnimation *basic = [CABasicAnimation animationWithKeyPath:@"position"];
+                NSString *name = kCAMediaTimingFunctionEaseInEaseOut;
+                if (kind == DSPS681CurveEaseOut) name = kCAMediaTimingFunctionEaseOut;
+                else if (kind == DSPS681CurveLinear) name = kCAMediaTimingFunctionLinear;
+                basic.timingFunction = [CAMediaTimingFunction functionWithName:name];
+                basic.duration = ms / 1000.0;
+                float c[4] = {0, 0, 0, 0};
+                [basic.timingFunction getControlPointAtIndex:1 values:&c[0]];
+                [basic.timingFunction getControlPointAtIndex:2 values:&c[2]];
+                shape = [NSString stringWithFormat:@"CABasicAnimation %@ bezier (%.2f, %.2f, %.2f, %.2f), duration %.0f ms", name, c[0], c[1], c[2], c[3], ms];
+                animation = basic;
+            }
+            // Additive: an offset from the model position that runs to zero, so
+            // any other layout of the host view during it still lands right.
+            animation.additive = YES;
+            animation.fromValue = [NSValue valueWithCGPoint:CGPointMake(from.x - to.x, dy)];
+            animation.toValue = [NSValue valueWithCGPoint:CGPointZero];
+            animation.fillMode = kCAFillModeBackwards;
+            animation.removedOnCompletion = YES;
+            animation.beginTime = [layer convertTime:begin fromLayer:nil];
+            [layer addAnimation:animation forKey:@"ps681"];
+            how = [NSString stringWithFormat:@"%@; starts %+.0f ms from the signal (signal at %.3f, delay %+.0f ms, added %.0f ms after the signal)",
+                   shape, (begin - signalAt) * 1000.0, signalAt, tune.delay, (now - signalAt) * 1000.0];
+        } @catch (NSException *exception) {
+            [layer removeAnimationForKey:@"ps681"];
+            how = [NSString stringWithFormat:@"instant (animation threw %@)", exception.reason ?: exception.name ?: @"?"];
+        }
+    }
+    [CATransaction commit];
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize682 %@ bar bottom %.0f -> %.0f (%@%@) t+%.0fms: card shows %@ -> %@ (%@); %@; host moves %.0f pt on the card",
+                              bundle, was, bar, why ?: @"?", applied != 0.0 ? [NSString stringWithFormat:@", offset %+.1f", applied] : @"",
+                              DSPhoneSize676Ms(), before, [self phoneSize680Region:bar],
+                              atAnchor ? @"keyboard down, anchored above the home inset" : @"bar on the keyboard", how ?: @"?", to.y - from.y);
+}
+
+- (void)phoneSize676ReleaseHold:(NSString *)why animated:(BOOL)animated {
+    UIView *snapshot = _phoneSizeHoldView;
+    if (!snapshot) return;
+    _phoneSizeHoldView = nil;
+    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize676 %@ picture hold OFF t+%.0fms (%@)", _bundleIdentifier ?: @"?", DSPhoneSize676Ms(), why ?: @"?");
+    if (!animated) {
+        [snapshot removeFromSuperview];
+        return;
+    }
+    [UIView animateWithDuration:0.1 animations:^{
+        snapshot.alpha = 0.0;
+    } completion:^(__unused BOOL finished) {
+        [snapshot removeFromSuperview];
+    }];
 }
 
 // 4.5.659: an app view handed to the system home transition (a parked card
@@ -1680,6 +5792,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     }
     _mediaActivateAttempts = 0;
     @try {
+        // 4.5.800 fg800: if we parked Live->Static while SpringBoard backgrounded
+        // the scene, put Live back before activation.
+        [DSSceneHost fg800RestoreLiveIfNeeded:controller];
         // 4.5.659: right after a home-transition hand-back, an app view that
         // is already Live keeps its mode. Setting the mode again then is a
         // mode change SpringBoard asserts on if its transition is still
@@ -1703,6 +5818,12 @@ typedef BOOL (^DSSceneHostAttempt)(void);
         }
         SEL activate = NSSelectorFromString(@"_activateApp");
         if ([controller respondsToSelector:activate]) {
+            // 4.5.716 blackout716: this activation's foreground update may land
+            // (see keepCommittedForegroundOfScene:onSettings:). Not Messages.
+            if (_bundleIdentifier.length > 0 && ![_bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) {
+                DSWake716Bundle = [_bundleIdentifier copy];
+                DSWake716Until = CFAbsoluteTimeGetCurrent() + 2.0;
+            }
             if (recentHandBack) {
                 DSActivatingBundle = [_bundleIdentifier copy];
                 DSActivatingUntil = CFAbsoluteTimeGetCurrent() + 1.5;
@@ -1720,6 +5841,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     if (DSAvoidSceneLifecycle()) return;
     SBAppViewController *controller = _appViewController;
     if (!controller) return;
+    // 4.5.801 fg801: restore Live + displayMode 4 / layerHosts immediately on
+    // corner restore / blackout wake (do not wait for the next settings diff).
+    [DSSceneHost fg800RestoreLiveIfNeeded:controller];
     BOOL foreground = YES;
     @try {
         FBScene *scene = [self appViewScene];
@@ -1758,6 +5882,9 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     // the old y=5 rewrite for a bottom card, is what UIScenePresentationView
     // copies into its own frame, so the picture leaves the rim.
     if (_hostView.superview || _ownSceneIdentifier || _matchCardFrame) {
+        // 4.5.688 mode=offset: the scene starts o pt down the screen, so the
+        // keyboard top (screen 586) is at window y 586 - o, the resting bar.
+        if ([self isPhoneSize688Geo] && _ps688Mode == DSPhoneSize688ModeOffset) return CGRectMake(0.0, [self phoneSize688O], width, height);
         return CGRectMake(0.0, 0.0, width, height);
     }
     // Not in a card yet. Keep the scene off the bottom edge so iOS does not
@@ -1888,11 +6015,6 @@ typedef BOOL (^DSSceneHostAttempt)(void);
     }
 }
 
-- (void)keepPictureFromTrackingHost {
-    if (!_hostView) return;
-    _hostView.autoresizesSubviews = NO;
-    [self keepPictureFromTrackingHostFrom:_hostView depth:0];
-}
 
 - (void)restorePictureTrackingFrom:(UIView *)view depth:(NSInteger)depth {
     if (!view || depth > 8) return;
@@ -2196,9 +6318,13 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
     if (_revealingTallContent && !_revealSizeSent) return;
     if (!_matchCardFrame || !_hostView) return;
     if (![_bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) return;
-    DSTraceFormat(@"hideStray split=%d depth=%ld",
-                  DSStageManager.sharedManager.isSplitMode,
-                  (long)DSSceneSettingsUpdateDepth);
+    // 4.5.754 log754: the same trace line again within 2 s is not repeated
+    // (753 log: 125 hideStray lines). Off: log754-off / core754-off.
+    {
+        NSString *line754 = [NSString stringWithFormat:@"hideStray split=%d depth=%ld",
+                             DSStageManager.sharedManager.isSplitMode, (long)DSSceneSettingsUpdateDepth];
+        if (DSTrace754Fresh(line754, 0)) DSTraceFormat(@"%@", line754);
+    }
     // A single staged card has one presentation, and the conversation push
     // resizes it. Hiding that view stalls the push until SpringBoard resprings.
     // The black full-screen leftover only exists once Split has taken Messages
@@ -2354,6 +6480,8 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
 - (void)roundHostedSceneToCard {
     UIView *host = _hostView;
     if (!host) return;
+    if (_beeper707Flat) return;   // 4.5.707 beeper707: the card clips a phone-size host
+    DSPerfCount(DSPerfCounterRoundPasses);
     UIView *source = host.superview;
     CGFloat radius = 0.0;
     CACornerMask corners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner | kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
@@ -2431,13 +6559,42 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
 }
 
 - (void)layoutHostView {
-    if (!_hostView) return;
+    DS_PERF_BEGIN();
+    [self layoutHostView697Body];
+    DS_PERF_END(DSPerfBucketHostLayout);
+}
+
+- (void)layoutHostView697Body {
+    if (!_hostView) {
+        [self phoneSize690RemoveStrip:@"no host view"];
+        return;
+    }
+    {
+        UIView *p690 = _hostView.superview;
+        BOOL tiny690 = CGRectGetWidth(p690.bounds) < 80.0 && CGRectGetHeight(p690.bounds) < 80.0;
+        if (_ps690Strip && (!_phoneSize || _cameraTall || !p690 || p690.tag == 9158 || tiny690 || CGRectIsEmpty(p690.bounds))) {
+            [self phoneSize690RemoveStrip:@"card not phone-size / minimized"];
+        }
+    }
     if ([_bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) {
-        DSTraceFormat(@"layoutHost Messages frame=%@", NSStringFromCGRect(_hostView.frame));
+        {
+            NSString *line754 = [NSString stringWithFormat:@"layoutHost Messages frame=%@", NSStringFromCGRect(_hostView.frame)];
+            if (DSTrace754Fresh(line754, 1)) DSTraceFormat(@"%@", line754);   // 4.5.754 log754 (logging only)
+        }
     }
     UIView *parent = _hostView.superview;
     CGFloat scale = _contentScale > 0 ? _contentScale : 1.0;
-    _hostView.transform = CGAffineTransformIdentity;
+    @try {
+        [self phoneSize696UpdateKeysSceneForParent:parent];
+    } @catch (NSException *exception) {
+    }
+    // 4.5.707 beeper707: the phone-size branch below writes its own transform;
+    // resetting it to identity first was two transform changes (and a bounds /
+    // center pass) on every layout of a scaled card.
+    BOOL tiny707 = parent && CGRectGetWidth(parent.bounds) < 80.0 && CGRectGetHeight(parent.bounds) < 80.0;
+    BOOL ps707 = _phoneSize && !_cameraTall && parent && !CGRectIsEmpty(parent.bounds) && parent.tag != 9158 && !tiny707 &&
+                 DSFeature699On("beeper707");
+    if (!ps707) _hostView.transform = CGAffineTransformIdentity;
 
     // At the normal scale the app is the card, edge to edge. A view left at the
     // screen size is clipped, which is the bottom stage showing only part of the app.
@@ -2451,6 +6608,134 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
         // Minimized. The live view stays off the card. Leaving it visible at
         // the old card size paints the app on the Home Screen.
         if (parent.tag == 9158) _hostView.hidden = YES;
+        // 4.5.695: a 684-mode phone-size card stays phone-size (no shrink);
+        // in a tiny card the phone-size picture is scaled to its width
+        // (transform only; the view's bounds and the scene are not touched).
+        BOOL keep695 = _phoneSize && [self phoneSize695KeepsAway:@"card minimized"];
+        if (keep695 && parent.tag != 9158 && tinyParent) {
+            CGSize b = _hostView.bounds.size;
+            CGFloat s = b.width > 1.0 ? CGRectGetWidth(parent.bounds) / b.width : 0.0;
+            if (isfinite(s) && s > 0.001 && s < 1.0) {
+                _hostView.transform = CGAffineTransformMakeScale(s, s);
+                _hostView.center = CGPointMake(CGRectGetMidX(parent.bounds), CGRectGetMidY(parent.bounds));
+            }
+        }
+        // 4.5.675: a minimized card is never phone-size. Back to the card
+        // size, outside this layout pass.
+        if (_phoneSize && !keep695) {
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf setPhoneSize675:NO keyboardTop:0.0 why:@"card minimized"];
+            });
+        }
+        return;
+    }
+    // 4.5.680: an allowlisted app on a card is always phone-size. Card open,
+    // restore and resize all come through here; the switch itself runs
+    // outside this layout pass (throttled, 1 s).
+    if (!_phoneSize && !_cameraTall && parent && !CGRectIsEmpty(parent.bounds)) [self phoneSize680GrowSoon];
+    // 4.5.675 phonesize675: the phone-size scene at the card's width, with
+    // scene y = keyboard top on the card's bottom edge. The card clips the
+    // rest (the top of the app above, the part behind the keys below).
+    if (_phoneSize && !_cameraTall && parent && !CGRectIsEmpty(parent.bounds)) {
+        CGSize phone = [self phoneSize675SceneSize];
+        CGFloat width = CGRectGetWidth(parent.bounds);
+        CGFloat height = CGRectGetHeight(parent.bounds);
+        CGFloat fit = [self phoneSize675FitForWidth:width height:height];
+        CGFloat keyTop = [self phoneSize675PinForCardHeight:height fit:fit];
+        if (_hostView.autoresizingMask != UIViewAutoresizingNone) _hostView.autoresizingMask = UIViewAutoresizingNone;
+        if (!_hostView.autoresizesSubviews) _hostView.autoresizesSubviews = YES;
+        CGRect phoneBounds = CGRectMake(0.0, 0.0, phone.width, phone.height);
+        if (!ps707 || !CGRectEqualToRect(_hostView.bounds, phoneBounds)) _hostView.bounds = phoneBounds;
+        // 4.5.694: vertical squash so the real top bar (from view_top) fits;
+        // x stays fit (full width), the bar line keyTop stays on the card bottom.
+        CGFloat sy = [self phoneSize694ScaleYForWidth:width height:height fit:fit keyTop:keyTop];
+        // 4.5.698: a little bigger (crop a few pt of the top band and the sides);
+        // keyTop stays on the card bottom. Off file / latch = 697 exactly.
+        CGFloat sx = fit;
+        CGFloat cx = width / 2.0;
+        [self phoneSize698ForWidth:width height:height phone:phone fit:fit keyTop:keyTop sx:&sx sy:&sy cx:&cx];
+        CGAffineTransform squash = CGAffineTransformMakeScale(sx, sy);
+        CGPoint middle = CGPointMake(cx, height - keyTop * sy + phone.height * sy / 2.0);
+        if (!ps707 || !CGAffineTransformEqualToTransform(_hostView.transform, squash)) _hostView.transform = squash;
+        if (!ps707 || fabs(_hostView.center.x - middle.x) > 0.01 || fabs(_hostView.center.y - middle.y) > 0.01) _hostView.center = middle;
+        // 4.5.679: scene size, scale and the visible app-y range, on every change.
+        if (fabs(_ps679LoggedWidth - phone.width) > 0.5 || fabs(_ps679LoggedFit - fit) > 0.0005 || fabs(_ps679LoggedPin - keyTop) > 0.5) {
+            _ps679LoggedWidth = phone.width;
+            _ps679LoggedFit = fit;
+            _ps679LoggedPin = keyTop;
+            NSString *kind = _phoneSizePreGrown ? (_phoneSizeKeyTop < 1.0 ? @"pre-grown, tap-safe" : @"pre-grown, bottom-anchored") : @"keyboard up";
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize679 %@ scene %.0fx%.0f at scale %.4f%@ (%@): visible app y %.0f..%.0f in card %.0fx%.0f; side crop %.1f pt each side",
+                                      _bundleIdentifier ?: @"?", phone.width, phone.height, fit,
+                                      _phoneSizeNudging ? @" (nudge running)" : @"", kind,
+                                      keyTop - height / MAX(fit, 0.01), keyTop, width, height,
+                                      MAX(0.0, (phone.width * fit - width) / 2.0));
+        }
+        objc_setAssociatedObject(_hostView, DSCardHostKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (_hostView.hidden) _hostView.hidden = NO;
+        if (ps707) {
+            // 4.5.707 beeper707: the parent clips (a plain rectangle inside the
+            // card's rounded content view). The host does not clip again, has no
+            // group opacity and is never rasterised, and the rounded clips
+            // inside it are dropped once.
+            DSFeature699MarkTrying("beeper707");
+            if (_hostView.layer.masksToBounds) {
+                _hostView.clipsToBounds = NO;
+                _hostView.layer.masksToBounds = NO;
+            }
+            if (_hostView.layer.allowsGroupOpacity) _hostView.layer.allowsGroupOpacity = NO;
+            if (_hostView.layer.shouldRasterize) _hostView.layer.shouldRasterize = NO;
+            if (!parent.layer.masksToBounds) {
+                parent.clipsToBounds = YES;
+                parent.layer.masksToBounds = YES;
+            }
+            if (!_beeper707Flat) {
+                _beeper707Flat = YES;
+                NSInteger flat = DSBeeper707Flatten(_hostView, 0);
+                if (!_beeper707Logged) {
+                    _beeper707Logged = YES;
+                    DSDiagnosticsRecordFormat(@"SpringBoard: beeper707 %@ phone-size host drawn flat: %ld nested rounded clips dropped, host clip off (the card clips), squash %.3fx%.3f",
+                                              _bundleIdentifier ?: @"?", (long)flat, sx, sy);
+                }
+            }
+        } else {
+            _hostView.clipsToBounds = YES;
+            _hostView.layer.masksToBounds = YES;
+            parent.clipsToBounds = YES;
+            parent.layer.masksToBounds = YES;
+        }
+        // 4.5.690: the recreated top bar over the card (picture only on the
+        // SpringBoard side; the host view above is placed exactly as before).
+        @try {
+            [self phoneSize690UpdateStripInParent:parent width:width height:height fit:fit cardBottomY:keyTop];
+        } @catch (NSException *exception) {
+            [self phoneSize690RemoveStrip:[NSString stringWithFormat:@"threw %@", exception.reason ?: exception.name ?: @"?"]];
+        }
+        return;
+    }
+    if (_beeper707Flat) {
+        // Out of phone-size (or minimised): the scene gets its corners back.
+        _beeper707Flat = NO;
+        _hostView.layer.allowsGroupOpacity = YES;
+        [self roundHostedSceneToCard];
+    }
+    // 4.5.668 sbcam668: the phone-size camera scene, at the card's width,
+    // bottom-aligned. The card (parent) clips what is above it.
+    if (_cameraTall && parent && !CGRectIsEmpty(parent.bounds)) {
+        CGSize phone = [self cameraTallSize];
+        CGFloat width = CGRectGetWidth(parent.bounds);
+        CGFloat height = CGRectGetHeight(parent.bounds);
+        CGFloat fit = width / phone.width;
+        _hostView.autoresizingMask = UIViewAutoresizingNone;
+        _hostView.bounds = CGRectMake(0.0, 0.0, phone.width, phone.height);
+        _hostView.transform = CGAffineTransformMakeScale(fit, fit);
+        _hostView.center = CGPointMake(width / 2.0, height - phone.height * fit / 2.0);
+        objc_setAssociatedObject(_hostView, DSCardHostKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        _hostView.hidden = NO;
+        _hostView.clipsToBounds = YES;
+        _hostView.layer.masksToBounds = YES;
+        parent.clipsToBounds = YES;
+        parent.layer.masksToBounds = YES;
         return;
     }
     if (parent && !CGRectIsEmpty(parent.bounds) && fabs(scale - 1.0) < 0.02) {
@@ -2499,7 +6784,8 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
             parent.layer.masksToBounds = YES;
         }
         [self clipHostContentsToCard];
-        [self roundHostedSceneToCard];
+        // 4.5.705 perf705: once, after the clamp (the clamp never touches corners).
+        if (!DSPerf705On()) [self roundHostedSceneToCard];
         if (!_clampingHost) {
             _clampingHost = YES;
             [self clampOversizedSubviewsOf:_hostView depth:0];
@@ -2532,7 +6818,7 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
         parent.layer.masksToBounds = YES;
     }
     [self clipHostContentsToCard];
-    [self roundHostedSceneToCard];
+    if (!DSPerf705On()) [self roundHostedSceneToCard];
     if (!_clampingHost) {
         _clampingHost = YES;
         [self clampOversizedSubviewsOf:_hostView depth:0];
@@ -2543,12 +6829,6 @@ static UIView *DSContainerToHide(UIView *presentation, UIView *cardHost) {
         [self hideStrayPresentationsOutsideCard];
         [self scheduleStrayPresentationSweep];
     }
-}
-
-- (void)refreshPresentedGeometry {
-    // Fit the view that is already on the card. Starting another scene
-    // transaction here re-pins the app to the whole display and the card goes black.
-    [self layoutHostView];
 }
 
 static long long DSHostReadLong(id target, NSString *name, long long fallback) {
@@ -2626,6 +6906,206 @@ static long long DSHostReadLong(id target, NSString *name, long long fallback) {
     return 0;
 }
 
+// ---- 4.5.719 bg719 ----------------------------------------------------------------
+// True backgrounding, the safe way (4.5.717's Visibility hold is gone for good).
+// SpringBoard asks RunningBoard for a legacy background keep-alive on the
+// staged / minimised app's pid: RBSAssertion(target pid, RBSLegacyAttribute
+// reason Audio(1), then Continuous(10005), flags PreventSuspend |
+// PreventThrottleDownCPU | AllowIdleSleep). No Visibility, no scene change.
+// - The acquire / invalidate run on a private serial queue (they are XPC to
+//   runningboardd); our own state is only touched on the main thread.
+// - Once per process and card: a pid that was tried is not tried again unless
+//   a relaunch (new pid), an unlock or a card change allows ONE re-take.
+//   Never from the stage tick.
+// - First use only after the user staged an app and >= 30 s after SpringBoard
+//   started. Never Messages, never SpringBoard's own pid, never pid <= 0.
+// - Per-action latch: bg719-trying before every take and release, cleared 15 s
+//   after the last one; 3 failed takes in a row switch it off for this run.
+// Off: /var/mobile/.dynamicstage-bg719-off (crash latch bg719-trying / -crashed).
+static BOOL DS719UserStaged = NO;
+static BOOL DS719RunOff = NO;
+static NSInteger DS719FailStreak = 0;
+static BOOL DS719WaitScheduled = NO;
+
+void DSBg719NoteUserStaged(void) {
+    DS719UserStaged = YES;
+}
+
+static dispatch_queue_t DS719Queue(void) {
+    static dispatch_queue_t queue;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        queue = dispatch_queue_create("com.recreated.dynamicstage.bg719", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
+- (BOOL)bg719AssertionValid {
+    id assertion = _bg719Assertion;
+    if (!assertion) return NO;
+    if (![assertion respondsToSelector:@selector(isValid)]) return YES;
+    @try {
+        return ((BOOL (*)(id, SEL))objc_msgSend)(assertion, @selector(isValid));
+    } @catch (NSException *exception) {
+        return NO;
+    }
+}
+
+- (void)bg719Release:(NSString *)why {
+    _bg719Gen += 1;          // an acquire still in flight is dropped when it lands
+    _bg719Busy = NO;
+    id assertion = _bg719Assertion;
+    pid_t pid = _bg719Pid;
+    _bg719Assertion = nil;
+    _bg719Pid = 0;
+    if (!assertion) return;
+    DSFeature719MarkAction("bg719");
+    dispatch_async(DS719Queue(), ^{
+        @try {
+            if ([assertion respondsToSelector:@selector(invalidate)]) {
+                ((void (*)(id, SEL))objc_msgSend)(assertion, @selector(invalidate));
+            }
+        } @catch (NSException *exception) {
+        }
+    });
+    DSDiagnosticsRecordFormat(@"SpringBoard: bg719 released %@ pid %d (%@)", _bundleIdentifier ?: @"?", (int)pid, why ?: @"?");
+}
+
+// A relaunch, an unlock or a card change: one re-take is allowed.
+- (void)bg719AllowRetake {
+    _bg719RetakeAllowed = YES;
+}
+
+- (void)bg719Request:(NSString *)why {
+    if (!NSThread.isMainThread) return;
+    if (DS719RunOff || !DS719UserStaged) return;
+    if (_bundleIdentifier.length == 0 || [_bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) return;
+    if (!_appViewController && !_scene && !_hostView) return;
+    if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
+    if (!DSFeature699On("bg719")) {
+        if (_bg719Assertion) [self bg719Release:@"switched off"];
+        return;
+    }
+    NSTimeInterval up = DSProcessUptime719();
+    if (up < 30.0) {
+        if (!DS719WaitScheduled) {
+            DS719WaitScheduled = YES;
+            __weak __typeof(self) weakSelf = self;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((30.5 - up) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                DS719WaitScheduled = NO;
+                [weakSelf bg719Request:@"30 s after start"];
+            });
+        }
+        return;
+    }
+    if (_bg719Busy) return;
+    pid_t pid = [self hostedProcessIdentifier];
+    if (pid <= 0 || pid == getpid()) return;
+    if (_bg719Assertion) {
+        if (_bg719Pid == pid && [self bg719AssertionValid]) return;
+        BOOL relaunched = _bg719Pid != pid;
+        [self bg719Release:relaunched ? @"the app relaunched" : @"RunningBoard dropped it"];
+        if (relaunched) _bg719RetakeAllowed = YES;
+    }
+    if (_bg719TriedPid == pid && !_bg719RetakeAllowed) return;   // once per process and card
+    _bg719RetakeAllowed = NO;
+    _bg719TriedPid = pid;
+
+    Class targetClass = objc_getClass("RBSTarget");
+    Class attributeClass = objc_getClass("RBSLegacyAttribute");
+    Class assertionClass = objc_getClass("RBSAssertion");
+    SEL targetSel = @selector(targetWithPid:);
+    SEL attributeSel = @selector(attributeWithReason:flags:);
+    SEL initSel = @selector(initWithExplanation:target:attributes:);
+    SEL acquireSel = @selector(acquireWithError:);
+    if (!targetClass || !attributeClass || !assertionClass ||
+        ![targetClass respondsToSelector:targetSel] ||
+        ![attributeClass respondsToSelector:attributeSel] ||
+        ![assertionClass instancesRespondToSelector:initSel] ||
+        ![assertionClass instancesRespondToSelector:acquireSel] ||
+        ![assertionClass instancesRespondToSelector:@selector(invalidate)]) {
+        DS719RunOff = YES;
+        DSDiagnosticsRecordFormat(@"SpringBoard: bg719 RunningBoard API missing (target=%d legacy=%d assertion=%d) - off for this run",
+                                  targetClass != nil, attributeClass != nil, assertionClass != nil);
+        return;
+    }
+
+    _bg719Busy = YES;
+    NSUInteger gen = ++_bg719Gen;
+    NSString *bundle = [_bundleIdentifier copy];
+    NSString *reasonWhy = [why copy] ?: @"?";
+    DSFeature719MarkAction("bg719");
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(DS719Queue(), ^{
+        id acquiredAssertion = nil;
+        NSUInteger usedReason = 0;
+        NSString *failure = nil;
+        // PreventSuspend | PreventThrottleDownCPU | AllowIdleSleep
+        const NSUInteger flags = (1u << 0) | (1u << 1) | (1u << 2);
+        const NSUInteger reasons[2] = { 1u /* audio */, 10005u /* continuous */ };
+        for (int r = 0; r < 2 && !acquiredAssertion; r++) {
+            id assertion = nil;
+            NSError *error = nil;
+            BOOL ok = NO;
+            @try {
+                id target = ((id (*)(id, SEL, int))objc_msgSend)(targetClass, targetSel, (int)pid);
+                id attribute = ((id (*)(id, SEL, NSUInteger, NSUInteger))objc_msgSend)(attributeClass, attributeSel, reasons[r], flags);
+                if (target && attribute) {
+                    NSString *explanation = [NSString stringWithFormat:@"Dynamic Stage bg719 %@", bundle];
+                    assertion = ((id (*)(id, SEL, NSString *, id, NSArray *))objc_msgSend)([assertionClass alloc], initSel,
+                                                                                          explanation, target, @[attribute]);
+                }
+                if (assertion) ok = ((BOOL (*)(id, SEL, NSError **))objc_msgSend)(assertion, acquireSel, &error);
+            } @catch (NSException *exception) {
+                ok = NO;
+                failure = [NSString stringWithFormat:@"threw %@", exception.name ?: @"?"];
+            }
+            if (ok) {
+                acquiredAssertion = assertion;
+                usedReason = reasons[r];
+            } else {
+                if (error) failure = [NSString stringWithFormat:@"reason %lu: %@", (unsigned long)reasons[r],
+                                      error.localizedFailureReason ?: error.localizedDescription ?: @"?"];
+                @try {
+                    if (assertion) ((void (*)(id, SEL))objc_msgSend)(assertion, @selector(invalidate));
+                } @catch (NSException *exception) {
+                }
+            }
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) host = weakSelf;
+            BOOL stale = !host || host->_bg719Gen != gen || [host hostedProcessIdentifier] != pid;
+            if (host && host->_bg719Gen == gen) host->_bg719Busy = NO;
+            if (!acquiredAssertion) {
+                DS719FailStreak += 1;
+                DSDiagnosticsRecordFormat(@"SpringBoard: bg719 could not hold %@ pid %d (%@; %@) [%ld in a row]", bundle, (int)pid,
+                                          failure ?: @"no assertion", reasonWhy, (long)DS719FailStreak);
+                if (DS719FailStreak >= 3 && !DS719RunOff) {
+                    DS719RunOff = YES;
+                    DSDiagnosticsRecord(@"SpringBoard: bg719 off for this SpringBoard run (3 failed takes in a row)");
+                }
+                return;
+            }
+            DS719FailStreak = 0;
+            if (stale) {
+                DSFeature719MarkAction("bg719");
+                dispatch_async(DS719Queue(), ^{
+                    @try {
+                        ((void (*)(id, SEL))objc_msgSend)(acquiredAssertion, @selector(invalidate));
+                    } @catch (NSException *exception) {
+                    }
+                });
+                DSDiagnosticsRecordFormat(@"SpringBoard: bg719 released %@ pid %d (card changed while taking it)", bundle, (int)pid);
+                return;
+            }
+            host->_bg719Assertion = acquiredAssertion;
+            host->_bg719Pid = pid;
+            DSDiagnosticsRecordFormat(@"SpringBoard: bg719 holding %@ pid %d (%@, %@)", bundle, (int)pid,
+                                      usedReason == 1 ? @"audio" : @"continuous", reasonWhy);
+        });
+    });
+}
+
 - (void)releaseRunningAssertion {
     id assertion = _runningAssertion;
     _runningAssertion = nil;
@@ -2679,6 +7159,10 @@ static long long DSHostReadLong(id target, NSString *name, long long fallback) {
     // 4.5.657: killed from the switcher; never wake or relaunch it from here.
     if (DSSceneHostBundleDiedPending(_bundleIdentifier)) return;
     if (!_appViewController && !_scene && !_hostView) return;
+    @try {
+        [self bg719Request:@"stage hold"];
+    } @catch (NSException *exception) {
+    }
     pid_t pid = [self hostedProcessIdentifier];
     if (_runningAssertion && (pid <= 0 || _runningAssertionPid == pid)) {
         BOOL valid = YES;
@@ -2787,11 +7271,14 @@ static long long DSHostReadLong(id target, NSString *name, long long fallback) {
 }
 
 - (NSDictionary *)overrideDescription {
-    return @{
+    NSMutableDictionary *description = [@{
         @"frame" : [NSValue valueWithCGRect:[self frameForScene]],
-        @"insets" : [NSValue valueWithUIEdgeInsets:_safeAreaInsets],
+        @"insets" : [NSValue valueWithUIEdgeInsets:[self insetsForScene]],
         @"foreground" : @(_foreground),
-    };
+    } mutableCopy];
+    CGFloat statusBar = _phoneSize ? [self phoneSize688StatusBarHeight] : 0.0;
+    if (statusBar > 0.0) description[@"statusBar"] = @(statusBar);
+    return description;
 }
 
 - (void)registerOverride {
@@ -2814,6 +7301,12 @@ static long long DSHostReadLong(id target, NSString *name, long long fallback) {
     DSSceneOverrideCountValue = (NSInteger)DSSceneOverrides().count;
     [DSSceneOverridesLock() unlock];
     _registeredOverride = NO;
+    // 4.5.688: a raised status bar height goes back to the scene's own value.
+    if (DSPhoneSize688HasStatusBarOriginal(identifier) && !DSAvoidSceneLifecycle()) {
+        DSUpdateSceneSettings(_scene, ^(FBSMutableSceneSettings *settings) {
+            DSPhoneSize688ApplyStatusBar(settings, identifier, 0.0);
+        });
+    }
 }
 
 - (void)pushSettings {
@@ -2823,7 +7316,7 @@ static long long DSHostReadLong(id target, NSString *name, long long fallback) {
     }
     if (!_scene) return;
     CGRect logical = [self frameForScene];
-    UIEdgeInsets insets = _safeAreaInsets;
+    UIEdgeInsets insets = [self insetsForScene];
     BOOL foreground = _foreground;
 
     [self updateSceneSettings:^(FBSMutableSceneSettings *settings) {
@@ -2861,8 +7354,10 @@ static long long DSHostReadLong(id target, NSString *name, long long fallback) {
 #pragma mark - Teardown
 
 - (void)relinquishKeepingBackgrounded:(BOOL)background {
+    [self phoneSize690RemoveStrip:@"card let go"];
     [self restoreOwnedStrayPresentations];
     _straySweepScheduled = NO;
+    [self bg719Release:@"card closed"];
     [self releaseRunningAssertion];
     [self removeOverride];
 
@@ -3079,7 +7574,10 @@ static void DSRunAfterTransitionBlocks(void) {
 + (void)setHomeGestureActive:(BOOL)active {
     BOOL changed = DSHomeGestureActive != active;
     DSHomeGestureActive = active;
-    if (!active) DSHomeGestureQuietUntil = CFAbsoluteTimeGetCurrent() + 1.15;
+    if (!active) {
+        DSHomeGestureQuietUntil = CFAbsoluteTimeGetCurrent() + 1.15;
+        DSHomeGestureEndedAt = CFAbsoluteTimeGetCurrent();
+    }
     if (changed) DSPostSystemGestureState();
 }
 
@@ -3136,6 +7634,32 @@ static void DSRunAfterTransitionBlocks(void) {
     [DSSceneOverridesLock() unlock];
 }
 
++ (void)noteHomeHandBack {
+    DSHomeHandBackAt = CFAbsoluteTimeGetCurrent();
+}
+
++ (void)noteSystemEdgePullActive:(BOOL)active {
+    if (DSSystemEdgePullActive == active) return;
+    DSSystemEdgePullActive = active;
+    if (active) DSSystemEdgePullStartedAt = CFAbsoluteTimeGetCurrent();
+    else DSSystemEdgePullEndedAt = CFAbsoluteTimeGetCurrent();
+}
+
+// A pull that never reported its end counts as over after 10 s.
++ (BOOL)systemEdgePullIsActive {
+    return DSSystemEdgePullActive && CFAbsoluteTimeGetCurrent() - DSSystemEdgePullStartedAt < 10.0;
+}
+
+// Data reads only. Called from inside the FBScene update hook.
++ (NSString *)systemTransitionHoldsSceneReason {
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if ([self systemEdgePullIsActive]) return @"corner pull adopted from the system gesture";
+    if (DSSystemEdgePullEndedAt > 0 && now - DSSystemEdgePullEndedAt < 1.5) return @"corner pull just ended";
+    if (DSHomeHandBackAt > 0 && now - DSHomeHandBackAt < 3.0) return @"home hand-back settling";
+    if (DSHomeGestureEndedAt > 0 && now - DSHomeGestureEndedAt < 4.0) return @"home transition finishing";
+    return nil;
+}
+
 + (BOOL)isStageActivatingSceneIdentifier:(NSString *)identifier {
     if (identifier.length == 0 || DSActivatingBundle.length == 0) return NO;
     if (CFAbsoluteTimeGetCurrent() >= DSActivatingUntil) return NO;
@@ -3164,11 +7688,42 @@ static void DSRunAfterTransitionBlocks(void) {
     return NO;
 }
 
+// 4.5.716 blackout716 ("Blacked out again after lock screen and minimised for
+// ages", 4.5.715): locked while the Beeper card was minimised, the scene was
+// put in the background; after the corner restore every foreground update -
+// including the ones the stage's own wake (_activateApp) caused - was written
+// back to the committed background here, so the wake never took and the card
+// stayed black. Within 2 s of the stage waking this app, a background ->
+// foreground update now lands (never foreground -> background, never Messages,
+// never while locked). Off: /var/mobile/.dynamicstage-blackout716-off (crash
+// latch blackout716-trying / -crashed) = exactly 4.5.715.
++ (BOOL)blackout716LetsForegroundLand:(FBScene *)scene incoming:(FBSMutableSceneSettings *)settings {
+    if (DSWake716Bundle.length == 0) return NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now >= DSWake716Until) return NO;
+    NSString *identifier = [scene respondsToSelector:@selector(identifier)] ? scene.identifier : nil;
+    if (identifier.length == 0 || [identifier rangeOfString:DSWake716Bundle].location == NSNotFound) return NO;
+    if ([identifier rangeOfString:@"MobileSMS"].location != NSNotFound) return NO;
+    BOOL knownIncoming = NO;
+    BOOL incoming = [self readForegroundFlag:settings known:&knownIncoming];
+    if (!knownIncoming || !incoming) return NO;
+    if (DSPS696DeviceLocked()) return NO;
+    if (!DSFeature699On("blackout716")) return NO;
+    DSFeature699MarkTrying("blackout716");
+    static CFAbsoluteTime lastLog = 0;
+    if (now - lastLog > 1.0 || now < lastLog) {
+        lastLog = now;
+        DSDiagnosticsRecordFormat(@"SpringBoard: blackout716 %@ woken by the stage: its foreground update lands (the scene was held in the background)", identifier);
+    }
+    return YES;
+}
+
 + (void)keepCommittedForegroundOfScene:(FBScene *)scene onSettings:(FBSMutableSceneSettings *)settings {
     if (!settings || ![scene respondsToSelector:@selector(settings)]) return;
     BOOL known = NO;
     BOOL foreground = [self readForegroundFlag:scene.settings known:&known];
     if (!known || ![settings respondsToSelector:@selector(setForeground:)]) return;
+    if (!foreground && [self blackout716LetsForegroundLand:scene incoming:settings]) return;
     @try {
         settings.foreground = foreground;
     } @catch (NSException *exception) {
@@ -3176,6 +7731,13 @@ static void DSRunAfterTransitionBlocks(void) {
 }
 
 + (BOOL)applyOverridesToSettings:(FBSMutableSceneSettings *)settings forScene:(FBScene *)scene {
+    DS_PERF_BEGIN();
+    BOOL applied = [self applyOverrides697ToSettings:settings forScene:scene];
+    DS_PERF_END(DSPerfBucketSceneHook);
+    return applied;
+}
+
++ (BOOL)applyOverrides697ToSettings:(FBSMutableSceneSettings *)settings forScene:(FBScene *)scene {
     if (DSAvoidSceneLifecycle()) return NO;
     if (!settings || ![scene respondsToSelector:@selector(identifier)]) return NO;
     NSString *identifier = scene.identifier;
@@ -3199,6 +7761,7 @@ static void DSRunAfterTransitionBlocks(void) {
             insets = UIApplication.sharedApplication.windows.firstObject.safeAreaInsets;
         }
         DSApplyGeometry(settings, CGRectMake(0.0, 0.0, CGRectGetWidth(screen), CGRectGetHeight(screen)), insets);
+        DSPhoneSize688ApplyStatusBar(settings, identifier, 0.0);
         return YES;
     }
 
@@ -3208,6 +7771,32 @@ static void DSRunAfterTransitionBlocks(void) {
     if (!override) return NO;
 
     DSApplyGeometry(settings, [override[@"frame"] CGRectValue], [override[@"insets"] UIEdgeInsetsValue]);
+    // 4.5.799: keep our occlusion reason on every settings write we touch, so a
+    // geometry update cannot wipe what the contributor put in.
+    if (DSReg799On()) {
+        NSString *reason = override[@"reg799Reason"];
+        if (reason.length == 0) {
+            // Fall back: match an owned app view whose scene is this one.
+            for (SBAppViewController *c in DSOwnedAppViewControllers()) {
+                @try {
+                    id h = DSIvar(c, @"_sceneHandle");
+                    if (!h && [c respondsToSelector:@selector(sceneHandle)]) h = ((id (*)(id, SEL))objc_msgSend)(c, @selector(sceneHandle));
+                    FBScene *sc = [h respondsToSelector:@selector(scene)] ? ((FBScene *(*)(id, SEL))objc_msgSend)(h, @selector(scene)) : nil;
+                    if (sc == scene || (sc.identifier.length && [sc.identifier isEqualToString:identifier])) {
+                        Ivar iv = class_getInstanceVariable(object_getClass(c), "_identifier");
+                        id ident = iv ? object_getIvar(c, iv) : nil;
+                        if ([ident isKindOfClass:[NSString class]]) reason = ident;
+                        break;
+                    }
+                } @catch (NSException *e) {}
+            }
+        }
+        if (reason.length) [DSSceneHost reg799AppendReason:reason toSettings:settings log:NO];
+    }
+    // 4.5.688 mode=statusbar: keep the raised status bar height (or put it back).
+    if (override[@"statusBar"] || DSPhoneSize688HasStatusBarOriginal(identifier)) {
+        DSPhoneSize688ApplyStatusBar(settings, identifier, [override[@"statusBar"] doubleValue]);
+    }
     // A minimized app stays backgrounded. Never write foreground YES here.
     // That write is the assert that safe-modes SpringBoard.
     if ([override[@"staysBackgrounded"] boolValue]) {
@@ -3236,6 +7825,35 @@ static void DSRunAfterTransitionBlocks(void) {
             if (now - DSCameraSceneLog > 3.0) {
                 DSCameraSceneLog = now;
                 DSDiagnosticsRecordFormat(@"SpringBoard: camera658 %@ holds the camera: scene kept unoccluded, no deactivation, path=scene-front", identifier);
+            }
+        } @catch (NSException *exception) {
+        }
+    }
+    // 4.5.696 keys: a visible phone-size card's scene does not keep
+    // SpringBoard's systemAnimation deactivation (0x20); only that bit, only
+    // while it is foreground, never during the home gesture, a system
+    // transition or with the phone locked.
+    if (![override[@"staysBackgrounded"] boolValue] && DSPS696IsKeysScene(identifier) && DSPS696Enabled(1) &&
+        ![self homeGestureIsActive] && ![self systemTransitionBusy] && !DSPS696DeviceLocked()) {
+        @try {
+            BOOL known = NO;
+            BOOL foreground = [self readForegroundFlag:settings known:&known];
+            SEL getReasons = @selector(deactivationReasons);
+            SEL setReasons = NSSelectorFromString(@"setDeactivationReasons:");
+            if (known && foreground && [settings respondsToSelector:getReasons] && [settings respondsToSelector:setReasons]) {
+                unsigned long long reasons = ((unsigned long long (*)(id, SEL))objc_msgSend)(settings, getReasons);
+                if (reasons & 0x20ULL) {
+                    ((void (*)(id, SEL, unsigned long long))objc_msgSend)(settings, setReasons, reasons & ~0x20ULL);
+                    DSPS696MarkTrying(1);
+                    static CFAbsoluteTime DSPS696KeysLog = 0;
+                    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+                    if (now - DSPS696KeysLog > 3.0 || now < DSPS696KeysLog) {
+                        DSPS696KeysLog = now;
+                        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize696 keys: cleared SpringBoard's systemAnimation deactivation (0x%llx -> 0x%llx) on the phone-size card %@, "
+                                                  @"so the app is already active at the first tap", reasons, reasons & ~0x20ULL, identifier);
+                        DSCall758NoteSystemAnimation(identifier);
+                    }
+                }
             }
         } @catch (NSException *exception) {
         }
@@ -3273,33 +7891,12 @@ static void DSRunAfterTransitionBlocks(void) {
     return stays;
 }
 
-+ (BOOL)hasAnySceneOverride {
-    [DSSceneOverridesLock() lock];
-    BOOL any = DSSceneOverrides().count > 0;
-    [DSSceneOverridesLock() unlock];
-    return any;
-}
-
 + (BOOL)sceneIdentifierHasOverride:(NSString *)identifier {
     if (identifier.length == 0) return NO;
     [DSSceneOverridesLock() lock];
     BOOL has = DSSceneOverrides()[identifier] != nil;
     [DSSceneOverridesLock() unlock];
     return has;
-}
-
-+ (void)noteLiveScene:(FBScene *)scene {
-    if (![scene respondsToSelector:@selector(identifier)]) return;
-    NSString *identifier = scene.identifier;
-    if (identifier.length == 0) return;
-
-    [DSSceneOverridesLock() lock];
-    if (DSSceneOverrides().count == 0) {
-        [DSSceneOverridesLock() unlock];
-        return;
-    }
-    [DSLiveScenes() setObject:scene forKey:identifier];
-    [DSSceneOverridesLock() unlock];
 }
 
 + (FBScene *)liveSceneForBundleIdentifier:(NSString *)bundleIdentifier {
@@ -3319,4 +7916,230 @@ static void DSRunAfterTransitionBlocks(void) {
     return found;
 }
 
+
+// 4.5.672 keys672: read only, never writes the scene.
+- (NSString *)keys672SceneSummary {
+    @try {
+        FBScene *scene = [self appViewScene] ?: _scene;
+        if (!scene || ![scene respondsToSelector:@selector(settings)]) return @"scene=?";
+        FBSSceneSettings *settings = scene.settings;
+        if (!settings) return @"scene settings=?";
+        NSString *insets = @"?";
+        if ([settings respondsToSelector:@selector(safeAreaInsetsPortrait)]) {
+            UIEdgeInsets value = ((UIEdgeInsets (*)(id, SEL))objc_msgSend)(settings, @selector(safeAreaInsetsPortrait));
+            insets = NSStringFromUIEdgeInsets(value);
+        }
+        NSInteger orientation = [settings respondsToSelector:@selector(interfaceOrientation)] ? settings.interfaceOrientation : -1;
+        return [NSString stringWithFormat:@"scene frame=%@ safeArea=%@ orientation=%ld (stage wants frame=%@ safeArea=%@)",
+                NSStringFromCGRect(settings.frame), insets, (long)orientation,
+                NSStringFromCGRect([self frameForScene]), NSStringFromUIEdgeInsets([self insetsForScene])];
+    } @catch (NSException *exception) {
+        return [NSString stringWithFormat:@"scene read threw %@", exception.name ?: @"?"];
+    }
+}
+
 @end
+
+// ---- 4.5.770 gest770 (log-only) -------------------------------------------------
+// Records what the user does around a minimised card and what the system does
+// with it: every bottom-edge pull (ours or the system's) and how it ended, the
+// switcher window showing / hiding (window hidden flags only, no switcher
+// controller queries), the app view's state on every minimise / restore and the
+// first Live update after a restore. Changes only. Never for Messages.
+static void DSGest770StartPoll(void);
+static BOOL DSGest770PollAsleep = NO;
+BOOL DSGest770On(void) {
+    static BOOL marked = NO;
+    if (!DS770On("gest770")) return NO;
+    if (!marked) {
+        marked = YES;
+        DSFeature699MarkTrying("gest770");
+        DSGest770StartPoll();
+    } else if (DSGest770PollAsleep && NSThread.isMainThread) {
+        DSGest770StartPoll();   // 4.5.796: wake the sleeping poll
+    }
+    return YES;
+}
+
+static NSString *DSGest770Contexts(CALayer *layer, int depth, NSMutableArray *out) {
+    if (!layer || depth > 8 || out.count >= 3) return nil;
+    if ([NSStringFromClass(layer.class) isEqualToString:@"CALayerHost"] && [layer respondsToSelector:@selector(contextId)]) {
+        unsigned int cid = ((unsigned int (*)(id, SEL))objc_msgSend)(layer, @selector(contextId));
+        [out addObject:[NSString stringWithFormat:@"%u%@", cid, layer.hidden ? @"(hidden)" : @""]];
+    }
+    for (CALayer *sub in layer.sublayers) DSGest770Contexts(sub, depth + 1, out);
+    return nil;
+}
+
+NSString *DSGest770SceneState(id controller, id scene) {
+    @try {
+        NSInteger mode = -1;
+        if ([controller respondsToSelector:@selector(displayMode)]) mode = ((NSInteger (*)(id, SEL))objc_msgSend)(controller, @selector(displayMode));
+        id settings = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+        BOOL known = NO;
+        BOOL fg = settings ? [DSSceneHost readForegroundFlag:settings known:&known] : NO;
+        long long deact = -1;
+        if ([settings respondsToSelector:@selector(deactivationReasons)]) deact = ((long long (*)(id, SEL))objc_msgSend)(settings, @selector(deactivationReasons));
+        NSString *active = @"?";
+        if ([scene respondsToSelector:@selector(isActive)]) active = ((BOOL (*)(id, SEL))objc_msgSend)(scene, @selector(isActive)) ? @"1" : @"0";
+        NSMutableArray *ctx = [NSMutableArray array];
+        UIView *view = [controller isKindOfClass:UIViewController.class] && [controller isViewLoaded] ? [controller view] : nil;
+        DSGest770Contexts(view.layer, 0, ctx);
+        return [NSString stringWithFormat:@"mode=%ld fg=%@ active=%@ deact=%lld layerHosts=[%@] view=%@",
+                (long)mode, known ? (fg ? @"1" : @"0") : @"?", active, deact,
+                [ctx componentsJoinedByString:@","], view ? (view.window ? @"in-window" : @"no-window") : @"none"];
+    } @catch (NSException *exception) {
+        return [NSString stringWithFormat:@"state threw %@", exception.name];
+    }
+}
+
+static NSMutableDictionary<NSString *, NSNumber *> *DSGest770Restored = nil;
+void DSGest770MarkRestored(NSString *bundle) {
+    if (!bundle.length || [bundle isEqualToString:@"com.apple.MobileSMS"] || !DSGest770On()) return;
+    if (!DSGest770Restored) DSGest770Restored = [NSMutableDictionary dictionary];
+    DSGest770Restored[bundle] = @(CFAbsoluteTimeGetCurrent());
+}
+
+void DSGest770FirstAfterRestore(id controller, id handle, NSString *what) {
+    if (DSGest770Restored.count == 0) return;
+    @try {
+        id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+        NSString *sid = [scene respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identifier)) : nil;
+        if (![sid isKindOfClass:NSString.class]) return;
+        for (NSString *bundle in DSGest770Restored.allKeys) {
+            if (![sid hasPrefix:bundle]) continue;
+            double at = DSGest770Restored[bundle].doubleValue;
+            [DSGest770Restored removeObjectForKey:bundle];
+            DSDiagnosticsRecordFormat(@"SpringBoard: gest770 first Live update after restoring %@ (+%.2f s): %@; %@",
+                                      bundle, CFAbsoluteTimeGetCurrent() - at, what ?: @"-", DSGest770SceneState(controller, scene));
+            return;
+        }
+    } @catch (NSException *exception) {}
+}
+
+@implementation DSSceneHost (Gest770)
+- (NSString *)gest770State {
+    id controller = [self valueForKey:@"_appViewController"];
+    return [NSString stringWithFormat:@"%@ pid=%d alive=%d", DSGest770SceneState(controller, [self hostedScene]),
+            (int)[self hostedProcessIdentifier], [self isProcessAlive]];
+}
+@end
+
+static NSString *DSGest770StateName(UIGestureRecognizerState s) {
+    switch (s) {
+        case UIGestureRecognizerStatePossible: return @"possible";
+        case UIGestureRecognizerStateBegan: return @"began";
+        case UIGestureRecognizerStateChanged: return @"changed";
+        case UIGestureRecognizerStateEnded: return @"ended";
+        case UIGestureRecognizerStateCancelled: return @"cancelled";
+        case UIGestureRecognizerStateFailed: return @"failed";
+    }
+    return @"?";
+}
+
+// 4.5.772: the real switcher state (the guarded read 4.5.650-656 shipped),
+// asked only from the 0.25 s gest770 poll / pull lines while a card exists.
+static NSString *DSGest772SwitcherState(void) {
+    static const char *names[] = { "SBMainSwitcherController", "SBMainSwitcherViewController" };
+    for (int i = 0; i < 2; i++) {
+        Class c = objc_getClass(names[i]);
+        if (!c || ![c respondsToSelector:@selector(sharedInstance)]) continue;
+        @try {
+            id controller = ((id (*)(id, SEL))objc_msgSend)(c, @selector(sharedInstance));
+            if (!controller || ![controller respondsToSelector:@selector(isMainSwitcherVisible)]) continue;
+            return ((BOOL (*)(id, SEL))objc_msgSend)(controller, @selector(isMainSwitcherVisible)) ? @"OPEN" : @"closed";
+        } @catch (NSException *exception) {
+            return @"?";
+        }
+    }
+    return @"unreadable";
+}
+
+static NSString *DSGest770SwitcherSummary(void) {
+    if (DS772On("hide772")) return DSGest772SwitcherState();
+    NSMutableArray *shown = [NSMutableArray array];
+    for (UIScene *s in UIApplication.sharedApplication.connectedScenes) {
+        if (![s isKindOfClass:UIWindowScene.class]) continue;
+        for (UIWindow *w in ((UIWindowScene *)s).windows) {
+            NSString *cls = NSStringFromClass(w.class);
+            if ([cls rangeOfString:@"Switcher"].location == NSNotFound) continue;
+            if (!w.hidden && w.alpha > 0.01) [shown addObject:[NSString stringWithFormat:@"%@@%.0f", cls, w.windowLevel]];
+        }
+    }
+    return shown.count ? [shown componentsJoinedByString:@","] : @"none";
+}
+
+@interface DSGest770PullObserver : NSObject
+@property (nonatomic, assign) BOOL adopted;
+@property (nonatomic, assign) CFAbsoluteTime began;
+@end
+@implementation DSGest770PullObserver
+- (void)pullChanged:(UIPanGestureRecognizer *)gesture {
+    UIGestureRecognizerState s = gesture.state;
+    if (s != UIGestureRecognizerStateEnded && s != UIGestureRecognizerStateCancelled && s != UIGestureRecognizerStateFailed) return;
+    @try {
+        CGPoint p = [gesture locationInView:nil];
+        CGPoint t = [gesture translationInView:nil];
+        CGPoint v = [gesture velocityInView:nil];
+        DSDiagnosticsRecordFormat(@"SpringBoard: gest770 edge pull %@ after %.2f s (%@) at %.0f,%.0f moved (%.0f,%.0f) v=(%.0f,%.0f) home=%d busy=%d switcher=%@",
+                                  DSGest770StateName(s), CFAbsoluteTimeGetCurrent() - self.began, self.adopted ? @"ours" : @"system's",
+                                  p.x, p.y, t.x, t.y, v.x, v.y, [DSSceneHost homeGestureIsActive], [DSSceneHost systemTransitionBusy],
+                                  DSGest770SwitcherSummary());
+    } @catch (NSException *exception) {}
+    [gesture removeTarget:self action:@selector(pullChanged:)];
+    objc_setAssociatedObject(gesture, @selector(pullChanged:), nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+@end
+
+void DSGest770NoteEdgePull(UIPanGestureRecognizer *gesture, BOOL adopted) {
+    if (!gesture || !DSGest770On()) return;
+    @try {
+        CGPoint p = [gesture locationInView:nil];
+        CGPoint v = [gesture velocityInView:nil];
+        DSDiagnosticsRecordFormat(@"SpringBoard: gest770 edge pull began at %.0f,%.0f v=(%.0f,%.0f): %@ (parked=%d stage visible=%d home=%d switcher=%@)",
+                                  p.x, p.y, v.x, v.y, adopted ? @"claimed by the stage" : @"left to the system (home / switcher)",
+                                  DSStageHasParkedCardFast(), DSStageVisibleFast(), [DSSceneHost homeGestureIsActive], DSGest770SwitcherSummary());
+        if (objc_getAssociatedObject(gesture, @selector(pullChanged:))) return;
+        DSGest770PullObserver *o = [DSGest770PullObserver new];
+        o.adopted = adopted;
+        o.began = CFAbsoluteTimeGetCurrent();
+        objc_setAssociatedObject(gesture, @selector(pullChanged:), o, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        [gesture addTarget:o action:@selector(pullChanged:)];
+    } @catch (NSException *exception) {}
+}
+
+void DSGest770NoteSuppressed(CGPoint point, NSString *who) {
+    if (!DSGest770On()) return;
+    static CFAbsoluteTime last = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - last < 0.5) return;
+    last = now;
+    DSDiagnosticsRecordFormat(@"SpringBoard: gest770 %@ refused a system gesture at %.0f,%.0f (the stage keeps the touch)", who, point.x, point.y);
+}
+
+static void DSGest770StartPoll(void) {
+    static dispatch_source_t timer = nil;
+    if (timer) {
+        if (DSGest770PollAsleep) { DSGest770PollAsleep = NO; dispatch_resume(timer); }
+        return;
+    }
+    timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+    dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, 0), (uint64_t)(0.25 * NSEC_PER_SEC), (uint64_t)(0.05 * NSEC_PER_SEC));
+    dispatch_source_set_event_handler(timer, ^{
+        static NSString *lastSig = nil;
+        if (!DSStageHasParkedCardFast() && !DSStageVisibleFast() && !DSStageHasSceneHostFast()) {
+            // 4.5.796: nothing staged, so the 4 Hz poll sleeps until the next gest770 use.
+            if (DS796CoreOn() && !DSGest770PollAsleep) { DSGest770PollAsleep = YES; dispatch_suspend(timer); }
+            return;
+        }
+        @try {
+            NSString *sig = [NSString stringWithFormat:@"switcher=%@ home=%d busy=%d stage visible=%d parked=%d",
+                             DSGest770SwitcherSummary(), [DSSceneHost homeGestureIsActive], [DSSceneHost systemTransitionBusy],
+                             DSStageVisibleFast(), DSStageHasParkedCardFast()];
+            if ([sig isEqualToString:lastSig]) return;
+            lastSig = sig;
+            DSDiagnosticsRecordFormat(@"SpringBoard: gest770 layout %@", sig);
+        } @catch (NSException *exception) {}
+    });
+    dispatch_resume(timer);
+}

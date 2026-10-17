@@ -1,3 +1,6 @@
+#import "DSStageDebug.h"
+CFAbsoluteTime DSRim740StripAt = 0;   // 4.5.740 rimwin740: last touch-down on a rim catcher strip
+CGPoint DSRim740StripPoint = {0, 0};
 #import "DSStageDragShellView.h"
 #import "DSStageContainerView.h"
 #import "DSRimCatcherView.h"
@@ -45,7 +48,8 @@
     CGRect card = _cardView.frame;
     CGFloat cut = CGFLOAT_MAX;
     if (_cardView.keyboardBandHeight > 1.0) cut = CGRectGetMaxY(card) - _cardView.keyboardBandHeight;
-    DSLayoutRimCatchersAvoiding(_catchers, self, CGRectInset(card, -kDSRimOuterCatch, -kDSRimOuterCatch), card, cut, YES, _catcherAvoid);
+    CGRect inner = card;
+    DSLayoutRimCatchersAvoiding(_catchers, self, DSEdge741Outer(CGRectInset(card, -kDSRimOuterCatch, -kDSRimOuterCatch), card, self), inner, cut, YES, _catcherAvoid);
 }
 
 - (void)setRimCatcherAvoidRect:(CGRect)windowRect {
@@ -97,8 +101,8 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
     _outlineLayer.frame = rim;
     _outlineLayer.cornerRadius = radius;
     _outlineLayer.cornerCurve = kCACornerCurveContinuous;
-    _outlineLayer.borderWidth = 3.0;
-    _outlineLayer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.28].CGColor;
+    _outlineLayer.borderWidth = DSNative703OutlineWidth();
+    _outlineLayer.borderColor = DSNative703OutlineColor();
     _outlineLayer.masksToBounds = NO;
     UIBezierPath *half = nil;
     if (_rimHalf == 1) half = DSShellBottomRim(rim, radius);
@@ -125,7 +129,11 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
         _pulseLayer.opacity = 0.0;
     } else {
         _pulseLayer.opacity = 1.0;
-        if (![_pulseLayer animationForKey:@"rimPulse"]) {
+        if (DSNative703On()) {
+            // 4.5.703: a steady highlight on the drop side, no blinking.
+            [_pulseLayer removeAnimationForKey:@"rimPulse"];
+            _pulseLayer.opacity = 0.7;
+        } else if (![_pulseLayer animationForKey:@"rimPulse"]) {
             CABasicAnimation *pulse = [CABasicAnimation animationWithKeyPath:@"opacity"];
             pulse.fromValue = @0.2;
             pulse.toValue = @1.0;
@@ -142,7 +150,7 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
 - (void)setGhostRed:(BOOL)red {
     (void)red;
     _outlineLayer.strokeColor = [UIColor colorWithWhite:1.0 alpha:0.28].CGColor;
-    _outlineLayer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.28].CGColor;
+    _outlineLayer.borderColor = DSNative703OutlineColor();
     _outlineLayer.shadowOpacity = 0.0;
 }
 
@@ -200,7 +208,10 @@ static UIBezierPath *DSShellTopRim(CGRect rect, CGFloat radius) {
     for (DSRimCatcherView *strip in _catchers) {
         if (strip.hidden) continue;
         UIView *hit = [strip hitTest:[self convertPoint:point toView:strip] withEvent:event];
-        if (hit) return hit;
+        if (hit) {
+            if (event && event.type == UIEventTypeTouches) { DSRim740StripAt = CFAbsoluteTimeGetCurrent(); DSRim740StripPoint = [self convertPoint:point toView:nil]; }
+            return hit;
+        }
     }
     if (_cardView && CGRectContainsPoint(_cardView.frame, point)) {
         CGPoint inCard = [self convertPoint:point toView:_cardView];

@@ -1,5 +1,7 @@
+#import <os/lock.h>
 #import "DSCameraArbiter.h"
 #import "DSStageManager.h"
+#import "DSStageDragShellView.h"
 #import "DSSceneHost.h"
 #import "DSPreferences.h"
 #import "DSGestureController.h"
@@ -13,6 +15,7 @@
 #import "DSStageLayout.h"
 #import "DSStageContainerView.h"
 #import "DSInCallStage.h"
+#import "DSStageDebug.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <notify.h>
@@ -69,6 +72,8 @@ static BOOL DSStageReady(void) {
     return DSFullInstallLive && !DSKillSwitchCached();
 }
 
+extern "C" void DSKeys674Install(void);
+
 static BOOL DSAsk(BOOL (^question)(DSStageManager *manager)) {
     if (!DSStageReady()) return NO;
     @try {
@@ -102,6 +107,51 @@ static void DSScheduleFullInstall(void) {
 #pragma mark - Boot (the only group installed from %ctor)
 
 %group Boot
+
+// 4.5.755 focus755: the last keyboard-focus / event-deferring settings update
+// SpringBoard sent each scene, passed or held. Log only; read by the manager
+// at keyboard on/off. Off: focus755-off / core755-off.
+static NSMutableDictionary<NSString *, NSArray *> *DSFocus755Last = nil;
+
+extern "C" NSString *DSFocus755LastFor(NSString *bundle, CFAbsoluteTime *at) {
+    if (![bundle isKindOfClass:NSString.class] || bundle.length == 0) return nil;
+    for (NSString *scene in DSFocus755Last) {
+        if ([scene rangeOfString:bundle].location == NSNotFound) continue;
+        NSArray *entry = DSFocus755Last[scene];
+        if (at) *at = [entry[0] doubleValue];
+        return entry[1];
+    }
+    return nil;
+}
+
+static void DSFocus755Note(id handle, NSString *text, NSString *holdWhy) {
+    if (!DSFeature699On("core755") || !DSFeature699On("focus755")) return;
+    if (![text isKindOfClass:NSString.class]) return;
+    NSRange r = [text rangeOfString:@"targetOfEventDeferringEnvironments"];
+    BOOL kf = [text rangeOfString:@"keyboardFocus" options:NSCaseInsensitiveSearch].location != NSNotFound;
+    if (r.location == NSNotFound && !kf) return;
+    id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+    NSString *sid = [scene respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identifier)) : nil;
+    if (![sid isKindOfClass:NSString.class]) sid = @"?";
+    NSString *list = @"";
+    if (r.location != NSNotFound) {
+        list = [text substringFromIndex:r.location];
+        list = [[list componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+        while ([list rangeOfString:@"  "].location != NSNotFound) list = [list stringByReplacingOccurrencesOfString:@"  " withString:@" "];
+        if (list.length > 200) list = [list substringToIndex:200];
+    }
+    BOOL empty = r.location != NSNotFound &&
+                 ([list rangeOfString:@"(empty)"].location != NSNotFound || [list rangeOfString:@"= ()"].location != NSNotFound ||
+                  [list rangeOfString:@"= (null)"].location != NSNotFound || [list rangeOfString:@"[]"].location != NSNotFound ||
+                  [list rangeOfString:@"count = 0"].location != NSNotFound);
+    NSString *line = [NSString stringWithFormat:@"%@%@%@ %@", holdWhy ? @"held" : @"passed",
+                      empty ? @" EMPTY" : @"", kf ? @" keyboardFocus" : @"", list];
+    if (!DSFocus755Last) DSFocus755Last = [NSMutableDictionary dictionary];
+    DSFocus755Last[sid] = @[ @(CFAbsoluteTimeGetCurrent()), line ];
+    DSFeature719MarkAction("focus755");
+    if (empty) DSDiagnosticsRecordFormat(@"SpringBoard: focus755 empty-list focus update for %@ %@ (%@)", sid,
+                                         holdWhy ? @"held" : @"passed", holdWhy ?: @"-");
+}
 
 %hook SpringBoard
 
@@ -149,6 +199,53 @@ static NSString *DSAnySceneIdentifier(id scene) {
     return nil;
 }
 
+// ---- 4.5.795 pass795 -----------------------------------------------------------
+// Rule: SpringBoard's own scene and app-view updates for a staged app always
+// reach SpringBoard, at once and in order. No hold, no replay, no drop, and
+// no completion(YES) without %orig. Every crash table entry since 667 traps in
+// SpringBoard's own -[SBAppViewController sceneHandle:didUpdateSettingsWithDiff:
+// previousSettings:] right after we had held, dropped or replayed an earlier
+// update for the same app view.
+// Off: pass795-off / core795-off (crash latch pass795) brings back 794's holds.
+static BOOL DS795PassOn(void) { return DS795On("pass795"); }
+static void DS795NoteWouldHold(NSString *what) {
+    DSFeature719MarkAction("pass795");
+    static CFAbsoluteTime last = 0;
+    static NSString *lastWhat = nil;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - last > 1.0 || now < last || ![what isEqualToString:lastWhat]) {
+        last = now; lastWhat = [what copy];
+        DSDiagnosticsRecordFormat(@"SpringBoard: pass795 passed to SpringBoard (794 would have held it: %@)", what);
+    }
+}
+
+// 4.5.704 sweep704: "held a minimized stage scene update" was written up to
+// once a second for as long as the home gesture / a held scene kept sending
+// updates (123 lines in one uploaded log). One line per 10 s with a count.
+static void DSSweep704NoteHeldUpdate(void) {
+    NSUInteger held = 0;
+    if (!DSLogGate(@"sweep704-held", @"held", 10.0, &held)) return;
+    if (held > 0) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: held a minimized stage scene update so another app can open (+%lu more in the last 10 s)",
+                                  (unsigned long)held);
+    } else {
+        DSDiagnosticsRecord(@"SpringBoard: held a minimized stage scene update so another app can open");
+    }
+}
+
+// 4.5.706 perf706: an app that is not injected (Signal) had SpringBoard send it
+// ~40 identical scene updates in a few seconds, each one a trace line. The same
+// scene / fg / depth / frame is traced once per 3 s; the skipped count is added
+// to the next line that does go out.
+static BOOL DSPerf706SceneTraceWanted(NSString *identifier, int fg, long depth, CGRect frame) {
+    if (!DSFeature699On("perf706")) return YES;
+    NSString *key = [NSString stringWithFormat:@"%@|%d|%ld|%@", identifier ?: @"?", fg, depth, NSStringFromCGRect(frame)];
+    NSUInteger was = 0;
+    BOOL want = DSLogGate(@"perf706-scene-trace", key, 3.0, &was);
+    if (want && was > 0) DSTraceFormat(@"scene update begin: %lu identical updates not traced (perf706)", (unsigned long)was);
+    return want;
+}
+
 #pragma mark - Stage (installed after launch)
 
 %group Stage
@@ -179,6 +276,13 @@ static NSString *DSAnySceneIdentifier(id scene) {
     if (!DSStageReady() || (!DSStageHasSceneHostFast() && DSSceneHostOverrideCount() == 0)) {
         %orig;
         return;
+    }
+    if (DSScene773Wanted()) {   // 4.5.773 scene773 (log only)
+        @try {
+            NSString *sid773 = [self respondsToSelector:@selector(identifier)] ? self.identifier : nil;
+            BOOL fk = NO; BOOL fg = [DSSceneHost readForegroundFlag:settings known:&fk];
+            DSScene773Note(sid773, [NSString stringWithFormat:@"frame=%@ fg=%@", NSStringFromCGRect(settings.frame), fk ? (fg ? @"1" : @"0") : @"?"]);
+        } @catch (NSException *exception) {}
     }
     // The home transition updates every foreground scene. Applying that to an
     // app the stage still hosts is the SIGTRAP. Leave the scene as it is and
@@ -235,27 +339,77 @@ static NSString *DSAnySceneIdentifier(id scene) {
                                           incomingIdentifier);
             }
         }
+        // 4.5.665: the 4.5.663 / 4.5.662 safe-mode SIGTRAP. Home swipe with
+        // the stage minimized, a corner pull adopted from SpringBoard's own
+        // gesture before the home transition had finished, the parked apps
+        // handed back, and then this branch refused SpringBoard's phone-sized
+        // update of the same app (done without %orig) while its transaction
+        // was still running. 4.5.659 only exempted the stage's own activation.
+        // Inside that window the update now lands like the 659 one: the card
+        // geometry is written over the phone frame and the committed
+        // foreground is kept (normal path below), then the card is refit.
+        if (phoneSized) {
+            NSString *systemReason = [DSSceneHost systemTransitionHoldsSceneReason];
+            if (systemReason.length > 0) {
+                phoneSized = NO;
+                static CFAbsoluteTime DSLastSystemPassLog = 0;
+                CFAbsoluteTime passNow = CFAbsoluteTimeGetCurrent();
+                if (passNow - DSLastSystemPassLog > 1.0) {
+                    DSLastSystemPassLog = passNow;
+                    DSDiagnosticsRecordFormat(@"SpringBoard: home665 let SpringBoard's update of %@ land at card size (%@), not refused",
+                                              incomingIdentifier, systemReason);
+                }
+                NSString *refit = [incomingIdentifier copy];
+                // After the update and after the 1.15 s quiet window; the refit
+                // itself waits out any home gesture / nested update.
+                for (NSNumber *delay in @[ @0.0, @1.3 ]) {
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                        DSTell(^(DSStageManager *manager) {
+                            [manager keepOnScreenStageInsideCardForSceneIdentifier:refit];
+                        });
+                    });
+                }
+            }
+        }
         // A card-sized update has to land even when its foreground flag reads
         // off, or the app stays phone-sized and the card cuts off the bottom
         // of the chat.
+        // 4.5.668: never refused any more. This was the last place a
+        // SpringBoard update of a hosted scene was answered with done(YES)
+        // and no %orig. SpringBoard's own bookkeeping then thinks the update
+        // landed while the scene never got it, and the next settings diff its
+        // SBAppViewController sees for that app view no longer matches: the
+        // SIGTRAP inside -[SBAppViewController sceneHandle:didUpdateSettings
+        // WithDiff:previousSettings:] in every 662-667 crash log (symbolized
+        // 668: frame 2 = our hook's %orig, Tweak.xm "owned app view" path),
+        // each preceded by "kept the open stage inside its card while another
+        // app opened". Like 659 / 665, it lands now: the card geometry is
+        // written over the phone frame and the committed foreground is kept
+        // (normal path below), then the card is refit.
         if (phoneSized) {
+            phoneSized = NO;
             static CFAbsoluteTime DSLastKeptCardLog = 0;
             CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
             if (now - DSLastKeptCardLog > 1.0) {
                 DSLastKeptCardLog = now;
-                DSDiagnosticsRecord(@"SpringBoard: kept the open stage inside its card while another app opened");
+                DSDiagnosticsRecordFormat(@"SpringBoard: home668 kept the open stage inside its card while another app opened "
+                                          @"(%@'s phone-size update lands at card size, not refused)", incomingIdentifier);
             }
             NSString *kept = [incomingIdentifier copy];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                DSTell(^(DSStageManager *manager) {
-                    [manager keepOnScreenStageInsideCardForSceneIdentifier:kept];
-                });
-            });
-            if (completion) {
-                void (^done)(BOOL) = (void (^)(BOOL))completion;
-                done(YES);
+            // 4.5.741 close741: the closing app's last update lands (668 rule) but
+            // never refits the stage that stays open (Bnb log 12:07:14.328).
+            BOOL closing741 = DSClose741Recent(incomingIdentifier);
+            if (closing741) {
+                DSFeature719MarkAction("close741");
+                DSDiagnosticsRecordFormat(@"SpringBoard: close741 %@ is closing: update landed, no refit of the open stage", incomingIdentifier);
             }
-            return;
+            for (NSNumber *delay in (closing741 ? @[] : @[ @0.0, @1.3 ])) {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    DSTell(^(DSStageManager *manager) {
+                        [manager keepOnScreenStageInsideCardForSceneIdentifier:kept];
+                    });
+                });
+            }
         }
     }
     if ([DSSceneHost homeGestureIsActive] ||
@@ -264,13 +418,10 @@ static NSString *DSAnySceneIdentifier(id scene) {
         BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:identifier] || DSAsk(^BOOL(DSStageManager *manager) {
             return [manager isHostingSceneIdentifier:identifier];
         });
-        if (hosted) {
-            static CFAbsoluteTime DSLastHeldSettingsLog = 0;
-            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-            if (now - DSLastHeldSettingsLog > 1.0) {
-                DSLastHeldSettingsLog = now;
-                DSDiagnosticsRecord(@"SpringBoard: held a minimized stage scene update so another app can open");
-            }
+        if (hosted && DS795PassOn()) {
+            DS795NoteWouldHold(@"minimized / home scene update");
+        } else if (hosted) {
+            DSSweep704NoteHeldUpdate();
             if (completion) {
                 void (^done)(BOOL) = (void (^)(BOOL))completion;
                 done(YES);
@@ -297,7 +448,8 @@ static NSString *DSAnySceneIdentifier(id scene) {
     BOOL traceCare = traceHosted ||
         [traceIdentifier rangeOfString:@"MobileSMS"].location != NSNotFound ||
         [traceIdentifier rangeOfString:@"keyboard" options:NSCaseInsensitiveSearch].location != NSNotFound;
-    if (traceCare && DSSceneTraceAllowed()) {
+    if (traceCare && DSSceneTraceAllowed() && DSPerf706SceneTraceWanted(traceIdentifier, traceForegroundKnown ? traceForeground : -1,
+                                                                           (long)[DSSceneHost sceneSettingsUpdateDepth], traceFrame)) {
         DSTraceFormat(@"scene update begin %@ fg=%d depth=%ld frame=%@",
                       traceIdentifier ?: @"?",
                       traceForegroundKnown ? traceForeground : -1,
@@ -310,9 +462,13 @@ static NSString *DSAnySceneIdentifier(id scene) {
     @try {
         if ([DSSceneHost sceneSettingsUpdateDepth] > 1) {
             FBSMutableSceneSettings *mutableSettings = keepFront ? [settings mutableCopy] : nil;
+            // 4.5.800 reason800: even when keepFront is NO (home), hosted scenes must
+            // carry our ignoreOcclusionReasons id through the commit.
+            if (!mutableSettings && traceHosted) mutableSettings = [settings mutableCopy];
             if (mutableSettings) {
                 [DSSceneHost applyOverridesToSettings:mutableSettings forScene:self];
-                [DSSceneHost keepCommittedForegroundOfScene:self onSettings:mutableSettings];
+                if (keepFront) [DSSceneHost keepCommittedForegroundOfScene:self onSettings:mutableSettings];
+                if (traceHosted) [DSSceneHost reason800EnsureReasonOnScene:self settings:mutableSettings];
                 %orig(mutableSettings, context, completion);
             } else {
                 %orig;
@@ -372,6 +528,13 @@ static NSString *DSAnySceneIdentifier(id scene) {
                 [DSSceneHost keepCommittedForegroundOfScene:self onSettings:mutableSettings];
                 overridden = YES;
             }
+            // 4.5.800 reason800: always re-append for hosted scenes (incl. home).
+            // Force the mutable path so a wiped ignoreOcclusionReasons set cannot
+            // slip through as a bare %orig when ensure had nothing else to change.
+            if (mutableSettings && traceHosted) {
+                [DSSceneHost reason800EnsureReasonOnScene:self settings:mutableSettings];
+                overridden = YES;
+            }
             if (overridden) {
                 %orig(mutableSettings, context, completion);
                 return;
@@ -406,13 +569,10 @@ static NSString *DSAnySceneIdentifier(id scene) {
         BOOL hosted = [DSSceneHost sceneIdentifierStaysBackgrounded:incomingIdentifier] || DSAsk(^BOOL(DSStageManager *manager) {
             return [manager isHostingSceneIdentifier:incomingIdentifier];
         });
-        if (hosted) {
-            static CFAbsoluteTime DSLastHeldBlockLog = 0;
-            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-            if (now - DSLastHeldBlockLog > 1.0) {
-                DSLastHeldBlockLog = now;
-                DSDiagnosticsRecord(@"SpringBoard: held a minimized stage scene update so another app can open");
-            }
+        if (hosted && DS795PassOn()) {
+            DS795NoteWouldHold(@"minimized / home scene block update");
+        } else if (hosted) {
+            DSSweep704NoteHeldUpdate();
             return;
         }
     }
@@ -433,6 +593,8 @@ static NSString *DSAnySceneIdentifier(id scene) {
             block(settings);
             @try {
                 [DSSceneHost applyOverridesToSettings:settings forScene:(FBScene *)weakSelf];
+                // 4.5.800 reason800: contributor-bypass path (home/layout) too.
+                if (hosted) [DSSceneHost reason800EnsureReasonOnScene:scene settings:settings];
                 // Foreground stays whatever the scene already committed. Writing
                 // YES here is a change the live app view rejects, and that
                 // rejection used to take the card size down with it.
@@ -450,7 +612,12 @@ static NSString *DSAnySceneIdentifier(id scene) {
                     CGRect screen = UIScreen.mainScreen.bounds;
                     BOOL phoneSized = CGRectGetWidth(after) > CGRectGetWidth(screen) - 30.0 &&
                                       CGRectGetHeight(after) > CGRectGetHeight(screen) * 0.7;
-                    if (phoneSized &&
+                    BOOL closing741 = phoneSized && DSClose741Recent(identifier);
+                    if (closing741) {
+                        DSFeature719MarkAction("close741");
+                        DSDiagnosticsRecordFormat(@"SpringBoard: close741 %@ is closing (card torn down just now): its last update is not a reason to refit the open stage", identifier);
+                    }
+                    if (phoneSized && !closing741 &&
                         ![DSSceneHost stageRequestedFrame:after forSceneIdentifier:identifier] &&
                         ![DSSceneHost isHandingOffSceneIdentifier:identifier]) {
                         static CFAbsoluteTime DSLastKeptBlockLog = 0;
@@ -518,16 +685,268 @@ static NSString *DSAnySceneIdentifier(id scene) {
 
 %end
 
+// ---- 4.5.765 corner765 -------------------------------------------------------
+// Off: corner765-off / core765-off (crash latch corner765).
+static CFAbsoluteTime DSCorner765At = 0;
+static BOOL DSCorner765On(void) {
+    return DSFeature699On("core765") && DSFeature699On("corner765");
+}
+static void DSCorner765NoteRestoreHold(void) {
+    if (!DSCorner765On()) return;
+    DSFeature719MarkAction("corner765");
+    DSCorner765At = CFAbsoluteTimeGetCurrent();
+}
+static BOOL DSCorner765Holding(void) {
+    if (DSCorner765At <= 0) return NO;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    // 4.5.767 corner767: 2.5 s, so the window always outlasts hold740's
+    // 1.5 s restore hold plus its 0.3 s re-checks (Resssj 21:43:31: both were
+    // 1.5 s and the replay passed the moment the window shut).
+    double window = DS767On("corner767") ? 2.5 : 1.5;
+    if (now < DSCorner765At || now - DSCorner765At >= window) return NO;
+    return DSCorner765On();
+}
+
+// 4.5.740 hold740: generation of the pending held Live update (main thread).
+static NSUInteger DSHold740Gen = 0;
+static BOOL DSHold740Replaying = NO;
+
+// ---- 4.5.769 focus769 -----------------------------------------------------------
+// Cbskh (767) 01:18:17.123: Beeper's keyboardFocus update was held for the
+// corner restore and dropped by corner767; SpringBoard never got it, the keys
+// were invisible, and at 01:20:10.6 an empty-focus update passed and SpringBoard
+// trapped. Per scene: the app's latest focus (from the diffs) and the focus last
+// delivered to SpringBoard (%orig). 0 unknown, 1 keyboardFocus, 2 empty.
+// Off: focus769-off / core769-off (crash latch focus769).
+static NSMutableDictionary<NSString *, NSNumber *> *DSFocus769Latest = nil;
+static NSMutableDictionary<NSString *, NSNumber *> *DSFocus769Delivered = nil;
+static NSUInteger DSFocus769PendingGen = 0;
+
+static NSInteger DSFocus769StateOf(NSString *text) {
+    if (text.length == 0) return 0;
+    NSRange r = [text rangeOfString:@"targetOfEventDeferringEnvironments = "];
+    if (r.location == NSNotFound) return 0;
+    NSString *rest = [text substringFromIndex:NSMaxRange(r)];
+    if ([rest hasPrefix:@"(empty)"]) return 2;
+    if ([rest rangeOfString:@"keyboardFocus"].location != NSNotFound && [rest rangeOfString:@"keyboardFocus"].location < 40) return 1;
+    return 0;
+}
+
+static NSString *DSFocus769Key(id handle) {
+    @try {
+        id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+        id ident = [scene respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identifier)) : nil;
+        if ([ident isKindOfClass:NSString.class]) return ident;
+    } @catch (NSException *exception) {}
+    return @"?";
+}
+
+static NSString *DSFocus769Name(NSInteger s) {
+    return s == 1 ? @"keyboardFocus" : (s == 2 ? @"empty" : @"unknown");
+}
+
+static NSInteger DSFocus769Get(NSMutableDictionary *d, NSString *key) {
+    return [d[key] integerValue];
+}
+
+static void DSFocus769Set(NSMutableDictionary * __strong *d, NSString *key, NSInteger s) {
+    if (!*d) *d = [NSMutableDictionary dictionary];
+    if (s) (*d)[key] = @(s);
+}
+
+// Would the app-view hook hold an update for this controller right now?
+static BOOL DSHold740StillHolding(id controller, id handle) {
+    @try {
+        if ([DSSceneHost homeGestureIsActive] || [DSSceneHost appViewControllerStaysBackgrounded:controller]) return YES;
+        // 4.5.765 corner765: a replay waits out the post-restore window too.
+        if (DSCorner765Holding()) return YES;
+        if (DSCallGuardActive()) return YES;
+        if (DSStageDragSettlingFast(1.2)) return YES;
+        if (DSPS696Enabled(0) && DSPS696DeviceLocked()) return YES;
+        if (DSCameraLayoutChangedRecently(1.0)) return YES;
+        if (DSFeature699On("drag706") && DSStageRestoreSettlingFast(1.5)) return YES;
+        if (DSPhoneSize675ChangedRecently(1.0)) return YES;
+        id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+        id current = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+        if (!current) return YES;
+        if ([current respondsToSelector:@selector(deactivationReasons)] &&
+            ((long long (*)(id, SEL))objc_msgSend)(current, @selector(deactivationReasons)) != 0) return YES;
+        BOOL known = NO;
+        BOOL fg = [DSSceneHost readForegroundFlag:current known:&known];
+        if (known && !fg) return YES;
+    } @catch (NSException *exception) {
+        return YES;
+    }
+    return NO;
+}
+
+
+// 4.5.798 card state, short, for the crash breadcrumb and focus798.
+static NSString *DS798Card(id ctrl) {
+    @try {
+        UIView *v = [ctrl respondsToSelector:@selector(view)] ? ((UIView *(*)(id, SEL))objc_msgSend)(ctrl, @selector(view)) : nil;
+        NSInteger mode = [ctrl respondsToSelector:@selector(displayMode)] ? ((NSInteger (*)(id, SEL))objc_msgSend)(ctrl, @selector(displayMode)) : -1;
+        BOOL io = [ctrl respondsToSelector:@selector(ignoresOcclusions)] ? ((BOOL (*)(id, SEL))objc_msgSend)(ctrl, @selector(ignoresOcclusions)) : NO;
+        return [NSString stringWithFormat:@"mode=%ld io=%d minimised=%d home=%d busy=%d stageVisible=%d parked=%d win=%@ hid=%d a=%.2f",
+                (long)mode, io, [DSSceneHost appViewControllerStaysBackgrounded:ctrl], [DSSceneHost homeGestureIsActive], [DSSceneHost systemTransitionBusy],
+                DSStageVisibleFast(), DSStageHasParkedCardFast(),
+                v.window ? NSStringFromClass(v.window.class) : @"none", v.window ? (int)v.window.hidden : -1, v.window ? v.window.alpha : 0.0];
+    } @catch (NSException *e) { return @"?"; }
+}
+
+// 4.5.798 occl798 - the root crash fix (disassembly of SpringBoard 16.5.1 20F75,
+// -[SBAppViewController sceneHandle:didUpdateSettingsWithDiff:previousSettings:]
+// +740 = SpringBoard+0xa1fa8, the trap in every crash since 667):
+//   if (_ignoresOcclusions && ![[scene.settings ignoreOcclusionReasons] containsObject:_identifier])
+//       BSAssert -> brk #0  ("Invalid condition not satisfying: [[sceneSettings
+//       ignoreOcclusionReasons] containsObject:_identifier]", SBAppViewController.m:445)
+// We set ignoresOcclusions YES on our app views (DSSceneHost). The reason only
+// enters the scene's settings through SpringBoard's own activation; when
+// SpringBoard's main screen updates the same scene its reasons replace ours, and
+// the next settings update to our app view traps. One plain rule, read from the
+// same state SpringBoard checks, at the moment it checks: our app view claims
+// ignoresOcclusions only while the scene really carries its reason. If not, the
+// claim is dropped before %orig, so the check is skipped instead of failing.
+// Off: occl798-off or core798-off (back to 797), plus crash latch.
+static void DS798Occlusion(id ctrl, id handle) {
+    if (!DSFeature699On("core798") || !DSFeature699On("occl798")) return;
+    @try {
+        if (![ctrl respondsToSelector:@selector(ignoresOcclusions)] || ![ctrl respondsToSelector:@selector(setIgnoresOcclusions:)]) return;
+        if (!((BOOL (*)(id, SEL))objc_msgSend)(ctrl, @selector(ignoresOcclusions))) return;
+        id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+        id settings = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+        id reasons = [settings respondsToSelector:@selector(ignoreOcclusionReasons)] ? ((id (*)(id, SEL))objc_msgSend)(settings, @selector(ignoreOcclusionReasons)) : nil;
+        Ivar iv = class_getInstanceVariable(object_getClass(ctrl), "_identifier");
+        id ident = iv ? object_getIvar(ctrl, iv) : nil;
+        BOOL has = ident && [reasons respondsToSelector:@selector(containsObject:)] && [reasons containsObject:ident];
+        // 4.5.799: when reg799's contributor is doing its job the reason is here.
+        // Log that (rate-limited) as proof; only drop ignoresOcclusions when missing.
+        if (has) {
+            static CFAbsoluteTime lastOk = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - lastOk > 2.0) {
+                lastOk = now;
+                NSString *ok = [NSString stringWithFormat:@"occl798 ok reason present %@ ctrl=%p (reg799 holding the claim) card[%@]",
+                                ident ?: @"?", ctrl, DS798Card(ctrl)];
+                DSDiagnosticsRecordFormat(@"SpringBoard: %@", ok);
+                DSCrash793Crumb(ok.UTF8String);
+            }
+            return;
+        }
+        ((void (*)(id, SEL, BOOL))objc_msgSend)(ctrl, @selector(setIgnoresOcclusions:), NO);
+        NSString *line = [NSString stringWithFormat:@"occl798 dropped ignoresOcclusions on %@ ctrl=%p: scene reasons %@ lack %@ (SpringBoard would have trapped here) card[%@]",
+                          ident ?: @"?", ctrl, reasons ? [[reasons description] stringByReplacingOccurrencesOfString:@"\n" withString:@" "] : @"(none)", ident ?: @"?", DS798Card(ctrl)];
+        DSDiagnosticsRecordFormat(@"SpringBoard: %@", line);
+        DSCrash793Crumb(line.UTF8String);
+    } @catch (NSException *e) {}
+}
+
+// 4.5.798 focus798: focus797 on both paths (797 ran it only with pass795 on).
+static void DS798Focus(id self, id handle, id diff) {
+    NSInteger mode795 = [self respondsToSelector:@selector(displayMode)] ? ((NSInteger (*)(id, SEL))objc_msgSend)(self, @selector(displayMode)) : -1;
+            // 4.5.797 focus797 (logging only): every keyboard-focus diff passed to a
+            // staged Live app view, with the card and keyboard state. The 796
+            // trap (18:46:33) was such a diff, with pass795 on, 2.8 s after the
+            // card was minimised and while Spotlight's keyboard was up.
+            if (mode795 == 4 && DSFeature699On("focus797")) {
+                NSString *full = [diff description] ?: @"";
+                if ([full rangeOfString:@"targetOfEventDeferringEnvironments"].location != NSNotFound) {
+                    @try {
+                        UIView *v = [self respondsToSelector:@selector(view)] ? ((UIView *(*)(id, SEL))objc_msgSend)(self, @selector(view)) : nil;
+                        UIWindow *kw = nil;
+                        for (UIWindow *w in UIApplication.sharedApplication.windows) if (w.isKeyWindow) { kw = w; break; }
+                        NSString *f797 = [NSString stringWithFormat:@"focus798 %@ %@ minimised=%d home=%d busy=%d stageVisible=%d parked=%d view=%@ win=%@ hid=%d a=%.2f key=%@",
+                            DSFocus769Key(handle), DSFocus769StateOf(full) == 1 ? @"keyboardFocus" : (DSFocus769StateOf(full) == 2 ? @"empty" : @"other"),
+                            [DSSceneHost appViewControllerStaysBackgrounded:self], [DSSceneHost homeGestureIsActive], [DSSceneHost systemTransitionBusy],
+                            DSStageVisibleFast(), DSStageHasParkedCardFast(), v ? @"yes" : @"no",
+                            v.window ? NSStringFromClass(v.window.class) : @"none", v.window ? (int)v.window.hidden : -1, v.window ? v.window.alpha : 0.0,
+                            kw ? NSStringFromClass(kw.class) : @"none"];
+                        DSDiagnosticsRecordFormat(@"SpringBoard: %@", f797);
+                        DSCrash793Crumb(f797.UTF8String);
+                    } @catch (NSException *e) {}
+                }
+            }
+}
+
 %hook SBAppViewController
 
 - (void)sceneHandle:(id)handle didUpdateSettingsWithDiff:(id)diff previousSettings:(id)previousSettings {
         if ([DSSceneHost ownsAppViewController:self]) {
+        // 4.5.800 reason800: re-append ignoreOcclusionReasons before occl798 inspects
+        // (home/layout paths bypass the reg799 contributor and wipe the set).
+        @try {
+            id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+            id settings = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+            if (settings) [DSSceneHost reason800EnsureReasonOnSettings:settings forAppViewController:self];
+        } @catch (NSException *e) {}
+        // 4.5.800 fg800 / 4.5.801 fg801: leave Live before SpringBoard applies
+        // foreground=NO (fg801 uses automatesLifecycle briefly like cover-sheet);
+        // restore Live + displayMode 4 / layerHosts when foreground again.
+        [DSSceneHost fg800LeaveLiveIfBackgrounded:self handle:handle previousSettings:previousSettings];
+        @try {
+            id sceneFg = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+            id stFg = [sceneFg respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(sceneFg, @selector(settings)) : nil;
+            BOOL knownFg = NO;
+            BOOL fgNow = stFg ? [DSSceneHost readForegroundFlag:stFg known:&knownFg] : NO;
+            if (knownFg && fgNow) [DSSceneHost fg800RestoreLiveIfNeeded:self];
+        } @catch (NSException *e) {}
+        BOOL fg801SkipOrig = [DSSceneHost fg801ShouldSkipForegroundAssertionOrig:self previousSettings:previousSettings handle:handle];
+        // 4.5.798: both run before either path (pass795 or the old one).
+        DS798Occlusion(self, handle);
+        DS798Focus(self, handle, diff);
+        if (DS793On("log793")) {
+            NSString *c798 = [NSString stringWithFormat:@"appview update ctrl=%p card[%@]", self, DS798Card(self)];
+            DSCrash793Crumb(c798.UTF8String);
+        }
         static CFAbsoluteTime DSLastAppViewTrace = 0;
         CFAbsoluteTime traceNow = CFAbsoluteTimeGetCurrent();
         BOOL traceThis = traceNow - DSLastAppViewTrace > 1.0;
         if (traceThis) {
             DSLastAppViewTrace = traceNow;
             DSTrace(@"app-view settings update");
+        }
+        // 4.5.795 pass795: always %orig, at once (see the helper above).
+        if (DS795PassOn()) {
+            NSString *would = nil;
+            if ([DSSceneHost homeGestureIsActive] || [DSSceneHost appViewControllerStaysBackgrounded:self]) would = @"home gesture / stays backgrounded";
+            else if (DSCallGuardActive()) would = @"call";
+            else if (DSStageDragSettlingFast(1.2)) would = @"card drag";
+            else if (DSStageRestoreSettlingFast(1.5)) would = @"corner restore";
+            if (would) DS795NoteWouldHold(would);
+            NSInteger mode795 = [self respondsToSelector:@selector(displayMode)] ? ((NSInteger (*)(id, SEL))objc_msgSend)(self, @selector(displayMode)) : -1;
+            static CFAbsoluteTime last795 = 0;
+            CFAbsoluteTime now795 = CFAbsoluteTimeGetCurrent();
+            NSString *dd = nil;
+            if (mode795 == 4 && (now795 - last795 > 0.5 || DS793On("log793"))) {
+                dd = [[([diff description] ?: @"") componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+                while ([dd rangeOfString:@"  "].location != NSNotFound) dd = [dd stringByReplacingOccurrencesOfString:@"  " withString:@" "];
+                NSRange ch = [dd rangeOfString:@"changes" options:NSCaseInsensitiveSearch];
+                if (ch.location != NSNotFound && ch.location > 0) dd = [dd substringFromIndex:ch.location];
+                if (dd.length > 500) dd = [dd substringToIndex:500];
+            }
+            if (mode795 == 4 && now795 - last795 > 0.5) {
+                last795 = now795;
+                DSDiagnosticsRecordFormat(@"SpringBoard: appview670 %@ mode=4 pass795 update: %@", DSFocus769Key(handle), dd ?: @"");
+            }
+            if (DS793On("log793")) {
+                NSString *crumb = [NSString stringWithFormat:@"appview pass795 mode=%ld handle=%p ctrl=%p diff=%p prev=%p card[%@] %@",
+                                   (long)mode795, handle, self, diff, previousSettings, DS798Card(self), dd ?: @""];
+                DSCrash793Crumb(crumb.UTF8String);
+            }
+            @try {
+                if (fg801SkipOrig) {
+                    DSDiagnosticsRecordFormat(@"SpringBoard: fg801: skipped SBAppViewController foreground=NO orig (mode already Static; cover-sheet ordering)");
+                    DSCrash793Crumb("fg801 skipped foreground=NO orig");
+                } else {
+                    %orig;
+                }
+                if (DS793On("log793")) DSCrash793Crumb("appview pass795 returned");
+            } @catch (NSException *exception) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: contained a scene update from the staged app (%@)",
+                                          exception.reason ?: exception.name ?: @"?");
+            }
+            if (traceThis) DSTrace(@"app-view settings update done");
+            return;
         }
         // SIGTRAP, not an exception: the home transition updates this host and
         // the original method asserts. Holding the update is what keeps
@@ -539,6 +958,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
                 DSLastHeldSceneLog = now;
                 DSDiagnosticsRecord(@"SpringBoard: held a minimized app view update so another app can open");
             }
+            if (DSGest770On()) DSGest770FirstAfterRestore(self, handle, @"HELD (home gesture / stays backgrounded)");   // 4.5.770
             return;
         }
         // 4.5.653: a phone call. The call screen comes up as the main-layout
@@ -547,7 +967,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
         // staged Phone). Held the same way as the home gesture: the scene
         // still changes underneath and the app view stays Live, which is
         // what it is again once the call screen has gone.
-        if (DSCallGuardActive()) {
+        if (DSCallGuardActive() || DSCall758AppViewHold()) {
             DSCallGuardNoteHeldUpdate();
             static CFAbsoluteTime DSLastCallHoldLog = 0;
             CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
@@ -556,7 +976,8 @@ static NSString *DSAnySceneIdentifier(id scene) {
                 NSString *text = [diff description] ?: @"";
                 text = [[text componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
                 if (text.length > 240) text = [text substringToIndex:240];
-                DSDiagnosticsRecordFormat(@"SpringBoard: call653 held a staged app view update during a call: %@", text);
+                DSDiagnosticsRecordFormat(@"SpringBoard: %@ held a staged app view update during a call: %@",
+                                          DSCall758AppViewHold() && !DSCallGuardActive() ? @"call758" : @"call653", text);
             }
             return;
         }
@@ -569,8 +990,366 @@ static NSString *DSAnySceneIdentifier(id scene) {
         // 4.5.650: describing the diff (a large string) on every update was
         // per-frame work during the switcher; only the Live mode needs it.
         NSString *diffText = displayMode == 4 ? ([diff description] ?: @"") : @"";
-        if (displayMode == 4 &&
-            [diffText rangeOfString:@"foreground" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+        // 4.5.668: the foreground flag itself, not only the word in the diff
+        // text (a diff that flips it under another key name got through).
+        BOOL foregroundFlip = NO;
+        if (displayMode == 4) {
+            @try {
+                id current = nil;
+                if ([handle respondsToSelector:@selector(scene)]) {
+                    id scene = ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene));
+                    if ([scene respondsToSelector:@selector(settings)]) current = ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings));
+                }
+                BOOL knownBefore = NO, knownNow = NO;
+                BOOL before = previousSettings ? [DSSceneHost readForegroundFlag:previousSettings known:&knownBefore] : NO;
+                BOOL after = current ? [DSSceneHost readForegroundFlag:current known:&knownNow] : NO;
+                foregroundFlip = knownBefore && knownNow && before != after;
+            } @catch (NSException *exception) {
+            }
+        }
+        // 4.5.668 crash forensics: the last diffs an owned app view applied
+        // go into the recent-lines ring the crash log prints, so a SIGTRAP in
+        // the %orig below names the update that caused it.
+        {
+            static CFAbsoluteTime DSLastDiffLog = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastDiffLog > 0.5) {
+                DSLastDiffLog = now;
+                NSString *text = diffText.length ? diffText : ([diff description] ?: @"");
+                text = [[text componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+                while ([text rangeOfString:@"  "].location != NSNotFound) text = [text stringByReplacingOccurrencesOfString:@"  " withString:@" "];
+                // 4.5.670: the crash ring cuts lines short; drop the
+                // "<FBSSceneSettingsDiff: 0x...> { settingsClass = ...;" head
+                // so the changed keys are what survives.
+                NSRange changes = [text rangeOfString:@"changes" options:NSCaseInsensitiveSearch];
+                if (changes.location != NSNotFound && changes.location > 0) text = [text substringFromIndex:changes.location];
+                if (text.length > 220) text = [text substringToIndex:220];
+                NSString *bundle = @"?";
+                @try {
+                    id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+                    if ([scene respondsToSelector:@selector(identifier)]) bundle = ((id (*)(id, SEL))objc_msgSend)(scene, @selector(identifier)) ?: @"?";
+                } @catch (NSException *exception) {
+                }
+                DSDiagnosticsRecordFormat(@"SpringBoard: appview670 %@ mode=%ld flip=%d update: %@",
+                                          bundle, (long)displayMode, foregroundFlip, text);
+            }
+        }
+        // 4.5.670 SIGTRAP fix: the 4.5.669 crash (222.txt) is this same
+        // %orig (frame 2 = Tweak.xm:714 in the 669 dSYM), reached right after
+        // the card was dragged while the scene had deactivation reasons set
+        // (0x20) and the stage had just republished its display-layout
+        // element. While Live, the app view does not get SpringBoard's
+        // updates during a card drag (and 1.2 s after), within 1 s of a
+        // stage display-layout change, or while the scene is deactivated
+        // (before or after this diff). The scene itself still changes
+        // underneath, as with the home-gesture and call holds.
+        if (displayMode == 4) {
+            NSString *holdWhy = nil;
+            // 4.5.740 hold740: the 0x20 -> 0x0 reactivation is never held (Needs
+            // patching log: every 0x20->0x0 diff was held, SpringBoard's own
+            // app-view state drifted, and the next passed update trapped).
+            BOOL hold740 = DSFeature699On("hold740");
+            // 4.5.742 msg742: a Messages scene keeps 739's handling (holds as before,
+            // no replay, reactivation not special-cased).
+            if (hold740 && DSStage742MessagesStaged() && [handle respondsToSelector:@selector(scene)]) {
+                @try {
+                    id sc742 = ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene));
+                    NSString *id742 = [sc742 respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(sc742, @selector(identifier)) : nil;
+                    if ([id742 isKindOfClass:NSString.class] && [id742 rangeOfString:@"MobileSMS"].location != NSNotFound) hold740 = NO;
+                } @catch (NSException *exception) {
+                }
+            }
+            BOOL react740 = NO;
+            if (hold740) {
+                @try {
+                    long long rb = -1, rn = -1;
+                    if ([previousSettings respondsToSelector:@selector(deactivationReasons)]) {
+                        rb = ((long long (*)(id, SEL))objc_msgSend)(previousSettings, @selector(deactivationReasons));
+                    }
+                    id sc = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+                    id cur = [sc respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(sc, @selector(settings)) : nil;
+                    if ([cur respondsToSelector:@selector(deactivationReasons)]) {
+                        rn = ((long long (*)(id, SEL))objc_msgSend)(cur, @selector(deactivationReasons));
+                    }
+                    react740 = rb > 0 && rn == 0;
+                } @catch (NSException *exception) {
+                    react740 = NO;
+                }
+            }
+            // 4.5.758 react758: safety — Yoop's SIGTRAP was hold740 passing
+            // Signal's reactivation, then Beeper's next focus Live %orig. When
+            // call758 just armed (systemAnimation on a Signal/Phone card), do
+            // not take the reactivation bypass; hold like any other 0x20 update.
+            // Off: react758-off / core758-off.
+            if (react740 && DSFeature699On("core758") && DSFeature699On("react758") && DSCall758RecentlyArmed()) {
+                DSFeature719MarkAction("react758");
+                react740 = NO;
+                DSDiagnosticsRecord(@"SpringBoard: react758 held a scene reactivation (call758 systemAnimation still armed)");
+            }
+            if (react740) {
+                DSFeature719MarkAction("hold740");
+                DSDiagnosticsRecord(@"SpringBoard: hold740 passed a scene reactivation (deactivation -> 0x0) without holding it");
+            } else {
+            if (DSStageDragSettlingFast(1.2)) holdWhy = @"card drag";
+            // 4.5.696 blackout: the lock screen backgrounds every app; applying
+            // that to the Live staged app view is the "out from underneath us"
+            // exception after which the card stayed black (Blackout log).
+            else if (DSPS696Enabled(0) && DSPS696DeviceLocked()) {
+                holdWhy = @"phone locked (696)";
+                DSPS696MarkTrying(0);
+            }
+            else if (DSCameraLayoutChangedRecently(1.0)) holdWhy = @"stage display-layout change";
+            // 4.5.706 drag706: the Saferestmode SIGTRAP (4.5.704) was this %orig
+            // right after a corner restore grew Beeper back to its card. Held
+            // like a card drag while the pull / restore runs and 1.5 s after.
+            else if (DSFeature699On("drag706") && DSStageRestoreSettlingFast(1.5)) {
+                holdWhy = @"corner restore (706)";
+                DSCorner765NoteRestoreHold();
+            }
+            // 4.5.765 corner765: Shdhb (759) SIGTRAPs 06:02:01 and 06:37:59 NZDT
+            // 16 Oct: one update held as "corner restore (706)", the very next
+            // focus update passed (appview699) and SpringBoard trapped. Hold
+            // every Live update for 1.5 s after the last corner-restore hold.
+            else if (DSCorner765Holding()) {
+                holdWhy = @"after a corner restore (765)";
+                DSFeature719MarkAction("corner765");
+            }
+            // 4.5.675: the stage just switched this scene between card size
+            // and phone size (phonesize675). Same hold as a card drag.
+            else if (DSPhoneSize675ChangedRecently(1.0)) holdWhy = @"phonesize675 scene size change";
+            else {
+                long long reasonsBefore = 0, reasonsNow = 0;
+                @try {
+                    if ([previousSettings respondsToSelector:@selector(deactivationReasons)]) {
+                        reasonsBefore = ((long long (*)(id, SEL))objc_msgSend)(previousSettings, @selector(deactivationReasons));
+                    }
+                    id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+                    id current = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+                    if ([current respondsToSelector:@selector(deactivationReasons)]) {
+                        reasonsNow = ((long long (*)(id, SEL))objc_msgSend)(current, @selector(deactivationReasons));
+                    }
+                } @catch (NSException *exception) {
+                }
+                if ((reasonsBefore & 0x20) || (reasonsNow & 0x20)) {
+                    NSString *sid758 = nil;
+                    @try {
+                        id sc758 = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+                        sid758 = [sc758 respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(sc758, @selector(identifier)) : nil;
+                    } @catch (NSException *exception) {}
+                    DSCall758NoteSystemAnimation(sid758);
+                }
+                if (reasonsBefore != 0 || reasonsNow != 0) {
+                    holdWhy = [NSString stringWithFormat:@"scene deactivated 0x%llx->0x%llx", reasonsBefore, reasonsNow];
+                } else if (DSFeature699On("crash699")) {
+                    // 4.5.699 crash699: the Blackoutagain SIGTRAP (4.5.697,
+                    // 14:36:28): frame 2 = this method's Live %orig (return
+                    // 0xa8f0 in the 697 dylib), frames 0/1 = SpringBoard's own
+                    // handler trapping (same instruction as the 667-674 traps).
+                    // The card had come back from minimised after the phone was
+                    // locked: its scene was still in the background (black card)
+                    // with no deactivation reasons, so nothing above held it.
+                    // A Live app view whose scene is in the background (before or
+                    // after this diff) does not get SpringBoard's update; the wake
+                    // (blackout699 / 696) brings the scene back to the foreground,
+                    // and that flip is left alone below as before.
+                    @try {
+                        id scene = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+                        id current = [scene respondsToSelector:@selector(settings)] ? ((id (*)(id, SEL))objc_msgSend)(scene, @selector(settings)) : nil;
+                        BOOL knownBefore = NO, knownNow = NO;
+                        BOOL fgBefore = previousSettings ? [DSSceneHost readForegroundFlag:previousSettings known:&knownBefore] : YES;
+                        BOOL fgNow = current ? [DSSceneHost readForegroundFlag:current known:&knownNow] : YES;
+                        if ((knownBefore && !fgBefore) || (knownNow && !fgNow)) {
+                            holdWhy = [NSString stringWithFormat:@"scene in the background fg %d->%d (699)", fgBefore, fgNow];
+                            DSFeature699MarkTrying("crash699");
+                        }
+                    } @catch (NSException *exception) {
+                    }
+                }
+            }
+            // 4.5.748 focus748: the system's own focus change (keyboard focus /
+            // event deferring only, no frame, no activation change) is never held
+            // for our own layout or scene-size changes. Card drags, deactivated or
+            // background scenes, lock and restore keep their holds (crash cases).
+            // Messages exempt. Off: focus748-off / core748-off (crash latch focus748).
+            if (holdWhy && DSFeature699On("core748") && DSFeature699On("focus748") &&
+                ([holdWhy isEqualToString:@"stage display-layout change"] || [holdWhy hasPrefix:@"phonesize675"])) {
+                @try {
+                    NSString *t748 = diffText.length ? diffText : ([diff description] ?: @"");
+                    BOOL focusOnly = ([t748 rangeOfString:@"targetOfEventDeferringEnvironments"].location != NSNotFound ||
+                                      [t748 rangeOfString:@"keyboardFocus" options:NSCaseInsensitiveSearch].location != NSNotFound) &&
+                                     [t748 rangeOfString:@"frame" options:NSCaseInsensitiveSearch].location == NSNotFound &&
+                                     [t748 rangeOfString:@"deactivation" options:NSCaseInsensitiveSearch].location == NSNotFound &&
+                                     [t748 rangeOfString:@"foreground" options:NSCaseInsensitiveSearch].location == NSNotFound &&
+                                     [t748 rangeOfString:@"MobileSMS"].location == NSNotFound;
+                    id sc748 = [handle respondsToSelector:@selector(scene)] ? ((id (*)(id, SEL))objc_msgSend)(handle, @selector(scene)) : nil;
+                    NSString *id748 = [sc748 respondsToSelector:@selector(identifier)] ? ((id (*)(id, SEL))objc_msgSend)(sc748, @selector(identifier)) : nil;
+                    if ([id748 isKindOfClass:NSString.class] && [id748 rangeOfString:@"MobileSMS"].location != NSNotFound) focusOnly = NO;
+                    if (focusOnly) {
+                        DSFeature719MarkAction("focus748");
+                        DSDiagnosticsRecordFormat(@"SpringBoard: focus748 passed a focus-only update instead of holding it (%@)", holdWhy);
+                        holdWhy = nil;
+                    }
+                } @catch (NSException *exception) {
+                }
+            }
+            // 4.5.769 focus769 (see the helpers above).
+            // Messages keeps msg742 (exempt).
+            if (DS769On("focus769") && [DSFocus769Key(handle) rangeOfString:@"MobileSMS"].location == NSNotFound) {
+                NSString *t769 = diffText.length ? diffText : ([diff description] ?: @"");
+                NSInteger state769 = DSFocus769StateOf(t769);
+                if (state769) {
+                    NSString *key769 = DSFocus769Key(handle);
+                    NSInteger latest769 = DSFocus769Get(DSFocus769Latest, key769);
+                    NSInteger delivered769 = DSFocus769Get(DSFocus769Delivered, key769);
+                    DSFocus769Set(&DSFocus769Latest, key769, state769);
+                    // (a) keyboardFocus is never held for the corner / layout /
+                    // scene-size holds: passed straight through.
+                    if (holdWhy && state769 == 1 && !DSHold740Replaying &&
+                        ([holdWhy rangeOfString:@"corner restore"].location != NSNotFound ||
+                         [holdWhy isEqualToString:@"stage display-layout change"] || [holdWhy hasPrefix:@"phonesize675"])) {
+                        DSFeature719MarkAction("focus769");
+                        DSDiagnosticsRecordFormat(@"SpringBoard: focus769 passed keyboardFocus for %@ instead of holding it (%@)", key769, holdWhy);
+                        holdWhy = nil;
+                    }
+                    // (b) an empty-focus update never passes while what SpringBoard
+                    // last got differs from the app's latest focus: dropped (a
+                    // replayed stale diff is what trapped in Resssj).
+                    if (!holdWhy && state769 == 2 && latest769 && delivered769 && latest769 != delivered769) {
+                        DSFeature719MarkAction("focus769");
+                        DSDiagnosticsRecordFormat(@"SpringBoard: focus769 DROPPED an empty-focus update for %@: SpringBoard last got %@, app's latest was %@",
+                                                  key769, DSFocus769Name(delivered769), DSFocus769Name(latest769));
+                        return;
+                    }
+                    if (holdWhy) {
+                        // Always logged, never throttled.
+                        DSDiagnosticsRecordFormat(@"SpringBoard: focus769 HELD a %@ focus update for %@ (%@); SpringBoard last got %@",
+                                                  DSFocus769Name(state769), key769, holdWhy, DSFocus769Name(delivered769));
+                        // (c) a held keyboardFocus is delivered when the hold ends,
+                        // if it is still the app's latest and SpringBoard lacks it.
+                        if (state769 == 1 && !DSHold740Replaying) {
+                            NSUInteger gen769 = ++DSFocus769PendingGen;
+                            id h769 = handle, d769 = diff, p769 = previousSettings;
+                            __weak SBAppViewController *weak769 = self;
+                            CFAbsoluteTime at769 = CFAbsoluteTimeGetCurrent();
+                            __block void (^retry769)(void) = nil;
+                            void (^attempt769)(void) = ^{
+                                if (gen769 != DSFocus769PendingGen) return;
+                                SBAppViewController *c769 = weak769;
+                                if (!c769 || ![DSSceneHost ownsAppViewController:c769]) return;
+                                if (DSFocus769Get(DSFocus769Latest, key769) != 1 || DSFocus769Get(DSFocus769Delivered, key769) == 1) return;
+                                if (CFAbsoluteTimeGetCurrent() - at769 > 6.0) {
+                                    DSDiagnosticsRecordFormat(@"SpringBoard: focus769 gave up delivering keyboardFocus for %@ after 6 s (still held)", key769);
+                                    return;
+                                }
+                                if (DSHold740StillHolding(c769, h769)) {
+                                    if (retry769) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry769);
+                                    return;
+                                }
+                                DSDiagnosticsRecordFormat(@"SpringBoard: focus769 delivering the latest keyboardFocus for %@ now the hold ended", key769);
+                                @try {
+                                    DSHold740Replaying = YES;
+                                    SEL s769 = @selector(sceneHandle:didUpdateSettingsWithDiff:previousSettings:);
+                                    if (DS793On("log793")) DSCrash793Crumb([NSString stringWithFormat:@"focus769 replay handle=%p ctrl=%p diff=%p", h769, c769, d769].UTF8String);
+                                    if ([c769 respondsToSelector:s769]) ((void (*)(id, SEL, id, id, id))objc_msgSend)(c769, s769, h769, d769, p769);
+                                    if (DS793On("log793")) DSCrash793Crumb("focus769 replay returned");
+                                    DSHold740Replaying = NO;
+                                } @catch (NSException *exception) {
+                                    DSHold740Replaying = NO;
+                                    DSDiagnosticsRecordFormat(@"SpringBoard: focus769 delivery threw %@", exception.reason ?: exception.name ?: @"?");
+                                }
+                            };
+                            retry769 = [attempt769 copy];
+                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry769);
+                        }
+                    }
+                }
+            }
+            // 4.5.755 focus755 (log only): remember the last focus update per scene.
+            @try { DSFocus755Note(handle, diffText.length ? diffText : ([diff description] ?: @""), holdWhy); } @catch (NSException *exception) {}
+            if (holdWhy) {
+                static CFAbsoluteTime DSLastHold670Log = 0;
+                static NSString *DSLastHold670Why = nil;
+                CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+                // 4.5.699: a new reason is always logged (the 1 s throttle hid
+                // which updates were held right before the trap).
+                BOOL newWhy = ![holdWhy isEqualToString:DSLastHold670Why];
+                if (now - DSLastHold670Log > 1.0 || newWhy) {
+                    DSLastHold670Log = now;
+                    DSLastHold670Why = [holdWhy copy];
+                    DSDiagnosticsRecordFormat(@"SpringBoard: appview670 held a Live app view update (%@)", holdWhy);
+                }
+                // 4.5.767 corner767: an update held for a corner restore is dropped,
+                // not replayed. Resssj (766) 21:43:31 SIGTRAP: the held diff
+                // 0x28311e0d0 was replayed 1.5 s later and SpringBoard trapped;
+                // Shdhb (759) 06:02 / 06:37: the first update to pass after the
+                // corner hold trapped. The next fresh update carries the state.
+                // Off: corner767-off / core767-off (latch corner767).
+                BOOL corner767Drop = hold740 && !DSHold740Replaying && [holdWhy rangeOfString:@"corner restore"].location != NSNotFound && DS767On("corner767");
+                if (corner767Drop) {
+                    DSFeature719MarkAction("corner767");
+                    DSHold740Gen++;   // cancels any earlier pending replay too
+                    static CFAbsoluteTime said767 = 0;
+                    CFAbsoluteTime t767 = CFAbsoluteTimeGetCurrent();
+                    if (t767 - said767 > 1.0 || t767 < said767 || (DS769On("focus769") && DSFocus769StateOf(diffText.length ? diffText : ([diff description] ?: @"")))) {
+                        said767 = t767;
+                        DSDiagnosticsRecordFormat(@"SpringBoard: corner767 dropped a held Live update (%@): no replay, the next fresh update carries the state", holdWhy);
+                    }
+                }
+                if (hold740 && !DSHold740Replaying && !corner767Drop) {
+                    // 4.5.740 hold740: the held update is not dropped. The latest one is
+                    // kept and passed once nothing holds it any more (checked every
+                    // 0.3 s); a newer update that passes on its own replaces it. The
+                    // hold always ends: after 4 s the pending update is let go.
+                    DSFeature719MarkAction("hold740");
+                    NSUInteger gen = ++DSHold740Gen;
+                    id h = handle, d = diff, ps = previousSettings;
+                    __weak SBAppViewController *weakController = self;
+                    CFAbsoluteTime heldAt = CFAbsoluteTimeGetCurrent();
+                    __block void (^retry)(void) = nil;
+                    void (^attempt)(void) = ^{
+                        if (gen != DSHold740Gen) return;
+                        SBAppViewController *controller = weakController;
+                        if (!controller || ![DSSceneHost ownsAppViewController:controller]) return;
+                        CFAbsoluteTime now740 = CFAbsoluteTimeGetCurrent();
+                        if (now740 - heldAt > 4.0) {
+                            DSHold740Gen++;
+                            DSDiagnosticsRecord(@"SpringBoard: hold740 let a held Live update go after 4 s (still not safe to pass; the next update carries the state)");
+                            return;
+                        }
+                        if (DSHold740StillHolding(controller, h)) {
+                            if (retry) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry);
+                            return;
+                        }
+                        DSHold740Gen++;
+                        DSDiagnosticsRecordFormat(@"SpringBoard: hold740 passed the latest held Live update %.1f s later", now740 - heldAt);
+                        if (DS793On("log793")) {
+                            NSString *dd = [[[d description] ?: @"" componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+                            if (dd.length > 160) dd = [dd substringToIndex:160];
+                            NSString *crumb = [NSString stringWithFormat:@"hold740 replay age=%.1fs handle=%@<%p> ctrl=%p owned=%d diff=%p %@",
+                                               now740 - heldAt, NSStringFromClass([h class]), h, controller, [DSSceneHost ownsAppViewController:controller], d, dd];
+                            DSDiagnosticsRecordFormat(@"SpringBoard: log793 %@", crumb);
+                            DSCrash793Crumb(crumb.UTF8String);
+                        }
+                        @try {
+                            DSHold740Replaying = YES;
+                            SEL sel740 = @selector(sceneHandle:didUpdateSettingsWithDiff:previousSettings:);
+                            if ([controller respondsToSelector:sel740]) ((void (*)(id, SEL, id, id, id))objc_msgSend)(controller, sel740, h, d, ps);
+                            DSHold740Replaying = NO;
+                            if (DS793On("log793")) DSCrash793Crumb("hold740 replay returned");
+                        } @catch (NSException *exception) {
+                            DSHold740Replaying = NO;
+                            DSDiagnosticsRecordFormat(@"SpringBoard: hold740 replay threw %@", exception.reason ?: exception.name ?: @"?");
+                        }
+                    };
+                    retry = [attempt copy];
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry);
+                }
+                return;
+            }
+            }   // 4.5.740 react740 else
+        }
+        if (displayMode == 4 && (foregroundFlip ||
+            [diffText rangeOfString:@"foreground" options:NSCaseInsensitiveSearch].location != NSNotFound)) {
             static CFAbsoluteTime DSLastLiveLog = 0;
             CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
             if (now - DSLastLiveLog > 1.0) {
@@ -579,8 +1358,46 @@ static NSString *DSAnySceneIdentifier(id scene) {
             }
             return;
         }
+        // 4.5.699 forensics: the crash ring names the last update that went
+        // through to SpringBoard's own handler (mode + foreground), max 2/s.
+        if (displayMode == 4) {
+            static CFAbsoluteTime DSLastPass699 = 0;
+            CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+            if (now - DSLastPass699 > 0.5) {
+                DSLastPass699 = now;
+                DSDiagnosticsRecordFormat(@"SpringBoard: appview699 Live update passed to SpringBoard (mode=%ld drag=%d)",
+                                          (long)displayMode, DSStageDragSettlingFast(0.0));
+            }
+        }
+        if (displayMode == 4) DSHold740Gen++;   // 4.5.740: a newer update passed; drop the pending replay
+        // 4.5.769 focus769: what SpringBoard is about to get.
+        if (displayMode == 4 && DS769On("focus769")) {
+            @try {
+                NSInteger s769 = DSFocus769StateOf(diffText);
+                if (s769) {
+                    NSString *k769 = DSFocus769Key(handle);
+                    DSFocus769Set(&DSFocus769Delivered, k769, s769);
+                    DSFocus769Set(&DSFocus769Latest, k769, s769);
+                }
+            } @catch (NSException *exception) {}
+        }
+        if (displayMode == 4 && DSGest770On()) {   // 4.5.770 gest770
+            NSString *d770 = [[diffText componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+            if (d770.length > 200) d770 = [d770 substringToIndex:200];
+            DSGest770FirstAfterRestore(self, handle, [NSString stringWithFormat:@"PASSED to SpringBoard (%@)", d770]);
+        }
+        if (DS793On("log793")) {
+            NSString *dd = [[diffText componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+            if (dd.length > 160) dd = [dd substringToIndex:160];
+            static NSString *lastHold793 = nil;
+            NSString *crumb = [NSString stringWithFormat:@"appview pass mode=%ld replay=%d handle=%@<%p> ctrl=%p diff=%p prev=%p %@",
+                               (long)displayMode, DSHold740Replaying, NSStringFromClass([handle class]), handle, self, diff, previousSettings, dd];
+            DSCrash793Crumb(crumb.UTF8String);
+            if (displayMode == 4 && ![crumb isEqualToString:lastHold793]) { lastHold793 = [crumb copy]; DSDiagnosticsRecordFormat(@"SpringBoard: log793 %@", crumb); }
+        }
         @try {
             %orig;
+            if (DS793On("log793")) DSCrash793Crumb("appview pass returned");
         } @catch (NSException *exception) {
             DSDiagnosticsRecordFormat(@"SpringBoard: contained a scene update from the staged app (%@)",
                                       exception.reason ?: exception.name ?: @"?");
@@ -610,11 +1427,11 @@ static NSString *DSAnySceneIdentifier(id scene) {
         %orig;
         return;
     }
-    if (DSStageHasParkedCardFast() && DSAsk(^BOOL(DSStageManager *manager) {
+    BOOL adopted770 = DSStageHasParkedCardFast() && DSAsk(^BOOL(DSStageManager *manager) {
             return [manager adoptSystemEdgePull:gesture];
-        })) {
-        return;
-    }
+        });
+    if (DSStageHasParkedCardFast() || DSStageVisibleFast() || DSStageHasSceneHostFast()) DSGest770NoteEdgePull(gesture, adopted770);   // 4.5.770 gest770
+    if (adopted770) return;
     if (DSStageHasSceneHostFast() || DSStageVisibleFast()) {
         DSTell(^(DSStageManager *manager) {
             [manager noteHomeGestureBegan:gesture];
@@ -630,6 +1447,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
     if (DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldSuppressSystemGestureAtPoint:point velocity:velocity];
         })) {
+        DSGest770NoteSuppressed(point, @"switcher");
         return NO;
     }
     return %orig;
@@ -654,6 +1472,7 @@ static NSString *DSAnySceneIdentifier(id scene) {
     if (DSAsk(^BOOL(DSStageManager *manager) {
             return [manager shouldSuppressSystemGestureAtPoint:point velocity:velocity];
         })) {
+        DSGest770NoteSuppressed(point, @"system");
         return NO;
     }
     return %orig;
@@ -876,6 +1695,34 @@ static BOOL DSShouldForceMedusaForIdentifier(NSString *identifier) {
     BOOL messages = [identifier rangeOfString:@"MobileSMS"].location != NSNotFound;
     if (!staged || messages) {
         %orig;
+        return;
+    }
+    // 4.5.683: the app's own keyboard is meant to show inside its card.
+    __block BOOL ownKeyboard683 = NO;
+    __block NSString *bundle683 = nil;
+    @try {
+        DSTell(^(DSStageManager *manager) {
+            if (![manager respondsToSelector:@selector(phoneSize683ActiveForBundle:)]) return;
+            bundle683 = [manager keys674HostedBundleForSceneIdentifier:identifier];
+            ownKeyboard683 = bundle683.length > 0 && [manager phoneSize683ActiveForBundle:bundle683];
+        });
+    } @catch (NSException *exception) {
+        ownKeyboard683 = NO;
+    }
+    if (ownKeyboard683) {
+        %orig;
+        UIView *added = [view isKindOfClass:UIView.class] ? (UIView *)view : nil;
+        DSDiagnosticsRecordFormat(@"SpringBoard: phonesize683 %@ UIKit added its hosted keyboard view %@ for %@ (pid %d): let through (4.5.683; before it was left out)",
+                                  bundle683, added ? NSStringFromClass(added.class) : @"?", identifier, pid);
+        __weak UIView *weakAdded = added;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            UIView *v = weakAdded;
+            if (!v) return;
+            DSDiagnosticsRecordFormat(@"SpringBoard: phonesize683 hosted keyboard view now %@ in %@ / %@ hidden=%d",
+                                      NSStringFromCGRect([v convertRect:v.bounds toView:nil]),
+                                      v.superview ? NSStringFromClass(v.superview.class) : @"no superview",
+                                      v.window ? NSStringFromClass(v.window.class) : @"no window", v.hidden);
+        });
         return;
     }
     static NSString *loggedIdentifier = nil;
@@ -1138,6 +1985,13 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 
 %hook UIWindow
 
+// 4.5.772 hide772: public UIKit setter; one class-name check only while a
+// staged keyboard is up (log only, never changes the call).
+- (void)setHidden:(BOOL)hidden {
+    if (hidden) DSHide772NoteWindowHidden(self, hidden);
+    %orig;
+}
+
 // 4.5.655: the pass-through setHidden: hook is gone. The setFrame: hook below
 // is gone too: both of its branches called %orig, but it first asked the stage
 // manager (kill-switch syscalls included) on every window frame change.
@@ -1226,12 +2080,6 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
 
 %end
 
-static BOOL DSMessagesHostStaysOnScreen(void) {
-    if (!DSIsMessagesKeyboardUp()) return NO;
-    return DSAsk(^BOOL(DSStageManager *manager) {
-        return [manager stagedKeyboardFieldIsEditing];
-    });
-}
 
 static BOOL DSHostedAppOwnsKeyboard(void) {
     // 4.5.657: only with a stage card on screen (ivar reads first).
@@ -1295,6 +2143,9 @@ static void DSPinContextLayerHost(UIView *view) {
     // pin only matters for a staged Beeper keyboard.
     // 4.5.657: a card on screen first (ivar reads), before any manager call.
     if (!DSStageReady() || !DSStageCardOnScreenFast()) return;
+    // 4.5.683: SpringBoard's bottom-of-phone copy of an app's keys is hidden
+    // while that app's own keyboard is up inside its card (static check first).
+    if (DSPhoneSize683HidesKeyCopies()) DSPhoneSize683ConsiderContextHost(view);
     if (!DSBeeperHostedCached() || [DSSceneHost systemTransitionBusy]) return;
     if (![view isKindOfClass:UIView.class] || !view.superview || !view.window) return;
     if (view.hidden || view.alpha < 0.01) return;
@@ -1652,47 +2503,10 @@ static id DSSavedKeyboardUIHandle = nil;
 static BOOL DSWeOwnKeyboardHost = NO;
 static __weak id DSLastKeyboardArbiter = nil;
 
-static NSString *DSHandlerBundle(id handler) {
-    if (![handler respondsToSelector:@selector(bundleIdentifier)]) return nil;
-    NSString *bundle = ((NSString * (*)(id, SEL))objc_msgSend)(handler, @selector(bundleIdentifier));
-    return bundle.length > 0 ? [bundle copy] : nil;
-}
 
-static id DSCallHandler(id arbiter, SEL selector, id argument) {
-    if (![arbiter respondsToSelector:selector]) return nil;
-    return ((id (*)(id, SEL, id))objc_msgSend)(arbiter, selector, argument);
-}
 
-static id DSSpringBoardKeyboardHandler(id arbiter) {
-    id springBoard = DSCallHandler(arbiter, @selector(handlerForBundleID:), @"com.apple.springboard");
-    if (springBoard) return springBoard;
-    SEL byPID = @selector(handlerForPID:);
-    if (![arbiter respondsToSelector:byPID]) return nil;
-    return ((id (*)(id, SEL, int))objc_msgSend)(arbiter, byPID, getpid());
-}
 
-static id DSKeyboardUIHandle(id arbiter) {
-    for (NSString *name in @[ @"keyboardUIHandle", @"keyboardUIHandler" ]) {
-        SEL selector = NSSelectorFromString(name);
-        if (![arbiter respondsToSelector:selector]) continue;
-        id handle = ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
-        if (handle) return handle;
-    }
-    return nil;
-}
 
-static id DSArbiterSceneLayer(id arbiter) {
-    SEL selector = @selector(sceneLayer);
-    if ([arbiter respondsToSelector:selector]) {
-        id layer = ((id (*)(id, SEL))objc_msgSend)(arbiter, selector);
-        if (layer) return layer;
-    }
-    id uiHandle = DSKeyboardUIHandle(arbiter);
-    if ([uiHandle respondsToSelector:selector]) {
-        return ((id (*)(id, SEL))objc_msgSend)(uiHandle, selector);
-    }
-    return nil;
-}
 
 static BOOL DSBundleIsStaged(NSString *bundle) {
     if (bundle.length == 0 || [bundle isEqualToString:@"com.apple.springboard"]) return NO;
@@ -1743,21 +2557,169 @@ void DSReleaseStagedKeyboardHost(void) {
     if (arbiter) DSSetKeyboardUIHandle(arbiter, restore);
 }
 
-static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onScreen) {
-    BOOL staged = DSBundleIsStaged(source);
-    id springBoard = DSSpringBoardKeyboardHandler(arbiter);
-    id uiHandle = DSKeyboardUIHandle(arbiter);
-    NSString *uiBundle = DSHandlerBundle(uiHandle) ?: @"none";
-    BOOL layer = DSArbiterSceneLayer(arbiter) != nil;
-    NSString *verdict = @"staged app keyboard is up";
-    if (!onScreen) verdict = @"keyboard is down";
-    else if (!staged) verdict = @"this keyboard is not from a staged app";
-    NSString *dylib = @"no";
-    if (staged && source.length) {
-        dylib = [[DSStageManager sharedManager] hostedAppHasStageDylib:source] ? @"yes" : @"no";
+
+// 4.5.677: the 4.5.676 focus hook (a manual MSHookMessageEx on
+// -[_UIKeyboardArbiter handlerRequestedFocus:shouldStealKeyboard:]) is gone.
+// 4.5.676 crashed SpringBoard (SIGSEGV) in the first objc message lookup after
+// that hook went in, on the main thread during activate. It only logged by
+// default. No hook other than the long-standing updateKeyboardStatus one is
+// put on the arbiter.
+
+// ---- 4.5.775 why775 (log only) -------------------------------------------------
+// Logs the inputs and results of SpringBoard's Medusa keyboard-window decision.
+// Never changes arguments or return values. Each group is installed only when
+// class_getInstanceMethod finds the exact selector. Off: why775-off, master
+// core775-off (crash latch why775).
+@interface SBMedusaHostedKeyboardWindowController : NSObject
+@end
+@interface SBInputUISceneController : NSObject
+@end
+
+static NSString *DSWhy775Ident(id obj) {
+    if (!obj) return @"nil";
+    @try {
+        NSString *ident = nil;
+        if ([obj respondsToSelector:@selector(identifier)]) {
+            id v = ((id (*)(id, SEL))objc_msgSend)(obj, @selector(identifier));
+            if ([v isKindOfClass:NSString.class]) ident = v;
+        }
+        if (!ident && [obj respondsToSelector:@selector(session)]) {
+            id session = ((id (*)(id, SEL))objc_msgSend)(obj, @selector(session));
+            if ([session respondsToSelector:@selector(persistentIdentifier)]) {
+                id v = ((id (*)(id, SEL))objc_msgSend)(session, @selector(persistentIdentifier));
+                if ([v isKindOfClass:NSString.class]) ident = v;
+            }
+        }
+        NSString *text = ident ?: [obj description];
+        if (text.length > 140) text = [[text substringToIndex:140] stringByAppendingString:@"..."];
+        return [NSString stringWithFormat:@"%@<%@>", NSStringFromClass([obj class]), text ?: @"?"];
+    } @catch (NSException *exception) {
+        return @"unreadable";
     }
-    return [NSString stringWithFormat:@"%@ | src=%@ on=%d staged=%d sbClient=%d uiHost=%@ layer=%d appDylib=%@",
-            verdict, source ?: @"?", onScreen, staged, springBoard != nil, uiBundle, layer, dylib];
+}
+
+%group Why775Update
+%hook SBMedusaHostedKeyboardWindowController
+- (void)updateMedusaHostedKeyboardWindowForScene:(id)scene isForeground:(BOOL)isForeground {
+    // 4.5.801: capture into a stack int BEFORE %orig and never re-read the
+    // BOOL parameter afterwards. 800's `BOOL fg = …; fg ? 1 : 0` still printed
+    // isForeground:1868470863 (Hdidbdh) — clang/%orig reused the clobbered reg.
+    volatile int fgLog = ((uint8_t)isForeground) != 0 ? 1 : 0;
+    %orig;
+    @try {
+        id w = [self respondsToSelector:@selector(medusaHostedKeyboardWindow)] ? ((id (*)(id, SEL))objc_msgSend)(self, @selector(medusaHostedKeyboardWindow)) : nil;
+        DSWhy775Note([NSString stringWithFormat:@"updateMedusaHostedKeyboardWindowForScene:%@ isForeground:%d -> window hidden=%@",
+                      DSWhy775Ident(scene), fgLog, [w isKindOfClass:UIWindow.class] ? (((UIWindow *)w).hidden ? @"YES" : @"NO") : @"?"]);
+    } @catch (NSException *exception) {
+    }
+}
+%end
+%end
+
+%group Why775Sized
+%hook SBMedusaHostedKeyboardWindowController
+- (BOOL)shouldKeyboardBeWindowSizedForHostWithIdentity:(id)identity {
+    BOOL r = %orig;
+    @try {
+        DSWhy775Note([NSString stringWithFormat:@"shouldKeyboardBeWindowSizedForHostWithIdentity:%@ -> %d", DSWhy775Ident(identity), r]);
+    } @catch (NSException *exception) {
+    }
+    return r;
+}
+%end
+%end
+
+%group Why775Target
+%hook SBInputUISceneController
+- (id)_targetSceneForKeyboardFocusedSceneIdentity:(id)identity {
+    id r = %orig;
+    @try {
+        DSWhy775Note([NSString stringWithFormat:@"_targetSceneForKeyboardFocusedSceneIdentity:%@ -> %@", DSWhy775Ident(identity), DSWhy775Ident(r)]);
+    } @catch (NSException *exception) {
+    }
+    return r;
+}
+%end
+%end
+
+// ---- 4.5.776 keep776 ---------------------------------------------------------------
+// Approach (b): only -[SBMedusaHostedKeyboardWindow setHidden:YES] issued from
+// inside -[SBMedusaHostedKeyboardWindowController updateMedusaHostedKeyboardWindowForScene:isForeground:]
+// (the proven hide path, stacks A and B) is dropped, and only while
+// DSKeep776Active(). setHidden:NO and every other caller pass through. Hidden
+// windows are never forced visible. Any exception -> %orig.
+@interface SBMedusaHostedKeyboardWindow : UIWindow
+@end
+static NSInteger DSKeep776UpdateDepth = 0;
+static BOOL DSKeep776Bypass = NO;
+
+%group Keep776Update
+%hook SBMedusaHostedKeyboardWindowController
+- (void)updateMedusaHostedKeyboardWindowForScene:(id)scene isForeground:(BOOL)isForeground {
+    DSKeep776UpdateDepth++;
+    @try {
+        %orig;
+    } @catch (NSException *exception) {
+        DSKeep776UpdateDepth--;
+        @throw;
+    }
+    DSKeep776UpdateDepth--;
+}
+%end
+%end
+
+%group Keep776Hide
+%hook SBMedusaHostedKeyboardWindow
+- (void)setHidden:(BOOL)hidden {
+    BOOL drop = NO;
+    @try {
+        drop = hidden && !DSKeep776Bypass && DSKeep776UpdateDepth > 0 && NSThread.isMainThread && !((UIWindow *)self).hidden && DSKeep776Active();
+        if (drop) DSKeep776NoteBlocked((UIWindow *)self);
+    } @catch (NSException *exception) {
+        drop = NO;
+    }
+    if (drop) return;
+    %orig;
+}
+%end
+%end
+
+static void DSKeep776Install(void) {
+    if (!DS776On("keep776")) return;
+    Class ctrl = objc_getClass("SBMedusaHostedKeyboardWindowController");
+    Class win = objc_getClass("SBMedusaHostedKeyboardWindow");
+    // Both must exist with their own implementations, or neither goes in.
+    BOOL ok = ctrl && win &&
+        class_getInstanceMethod(ctrl, @selector(updateMedusaHostedKeyboardWindowForScene:isForeground:)) &&
+        class_getInstanceMethod(win, @selector(setHidden:)) &&
+        class_getInstanceMethod(win, @selector(setHidden:)) != class_getInstanceMethod(objc_getClass("UIWindow"), @selector(setHidden:));
+    if (!ok) { DSDiagnosticsRecord(@"SpringBoard: keep776 not installed (selectors not found)"); return; }
+    %init(Keep776Update, SBMedusaHostedKeyboardWindowController = ctrl);
+    %init(Keep776Hide, SBMedusaHostedKeyboardWindow = win);
+    DSKeep776ApplyHide = ^(UIWindow *medusa) {
+        DSKeep776Bypass = YES;
+        @try { [medusa setHidden:YES]; } @catch (NSException *exception) {}
+        DSKeep776Bypass = NO;
+    };
+    DSDiagnosticsRecord(@"SpringBoard: keep776 installed (Medusa hide from updateMedusaHostedKeyboardWindowForScene: kept out while a staged app owns the keys)");
+}
+
+static void DSWhy775Install(void) {
+    if (!DS775On("why775")) return;
+    DSFeature699MarkTrying("why775");
+    Class ctrl = objc_getClass("SBMedusaHostedKeyboardWindowController");
+    Class input = objc_getClass("SBInputUISceneController");
+    NSMutableArray *done = [NSMutableArray array];
+    if (ctrl && class_getInstanceMethod(ctrl, @selector(updateMedusaHostedKeyboardWindowForScene:isForeground:))) {
+        %init(Why775Update, SBMedusaHostedKeyboardWindowController = ctrl); [done addObject:@"update"];
+    }
+    if (ctrl && class_getInstanceMethod(ctrl, @selector(shouldKeyboardBeWindowSizedForHostWithIdentity:))) {
+        %init(Why775Sized, SBMedusaHostedKeyboardWindowController = ctrl); [done addObject:@"sized"];
+    }
+    if (input && class_getInstanceMethod(input, @selector(_targetSceneForKeyboardFocusedSceneIdentity:))) {
+        %init(Why775Target, SBInputUISceneController = input); [done addObject:@"target"];
+    }
+    DSDiagnosticsRecordFormat(@"SpringBoard: why775 hooks installed: %@", done.count ? [done componentsJoinedByString:@","] : @"none");
 }
 
 %group Arbiter
@@ -1789,6 +2751,69 @@ static NSString *DSKeyboardArbiterSummary(id arbiter, NSString *source, BOOL onS
     }
     (void)handler;
     DSTraceFormat(@"arbiter on=%d src=%@ frame=%@", onScreen, source ?: @"?", NSStringFromCGRect(frame));
+    // 4.5.743 fast743: the arbiter's on=0 is the earliest hide signal.
+    if (!onScreen && DSStageReady()) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @try {
+                DSTell(^(DSStageManager *manager) {
+                    if ([manager respondsToSelector:@selector(fast743KeysHiding:)]) [manager fast743KeysHiding:@"arbiter on=0"];
+                    // 4.5.778 caret778: the keys are down (swipe-down included), so a
+                    // staged Messages lets go of its message box. Off: caret778-off.
+                    if (DSCaret778Enabled() && [manager respondsToSelector:@selector(postMessagesKeyboardShown:)]) {
+                        [manager postMessagesKeyboardShown:NO];
+                    }
+                });
+            } @catch (NSException *exception) {
+            }
+        });
+    }
+    // 4.5.676 phonesize676: the earliest sign that a staged app's keyboard is
+    // coming up. The stage grows an allowlisted app's scene right away instead
+    // of after its first keyboard note.
+    // 4.5.677: defensive. Only values already read above (copied string, a
+    // finite height, a timestamp) leave this queue; nothing else of the arbiter,
+    // the handler or the information object is touched here, and all the stage
+    // work (allowlist, off files, host lookup) happens on the main queue.
+    // 4.5.680 phonesize680: the same values also move an always-full-screen
+    // card's window with the keyboard (on=1 and on=0); tried first, the 676
+    // early switch only runs when 680 did not take it.
+    @try {
+        if (onScreen && [source isKindOfClass:NSString.class] && source.length && DSStageReady()) {
+            NSString *earlySource = [source copy];
+            CGFloat earlyHeight = CGRectGetHeight(frame);
+            if (!isfinite(earlyHeight) || earlyHeight < 0.0) earlyHeight = 0.0;
+            double earlyAt = CACurrentMediaTime();
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @try {
+                    DSTell(^(DSStageManager *manager) {
+                        if ([manager respondsToSelector:@selector(phoneSize680KeyboardSignal:bundle:on:height:at:)] &&
+                            [manager phoneSize680KeyboardSignal:@"arbiter on=1" bundle:earlySource on:YES height:earlyHeight at:earlyAt]) {
+                            return;
+                        }
+                        if (DSPhoneSize677EarlyDisabled()) return;
+                        if (![manager respondsToSelector:@selector(phoneSize676EarlySignal:bundle:height:at:)]) return;
+                        [manager phoneSize676EarlySignal:@"arbiter on=1" bundle:earlySource height:earlyHeight at:earlyAt];
+                    });
+                } @catch (NSException *exception) {
+                    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize677 early switch threw %@", exception.reason ?: exception.name ?: @"?");
+                }
+            });
+        } else if (!onScreen && DSStageReady()) {
+            NSString *hideSource = [source isKindOfClass:NSString.class] ? [source copy] : @"";
+            double hideAt = CACurrentMediaTime();
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @try {
+                    DSTell(^(DSStageManager *manager) {
+                        if (![manager respondsToSelector:@selector(phoneSize680KeyboardSignal:bundle:on:height:at:)]) return;
+                        [manager phoneSize680KeyboardSignal:@"arbiter on=0" bundle:hideSource on:NO height:0.0 at:hideAt];
+                    });
+                } @catch (NSException *exception) {
+                    DSDiagnosticsRecordFormat(@"SpringBoard: phonesize680 hide signal threw %@", exception.reason ?: exception.name ?: @"?");
+                }
+            });
+        }
+    } @catch (NSException *exception) {
+    }
     // A call deactivates the staged app and UIKit reports the keyboard down.
     // That is not the user leaving the field. Dismissing here is the keys dying.
     BOOL keepKeysDuringCall = NO;
@@ -2105,6 +3130,113 @@ static void DSRegisterDarwinObservers(void) {
     });
 }
 
+
+// ---- 4.5.749 core749 ---------------------------------------------------------
+// Master off: /var/mobile/.dynamicstage-core749-off returns to 4.5.748.
+static BOOL DS749FileOff(const char *name) {
+    char a[160], b[180];
+    snprintf(a, sizeof(a), "/var/mobile/.dynamicstage-%s-off", name);
+    snprintf(b, sizeof(b), "/var/jb/var/mobile/.dynamicstage-%s-off", name);
+    return access(a, F_OK) == 0 || access(b, F_OK) == 0;
+}
+
+// latch749: one loud line at startup listing every feature a crash latch has
+// turned off (name, when, why), also written to /var/mobile/DynamicStage-latched.txt.
+// Off: latch749-off / core749-off.
+static void DSLatch749Report(void) {
+    if (DS749FileOff("core749") || !DSFeature699On("latch749")) return;
+    @try {
+        NSFileManager *fm = NSFileManager.defaultManager;
+        NSDateFormatter *f = [NSDateFormatter new];
+        f.dateFormat = @"MM-dd HH:mm:ss";
+        NSMutableArray *items = [NSMutableArray array];
+        for (NSString *dir in @[ @"/var/mobile", @"/var/jb/var/mobile" ]) {
+            for (NSString *n in [fm contentsOfDirectoryAtPath:dir error:nil] ?: @[]) {
+                if (![n hasPrefix:@".dynamicstage-"] || ![n hasSuffix:@"-crashed"]) continue;
+                NSString *name = [[n substringFromIndex:14] stringByReplacingOccurrencesOfString:@"-crashed" withString:@""];
+                NSDate *m = [fm attributesOfItemAtPath:[dir stringByAppendingPathComponent:n] error:nil].fileModificationDate;
+                [items addObject:[NSString stringWithFormat:@"%@ (latched %@, SpringBoard went down within 15 s of its use; delete %@/%@ to allow it)",
+                                  name, m ? [f stringFromDate:m] : @"?", dir, n]];
+            }
+        }
+        NSString *line = items.count
+            ? [NSString stringWithFormat:@"LATCHED OFF %lu feature(s): %@", (unsigned long)items.count, [items componentsJoinedByString:@"; "]]
+            : @"latch749: no feature is latched off";
+        DSDiagnosticsRecord(@"SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen");
+        // 4.5.798: the one long line was cut at the log's line limit (797 log showed
+        // 3 of 9 names). Now a short count line with every name, then one line each.
+        if (items.count) {
+            NSMutableArray *names = [NSMutableArray array];
+            for (NSString *it in items) [names addObject:[it componentsSeparatedByString:@" ("].firstObject ?: it];
+            DSDiagnosticsRecordFormat(@"SpringBoard: LATCHED OFF %lu feature(s): %@", (unsigned long)items.count, [names componentsJoinedByString:@", "]);
+            NSUInteger k = 0;
+            for (NSString *it in items) DSDiagnosticsRecordFormat(@"SpringBoard: latched %lu/%lu %@", (unsigned long)++k, (unsigned long)items.count, it);
+        } else {
+            DSDiagnosticsRecordFormat(@"SpringBoard: %@", line);
+        }
+        [line writeToFile:@"/var/mobile/DynamicStage-latched.txt" atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    } @catch (NSException *exception) {
+    }
+}
+
+// safe749: when the boot guard skips the tweak for one start, a light safe mode
+// still shows the right-edge Stages tab (a plain window, no hooks, no stage
+// features). Tapping it says why the tweak is off and to respring.
+// Off: safe749-off / core749-off.
+static UIWindow *DSSafe749Window = nil;
+static void DSSafe749Tapped(void) {
+    UIView *root = DSSafe749Window.rootViewController.view;
+    UILabel *label = (UILabel *)[root viewWithTag:749];
+    if (label) { label.hidden = !label.hidden; return; }
+}
+@interface DSSafe749Target : NSObject
+@end
+@implementation DSSafe749Target
+- (void)tap { DSSafe749Tapped(); }
+@end
+static void DSSafe749Start(NSString *why) {
+    if (DS749FileOff("core749") || DS749FileOff("safe749")) return;
+    @try {
+        UIWindowScene *scene = nil;
+        for (UIScene *s in UIApplication.sharedApplication.connectedScenes) {
+            if ([s isKindOfClass:UIWindowScene.class] && s.activationState == UISceneActivationStateForegroundActive) { scene = (UIWindowScene *)s; break; }
+        }
+        if (!scene) return;
+        CGRect screen = scene.coordinateSpace.bounds;
+        UIWindow *w = [[UIWindow alloc] initWithWindowScene:scene];
+        w.frame = CGRectMake(CGRectGetWidth(screen) - 300.0, CGRectGetMidY(screen) - 60.0, 300.0, 120.0);
+        w.windowLevel = UIWindowLevelAlert - 1.0;
+        w.backgroundColor = UIColor.clearColor;
+        UIViewController *vc = [UIViewController new];
+        vc.view.backgroundColor = UIColor.clearColor;
+        w.rootViewController = vc;
+        UIControl *tab = [[UIControl alloc] initWithFrame:CGRectMake(286.0, 28.0, 14.0, 64.0)];
+        tab.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.94];
+        tab.layer.cornerRadius = 8.0;
+        tab.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMinXMaxYCorner;
+        tab.accessibilityLabel = @"Stages (safe mode)";
+        static DSSafe749Target *target;
+        target = [DSSafe749Target new];
+        [tab addTarget:target action:@selector(tap) forControlEvents:UIControlEventTouchUpInside];
+        [vc.view addSubview:tab];
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 10.0, 278.0, 100.0)];
+        label.tag = 749;
+        label.numberOfLines = 0;
+        label.font = [UIFont systemFontOfSize:13.0];
+        label.textColor = UIColor.whiteColor;
+        label.backgroundColor = [UIColor colorWithWhite:0.1 alpha:0.92];
+        label.layer.cornerRadius = 12.0;
+        label.clipsToBounds = YES;
+        label.text = @"  DynamicStage is in safe mode for this start (it crashed right after the last respring). Respring to turn it back on.";
+        label.hidden = YES;
+        [vc.view addSubview:label];
+        w.hidden = NO;
+        DSSafe749Window = w;
+        DSDiagnosticsRecordFormat(@"SpringBoard: safe749 safe mode: full tweak skipped (%@); Stages tab shown, no stage features started", why ?: @"?");
+    } @catch (NSException *exception) {
+    }
+}
+
 static void DSInstallRemainingHooks(void) {
     static dispatch_once_t token;
     dispatch_once(&token, ^{
@@ -2127,6 +3259,11 @@ static void DSInstallRemainingHooks(void) {
             DSRegisterDarwinObservers();
             %init(Stage);
             DSInCallStageInstall();
+            // 4.5.674 keys674 (keyboard layer of apps without the app dylib).
+            @try {
+                DSKeys674Install();
+            } @catch (NSException *exception) {
+            }
             [[NSNotificationCenter defaultCenter] addObserverForName:@"DSStageStatusBarRefresh"
                                                                 object:nil
                                                                  queue:NSOperationQueue.mainQueue
@@ -2140,8 +3277,15 @@ static void DSInstallRemainingHooks(void) {
             if (arbiter && class_getInstanceMethod(arbiter, @selector(updateKeyboardStatus:fromHandler:))) {
                 %init(Arbiter, _UIKeyboardArbiter = arbiter);
             }
+            @try { DSKeep776Install(); } @catch (NSException *exception) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: keep776 install caught %@", exception.reason ?: exception.name);
+            }
+            @try { DSWhy775Install(); } @catch (NSException *exception) {
+                DSDiagnosticsRecordFormat(@"SpringBoard: why775 install caught %@", exception.reason ?: exception.name);
+            }
 
             [[DSStageManager sharedManager] activate];
+            DSLatch749Report();   // 4.5.749 latch749
             // 4.5.652: camera in staged apps.
             @try {
                 [DSCameraArbiter start];
@@ -2164,6 +3308,7 @@ static void DSInstallRemainingHooks(void) {
                 DSDiagnosticsRecord(@"SpringBoard: stayed up, boot guard cleared");
             });
 
+            DSTree765WipeStaleOnBoot();
             DSDiagnosticsRecordFormat(@"SpringBoard: hooks installed after home screen, corner pull will come from %@",
                                       systemPull ? @"the system edge gesture" : @"a window in the corner");
 
@@ -2212,6 +3357,7 @@ static void DSInstallRemainingHooks(void) {
         // before any hook or signal handler exists.
         if (DSKillSwitchPresent()) return;
         if (DSLaunchGuardTripped()) {
+            DSLatch754NoteSafeMode();   // 4.5.754 latch754: safe mode = crash evidence for the next start
             // 4.5.653: stay off for this one start (that is the protection),
             // then let the next respring try again instead of staying off
             // until a reinstall. A real crash loop alternates on / off and
@@ -2220,12 +3366,20 @@ static void DSInstallRemainingHooks(void) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(20.0 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{
                 DSDiagnosticsRecord(@"SpringBoard: DynamicStage stayed off for this start after a crash right after the last respring; respring once to turn it back on");
+                DSSafe749Start(@"boot guard: SpringBoard crashed within 8 s of the previous start");   // 4.5.749 safe749
             });
             return;
         }
         if (!DSBootstrapBeginFullInstall()) return;
 
+        DSLatch754BootSweep();      // 4.5.754 latch754: decide latches from how the last SpringBoard ended
         DSCrashLogInstallHandlers();
+        DSCrashLog754Arm();
+        DSBeat756Start();           // 4.5.756 beat756: clean-respring heartbeat
+        DSFeature699MarkTrying("latch754");   // crash latch for latch754 itself (15 s after start)
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(6.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (DSLatch754Summary) DSDiagnosticsRecordFormat(@"SpringBoard: %@", DSLatch754Summary);
+        });
         @try {
             %init(Boot);
             // If applicationDidFinishLaunching already ran (late inject) or never

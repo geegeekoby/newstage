@@ -40,6 +40,12 @@
 // /var/tmp is readable from a sandboxed app. Preferences is not.
 #define kDSKeyboardInputPath @"/var/tmp/com.recreated.dynamicstage.keyboard.input.plist"
 #define kDSKeyboardInputNotification "com.recreated.dynamicstage.keyboard.input"
+// 4.5.795 keyring795: keys travel in a ring of notify states (memory only,
+// nothing on disk). Slot n holds the key whose seq % kDSKeyboardRingSlots == n,
+// encoded like the main state (seq | delete bit 32 | code point << 33).
+#define kDSKeyboardRingSlots 64
+#define kDSKeyboardRingFormat "com.recreated.dynamicstage.keyboard.ring.%d"
+#define kDSKeyboardRingOffPath "/var/mobile/.dynamicstage-keyring795-off"
 
 // The staged app tells SpringBoard whether that letter changed the field.
 // The app cannot append the shared log from inside its sandbox, so this is
@@ -210,7 +216,11 @@ static inline uint32_t DSIdentifierHash(NSString *identifier) {
 
 // Kept across resprings. postinst deletes it, so a crash from the build that
 // was just replaced is not still sitting there after the next install.
-#define kDSBuildVersionString "4.5.662"
+#define kDSBuildVersionString "4.5.801"
+
+// 4.5.667: a sandboxed app's trace lines land in <its data container>/tmp/
+// under this name; SpringBoard relays new lines into the shared trace.
+#define kDSAppTraceFileName "com.recreated.dynamicstage.app-trace.log"
 
 // One line from the staged app, copied into the stage log. The app and
 // SpringBoard do not share that log, so a blocked keyboard hide was invisible.

@@ -1,6 +1,11 @@
 #import "DSStageWindow.h"
 #import "DSPrivate.h"
 #import <objc/message.h>
+#import "DSStageDebug.h"
+#import "DSDiagnostics.h"
+FOUNDATION_EXPORT BOOL DSStage742MessagesStaged(void);
+FOUNDATION_EXPORT BOOL DSFold752On(void);
+FOUNDATION_EXPORT NSUInteger DSHost752Epoch;
 
 @implementation DSStageRootViewController
 
@@ -15,6 +20,16 @@
 
 - (BOOL)shouldAutorotate {
     return NO;
+}
+
+// 4.5.703 native703: follow the system's light / dark switch while open.
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    if (@available(iOS 13.0, *)) {
+        if (previousTraitCollection && previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"DSNative703TraitsChanged" object:nil];
+        }
+    }
 }
 
 @end
@@ -164,6 +179,23 @@ static NSHashTable *DSStageWindowRegistry(void) {
     if (scene.screen && scene.screen != UIScreen.mainScreen) scene = nil;
     if (!scene) scene = DSForegroundWindowScene();
     if (!scene || self.windowScene == scene) return NO;
+    // 4.5.741 open741: the window moves scene once per open / close. Another
+    // move within 0.6 s, while it is still on a foreground-active scene, is
+    // skipped: each move takes the whole stage off screen and back (the Bnb
+    // flicker, three moves in 400 ms). Off: -open741-off (latch).
+    static CFAbsoluteTime lastMove741 = 0;
+    static NSUInteger lastEpoch752 = 0;
+    CFAbsoluteTime now741 = CFAbsoluteTimeGetCurrent();
+    BOOL fold752 = DSFold752On() && !DSStage742MessagesStaged();   // 4.5.752: see DSStageManager fold752
+    if (DSFeature699On("open741") && !DSStage742MessagesStaged() && self.windowScene &&
+        self.windowScene.activationState == UISceneActivationStateForegroundActive &&
+        now741 - lastMove741 < 0.6 && now741 >= lastMove741 && (!fold752 || DSHost752Epoch == lastEpoch752)) {
+        DSFeature719MarkAction("open741");
+        DSDiagnosticsRecord(@"SpringBoard: open741 skipped a second stage-window scene move within 0.6 s");
+        return NO;
+    }
+    lastMove741 = now741;
+    lastEpoch752 = DSHost752Epoch;
     self.windowScene = scene;
     CGRect bounds = scene.coordinateSpace.bounds;
     if (!CGRectEqualToRect(self.bounds, bounds)) {
@@ -179,7 +211,12 @@ static NSHashTable *DSStageWindowRegistry(void) {
 // not receiving a touch is the far cheaper failure.
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     if (DSStageWindowsAside) return nil; // 4.5.656: the call screen gets every touch
-    if (!self.touchTest || !self.touchTest(point)) return nil;
+    if (!self.touchTest || !self.touchTest(point)) {
+        // 4.5.712: one flag read and out when no stage is on screen.
+        if (!_outsideArmed) return nil;
+        if (self.outsideTouch && event && event.type == UIEventTypeTouches) self.outsideTouch(point);
+        return nil;
+    }
     return [super hitTest:point withEvent:event];
 }
 

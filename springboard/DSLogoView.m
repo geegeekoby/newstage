@@ -67,17 +67,4 @@ static UIBezierPath *DSArrowPath(CGFloat side) {
     CGContextRestoreGState(context);
 }
 
-+ (UIImage *)logoImageWithSize:(CGSize)size
-                     markColor:(UIColor *)markColor
-                    arrowColor:(UIColor *)arrowColor {
-    UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
-    DSLogoView *view = [[DSLogoView alloc] initWithFrame:CGRectMake(0, 0, size.width, size.height)];
-    view.markColor = markColor ?: UIColor.whiteColor;
-    view.arrowColor = arrowColor ?: UIColor.blackColor;
-    [view drawRect:view.bounds];
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return image;
-}
-
 @end

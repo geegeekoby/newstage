@@ -1,22 +1,10 @@
-## 4.5.800
-- reason800: re-append our SBAppViewController._identifier to FBSMutableSceneSettings.ignoreOcclusionReasons on every staged-app settings update path (FBScene updateSettings: / updateSettingsWithBlock:, and SBAppViewController sceneHandle:didUpdateSettingsWithDiff: before occl798). Covers the home/layout path that bypassed reg799's contributor (Buddha 799 23:28:17.984: empty reasons, occl798 drop). In-place addObject when mutable; otherwise FBScene updateSettingsWithBlock:. occl798 stays as alarm and should never drop. Off: reason800-off + crash latch. core800-off returns to 799.
-- fg800: when SpringBoard backgrounds a staged scene while currentMode is Live (2), leave Live for Static (1) via setRequestedMode: and _setCurrentMode: (automatesLifecycle is still NO) before %orig — same shape as cover-sheet / in-call hosts. Restore Live on foreground return and on activateHostedAppWhenMediaAllows. Stops the "foreground status out from underneath us (current mode: Live)" assertion and the WillActivate storm. Logs "fg800: …". WillActivate logging rate-limited. Off: fg800-off + crash latch.
-- camera658 layout move: old display-layout element out, then new in (was new-in-then-old-out; left duplicate MobileSMS elements).
-- why775: capture isForeground before %orig (arm64 clobbered the BOOL → garbage 1872386623).
-- tree765: clear append-only log when it belongs to an older build so the header is not stale.
-- Holds stay (true holds-removal is later).
-
-## 4.5.799
-- reg799: each staged card now registers the way SpringBoard's own hosted apps do (cover sheet and in-call). We set the SBAppViewController's delegate, call addSceneUpdateContributer: on its scene handle, and on every settings rebuild our applicationSceneHandle:appendToSceneSettings:fromRequestContext:entity: puts the app-view identifier into ignoreOcclusionReasons. That is the real form of the crash fix; occl798 stays as a safety net and now logs "occl798 ok reason present" when the claim is held. Display-layout publish is log-only in 799. Off: reg799-off, plus a crash latch. core799-off undoes 799.
-- Holds are unchanged (that is 800).
-
-## 4.5.798
-- occl798, the crash fix: SpringBoard (16.5.1) traps when one of its app views says "ignore occlusion" but the app's scene no longer lists that view's reason. Our staged cards always said "ignore occlusion". The reason only gets added when SpringBoard launches the app itself, and when SpringBoard's main screen touches the same app, its own update replaces the list. The next update to our card then hit the check (SpringBoard+0xa1fa8, every SIGTRAP since 667). Now, before each update, a card keeps saying "ignore occlusion" only if the scene really lists its reason. Otherwise it stops saying it, and SpringBoard skips the check instead of failing it. Logged as "occl798 dropped ignoresOcclusions". Off: occl798-off, plus a crash latch.
-- focus798: the card-state line now runs on both update paths, not only with pass795. Every app-view update puts the card state in the crash breadcrumb.
-- The latch report prints every name on one short line, then one line per feature. Before, it was cut off after 3 of 9.
-- Crash log lines are no longer cut off (breadcrumb 1024, ring lines 600, diff text 500).
-- one798: after a crash, only the feature tried last gets latched off. The other try markers are dropped. Off: one798-off.
-- core798-off undoes 798.
+## 4.5.801
+- fg801: cover-sheet ordering for Live↔Static (automatesLifecycle briefly YES around setRequestedMode); restore Live + displayMode 4 / layerHosts on wake; skip foreground=NO orig when already Static. Fixes the Static assertion and the ~5 s blank card after deep-background corner restore. Off: fg801-off.
+- why775: volatile stack int before %orig so the log prints 0 or 1.
+- tree765: wipe stale dump on boot when build stamp differs (800 never did unless tree765-on).
+- Logging: log697 exempts focus/keyboard lines and caps at 120/s; DSTraceFile newline-aligns the export tail.
+- kbfocus801: SBWorkspaceKeyboardFocusController / SBSKeyboardFocusService real focus for the staged scene; bypass stand-in / keyring795 / msg742 while on; card lift from real keyboard height. Off: kbfocus801-off.
+- core801-off returns to 800.
 
 ## 4.5.797
 - focus797 (logging only): every keyboard-focus change passed to a staged app view is logged with the card state (minimised, home, busy, stage visible, parked), the app view's window and the key window. The 796 SIGTRAP (18:46:33) happened with pass795 on: Beeper got keyboardFocus 2.8 s after being minimised, while Spotlight's keyboard was up. Holds were not the cause. The exact SpringBoard check that fails is still unproven, so there is no behaviour change. Off: focus797-off.

@@ -40,9 +40,15 @@ NSString *DSDiagnosticsReadKeyboardStageLog(void);
 // to the run loop, including the last line that thread logged.
 void DSTrace(NSString *message);
 void DSTraceFormat(NSString *format, ...);
+// 4.5.792 log792: open / close the Messages capture window.
+void DSTrace792Open(double seconds);
+void DSTrace792Tap(void);
 void DSTraceSetContext(NSString *context);
 void DSTraceArchivePreviousAndStart(void);
 NSString *DSTraceRead(void);
+// 4.5.667: SpringBoard appends lines it copied from a sandboxed app's own
+// trace file (already formatted, newline-terminated).
+void DSTraceAppendRelayed(NSString *text);
 
 #ifdef __cplusplus
 }

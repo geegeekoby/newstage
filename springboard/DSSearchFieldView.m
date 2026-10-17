@@ -258,6 +258,10 @@ static const NSInteger kDSSearchSettleWaitLimit = 6;
     [_field becomeFirstResponder];
 }
 
+- (BOOL)isEditingNow {
+    return _field.isFirstResponder;
+}
+
 - (void)restartEditing {
     _suppressEndEditing = YES;
     if (_field.isFirstResponder) {

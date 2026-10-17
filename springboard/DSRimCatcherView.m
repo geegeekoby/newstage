@@ -1,6 +1,34 @@
 #import "DSRimCatcherView.h"
 #import "DSDiagnostics.h"
 #import <objc/message.h>
+#import "../shared/DSStageDebug.h"
+extern CFAbsoluteTime DSRim740StripAt;
+extern CGPoint DSRim740StripPoint;
+
+// 4.5.741 edge741: a card within 24 pt of a side of the screen gets its outer
+// strip on that side stretched to the physical screen edge (x = 0 / screen
+// width), so a touch at x = 0 still lands on the rim. Only the area outside the
+// card grows; the app is never covered. Off: -edge741-off (latch).
+CGRect DSEdge741Outer(CGRect outer, CGRect card, UIView *parent) {
+    if (!parent.window || !DSFeature699On("edge741")) return outer;
+    @try {
+        CGRect inWin = [parent convertRect:card toView:nil];
+        CGFloat w = CGRectGetWidth(parent.window.bounds);
+        if (w < 100.0) return outer;
+        CGRect o = [parent convertRect:outer toView:nil];
+        if (CGRectGetMinX(inWin) >= -1.0 && CGRectGetMinX(inWin) < 24.0 && CGRectGetMinX(o) > -2.0) {
+            CGFloat grow = CGRectGetMinX(o) + 2.0;
+            o.origin.x -= grow; o.size.width += grow;
+        }
+        CGFloat rightGap = w - CGRectGetMaxX(inWin);
+        if (rightGap >= -1.0 && rightGap < 24.0 && CGRectGetMaxX(o) < w + 2.0) {
+            o.size.width += (w + 2.0) - CGRectGetMaxX(o);
+        }
+        return [parent convertRect:o fromView:nil];
+    } @catch (NSException *exception) {
+        return outer;
+    }
+}
 
 void DSRimLog(NSString *text) {
     if (text.length == 0) return;
@@ -80,6 +108,8 @@ static void DSMakeSolidForWindowServer(UIView *view) {
     if (event && event.timestamp != lastEvent) {
         lastEvent = event.timestamp;
         CGPoint screen = [self convertPoint:point toView:nil];
+        // 4.5.741: every rim strip (main shell, top card, float) arms rimwin740.
+        if (event.type == UIEventTypeTouches) { DSRim740StripAt = CFAbsoluteTimeGetCurrent(); DSRim740StripPoint = screen; }
         DSRimLog([NSString stringWithFormat:@"hit %@ at %.0f,%.0f -> %@", self.catcherName ?: @"?", screen.x, screen.y, path]);
     }
     return result;
@@ -89,11 +119,13 @@ static void DSMakeSolidForWindowServer(UIView *view) {
 
 NSArray<DSRimCatcherView *> *DSMakeRimCatchers(UIView *parent, NSString *name, UIView *owner) {
     NSMutableArray<DSRimCatcherView *> *strips = [NSMutableArray arrayWithCapacity:4];
-    static NSString *sides[] = { @"top", @"bottom", @"left", @"right" };
+    // 4.5.741 log741: no static NSString C array (its "left" entry came out as
+    // garbage on device, "top-outer-\u00eb\u00c1", which cut the log line short).
+    NSString *(^sides741)(NSUInteger) = ^NSString *(NSUInteger k) { switch (k) { case 0: return @"top"; case 1: return @"bottom"; case 2: return @"left"; default: return @"right"; } };
     for (int i = 0; i < 4; i++) {
         DSRimCatcherView *strip = [[DSRimCatcherView alloc] initWithFrame:CGRectZero];
         strip.touchOwner = owner;
-        strip.catcherName = [NSString stringWithFormat:@"%@-%@", name, sides[i]];
+        strip.catcherName = [NSString stringWithFormat:@"%@-%@", name, sides741((NSUInteger)i)];
         [parent addSubview:strip];
         [strips addObject:strip];
     }

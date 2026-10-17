@@ -29,3 +29,6 @@
 - (void)setRimCatcherAvoidRect:(CGRect)windowRect;
 
 @end
+
+FOUNDATION_EXPORT CFAbsoluteTime DSRim740StripAt;
+FOUNDATION_EXPORT CGPoint DSRim740StripPoint;

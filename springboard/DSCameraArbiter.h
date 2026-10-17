@@ -31,3 +31,7 @@
 + (void)withdrawAllForReason:(NSString *)why;
 
 @end
+
+// 4.5.670: YES within `window` seconds of the stage moving or removing one of
+// its display-layout elements. Thread safe.
+FOUNDATION_EXPORT BOOL DSCameraLayoutChangedRecently(double window);

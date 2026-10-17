@@ -37,6 +37,8 @@ CFAbsoluteTime DSSearchFieldLastUserTap(void);
 // Ends editing and starts it again. reloadInputViews does not raise a keyboard
 // that never appeared.
 - (void)restartEditing;
+// 4.5.720: the text field is the first responder.
+- (BOOL)isEditingNow;
 // Read-only. fr/win/key/att for the diagnostics log.
 - (NSString *)editingDebugSummary;
 

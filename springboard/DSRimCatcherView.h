@@ -39,3 +39,4 @@ void DSRimLog(NSString *text);
 #ifdef __cplusplus
 }
 #endif
+FOUNDATION_EXPORT CGRect DSEdge741Outer(CGRect outer, CGRect card, UIView *parent);

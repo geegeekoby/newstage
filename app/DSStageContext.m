@@ -62,6 +62,8 @@ static CGRect DSCardRectFromState(NSDictionary *state, NSString *identifier) {
     // 4.5.654: last card size read from notifyd, and when (main thread only).
     CGRect _notedCard;
     CFAbsoluteTime _notedAt;
+    CFAbsoluteTime _battery701ActiveAt;   // 4.5.701: last launch / foreground
+    BOOL _battery701Observing;
     // 4.5.654: a layout pass is already queued (main thread only). The
     // geometry and peer notifications arrive as a pair, and each used to
     // queue its own full layoutIfNeeded of every window.
@@ -98,27 +100,6 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
     NSArray *stages = state[@"stages"];
     if ([stages isKindOfClass:NSArray.class] && [stages containsObject:identifier]) return YES;
     return [state[@"active"] boolValue] && [state[@"stage"] isEqualToString:identifier];
-}
-
-+ (BOOL)processIsStagedNow {
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier;
-    if (identifier.length == 0) return NO;
-
-    NSDictionary *state = [NSDictionary dictionaryWithContentsOfFile:kDSSharedStatePath];
-    if (DSFileNamesUs(state, identifier)) return YES;
-
-    int token = NOTIFY_TOKEN_INVALID;
-    int peer = NOTIFY_TOKEN_INVALID;
-    BOOL named = NO;
-    if (notify_register_check(kDSStageGeometryNotification, &token) == NOTIFY_STATUS_OK) {
-        named = DSNotifyNamesUs(token, identifier);
-        notify_cancel(token);
-    }
-    if (!named && notify_register_check(kDSStagePeerNotification, &peer) == NOTIFY_STATUS_OK) {
-        named = DSNotifyNamesUs(peer, identifier);
-        notify_cancel(peer);
-    }
-    return named;
 }
 
 - (void)startObserving {
@@ -360,9 +341,45 @@ static BOOL DSFileNamesUs(NSDictionary *state, NSString *identifier) {
 
 // The scene's coordinate space follows the frame SpringBoard hands us and is not
 // something this dylib rewrites, so it stays trustworthy.
+// 4.5.701 battery701: this backup probe (notifications are the real signal)
+// ran in every injected app for its whole life - every 0.35 s while not on a
+// card (Messages used full screen polled ~3x a second) and every 1.5 s on a
+// card, including a minimised card's app kept running in the background. Now:
+// in the background every 6 s; not on a card and foreground: 0.35 s for 10 s
+// after launch / coming to the foreground, then 1 s; on a card and
+// foreground: 1.5 s as before. Coming to the foreground refreshes at once.
+// Follows SpringBoard's battery701 switch (off file there).
+- (NSTimeInterval)battery701ProbeDelay {
+    NSTimeInterval classic = self.staged ? 1.5 : 0.35;
+    if (!DSBattery701AppOn()) return classic;
+    if (!_battery701Observing) {
+        _battery701Observing = YES;
+        _battery701ActiveAt = CFAbsoluteTimeGetCurrent();
+        __weak DSStageContext *weakSelf = self;
+        for (NSNotificationName name in @[ UIApplicationWillEnterForegroundNotification, UIApplicationDidBecomeActiveNotification ]) {
+            [NSNotificationCenter.defaultCenter addObserverForName:name object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) {
+                (void)note;
+                DSStageContext *strongSelf = weakSelf;
+                if (!strongSelf) return;
+                strongSelf->_battery701ActiveAt = CFAbsoluteTimeGetCurrent();
+                [strongSelf refresh];
+            }];
+        }
+    }
+    UIApplicationState state = UIApplicationStateActive;
+    @try {
+        state = UIApplication.sharedApplication.applicationState;
+    } @catch (NSException *exception) {
+    }
+    if (state == UIApplicationStateBackground) return 6.0;
+    if (self.staged) return 1.5;
+    CFAbsoluteTime since = CFAbsoluteTimeGetCurrent() - _battery701ActiveAt;
+    return (since >= 0.0 && since < 10.0) ? 0.35 : 1.0;
+}
+
 - (void)scheduleProbe {
     __weak DSStageContext *weakSelf = self;
-    NSTimeInterval delay = self.staged ? 1.5 : 0.35;
+    NSTimeInterval delay = [self battery701ProbeDelay];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         DSStageContext *strongSelf = weakSelf;

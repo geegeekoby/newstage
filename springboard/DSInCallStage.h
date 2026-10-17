@@ -32,6 +32,11 @@ BOOL DSCallGuardActive(void);
 void DSCallGuardNoteFrontChange(void);
 // 4.5.656: SBAppViewController hook held one staged app view update (log count).
 void DSCallGuardNoteHeldUpdate(void);
+// 4.5.758 call758: a staged scene got systemAnimation (0x20). Signal VoIP
+// ends without InCallService; arm the Live-update hold. Off: call758-off.
+void DSCall758NoteSystemAnimation(NSString *sceneIdentifier);
+BOOL DSCall758RecentlyArmed(void);
+BOOL DSCall758AppViewHold(void);
 // 4.5.656: YES while the stage windows are hidden so a call screen shows.
 BOOL DSCallStepAsideActive(void);
 // YES for a touch outside the card on the window that holds the contained

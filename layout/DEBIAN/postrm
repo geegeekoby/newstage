@@ -1,12 +1,27 @@
 #!/bin/sh
-# Only remove our own copies under TweakInject. If TweakInject is a symlink to
-# DynamicLibraries, leaving it alone is correct - the package manager removes
-# the DynamicLibraries files itself.
-set -e
+# Only remove our own copies under TweakInject, and only when the package is
+# really going away (remove / purge). 4.5.708: an upgrade runs the old postrm
+# after the new files are unpacked; deleting there removed the files dpkg had
+# just installed when TweakInject and DynamicLibraries are the same files.
+# Never fails: dpkg must not be left half-configured by this script.
 
 INJECT="/var/jb/usr/lib/TweakInject"
-if [ -d "$INJECT" ] && [ ! -L "$INJECT" ]; then
-	rm -f "$INJECT/DynamicStageApp.dylib" "$INJECT/DynamicStageApp.plist"
-fi
+LIBS="/var/jb/Library/MobileSubstrate/DynamicLibraries"
+
+case "$1" in
+	remove|purge)
+		if [ -d "$INJECT" ] && [ ! -L "$INJECT" ]; then
+			for name in DynamicStageApp.dylib DynamicStageApp.plist; do
+				# The same file as the package's own copy: dpkg removes it.
+				if [ -e "$LIBS/$name" ] && [ "$LIBS/$name" -ef "$INJECT/$name" ]; then
+					continue
+				fi
+				rm -f "$INJECT/$name" || true
+			done
+		fi
+		;;
+	*)
+		;;
+esac
 
 exit 0

@@ -5,8 +5,11 @@
 #import "DSExclusions.h"
 #import "DSBootstrap.h"
 #import "DSDiagnostics.h"
+#import "DSStageDebug.h"
 #import "DSStagePipeline.h"
 #import <objc/runtime.h>
+#import <dlfcn.h>
+#import <execinfo.h>
 #import <objc/message.h>
 #import <notify.h>
 #import <fcntl.h>
@@ -32,12 +35,6 @@ static BOOL DSStaged(void) {
     return [DSStageContext sharedContext].staged;
 }
 
-// Messenger, Signal, and Beeper keep SpringBoard's keyboard. Messages does not:
-// StageDuo 1.2 leaves MobileSMS on its own keyboard so the iMessage app strip
-// (the quick bar under the field) stays attached to that keyboard.
-static BOOL DSMessagesDrawsOwnKeyboard(void) {
-    return NO;
-}
 
 static BOOL DSMessagesInputIsTransitioning(UIView *view, CGRect frame);
 static BOOL DSMessagesInputFrameIsParkedOffScreen(CGRect frame);
@@ -148,13 +145,6 @@ static BOOL DSBeeperNameLooksLikeQuickBar(NSString *name) {
     return NO;
 }
 
-static BOOL DSBeeperViewIsQuickBar(UIView *view) {
-    if (![view isKindOfClass:UIView.class]) return NO;
-    if (DSBeeperNameLooksLikeQuickBar(DSBeeperShortClass(view))) return YES;
-    CGFloat width = CGRectGetWidth(view.bounds);
-    CGFloat height = CGRectGetHeight(view.bounds);
-    return width >= 180.0 && height >= 24.0 && height <= 180.0;
-}
 
 static NSString *DSBeeperChain(UIView *view) {
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
@@ -354,6 +344,7 @@ static BOOL DSMessagesFieldIsEditing = NO;
 // Set for the tap that wants SpringBoard's keyboard. A resign in this window
 // is the stage taking the key, not the user leaving the field.
 static BOOL DSStageKeyboardWanted = NO;
+static BOOL DSCaret778Dropping = NO;   // 4.5.778: our own drop after SpringBoard's hide
 
 static BOOL DSMessagesKeepsOwnKeys(void) {
     // SpringBoard's stand-in is the editor for the whole Messages session. The
@@ -363,7 +354,7 @@ static BOOL DSMessagesKeepsOwnKeys(void) {
         if (DSStageKeyboardWanted) return NO;
         return !DSMessagesFieldIsEditing;
     }
-    return DSMessagesDrawsOwnKeyboard() && !DSMessagesKeyboardHosted;
+    return NO;
 }
 
 // The reply bar stays where it was while the keyboard moves to SpringBoard.
@@ -385,8 +376,6 @@ static BOOL DSMessagesWantsRemoteKeyboard(void) {
     return YES;
 }
 
-static void DSReleaseMessagesKeyboardHost(void);
-static void DSScheduleMessagesKeyboardHandoff(UIResponder *responder);
 
 static CFAbsoluteTime DSStageKeyboardGuardUntil = 0;
 // The reply bar, as it was when the field was tapped. A later keyboard inset
@@ -436,12 +425,17 @@ static UIView *DSEntryBarInTree(UIView *view, NSInteger depth, UIView *best) {
 }
 
 static void DSRecordKeyboardWhy(NSString *why);
+static BOOL DSReopen788Active(void);
+static void DSStrip790Key(BOOL isDelete);
+static NSInteger DSStrip790Left = 0;
 static CGRect DSStageBounds(void);
 static CGFloat DSEntryOnCardMinY = 0;
 
 // The reply bar starts on the card, then Messages parks it a few thousand
 // points down. That park is what hides the box. Put it back on the spot it
 // just had. A move of a few thousand points is the park, not a bad reading.
+static BOOL DSInputContainer782Parked(CGRect *outFrame);
+static BOOL DSUnpark788(NSString *where);
 static void DSShowMessageEntryAboveKeyboard(UIResponder *responder) {
     NSString *who = NSStringFromClass(responder.class);
     UIView *entry = nil;
@@ -481,6 +475,17 @@ static void DSShowMessageEntryAboveKeyboard(UIResponder *responder) {
     }
     if (!parked) {
         DSRecordKeyboardWhy(where);
+        return;
+    }
+    // 4.5.782: when the whole input container is parked, sliding only the bar
+    // left the bar, the app strip and the container in three places.
+    // reopen782 brings the container back instead.
+    if (DSReopen788Active() && DSUnpark788(@"focus")) {
+        DSRecordKeyboardWhy([where stringByAppendingString:@" container parked, put back by reopen788"]);
+        return;
+    }
+    if ((DS782On("reopen782") || DS783On("reopen783")) && DSInputContainer782Parked(NULL)) {
+        DSRecordKeyboardWhy([where stringByAppendingString:@" container parked, left to reopen782"]);
         return;
     }
     CGFloat target = DSEntryOnCardMinY > 20.0 ? DSEntryOnCardMinY : (cardH - barH);
@@ -623,22 +628,6 @@ static void DSRequestSpringBoardKeyboard(BOOL show) {
                   show ? @"show" : @"hide", token, setStatus, postStatus);
 }
 
-// The picker keyboard, without the blank input view. The message field stays
-// first responder. Resigning it is what hid the keys and shifted the bar.
-static void DSPostPickerKeyboard(BOOL show) {
-    if (!DSStaged() || !DSMessagesDrawsOwnKeyboard()) return;
-    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
-    if (show) state |= kDSStageStateActiveBit;
-    static int token = NOTIFY_TOKEN_INVALID;
-    if (token == NOTIFY_TOKEN_INVALID) {
-        notify_register_check(kDSKeyboardRequestNotification, &token);
-    }
-    uint32_t setStatus = 1;
-    if (token != NOTIFY_TOKEN_INVALID) setStatus = notify_set_state(token, state);
-    uint32_t postStatus = notify_post(kDSKeyboardRequestNotification);
-    DSTraceFormat(@"app keyboard request %@ token=%d set=%u post=%u",
-                  show ? @"show" : @"hide", token, setStatus, postStatus);
-}
 
 // A custom input view with no height tells Messages there is nothing to slide
 // up for. SpringBoard draws the keys. Returning this before the field is
@@ -722,7 +711,7 @@ static CGRect DSMessagesHoldFrame(UIView *view, CGRect proposed) {
     return current;
 }
 
-static void DSBanishLocalKeyboard(void);
+
 static BOOL DSResignIsFromKeyWindow(void);
 static BOOL DSResponderTakesText(UIResponder *responder);
 static BOOL DSIsKeyboardWindow(UIWindow *window);
@@ -737,12 +726,346 @@ static BOOL DSDrainQueued = NO;
 // drop first-responder status; the field is still where the text has to go.
 static __weak UIResponder *DSKeyboardTarget = nil;
 static BOOL DSKeyboardTargetOnScreen = NO;
-static CFAbsoluteTime DSKeyboardShownAt = 0;
 static BOOL DSLoggedMissingTextTarget = NO;
 static NSString *DSLoggedEditingClass = nil;
 // Set while a letter is being written into the tapped field. The app must not
 // open its own keyboard for that, and it must not hide the one already up.
 static BOOL DSDeliveringStageKey = NO;
+
+// 4.5.781 entry781: one line with the reply bar, the input container and the
+// app strip, so a bar that drops or leaves the card shows where it went.
+static void DSEntry781Collect(UIView *view, NSInteger depth, NSMutableArray *out) {
+    if (!view || depth > 18 || out.count > 8) return;
+    if ([view isKindOfClass:UICollectionView.class] || [view isKindOfClass:UITableView.class]) return;
+    NSString *name = NSStringFromClass(object_getClass(view));
+    BOOL strip = [name rangeOfString:@"AppStrip"].location != NSNotFound ||
+                 [name rangeOfString:@"BrowserSwitcher"].location != NSNotFound;
+    BOOL container = [name isEqualToString:@"UIInputSetContainerView"] || [name isEqualToString:@"UIInputSetHostView"];
+    if ((strip || container || DSViewIsMessageEntryBar(view)) && view.window) {
+        CGRect r = [view convertRect:view.bounds toView:nil];
+        [out addObject:[NSString stringWithFormat:@"%@%@ h=%d a=%.1f", name, NSStringFromCGRect(r), view.hidden, view.alpha]];
+        if (strip) return;
+    }
+    for (UIView *sub in view.subviews) DSEntry781Collect(sub, depth + 1, out);
+}
+
+static UIView *DSInputContainer782In(UIView *view, NSInteger depth);
+static CGRect DSLastKeyboardEnd784 = {{0, 0}, {0, 0}};
+static NSString *DSLastKeyboardNote784 = nil;
+
+// 4.5.784 strip784: read-only. Method names once per launch, then the
+// keyboard state Messages could be asking about. Off: strip784-off
+static void DSStrip784Methods(void) {
+    static BOOL done = NO;
+    if (done) return;
+    done = YES;
+    const char *classes[] = { "CKMessageEntryView", "CKChatController", "CKMessageEntryViewController", "CKChatInputController" };
+    for (int c = 0; c < 4; c++) {
+        Class cls = objc_getClass(classes[c]);
+        if (!cls) { DSTraceFormat(@"strip784 methods %s: no class", classes[c]); continue; }
+        NSMutableArray *hits = [NSMutableArray array];
+        for (int meta = 0; meta < 2; meta++) {
+            Class k = meta ? object_getClass((id)cls) : cls;
+            unsigned int n = 0;
+            Method *list = class_copyMethodList(k, &n);
+            for (unsigned int i = 0; i < n; i++) {
+                NSString *m = NSStringFromSelector(method_getName(list[i]));
+                NSString *low = m.lowercaseString;
+                if ([low containsString:@"appstrip"] || [low containsString:@"browser"] || [low containsString:@"collapse"] ||
+                    [low containsString:@"strip"] || [low containsString:@"keyboard"]) {
+                    [hits addObject:meta ? [@"+" stringByAppendingString:m] : m];
+                }
+            }
+            if (list) free(list);
+        }
+        DSTraceFormat(@"strip784 methods %s (%lu): %@", classes[c], (unsigned long)hits.count, [hits componentsJoinedByString:@" "]);
+    }
+}
+
+static void DSStrip784Log(NSString *why) {
+    if (!DSStaged() || !DS784On("strip784") || access("/var/mobile/.dynamicstage-strip784-on", F_OK) != 0) return;   // 4.5.788: opt-in
+    @try {
+        DSStrip784Methods();
+        NSString *onScreen = @"n/a";
+        Class kb = objc_getClass("UIKeyboard");
+        SEL os = sel_registerName("isOnScreen");
+        if (kb && [kb respondsToSelector:os]) onScreen = ((BOOL (*)(id, SEL))objc_msgSend)(kb, os) ? @"1" : @"0";
+        NSString *visible = @"n/a";
+        SEL vis = sel_registerName("isKeyboardVisible");
+        Class impl = objc_getClass("UIKeyboardImpl");
+        if (impl && [impl respondsToSelector:vis]) visible = ((BOOL (*)(id, SEL))objc_msgSend)(impl, vis) ? @"1" : @"0";
+        DSTraceFormat(@"strip784 %@ isOnScreen=%@ implVisible=%@ lastNote=%@ end=%@", why, onScreen, visible,
+                      DSLastKeyboardNote784 ?: @"none", NSStringFromCGRect(DSLastKeyboardEnd784));
+    } @catch (NSException *e) {}
+}
+
+static void DSEntry781Log(NSString *why) {
+    if ([why hasPrefix:@"become"] || [why hasPrefix:@"auto-focus"]) DSStrip790Left = 3;   // 4.5.790 strip790
+    DSStrip784Log(why);
+    if (!DSStaged() || !DS781On("entry781")) return;
+    @try {
+        NSMutableArray *out = [NSMutableArray array];
+        for (UIWindow *w in UIApplication.sharedApplication.windows) DSEntry781Collect(w, 0, out);
+        UIResponder *t = DSKeyboardTarget;
+        NSUInteger len = 0;
+        if ([t isKindOfClass:UITextView.class]) len = ((UITextView *)t).text.length;
+        if (DS783On("strip783") && access("/var/mobile/.dynamicstage-strip783-on", F_OK) == 0) {   // 4.5.788: opt-in
+            NSMutableArray *kids = [NSMutableArray array];
+            for (UIWindow *w in UIApplication.sharedApplication.windows) {
+                UIView *c = DSInputContainer782In(w, 0);
+                for (UIView *h in c.subviews) {
+                    if (![NSStringFromClass(object_getClass(h)) isEqualToString:@"UIInputSetHostView"]) continue;
+                    for (UIView *k in h.subviews) {
+                        NSMutableString *e = [NSMutableString stringWithFormat:@"%@ y=%.0f h=%.0f hid=%d", NSStringFromClass(object_getClass(k)),
+                                              CGRectGetMinY(k.frame), CGRectGetHeight(k.frame), k.hidden];
+                        NSUInteger n = 0;
+                        for (UIView *g in k.subviews) {
+                            if (n++ >= 4) break;
+                            [e appendFormat:@" [%@ y=%.0f h=%.0f hid=%d]", NSStringFromClass(object_getClass(g)), CGRectGetMinY(g.frame), CGRectGetHeight(g.frame), g.hidden];
+                        }
+                        [kids addObject:e];
+                    }
+                }
+                if (kids.count) break;
+            }
+            NSMutableString *kb = [NSMutableString string];
+            Class impl = objc_getClass("UIKeyboardImpl");
+            SEL act = sel_registerName("activeInstance");
+            id inst = (impl && [impl respondsToSelector:act]) ? ((id (*)(id, SEL))objc_msgSend)(impl, act) : nil;
+            const char *names[] = { "isInHardwareKeyboardMode", "isMinimized", "showsCandidateBar", "isUsingDictationLayout" };
+            for (int q = 0; q < 4; q++) {
+                SEL sq = sel_registerName(names[q]);
+                if (inst && [inst respondsToSelector:sq]) [kb appendFormat:@" %s=%d", names[q], ((BOOL (*)(id, SEL))objc_msgSend)(inst, sq)];
+            }
+            if (!inst) [kb appendString:@" kbImpl=nil"];
+            DSTraceFormat(@"strip783 %@ text=%lu |%@ | host: %@", why, (unsigned long)len, kb,
+                          kids.count ? [kids componentsJoinedByString:@" ; "] : @"none");
+        }
+        DSTraceFormat(@"entry781 %@ fr=%d text=%lu wanted=%d | %@", why, t.isFirstResponder, (unsigned long)len,
+                      DSStageKeyboardWanted, out.count ? [out componentsJoinedByString:@" ; "] : @"no bar");
+    } @catch (NSException *e) {}
+}
+
+static BOOL DSIsMessageBox781(UIResponder *r) {
+    return r && [NSStringFromClass(r.class) rangeOfString:@"MessageEntry"].location != NSNotFound &&
+           [NSStringFromClass(r.class) rangeOfString:@"Search"].location == NSNotFound;
+}
+
+static BOOL DSChatOpening781 = NO;
+
+// 4.5.782 strip782: see the keyboard-note hook.
+static BOOL DSStrip782Passes(NSString *name) {
+    if (!DSStaged() || !DSMessagesOwnsKeyboard() || !DS782On("strip782")) return NO;
+    // 4.5.783: had no effect in Hingis; off unless /var/mobile/.dynamicstage-strip782-on exists.
+    if (DSFeature699On("core783") && access("/var/mobile/.dynamicstage-strip782-on", F_OK) != 0) return NO;
+    if (!DSStageKeyboardWanted) return NO;
+    UIResponder *t = DSKeyboardTarget;
+    if (!DSIsMessageBox781(t) || !t.isFirstResponder) return NO;
+    return [name isEqualToString:UIKeyboardWillShowNotification] ||
+           [name isEqualToString:UIKeyboardDidShowNotification] ||
+           [name isEqualToString:UIKeyboardWillChangeFrameNotification] ||
+           [name isEqualToString:UIKeyboardDidChangeFrameNotification];
+}
+
+// 4.5.782 reopen782: Messages focuses a box with a draft while the chat is
+// still opening, and UIKit leaves its input container parked ~4000 pt down.
+static UIView *DSInputContainer782In(UIView *view, NSInteger depth) {
+    if (!view || depth > 4) return nil;
+    if ([NSStringFromClass(object_getClass(view)) isEqualToString:@"UIInputSetContainerView"]) return view;
+    for (UIView *sub in view.subviews) {
+        UIView *found = DSInputContainer782In(sub, depth + 1);
+        if (found) return found;
+    }
+    return nil;
+}
+
+static BOOL DSInputContainer782Parked(CGRect *outFrame) {
+    @try {
+        UIResponder *t = DSKeyboardTarget;
+        UIWindow *w = [t isKindOfClass:UIView.class] ? ((UIView *)t).window : nil;
+        UIView *c = DSInputContainer782In(w, 0);
+        if (!c) return NO;
+        if (outFrame) [w layoutIfNeeded];
+        CGRect r = [c convertRect:c.bounds toView:nil];
+        if (outFrame) *outFrame = r;
+        return fabs(CGRectGetMinY(r)) > 1500.0;
+    } @catch (NSException *e) { return NO; }
+}
+
+
+// 4.5.789 reopen789: reopen788's frame move did nothing (Shush's 07:42:17.650,
+// 17.953, 27.393, 27.626, 27.947: {{0, 4000}} -> {{0, 4000}}). What does bring
+// the container back is Messages' own text-changed relayout: a delete did it
+// (Shush's 07:42:21.872, 29.977 -> {{0, 0}}) and reopen783's signal did it on
+// the next pass (Hingis 06:47:58.100). Rule: reopen788 off, the reopen783
+// signal path runs at draft auto-focus and chat didAppear.
+// Off: /var/mobile/.dynamicstage-reopen789-off (core789-off too).
+static BOOL DSReopen788Active(void) {
+    if (!DS788On("reopen788")) return NO;
+    if (DS789On("reopen789")) return NO;
+    return YES;
+}
+
+// 4.5.785 reopen784: Messages focuses a draft box while the chat opens, the
+// box then resigns at the keyboard handoff (caret778 off) and the input
+// container stays parked ~4000 pt down. A tap fixes it (Hahahah 07:01:10.996),
+// so when the chat has appeared do what the tap does: focus the box once.
+// Off: /var/mobile/.dynamicstage-reopen784-off (core785-off too).
+static BOOL DSAutoFocus785 = NO;
+
+// 4.5.788 reopen788: reopen784's becomeFirstResponder never brought the parked
+// container back (Kaisjd 07:31:41.481 still {{0, 4000}} after it; Hufhj
+// 07:19:38.268 the same); it stayed parked until the next tap, and the extra
+// focus moved SpringBoard's keys off and up again (Kaisjd 41.479 -> 41.507).
+// Put the container itself back on the card, in one move, no focus change.
+// Off: /var/mobile/.dynamicstage-reopen788-off
+static BOOL DSUnpark788(NSString *where) {
+    @try {
+        UIResponder *t = DSKeyboardTarget;
+        UIWindow *w = [t isKindOfClass:UIView.class] ? ((UIView *)t).window : nil;
+        UIView *c = DSInputContainer782In(w, 0);
+        if (!c || !c.superview) return NO;
+        CGRect r = [c convertRect:c.bounds toView:nil];
+        if (fabs(CGRectGetMinY(r)) <= 1500.0) return NO;
+        CGRect f = c.frame;
+        f.origin.y -= CGRectGetMinY(r);
+        c.frame = f;
+        CGRect after = [c convertRect:c.bounds toView:nil];
+        DSFeature719MarkAction("reopen788");
+        DSTraceFormat(@"reopen788 %@: input container %@ -> %@ (no focus change)", where, NSStringFromCGRect(r), NSStringFromCGRect(after));
+        return YES;
+    } @catch (NSException *e) { return NO; }
+}
+
+static void DSReopen785(void) {
+    if (!DSStaged() || !DSMessagesOwnsKeyboard()) return;
+    if (!DSAutoFocus785 || !DSStageKeyboardWanted) return;
+    UIResponder *t = DSKeyboardTarget;
+    if (!DSIsMessageBox781(t)) return;
+    CGRect before = CGRectNull;
+    if (!DSInputContainer782Parked(&before)) return;
+    @try {
+        DSFeature719MarkAction("reopen784");
+        DSTraceFormat(@"reopen784: draft auto-focus left the input container parked %@ (fr=%d), focusing the box once", NSStringFromCGRect(before), t.isFirstResponder);
+        if (!t.isFirstResponder) [t becomeFirstResponder];
+        CGRect after = before;
+        BOOL still = DSInputContainer782Parked(&after);
+        DSTraceFormat(@"reopen784 after %@%@ fr=%d", NSStringFromCGRect(after), still ? @" (still parked this pass)" : @"", t.isFirstResponder);
+        DSEntry781Log(@"after reopen784");
+    } @catch (NSException *exception) {}
+}
+
+
+// 4.5.786 swipe786: with caret778 off the message box is not first responder
+// after the keyboard handoff, so dragging the conversation down (Messages'
+// interactive keyboard dismiss) has no UIKit keyboard to dismiss and
+// SpringBoard's keys stayed up. A downward drag of the transcript that reaches
+// the reply bar while Messages wants the staged keys hides them (kbleave743 path).
+// Off: /var/mobile/.dynamicstage-swipe786-off
+@interface DSSwipe786Target : NSObject
+@property (nonatomic) BOOL fired;
+- (void)pan:(UIPanGestureRecognizer *)pan;
+@end
+
+@implementation DSSwipe786Target
+- (void)pan:(UIPanGestureRecognizer *)pan {
+    @try {
+        if (pan.state == UIGestureRecognizerStateBegan) { self.fired = NO; return; }
+        if (pan.state != UIGestureRecognizerStateChanged || self.fired) return;
+        if (!DSStaged() || !DSMessagesOwnsKeyboard() || !DS786On("swipe786") || !DSStageKeyboardWanted) return;
+        CGPoint t = [pan translationInView:pan.view];
+        if (t.y < 30.0 || fabs(t.y) < fabs(t.x) * 1.5) return;
+        // Native interactive dismiss starts when the finger reaches the keys.
+        // The staged keys sit under the card, so the finger has to reach the
+        // reply bar at the bottom of the card; scrolling higher up only scrolls.
+        UIWindow *w = pan.view.window;
+        CGPoint at = [pan locationInView:w];
+        if (!w || at.y < CGRectGetHeight(w.bounds) - 90.0) return;
+        self.fired = YES;
+        DSFeature719MarkAction("swipe786");
+        DSTraceFormat(@"swipe786: conversation dragged down %.0f pt, hiding the staged keys", t.y);
+        // 4.5.787 swipe787: a user dismissal, so SpringBoard skips its 1 s stand-in guard.
+        DSRecordKeyboardWhy(DS787On("swipe787") ? @"swipe786 cancel=1" : @"swipe786");
+        DSRequestSpringBoardKeyboard(NO);
+        UIResponder *box = DSKeyboardTarget;
+        if (DSIsMessageBox781(box) && box.isFirstResponder) [box resignFirstResponder];
+    } @catch (NSException *exception) {}
+}
+@end
+
+static const void *DSSwipe786Key = &DSSwipe786Key;
+
+static void DSSwipe786Attach(UIView *view, NSInteger depth) {
+    if (!view || depth > 14) return;
+    if ([view isKindOfClass:UIScrollView.class]) {
+        UIScrollView *scroll = (UIScrollView *)view;
+        if (scroll.keyboardDismissMode != UIScrollViewKeyboardDismissModeNone &&
+            !objc_getAssociatedObject(scroll, DSSwipe786Key)) {
+            DSSwipe786Target *target = [DSSwipe786Target new];
+            objc_setAssociatedObject(scroll, DSSwipe786Key, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            [scroll.panGestureRecognizer addTarget:target action:@selector(pan:)];
+            DSTraceFormat(@"swipe786: watching %@ (dismissMode=%ld)", NSStringFromClass(object_getClass(scroll)), (long)scroll.keyboardDismissMode);
+        }
+        return;
+    }
+    for (UIView *sub in view.subviews) DSSwipe786Attach(sub, depth + 1);
+}
+
+// 4.5.783 reopen783: in Hingis the parked container only came back on the
+// first key (deleteBackward -> text change -> Messages' textViewDidChange ->
+// entry relayout). Send that same change signal once, without editing text.
+// Off: /var/mobile/.dynamicstage-reopen783-off
+static void DSReopen782(NSString *where, BOOL mayRefocus) {
+    (void)mayRefocus;
+    if (!DSStaged() || !DSMessagesOwnsKeyboard() || !DS783On("reopen783")) return;
+    UIResponder *t = DSKeyboardTarget;
+    if (!DSIsMessageBox781(t) || (!t.isFirstResponder && !DS790On("reopen790"))) return;
+    // 4.5.791 reopen791: never send Messages' text-changed relayout while the box
+    // is focused. Highb: 07:53:51.322 bar 81 + strip -> signal at fr=1 text=8 ->
+    // 51.353 bar 44, strip gone (also 55.496->55.521, 06.062->06.094). Unfocused
+    // keys (fr=0) keep 81 + strip (59.272-59.777), and the fr=0 didAppear signal
+    // still unparks next pass (51.925, 56.082, 06.666). Off: -reopen791-off.
+    if (DS791On("reopen791") && t.isFirstResponder) {
+        NSUInteger len791 = [t isKindOfClass:UITextView.class] ? ((UITextView *)t).text.length : 0;
+        DSFeature719MarkAction("reopen791");
+        DSTraceFormat(@"reopen791 %@: box focused (text=%lu), text-changed signal skipped", where, (unsigned long)len791);
+        return;
+    }
+    static BOOL busy = NO;
+    if (busy) return;
+    CGRect before = CGRectNull;
+    if (!DSInputContainer782Parked(&before)) return;
+    busy = YES;
+    @try {
+        DSFeature719MarkAction("reopen783");
+        if (DS789On("reopen789")) DSFeature719MarkAction("reopen789");
+        if (!t.isFirstResponder) DSFeature719MarkAction("reopen790");
+        DSTraceFormat(@"reopen783 %@: input container parked %@, sending text-changed signal", where, NSStringFromCGRect(before));
+        if ([t conformsToProtocol:@protocol(UITextInput)]) {
+            id<UITextInput> input = (id<UITextInput>)t;
+            id<UITextInputDelegate> d = input.inputDelegate;
+            if ([d respondsToSelector:@selector(textWillChange:)]) [d textWillChange:input];
+            if ([d respondsToSelector:@selector(textDidChange:)]) [d textDidChange:input];
+        }
+        if ([t isKindOfClass:UITextView.class]) {
+            UITextView *tv = (UITextView *)t;
+            id<UITextViewDelegate> vd = tv.delegate;
+            if ([vd respondsToSelector:@selector(textViewDidChange:)]) [vd textViewDidChange:tv];
+        }
+        CGRect after = before;
+        BOOL still = DSInputContainer782Parked(&after);
+        DSTraceFormat(@"reopen783 after %@%@", NSStringFromCGRect(after), still ? @" (still parked this pass)" : @"");
+        DSEntry781Log(@"after reopen783");
+        if (still) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                CGRect next = CGRectNull;
+                BOOL parked = DSInputContainer782Parked(&next);
+                DSTraceFormat(@"reopen783 next pass %@%@", NSStringFromCGRect(next), parked ? @" still parked" : @"");
+            });
+        }
+    } @catch (NSException *exception) {}
+    busy = NO;
+}
 
 static void DSPrepareMessagesForSpringBoardKeyboard(UIResponder *responder) {
     if (!DSMessagesOwnsKeyboard() || !DSResponderTakesText(responder)) return;
@@ -853,6 +1176,7 @@ static void DSInstallSearchCancelHook(void) {
 
 static void DSNoteStageKeyboardResign(UIResponder *responder) {
     if (DSIsBeeper()) return;
+    if (DSCaret778Dropping) return;   // 4.5.778: SpringBoard already hid the keys
     if (!DSStaged() || !DSMessagesUsesStageKeyboard() || DSDeliveringStageKey) return;
     if (DSMessagesOwnsKeyboard()) {
         NSString *name = NSStringFromClass(responder.class);
@@ -904,8 +1228,47 @@ static BOOL DSResignIsFromKeyWindow(void) {
     return NO;
 }
 
+// ---- 4.5.777 caret777 -------------------------------------------------------
+// Staged Messages lost its blue caret right after the tap: UIKit resigned the
+// message box when the key window moved for the keyboard handoff (Rhirfn
+// 04:18:20.88: "resign CKMessageEntryRichTextView ... blocked=1", then every
+// key "fr=0"). DSKeepComposer's first line excluded Messages, so the resign
+// went through. One rule: while Messages wants the staged keys, a resign of
+// the message box that comes from a key-window change is not the user leaving
+// and is refused. Every other resign (send, tap outside, swipe-down, leaving
+// the chat, search cancel) still goes through, and kbleave743 is untouched.
+// Off: /var/mobile/.dynamicstage-caret777-off, master core777-off (crash latch caret777).
+static NSString *DSCaret777Why = nil;   // last decision, for resign777
+
+// 4.5.778 caret778: Fuchhc showed the message box resigning ~75-115 ms after
+// every tap with suppress=0 and no key-window change (caret777 never matched;
+// stripped UIKit frames carry no names). The resign follows SpringBoard's
+// stand-in taking keyboard focus. Rule: while Messages wants the staged keys
+// and the responder is the message box, every resign is refused except search
+// Cancel. Every real dismissal clears "wanted" first (kbleave743, SpringBoard's
+// hide via "told Messages the keyboard is gone", search cancel, camera).
+// Off: /var/mobile/.dynamicstage-caret778-off, master core778-off (crash latch caret778).
+
+static BOOL DSCaret777Keeps(UIResponder *responder) {
+    DSCaret777Why = nil;
+    @try {
+        if (!DSCaret778Enabled()) { DSCaret777Why = @"caret778 off"; return NO; }
+        if (!DSStaged() || DSDeliveringStageKey || !responder || DSCaret778Dropping) return NO;
+        NSString *name = NSStringFromClass(responder.class);
+        if ([name rangeOfString:@"MessageEntry"].location == NSNotFound) { DSCaret777Why = @"not the message box"; return NO; }
+        if (!DSStageKeyboardWanted) { DSCaret777Why = @"keys not wanted (dismissed)"; return NO; }
+        if (DSResignIsSearchCancel()) { DSCaret777Why = @"cancel"; return NO; }
+        DSFeature719MarkAction("caret778");
+        DSCaret777Why = @"kept: caret778 Messages wants the staged keys";
+        return YES;
+    } @catch (NSException *exception) {
+        DSCaret777Why = @"exception";
+        return NO;
+    }
+}
+
 static BOOL DSKeepComposer(UIResponder *responder) {
-    if (DSMessagesOwnsKeyboard()) return NO;
+    if (DSMessagesOwnsKeyboard()) return DSCaret777Keeps(responder);
     if (DSMessagesHandoffResign) return NO;
     if (!DSStaged() || DSDeliveringStageKey || !responder) return NO;
     BOOL text = DSResponderTakesText(responder) ||
@@ -918,6 +1281,136 @@ static BOOL DSKeepComposer(UIResponder *responder) {
     if (!DSComposerHeld) return NO;
     if (DSSuppressComposerResign || DSResignIsFromKeyWindow()) return YES;
     return DSComposerHeldAt > 0 && CFAbsoluteTimeGetCurrent() - DSComposerHeldAt < 1.0;
+}
+
+// ---- 4.5.777 resign777 logging ----------------------------------------------
+// Every become/resign of a text field in a staged app, with the stack and the
+// window/app/scene state, so the next log names what takes the caret away.
+// Off: /var/mobile/.dynamicstage-resign777-off, master core777-off.
+static NSString *DSResign777CaretState(UIView *view) {
+    if (![view isKindOfClass:UIView.class]) return @"n/a";
+    NSMutableArray *found = [NSMutableArray array];
+    NSMutableArray *queue = [NSMutableArray arrayWithObject:view];
+    int visited = 0;
+    while (queue.count && visited < 400 && found.count < 4) {
+        UIView *v = queue.firstObject; [queue removeObjectAtIndex:0]; visited++;
+        NSString *cls = NSStringFromClass(v.class);
+        if ([cls rangeOfString:@"Selection"].location != NSNotFound ||
+            [cls rangeOfString:@"Cursor"].location != NSNotFound ||
+            [cls rangeOfString:@"Caret"].location != NSNotFound) {
+            [found addObject:[NSString stringWithFormat:@"%@ hid=%d a=%.2f", cls, v.hidden, v.alpha]];
+        }
+        [queue addObjectsFromArray:v.subviews];
+    }
+    return found.count ? [found componentsJoinedByString:@"; "] : @"none";
+}
+
+static void DSResign777Log(NSString *what, UIResponder *responder, NSString *result) {
+    @try {
+        if (!DSStaged() || !responder || !DS777On("resign777")) return;   // resign778 rides on resign777-off too
+        static unsigned long serial = 0;
+        serial++;
+        UIView *view = [responder isKindOfClass:UIView.class] ? (UIView *)responder : nil;
+        UIWindow *fieldWindow = view.window;
+        UIApplication *app = UIApplication.sharedApplication;
+        UIWindow *key = nil;
+        for (UIWindow *w in app.windows) { if (w.isKeyWindow) { key = w; break; } }
+        NSString *appState = app.applicationState == UIApplicationStateActive ? @"active" :
+            (app.applicationState == UIApplicationStateInactive ? @"inactive" : @"background");
+        NSString *sceneState = @"none";
+        UIWindowScene *scene = fieldWindow.windowScene;
+        if (scene) {
+            UISceneActivationState st = scene.activationState;
+            sceneState = st == UISceneActivationStateForegroundActive ? @"fg-active" :
+                (st == UISceneActivationStateForegroundInactive ? @"fg-inactive" :
+                 (st == UISceneActivationStateBackground ? @"bg" : @"unattached"));
+        }
+        // 4.5.778: keyboard focus state (verified via respondsToSelector, @try).
+        NSString *implDelegate = @"n/a", *firstResp = @"n/a";
+        @try {
+            Class impl = objc_getClass("UIKeyboardImpl");
+            SEL active = sel_registerName("activeInstance");
+            if (impl && [impl respondsToSelector:active]) {
+                id inst = ((id (*)(id, SEL))objc_msgSend)(impl, active);
+                SEL del = sel_registerName("delegate");
+                if (inst && [inst respondsToSelector:del]) {
+                    id d = ((id (*)(id, SEL))objc_msgSend)(inst, del);
+                    implDelegate = d ? NSStringFromClass([d class]) : @"nil";
+                } else implDelegate = inst ? @"no delegate sel" : @"no instance";
+            }
+            SEL frSel = sel_registerName("firstResponder");
+            if (key && [key respondsToSelector:frSel]) {
+                id f = ((id (*)(id, SEL))objc_msgSend)(key, frSel);
+                NSMutableArray *chain = [NSMutableArray array];
+                UIResponder *r = [f isKindOfClass:UIResponder.class] ? f : nil;
+                while (r && chain.count < 6) { [chain addObject:NSStringFromClass(r.class)]; r = r.nextResponder; }
+                firstResp = chain.count ? [chain componentsJoinedByString:@">"] : @"nil";
+            }
+        } @catch (NSException *e) {}
+        DSTraceFormat(@"resign777 #%lu %@ %@ result=%@ fr=%d | key=%@ isKey=%d fieldWin=%@ fieldWinKey=%d app=%@ scene=%@ wanted=%d | caret=%@",
+                      serial, what, NSStringFromClass(responder.class), result ?: @"-", responder.isFirstResponder,
+                      key ? NSStringFromClass(key.class) : @"none", key.isKeyWindow,
+                      fieldWindow ? NSStringFromClass(fieldWindow.class) : @"none", fieldWindow.isKeyWindow,
+                      appState, sceneState, DSStageKeyboardWanted, DSResign777CaretState(view));
+        DSTraceFormat(@"resign778 #%lu focus: kbImpl.delegate=%@ firstResponder=%@", serial, implDelegate, firstResp);
+        // 4.5.778: stack one frame per line, named with dladdr (image + nearest symbol + offset).
+        if (DS791On("log791")) {
+            // 4.5.791 log791: one line naming who focused / resigned the box
+            // (image of each caller frame; DS = our dylib), exempt from the burst cap.
+            void *addrs[24];
+            int n = backtrace(addrs, 24);
+            NSMutableArray *imgs = [NSMutableArray array];
+            for (int i = 1; i < n && imgs.count < 14; i++) {
+                Dl_info info; memset(&info, 0, sizeof(info));
+                const char *img = "?";
+                if (dladdr(addrs[i], &info) && info.dli_fname) { img = strrchr(info.dli_fname, '/'); img = img ? img + 1 : info.dli_fname; }
+                NSString *s = [NSString stringWithUTF8String:img] ?: @"?";
+                if ([s hasPrefix:@"DynamicStage"]) s = [NSString stringWithFormat:@"DS+0x%lx", (unsigned long)((uintptr_t)addrs[i] - (uintptr_t)info.dli_fbase)];
+                else s = [NSString stringWithFormat:@"%@+0x%lx", s, (unsigned long)((uintptr_t)addrs[i] - (uintptr_t)info.dli_saddr)];
+                [imgs addObject:s];
+            }
+            UIResponder *tt = responder;
+            NSUInteger len = [tt isKindOfClass:UITextView.class] ? ((UITextView *)tt).text.length : 0;
+            if ([what hasPrefix:@"become"]) DSTrace792Tap();
+            DSTraceFormat(@"focus791 #%lu %@ fr=%d text=%lu opening=%d by %@", serial, what, responder.isFirstResponder,
+                          (unsigned long)len, DSChatOpening781, [imgs componentsJoinedByString:@" < "]);
+        } else if (![what hasPrefix:@"become"] || DS778On("stack778become")) {
+            void *addrs[24];
+            int n = backtrace(addrs, 24);
+            int shown = 0;
+            for (int i = 1; i < n && shown < 16; i++) {
+                Dl_info info;
+                memset(&info, 0, sizeof(info));
+                NSString *line;
+                if (dladdr(addrs[i], &info) && info.dli_fname) {
+                    const char *img = strrchr(info.dli_fname, '/');
+                    img = img ? img + 1 : info.dli_fname;
+                    uintptr_t a = (uintptr_t)addrs[i];
+                    if (info.dli_sname) {
+                        line = [NSString stringWithFormat:@"%s %s+0x%lx", img, info.dli_sname, (unsigned long)(a - (uintptr_t)info.dli_saddr)];
+                    } else {
+                        line = [NSString stringWithFormat:@"%s +0x%lx", img, (unsigned long)(a - (uintptr_t)info.dli_fbase)];
+                    }
+                } else {
+                    line = [NSString stringWithFormat:@"%p", addrs[i]];
+                }
+                DSTraceFormat(@"resign778 #%lu f%02d %@", serial, shown, line);
+                shown++;
+            }
+        }
+        if ([what hasPrefix:@"become"] && view) {
+            __weak UIView *weakView = view;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @try {
+                    UIView *v = weakView;
+                    if (!v) return;
+                    DSTraceFormat(@"resign777 #%lu after become: fr=%d winKey=%d caret=%@",
+                                  serial, v.isFirstResponder, v.window.isKeyWindow, DSResign777CaretState(v));
+                } @catch (NSException *e) {}
+            });
+        }
+    } @catch (NSException *exception) {
+    }
 }
 
 static UIResponder *DSFirstResponderInView(UIView *view) {
@@ -1167,6 +1660,25 @@ static void DSWriteFile(const char *path, const char *text) {
     close(fd);
 }
 
+// 4.5.668: <container>/tmp/<name> and <container>/Library/Caches/<name>, from
+// TMPDIR / HOME, plain C so it works before anything else in the image.
+static void DSWriteContainerMarker(const char *name, const char *text) {
+    char path[1024];
+    const char *tmp = getenv("TMPDIR");
+    if (tmp && tmp[0] == '/') {
+        size_t length = strlen(tmp);
+        snprintf(path, sizeof(path), "%s%s%s", tmp, (length && tmp[length - 1] == '/') ? "" : "/", name);
+        DSWriteFile(path, text);
+    }
+    const char *home = getenv("HOME");
+    if (home && home[0] == '/' && strstr(home, "/Containers/Data/") != NULL) {
+        snprintf(path, sizeof(path), "%s/tmp/%s", home, name);
+        DSWriteFile(path, text);
+        snprintf(path, sizeof(path), "%s/Library/Caches/%s", home, name);
+        DSWriteFile(path, text);
+    }
+}
+
 // notify_register_check can fail in a sandboxed app before anyone is listening.
 // The post still has to happen, or SpringBoard never learns this image mapped.
 static void DSPostApply(uint64_t state) {
@@ -1229,32 +1741,8 @@ static void DSReportCtor(int reason) {
     DSPostApply(state);
 }
 
-static void DSReportLoaded(void) {
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
-        state |= (1ULL << 39);
-        DSPostApply(state);
-    });
-}
 
-static void DSReportRemoteKeyboard(void) {
-    static BOOL reported = NO;
-    if (reported) return;
-    reported = YES;
-    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
-    state |= (1ULL << 48) | (1ULL << 39) | (1ULL << 38) | (1ULL << 49);
-    DSPostApply(state);
-}
 
-static void DSReportRemoteSkipped(void) {
-    static BOOL reported = NO;
-    if (reported) return;
-    reported = YES;
-    uint64_t state = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
-    state |= (1ULL << 50) | (1ULL << 39) | (1ULL << 49);
-    DSPostApply(state);
-}
 
 // Bit 48 is "SpringBoard may lift". A call that happens before the app is
 // staged must not consume that, or the later staged call never gets through.
@@ -1363,6 +1851,11 @@ static void DSApplyKeyboardOp(NSString *op, NSString *text) {
     }
     DSDeliveringStageKey = NO;
     DSReportKeyApplied(isDelete, responder, before && after && !unchanged, NO, heldStandIn);
+    if (DSIsMessageBox781(responder) && ((before.length == 0) != (after.length == 0) || before.length == 0)) {
+        // 4.5.781 entry781: the app strip question is empty box vs text.
+        dispatch_async(dispatch_get_main_queue(), ^{ DSEntry781Log(isDelete ? @"after delete (empty/text flip)" : @"after insert (empty/text flip)"); });
+    }
+    DSStrip790Key(isDelete);
     NSString *changed = @"?";
     if (before && after) changed = unchanged ? @"0" : @"1";
     BOOL editing = responder.isFirstResponder;
@@ -1411,9 +1904,10 @@ static void DSApplyNotifyState(void) {
     DSApplyKeyboardOp(@"insert", text);
 }
 
+static BOOL DS795AppKeyringOn(void);
 // Skip every letter already queued. The next notification is a new key.
 static void DSCatchUpKeyboardInput(void) {
-    NSDictionary *root = [NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath];
+    NSDictionary *root = DS795AppKeyringOn() ? nil : [NSDictionary dictionaryWithContentsOfFile:kDSKeyboardInputPath];
     NSInteger seq = [root[@"seq"] integerValue];
     BOOL saw = root != nil;
     for (NSDictionary *op in root[@"ops"]) {
@@ -1438,6 +1932,55 @@ static void DSCatchUpKeyboardInput(void) {
     DSKeyboardCaughtUp = YES;
 }
 
+// 4.5.795 keyring795: read the keys from the notify-state ring (no file).
+// Off: /var/mobile/.dynamicstage-keyring795-off (SpringBoard writes the file
+// again and this side reads it, as 794).
+static BOOL DS795AppKeyringOn(void) {
+    return access(kDSKeyboardRingOffPath, F_OK) != 0 &&
+           access("/var/mobile/.dynamicstage-core795-off", F_OK) != 0 &&
+           access("/var/mobile/.dynamicstage-keyring795-crashed", F_OK) != 0;
+}
+static int DS795AppRing[kDSKeyboardRingSlots];
+static BOOL DS795AppRingReady(void) {
+    static BOOL ready = NO;
+    if (ready) return YES;
+    for (int i = 0; i < kDSKeyboardRingSlots; i++) {
+        char name[96];
+        snprintf(name, sizeof(name), kDSKeyboardRingFormat, i);
+        DS795AppRing[i] = NOTIFY_TOKEN_INVALID;
+        if (notify_register_check(name, &DS795AppRing[i]) != NOTIFY_STATUS_OK) return NO;
+    }
+    ready = YES;
+    return YES;
+}
+static void DS795DrainRing(void) {
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID) {
+        notify_register_check(kDSKeyboardInputNotification, &DSKeyboardInputStateToken);
+    }
+    if (DSKeyboardInputStateToken == NOTIFY_TOKEN_INVALID || !DS795AppRingReady()) return;
+    uint64_t mainState = 0;
+    notify_get_state(DSKeyboardInputStateToken, &mainState);
+    NSInteger newest = (NSInteger)(mainState & 0xFFFFFFFF);
+    if (!DSKeyboardCaughtUp) {
+        // First wake in this process: only the key that woke us.
+        DSKeyboardCaughtUp = YES;
+        if (newest - 1 > DSLastKeyboardInputSeq) DSLastKeyboardInputSeq = newest - 1;
+    }
+    if (newest <= DSLastKeyboardInputSeq) return;
+    NSInteger from = DSLastKeyboardInputSeq + 1;
+    if (newest - from >= kDSKeyboardRingSlots) from = newest - kDSKeyboardRingSlots + 1;
+    for (NSInteger seq = from; seq <= newest; seq++) {
+        uint64_t st = 0;
+        notify_get_state(DS795AppRing[(uint32_t)seq % kDSKeyboardRingSlots], &st);
+        if ((NSInteger)(st & 0xFFFFFFFF) != seq) continue;   // overwritten or not there
+        DSLastKeyboardInputSeq = seq;
+        if (st & (1ULL << 32)) { DSApplyKeyboardOp(@"delete", @""); continue; }
+        NSString *t = DSStringFromUTF32((UTF32Char)((st >> 33) & 0x1FFFFF));
+        if (t.length) DSApplyKeyboardOp(@"insert", t);
+    }
+    if (newest > DSLastKeyboardInputSeq) DSLastKeyboardInputSeq = newest;
+}
+
 static void DSDrainKeyboardInput(void) {
     if (!DSStaged()) {
         DSReportKeyApplied(NO, nil, NO, YES, NO);
@@ -1445,6 +1988,13 @@ static void DSDrainKeyboardInput(void) {
     }
     if (DSInKeyboardApply) {
         DSDrainQueued = YES;
+        return;
+    }
+    if (DS795AppKeyringOn()) {
+        DSInKeyboardApply = YES;
+        DS795DrainRing();
+        DSInKeyboardApply = NO;
+        if (DSDrainQueued) { DSDrainQueued = NO; DSDrainKeyboardInput(); }
         return;
     }
     DSInKeyboardApply = YES;
@@ -1552,12 +2102,23 @@ static BOOL DSPhoneKeepsRealScreen(void) {
     return DSIsMobilePhone();
 }
 
-// 4.5.662: while a staged app's camera UI is open, keep real phone metrics and
-// scale the root to FIT the card (see DSCameraStageApplyLayoutFit). Without
-// this the tall-root clamp + clipsToBounds cut off shutter / flip / gallery.
+// 4.5.663: while a staged app's camera UI is open, keep real phone metrics and
+// FILL+bottom-align the root into the card (see DSCameraStageApplyLayoutFit).
+// 4.5.662's FIT+center on the key window still left the shutter missing in
+// most apps; this matches Phone's dial-pad path so bottom chrome stays.
 extern "C" BOOL DSCameraStageNeedsTallLayout(void);
 extern "C" void DSCameraStageNoteCameraUI(BOOL visible);
+extern "C" void DSCameraStageNoteCameraScreen(id controller, BOOL visible);
+// 4.5.666: a camera screen is up on the card (cheap atomic read), and the
+// per-tap hit log.
+extern "C" BOOL DSCameraStageCameraScreenUp(void);
+extern "C" void DSCameraStageNoteHit(UIWindow *window, CGPoint point, UIEvent *event, UIView *hit, NSString *path);
 extern "C" void DSCameraStageApplyLayoutFit(void);
+// 4.5.667: while Messages' camera extension sits in a phone-shaped, scaled
+// container on the card, UIKit's frame writes on that one view are dropped
+// (the stage owns its geometry until the camera screen goes).
+extern "C" BOOL DSCameraStageHoldsView(UIView *view);
+extern "C" BOOL DSCameraStageWritesView(void);
 
 static BOOL DSCameraKeepsRealScreen(void) {
     if (DSIsMobilePhone() || !DSStaged()) return NO;
@@ -1583,6 +2144,26 @@ static BOOL DSNameLooksLikeCameraUI(NSString *name) {
     if ([name rangeOfString:@"PhotoCapture" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
     if ([name rangeOfString:@"VideoCall" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
     if ([name rangeOfString:@"CallCamera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    // 4.5.663: names Beeper / Signal / Messenger use that 662 missed.
+    if ([name rangeOfString:@"MediaPicker" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"AttachmentPicker" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"PhotoPicker" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"TakePhoto" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"TakePicture" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"Shutter" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"CamVC" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"CamView" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"Scanner" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"Recorder" options:NSCaseInsensitiveSearch].location != NSNotFound &&
+        [name rangeOfString:@"Audio" options:NSCaseInsensitiveSearch].location == NSNotFound) return YES;
+    if ([name rangeOfString:@"Lens" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"SnapCam" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"StoryCamera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"ComposerCamera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"ChatCamera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"MessageCamera" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    if ([name rangeOfString:@"CKBrowser" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES; // Messages apps/camera strip
+    if ([name rangeOfString:@"CKPhoto" options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
     return NO;
 }
 
@@ -1811,7 +2392,7 @@ static NSInteger DSDropQueryDepth = 0;
 static BOOL DSViewIsCompatibilityInputView(UIView *view);
 static CGRect DSDroppedRectForRoot(UIView *view);
 static void DSDropOurViewToInput(void);
-static void DSPinViewToStageBottom(UIView *view);
+
 
 // Messages lays the reply bar out for the full display, so it sits below the
 // card. Move that bar onto the card's bottom edge. A transform survives the
@@ -1857,27 +2438,6 @@ static NSString *DSViewBrief(UIView *view) {
             view.alpha];
 }
 
-static NSString *DSPiecesAroundEntry(UIView *entry) {
-    if (![entry isKindOfClass:UIView.class]) return @"no-entry";
-    NSMutableArray<NSString *> *parts = [NSMutableArray array];
-    CGFloat entryBottom = CGRectGetMaxY(entry.frame);
-    UIView *parent = entry.superview;
-    for (UIView *sibling in parent.subviews) {
-        if (sibling == entry) continue;
-        BOOL below = CGRectGetMaxY(sibling.frame) > entryBottom + 4.0;
-        BOOL above = CGRectGetMaxY(sibling.frame) <= CGRectGetMinY(entry.frame) + 4.0;
-        if (!below && !above) continue;
-        if (CGRectGetHeight(sibling.bounds) < 8.0 && CGRectGetWidth(sibling.bounds) < 8.0) continue;
-        [parts addObject:[NSString stringWithFormat:@"%@ %@", below ? @"below" : @"above", DSViewBrief(sibling)]];
-        if (parts.count >= 4) break;
-    }
-    for (UIView *child in entry.subviews) {
-        if (CGRectGetMinY(child.frame) < CGRectGetHeight(entry.bounds) * 0.55) continue;
-        [parts addObject:[NSString stringWithFormat:@"inside %@", DSViewBrief(child)]];
-        if (parts.count >= 6) break;
-    }
-    return parts.count ? [parts componentsJoinedByString:@" | "] : @"nothing beside the field";
-}
 
 static void DSForgetReplyBarSpot(void) {
 }
@@ -1920,7 +2480,7 @@ static CGRect DSFittedStageFrame(UIView *view, CGRect frame) {
         UIWindow *owning = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
         if (!owning || !DSIsKeyboardWindow(owning)) return frame;
     }
-    // 4.5.662: camera chrome needs phone-tall frames; the root scale fits them.
+    // 4.5.663: camera chrome needs phone-tall frames; the root FILL keeps them.
     if (DSCameraKeepsRealScreen()) {
         UIWindow *owning = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
         if (!owning || !DSIsKeyboardWindow(owning)) return frame;
@@ -2148,10 +2708,9 @@ static void DSKeepTranscriptBottom(UIView *view, NSInteger depth) {
 }
 
 static BOOL DSPhoneLayoutFrozen = NO;
-static BOOL DSPhoneScaleScheduled = NO;
-static void DSPhoneApplyCardFrame(UIView *root);
+
 static BOOL DSPhoneScaleRootIntoCard(UIView *root);
-static void DSPhoneScheduleScaleRootIntoCard(UIView *root);
+
 static void DSPhoneRequestPass(UIView *any, NSString *reason);
 
 %hook UIViewController
@@ -2173,10 +2732,16 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
 
 - (void)viewWillAppear:(BOOL)animated {
     NSString *name = NSStringFromClass(self.class);
-    if (DSStaged() && DSNameLooksLikeCameraUI(name) && !DSIsMobilePhone()) {
+    BOOL cameraUI = DSNameLooksLikeCameraUI(name);
+    if (!cameraUI) {
+        Class picker = NSClassFromString(@"UIImagePickerController");
+        if (picker && [self isKindOfClass:picker]) cameraUI = YES;
+    }
+    if (DSStaged() && cameraUI && !DSIsMobilePhone()) {
         DSTraceFormat(@"app willAppear cameraUI %@", name);
-        DSCameraStageNoteCameraUI(YES);
-        DSCameraStageApplyLayoutFit();
+        // 4.5.664: remembered weakly; it only counts while its view is on
+        // screen AND a live camera preview is there (see DSCam664Recompute).
+        DSCameraStageNoteCameraScreen(self, YES);
     }
     if (DSStaged() &&
         ([name rangeOfString:@"Chat"].location != NSNotFound ||
@@ -2186,6 +2751,7 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
          [name rangeOfString:@"CK"].location == 0)) {
         DSTraceFormat(@"app willAppear %@", name);
     }
+    if (DSStaged() && [name rangeOfString:@"CKChatController"].location != NSNotFound) { DSChatOpening781 = YES; DSAutoFocus785 = NO; DSTrace792Open(10.0); }
     // The push lays the reply bar out. Sliding it now cancels the push.
     if ([name rangeOfString:@"CKChatController"].location != NSNotFound ||
         [name rangeOfString:@"CKTranscript"].location != NSNotFound ||
@@ -2196,26 +2762,47 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
         [name rangeOfString:@"Inbox"].location != NSNotFound) {
         DSForgetReplyBarSpot();
     }
-    // Back on the conversation list. Drop the keyboard hold before UIKit
-    // parks the composer off screen, or the bar stays painted on the list.
-    if (DSStaged() && DSMessagesDrawsOwnKeyboard() &&
-        ([name rangeOfString:@"ConversationList"].location != NSNotFound ||
-         [name rangeOfString:@"Inbox"].location != NSNotFound)) {
-        DSMessagesChatOnScreen = NO;
-        DSMessagesChatReadyAt = 0;
-        DSMessagesHandoffToken++;
-        DSReleaseMessagesKeyboardHost();
-        DSTrace(@"app left the conversation");
-    } else if (DSStaged() && DSMessagesDrawsOwnKeyboard() &&
-               [name rangeOfString:@"ChatController"].location != NSNotFound) {
-        // A new conversation is another scene update. The keyboard is created
-        // only after that update has had time to finish. An existing SpringBoard
-        // keyboard is left alone.
-        DSMessagesChatOnScreen = YES;
-        if (!DSMessagesKeyboardHosted && !DSMessagesHandoffInFlight) {
-            DSMessagesHandoffCooldownUntil = 0;
-            DSMessagesChatReadyAt = CFAbsoluteTimeGetCurrent() + 0.45;
-            DSScheduleMessagesKeyboardHandoff(nil);
+    // 4.5.743 kbleave743: leaving a conversation for the list never resigns
+    // the entry field through our hooks, so SpringBoard's keys stayed up.
+    // Tell SpringBoard to hide them when the list comes back after a chat.
+    // Off: /var/mobile/.dynamicstage-kbleave743-off
+    {
+        static BOOL kb743ChatSeen = NO;
+        if ([name rangeOfString:@"ChatController"].location != NSNotFound) kb743ChatSeen = YES;
+        if (kb743ChatSeen && DSStaged() &&
+            [name rangeOfString:@"ConversationList"].location != NSNotFound) {
+            kb743ChatSeen = NO;
+            if (access("/var/mobile/.dynamicstage-kbleave743-off", F_OK) != 0 && DSMessagesUsesStageKeyboard()) {
+                DSTrace(@"kbleave743: left the conversation, asking SpringBoard to hide the keys");
+                DSRecordKeyboardWhy(@"kbleave743");   // 4.5.745 why745
+                DSRequestSpringBoardKeyboard(NO);
+            }
+        }
+    }
+    %orig;
+}
+
+// 4.5.781 leave781: caret778 holds the message box as first responder, so
+// when the chat closes Messages saves it as "editing" and refocuses it on
+// reopen while its input container is still parked ~4000 pt down, which put
+// the bar at y=-3542. Let go of the box before the chat saves that state.
+// Off: /var/mobile/.dynamicstage-leave781-off (core781-off too).
+- (void)viewWillDisappear:(BOOL)animated {
+    if (DSStaged() && DSMessagesOwnsKeyboard() && DS781On("leave781") &&
+        [NSStringFromClass(object_getClass(self)) rangeOfString:@"CKChatController"].location != NSNotFound) {
+        @try {
+            UIResponder *target = DSKeyboardTarget;
+            if (DSIsMessageBox781(target) && target.isFirstResponder) {
+                DSFeature719MarkAction("leave781");
+                DSTrace(@"leave781: chat closing, releasing the message box before Messages saves it");
+                DSStageKeyboardWanted = NO;
+                DSStageKeyboardGuardUntil = 0;
+                DSCaret778Dropping = YES;
+                [target resignFirstResponder];
+                DSCaret778Dropping = NO;
+            }
+        } @catch (NSException *exception) {
+            DSCaret778Dropping = NO;
         }
     }
     %orig;
@@ -2223,9 +2810,13 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
 
 - (void)viewDidDisappear:(BOOL)animated {
     NSString *name = NSStringFromClass(self.class);
-    if (DSStaged() && DSNameLooksLikeCameraUI(name) && !DSIsMobilePhone()) {
-        DSCameraStageNoteCameraUI(NO);
-        DSCameraStageApplyLayoutFit();
+    BOOL cameraUI = DSNameLooksLikeCameraUI(name);
+    if (!cameraUI) {
+        Class picker = NSClassFromString(@"UIImagePickerController");
+        if (picker && [self isKindOfClass:picker]) cameraUI = YES;
+    }
+    if (DSStaged() && cameraUI && !DSIsMobilePhone()) {
+        DSCameraStageNoteCameraScreen(self, NO);
     }
     %orig;
 }
@@ -2246,7 +2837,7 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
     // Schedule off this layout turn: mutating bounds+transform mid-layout is a
     // SIGTRAP (not catchable by @try).
     if (DSIsMobilePhone()) DSPhoneRequestPass(self.view, @"vc-layout");
-    // 4.5.662: re-apply camera fit after the root lays out (async, not mid-layout).
+    // 4.5.663: re-apply camera FILL after the root lays out (async, not mid-layout).
     if (DSCameraKeepsRealScreen()) {
         dispatch_async(dispatch_get_main_queue(), ^{ DSCameraStageApplyLayoutFit(); });
     }
@@ -2262,6 +2853,17 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
     BOOL chat = [name rangeOfString:@"CKChatController"].location != NSNotFound ||
                 [name rangeOfString:@"CKTranscript"].location != NSNotFound;
     if (!chat) return;
+    if ([name rangeOfString:@"CKChatController"].location != NSNotFound) {
+        DSChatOpening781 = NO;
+        DSEntry781Log(@"chat didAppear");
+        if (DSReopen788Active()) {
+            if (DSStageKeyboardWanted && DSMessagesOwnsKeyboard()) DSUnpark788(@"chat didAppear");
+        } else if (DS790On("reopen790")) DSReopen782(@"chat didAppear", YES);   // 4.5.790: reopen789's signal also with caret off
+        else if (DS785On("reopen784") && !DSCaret778Enabled()) DSReopen785();
+        else DSReopen782(@"chat didAppear", YES);
+        DSAutoFocus785 = NO;
+        if (DS786On("swipe786")) { @try { DSSwipe786Attach(self.view, 0); } @catch (NSException *e) {} }   // 4.5.782 replaces reopen781
+    }
     UIView *entry = nil;
     if ([self respondsToSelector:@selector(entryView)]) {
         id candidate = ((id (*)(id, SEL))objc_msgSend)(self, @selector(entryView));
@@ -2281,7 +2883,6 @@ static void DSPhoneRequestPass(UIView *any, NSString *reason);
 // staged, those views are pulled out of the card on every pass UIKit uses to
 // put them back, and again before the run loop sleeps.
 
-static BOOL DSBanishing = NO;
 static NSUInteger DSBanishHits = 0;
 static BOOL DSBanishFoundChrome = NO;
 
@@ -2460,81 +3061,14 @@ static void DSVisitLiveWindows(void (^visitor)(UIWindow *window)) {
     }
 }
 
-static NSString *DSChainBrief(UIView *view) {
-    NSMutableArray<NSString *> *parts = [NSMutableArray array];
-    UIView *cursor = view;
-    for (NSInteger i = 0; cursor && i < 6; i++) {
-        [parts addObject:DSViewBrief(cursor)];
-        if ([cursor isKindOfClass:UIWindow.class]) break;
-        cursor = cursor.superview;
-    }
-    return parts.count ? [parts componentsJoinedByString:@" < "] : @"none";
-}
 
-static UIView *DSEntryForResponder(UIResponder *responder) {
-    UIView *view = [responder isKindOfClass:UIView.class] ? (UIView *)responder : nil;
-    UIView *cursor = view;
-    for (NSInteger i = 0; cursor && i < 10; i++) {
-        if ([NSStringFromClass(object_getClass(cursor)) rangeOfString:@"MessageEntry"].location != NSNotFound) {
-            return cursor;
-        }
-        cursor = cursor.superview;
-    }
-    return view;
-}
 
-static NSString *DSKeyboardWindowBrief(void) {
-    NSMutableArray<NSString *> *parts = [NSMutableArray array];
-    DSVisitLiveWindows(^(UIWindow *window) {
-        if (parts.count >= 3 || !DSWindowIsKeyboardChrome(window)) return;
-        [parts addObject:[NSString stringWithFormat:@"%@ f=%@ hid=%d a=%.2f lvl=%.0f",
-                          NSStringFromClass(object_getClass(window)),
-                          NSStringFromCGRect(window.frame),
-                          window.hidden,
-                          window.alpha,
-                          window.windowLevel]];
-    });
-    return parts.count ? [parts componentsJoinedByString:@" || "] : @"no keyboard window in this app";
-}
 
 static void DSTraceInputLayout(NSString *cause, UIView *view) {
     (void)cause;
     (void)view;
 }
 
-static void DSReportKeyboardDebug(NSString *windowNames) {
-    (void)windowNames;
-    return;
-    static int token = NOTIFY_TOKEN_INVALID;
-    static uint64_t lastState = 0;
-    static NSString *lastNames = nil;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        notify_register_check(kDSKeyboardDebugNotification, &token);
-    });
-    NSString *identifier = NSBundle.mainBundle.bundleIdentifier ?: @"";
-    BOOL staged = DSStaged();
-    uint64_t state = DSIdentifierHash(identifier);
-    if (staged) state |= kDSStageStateActiveBit;
-    if (DSBanishFoundChrome) state |= (1ULL << 33);
-    state |= (uint64_t)MIN(DSBanishHits, (NSUInteger)255) << 40;
-    BOOL changed = state != lastState || (windowNames.length > 0 && ![windowNames isEqualToString:lastNames]);
-    if (!changed) return;
-    lastState = state;
-    lastNames = [windowNames copy];
-    if (token != NOTIFY_TOKEN_INVALID) {
-        notify_set_state(token, state);
-        notify_post(kDSKeyboardDebugNotification);
-    }
-    // A separate file so this cannot overwrite the stage list SpringBoard publishes.
-    NSString *summary = [NSString stringWithFormat:@"%@ staged=%d chrome=%d hid=%lu windows=%@",
-                         identifier, staged, DSBanishFoundChrome, (unsigned long)DSBanishHits,
-                         windowNames ?: @"?"];
-    [summary writeToFile:@"/var/mobile/Library/Preferences/com.recreated.dynamicstage.keyboard.txt"
-              atomically:YES
-                encoding:NSUTF8StringEncoding
-                   error:nil];
-}
 
 static void DSKillHostedKeyboardView(id view) {
     if (DSMessagesKeepsOwnKeys()) return;
@@ -2560,19 +3094,6 @@ static void DSStripKeyboardLayerHostView(UIView *view) {
     DSKillHostedKeyboardView(view);
 }
 
-static CGRect DSStageContainerFrameOnScreen(void) {
-    __block UIWindow *appWindow = nil;
-    DSVisitLiveWindows(^(UIWindow *window) {
-        if (appWindow) return;
-        if (DSWindowIsKeyboardChrome(window)) return;
-        appWindow = window;
-    });
-    if (appWindow) {
-        return [appWindow convertRect:appWindow.bounds toView:nil];
-    }
-    CGRect stage = DSStageBounds();
-    return CGRectMake(0.0, 0.0, stage.size.width, stage.size.height);
-}
 
 static void DSLayoutKeyboardRemoteControlView(UIView *view) {
     if (!DSStaged() || !view || !view.superview) return;
@@ -2616,8 +3137,6 @@ static void DSStripKeyboardLayerHostsInTree(UIView *root, NSInteger depth) {
     }
 }
 
-static BOOL DSFittingEffectsWindow = NO;
-static NSInteger DSCompactDepth = 0;
 
 // The three long views in the debugger: the text-effects window, the input
 // container, and the input host. The editing overlay is the same kind of
@@ -2892,7 +3411,6 @@ static void DSSeatReplyTree(UIView *view, NSInteger depth) {
     for (UIView *subview in [view.subviews copy]) DSSeatReplyTree(subview, depth + 1);
 }
 
-static NSInteger DSShellPinDepth = 0;
 
 static BOOL DSConstraintPinsShellToParent(NSLayoutConstraint *constraint, UIView *shell) {
     if (![constraint isKindOfClass:NSLayoutConstraint.class] || !shell) return NO;
@@ -2967,22 +3485,6 @@ static void DSPinShellTree(UIView *view, CGRect card, NSInteger depth) {
     }
 }
 
-static void DSPinInputShellsToStage(void) {
-    // Pinning these shells to the card resizes the keyboard scene.
-    return;
-    if (!DSStaged() || DSShellPinDepth > 0) return;
-    DSTrace(@"app pin input shells");
-    CGRect card = DSStageBounds();
-    if (CGRectGetWidth(card) < 80.0 || CGRectGetHeight(card) < 80.0) return;
-    DSShellPinDepth += 1;
-    DSVisitLiveWindows(^(UIWindow *window) {
-        if (DSIsRemoteKeyboardWindow(window) || !DSIsKeyboardWindow(window)) return;
-        NSString *name = NSStringFromClass(object_getClass(window));
-        if ([name rangeOfString:@"TextEffects"].location == NSNotFound) return;
-        DSPinShellTree(window, card, 0);
-    });
-    DSShellPinDepth -= 1;
-}
 
 // The input host stays the height of the phone. Its reply field is a direct
 // child (CK in Messages, WA in WhatsApp). Slide that child so its bottom edge
@@ -3002,17 +3504,6 @@ static void DSApplyComposerShift(UIView *view, CGFloat targetBottom) {
     CGFloat ty = targetBottom - (CGRectGetMaxY(view.frame) - currentTy);
     if (ty > 4000.0 || ty < -4000.0) return;
     if (fabs(currentTy - ty) < 0.5 && fabs(view.transform.tx) < 0.5) return;
-    // A downward slide is the keyboard inset. On the card it walks the reply
-    // bar off the bottom. Messages keeps its own keys, so the bar stays put.
-    if (DSMessagesDrawsOwnKeyboard() && ty > 24.0) {
-        static NSInteger logs = 0;
-        if (logs < 6) {
-            logs += 1;
-            DSTraceFormat(@"app skipped composer slide %@ ty=%.0f",
-                          NSStringFromClass(object_getClass(view)), ty);
-        }
-        return;
-    }
     // One slide. A layout that wants a different slide is the keyboard
     // reacting to the one just applied, and answering it is the freeze.
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
@@ -3077,23 +3568,6 @@ static void DSTranslateComposersInTree(UIView *view, NSInteger depth) {
     for (UIView *subview in view.subviews) DSTranslateComposersInTree(subview, depth + 1);
 }
 
-static void DSFitTextEffectsWindow(UIWindow *window) {
-    // This window stays the size of the phone so the keys are drawn outside the card.
-    (void)window;
-    return;
-    if (!DSStaged() || !window || DSFittingEffectsWindow || DSCompactDepth > 0) return;
-    DSTrace(@"app fit text effects");
-    if (DSIsRemoteKeyboardWindow(window)) return;
-    NSString *name = NSStringFromClass(object_getClass(window));
-    if ([name rangeOfString:@"TextEffects"].location == NSNotFound) return;
-    CGFloat cardH = DSVisibleCardHeight(window);
-    if (cardH < 80.0) return;
-    DSCompactDepth += 1;
-    DSLiftEffectsNode(window, cardH, NO, 0);
-    DSPinShellTree(window, CGRectMake(0.0, 0.0, CGRectGetWidth(DSStageBounds()), cardH), 0);
-    DSTranslateComposersInTree(window, 0);
-    DSCompactDepth -= 1;
-}
 
 // The view the card actually shows. The stage window itself is in SpringBoard,
 // a different process, so the input bar has to join this app's root view.
@@ -3114,23 +3588,6 @@ static UIView *DSStagedAppRoot(void) {
     return found;
 }
 
-static CGFloat DSCardHeightForInput(UIView *stageView) {
-    CGRect stage = DSStageBounds();
-    CGRect device = [DSStageContext sharedContext].deviceBounds;
-    CGFloat stageH = CGRectGetHeight(stage);
-    CGFloat deviceH = CGRectGetHeight(device);
-    CGFloat rootH = stageView ? CGRectGetHeight(stageView.bounds) : 0;
-    BOOL stageIsPhone = deviceH > 80.0 &&
-                        fabs(stageH - deviceH) < 12.0 &&
-                        fabs(CGRectGetWidth(stage) - CGRectGetWidth(device)) < 12.0;
-    if (!stageIsPhone && stageH > 80.0) {
-        if (rootH > 80.0 && rootH + 8.0 < stageH) return rootH;
-        return stageH;
-    }
-    if (rootH > 80.0 && deviceH > 80.0 && rootH + 24.0 < deviceH) return rootH;
-    if (deviceH > 160.0) return floor(deviceH * 0.5);
-    return rootH > 80.0 ? rootH : stageH;
-}
 
 static void DSShrinkScrollsAbove(UIView *view, UIView *bar, CGFloat barTop, NSInteger depth) {
     if (!view || view == bar || depth > 10) return;
@@ -3166,75 +3623,7 @@ static void DSShrinkScrollsAbove(UIView *view, UIView *bar, CGFloat barTop, NSIn
     }
 }
 
-static void DSStageWidthAndHeight(UIView *stageView, CGFloat *width, CGFloat *height) {
-    CGFloat cardH = DSCardHeightForInput(stageView);
-    CGFloat cardW = CGRectGetWidth(stageView.bounds);
-    CGRect stage = DSStageBounds();
-    if (CGRectGetWidth(stage) > 80.0 && CGRectGetWidth(stage) + 2.0 < cardW) cardW = CGRectGetWidth(stage);
-    if (width) *width = cardW;
-    if (height) *height = cardH;
-}
 
-// Sit a bar that already lives in the conversation on the card's bottom.
-// Messages lays that bar out for the phone and will put it back on the next
-// layout, so this runs again after that layout. It does not call layoutIfNeeded.
-static void DSPinViewToStageBottom(UIView *view) {
-    if (!DSStaged() || ![view isKindOfClass:UIView.class]) return;
-    UIView *stageView = DSStagedAppRoot();
-    if (!stageView || view == stageView || view.superview == nil) return;
-    if (view.superview != stageView && ![view isDescendantOfView:stageView]) return;
-
-    CGFloat cardW = 0;
-    CGFloat cardH = 0;
-    DSStageWidthAndHeight(stageView, &cardW, &cardH);
-    if (cardW < 80.0 || cardH < 80.0) return;
-
-    CGFloat height = CGRectGetHeight(view.bounds);
-    if (height < 1.0) height = CGRectGetHeight(view.frame);
-    if (height < 20.0 || height > cardH * 0.55) return;
-
-    BOOL direct = view.superview == stageView;
-    CGRect frame;
-    if (direct) {
-        frame = CGRectMake(0.0, cardH - height, cardW, height);
-    } else {
-        if (CGAffineTransformIsIdentity(view.transform)) {
-            CGRect inStage = [view convertRect:view.bounds toView:stageView];
-            if (fabs(cardH - CGRectGetMaxY(inStage)) < 1.0) return;
-        }
-        CGRect inStage = [view convertRect:view.bounds toView:stageView];
-        CGFloat delta = cardH - CGRectGetMaxY(inStage);
-        frame = view.frame;
-        frame.origin.y += delta;
-        if (CGRectGetHeight(view.superview.bounds) > height + 30.0) {
-            frame.size.width = cardW;
-            frame.origin.x = 0.0;
-        }
-    }
-
-    BOOL placed = CGRectEqualToRect(view.frame, frame) && CGAffineTransformIsIdentity(view.transform);
-    if (placed) {
-        if (direct) [stageView bringSubviewToFront:view];
-        return;
-    }
-
-    BOOL outer = DSInputReparentDepth == 0;
-    if (outer) DSInputReparentDepth += 1;
-    view.transform = CGAffineTransformIdentity;
-    if (direct) {
-        view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-        view.translatesAutoresizingMaskIntoConstraints = YES;
-    }
-    DSClampingStage = YES;
-    view.frame = frame;
-    DSClampingStage = NO;
-    if (direct) {
-        [stageView bringSubviewToFront:view];
-        stageView.clipsToBounds = YES;
-        DSShrinkScrollsAbove(stageView, view, CGRectGetMinY(view.frame), 0);
-    }
-    if (outer) DSInputReparentDepth -= 1;
-}
 
 // UICompatibilityInputViewController's own view. It is the next responder of
 // that view, which is how the system window keeps the reply field.
@@ -3415,24 +3804,7 @@ static void DSDropOurViewToInput(void) {
     DSDroppingStage = NO;
 }
 
-static UIView *DSOwningInputView(UIView *view) {
-    Class inputClass = objc_getClass("UICompatibilityInputViewController");
-    UIResponder *responder = view;
-    while (responder) {
-        if (inputClass && [responder isKindOfClass:inputClass]) {
-            UIView *controllerView = ((UIViewController *)responder).view;
-            return [controllerView isKindOfClass:UIView.class] ? controllerView : view;
-        }
-        responder = responder.nextResponder;
-    }
-    return view;
-}
 
-// The reply field stays in the text-effects window. Callers that used to pull
-// it onto the conversation now drop the conversation down to the field instead.
-static void DSReparentStagedMessageInput(void) {
-    DSDropOurViewToInput();
-}
 
 extern "C" void DSRelayoutStagedMessageInput(void) {
     if (!DSStaged() || DSInputReparentDepth > 0) return;
@@ -3485,34 +3857,6 @@ extern "C" void DSRestoreAfterLeavingStage(void) {
     DSTrace(@"app restored the phone layout");
 }
 
-static void DSBanishLocalKeyboard(void) {
-    if (!DSStaged() || DSBanishing) return;
-    DSTrace(@"app banish keyboard. cause=SpringBoard reported a full keyboard, so the copy inside the card is hidden");
-    DSBanishing = YES;
-    NSMutableArray<NSString *> *names = [NSMutableArray array];
-    DSVisitLiveWindows(^(UIWindow *window) {
-        if (!DSWindowIsKeyboardChrome(window)) return;
-        [names addObject:NSStringFromClass(object_getClass(window))];
-        NSString *name = NSStringFromClass(object_getClass(window));
-        // The reply bar lives in the text-effects window. Key views inside it
-        // are hidden below. A hosted keyboard window is only keys.
-        if ([name rangeOfString:@"TextEffects"].location == NSNotFound) {
-            DSKillHostedKeyboardView(window);
-        }
-        DSBanishKeyboardInView(window, window.bounds, YES, 0);
-        DSBanishKeyboardLayers(window.layer, window.bounds);
-    });
-    DSVisitLiveWindows(^(UIWindow *window) {
-        if (DSWindowIsKeyboardChrome(window)) return;
-        DSStripKeyboardLayerHostsInTree(window, 0);
-    });
-    DSVisitLiveWindows(^(UIWindow *window) {
-        if (!DSWindowIsKeyboardChrome(window)) return;
-        DSLayoutKeyboardRemoteControlsInTree(window, 0);
-    });
-    DSBanishing = NO;
-    if (names.count) DSReportKeyboardDebug([names componentsJoinedByString:@","]);
-}
 
 static void DSOnKeyboardWillChangeFrame(NSNotification *note) {
     // Hiding key views from here posts these same four notes, which hide the
@@ -3652,82 +3996,15 @@ static BOOL DSPhoneViewIsKeypad(UIView *view) {
 
 static BOOL DSPhoneIsCardRoot(UIView *view);
 static void DSPhoneFindKeypad(UIView *view, NSInteger depth, UIView **best, CGFloat *bestArea);
-static void DSPhoneFitCardRoot(UIView *root);
+
 static void DSPhoneRestoreLifted(UIView *view, NSInteger depth);
 static void DSPhoneWriteFit(NSString *line, CGFloat scale, CGFloat box, CGFloat band);
 
-// The card size at the origin of Phone's window. SpringBoard's scene stays
-// the full display, so Phone lays the header out at the top of 932pt unless
-// this frame is in place before that layout.
-static CGRect DSPhoneCardFrame(void) {
-    if (!DSIsMobilePhone() || !DSStaged()) return CGRectZero;
-    CGRect stage = DSStageBounds();
-    CGRect device = [DSStageContext sharedContext].deviceBounds;
-    if (CGRectGetWidth(stage) < 80.0 || CGRectGetHeight(stage) < 80.0) return CGRectZero;
-    if (CGRectGetHeight(device) > 80.0 && CGRectGetHeight(stage) > CGRectGetHeight(device) - 40.0) return CGRectZero;
-    return CGRectMake(0.0, 0.0, CGRectGetWidth(stage), CGRectGetHeight(stage));
-}
 
-// The card is the window. A full-screen root is what paints the top of Phone
-// outside the stage, where the card clips it away.
-static void DSPhoneApplyCardFrame(UIView *root) {
-    if (!DSIsMobilePhone() || !DSStaged() || !root || DSPhoneLayoutFrozen || DSClampingStage) return;
-    @try {
-        UIWindow *window = [root isKindOfClass:UIWindow.class] ? (UIWindow *)root : root.window;
-        if (![window isKindOfClass:UIWindow.class] || DSIsKeyboardWindow(window)) return;
-        CGRect want = DSPhoneCardFrame();
-        if (CGRectGetWidth(want) < 80.0 || CGRectGetHeight(want) < 80.0) return;
-        window.clipsToBounds = YES;
-        window.layer.masksToBounds = YES;
-        if (fabs(CGRectGetWidth(window.bounds) - CGRectGetWidth(want)) > 1.0 ||
-            fabs(CGRectGetHeight(window.bounds) - CGRectGetHeight(want)) > 1.0 ||
-            fabs(CGRectGetMinX(window.frame)) > 1.0 ||
-            fabs(CGRectGetMinY(window.frame)) > 1.0) {
-            window.transform = CGAffineTransformIdentity;
-            window.frame = want;
-        }
-        UIView *content = window.rootViewController.view ?: root;
-        content.clipsToBounds = YES;
-        content.layer.masksToBounds = YES;
-        CGRect bounds = CGRectMake(0.0, 0.0, CGRectGetWidth(window.bounds), CGRectGetHeight(window.bounds));
-        if (!CGRectEqualToRect(content.frame, bounds)) {
-            content.transform = CGAffineTransformIdentity;
-            content.frame = bounds;
-        }
-    } @catch (NSException *exception) {
-    }
-}
 
-static void DSPhoneContainCard(UIView *any) {
-    if (!DSIsMobilePhone() || !DSStaged() || !any || DSPhoneLayoutFrozen || DSClampingStage) return;
-    DSPhoneLayoutFrozen = YES;
-    DSClampingStage = YES;
-    DSPhoneApplyCardFrame(any);
-    DSClampingStage = NO;
-    DSPhoneLayoutFrozen = NO;
-    UIWindow *window = [any isKindOfClass:UIWindow.class] ? (UIWindow *)any : any.window;
-    if ([window isKindOfClass:UIWindow.class]) {
-        DSPhoneWriteFit([NSString stringWithFormat:@"app: phone contained %@", NSStringFromCGRect(window.bounds)],
-                        1.0, CGRectGetHeight(window.bounds), CGRectGetHeight(DSStageBounds()));
-    }
-}
 
-static void DSAdjustPhoneLayoutForStage(UIView *root);
 
-// Other staged apps lay out at the card size, so they fill the card. Phone
-// keeps the real screen metrics (DSPhoneKeepsRealScreen), so it draws a
-// full-phone dialer (round keys). SpringBoard's host view is the card's
-// shape: if the scene stays phone-aspect, the host stretches it and every
-// circle becomes a wide oval (4.5.636–641 fill).
-//
-// Fix (4.5.644): window = card, root = device size, ONE uniform root scale,
-// bottom-align so 1–call + tabs stay on-card (keys stay round).
-// Fix (4.5.645): root fill alone left the dial block floating high (native
-// gap between call and tabs). After root fill, resize JUST the dial pad
-// (digits + call/delete) to fill the band above the tab/quick bar — uniform
-// preferred, mild non-uniform stretch OK. Stage card size stays fixed; tabs
-// stay at the bottom of the card.
-static const CGFloat DSPhoneMinLayoutHeight = 560.0; // kept for logs / fallbacks
+
 
 // 4.5.650: returns YES when the window or root geometry had to be rewritten
 // (Phone then needs one layout at the new box before the pad is measured).
@@ -3820,12 +4097,6 @@ static BOOL DSPhoneScaleRootIntoCard(UIView *root) {
     return changed;
 }
 
-// Every Phone relayout trigger funnels into DSPhoneRequestPass (4.5.650):
-// coalesced, debounced, deferred while SpringBoard's home / switcher gesture
-// runs, never run inside a layout callback. See DSPhoneRunPass.
-static void DSPhoneScheduleScaleRootIntoCard(UIView *root) {
-    DSPhoneRequestPass(root, @"schedule");
-}
 
 static void DSFitPhoneAfterLayout(UIView *view) {
     // 4.5.650: no DSPhoneLayoutFrozen check here. 4.5.649 dropped a root
@@ -3850,11 +4121,8 @@ static const void *DSPhoneNaturalRootKey = &DSPhoneNaturalRootKey;
 // Set on the dial-button grid only. The header keeps the frame Phone laid
 // out, so a keypad scale cannot slide "Add Number" above the card.
 static const void *DSPhoneGridPieceKey = &DSPhoneGridPieceKey;
-static const CGFloat DSPhoneDialScale = 1.0; // 4.5.645: fill uses computed sx/sy; this is unused floor bias
 static const CGFloat DSPhoneDialBottomMargin = 6.0; // sit call just above tab/quick bar
 static const CGFloat DSPhoneNumberDisplayLift = 10.0; // small LCD nudge only
-static const CGFloat DSPhoneDialTopPad = 36.0; // leave room for Add Number / LCD strip
-static const CGFloat DSPhoneDialMaxAspect = 1.14; // mild stretch cap (sx/sy)
 // 4.5.641+: dial grid uses transform (keeps circles when sx≈sy).
 // 4.5.645: dial-grid FILL re-enabled after root fill; lift stores sx in
 // CGRect width and sy in height (height 0 = uniform legacy).
@@ -3978,10 +4246,6 @@ static void DSPhoneRestoreNaturalFrames(UIView *view, NSInteger depth) {
 // distorted Phone. DSPhoneScaleRootIntoCard now lays Phone out in a
 // card-shaped box and scales it uniformly to fill the card. Kept as a no-op.
 static BOOL DSPhoneIsTabBar(UIView *view);
-static void DSPhoneFitTallContent(UIView *root) {
-    (void)root;
-    // Staged Phone uses one uniform fill scale; never stretch children.
-}
 
 // A bar Phone already laid out above the card. Move that bar down to the top
 // of the stage. The dial grid is positioned on its own pass.
@@ -5070,10 +5334,6 @@ static void DSPhoneRunPass(void) {
     }
 }
 
-// Kept for the old call sites: same pass, explicit reason.
-static void DSAdjustPhoneLayoutForStage(UIView *root) {
-    DSPhoneRequestPass(root, @"adjust");
-}
 
 // ---- 4.5.650 in-call routing: tell SpringBoard a call started HERE ---------
 // SpringBoard only fits the call screen into the stage when this signal came
@@ -5310,118 +5570,6 @@ static void DSPhoneCollectRounds(UIView *view, NSMutableArray<UIView *> *buttons
     }
 }
 
-// The number keys were being laid out inside the pad, and the pad already
-// sits in the bottom half of the card. Put the keys on the card itself,
-// starting near the top, and hold that frame when Phone lays them out again.
-static void DSPhoneFitCardRoot(UIView *root) {
-    UIView *pad = nil;
-    CGFloat padArea = 0.0;
-    DSPhoneFindKeypad(root, 0, &pad, &padArea);
-    if (!pad || pad.hidden || pad.alpha < 0.02 || !pad.window) {
-        DSPhoneWriteFit(@"app: phone keypad not found", 0, 0, 0);
-        return;
-    }
-    NSMutableArray<UIView *> *buttons = [NSMutableArray array];
-    DSPhoneCollectRounds(pad, buttons, 0);
-    if (buttons.count < 9) {
-        for (UIView *subview in root.subviews) {
-            if (objc_getAssociatedObject(subview, DSPhoneLiftFrameKey)) [buttons addObject:subview];
-        }
-    }
-    if (buttons.count < 9) {
-        DSPhoneWriteFit([NSString stringWithFormat:@"app: phone keypad %s buttons=%ld",
-                         object_getClassName(pad) ?: "?", (long)buttons.count],
-                        0, 0, 0);
-        return;
-    }
-    CGFloat rootW = CGRectGetWidth(root.bounds);
-    CGFloat rootH = CGRectGetHeight(root.bounds);
-    UIView *tab = DSPhoneFindTabBar(root, 0);
-    CGFloat tabTop = rootH - 4.0;
-    if (tab && tab != root) {
-        CGRect tabInRoot = [tab convertRect:tab.bounds toView:root];
-        if (CGRectGetMinY(tabInRoot) > 40.0) tabTop = CGRectGetMinY(tabInRoot) - 4.0;
-    }
-    CGFloat wasTop = CGFLOAT_MAX;
-    for (UIView *button in buttons) {
-        CGRect inRoot = [button convertRect:button.bounds toView:root];
-        wasTop = MIN(wasTop, CGRectGetMinY(inRoot));
-    }
-    [buttons sortUsingComparator:^NSComparisonResult(UIView *a, UIView *b) {
-        CGFloat ay = CGRectGetMidY([a convertRect:a.bounds toView:root]);
-        CGFloat by = CGRectGetMidY([b convertRect:b.bounds toView:root]);
-        if (fabs(ay - by) > 18.0) return ay < by ? NSOrderedAscending : NSOrderedDescending;
-        CGFloat ax = CGRectGetMidX([a convertRect:a.bounds toView:root]);
-        CGFloat bx = CGRectGetMidX([b convertRect:b.bounds toView:root]);
-        if (fabs(ax - bx) < 1.0) return NSOrderedSame;
-        return ax < bx ? NSOrderedAscending : NSOrderedDescending;
-    }];
-    NSInteger gridCount = MIN((NSInteger)buttons.count, 12);
-    BOOL hasCall = buttons.count > 12;
-    NSInteger rows = hasCall ? 5 : 4;
-    NSInteger cols = 3;
-    // Hard top. Do not follow the pad, or the keys stay in the lower half.
-    CGFloat bandTop = 28.0;
-    CGFloat side = 70.0;
-    CGFloat gapY = 18.0;
-    while (side > 52.0 && bandTop + rows * side + (rows - 1) * gapY > tabTop) side -= 2.0;
-    if (bandTop + rows * side + (rows - 1) * gapY > tabTop) {
-        gapY = 8.0;
-        side = floor((tabTop - bandTop - (rows - 1) * gapY) / rows);
-        if (side < 44.0) side = 44.0;
-    }
-    CGFloat gapX = MAX(22.0, (rootW - 12.0 - cols * side) / (cols + 1));
-    CGFloat gridLeft = gapX;
-
-    for (UIView *ancestor = pad; ancestor && ancestor != root.superview; ancestor = ancestor.superview) {
-        ancestor.clipsToBounds = NO;
-    }
-    root.clipsToBounds = NO;
-    DSPhoneLayoutFrozen = YES;
-    DSClampingStage = YES;
-    for (NSInteger index = 0; index < gridCount; index++) {
-        UIView *button = buttons[index];
-        NSInteger row = index / cols;
-        NSInteger col = index % cols;
-        CGRect target = CGRectMake(gridLeft + col * (side + gapX),
-                                    bandTop + row * (side + gapY),
-                                    side, side);
-        if (button.superview != root) {
-            if (!objc_getAssociatedObject(button, DSPhoneHomeKey) && button.superview) {
-                objc_setAssociatedObject(button, DSPhoneHomeKey, button.superview, OBJC_ASSOCIATION_ASSIGN);
-            }
-            [root addSubview:button];
-        }
-        button.transform = CGAffineTransformIdentity;
-        button.translatesAutoresizingMaskIntoConstraints = YES;
-        button.autoresizingMask = UIViewAutoresizingNone;
-        button.frame = target;
-        objc_setAssociatedObject(button, DSPhoneLiftFrameKey, [NSValue valueWithCGRect:target], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-    if (hasCall) {
-        UIView *callButton = buttons[12];
-        CGRect target = CGRectMake((rootW - side) * 0.5,
-                                    bandTop + 4 * (side + gapY),
-                                    side, side);
-        if (callButton.superview != root) {
-            if (!objc_getAssociatedObject(callButton, DSPhoneHomeKey) && callButton.superview) {
-                objc_setAssociatedObject(callButton, DSPhoneHomeKey, callButton.superview, OBJC_ASSOCIATION_ASSIGN);
-            }
-            [root addSubview:callButton];
-        }
-        callButton.transform = CGAffineTransformIdentity;
-        callButton.translatesAutoresizingMaskIntoConstraints = YES;
-        callButton.autoresizingMask = UIViewAutoresizingNone;
-        callButton.frame = target;
-        objc_setAssociatedObject(callButton, DSPhoneLiftFrameKey, [NSValue valueWithCGRect:target], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-    DSClampingStage = NO;
-    DSPhoneLayoutFrozen = NO;
-    DSPhoneWriteFit([NSString stringWithFormat:@"app: phone keys lifted %s n=%ld from=%.0f top=%.0f side=%.0f",
-                     object_getClassName(pad) ?: "?",
-                     (long)gridCount, wasTop, bandTop, side],
-                    side / 80.0, wasTop, bandTop);
-}
 
 static BOOL DSPhoneIsCardRoot(UIView *view) {
     if (!DSIsMobilePhone() || !view || DSPhoneLayoutFrozen || DSClampingStage) return NO;
@@ -5458,7 +5606,7 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
     if (DSIsMobilePhone() && !DSPhoneLayoutFrozen && objc_getAssociatedObject(view, DSPhoneScaleKey)) {
         DSPhoneReapply(view);
     }
-    // 4.5.662: keep camera chrome fit after UIKit clears transforms on layout.
+    // 4.5.663: keep camera chrome FILL after UIKit clears transforms on layout.
     if (DSCameraKeepsRealScreen() && view.window &&
         view.window.rootViewController.view == view) {
         dispatch_async(dispatch_get_main_queue(), ^{ DSCameraStageApplyLayoutFit(); });
@@ -5467,6 +5615,11 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 
 - (void)setFrame:(CGRect)frame {
     UIView *view = (UIView *)self;
+    if (DSCameraStageHoldsView(view)) return;
+    if (DSCameraStageWritesView()) {
+        %orig(frame);
+        return;
+    }
     if ([view isKindOfClass:UIWindow.class] && DSShouldSkipDynamicStageForBeeper((UIWindow *)view)) {
         %orig(frame);
         return;
@@ -5515,10 +5668,20 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
     if (DSIsMobilePhone() && !DSPhoneLayoutFrozen && objc_getAssociatedObject(view, DSPhoneScaleKey)) {
         DSPhoneReapply(view);
     }
+    // 4.5.663: UIKit rewriting the root frame clears the camera FILL transform.
+    if (DSCameraKeepsRealScreen() && view.window &&
+        view.window.rootViewController.view == view) {
+        dispatch_async(dispatch_get_main_queue(), ^{ DSCameraStageApplyLayoutFit(); });
+    }
 }
 
 - (void)setTransform:(CGAffineTransform)transform {
     UIView *view = (UIView *)self;
+    if (DSCameraStageHoldsView(view)) return;
+    if (DSCameraStageWritesView()) {
+        %orig(transform);
+        return;
+    }
     if ([view isKindOfClass:UIWindow.class] && DSShouldSkipDynamicStageForBeeper((UIWindow *)view)) {
         %orig(transform);
         return;
@@ -5542,6 +5705,11 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 
 - (void)setCenter:(CGPoint)center {
     UIView *view = (UIView *)self;
+    if (DSCameraStageHoldsView(view)) return;
+    if (DSCameraStageWritesView()) {
+        %orig(center);
+        return;
+    }
     // Auto Layout moves the lifted dial grid back to its natural center; keep
     // the lift on top of whatever center Phone now wants.
     if (DSIsMobilePhone() && !DSPhoneLayoutFrozen && DSPhoneHasGridLift(view)) {
@@ -5556,6 +5724,12 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 
 - (UIEdgeInsets)safeAreaInsets {
     UIEdgeInsets insets = %orig;
+    // 4.5.663: while camera chrome is FILL-scaled into the card, a full phone
+    // home-indicator inset pushes the shutter below the card bottom. Cap it.
+    if (DSCameraKeepsRealScreen()) {
+        if (insets.bottom > 8.0) insets.bottom = 8.0;
+        return insets;
+    }
     // The keyboard inset is what pulls Beeper's composer up inside the card.
     // The home indicator is much smaller and stays. Beeper is left alone:
     // SpringBoard already owns that card.
@@ -5577,6 +5751,11 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 
 - (void)setBounds:(CGRect)bounds {
     UIView *view = (UIView *)self;
+    if (DSCameraStageHoldsView(view)) return;
+    if (DSCameraStageWritesView()) {
+        %orig(bounds);
+        return;
+    }
     if ([view isKindOfClass:UIWindow.class] && DSShouldSkipDynamicStageForBeeper((UIWindow *)view)) {
         %orig(bounds);
         return;
@@ -5592,8 +5771,8 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
             return;
         }
     }
-    // 4.5.662: do not clamp the camera root back to the card (that was the
-    // missing shutter / flip / gallery). Fit scale runs after.
+    // 4.5.663: do not clamp the camera root back to the card (that was the
+    // missing shutter / flip / gallery). FILL+bottom-align runs after.
     if (DSCameraKeepsRealScreen() && DSStaged()) {
         UIWindow *owning = [view isKindOfClass:UIWindow.class] ? (UIWindow *)view : view.window;
         if (!DSIsKeyboardWindow(owning)) {
@@ -5687,6 +5866,9 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
         UIView *phoneHit = %orig;
         return DSPhoneRouteLiftedHit((UIView *)self, point, event, phoneHit);
     }
+    // 4.5.666: a camera screen on the card gets plain UIKit hit testing; the
+    // keyboard-chrome filters below are for typing, not for the shutter.
+    if (DSCameraStageCameraScreenUp()) return %orig;
     if (DSMessagesKeepsOwnKeys() || !DSMessagesLocalKeysHidden) return %orig;
     UIView *view = (UIView *)self;
     if (DSStaged() && DSViewIsStageShell(view) && ![view isKindOfClass:UIWindow.class]) {
@@ -5699,6 +5881,7 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSCameraStageCameraScreenUp()) return %orig;
     if (DSMessagesKeepsOwnKeys() || !DSMessagesLocalKeysHidden) return %orig;
     UIView *view = (UIView *)self;
     if (DSStaged() && DSViewIsStageShell(view) && ![view isKindOfClass:UIWindow.class]) return %orig;
@@ -5785,6 +5968,12 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
             return routed ?: phoneHit;
         }
     }
+    // 4.5.666: camera screen on the card: no keyboard filtering, log the hit.
+    if (DSCameraStageCameraScreenUp()) {
+        UIView *cameraHit = %orig;
+        DSCameraStageNoteHit((UIWindow *)self, point, event, cameraHit, @"window");
+        return cameraHit;
+    }
     if (DSBeeperKeepsItsLayout() || DSMessagesKeepsOwnKeys()) return %orig;
     if (!DSStaged() || !DSWindowIsKeyboardChrome(self)) return %orig;
     UIView *hit = %orig;
@@ -5799,6 +5988,11 @@ static void DSPhoneClearPieceTransforms(UIView *view) {
 %hook UIAutoRotatingWindow
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSCameraStageCameraScreenUp()) {
+        UIView *cameraHit = %orig;
+        DSCameraStageNoteHit((UIWindow *)self, point, event, cameraHit, @"autorotating-window");
+        return cameraHit;
+    }
     if (DSBeeperKeepsItsLayout() || DSMessagesKeepsOwnKeys()) return %orig;
     if (!DSStaged() || !DSWindowIsKeyboardChrome((UIWindow *)self)) return %orig;
     // Messages holds the reply bar with the anchor. Refitting this window on a
@@ -5918,42 +6112,6 @@ static UIView *DSFindMessagesKeyboard(UIView *view, NSInteger depth) {
     return best;
 }
 
-// The globe and the microphone were drawn under the keys and again inside
-// the card. Sit those loose controls on the bottom edge of the keyboard.
-static void DSSeatAssistantOnKeyboard(UIView *root) {
-    if (!DSMessagesTyping() || ![root isKindOfClass:UIView.class]) return;
-    UIView *keys = DSFindMessagesKeyboard(root, 0);
-    if (!keys) return;
-    CGRect keysScreen = [keys convertRect:keys.bounds toView:nil];
-    if (CGRectGetHeight(keysScreen) < 160.0) return;
-    NSMutableArray<UIView *> *loose = [NSMutableArray array];
-    NSMutableArray<UIView *> *stack = [NSMutableArray arrayWithObject:root];
-    while (stack.count) {
-        UIView *view = stack.lastObject;
-        [stack removeLastObject];
-        if (view != keys && [view isDescendantOfView:keys]) continue;
-        NSString *name = NSStringFromClass(object_getClass(view));
-        if (view != root && DSMessagesAssistantName(name) && CGRectGetHeight(view.bounds) >= 18.0 &&
-            CGRectGetHeight(view.bounds) <= 80.0) {
-            CGRect screen = [view convertRect:view.bounds toView:nil];
-            if (!CGRectIntersectsRect(CGRectInset(keysScreen, -4.0, -8.0), screen)) {
-                [loose addObject:view];
-            }
-            continue;
-        }
-        for (UIView *subview in view.subviews) {
-            if (subview != keys && ![subview isDescendantOfView:keys]) [stack addObject:subview];
-        }
-    }
-    for (UIView *view in loose) {
-        if (!view.superview) continue;
-        CGPoint bottom = [keys convertPoint:CGPointMake(0.0, CGRectGetHeight(keys.bounds)) toView:view.superview];
-        CGRect frame = view.frame;
-        frame.origin.y = bottom.y - CGRectGetHeight(frame);
-        if (fabs(frame.origin.y - view.frame.origin.y) < 1.0) continue;
-        view.frame = frame;
-    }
-}
 
 static void DSCollectMessagesChrome(UIView *view, NSMutableArray<UIView *> *found, NSInteger depth) {
     if (!view || depth > 14) return;
@@ -6094,6 +6252,11 @@ static void DSRaiseMessagesKeyboardWindow(UIWindow *window) {
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (DSCameraStageCameraScreenUp()) {
+        UIView *cameraHit = %orig;
+        DSCameraStageNoteHit((UIWindow *)self, point, event, cameraHit, @"text-effects-window");
+        return cameraHit;
+    }
     if (!DSMessagesOwnsKeyboard()) return %orig;
     UIView *hit = %orig;
     if (!hit || hit == (UIView *)self) return nil;
@@ -6199,7 +6362,7 @@ static void DSShellSetBounds(UIView *view, CGRect bounds) {
 }
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    if (DSStaged()) return NO;
+    if (DSStaged() && !DSCameraStageCameraScreenUp()) return NO;
     return %orig;
 }
 
@@ -6497,9 +6660,12 @@ static void DSShellSetBounds(UIView *view, CGRect bounds) {
 
 - (void)postNotificationName:(NSString *)name object:(id)object userInfo:(NSDictionary *)userInfo {
     // SpringBoard draws the keys below the card. These notes only slide the
-    // conversation and composer inside the staged app. Messages is the
-    // exception: it has to hear the note so it can build the app strip, with
-    // the height reduced the way StageDuo reduces it.
+    // conversation and composer inside the staged app, so they are dropped.
+    // 4.5.782 strip782: one exception. While caret778 holds Messages' box,
+    // Messages has to hear that a keyboard is up, or it treats the held box
+    // like a hardware keyboard and removes the app strip as soon as there is
+    // text. Show/change notes pass with the frame on the card bottom, height
+    // 0, so nothing slides. Off: /var/mobile/.dynamicstage-strip782-off
     BOOL keyboardNote = name.length > 0 &&
         ([name isEqualToString:UIKeyboardWillChangeFrameNotification] ||
          [name isEqualToString:UIKeyboardDidChangeFrameNotification] ||
@@ -6516,11 +6682,29 @@ static void DSShellSetBounds(UIView *view, CGRect bounds) {
         NSString *kind = @"change";
         if ([name rangeOfString:@"Show"].location != NSNotFound) kind = @"show";
         else if ([name rangeOfString:@"Hide"].location != NSNotFound) kind = @"hide";
+        DSLastKeyboardEnd784 = end;
+        DSLastKeyboardNote784 = [name copy];
         DSShipKeyboardTrace([NSString stringWithFormat:@"kb %@ x=%.1f y=%.1f w=%.1f h=%.1f bundle=%@ local=%@",
                              kind,
                              end.origin.x, end.origin.y, end.size.width, end.size.height,
                              NSBundle.mainBundle.bundleIdentifier ?: @"?",
                              local ?: @"?"]);
+        if (DSStrip782Passes(name)) {
+            @try {
+                CGRect card = DSStageBounds();
+                NSValue *flat = [NSValue valueWithCGRect:CGRectMake(0.0, CGRectGetHeight(card), CGRectGetWidth(card), 0.0)];
+                NSMutableDictionary *info = [userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+                info[UIKeyboardFrameEndUserInfoKey] = flat;
+                info[UIKeyboardFrameBeginUserInfoKey] = flat;
+                DSFeature719MarkAction("strip782");
+                %orig(name, object, info);
+                NSString *why = [@"strip782 passed " stringByAppendingString:name];
+                dispatch_async(dispatch_get_main_queue(), ^{ DSEntry781Log(why); });
+                return;
+            } @catch (NSException *exception) {
+                return;
+            }
+        }
         if (DSBeeperKeepsItsLayout()) {
             NSValue *endValue = userInfo[UIKeyboardFrameEndUserInfoKey];
             NSValue *beginValue = userInfo[UIKeyboardFrameBeginUserInfoKey];
@@ -6598,74 +6782,8 @@ static void DSShowMessagesLocalKeys(void) {
     });
 }
 
-// Resigning the field released the only keyboard and the anchor froze the
-// reply bar off the card. The field stays. SpringBoard shows the keyboard it
-// already uses for the picker. In-card keys stay until that view is on screen.
-static void DSPerformMessagesKeyboardHandoff(UIResponder *responder) {
-    if (!responder || !DSStaged() || !DSMessagesChatOnScreen) return;
-    if (!responder.isFirstResponder || !DSResponderTakesText(responder)) return;
-    DSMessagesBarHeld = YES;
-    DSMessagesPickerAsked = YES;
-    DSPostPickerKeyboard(YES);
-    DSTrace(@"app Messages asked SpringBoard for the keyboard");
-}
 
-// The conversation push focuses the field on the same turn that updates the
-// scene. Asking SpringBoard for a keyboard inside that turn is what spun it.
-// This waits until that update has finished. The field is not resigned.
-static void DSScheduleMessagesKeyboardHandoff(UIResponder *responder) {
-    if (!DSMessagesDrawsOwnKeyboard() || !DSStaged()) return;
-    if (DSMessagesKeyboardHosted || DSMessagesHandoffInFlight) return;
-    if (!DSMessagesChatOnScreen) return;
-    if (CFAbsoluteTimeGetCurrent() < DSMessagesHandoffCooldownUntil) return;
-    NSUInteger token = ++DSMessagesHandoffToken;
-    CFAbsoluteTime ready = DSMessagesChatReadyAt;
-    if (ready <= 0) ready = CFAbsoluteTimeGetCurrent() + 0.45;
-    NSTimeInterval delay = ready - CFAbsoluteTimeGetCurrent();
-    if (delay < 0.05) delay = 0.05;
-    __weak UIResponder *weakField = responder;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        if (token != DSMessagesHandoffToken) return;
-        if (!DSStaged() || !DSMessagesChatOnScreen || DSMessagesKeyboardHosted || DSMessagesHandoffInFlight) return;
-        UIResponder *field = weakField;
-        if (!field.isFirstResponder || !DSResponderTakesText(field)) field = DSCurrentKeyInput();
-        if (!field || !DSResponderTakesText(field) || !field.isFirstResponder) {
-            static NSInteger logs = 0;
-            if (logs < 3) {
-                logs += 1;
-                DSTrace(@"app Messages keyboard waits for the field");
-            }
-            return;
-        }
-        DSPerformMessagesKeyboardHandoff(field);
-    });
-}
 
-static void DSReleaseMessagesKeyboardHost(void) {
-    if (!DSMessagesDrawsOwnKeyboard()) return;
-    if (DSMessagesHandoffDepth > 0) return;
-    // Leaving the conversation clears the chat flag first. A field resign while
-    // the chat is still up is the in-card keyboard going away, and it must not
-    // dismiss the keyboard SpringBoard is showing.
-    if (DSMessagesChatOnScreen && DSMessagesPickerAsked) return;
-    DSMessagesHandoffToken++;
-    DSMessagesRemoteHooks = NO;
-    DSMessagesDropsKeyboardNotes = NO;
-    DSMessagesBarHeld = NO;
-    if (DSMessagesLocalKeysHidden) {
-        DSMessagesLocalKeysHidden = NO;
-        DSShowMessagesLocalKeys();
-    }
-    if (DSMessagesPickerAsked) {
-        DSMessagesPickerAsked = NO;
-        DSPostPickerKeyboard(NO);
-    }
-    if (!DSMessagesKeyboardHosted) return;
-    DSMessagesKeyboardHosted = NO;
-    DSClearEntryAnchor();
-    DSTrace(@"app released Messages keyboard");
-}
 
 static void DSNoteFieldFocused(UIResponder *responder) {
     if (!DSStaged() || !responder) return;
@@ -6694,8 +6812,11 @@ static void DSNoteFieldFocused(UIResponder *responder) {
     if (DSStaged() && DSResponderTakesText(self)) {
         DSTraceFormat(@"app become %@", NSStringFromClass(self.class));
     }
+    BOOL ds777Was = self.isFirstResponder;
     DSPrepareMessagesForSpringBoardKeyboard(self);
     BOOL became = %orig;
+    if (DSStaged() && DSIsMessageBox781(self) && became) DSEntry781Log(DSChatOpening781 ? @"auto-focus while chat opening (draft restore)" : @"become"); if (DSStaged() && DSIsMessageBox781(self) && became && DSChatOpening781) { DSAutoFocus785 = YES; if (!DSReopen788Active() && (!DS785On("reopen784") || DSCaret778Enabled() || DS790On("reopen790"))) DSReopen782(@"auto-focus", NO); }
+    if (DSStaged() && DSResponderTakesText(self)) DSResign777Log(@"become(UIResponder)", self, [NSString stringWithFormat:@"%@ (was fr=%d)", became ? @"YES" : @"NO", ds777Was]);
     if (became && DSStaged() && DSResponderTakesText(self)) {
         DSShipKeyboardTrace([NSString stringWithFormat:@"focus %@ bundle=%@",
                              NSStringFromClass(self.class),
@@ -6713,18 +6834,21 @@ static void DSNoteFieldFocused(UIResponder *responder) {
     if (wasEditing && DSStaged() && DSResignIsSystemDeactivation() && !DSResignIsSearchCancel()) {
         DSRememberKeyboardTarget(self);
         DSShipKeyboardTrace(@"kept field during a call");
+        DSResign777Log(@"resign(UIResponder)", self, @"NO kept (call)");
         return NO;
     }
+    DSCaret777Why = nil;
     if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
+        DSResign777Log(@"resign(UIResponder)", self, [NSString stringWithFormat:@"NO kept (%@)", DSCaret777Why ?: @"composer"]);
         return NO;
     }
     if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
     DSAllowKeyboardHide = NO;
+    if (wasEditing && DSResponderTakesText(self)) DSResign777Log(@"resign(UIResponder)", self, [NSString stringWithFormat:@"%@ allowed%@%@", resigned ? @"YES" : @"NO", DSCaret777Why ? @": " : @"", DSCaret777Why ?: @""]);
     if (wasEditing && resigned && DSStaged() && DSResponderTakesText(self) && !DSDeliveringStageKey) {
         if (DSMessagesOwnsKeyboard()) DSMessagesFieldIsEditing = NO;
-        DSReleaseMessagesKeyboardHost();
         DSReleaseComposer();
         DSNoteStageKeyboardResign(self);
     }
@@ -6748,8 +6872,11 @@ static void DSNoteFieldFocused(UIResponder *responder) {
     if (DSStaged()) {
         DSTraceFormat(@"app become %@", NSStringFromClass(self.class));
     }
+    BOOL ds777Was = self.isFirstResponder;
     DSPrepareMessagesForSpringBoardKeyboard(self);
     BOOL became = %orig;
+    if (DSStaged() && DSIsMessageBox781(self) && became) DSEntry781Log(DSChatOpening781 ? @"auto-focus while chat opening (draft restore)" : @"become"); if (DSStaged() && DSIsMessageBox781(self) && became && DSChatOpening781) { DSAutoFocus785 = YES; if (!DSReopen788Active() && (!DS785On("reopen784") || DSCaret778Enabled() || DS790On("reopen790"))) DSReopen782(@"auto-focus", NO); }
+    if (DSStaged() && DSResponderTakesText(self)) DSResign777Log(@"become(UITextField)", self, [NSString stringWithFormat:@"%@ (was fr=%d)", became ? @"YES" : @"NO", ds777Was]);
     if (became && DSStaged()) {
         if (DSMessagesUsesStageKeyboard()) DSArmStageKeyboard(self);
         DSNoteFieldFocused(self);
@@ -6764,18 +6891,21 @@ static void DSNoteFieldFocused(UIResponder *responder) {
     if (wasEditing && DSStaged() && DSResignIsSystemDeactivation() && !DSResignIsSearchCancel()) {
         DSRememberKeyboardTarget(self);
         DSShipKeyboardTrace(@"kept field during a call");
+        DSResign777Log(@"resign(UITextField)", self, @"NO kept (call)");
         return NO;
     }
+    DSCaret777Why = nil;
     if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
+        DSResign777Log(@"resign(UITextField)", self, [NSString stringWithFormat:@"NO kept (%@)", DSCaret777Why ?: @"composer"]);
         return NO;
     }
     if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
     DSAllowKeyboardHide = NO;
+    if (wasEditing && DSResponderTakesText(self)) DSResign777Log(@"resign(UITextField)", self, [NSString stringWithFormat:@"%@ allowed%@%@", resigned ? @"YES" : @"NO", DSCaret777Why ? @": " : @"", DSCaret777Why ?: @""]);
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         if (DSMessagesOwnsKeyboard()) DSMessagesFieldIsEditing = NO;
-        DSReleaseMessagesKeyboardHost();
         DSReleaseComposer();
         DSNoteStageKeyboardResign(self);
     }
@@ -6799,8 +6929,11 @@ static void DSNoteFieldFocused(UIResponder *responder) {
     if (DSStaged()) {
         DSTraceFormat(@"app become %@", NSStringFromClass(self.class));
     }
+    BOOL ds777Was = self.isFirstResponder;
     DSPrepareMessagesForSpringBoardKeyboard(self);
     BOOL became = %orig;
+    if (DSStaged() && DSIsMessageBox781(self) && became) DSEntry781Log(DSChatOpening781 ? @"auto-focus while chat opening (draft restore)" : @"become"); if (DSStaged() && DSIsMessageBox781(self) && became && DSChatOpening781) { DSAutoFocus785 = YES; if (!DSReopen788Active() && (!DS785On("reopen784") || DSCaret778Enabled() || DS790On("reopen790"))) DSReopen782(@"auto-focus", NO); }
+    if (DSStaged() && DSResponderTakesText(self)) DSResign777Log(@"become(UITextView)", self, [NSString stringWithFormat:@"%@ (was fr=%d)", became ? @"YES" : @"NO", ds777Was]);
     if (became && DSStaged()) {
         if (DSMessagesUsesStageKeyboard()) DSArmStageKeyboard(self);
         DSNoteFieldFocused(self);
@@ -6815,18 +6948,21 @@ static void DSNoteFieldFocused(UIResponder *responder) {
     if (wasEditing && DSStaged() && DSResignIsSystemDeactivation() && !DSResignIsSearchCancel()) {
         DSRememberKeyboardTarget(self);
         DSShipKeyboardTrace(@"kept field during a call");
+        DSResign777Log(@"resign(UITextView)", self, @"NO kept (call)");
         return NO;
     }
+    DSCaret777Why = nil;
     if (wasEditing && DSKeepComposer(self)) {
         DSRememberKeyboardTarget(self);
+        DSResign777Log(@"resign(UITextView)", self, [NSString stringWithFormat:@"NO kept (%@)", DSCaret777Why ?: @"composer"]);
         return NO;
     }
     if (wasEditing && DSStaged()) DSAllowKeyboardHide = YES;
     BOOL resigned = %orig;
     DSAllowKeyboardHide = NO;
+    if (wasEditing && DSResponderTakesText(self)) DSResign777Log(@"resign(UITextView)", self, [NSString stringWithFormat:@"%@ allowed%@%@", resigned ? @"YES" : @"NO", DSCaret777Why ? @": " : @"", DSCaret777Why ?: @""]);
     if (wasEditing && resigned && DSStaged() && !DSDeliveringStageKey) {
         if (DSMessagesOwnsKeyboard()) DSMessagesFieldIsEditing = NO;
-        DSReleaseMessagesKeyboardHost();
         DSReleaseComposer();
         DSNoteStageKeyboardResign(self);
     }
@@ -7264,6 +7400,41 @@ static void DSInstallMessagesBehaviorHooks(void) {
 // window is the one SpringBoard already uses for the picker, on the
 // remote-keyboard scene. Nothing here hides a view, moves a window, or talks
 // to the arbiter.
+// 4.5.792 log792: log when Messages' app strip is removed or hidden, with the
+// caller images (DS+ = our code). Logging only. Off: -log792-off.
+static void DS792StripLog(UIView *v, NSString *what) {
+    static Class footer = Nil;
+    if (!footer) footer = objc_getClass("CKBrowserSwitcherFooterView");
+    if (!footer || ![v isKindOfClass:footer]) return;
+    void *addrs[20];
+    int n = backtrace(addrs, 20);
+    NSMutableArray *imgs = [NSMutableArray array];
+    for (int i = 2; i < n && imgs.count < 14; i++) {
+        Dl_info info; memset(&info, 0, sizeof(info));
+        if (!dladdr(addrs[i], &info) || !info.dli_fname) { [imgs addObject:@"?"]; continue; }
+        const char *img = strrchr(info.dli_fname, '/'); img = img ? img + 1 : info.dli_fname;
+        NSString *s = [NSString stringWithUTF8String:img] ?: @"?";
+        if ([s hasPrefix:@"DynamicStage"]) s = [NSString stringWithFormat:@"DS+0x%lx", (unsigned long)((uintptr_t)addrs[i] - (uintptr_t)info.dli_fbase)];
+        else s = [NSString stringWithFormat:@"%@+0x%lx", s, (unsigned long)((uintptr_t)addrs[i] - (uintptr_t)info.dli_saddr)];
+        [imgs addObject:s];
+    }
+    DSTraceFormat(@"strip792 %@ frame=%@ super=%@ by %@", what, NSStringFromCGRect(v.frame),
+                  v.superview ? NSStringFromClass(v.superview.class) : @"none", [imgs componentsJoinedByString:@" < "]);
+}
+
+%group Strip792
+%hook UIView
+- (void)removeFromSuperview {
+    if (self.superview) DS792StripLog(self, @"removeFromSuperview");
+    %orig;
+}
+- (void)setHidden:(BOOL)hidden {
+    if (hidden && !self.hidden) DS792StripLog(self, @"setHidden:YES");
+    %orig;
+}
+%end
+%end
+
 %group RemoteKeys
 
 %hook _UIRemoteKeyboards
@@ -7343,7 +7514,44 @@ static void DSInstallRemoteKeyboardHooks(void) {
         }
         %init(RemoteKeys);
         DSReportRemoteArmed();
+        if (DS792On("log792") && objc_getClass("CKBrowserSwitcherFooterView") &&
+            [NSBundle.mainBundle.bundleIdentifier isEqualToString:@"com.apple.MobileSMS"]) {
+            %init(Strip792);
+            DSTraceFormat(@"strip792 hooks in (UIView removeFromSuperview / setHidden:, filtered to CKBrowserSwitcherFooterView)");
+        }
     });
+}
+
+// ---- 4.5.797 kbcap797 (decision logging only) ------------------------------------
+// Groundwork for one keyboard model: next to each bundle-id decision, log what
+// the app is observed to do, so a later build can switch the decision to the
+// observed condition with proof that Messages behaves the same. No behaviour.
+// Off: kbcap797-off / core797-off.
+static BOOL DS797FindClass(UIView *v, Class c, int depth) {
+    if (!v || depth > 40) return NO;
+    if ([v isKindOfClass:c]) return YES;
+    for (UIView *sub in v.subviews) if (DS797FindClass(sub, c, depth + 1)) return YES;
+    return NO;
+}
+static void DSKbCap797Log(BOOL shown) {
+    if (!DSFeature699On("core797") || !DSFeature699On("kbcap797")) return;
+    static CFAbsoluteTime last = 0;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - last < 2.0 && now >= last) return;
+    last = now;
+    @try {
+        Class footer = objc_getClass("CKBrowserSwitcherFooterView");
+        BOOL strip = NO; int ownKeys = 0; UIWindow *key = nil;
+        for (UIWindow *w in UIApplication.sharedApplication.windows) {
+            if (w.isKeyWindow) key = w;
+            NSString *cls = NSStringFromClass(w.class);
+            if (!w.hidden && w.alpha > 0.01 && ([cls rangeOfString:@"TextEffects"].location != NSNotFound || [cls rangeOfString:@"RemoteKeyboard"].location != NSNotFound)) ownKeys++;
+            if (footer && !strip && !w.hidden) strip = DS797FindClass(w, footer, 0);
+        }
+        DSDiagnosticsRecordFormat(@"app: kbcap797 shown=%d | by bundle: messagesOwnsKeys=%d stageKeyboardApp=%d beeper=%d | seen: stripFooter=%d keyboardWindows=%d keyWindow=%@",
+                                  shown, DSMessagesOwnsKeyboard(), DSUsesStageKeyboard(), DSIsBeeper(), strip, ownKeys,
+                                  key ? NSStringFromClass(key.class) : @"none");
+    } @catch (NSException *e) {}
 }
 
 static void DSOnSpringBoardKeyboardShown(void) {
@@ -7357,42 +7565,45 @@ static void DSOnSpringBoardKeyboardShown(void) {
     uint32_t hash = DSIdentifierHash(NSBundle.mainBundle.bundleIdentifier ?: @"");
     if ((uint32_t)state != hash) return;
     BOOL shown = (state & kDSStageStateActiveBit) != 0;
+    DSKbCap797Log(shown);
     if (!DSStaged()) return;
-    if (DSMessagesOwnsKeyboard()) return;
-    if (!DSMessagesDrawsOwnKeyboard()) {
-        // SpringBoard has the full keyboard. The copy inside the card can go.
-        // Doing this earlier hides the only keys, and SpringBoard never draws any.
-        if (shown) {
-            // The plain remote window stays. The copy in the text-effects
-            // window is the one inside the card.
-            if (!DSMessagesLocalKeysHidden) {
-                DSMessagesLocalKeysHidden = YES;
-                DSHideMessagesLocalKeys();
+    if (DSMessagesOwnsKeyboard()) {
+        // 4.5.778 caret778: SpringBoard's keys went down (swipe-down, tap
+        // outside, home, minimise, close, any shared hide). "Wanted" is
+        // cleared first, then the message box lets go, so keys and caret
+        // leave together.
+        if (!shown && DSCaret778Enabled()) {
+            @try {
+                DSStageKeyboardWanted = NO;
+                DSStageKeyboardGuardUntil = 0;
+                UIResponder *target = DSKeyboardTarget;
+                if (target && target.isFirstResponder) {
+                    DSTraceFormat(@"caret778: SpringBoard hid the keys; %@ lets go", NSStringFromClass(target.class));
+                    DSCaret778Dropping = YES;
+                    [target resignFirstResponder];
+                    DSCaret778Dropping = NO;
+                }
+            } @catch (NSException *exception) {
+                DSCaret778Dropping = NO;
             }
-            DSTrace(@"app Messages keyboard is SpringBoard's, in-card keys hidden, field stays");
-            return;
         }
-        DSStageKeyboardWanted = NO;
-        if (!DSMessagesLocalKeysHidden) return;
-        DSMessagesLocalKeysHidden = NO;
-        DSShowMessagesLocalKeys();
-        DSTrace(@"app Messages keys are back in the card");
         return;
     }
+    // SpringBoard has the full keyboard. The copy inside the card can go.
+    // Doing this earlier hides the only keys, and SpringBoard never draws any.
     if (shown) {
-        if (!DSMessagesChatOnScreen || !DSMessagesPickerAsked) return;
-        if (DSMessagesLocalKeysHidden) return;
-        // Drop the frame notes first, so hiding the key chrome cannot slide
-        // the reply bar off the card.
-        DSMessagesDropsKeyboardNotes = YES;
-        DSMessagesLocalKeysHidden = YES;
-        DSHideMessagesLocalKeys();
-        DSTrace(@"app Messages keys are SpringBoard's");
+        // The plain remote window stays. The copy in the text-effects
+        // window is the one inside the card.
+        if (!DSMessagesLocalKeysHidden) {
+            DSMessagesLocalKeysHidden = YES;
+            DSHideMessagesLocalKeys();
+        }
+        DSTrace(@"app Messages keyboard is SpringBoard's, in-card keys hidden, field stays");
         return;
     }
+    DSStageKeyboardWanted = NO;
     if (!DSMessagesLocalKeysHidden) return;
     DSMessagesLocalKeysHidden = NO;
-    DSMessagesDropsKeyboardNotes = NO;
     DSShowMessagesLocalKeys();
     DSTrace(@"app Messages keys are back in the card");
 }
@@ -7401,6 +7612,110 @@ static void DSOnSpringBoardKeyboardShown(void) {
 extern "C" void DSCameraStageInstall(void);
 // 4.5.660: re-announces the camera hook state to SpringBoard once staged.
 extern "C" void DSCameraStageDidBecomeStaged(void);
+
+// 4.5.788 caret788: with caret778 the box stays focused while UIKit's own
+// keyboard in Messages is hidden, and Messages dropped its app strip. Answer
+// -[CKMessageEntryView isKeyboardVisible] (listed by strip784, Kaisjd) as YES
+// while the staged keys are wanted. Hooked only if the method is there and
+// returns BOOL with no arguments. Off: /var/mobile/.dynamicstage-caret788-off
+static BOOL (*DSOrigKbVisible788)(id, SEL) = NULL;
+static BOOL DSKbVisible788(id self, SEL _cmd) {
+    BOOL orig = DSOrigKbVisible788 ? DSOrigKbVisible788(self, _cmd) : NO;
+    if (orig || !DSStaged() || !DSStageKeyboardWanted || !DS788On("caret788") || !DSCaret778Enabled()) return orig;
+    static NSUInteger logs = 0;
+    if (logs < 6) { logs++; DSTraceFormat(@"caret788: CKMessageEntryView isKeyboardVisible answered YES (UIKit said NO, staged keys up)"); }
+    return YES;
+}
+static void DSInstallCaret788(void) {
+    if (!DS788On("caret788")) return;
+    @try {
+        Class cls = objc_getClass("CKMessageEntryView");
+        SEL sel = sel_registerName("isKeyboardVisible");
+        Method m = cls ? class_getInstanceMethod(cls, sel) : NULL;
+        const char *types = m ? method_getTypeEncoding(m) : NULL;
+        if (!m || !types || (types[0] != 'B' && types[0] != 'c') || method_getNumberOfArguments(m) != 2) {
+            DSTraceFormat(@"caret788: isKeyboardVisible not hooked (missing or types=%s)", types ?: "-");
+            return;
+        }
+        // Own the method on CKMessageEntryView itself before swapping.
+        class_addMethod(cls, sel, method_getImplementation(m), types);
+        m = class_getInstanceMethod(cls, sel);
+        DSOrigKbVisible788 = (BOOL (*)(id, SEL))method_setImplementation(m, (IMP)DSKbVisible788);
+        DSTraceFormat(@"caret788: hooked CKMessageEntryView isKeyboardVisible types=%s", types);
+    } @catch (NSException *e) {}
+}
+
+// 4.5.790 strip790 (log only): which Messages check drops the strip.
+// For the first 3 keys after each focus: box focus, Messages' own
+// isKeyboardVisible (unhooked answer) and activeKeyboardHeight, then the
+// entry781 line right after the key and 0.3 s later. Also every call of
+// -[CKMessageEntryView _updateUIForEntryFieldCollapsedStateChange] (listed by
+// strip784; hooked only if it takes no arguments and returns void).
+// Off: /var/mobile/.dynamicstage-strip790-off
+static UIView *DSStrip790Entry(void) {
+    UIResponder *t = DSKeyboardTarget;
+    UIView *v = [t isKindOfClass:UIView.class] ? (UIView *)t : nil;
+    Class cls = objc_getClass("CKMessageEntryView");
+    while (v && cls && ![v isKindOfClass:cls]) v = v.superview;
+    return v;
+}
+static NSString *DSStrip790State(void) {
+    UIView *e = DSStrip790Entry();
+    UIResponder *t = DSKeyboardTarget;
+    NSString *vis = @"-", *h = @"-";
+    @try {
+        if (e && DSOrigKbVisible788) vis = DSOrigKbVisible788(e, sel_registerName("isKeyboardVisible")) ? @"1" : @"0";
+        SEL hs = sel_registerName("activeKeyboardHeight");
+        Method m = e ? class_getInstanceMethod(object_getClass(e), hs) : NULL;
+        const char *ty = m ? method_getTypeEncoding(m) : NULL;
+        if (m && ty && ty[0] == 'd' && method_getNumberOfArguments(m) == 2)
+            h = [NSString stringWithFormat:@"%.0f", ((double (*)(id, SEL))objc_msgSend)(e, hs)];
+        else if (m && ty && ty[0] == 'f' && method_getNumberOfArguments(m) == 2)
+            h = [NSString stringWithFormat:@"%.0f", ((float (*)(id, SEL))objc_msgSend)(e, hs)];
+        else if (DS791On("log791"))   // 4.5.791: say why it was not read (Highb: always '-')
+            h = m ? [NSString stringWithFormat:@"-(types=%s args=%u)", ty ?: "?", method_getNumberOfArguments(m)] : @"-(no method)";
+    } @catch (NSException *x) {}
+    return [NSString stringWithFormat:@"fr=%d caret=%d entryH=%.0f msgKbVisible=%@ activeKbH=%@",
+            t.isFirstResponder, DSCaret778Enabled(), e ? CGRectGetHeight(e.bounds) : -1.0, vis, h];
+}
+static void DSStrip790Key(BOOL isDelete) {
+    if (!DSStaged() || !DS790On("strip790") || DSStrip790Left <= 0) return;
+    if (!DSIsMessageBox781(DSKeyboardTarget)) return;
+    NSInteger n = 4 - DSStrip790Left;
+    DSStrip790Left -= 1;
+    NSString *k = isDelete ? @"delete" : @"insert";
+    DSTraceFormat(@"strip790 key %ld %@ now: %@", (long)n, k, DSStrip790State());
+    dispatch_async(dispatch_get_main_queue(), ^{ DSEntry781Log([NSString stringWithFormat:@"strip790 key %ld %@ next pass", (long)n, k]); });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DSTraceFormat(@"strip790 key %ld %@ +0.3s: %@", (long)n, k, DSStrip790State());
+        DSEntry781Log([NSString stringWithFormat:@"strip790 key %ld %@ +0.3s", (long)n, k]);
+    });
+}
+static void (*DSOrigCollapse790)(id, SEL) = NULL;
+static void DSCollapse790(id self, SEL _cmd) {
+    BOOL log = DSStaged() && DS790On("strip790");
+    static NSUInteger logs = 0;
+    if (log && logs < 40) { logs++; DSTraceFormat(@"strip790 _updateUIForEntryFieldCollapsedStateChange before: %@", DSStrip790State()); }
+    if (DSOrigCollapse790) DSOrigCollapse790(self, _cmd);
+    if (log && logs < 40) DSEntry781Log(@"strip790 after _updateUIForEntryFieldCollapsedStateChange");
+}
+static void DSInstallStrip790(void) {
+    if (!DS790On("strip790")) return;
+    @try {
+        Class cls = objc_getClass("CKMessageEntryView");
+        SEL sel = sel_registerName("_updateUIForEntryFieldCollapsedStateChange");
+        Method m = cls ? class_getInstanceMethod(cls, sel) : NULL;
+        const char *types = m ? method_getTypeEncoding(m) : NULL;
+        if (!m || !types || types[0] != 'v' || method_getNumberOfArguments(m) != 2) {
+            DSTraceFormat(@"strip790: _updateUIForEntryFieldCollapsedStateChange not hooked (types=%s)", types ?: "-");
+            return;
+        }
+        class_addMethod(cls, sel, method_getImplementation(m), types);
+        m = class_getInstanceMethod(cls, sel);
+        DSOrigCollapse790 = (void (*)(id, SEL))method_setImplementation(m, (IMP)DSCollapse790);
+        DSTraceFormat(@"strip790: hooked _updateUIForEntryFieldCollapsedStateChange types=%s", types);
+    } @catch (NSException *e) {}
+}
 
 static void DSInstallHooks(void) {
     static dispatch_once_t token;
@@ -7411,6 +7726,8 @@ static void DSInstallHooks(void) {
         } @catch (NSException *exception) {
         }
         DSInstallMessagesBehaviorHooks();
+        DSInstallCaret788();
+        DSInstallStrip790();
         DSInstallRemoteKeyboardHooks();
         DSInstallKeyboardBanishObserver();
         DSInstallSearchCancelHook();
@@ -7430,6 +7747,24 @@ static void DSInstallHooks(void) {
         notify_register_dispatch(kDSKeyboardShownNotification, &shownToken, dispatch_get_main_queue(), ^(int t) {
             (void)t;
             DSOnSpringBoardKeyboardShown();
+        });
+        // 4.5.744 kbdrag744: SpringBoard asks this app to drop its keyboard
+        // (its card is being minimised / closed). Messages is excluded: its keys
+        // are SpringBoard's and go through the shared hide.
+        // Off: /var/mobile/.dynamicstage-kbapp744-off
+        static int dismissToken = NOTIFY_TOKEN_INVALID;
+        notify_register_dispatch("com.recreated.dynamicstage.kbdismiss744", &dismissToken, dispatch_get_main_queue(), ^(int t) {
+            @try {
+                uint64_t state = 0;
+                notify_get_state(t, &state);
+                NSString *me = NSBundle.mainBundle.bundleIdentifier ?: @"";
+                if ((uint32_t)state != (uint32_t)DSIdentifierHash(me)) return;
+                if ([me isEqualToString:@"com.apple.MobileSMS"]) return;
+                if (access("/var/mobile/.dynamicstage-kbapp744-off", F_OK) == 0) return;
+                DSTrace(@"kbapp744: SpringBoard asked for the keyboard to go");
+                for (UIWindow *w in UIApplication.sharedApplication.windows) [w endEditing:YES];
+            } @catch (NSException *exception) {
+            }
         });
         DSReportListening();
     });
@@ -7460,9 +7795,14 @@ static void DSImageMapped(void) {
     } @catch (NSException *exception) {
     }
     char line[512];
-    snprintf(line, sizeof(line), "mapped bundle=%s\n", identifier.UTF8String ?: "?");
+    snprintf(line, sizeof(line), "mapped bundle=%s pid=%d build=%s\n", identifier.UTF8String ?: "?", (int)getpid(), kDSBuildVersionString);
     DSWriteFile("/var/tmp/com.recreated.dynamicstage.mapped", line);
     DSWriteFile("/var/jb/tmp/com.recreated.dynamicstage.mapped", line);
+    // 4.5.668: a sandboxed App Store app (Beeper, Messenger, Signal) cannot
+    // write either of those. Its own container can; SpringBoard's relay
+    // (springboard/DSAppTraceRelay.m) reads these markers, so a log now says
+    // whether this image ever mapped in that app at all.
+    DSWriteContainerMarker("com.recreated.dynamicstage.mapped", line);
 }
 
 %ctor {
@@ -7484,6 +7824,12 @@ static void DSImageMapped(void) {
         }
         DSReportCtor(reason);
         NSString *ctorBundle = NSBundle.mainBundle.bundleIdentifier ?: @"";
+        {
+            char marker[512];
+            snprintf(marker, sizeof(marker), "ctor bundle=%s pid=%d reason=%d build=%s\n",
+                     ctorBundle.UTF8String ?: "?", (int)getpid(), reason, kDSBuildVersionString);
+            DSWriteContainerMarker("com.recreated.dynamicstage.ctor", marker);
+        }
         if ([ctorBundle isEqualToString:@"com.beeper.chat.ios"]) {
             DSBeeperDetailLogFormat(@"APP ctor build=%s reason=%d bundle=%@",
                                     kDSBuildVersionString, reason, ctorBundle);

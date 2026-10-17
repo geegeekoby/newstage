@@ -8,8 +8,4 @@
 @property (nonatomic, strong) UIColor *markColor;    // the squircle
 @property (nonatomic, strong) UIColor *arrowColor;   // the arrow inside it
 
-+ (UIImage *)logoImageWithSize:(CGSize)size
-                     markColor:(UIColor *)markColor
-                    arrowColor:(UIColor *)arrowColor;
-
 @end

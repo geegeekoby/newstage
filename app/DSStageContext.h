@@ -9,11 +9,6 @@
 
 + (instancetype)sharedContext;
 
-// Whether this process is on the stage right now, answered without building
-// anything or registering for anything. An app the stage launched has to know
-// this inside its constructor; every other app can find out later.
-+ (BOOL)processIsStagedNow;
-
 // The real display, in points, derived from nativeBounds so it survives every
 // hook in this file.
 @property (nonatomic, readonly) CGRect deviceBounds;

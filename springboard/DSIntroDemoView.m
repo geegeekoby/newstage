@@ -235,8 +235,16 @@ static UIView *DSDemoBar(CGFloat inset, CGFloat height, UIColor *color) {
     }
 
     [self runCycle];
+    // 4.5.698: weak - the repeating timer held this view forever (its dealloc,
+    // which invalidates the timer, could never run if stop was missed).
+    __weak __typeof(self) weakSelf = self;
     _loop = [NSTimer scheduledTimerWithTimeInterval:4.4 repeats:YES block:^(NSTimer *timer) {
-        [self runCycle];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            [timer invalidate];
+            return;
+        }
+        [strongSelf runCycle];
     }];
 }
 

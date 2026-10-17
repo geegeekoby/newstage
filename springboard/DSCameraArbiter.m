@@ -1,4 +1,5 @@
 #import "DSCameraArbiter.h"
+#import "DSStageDebug.h"
 #import "DSStageManager.h"
 #import "DSSceneHost.h"
 #import "DSConstants.h"
@@ -26,7 +27,14 @@
 @property (nonatomic, copy) NSString *hostBundle;
 @property (nonatomic, copy) NSString *hostPath;
 @property (nonatomic) BOOL presenceLogged;
+// 4.5.670: last time the element was moved to a new card frame.
+@property (nonatomic) CFAbsoluteTime lastMove;
 @end
+
+void DSAppTraceRelayStart(void);
+BOOL DSAppTraceRelayBundleIsLive(NSString *bundle);
+NSString *DSAppTraceRelayBundleSummary(NSString *bundle);
+void DSAppTraceRelayNoteHosted(NSArray<NSString *> *hosted);
 
 @implementation DSCameraClaim
 @end
@@ -53,6 +61,7 @@ static NSSet<NSString *> *DSCameraPublished;
 static NSDictionary<NSString *, NSNumber *> *DSCam661SensorCamera;
 static NSDictionary<NSString *, NSNumber *> *DSCam661SensorHostPid;
 static BOOL DSCam661SensorHooked = NO;
+static BOOL DSCam668Disabled(void);
 
 #pragma mark - Logging
 
@@ -341,12 +350,41 @@ static id DSCameraAddElement(id self, SEL _cmd, id element) {
             DSCameraPublisher = self;
             if (DSCameraSend(element, @selector(isUIApplicationElement)) &&
                 DSCameraSend(element, @selector(fillsDisplayBounds))) {
-                DSCameraTemplateRole = DSCameraSendLong(element, @selector(layoutRole), DSCameraTemplateRole);
-                DSCameraTemplateLevel = DSCameraSendLong(element, @selector(level), DSCameraTemplateLevel);
-                DSCameraTemplateSeen = YES;
+                // 4.5.674 SIGTRAP fix: both 4.5.673 crashes (Crashsnstuff.txt,
+                // 23:09:10 and 23:46:53 NZDT, frame 2 = Tweak.xm:764, the
+                // SBAppViewController settings %orig) came right after the
+                // card was published with a template learnt from a full-screen
+                // system element: role=6 level=1050 (every earlier log, and
+                // every 4.5.673 session without that template, published
+                // role=1 level=1 and never crashed there). With that role
+                // SpringBoard re-describes the card's scene (status-bar
+                // overrides, event-deferring targets) and its own app-view
+                // handler traps. Only an ordinary primary app element (role 1,
+                // level 0..10) is used as the template now.
+                long long role = DSCameraSendLong(element, @selector(layoutRole), 1);
+                long long level = DSCameraSendLong(element, @selector(level), 1);
+                if (role == 1 && level >= 0 && level <= 10) {
+                    DSCameraTemplateRole = role;
+                    DSCameraTemplateLevel = level;
+                    DSCameraTemplateSeen = YES;
+                } else {
+                    static int DSCam674Ignored = 0;
+                    if (DSCam674Ignored < 6) {
+                        DSCam674Ignored += 1;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            DSDiagnosticsRecordFormat(@"SpringBoard: presence674 ignored SpringBoard's full-screen element role=%lld level=%lld as the card template "
+                                                      @"(cards stay role=1 level=%lld; role 6 / level 1050 made SpringBoard trap on the card's next app-view update in 4.5.673)",
+                                                      role, level, DSCameraTemplateLevel);
+                        });
+                    }
+                }
             }
-            if (!hadPublisher && NSThread.isMainThread && DSCameraClaims.count) {
-                [DSCameraArbiter refreshSoon];
+            if (!hadPublisher) {
+                NSString *cls = NSStringFromClass(object_getClass(self)) ?: @"?";
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    DSDiagnosticsRecordFormat(@"SpringBoard: presence670 display layout publisher acquired via SpringBoard's own addElement (%@)", cls);
+                    [DSCameraArbiter refreshSoon];
+                });
             }
         }
     } @catch (NSException *exception) {
@@ -364,41 +402,167 @@ static void DSCameraInstallPublisherHook(void) {
     DSOrigAddElement = (id (*)(id, SEL, id))method_setImplementation(method, (IMP)DSCameraAddElement);
 }
 
-// Before SpringBoard has added an element since this process started, ask the
-// window scene for its publisher.
+// 4.5.670 presence670: after a respring the stage's hooks go in once the
+// home screen is up, so SpringBoard had already added its elements and the
+// addElement hook never saw the publisher: every camera claim then logged
+// "the display layout publisher is not known yet" and Beeper's camera stayed
+// black (4.5.669 log 222.txt, 18:37:3x). The publisher is now asked for
+// directly from SpringBoard's own objects, eagerly at start and retried until
+// found (iOS 16/17: SBWindowScene -displayLayoutPublisher, also kept in
+// SBWindowSceneContext's _displayLayoutPublisher; the main window scene is
+// SBIconController -mainDisplayWindowScene or the connected SBWindowScene with
+// -isMainDisplayWindowScene). Nothing is created: a second main-display
+// publisher would publish a layout of its own over SpringBoard's.
+static NSString *DSCameraPublisherRoute = nil;
+
+static id DSCameraSendId(id target, NSString *name) {
+    if (!target || name.length == 0) return nil;
+    SEL selector = NSSelectorFromString(name);
+    if (![target respondsToSelector:selector]) return nil;
+    @try {
+        return ((id (*)(id, SEL))objc_msgSend)(target, selector);
+    } @catch (NSException *exception) {
+        return nil;
+    }
+}
+
+static BOOL DSCameraLooksLikePublisher(id candidate) {
+    if (!candidate) return NO;
+    if (![candidate respondsToSelector:@selector(addElement:)]) return NO;
+    // Not a layout monitor / observer / window scene by mistake.
+    return [candidate respondsToSelector:@selector(currentLayout)] ||
+           [candidate respondsToSelector:@selector(flush)] ||
+           [candidate isKindOfClass:(objc_getClass("FBSDisplayLayoutPublisher") ?: NSNull.class)];
+}
+
+static id DSCameraPublisherFromScene(id scene, NSString **via) {
+    if (!scene) return nil;
+    id found = DSCameraSendId(scene, @"displayLayoutPublisher");
+    if (DSCameraLooksLikePublisher(found)) {
+        if (via) *via = @"displayLayoutPublisher";
+        return found;
+    }
+    for (NSString *contextName in @[ @"sceneContext", @"_sceneContext", @"windowSceneContext", @"contextProvider" ]) {
+        id context = DSCameraSendId(scene, contextName);
+        found = DSCameraSendId(context, @"displayLayoutPublisher");
+        if (DSCameraLooksLikePublisher(found)) {
+            if (via) *via = [contextName stringByAppendingString:@".displayLayoutPublisher"];
+            return found;
+        }
+    }
+    // Any ivar holding a publisher (the scene or its context).
+    for (id holder in @[ scene ]) {
+        unsigned int count = 0;
+        for (Class cls = object_getClass(holder); cls && cls != NSObject.class && cls != UIResponder.class; cls = class_getSuperclass(cls)) {
+            Ivar *ivars = class_copyIvarList(cls, &count);
+            for (unsigned int k = 0; k < count; k++) {
+                const char *type = ivar_getTypeEncoding(ivars[k]);
+                const char *name = ivar_getName(ivars[k]);
+                if (!type || type[0] != '@' || !name) continue;
+                if (!strcasestr(name, "layoutPublisher") && !strcasestr(name, "Context")) continue;
+                id value = nil;
+                @try {
+                    value = object_getIvar(holder, ivars[k]);
+                } @catch (NSException *exception) {
+                    value = nil;
+                }
+                if (!value) continue;
+                if (strcasestr(name, "layoutPublisher") && DSCameraLooksLikePublisher(value)) {
+                    if (via) *via = [NSString stringWithFormat:@"ivar %s", name];
+                    free(ivars);
+                    return value;
+                }
+                id inner = DSCameraSendId(value, @"displayLayoutPublisher");
+                if (DSCameraLooksLikePublisher(inner)) {
+                    if (via) *via = [NSString stringWithFormat:@"ivar %s.displayLayoutPublisher", name];
+                    free(ivars);
+                    return inner;
+                }
+            }
+            free(ivars);
+        }
+    }
+    return nil;
+}
+
 static id DSCameraFindPublisher(void) {
     id publisher = DSCameraPublisher;
     if (publisher) return publisher;
-    Class publisherClass = objc_getClass("FBSDisplayLayoutPublisher");
+    if (!NSThread.isMainThread) return nil;
+    NSString *route = nil;
     @try {
         id app = UIApplication.sharedApplication;
-        NSMutableArray *candidates = [NSMutableArray array];
-        if (app) [candidates addObject:app];
-        for (NSString *name in @[ @"windowSceneManager" ]) {
-            SEL selector = NSSelectorFromString(name);
-            if (![app respondsToSelector:selector]) continue;
-            id manager = ((id (*)(id, SEL))objc_msgSend)(app, selector);
-            for (NSString *sceneName in @[ @"embeddedDisplayWindowScene", @"activeDisplayWindowScene" ]) {
-                SEL sceneSelector = NSSelectorFromString(sceneName);
-                if (![manager respondsToSelector:sceneSelector]) continue;
-                id scene = ((id (*)(id, SEL))objc_msgSend)(manager, sceneSelector);
-                if (scene) [candidates addObject:scene];
+        NSMutableArray *scenes = [NSMutableArray array];
+        NSMutableArray<NSString *> *names = [NSMutableArray array];
+        Class iconClass = objc_getClass("SBIconController");
+        id icons = iconClass ? (DSCameraSendId(iconClass, @"sharedInstanceIfExists") ?: DSCameraSendId(iconClass, @"sharedInstance")) : nil;
+        id iconScene = DSCameraSendId(icons, @"mainDisplayWindowScene");
+        if (iconScene) {
+            [scenes addObject:iconScene];
+            [names addObject:@"SBIconController.mainDisplayWindowScene"];
+        }
+        id sceneManager = DSCameraSendId(app, @"windowSceneManager");
+        for (NSString *sceneName in @[ @"embeddedDisplayWindowScene", @"activeDisplayWindowScene", @"mainDisplayWindowScene" ]) {
+            id scene = DSCameraSendId(sceneManager, sceneName);
+            if (scene && ![scenes containsObject:scene]) {
+                [scenes addObject:scene];
+                [names addObject:[@"windowSceneManager." stringByAppendingString:sceneName]];
             }
         }
-        for (id candidate in candidates) {
+        if ([app respondsToSelector:@selector(connectedScenes)]) {
+            for (id scene in [app connectedScenes]) {
+                if ([scenes containsObject:scene]) continue;
+                if ([scene respondsToSelector:NSSelectorFromString(@"isMainDisplayWindowScene")] &&
+                    !DSCameraSend(scene, NSSelectorFromString(@"isMainDisplayWindowScene"))) continue;
+                [scenes addObject:scene];
+                [names addObject:[NSString stringWithFormat:@"connectedScenes.%@", NSStringFromClass(object_getClass(scene))]];
+            }
+        }
+        for (NSUInteger k = 0; k < scenes.count && !publisher; k++) {
+            NSString *via = nil;
+            publisher = DSCameraPublisherFromScene(scenes[k], &via);
+            if (publisher) route = [NSString stringWithFormat:@"%@.%@", names[k], via ?: @"?"];
+        }
+        if (!publisher) {
             for (NSString *name in @[ @"displayLayoutPublisher", @"mainDisplayLayoutPublisher" ]) {
-                SEL selector = NSSelectorFromString(name);
-                if (![candidate respondsToSelector:selector]) continue;
-                id found = ((id (*)(id, SEL))objc_msgSend)(candidate, selector);
-                if (found && (!publisherClass || [found isKindOfClass:publisherClass])) {
-                    DSCameraPublisher = found;
-                    return found;
+                id found = DSCameraSendId(app, name);
+                if (DSCameraLooksLikePublisher(found)) {
+                    publisher = found;
+                    route = [@"SpringBoard." stringByAppendingString:name];
+                    break;
                 }
             }
         }
     } @catch (NSException *exception) {
+        publisher = nil;
     }
-    return nil;
+    if (publisher) {
+        DSCameraPublisher = publisher;
+        DSCameraPublisherRoute = route;
+        DSDiagnosticsRecordFormat(@"SpringBoard: presence670 display layout publisher acquired via %@ (%@)",
+                                  route ?: @"?", NSStringFromClass(object_getClass(publisher)) ?: @"?");
+    }
+    return publisher;
+}
+
+// Eager: at start, then again after 0.5, 1, 2, 3, 5 s and every 5 s until
+// found. Each refresh also asks (DSCameraPublish). A late find refreshes so
+// the visible cards' presence goes in right away.
+static void DSCameraAcquirePublisherSoon(NSUInteger attempt) {
+    if (DSCameraPublisher) return;
+    id found = DSCameraFindPublisher();
+    if (found) {
+        if (attempt > 0) [DSCameraArbiter refreshSoon];
+        return;
+    }
+    if (attempt == 0 || attempt == 6 || attempt == 30 || attempt % 120 == 119) {
+        DSDiagnosticsRecordFormat(@"SpringBoard: presence670 display layout publisher still unknown (try %lu); retrying", (unsigned long)attempt + 1);
+    }
+    static const double delays[] = { 0.5, 1.0, 2.0, 3.0, 5.0 };
+    double delay = attempt < 5 ? delays[attempt] : 5.0;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DSCameraAcquirePublisherSoon(attempt + 1);
+    });
 }
 
 #pragma mark - Publishing
@@ -416,8 +580,24 @@ static void DSCameraUpdatePublishedSet(void) {
     os_unfair_lock_unlock(&DSCameraPublishedLock);
 }
 
+// 4.5.670: when the stage last moved or removed a display-layout element.
+// 4.5.674: every publish counts (both 4.5.673 crashes followed a re-publish).
+// SpringBoard answers a layout change by updating the staged app's scene, and
+// that update is what the app-view hook holds for a moment (SIGTRAP fix).
+static _Atomic double DSCameraLastLayoutChange = 0;
+
+static void DSCameraNoteLayoutChange(void) {
+    atomic_store(&DSCameraLastLayoutChange, CACurrentMediaTime());
+}
+
+BOOL DSCameraLayoutChangedRecently(double window) {
+    double last = atomic_load(&DSCameraLastLayoutChange);
+    return last > 0 && CACurrentMediaTime() - last < window;
+}
+
 static void DSCameraUnpublish(DSCameraClaim *claim, NSString *why) {
     if (!claim.assertion) return;
+    DSCameraNoteLayoutChange();
     id assertion = claim.assertion;
     claim.assertion = nil;
     claim.frame = CGRectNull;
@@ -430,6 +610,9 @@ static void DSCameraUnpublish(DSCameraClaim *claim, NSString *why) {
 }
 
 static BOOL DSCameraPublish(DSCameraClaim *claim, CGRect frame) {
+    // 4.5.670: whole points only (669 published {{-11.67, 36}} mid-drag).
+    frame = CGRectMake(round(CGRectGetMinX(frame)), round(CGRectGetMinY(frame)),
+                       round(CGRectGetWidth(frame)), round(CGRectGetHeight(frame)));
     id publisher = DSCameraFindPublisher();
     if (!publisher || ![publisher respondsToSelector:@selector(addElement:)]) {
         DSCameraRecord(@"nopub", @"%@ wants the camera but the display layout publisher is not known yet", claim.bundle);
@@ -483,6 +666,10 @@ static BOOL DSCameraPublish(DSCameraClaim *claim, CGRect frame) {
         }
         claim.assertion = assertion;
         claim.frame = frame;
+        // 4.5.674: a re-publish (card back from minimized / parked / a
+        // corner pull) is a layout change too: the Live app view's next
+        // SpringBoard update within 1 s is held like after a move.
+        DSCameraNoteLayoutChange();
         DSCameraRecord([@"pub." stringByAppendingString:claim.bundle ?: @"?"],
                        @"%@ card published to the display layout frame=%@ role=%lld level=%lld template=%d, path=layout-element; layout now: %@",
                        claim.bundle, NSStringFromCGRect(frame), DSCameraTemplateRole, DSCameraTemplateLevel,
@@ -857,30 +1044,25 @@ static BOOL DSCam661Integer(id target, NSString *name, long long *value) {
     }
 }
 
-static NSArray *DSCam661Items(id value) {
-    if ([value isKindOfClass:NSSet.class]) return [(NSSet *)value allObjects];
-    if ([value isKindOfClass:NSArray.class]) return value;
-    if ([value isKindOfClass:NSOrderedSet.class]) return [(NSOrderedSet *)value array];
-    if ([value isKindOfClass:NSDictionary.class]) return [(NSDictionary *)value allValues];
-    return nil;
-}
 
-static NSArray *DSCam661Flatten(NSArray *items) {
-    NSMutableArray *flat = [NSMutableArray array];
-    for (id item in items) {
-        NSArray *inner = DSCam661Items(item);
-        if (inner) [flat addObjectsFromArray:inner];
-        else [flat addObject:item];
-        if (flat.count > 32) break;
-    }
-    return flat;
-}
 
 static NSString *DSCam661BundleOf(id attribution, long long *pid) {
     NSMutableArray *candidates = [NSMutableArray arrayWithObject:attribution];
-    for (NSString *name in @[ @"attributedEntity", @"activeEntity", @"entity", @"client", @"clientAttribution", @"attribution" ]) {
-        id entity = DSCam661Object(attribution, name);
-        if (entity) [candidates addObject:entity];
+    // 4.5.668: two levels (STUIDataAccessAttribution.attribution -> STActivityAttribution.attributedEntity).
+    NSArray *level = @[ attribution ];
+    for (int depth = 0; depth < 2; depth++) {
+        NSMutableArray *next = [NSMutableArray array];
+        for (id owner in level) {
+            for (NSString *name in @[ @"attributedEntity", @"activeEntity", @"entity", @"client", @"clientAttribution", @"attribution" ]) {
+                id entity = DSCam661Object(owner, name);
+                if (entity && ![candidates containsObject:entity] && candidates.count < 16) {
+                    [candidates addObject:entity];
+                    [next addObject:entity];
+                }
+            }
+        }
+        level = next;
+        if (level.count == 0) break;
     }
     for (id entity in [candidates copy]) {
         id identity = DSCam661Object(entity, @"executableIdentity");
@@ -948,8 +1130,16 @@ static NSString *DSCam661FrontBundle(void) {
     }
 }
 
+// 4.5.669: which source last said each bundle's camera is on.
+static NSDictionary<NSString *, NSNumber *> *DSCam669DomainCamera;    // from the domain data (main thread)
+static NSString *DSCam669DomainHow;                                   // how it was read
+static NSDictionary<NSString *, NSNumber *> *DSCam669ProviderCamera;  // from SpringBoard's own attributions
+static NSDictionary<NSString *, NSNumber *> *DSCam669DomainHostPids;
+static __weak id DSCam669Provider;
+
 // Main thread.
-static void DSCam661NoteSensor(NSDictionary<NSString *, NSNumber *> *camera, NSDictionary<NSString *, NSNumber *> *hostPids) {
+static void DSCam661NoteSensor(NSDictionary<NSString *, NSNumber *> *camera, NSDictionary<NSString *, NSNumber *> *hostPids,
+                               NSDictionary<NSString *, NSString *> *sources) {
     NSDictionary *old = DSCam661SensorCamera ?: @{};
     if ([old isEqualToDictionary:camera]) {
         DSCam661SensorHostPid = hostPids;
@@ -967,87 +1157,388 @@ static void DSCam661NoteSensor(NSDictionary<NSString *, NSNumber *> *camera, NSD
         NSString *role = [hosted containsObject:bundle] ? @"staged card"
             : ([bundle isEqualToString:front] ? @"full-screen front app"
                : (hostPid > 0 ? [NSString stringWithFormat:@"hosted by pid %d", hostPid] : @"not on a card, not the front app"));
-        DSCamera661Record([NSString stringWithFormat:@"sensor.on.%@", bundle], @"sensor %@ pid=%d camera on (%@) front=%@ staged=[%@]",
-                          bundle, [camera[bundle] intValue], role, front ?: @"home screen", [hosted componentsJoinedByString:@","]);
+        DSCamera661Record([NSString stringWithFormat:@"sensor.on.%@", bundle], @"sensor %@ camera on via %@ pid=%d (%@) front=%@ staged=[%@]",
+                          bundle, sources[bundle] ?: @"?", [camera[bundle] intValue], role, front ?: @"home screen",
+                          [hosted componentsJoinedByString:@","]);
     }
     for (NSString *bundle in old) {
         if (camera[bundle]) continue;
-        DSCamera661Record([NSString stringWithFormat:@"sensor.off.%@", bundle], @"sensor %@ pid=%d camera off", bundle, [old[bundle] intValue]);
+        DSCamera661Record([NSString stringWithFormat:@"sensor.off.%@", bundle], @"sensor %@ camera off via %@ pid=%d", bundle,
+                          DSCam669DomainHow ?: @"domain-data", [old[bundle] intValue]);
     }
     DSCam661SensorCamera = [camera copy];
     DSCam661SensorHostPid = [hostPids copy];
     [DSCameraArbiter refreshSoon];
 }
 
+// Main thread. Union of the two signals.
+static void DSCam669Merge(void) {
+    NSMutableDictionary<NSString *, NSNumber *> *camera = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSString *> *sources = [NSMutableDictionary dictionary];
+    for (NSString *bundle in DSCam669DomainCamera) {
+        camera[bundle] = DSCam669DomainCamera[bundle];
+        sources[bundle] = DSCam669DomainHow ?: @"domain-data";
+    }
+    for (NSString *bundle in DSCam669ProviderCamera) {
+        if (!camera[bundle] || [camera[bundle] intValue] <= 0) camera[bundle] = DSCam669ProviderCamera[bundle];
+        sources[bundle] = sources[bundle] ? [sources[bundle] stringByAppendingString:@"+sb-attributions"] : @"sb-attributions";
+    }
+    DSCam661NoteSensor(camera, DSCam669DomainHostPids ?: @{}, sources);
+}
+
+static NSArray *DSCam669Collection(id value, NSInteger depth);
+
+static NSArray *DSCam669FromCollectionObject(id value) {
+    if ([value isKindOfClass:NSArray.class]) return value;
+    if ([value isKindOfClass:NSSet.class]) return [(NSSet *)value allObjects];
+    if ([value isKindOfClass:NSOrderedSet.class]) return [(NSOrderedSet *)value array];
+    if ([value isKindOfClass:NSDictionary.class]) return [(NSDictionary *)value allValues];
+    return nil;
+}
+
+// Items out of a list-like object by every route: a collection, a known
+// accessor (STListData -objects), NSFastEnumeration, then its object ivars.
+static NSArray *DSCam669Collection(id value, NSInteger depth) {
+    if (!value || depth > 2) return nil;
+    NSArray *direct = DSCam669FromCollectionObject(value);
+    if (direct) return direct;
+    for (NSString *name in @[ @"objects", @"allObjects", @"array", @"items", @"list", @"entries", @"values", @"orderedSet", @"set" ]) {
+        NSArray *inner = DSCam669FromCollectionObject(DSCam661Object(value, name));
+        if (inner) return inner;
+    }
+    @try {
+        if ([value conformsToProtocol:@protocol(NSFastEnumeration)] &&
+            [value respondsToSelector:@selector(countByEnumeratingWithState:objects:count:)]) {
+            NSMutableArray *items = [NSMutableArray array];
+            for (id item in (id<NSFastEnumeration>)value) {
+                if (item) [items addObject:item];
+                if (items.count > 64) break;
+            }
+            return items;
+        }
+    } @catch (NSException *exception) {
+    }
+    @try {
+        for (Class cls = object_getClass(value); cls && cls != NSObject.class; cls = class_getSuperclass(cls)) {
+            unsigned int count = 0;
+            Ivar *ivars = class_copyIvarList(cls, &count);
+            for (unsigned int i = 0; i < count; i++) {
+                const char *type = ivar_getTypeEncoding(ivars[i]);
+                if (!type || type[0] != '@') continue;
+                id inner = object_getIvar(value, ivars[i]);
+                NSArray *found = DSCam669FromCollectionObject(inner);
+                if (!found && inner && depth < 2) found = DSCam669Collection(inner, depth + 1);
+                if (found) {
+                    free(ivars);
+                    return found;
+                }
+            }
+            free(ivars);
+        }
+    } @catch (NSException *exception) {
+    }
+    return nil;
+}
+
+static NSString *DSCam669ClassShape(id object) {
+    if (!object) return @"nil";
+    NSMutableArray *ivarNames = [NSMutableArray array];
+    @try {
+        for (Class cls = object_getClass(object); cls && cls != NSObject.class; cls = class_getSuperclass(cls)) {
+            unsigned int count = 0;
+            Ivar *ivars = class_copyIvarList(cls, &count);
+            for (unsigned int i = 0; i < count; i++) {
+                const char *name = ivar_getName(ivars[i]);
+                const char *type = ivar_getTypeEncoding(ivars[i]);
+                [ivarNames addObject:[NSString stringWithFormat:@"%s:%s", name ?: "?", type ?: "?"]];
+            }
+            free(ivars);
+        }
+    } @catch (NSException *exception) {
+    }
+    NSMutableArray *answers = [NSMutableArray array];
+    for (NSString *name in @[ @"objects", @"count", @"activeAttributionData", @"recentAttributionData", @"dataAccessAttributions",
+                              @"attributionListData", @"attributions", @"dataAccessType", @"cameraCaptureAttribution",
+                              @"audioRecordingActivityAttribution", @"attributedEntity", @"isRecent", @"bundleIdentifier",
+                              @"activityAttribution", @"pid", @"sensor", @"usedRecently", @"activeSensorActivityAttributions",
+                              @"activeCameraAndMicrophoneActivityAttributions" ]) {
+        if ([object respondsToSelector:NSSelectorFromString(name)]) [answers addObject:name];
+    }
+    return [NSString stringWithFormat:@"%@ ivars=[%@] responds=[%@]", NSStringFromClass(object_getClass(object)),
+            [ivarNames componentsJoinedByString:@","], [answers componentsJoinedByString:@","]];
+}
+
+static NSString *DSCam669OneLine(NSString *text, NSUInteger limit) {
+    text = [[text ?: @"" componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] componentsJoinedByString:@" "];
+    while ([text rangeOfString:@"  "].location != NSNotFound) text = [text stringByReplacingOccurrencesOfString:@"  " withString:@" "];
+    if (text.length > limit) text = [text substringToIndex:limit];
+    return text;
+}
+
+// The bundle of one STUIDataAccessAttribution (attributedEntity.bundleIdentifier,
+// or through cameraCaptureAttribution.activityAttribution), and its pid.
+static NSString *DSCam669BundleOfAttribution(id item, long long *pid) {
+    NSMutableArray *owners = [NSMutableArray arrayWithObject:item];
+    id capture = DSCam661Object(item, @"cameraCaptureAttribution");
+    id activity = DSCam661Object(capture, @"activityAttribution") ?: DSCam661Object(item, @"activityAttribution");
+    if (activity) [owners addObject:activity];
+    NSMutableArray *entities = [NSMutableArray array];
+    for (id owner in owners) {
+        for (NSString *name in @[ @"attributedEntity", @"activeEntity" ]) {
+            id entity = DSCam661Object(owner, name);
+            if (entity) [entities addObject:entity];
+        }
+    }
+    NSString *bundle = nil;
+    for (id entity in [entities arrayByAddingObjectsFromArray:owners]) {
+        for (NSString *name in @[ @"bundleIdentifier", @"bundleID", @"applicationIdentifier", @"clientBundleIdentifier" ]) {
+            id value = DSCam661Object(entity, name);
+            if ([value isKindOfClass:NSString.class] && [(NSString *)value rangeOfString:@"."].location != NSNotFound) {
+                bundle = value;
+                break;
+            }
+        }
+        if (bundle) break;
+    }
+    if (!bundle) {
+        // An app's bundle path ("/.../Beeper.app") names it through its Info.plist.
+        for (id entity in entities) {
+            id path = DSCam661Object(entity, @"bundlePath") ?: DSCam661Object(DSCam661Object(entity, @"executableIdentity"), @"bundlePath");
+            if (![path isKindOfClass:NSString.class] || ![(NSString *)path hasSuffix:@".app"]) continue;
+            NSDictionary *info = [NSDictionary dictionaryWithContentsOfFile:[(NSString *)path stringByAppendingPathComponent:@"Info.plist"]];
+            id value = info[@"CFBundleIdentifier"];
+            if ([value isKindOfClass:NSString.class]) {
+                bundle = value;
+                break;
+            }
+        }
+    }
+    if (!bundle) bundle = DSCam661BundleOf(item, NULL);
+    if (pid) {
+        *pid = 0;
+        long long value = 0;
+        for (id owner in [@[ activity ?: NSNull.null ] arrayByAddingObjectsFromArray:owners]) {
+            if (owner == NSNull.null) continue;
+            if ((DSCam661Integer(owner, @"pid", &value) || DSCam661Integer(owner, @"processIdentifier", &value)) && value > 0) {
+                *pid = value;
+                break;
+            }
+        }
+    }
+    return bundle;
+}
+
+// 1 camera, 0 not camera; *recent set for a dot that is only "recently used".
+static BOOL DSCam669AttributionIsCamera(id item, BOOL *recent, NSString **typeOut) {
+    long long flag = 0;
+    if (recent) *recent = DSCam661Integer(item, @"isRecent", &flag) && flag != 0;
+    NSString *type = nil;
+    BOOL camera = NO;
+    if (DSCam661Object(item, @"cameraCaptureAttribution")) {
+        camera = YES;
+        type = @"cameraCaptureAttribution";
+    } else if (DSCam661Object(item, @"audioRecordingActivityAttribution") || DSCam661Object(item, @"locationAttribution")) {
+        camera = NO;
+        type = @"audio/location attribution";
+    } else {
+        long long access = -1;
+        if (DSCam661Integer(item, @"dataAccessType", &access)) {
+            // SBSensorActivityAttribution -initWithDataAccessAttribution: 0 audio, 1 camera, 2 location.
+            camera = access == 1;
+            type = [NSString stringWithFormat:@"dataAccessType=%lld", access];
+        } else {
+            NSString *text = [[item description] lowercaseString] ?: @"";
+            camera = [text containsString:@"type = camera"];
+            type = @"description";
+            if (recent && [text containsString:@"state = "] && ![text containsString:@"state = active"]) *recent = YES;
+        }
+    }
+    if (typeOut) *typeOut = type;
+    return camera;
+}
+
+// Last resort: "type = camera; state = active; ... bundleIdentifier = x.y.z" in the text.
+static NSDictionary<NSString *, NSNumber *> *DSCam669RegexCamera(NSString *text) {
+    NSMutableDictionary *found = [NSMutableDictionary dictionary];
+    if (text.length == 0) return found;
+    NSArray *blocks = [text componentsSeparatedByString:@"<STUIDataAccessAttribution"];
+    NSRegularExpression *bundleRe = [NSRegularExpression regularExpressionWithPattern:
+        @"(?:bundleIdentifier|bundleID|applicationIdentifier)\\s*[=:]\\s*\"?([A-Za-z0-9_\\-]+(?:\\.[A-Za-z0-9_\\-]+)+)" options:0 error:nil];
+    NSRegularExpression *pidRe = [NSRegularExpression regularExpressionWithPattern:@"pid\\s*[=:]\\s*(\\d+)" options:0 error:nil];
+    for (NSString *block in blocks) {
+        if (![block containsString:@"type = camera"]) continue;
+        if ([block containsString:@"state = "] && ![block containsString:@"state = active"]) continue;
+        NSTextCheckingResult *match = [bundleRe firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+        if (!match || [match rangeAtIndex:1].location == NSNotFound) continue;
+        NSString *bundle = [block substringWithRange:[match rangeAtIndex:1]];
+        NSTextCheckingResult *pidMatch = [pidRe firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+        long long pid = pidMatch ? [[block substringWithRange:[pidMatch rangeAtIndex:1]] longLongValue] : 0;
+        found[bundle] = @(pid);
+    }
+    return found;
+}
+
+// Utility queue. The domain data SpringBoard hands _handleNewDomainData:
+// (STUIDataAccessStatusDomainData on iOS 16: -activeAttributionData,
+// -dataAccessAttributions, -attributionListData -> STListData -objects).
 static void DSCam661ReadSensorData(id data) {
     NSMutableDictionary<NSString *, NSNumber *> *camera = [NSMutableDictionary dictionary];
     NSMutableDictionary<NSString *, NSNumber *> *hostPids = [NSMutableDictionary dictionary];
+    NSString *how = nil;
     NSInteger seen = 0;
-    NSInteger unclassified = 0;
-    id sample = nil;
+    NSInteger cameras = 0;
+    NSInteger unnamed = 0;
+    NSString *text = nil;
     @try {
-        // Per-sensor collections first, then a mixed list classified one by one.
-        NSArray *cameraItems = nil;
-        for (NSString *name in @[ @"cameraAttributions", @"cameraActivityAttributions", @"activeCameraAttributions",
-                                  @"cameraAndMicrophoneAttributions" ]) {
-            cameraItems = DSCam661Items(DSCam661Object(data, name));
-            if (cameraItems) break;
+        NSArray *items = nil;
+        id active = DSCam661Object(data, @"activeAttributionData");
+        if (active) {
+            items = DSCam669FromCollectionObject(DSCam661Object(active, @"dataAccessAttributions"));
+            if (items) how = @"domain-data activeAttributionData.dataAccessAttributions";
         }
-        NSArray *items = cameraItems ? DSCam661Flatten(cameraItems) : nil;
-        BOOL perSensor = items != nil;
-        if (!items) items = DSCam661Items(data);
         if (!items) {
-            for (NSString *name in @[ @"activityAttributions", @"activeAttributions", @"attributions", @"sensorActivityAttributions",
-                                      @"currentAttributions", @"allAttributions", @"sensorActivities", @"activities" ]) {
-                items = DSCam661Items(DSCam661Object(data, name));
-                if (items) break;
+            items = DSCam669FromCollectionObject(DSCam661Object(data, @"dataAccessAttributions"));
+            if (items) how = @"domain-data dataAccessAttributions";
+        }
+        if (!items) {
+            for (NSString *name in @[ @"attributionListData", @"attributions", @"cameraAttributionListData", @"cameraAttributions",
+                                      @"activeAttributions", @"activityAttributions" ]) {
+                items = DSCam669Collection(DSCam661Object(data, name), 0);
+                if (items) {
+                    how = [NSString stringWithFormat:@"domain-data %@", name];
+                    break;
+                }
             }
         }
-        items = DSCam661Flatten(items ?: @[]);
-        for (id item in items) {
+        if (!items) {
+            items = DSCam669Collection(data, 0);
+            if (items) how = @"domain-data ivars";
+        }
+        for (id item in items ?: @[]) {
             seen += 1;
-            if (!sample) sample = item;
-            NSString *text = [[item description] lowercaseString] ?: @"";
-            if (text.length > 800) text = [text substringToIndex:800];
-            BOOL isCamera = perSensor && ![text containsString:@"microphone"];
-            if (!perSensor) {
-                if ([text containsString:@"camera"]) isCamera = YES;
-                else if (![text containsString:@"microphone"] && ![text containsString:@"location"]) unclassified += 1;
-            }
-            if (!isCamera) continue;
+            BOOL recent = NO;
+            if (!DSCam669AttributionIsCamera(item, &recent, NULL) || recent) continue;
+            cameras += 1;
             long long pid = 0;
-            NSString *bundle = DSCam661BundleOf(item, &pid);
+            NSString *bundle = DSCam669BundleOfAttribution(item, &pid);
             if (bundle.length == 0) {
-                unclassified += 1;
+                unnamed += 1;
                 continue;
             }
             camera[bundle] = @(pid);
             pid_t host = DSCam661HostPidOf((pid_t)pid);
             if (host > 0 && host != (pid_t)pid) hostPids[bundle] = @(host);
         }
+        text = [data description] ?: @"";
+        if ((items == nil || unnamed > 0) && [text containsString:@"type = camera"]) {
+            NSDictionary *regex = DSCam669RegexCamera(text);
+            if (regex.count) {
+                [camera addEntriesFromDictionary:regex];
+                how = @"domain-data description";
+            }
+        }
     } @catch (NSException *exception) {
     }
-    // The shape, once every 10 minutes, when something could not be read.
-    static _Atomic(double) shapeLoggedAt = 0;
+    // Once per SpringBoard launch: the shape and the whole text, so a log
+    // proves the format. And once more for the first data with a camera in it.
+    static atomic_int shapeLogs = 0;
+    static atomic_bool cameraLogged = false;
+    BOOL hasCamera = [text containsString:@"type = camera"];
     NSString *shape = nil;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if ((unclassified > 0 || (seen == 0 && data && !DSCam661Items(data))) && now - atomic_load(&shapeLoggedAt) > 600.0) {
-        atomic_store(&shapeLoggedAt, now);
-        NSString *text = [(sample ?: data) description] ?: @"?";
-        if (text.length > 260) text = [text substringToIndex:260];
-        shape = [NSString stringWithFormat:@"sensor data %@ items=%ld unclassified=%ld first=%@ desc=%@",
-                 NSStringFromClass([data class]) ?: @"nil", (long)seen, (long)unclassified,
-                 sample ? NSStringFromClass([sample class]) : @"-", text];
+    if (atomic_fetch_add(&shapeLogs, 1) == 0 || (hasCamera && !atomic_exchange(&cameraLogged, true))) {
+        id listData = DSCam661Object(data, @"attributionListData");
+        id first = [DSCam669FromCollectionObject(DSCam661Object(data, @"dataAccessAttributions")) firstObject];
+        shape = [NSString stringWithFormat:@"sensor669 domain shape: data=%@ | list=%@ | item=%@ | read via %@ items=%ld cameras=%ld unnamed=%ld found=[%@] | desc=%@",
+                 DSCam669ClassShape(data), DSCam669ClassShape(listData), DSCam669ClassShape(first), how ?: @"nothing",
+                 (long)seen, (long)cameras, (long)unnamed, [camera.allKeys componentsJoinedByString:@","],
+                 DSCam669OneLine(text, 3000)];
     }
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (shape) DSCamera661Record(@"sensor.shape", @"%@", shape);
-        DSCam661NoteSensor(camera, hostPids);
+        if (shape) DSDiagnosticsRecord([@"SpringBoard: camera661 " stringByAppendingString:shape]);
+        DSCam669DomainCamera = [camera copy];
+        DSCam669DomainHow = how ?: @"domain-data";
+        DSCam669DomainHostPids = [hostPids copy];
+        DSCam669Merge();
     });
+}
+
+// Main thread. Signal 2: SpringBoard's own green-dot model,
+// -[SBSensorActivityDataProvider activeSensorActivityAttributions]
+// (NSSet of SBSensorActivityAttribution: -bundleIdentifier, -sensor
+// 0 camera / 1 microphone / 2 location, -usedRecently).
+static void DSCam669ReadProviderSet(id set, NSString *via) {
+    NSArray *items = DSCam669FromCollectionObject(set);
+    if (!items) return;
+    NSMutableDictionary<NSString *, NSNumber *> *camera = [NSMutableDictionary dictionary];
+    static BOOL itemLogged = NO;
+    for (id item in items) {
+        long long sensor = -1;
+        BOOL hasSensor = DSCam661Integer(item, @"sensor", &sensor);
+        long long recent = 0;
+        if (DSCam661Integer(item, @"usedRecently", &recent) && recent) continue;
+        NSString *text = [[item description] lowercaseString] ?: @"";
+        BOOL textSaysCamera = [text containsString:@"sensor = camera"] || [text containsString:@"sensor: camera"];
+        BOOL textSaysOther = [text containsString:@"sensor = microphone"] || [text containsString:@"sensor = location"] ||
+                             [text containsString:@"sensor = audio"];
+        BOOL isCamera = textSaysCamera || (!textSaysOther && hasSensor && sensor == 0);
+        if (!itemLogged) {
+            itemLogged = YES;
+            DSDiagnosticsRecordFormat(@"SpringBoard: camera661 sensor669 SpringBoard attribution shape (%@): %@ sensor=%lld camera=%d | %@",
+                                      via, DSCam669ClassShape(item), sensor, isCamera, DSCam669OneLine([item description], 600));
+        }
+        if (!isCamera) continue;
+        id bundle = DSCam661Object(item, @"bundleIdentifier");
+        if (![bundle isKindOfClass:NSString.class] || [(NSString *)bundle length] == 0) {
+            bundle = DSCam661Object(item, @"activeEntityBundleIdentifier");
+        }
+        if (![bundle isKindOfClass:NSString.class] || [(NSString *)bundle length] == 0) continue;
+        long long pid = 0;
+        DSCam661Integer(item, @"pid", &pid);
+        camera[bundle] = @(pid);
+    }
+    if ([camera isEqualToDictionary:DSCam669ProviderCamera ?: @{}]) return;
+    DSCam669ProviderCamera = [camera copy];
+    DSCam669Merge();
+}
+
+static void DSCam669PollProvider(void) {
+    id provider = DSCam669Provider;
+    if (!provider) return;
+    @try {
+        id set = DSCam661Object(provider, @"activeSensorActivityAttributions");
+        if (set) DSCam669ReadProviderSet(set, @"poll");
+    } @catch (NSException *exception) {
+    }
+}
+
+static void (*DSOrig669SetActive)(id, SEL, id);
+static void DSCam669SetActive(id self, SEL _cmd, id set) {
+    if (DSOrig669SetActive) DSOrig669SetActive(self, _cmd, set);
+    DSCam669Provider = self;
+    id retained = set;
+    void (^read)(void) = ^{
+        @try {
+            DSCam669ReadProviderSet(retained ?: [NSSet set], @"setActiveSensorActivityAttributions:");
+        } @catch (NSException *exception) {
+        }
+    };
+    if ([NSThread isMainThread]) read();
+    else dispatch_async(dispatch_get_main_queue(), read);
 }
 
 static void DSCam661HandleNewDomainData(id self, SEL _cmd, id data) {
     if (DSOrigHandleNewDomainData) DSOrigHandleNewDomainData(self, _cmd, data);
-    if (!data) return;
+    DSCam669Provider = self;
+    // SpringBoard's own attributions were just set from this data.
+    if ([NSThread isMainThread]) DSCam669PollProvider();
+    else dispatch_async(dispatch_get_main_queue(), ^{ DSCam669PollProvider(); });
+    if (!data) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DSCam669DomainCamera = @{};
+            DSCam669Merge();
+        });
+        return;
+    }
     id retained = data;
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
         @try {
@@ -1065,17 +1556,32 @@ static void DSCam661InstallSensorHook(void) {
     // void return, one object argument; anything else is left alone.
     if (!method || method_getNumberOfArguments(method) != 3 || !types || types[0] != 'v') {
         DSDiagnosticsRecord(@"SpringBoard: camera661 sensor: SBSensorActivityDataProvider _handleNewDomainData: not found, no green-dot attribution");
-        return;
+    } else {
+        char argument[8] = {0};
+        method_getArgumentType(method, 2, argument, sizeof(argument));
+        if (argument[0] != '@') {
+            DSDiagnosticsRecord(@"SpringBoard: camera661 sensor: _handleNewDomainData: takes no object, attribution off");
+        } else {
+            DSOrigHandleNewDomainData = (void (*)(id, SEL, id))method_setImplementation(method, (IMP)DSCam661HandleNewDomainData);
+            DSCam661SensorHooked = YES;
+            DSDiagnosticsRecord(@"SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)");
+        }
     }
-    char argument[8] = {0};
-    method_getArgumentType(method, 2, argument, sizeof(argument));
-    if (argument[0] != '@') {
-        DSDiagnosticsRecord(@"SpringBoard: camera661 sensor: _handleNewDomainData: takes no object, attribution off");
-        return;
+    // 4.5.669 signal 2: the setter SpringBoard's own green-dot model goes through.
+    SEL setter = NSSelectorFromString(@"setActiveSensorActivityAttributions:");
+    Method setMethod = cls ? class_getInstanceMethod(cls, setter) : NULL;
+    const char *setTypes = setMethod ? method_getTypeEncoding(setMethod) : NULL;
+    char setArgument[8] = {0};
+    if (setMethod) method_getArgumentType(setMethod, 2, setArgument, sizeof(setArgument));
+    if (setMethod && method_getNumberOfArguments(setMethod) == 3 && setTypes && setTypes[0] == 'v' && setArgument[0] == '@') {
+        DSOrig669SetActive = (void (*)(id, SEL, id))method_setImplementation(setMethod, (IMP)DSCam669SetActive);
+        DSDiagnosticsRecord(@"SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: "
+                            @"(SpringBoard's own green-dot attributions, sensor 0 = camera)");
+    } else {
+        DSDiagnosticsRecordFormat(@"SpringBoard: camera661 sensor669 second signal: setActiveSensorActivityAttributions: %@, "
+                                  @"polling activeSensorActivityAttributions only",
+                                  setMethod ? @"has an unexpected signature" : @"not found");
     }
-    DSOrigHandleNewDomainData = (void (*)(id, SEL, id))method_setImplementation(method, (IMP)DSCam661HandleNewDomainData);
-    DSCam661SensorHooked = YES;
-    DSDiagnosticsRecord(@"SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)");
 }
 
 #pragma mark - 4.5.661 presence
@@ -1147,6 +1653,9 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
     dispatch_once(&once, ^{
         DSCameraClaims = [NSMutableDictionary dictionary];
         DSCameraInstallPublisherHook();
+        // 4.5.670 presence670: find SpringBoard's publisher now, not on the
+        // first addElement (after a respring there may be none for a while).
+        DSCameraAcquirePublisherSoon(0);
         int token = NOTIFY_TOKEN_INVALID;
         notify_register_dispatch(kDSCameraNotification, &token, dispatch_get_main_queue(), ^(int t) {
             uint64_t state = 0;
@@ -1154,6 +1663,10 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
             [DSCameraArbiter handleState:state];
         });
         DSDiagnosticsRecord(@"SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)");
+        // 4.5.667: sandboxed apps' own trace lines (ctor, camera, layout, taps).
+        // 4.5.736: the app trace relay (diagnostics only) is removed. 4.5.734 and
+        // 4.5.735 both crashed on its first object ([DSAppTraceRelayEntry new],
+        // DSAppTraceRelay.m:301); nothing a user sees depends on it.
         // 4.5.660: the per-app camera event channels.
         for (NSString *bundle in DSCameraInjectedBundles()) DSCam660WatchBundle(bundle);
         DSDiagnosticsRecordFormat(@"SpringBoard: camera660 listening for in-app camera events from %lu apps", (unsigned long)DSCam660Watches.count);
@@ -1162,6 +1675,8 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
             DSCam661InstallSensorHook();
         } @catch (NSException *exception) {
         }
+        DSDiagnosticsRecordFormat(@"SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is %@ (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging",
+                                  DSCam668Disabled() ? @"OFF" : @"ON");
         DSDiagnosticsRecordFormat(@"SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event%@",
                                   DSCam661PresenceDisabled() ? @" (switched off by " kDSCam661PresenceOffPath @")" : @"");
     });
@@ -1190,6 +1705,8 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
         if ([DSCameraInjectedBundles() containsObject:bundle]) DSCam660PingSoon(bundle);
     } @catch (NSException *exception) {
     }
+    // 4.5.670: the first staged card asks for the publisher at the latest.
+    if (!DSCameraPublisher) DSCameraFindPublisher();
     // 4.5.661: the new card's presence element.
     [self refreshSoon];
     static NSMutableDictionary<NSString *, NSNumber *> *lastNote;
@@ -1199,7 +1716,7 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
     lastNote[bundle] = @(now);
     if (lastNote.count > 32) [lastNote removeAllObjects];
     if ([DSCameraInjectedBundles() containsObject:bundle]) {
-        DSDiagnosticsRecordFormat(@"SpringBoard: camera658 %@ on a card: injected app, a 'camera hook loaded' line should follow", bundle);
+        DSDiagnosticsRecordFormat(@"SpringBoard: camera658 %@ on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)", bundle);
     } else {
         DSDiagnosticsRecordFormat(@"SpringBoard: camera658 %@ on a card: NOT an injected app, DynamicStage has no camera handling inside it (only Messages, Messenger, Signal, Beeper, Phone)", bundle);
     }
@@ -1328,6 +1845,77 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
     });
 }
 
+// 4.5.668 sbcam668 (4.5.669: logged as sbcam669). A staged app the green dot shows using the camera, with
+// no app dylib running in it (no ctor / mapped marker, no trace lines - the
+// relay checks), gets its scene at the phone's size, shown at the card's width
+// and bottom-aligned, so its own full-screen camera layout (shutter row at the
+// bottom) is on the card. That needs nothing inside the app. Apple's apps have
+// the dylib and their own camera fit (camera667), so they are left alone.
+// Off when the camera stops, the card hides / parks / minimizes, a keyboard
+// comes up, the phone locks or a call screen comes up. Unchanged while home /
+// switcher has the screen. Kill switch: /var/tmp/com.recreated.dynamicstage.nosbcam
+// or /var/jb/tmp/com.recreated.dynamicstage.nosbcam.
+// 4.5.670: OFF by default. It never did what it was for (no 669 log has an
+// sbcam669 ON line) and resizing / transforming a scene from SpringBoard is
+// the riskiest thing the stage could do to an app without the dylib. Opt-in:
+// create /var/mobile/.dynamicstage-sbcam-on (or /var/jb/var/mobile/...).
+// The green-dot reader keeps running for the "sensor ..." log lines and for
+// the extension presence elements.
+static BOOL DSCam668DisabledNow(void);
+
+static BOOL DSCam668Disabled(void) {
+    // 4.5.697: four access() calls on every camera / layout pass; 2 s cache.
+    static CFAbsoluteTime checkedAt = 0;
+    static BOOL cached = YES;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (DSPerf697On() && checkedAt > 0 && now - checkedAt < 2.0 && now >= checkedAt) return cached;
+    checkedAt = now;
+    cached = DSCam668DisabledNow();
+    return cached;
+}
+
+static BOOL DSCam668DisabledNow(void) {
+    BOOL optIn = access("/var/mobile/.dynamicstage-sbcam-on", F_OK) == 0 ||
+                 access("/var/jb/var/mobile/.dynamicstage-sbcam-on", F_OK) == 0;
+    if (!optIn) return YES;
+    return access("/var/tmp/com.recreated.dynamicstage.nosbcam", F_OK) == 0 ||
+           access("/var/jb/tmp/com.recreated.dynamicstage.nosbcam", F_OK) == 0;
+}
+
+static void DSCam668UpdateCameraTall(DSStageManager *manager, NSArray<NSString *> *hosted,
+                                     NSDictionary<NSString *, NSValue *> *visible, BOOL locked, BOOL systemOwns) {
+    DSAppTraceRelayNoteHosted(hosted ?: @[]);
+    // 4.5.669: SpringBoard's own green-dot set, once a second with the refresh.
+    DSCam669PollProvider();
+    if (systemOwns) return;
+    BOOL disabled = DSCam668Disabled();
+    BOOL keyboard = [manager stagedKeyboardIsUp];
+    NSMutableSet<NSString *> *check = [NSMutableSet setWithArray:hosted ?: @[]];
+    [check addObjectsFromArray:[manager cameraTallBundleIdentifiers] ?: @[]];
+    for (NSString *bundle in check) {
+        BOOL camera = DSCam661SensorCamera[bundle] != nil;
+        BOOL apple = [bundle hasPrefix:@"com.apple."];
+        BOOL live = DSAppTraceRelayBundleIsLive(bundle);
+        BOOL onCard = [hosted containsObject:bundle] && visible[bundle] != nil;
+        NSString *why = nil;
+        if (!camera) why = @"camera off";
+        else if (apple) why = @"Apple app, its own camera fit";
+        else if (live) why = @"app dylib is running in it, app-side camera fit";
+        else if (disabled) why = @"sbcam670 off by default (opt-in file /var/mobile/.dynamicstage-sbcam-on absent)";
+        else if (locked) why = @"phone locked or call screen up";
+        else if (!onCard) why = @"card hidden, parked, minimized or closed";
+        else if (keyboard) why = @"keyboard up";
+        BOOL want = why == nil;
+        BOOL now = [manager cameraTallForBundleIdentifier:bundle];
+        if (want == now) continue;
+        if (want) {
+            why = [NSString stringWithFormat:@"green dot: camera pid %d, no app dylib (%@)",
+                   [DSCam661SensorCamera[bundle] intValue], DSAppTraceRelayBundleSummary(bundle)];
+        }
+        [manager setCameraTall:want forBundleIdentifier:bundle why:why];
+    }
+}
+
 + (void)timerFired:(NSTimer *)timer {
     (void)timer;
     [self refresh];
@@ -1384,6 +1972,18 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
         for (NSString *bundle in hosted) {
             DSCameraClaim *claim = DSCameraClaims[bundle];
             BOOL eligible = presenceAllowed && visible[bundle] != nil;
+            // 4.5.740 cam740: presence only while the staged app is using the
+            // camera (its own camera event in the last 12 s, or the green dot
+            // shows it), so a card that is just on screen no longer publishes
+            // display-layout elements on every settle (each one makes SpringBoard
+            // re-describe the scene: the "stage display-layout change" holds that
+            // preceded the 735/739 SIGTRAPs). Messages keeps 661/673 presence
+            // unchanged. Off: /var/mobile/.dynamicstage-cam740-off (latch).
+            if (eligible && DSFeature699On("cam740") && ![bundle isEqualToString:@"com.apple.MobileSMS"]) {
+                BOOL usingCamera = (claim && claim.lastHeard > 0 && now - claim.lastHeard <= 12.0) || DSCam661SensorCamera[bundle] != nil;
+                if (!usingCamera) eligible = NO;
+                else DSFeature719MarkAction("cam740");
+            }
             if (eligible && !claim) {
                 claim = [DSCameraClaim new];
                 claim.bundle = bundle;
@@ -1462,9 +2062,45 @@ static void DSCam661NotePresence(DSCameraClaim *claim, BOOL published, NSString 
                 continue;
             }
             if (claim.assertion && DSCameraFramesClose(frame, claim.frame)) continue;
-            DSCameraUnpublish(claim, @"card moved");
+            if (claim.assertion) {
+                // 4.5.670: skip mid-drag fractional frames (669 SIGTRAP).
+                // 4.5.800: old out, then new in — "new in then old out" left two
+                // MobileSMS elements in the layout (Buddha 799 camera658). The
+                // mid-drag skip already covers the 669 trap; a brief gap is safer
+                // than a duplicate display-layout element for the same app.
+                if (DSStageDragSettlingFast(1.2)) {
+                    DSCameraRecord([@"drag670." stringByAppendingString:claim.bundle ?: @"?"],
+                                   @"%@ layout670 card is moving: display-layout element kept at %@ until the drag settles",
+                                   claim.bundle, NSStringFromCGRect(claim.frame));
+                    continue;
+                }
+                CFAbsoluteTime moveNow = CFAbsoluteTimeGetCurrent();
+                if (moveNow - claim.lastMove < 2.0) continue;
+                claim.lastMove = moveNow;
+                id oldAssertion = claim.assertion;
+                CGRect oldFrame = claim.frame;
+                claim.assertion = nil;
+                @try {
+                    if ([oldAssertion respondsToSelector:@selector(invalidate)]) [oldAssertion invalidate];
+                } @catch (NSException *exception) {
+                }
+                if (DSCameraPublish(claim, frame)) {
+                    DSCameraNoteLayoutChange();
+                    DSCameraRecord([@"move670." stringByAppendingString:claim.bundle ?: @"?"],
+                                   @"%@ layout670 card moved: display-layout element %@ -> %@ (old out, then new in)",
+                                   claim.bundle, NSStringFromCGRect(oldFrame), NSStringFromCGRect(claim.frame));
+                } else {
+                    // Publish failed after removing the old element — try once more
+                    // at the old frame so the app is not left out of the layout.
+                    if (!DSCameraPublish(claim, oldFrame)) {
+                        claim.frame = oldFrame;
+                    }
+                }
+                continue;
+            }
             if (DSCameraPublish(claim, frame)) DSCam661NotePresence(claim, YES, nil);
         }
+        DSCam668UpdateCameraTall(manager, hosted, visible, locked, systemOwns);
     } @catch (NSException *exception) {
         DSCameraRecord(@"refreshthrew", @"refresh threw %@", exception.name ?: @"?");
     }

@@ -1,0 +1,6 @@
+4.5.820 = bak816 (4.5.815 source) + version bump only (control, kDSBuildVersionString). Source diff vs bak816: those two lines.
+Audit (user: 818/819 "still crashes"):
+ - 815 -> 816 source diff: app/Tweak.xm grow816 (one static function, called from the existing UIInputWindowController viewDidLayoutSubviews hook when staged Messages + gates), springboard/DSStageManager.m topstay816 (4 lines in kb707 apply + log wording), DS816On, core816 in the group list. No %hook / %group / %init / %ctor / +load added.
+ - debs 812-1 / 815 / 816 / 818 / 819: load commands, LC_BUILD_VERSION (minos 14.0, sdk 16.5), arm64 + arm64e (PTR_AUTH_VERSION USERSPACE 0), ldid entitlements, DEBIAN scripts, filter plists, file list: identical (control Version/Installed-Size only). Undefined symbols identical for both dylibs and both slices 812-1 = 815 = 816 = 818; 819 adds public UIKit/libm symbols only.
+ - built dylibs are fresh: version string and feature strings (pin815 / grow816 / topstay816 / picker819) present as expected per build; payload and DynamicLibraries copies of DynamicStageApp.dylib identical.
+ - nothing in 816 runs at SpringBoard launch or outside staged typing; cause not found in the binaries. 820 removes all post-815 code.

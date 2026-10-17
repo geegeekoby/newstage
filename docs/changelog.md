@@ -1,3 +1,7 @@
+## 4.5.820 (known-good: exact 4.5.815)
+- Exactly the 4.5.815 code that booted cleanly on your phone (log 09:06), rebuilt with only the version number changed. Everything from 4.5.816 to 4.5.819 is not in this build: grow816, topstay816, the new picker (817/819), search817/819 and the app-lookup throttle.
+- Install this first. Later builds will each add back one change.
+
 ## 4.5.819 (new app picker back, boot-safe)
 - picker819: the redesigned picker from 4.5.817 is back, rebuilt so that nothing of it runs while SpringBoard starts.
   - At launch the stage builds the classic picker exactly as in 4.5.818. The new picker is created only the first time you open a picker, after SpringBoard has passed its "stayed up" check (about 8 s after a respring). Until then you see the classic picker.

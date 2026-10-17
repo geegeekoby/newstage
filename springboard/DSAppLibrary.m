@@ -1,5 +1,4 @@
 #import "DSAppLibrary.h"
-#import "DSStageDebug.h"
 #import "DSPrivate.h"
 #import "DSPreferences.h"
 #import "DSExclusions.h"
@@ -97,12 +96,6 @@
     if (entry) return entry;
 
     // Apps installed after the last reload still need to resolve.
-    // 4.5.819: at most one walk per 2 s - a stale recent/pinned id (app
-    // removed) re-walked every installed app once per id, per picker reload.
-    static CFAbsoluteTime last819 = 0;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (DS819On("search819") && now - last819 < 2.0 && now >= last819) return nil;
-    last819 = now;
     [self reload];
     return _entriesByIdentifier[bundleIdentifier];
 }

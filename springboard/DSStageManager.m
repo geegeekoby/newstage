@@ -9317,7 +9317,6 @@ static void DSFitRimBorder(CAShapeLayer *layer, CGRect bounds, CGFloat band, CGF
 - (void)presentPickerOnCard:(DSStageContainerView *)card picker:(DSAppPickerViewController *)picker {
     _kb723QuietUntil = CFAbsoluteTimeGetCurrent() + 0.6;   // 4.5.723: kb723 stays out (create / picker / teardown)
     if (!card || !picker) return;
-    [picker activate819];   // 4.5.819 picker819: built on first show only, never at launch
     [self refreshPickerAvailability];
     picker.darkMode = card.darkMode;
     UIView *pickerView = picker.view;
@@ -11460,33 +11459,6 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
 - (void)appPicker:(DSAppPickerViewController *)picker didSelectEntry:(DSAppEntry *)entry fromView:(UIView *)view {
     [picker dismissKeyboard];
     [self launchEntry:entry slot:[self slotForPicker:picker]];
-}
-
-- (NSArray<NSDictionary *> *)appPickerSlotChoices819:(DSAppPickerViewController *)picker {
-    NSMutableArray *out = [NSMutableArray array];
-    @try {
-        NSInteger own = [self slotForPicker:picker];
-        for (NSInteger slot = 0; slot <= 1; slot++) {
-            if (slot != own && ![self pickerVisibleOnSlot:slot]) continue;
-            DSStageContainerView *card = slot == 0 ? _container : _topContainer;
-            if (!card) continue;
-            BOOL upper = card == [self cardOnHalf:1];
-            [out addObject:@{ @"slot": @(slot), @"here": @(slot == own),
-                              @"title": upper ? @"Open on Top Card" : @"Open on Bottom Card" }];
-        }
-    } @catch (NSException *exception) {}
-    return out;
-}
-
-- (void)appPicker:(DSAppPickerViewController *)picker didChooseEntry:(DSAppEntry *)entry slot819:(NSInteger)slot fromView:(UIView *)view {
-    [picker dismissKeyboard];
-    NSInteger own = [self slotForPicker:picker];
-    if (slot != own) {
-        if (slot < 0 || slot > 1 || ![self pickerVisibleOnSlot:slot]) slot = own;   // that card filled meanwhile
-        else [[self pickerForSlot:slot] dismissKeyboard];
-    }
-    DSDiagnosticsRecordFormat(@"SpringBoard: picker819 menu: %@ on slot %ld (picker slot %ld)", entry.bundleIdentifier ?: @"?", (long)slot, (long)own);
-    [self launchEntry:entry slot:slot];
 }
 
 - (void)appPicker:(DSAppPickerViewController *)picker didHoldEntry:(DSAppEntry *)entry fromView:(UIView *)view {
@@ -13730,14 +13702,6 @@ static void DSKb723Breadcrumb(const char *what) {
         DSFeature719MarkAction("lift755");
         lift = 0.0;
     }
-    // 4.5.816 topstay816: the top card stays where it is while typing in it
-    // (815 log: "kept (already clear) 140 pt" moved it {{5, 5}} -> {{5, 145}}).
-    // The bottom card still moves just above the keyboard; the other card's
-    // slide-aside is unchanged. Off: /var/mobile/.dynamicstage-topstay816-off.
-    if (fabs(lift) > 0.5 && owner == [self cardOnHalf:1] && DS816On("topstay816") && DS809Latched("topstay816")) {
-        DSFeature719MarkAction("topstay816");
-        lift = 0.0;
-    }
     CGFloat side = 0.0;
     if (other) {
         // The other card makes room only when the typing card (at its lifted
@@ -13789,7 +13753,7 @@ static void DSKb723Breadcrumb(const char *what) {
         _kb707Logged = line;
         DSDiagnosticsRecordFormat(@"SpringBoard: kb707 typing in the %@ card (%@, %@): %@ %.0f pt to the keyboard%@",
                                   owner == [self cardOnHalf:1] ? @"upper" : @"lower", what ?: @"?", why ?: @"?",
-                                  lift > 0.5 ? @"lifted" : (lift < -0.5 ? @"lowered" : @"kept (already clear)"), fabs(lift),
+                                  lift > 0.5 ? @"lifted" : @"kept (already clear)", fabs(lift),
                                   other ? [NSString stringWithFormat:@", the other card slid %@ %.0f pt", side < 0 ? @"left" : @"right", fabs(side)] : @"");
     }
 }

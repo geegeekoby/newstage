@@ -12,10 +12,6 @@
 - (void)appPickerNeedsKeyWindowForSearch:(DSAppPickerViewController *)picker;
 - (void)appPickerDidEndSearch:(DSAppPickerViewController *)picker;
 - (BOOL)appPickerShouldWaitBeforeSearchEditing:(DSAppPickerViewController *)picker;
-// 4.5.819 picker819: the long-press menu's card choices, each
-// @{@"slot": NSNumber, @"title": NSString, @"here": NSNumber(BOOL)}.
-- (NSArray<NSDictionary *> *)appPickerSlotChoices819:(DSAppPickerViewController *)picker;
-- (void)appPicker:(DSAppPickerViewController *)picker didChooseEntry:(DSAppEntry *)entry slot819:(NSInteger)slot fromView:(UIView *)view;
 @end
 
 // What the stage shows when no app is loaded: a search field, a two column
@@ -36,9 +32,5 @@
 // 4.5.720: the search field is the first responder.
 - (BOOL)searchFieldIsEditing;
 - (NSString *)searchEditingDebugSummary;
-// 4.5.819 picker819: called when the stage shows this picker. The first call
-// after SpringBoard has stayed up builds the new picker inside this one
-// (unless picker819-off / latched); later calls re-read the app list once.
-- (void)activate819;
 
 @end

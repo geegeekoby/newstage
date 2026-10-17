@@ -1,3 +1,11 @@
+## 4.5.811 (Messages reply bar fix + log fixes)
+- Fix (unpark811): in a staged Messages chat opened without tapping the box, the input container stayed parked 4000 pt below the card, so the reply bar and app strip were missing. The parked container is now signalled back with the chat's own message box (same signal as before, no focus change).
+- entry811: logs where the reply bar and app strip really are against the card (window/screen frames, clipping ancestor, inCard).
+- pass811: one crumb when a touch passed through the keyboard window with no keys up and no rim651 hit followed within 0.4 s (to prove or rule out dropped edge grabs).
+- switch811: the gest770 layout line is re-read when SBMainSwitcherWindow is the key / competing window, so switcher=OPEN gets logged.
+- quiet811: why806 only when the keyboard owner is on a card, hosted, or medusa803 holds; why775 stops once the kbvis768 sample for that show has ended.
+- Off files: core811-off, unpark811-off, entry811-off, pass811-off, switch811-off, quiet811-off.
+
 ## 4.5.810 (sweep clean-up)
 - About 1,040 lines net removed; no behaviour change apart from less log noise.
 - Dead code: 25 unused app functions and 16 unused statics deleted; unused-code warnings are on in the Makefiles (build is warning-free).

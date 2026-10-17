@@ -401,6 +401,7 @@ static int DS796Group(const char *name) {
         if (strcmp(name, "core808") == 0) return -1;
         if (strcmp(name, "core809") == 0) return -1;
         if (strcmp(name, "core810") == 0) return -1;
+        if (strcmp(name, "core811") == 0) return -1;
         return DS796CoreOn() ? 1 : -1;   // retired masters (unless core796-off)
     }
     if (!DS796CoreOn()) return -1;
@@ -1014,6 +1015,12 @@ BOOL DS809On(const char *name) {
 // The dead-code deletions stay deleted.
 BOOL DS810On(const char *name) {
     return DSFeature699On("core810") && DS809On("core809") && DSFeature699On(name);
+}
+
+// 4.5.811: master core811-off returns the 811 log changes (pass811, switch811,
+// quiet811) to 810.
+BOOL DS811On(const char *name) {
+    return DSFeature699On("core811") && DS810On("core810") && DSFeature699On(name);
 }
 
 // 4.5.809 latch809: a SpringBoard behaviour feature that had an off file but

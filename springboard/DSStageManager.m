@@ -11095,6 +11095,7 @@ static NSString *DSSceneActivationName(UISceneActivationState state) {
         UIWindow *other = DSCompetingKeyWindow(window);
         if (other) otherName = NSStringFromClass(other.class);
     }
+    DSGest811NoteOther(otherName);
     NSMutableArray *scenes = [NSMutableArray array];
     for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
         if (![candidate isKindOfClass:UIWindowScene.class]) continue;

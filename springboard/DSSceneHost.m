@@ -8094,6 +8094,15 @@ void DSGest770LogLayout(NSString *why) {
         DSDiagnosticsRecordFormat(@"SpringBoard: gest770 layout %@", sig);
     } @catch (NSException *exception) {}
 }
+// 4.5.811 switch811: when the key / competing window is SBMainSwitcherWindow,
+// re-read the gest770 layout line (read-only, same dedupe as poll805).
+// Off: switch811-off / core811-off.
+void DSGest811NoteOther(NSString *otherName) {
+    @try {
+        if (!NSThread.isMainThread || ![otherName isEqualToString:@"SBMainSwitcherWindow"] || !DS811On("switch811") || !DSGest770On()) return;
+        DSGest770LogLayout(@"switch811");
+    } @catch (NSException *exception) {}
+}
 void DSGest770NoteEvent(NSString *why) {
     if (!DS805On("poll805") || !DSGest770On()) return;
     static BOOL marked = NO;

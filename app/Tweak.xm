@@ -789,7 +789,104 @@ static void DSStrip784Log(NSString *why) {
     } @catch (NSException *e) {}
 }
 
+// ---- 4.5.811 entry811 (log only) -------------------------------------------------
+// Where the reply bar (CKMessageEntryView) and the app strip
+// (CKBrowserSwitcherFooterView) really are: frame in their window and on the
+// screen, the card (the app's stage bounds), hidden / alpha / height, the first
+// clipping ancestor that cuts them, and whether each is inside the card. One
+// line per change. Off: entry811-off / core811-off.
+static UIView *DSEntry811Find(UIView *view, NSString *cls, NSInteger depth) {
+    if (!view || depth > 24) return nil;
+    if ([NSStringFromClass(object_getClass(view)) isEqualToString:cls]) return view;
+    for (UIView *sub in view.subviews) {
+        UIView *f = DSEntry811Find(sub, cls, depth + 1);
+        if (f) return f;
+    }
+    return nil;
+}
+
+// 4.5.811 unpark811: reopen783/790 only knew the box after it had been focused
+// (DSKeyboardTarget is set on becomeFirstResponder). In a chat that was opened
+// without tapping the box, the target is nil, so the parked input container
+// ({{0, 4000}}, log810 06:53:06.675) was never signalled and the reply bar and
+// app strip stayed off the card. Rule: when no box was focused, reopen783 uses
+// the chat's own message text view. No focus change, no timer.
+// Off: unpark811-off / core811-off (crash latch unpark811).
+static UIView *DSUnpark811FindBox(UIView *view, NSInteger depth) {
+    if (!view || depth > 24) return nil;
+    NSString *n = NSStringFromClass(object_getClass(view));
+    if ([view isKindOfClass:UITextView.class] && [n rangeOfString:@"MessageEntry"].location != NSNotFound &&
+        [n rangeOfString:@"Search"].location == NSNotFound) return view;
+    for (UIView *sub in view.subviews) {
+        UIView *f = DSUnpark811FindBox(sub, depth + 1);
+        if (f) return f;
+    }
+    return nil;
+}
+static UIResponder *DSUnpark811Box(void) {
+    if (!DS811On("unpark811") || !DS809Latched("unpark811")) return nil;
+    @try {
+        for (UIWindow *w in UIApplication.sharedApplication.windows) {
+            UIView *entry = DSEntry811Find(w, @"CKMessageEntryView", 0);
+            if (!entry) continue;
+            UIView *box = DSUnpark811FindBox(entry, 0);
+            if (box) return (UIResponder *)box;
+        }
+    } @catch (NSException *exception) {}
+    return nil;
+}
+
+static NSString *DSEntry811Describe(NSString *label, UIView *v, CGRect card) {
+    if (!v) return [NSString stringWithFormat:@"%@=none", label];
+    UIWindow *w = v.window;
+    CGRect inWin = w ? [v convertRect:v.bounds toView:w] : v.frame;
+    CGRect onScreen = (w && w.screen) ? [v convertRect:v.bounds toCoordinateSpace:w.screen.coordinateSpace] : CGRectNull;
+    NSString *clip = @"none";
+    BOOL hiddenUp = NO;
+    for (UIView *a = v.superview; a; a = a.superview) {
+        if (a.hidden || a.alpha < 0.01) hiddenUp = YES;
+        if (a.clipsToBounds && w) {
+            CGRect ab = [a convertRect:a.bounds toView:w];
+            if (!CGRectContainsRect(CGRectInset(ab, -1.0, -1.0), inWin)) {
+                clip = [NSString stringWithFormat:@"%@%@", NSStringFromClass(object_getClass(a)), NSStringFromCGRect(ab)];
+                break;
+            }
+        }
+    }
+    BOOL inside = CGRectGetHeight(inWin) > 0.5 && CGRectContainsRect(CGRectInset(card, -1.0, -1.0), inWin);
+    BOOL meets = CGRectIntersectsRect(card, inWin);
+    return [NSString stringWithFormat:@"%@ win=%@ screen=%@ h=%.0f hid=%d a=%.2f hiddenAncestor=%d clip=%@ inCard=%@ window=%@%@",
+            label, NSStringFromCGRect(inWin), CGRectIsNull(onScreen) ? @"?" : NSStringFromCGRect(onScreen),
+            CGRectGetHeight(v.bounds), v.hidden, v.alpha, hiddenUp, clip,
+            inside ? @"YES" : (meets ? @"PART" : @"NO"),
+            w ? NSStringFromClass(object_getClass(w)) : @"nil", w ? NSStringFromCGRect(w.bounds) : @""];
+}
+
+static void DSEntry811Log(NSString *why) {
+    if (!NSThread.isMainThread || !DSStaged() || !DSMessagesOwnsKeyboard() || !DS811On("entry811")) return;
+    static BOOL marked = NO;
+    if (!marked) { marked = YES; DSFeature699MarkTrying("entry811"); }
+    @try {
+        UIView *entry = nil, *strip = nil;
+        for (UIWindow *w in UIApplication.sharedApplication.windows) {
+            if (!entry) entry = DSEntry811Find(w, @"CKMessageEntryView", 0);
+            if (!strip) strip = DSEntry811Find(w, @"CKBrowserSwitcherFooterView", 0);
+            if (entry && strip) break;
+        }
+        CGRect card = DSStageBounds();
+        NSString *sig = [NSString stringWithFormat:@"card=%@ | %@ | %@", NSStringFromCGRect(card),
+                         DSEntry811Describe(@"bar", entry, card), DSEntry811Describe(@"strip", strip, card)];
+        static NSString *last = nil;
+        if ([sig isEqualToString:last]) return;
+        last = [sig copy];
+        static NSInteger count = 0;
+        if (++count > 120) return;
+        DSTraceFormat(@"entry811 %@: %@", why ?: @"?", sig);
+    } @catch (NSException *exception) {}
+}
+
 static void DSEntry781Log(NSString *why) {
+    DSEntry811Log(why);
     if ([why hasPrefix:@"become"] || [why hasPrefix:@"auto-focus"]) DSStrip790Left = 3;   // 4.5.790 strip790
     DSStrip784Log(why);
     if (!DSStaged() || !DS781On("entry781")) return;
@@ -872,6 +969,7 @@ static UIView *DSInputContainer782In(UIView *view, NSInteger depth) {
 static BOOL DSInputContainer782Parked(CGRect *outFrame) {
     @try {
         UIResponder *t = DSKeyboardTarget;
+        if (!t) t = DSUnpark811Box();
         UIWindow *w = [t isKindOfClass:UIView.class] ? ((UIView *)t).window : nil;
         UIView *c = DSInputContainer782In(w, 0);
         if (!c) return NO;
@@ -1009,7 +1107,10 @@ static void DSReopen782(NSString *where, BOOL mayRefocus) {
     (void)mayRefocus;
     if (!DSStaged() || !DSMessagesOwnsKeyboard() || !DS783On("reopen783")) return;
     UIResponder *t = DSKeyboardTarget;
+    BOOL used811 = NO;
+    if (!t) { t = DSUnpark811Box(); used811 = t != nil; }
     if (!DSIsMessageBox781(t) || (!t.isFirstResponder && !DS790On("reopen790"))) return;
+
     // 4.5.791 reopen791: never send Messages' text-changed relayout while the box
     // is focused. Highb: 07:53:51.322 bar 81 + strip -> signal at fr=1 text=8 ->
     // 51.353 bar 44, strip gone (also 55.496->55.521, 06.062->06.094). Unfocused
@@ -1026,6 +1127,7 @@ static void DSReopen782(NSString *where, BOOL mayRefocus) {
     CGRect before = CGRectNull;
     if (!DSInputContainer782Parked(&before)) return;
     busy = YES;
+    if (used811) { DSFeature719MarkAction("unpark811"); DSTraceFormat(@"unpark811 %@: no box was focused, using the chat's message box %@", where, NSStringFromClass(object_getClass(t))); }
     @try {
         DSFeature719MarkAction("reopen783");
         if (DS789On("reopen789")) DSFeature719MarkAction("reopen789");
@@ -6579,6 +6681,7 @@ static void DSInstallMessagesBehaviorHooks(void) {
 - (void)viewDidLayoutSubviews {
     if (DSStaged()) DSTrace(@"app input window laid out");
     %orig;
+    if (DSStaged()) DSEntry811Log(@"input window laid out");
 }
 
 %end

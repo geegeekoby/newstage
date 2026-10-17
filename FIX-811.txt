@@ -1,0 +1,41 @@
+DynamicStage 4.5.811 - log fixes from log810 (built on 4.5.810; backup ../bak811)
+
+One behaviour fix (unpark811, item 0); the rest is log only. Master core811-off returns all three to 810 (DS811On chains core811 && DS810On).
+core811 is listed in the DS796Group live masters.
+
+0. unpark811 (FAILURE FIX, app/Tweak.xm): staged Messages chat showed no reply bar and no app strip.
+   Proven (log810): 06:53:04.763 "app left UIInputSetContainerView at {{0, 4000}, {430, 932}}" when the chat
+   list appeared; 06:53:06.675 "entry781 chat didAppear fr=0 text=0 wanted=0 | UIInputSetContainerView{{0, 4000}..}
+   ; CKMessageEntryView{{0, 4851}, {420, 81}} ; CKBrowserSwitcherFooterView{{0, 4891.3}..}" = whole input
+   container parked 4000 pt below the card; no reopen783 line followed. Proven (code): chat didAppear runs
+   DSReopen782 (reopen790), which returns at once when DSKeyboardTarget is not a message box; DSKeyboardTarget
+   is a weak ref set only on becomeFirstResponder, and the box was never focused (fr=0) -> nil -> no unpark.
+   Fix (one rule): when no box was focused, reopen783 uses the chat's own message text view
+   (UITextView *MessageEntry* inside CKMessageEntryView, found by class-name walk, no new selectors) and sends
+   the same text-changed signal it already sends at fr=0 (proven to unpark next pass in Highb 51.925/56.082).
+   No focus change, no timer, no hold. msg742, camera, the strip and the stand-in untouched.
+   Off: unpark811-off (latch unpark811).
+   Not a 809/810 regression: the gate has been "DSKeyboardTarget must be the box" since 783/790.
+   The first didAppear (06:53:03.522) had the container at y=0, bar {0,833,420,99}, strip {0,891.3,420,37}
+   in a 430x932 window: the 891 is window-space, not off-card by itself; entry811 now logs it against the card.
+00. entry811 (log only, app): on every DSEntry781Log call and every UIInputWindowController layout, one
+   line when it changed: card rect, and for bar and strip: window rect, screen rect, height, hidden, alpha,
+   hidden ancestor, first clipping ancestor that cuts it, inCard YES/PART/NO, window class+bounds. Max 120.
+   Off: entry811-off.
+
+1. pass811 (springboard/DSRimCatcherView.m, Tweak.xm passthrough): when the keyboard window passes a touch
+   through while no keys are up, the point/time is kept as pending. The next passthrough or rim hit settles
+   it: if no rim651 hit came within 0.4 s, one line "pass811 a touch passed through with no keys up at X,Y
+   and no rim651 hit followed within 0.4 s". Max 16 per boot. No timer, no hold, no replay; it never changes
+   the hitTest result. Off: pass811-off.
+2. switch811 (DSStageManager.m searchKeyboardDebugLine -> DSSceneHost.m DSGest811NoteOther): when the
+   key/competing window is SBMainSwitcherWindow, DSGest770LogLayout runs (same signature dedupe, same
+   verified switch810 read: SBMainSwitcherControllerCoordinator sharedInstanceIfExists / isAnySwitcherVisible).
+   Read-only. Off: switch811-off.
+3. quiet811 (DSKeyboardVisibility.m): why806 only when stageOnScreen (DSKbVis776StageOn) || owner hosted ||
+   medusa803 holding; why775 only while the kbvis768 sample is running. Off: quiet811-off.
+
+No new selectors (pass811/quiet811 use none; switch811 reuses switch810's verified pair).
+Expected log changes: "unpark811 chat didAppear: no box was focused ..." then "reopen783 chat didAppear: input container parked {{0, 4000}..}" and "entry811 ... bar ... inCard=YES"; plus ~45 fewer why806 lines per session (none for Spotlight/Zalo/Edge off-card), no
+"why775 show N" lines after "kbvis768 show N ended", new "pass811" lines only after a no-keys passthrough
+without a rim hit, and "gest770 layout switcher=OPEN" after a takeKey line naming other=SBMainSwitcherWindow.

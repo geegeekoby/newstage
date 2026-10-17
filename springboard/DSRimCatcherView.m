@@ -46,6 +46,45 @@ void DSRimLog(NSString *text) {
     DSDiagnosticsRecordFormat(@"SpringBoard: rim651 %@", text);
 }
 
+// ---- 4.5.811 pass811 (log only) ---------------------------------------------------
+// A touch the keyboard window passed through while no keys were up is kept as
+// "pending". If no rim651 hit came within 0.4 s of it, one line says so. The
+// check runs only on the next passthrough or rim hit (no timer, no hold). No
+// behaviour change. Off: pass811-off / core811-off.
+static CFAbsoluteTime DSPass811At = 0;
+static CGPoint DSPass811Point = {0, 0};
+static CFAbsoluteTime DSPass811RimAt = 0;
+static void DSPass811Settle(CFAbsoluteTime now) {
+    if (DSPass811At <= 0 || now - DSPass811At < 0.4) return;
+    BOOL hit = DSPass811RimAt >= DSPass811At - 0.05 && DSPass811RimAt <= DSPass811At + 0.4;
+    if (!hit) {
+        static NSInteger count = 0;
+        if (count < 16) {
+            count++;
+            DSDiagnosticsRecordFormat(@"SpringBoard: pass811 a touch passed through with no keys up at %.0f,%.0f and no rim651 hit followed within 0.4 s (%.1f s ago)",
+                                      DSPass811Point.x, DSPass811Point.y, now - DSPass811At);
+        }
+    }
+    DSPass811At = 0;
+}
+void DSPass811NoteThrough(CGPoint screen, BOOL keysUp) {
+    @try {
+        if (!NSThread.isMainThread || !DS811On("pass811")) return;
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        DSPass811Settle(now);
+        if (keysUp) return;
+        if (DSPass811At > 0 && now - DSPass811At < 0.4) return;   // same touch, hitTest runs repeatedly
+        DSPass811At = now;
+        DSPass811Point = screen;
+    } @catch (NSException *exception) {}
+}
+static void DSPass811NoteRimHit(void) {
+    if (!NSThread.isMainThread || !DS811On("pass811")) return;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    DSPass811RimAt = now;
+    DSPass811Settle(now);
+}
+
 static void DSMakeSolidForWindowServer(UIView *view) {
     // Invisible (1.1% black), but a filled layer: the window server routes a
     // touch on it to SpringBoard instead of the app drawn below.
@@ -108,6 +147,7 @@ static void DSMakeSolidForWindowServer(UIView *view) {
     if (event && event.timestamp != lastEvent) {
         lastEvent = event.timestamp;
         CGPoint screen = [self convertPoint:point toView:nil];
+        if (event.type == UIEventTypeTouches) DSPass811NoteRimHit();
         // 4.5.741: every rim strip (main shell, top card, float) arms rimwin740.
         if (event.type == UIEventTypeTouches) { DSRim740StripAt = CFAbsoluteTimeGetCurrent(); DSRim740StripPoint = screen; }
         DSRimLog([NSString stringWithFormat:@"hit %@ at %.0f,%.0f -> %@", self.catcherName ?: @"?", screen.x, screen.y, path]);

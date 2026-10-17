@@ -1702,6 +1702,8 @@ BOOL DSKbVis775ArbiterOn(void) { return DSKbVis768On_; }
 void DSWhy775Note(NSString *line) {
     if (!NSThread.isMainThread || !line.length || !DSKbVis768On_ || !DS775On("why775")) return;
     if (!DSKbVis768Owner || [DSKbVis768Owner isEqualToString:@"com.apple.springboard"] || [DSKbVis768Owner isEqualToString:@"com.apple.MobileSMS"]) return;
+    // 4.5.811 quiet811: nothing after the kbvis768 sample for this show has ended.
+    if (DS811On("quiet811") && !DSKbVis768Running) return;
     static NSInteger show = -1, count = 0, folded = 0;
     static NSString *last = nil;
     if (show != DSKbVis768Show) { show = DSKbVis768Show; count = 0; folded = 0; last = nil; }
@@ -1830,6 +1832,8 @@ void DSWhy806NotePassed(UIWindow *medusa, BOOL wasHidden, BOOL bypass, NSInteger
         NSString *owner = DSKbVis768Owner;
         DSStageManager *m = [DSStageManager sharedManager];
         BOOL ownerOk = owner.length && ![owner isEqualToString:@"com.apple.springboard"] && ![owner isEqualToString:@"com.apple.MobileSMS"] && !DSStage742MessagesStaged();
+        // 4.5.811 quiet811: only when the owner is on a card or hosted (or medusa803 holds).
+        if (DS811On("quiet811") && !(DSKbVis776StageOn || (owner.length && [m isHostingBundleIdentifier:owner]) || DSMedusa802Assertion != nil)) return;
         DSDiagnosticsRecordFormat(@"SpringBoard: why806 SpringBoard update hide went through for %@: wasHidden=%d bypass=%d depth=%ld | keep776 arbOn=%d stageOnScreen=%d keep776on=%d owner=%@ ownerOk=%d stageVisible=%d hosted=%d | medusa803 holding=%d sameWindow=%d | keep806 on=%d",
             arb, wasHidden, bypass, (long)depth, DSKbVis768On_, DSKbVis776StageOn, DS776On("keep776"), owner ?: @"-", ownerOk,
             m.isStageVisible, owner.length ? [m isHostingBundleIdentifier:owner] : NO,

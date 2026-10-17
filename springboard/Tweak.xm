@@ -1319,6 +1319,7 @@ static BOOL DSSpringBoardShouldPassTouch(UIView *view, CGPoint point) {
         inWindow.y <= windowH + 4.0) {
         return NO;
     }
+    DSPass811NoteThrough(onScreen, keyboardUp);
     static NSInteger noted = 0;
     if (noted < 4) {
         noted += 1;

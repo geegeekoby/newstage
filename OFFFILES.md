@@ -389,3 +389,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-settings825-off : Settings switches/status/recents limit/hide Copy Logs ignored
 - /var/mobile/.dynamicstage-core825-off : all of 825
 - Latch: /var/mobile/.dynamicstage-pin825-crashed (hang marker /var/mobile/.dynamicstage-pin825-showing)
+
+## 4.5.826
+- /var/mobile/.dynamicstage-pill826-off : old notch panel (New Stage square, drag-to-open)
+- /var/mobile/.dynamicstage-core826-off : all of 826 (back to 825)
+- Latch: /var/mobile/.dynamicstage-pill826-crashed (hang marker /var/mobile/.dynamicstage-pill826-showing)

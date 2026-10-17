@@ -1,0 +1,10 @@
+4.5.826 (on 4.5.825)
+pill826 (off: pill826-off -> exact old notch panel; latch pill826-crashed; hang marker pill826-showing; core826-off -> 825):
+ the right-edge tab (unchanged look, size 14x64 and hit area) now grows with a spring into a 60 pt glass strip
+ (solid fill as the window is clear, gradient edge + top sheen as in 824, shadowPath): New Stage (+), then the top,
+ bottom and float card app icons (minimised cards get a teal badge). Reduce Motion: fade only. Dark/light follows the tab.
+ Tap +: existing halfHandler (beginStageOnHalf). Tap a minimised top/bottom icon: restore through
+ restoreMinimizedStageAnimated: exactly as the queued corner771 restore does (refused while a minimise/restore/home
+ gesture runs); a card already on screen / float icon: nothing. Hold top/bottom icon 0.42 s: existing halfHoldHandler
+ (returnHalfToPicker). Strip decided at tap time after DSStayedUp823; nothing at launch. The New Stage drag lives only
+ in the old panel (pill826-off).

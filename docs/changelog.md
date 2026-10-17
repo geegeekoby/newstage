@@ -1,3 +1,7 @@
+## 4.5.826
+- The edge tab now opens a morphing glass pill strip: New Stage plus the icons of the top / bottom / floating card apps. Tap a minimised card's icon to bring it back; hold a top/bottom icon to send that card back to the picker. Respects Reduce Motion and dark/light.
+- Off: pill826-off (old notch panel exactly), core826-off (back to 825). Latch: pill826-crashed.
+
 ## 4.5.825
 - Pin from the picker: hold an app (0.55 s) for a menu - Pin / Unpin / Move Pin Earlier / Later / Open Full Screen / Open in the empty other card / Clear Suggested History.
 - Settings: Remembered Recent Apps (default 12), Hide Copy Logs Button, switches for the main features (mapped onto the existing off files), read-only feature status (On / Off / Latched off).

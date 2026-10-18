@@ -1,0 +1,15 @@
+4.5.844 (on 4.5.843). Stage feature 'Close all stages'. No new log after 843 (origin 52ca3d3).
+Request review: #1 'change a card's app' ALREADY EXISTS (828): hold a card's icon in the pill strip -> that card goes
+back to its picker (returnHalfToPicker:) and the app picked replaces it in place - not rebuilt. #3 'open links in the
+other card' SKIPPED: SpringBoard routes an app's openURL / app switch through its workspace transaction / scene
+activation; showing it in the other card means intercepting that request, which needs a hook on that path and
+touches scene lifecycle - not doable with the existing hooks only.
+closeall844 (off: closeall844-off, latch closeall844-crashed via DSFeature719MarkAction; core844-off -> 843):
+ strip item tag 5 'Close all stages' when the top, bottom or floating card holds an app. Tap -> confirm action sheet
+ ('Close All Stages?', 'N apps will be closed', destructive Close All / Cancel) on our window's root controller.
+ Confirm -> close844Step: one card per step, 0.6 s apart, each step only when quiet (no drag / minimise / restore /
+ home gesture / animation, keyboard down, no search field), up to 4 x 0.5 s waits, 8-step cap, stops and logs on
+ anything unexpected. Floating card, then on-screen top, then bottom: terminateDraggedCard: (the same close as
+ dragging a card off). A minimised card: the strip's own restore (pill826CardTapped:), closed on the next step.
+ Same app ending as a manual close (auto-kill setting respected by the existing teardown). No hook / ctor; no new
+ keyboard / scene code (only the existing close / restore paths).

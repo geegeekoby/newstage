@@ -484,3 +484,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-a11y843-off : VoiceOver labels as 842
 - /var/mobile/.dynamicstage-core843-off : all of 843 (back to 842)
 - Latch: a11y843-crashed
+
+## 4.5.844
+- /var/mobile/.dynamicstage-closeall844-off : no Close all item in the strip (843)
+- /var/mobile/.dynamicstage-core844-off : all of 844 (back to 843)
+- Latch: closeall844-crashed

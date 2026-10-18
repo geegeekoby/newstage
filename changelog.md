@@ -1,3 +1,7 @@
+## 4.5.844
+- Pill strip: "Close all stages" (x in a circle) whenever a card holds an app. Asks first, then closes every card one by one (minimised ones come back briefly, then close).
+- Off: closeall844-off, core844-off (back to 843).
+
 ## 4.5.843
 - Quality: VoiceOver names every picker app as a button (and says when it is already open), the edge pill says what tap and hold do, and minimised cards in the strip are read as minimised. No visual or behaviour change.
 - Off: a11y843-off, core843-off (back to 842).

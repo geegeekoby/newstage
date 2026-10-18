@@ -1,3 +1,7 @@
+## 4.5.843
+- Quality: VoiceOver names every picker app as a button (and says when it is already open), the edge pill says what tap and hold do, and minimised cards in the strip are read as minimised. No visual or behaviour change.
+- Off: a11y843-off, core843-off (back to 842).
+
 ## 4.5.842
 - Picker tiles and rows show the app's notification badge (red count, like the home screen; VoiceOver reads it).
 - Off: badge842-off, core842-off (back to 841).

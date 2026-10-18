@@ -479,3 +479,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-badge842-off : no badges on picker tiles (841)
 - /var/mobile/.dynamicstage-core842-off : all of 842 (back to 841)
 - Latch: badge842-crashed
+
+## 4.5.843
+- /var/mobile/.dynamicstage-a11y843-off : VoiceOver labels as 842
+- /var/mobile/.dynamicstage-core843-off : all of 843 (back to 842)
+- Latch: a11y843-crashed

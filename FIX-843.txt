@@ -1,0 +1,13 @@
+4.5.843 (on 4.5.842). Quality pass. No new log after 842 (origin b26a9d3).
+a11y843 (off: a11y843-off, latch a11y843-crashed; core843-off -> 842) - accessibility only, nothing drawn changes:
+ - picker cells (DSAppCellContentView): one VoiceOver element, label = app name, trait button, hint 'Opens on the
+   stage. Hold for options.'; unavailable cells (already on a card) add 'not enabled' + 'Already open on a card'.
+ - edge pill tab: trait button, value 'Open' while the strip is open, hint names tap (+ hold when hold837 is on).
+ - strip: a minimised card's icon is read '<Top/Bottom card>, minimised'.
+ - fix: badge842 now writes its try marker, so its badge842-crashed latch works as documented.
+Spacing / typography / dark-light audit: picker and strip fonts already scale with Dynamic Type with caps (picker
+ rows 24 pt, tiles 16 pt), every colour follows darkMode; no inconsistencies needing a visual change were found.
+Dead code: none removed on purpose. The old paths (822 picker look, 826 tab, old panel, pre-828 paths) are the
+ exact code every *-off / coreNNN-off file returns to; deleting them would break those rollbacks.
+No hook / ctor / timer; no keyboard / scene code. New undefined symbols: _UIAccessibilityTraitButton,
+ _UIAccessibilityTraitNotEnabled (public UIKit constants).

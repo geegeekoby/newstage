@@ -1,3 +1,7 @@
+## 4.5.836
+- Picker lists every installed app with an icon: jailbreak and TrollStore apps (Sileo, Zebra, Filza, Santander, NewTerm, TrollStore, NathanLR, ...) now show too, alongside App Store and sideloaded apps. They still run with no tweak code inside them.
+- Off: sideload836-off, core836-off (back to 835).
+
 ## 4.5.835
 - Fix: the edge pill sometimes missing over apps. Its window now always sits on SpringBoard's main screen scene (it could start on, or follow the key window to, a Dynamic Island scene), and is put back if found hidden outside a call.
 - Off: pillshow835-off, core835-off (back to 834).

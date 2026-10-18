@@ -1,0 +1,20 @@
+4.5.836 (on 4.5.835). "make sure we can use all our side loaded apps too". No new log after 835 (origin 9deafb7).
+How the picker builds its list (DSAppLibrary reload824WithProxies): LSApplicationWorkspace -allInstalledApplications,
+then three filters per app:
+ 1. DSIdentifierIsExcludedFromStage(identifier) - a fixed identifier list (shared/DSExclusions.m);
+ 2. isProxyHidden: applicationType must be "User" or "System"; appTags "hidden"/"SBAppTagHidden"; SBApplicationInfo
+    isLaunchProhibited;
+ 3. the user's own per-app "disabled" setting.
+ No path, signer or container filter exists anywhere in the list. App Store and sideloaded (AltStore / Sideloadly /
+ TrollStore "User") apps have type User; uicache'd /var/jb/Applications apps and TrollStore "System" apps have type
+ System - all pass filter 2.
+ Proven excluder: filter 1. Besides system stubs it names the jailbreak apps by identifier - Sileo, Cydia, Zebra,
+ Installer, Filza, ADManager, Santander, NewTerm (ws.hbang.Terminal), Dopamine, NathanLR, TrollStore, TrollStore
+ Persistence Helper, palera1n loader, Electra, SafeMode - so they never appeared in the picker.
+Fix sideload836 (off: sideload836-off, latch sideload836-crashed; core836-off -> 835):
+ - the jailbreak / TrollStore apps are split into DSIdentifierIsJailbreakTool836; the picker lists them.
+ - DSIdentifierIsExcludedFromStage is unchanged (still YES for them), so the app dylib still installs NO hooks
+   inside them - they keep running exactly as without the tweak, just on a card.
+ - each list rebuild logs "sideload836 picker list N apps ...; jailbreak / TrollStore apps listed: ...; non-Apple
+   apps hidden by type / hidden tag / launch-prohibited: id(type), ..." so a log proves what is in / out.
+No new hook / ctor / timer; no new system selectors.

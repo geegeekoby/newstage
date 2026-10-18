@@ -444,3 +444,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-pillshow835-off : stage window scene choice as 834
 - /var/mobile/.dynamicstage-core835-off : all of 835 (back to 834)
 - Latch: pillshow835-crashed
+
+## 4.5.836
+- /var/mobile/.dynamicstage-sideload836-off : picker leaves jailbreak / TrollStore apps out (835)
+- /var/mobile/.dynamicstage-core836-off : all of 836 (back to 835)
+- Latch: sideload836-crashed

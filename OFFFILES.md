@@ -494,3 +494,10 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-fade845-off : a card switching straight to another app cuts away at once (844)
 - /var/mobile/.dynamicstage-core845-off : all of 845 (back to 844)
 - Latch: fade845-crashed
+
+## 4.5.846
+- /var/mobile/.dynamicstage-toggles846-off : no gear / quick settings in the strip; accent846-off and hint846-off ignored; strip hold / pair ticks ignore haptic834 (845)
+- /var/mobile/.dynamicstage-accent846-off : (written by Accents: Off) picker tiles without the icon-colour tint
+- /var/mobile/.dynamicstage-hint846-off : (written by Pill Hint: Off) no breathing hint when the edge pill first shows
+- /var/mobile/.dynamicstage-core846-off : all of 846 (back to 845)
+- Latch: toggles846-crashed, accent846-crashed, hint846-crashed

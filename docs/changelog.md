@@ -1,3 +1,8 @@
+## 4.5.846
+- Pill strip: gear (Quick settings) with Keep Alive, Haptics, Accents and Pill Hint switches. Each one just writes or deletes its off file (keep829, haptic834, accent846, hint846); takes effect within 2 s (Accents at the next picker show, Pill Hint at the next pill show).
+- Haptics now also covers the strip's hold-for-New-Stage and pair save / remove ticks.
+- Off: toggles846-off, core846-off (back to 845).
+
 ## 4.5.845
 - A card that switches straight from one app to another now crossfades (0.25 s) instead of cutting away.
 - Off: fade845-off, core845-off (back to 844).

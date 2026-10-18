@@ -1,0 +1,11 @@
+4.5.846 (on 4.5.845). Quick toggles in the strip. No new log after 845 (origin 56c0795).
+toggles846 (off: toggles846-off, latch via DSFeature719MarkAction; core846-off -> 845): strip item tag 6 'Quick settings'
+(gearshape), always shown while the strip is open. Tap -> action sheet 'Stage Quick Settings' with 4 rows showing
+On/Off from the files; tap a row -> Off writes /var/mobile/.dynamicstage-<name>-off, On deletes it (and the /var/jb
+copy). Rows: Keep Alive = keep829, Haptics = haptic834, Accents = accent846, Pill Hint = hint846.
+Judgement: there was no off file that only removes accents or only the pill hint (style824-off is the whole 824 look
+and is ignored under only828; pilllook827-off removes the whole capsule), so two narrow ones were added and checked
+only while toggles846 is on: accent846-off -> setAccent824: drops the icon colour (plain white / grey ground);
+hint846-off -> s827Hint returns before the one pulse. haptic834-off only covered strip minimise / swap / size, so with
+toggles846 on the strip's other ticks (hold837 New Stage, pair832 save / remove) also follow it. Not on the pill hold
+(that is New Stage, 837). No hook / ctor / timer; no keyboard / scene / gesture code.

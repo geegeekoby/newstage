@@ -501,3 +501,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-hint846-off : (written by Pill Hint: Off) no breathing hint when the edge pill first shows
 - /var/mobile/.dynamicstage-core846-off : all of 846 (back to 845)
 - Latch: toggles846-crashed, accent846-crashed, hint846-crashed
+
+## 4.5.847
+- /var/mobile/.dynamicstage-restore847-off : a card brought back can still show the frozen home-swipe still over the app until it is dragged (846)
+- /var/mobile/.dynamicstage-core847-off : all of 847 (back to 846)
+- Latch: restore847-crashed

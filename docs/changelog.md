@@ -1,3 +1,7 @@
+## 4.5.847
+- Fix: a card brought back from minimised (corner pull, strip icon, corner icon) could show a frozen picture and ignore touches until it was dragged. The still the home swipe puts on each open card is now dropped when the card is back on screen.
+- Off: restore847-off, core847-off (back to 846).
+
 ## 4.5.846
 - Pill strip: gear (Quick settings) with Keep Alive, Haptics, Accents and Pill Hint switches. Each one just writes or deletes its off file (keep829, haptic834, accent846, hint846); takes effect within 2 s (Accents at the next picker show, Pill Hint at the next pill show).
 - Haptics now also covers the strip's hold-for-New-Stage and pair save / remove ticks.

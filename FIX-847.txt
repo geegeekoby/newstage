@@ -1,0 +1,20 @@
+4.5.847 (on 4.5.846). Restored card frozen / not touchable until dragged. No new log after 846 (origin a0eec4e;
+latest user log is still Dhdjdbdbdh from 828, which has no restore of this kind), so the cause is from the code.
+PROVEN (code): noteHomeGestureBegan (home gesture began, ~18625) calls holdPictureOfCard: on every open card: a
+snapshotViewAfterScreenUpdates:NO still, tag 9151, added on top of card.contentView. It is removed only by
+dropHeldPictureOnCard:. When the swipe commits, home731 -> tuckOpenStageAwayForHomeGesture parks the cards
+(setParked:YES) and never drops it; only the 'touched but not swiped' branch drops it. The cover-ended path
+(noteHostedSceneIdentifier:covered:NO) skips parked cards. The restore paths (restoreMinimizedStageAnimated: ->
+finishCornerRestoreOfCard:, used by the corner pull and the 828 strip restore; enterStateOverlay (corner icon open))
+never call dropHeldPictureOnCard:. The card drag begin does (first thing in Began, ~16003) -> exactly 'works once I
+move the stage'.
+INFERRED (not logged): the touches. The still has userInteractionEnabled NO, so it does not take UIKit hits, but it is
+a snapshot layer over the hosted app's layer, and the window server's touch routing to the app is layer based, so it
+most likely blocks the app's touches; either way the user sees a frozen picture. Not the cause: the 845 fade (only on
+a direct app switch, always removed), the remembered/park picture (handed off on restore), keep829 (scene stays
+foreground; no Static mode involved).
+restore847 (off: restore847-off, latch via DSFeature719MarkAction; core847-off -> 846): restore847DropStaleStillOnCard:
+at the end of finishCornerRestoreOfCard: (Overlay branch) and of enterStateOverlay's finish (bottom + top card): if the
+card is on screen, hosting, no home gesture running, not the split-home still, and a tag 9151 still is on it ->
+dropHeldPictureOnCard: (the same call the drag begin makes: remove the still + wakeIfBackgrounded). Logged. No hook /
+ctor / timer; no keyboard / scene / gesture code.

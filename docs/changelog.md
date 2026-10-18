@@ -1,3 +1,7 @@
+## 4.5.834
+- Polish: smoother minimise / restore springs (less bounce, same speed), the minimised corner icon keeps its thin outline (no pop at the end of the minimise), slightly softer card shadows, and the same light haptic ticks for strip minimise, swap and floating size changes as for dragging.
+- Off: spring834-off, look834-off, haptic834-off, core834-off (back to 833).
+
 ## 4.5.833
 - Floating card sizes: hold the floating card's icon in the pill strip and pick Small, Medium or Large. The choice is remembered.
 - Off: size833-off, core833-off (back to 832).

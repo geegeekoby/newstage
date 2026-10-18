@@ -432,3 +432,10 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-size833-off : floating card always the 832 (medium) size, no size menu
 - /var/mobile/.dynamicstage-core833-off : all of 833 (back to 832)
 - Latch: size833-crashed
+
+## 4.5.834
+- /var/mobile/.dynamicstage-spring834-off : minimise / restore springs as 833 (damping 0.86 / 0.85)
+- /var/mobile/.dynamicstage-look834-off : corner icon without outline, card shadow as 833
+- /var/mobile/.dynamicstage-haptic834-off : no haptics for strip minimise / swap / size change (833)
+- /var/mobile/.dynamicstage-core834-off : all of 834 (back to 833)
+- Latches: spring834-crashed, look834-crashed, haptic834-crashed

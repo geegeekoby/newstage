@@ -1,0 +1,16 @@
+4.5.834 (on 4.5.833). No new log after 833. Visual polish only: CA / UIKit values, no keyboard, gesture,
+scene or state-machine code touched; every animation keeps its duration, so every completion runs when it did.
+spring834 (off: spring834-off; latch spring834-crashed via spring834-trying):
+ the minimise / restore / flick springs (anim702 / flick733 UISpringTimingParameters) settle with damping 0.92
+ instead of 0.86 / 0.85: less overshoot at the corner and on restore, same durations (0.40 / 0.34 / 0.44 s).
+look834 (off: look834-off; latch look834-crashed via look834-trying (first use)):
+ - the resting minimised corner icon keeps the 1 pt system outline (native703 colour) that the minimise flight
+   ends with, so there is no outline pop when the flight hands over to the icon; continuous corners as before.
+ - card resting shadow a touch softer and deeper (opacity 0.18, radius 22, offset 8 instead of 0.16 / 18 / 6);
+   still drawn from the fixed shadowPath (no offscreen pass); the held-card shadow is unchanged.
+haptic834 (off: haptic834-off; latch haptic834-crashed via DSFeature719MarkAction):
+ the strip's minimise (bg828) gets the soft minimise tick, the swap button (swap830) and a floating size change
+ (size833) get the drop / snap tick - the same native703 ticks the drag paths use (its 0.12 s guard prevents
+ double ticks). Restore already ticked.
+core834-off -> 833.
+Binary: no new hook / ctor / +load / %init / thread / timer; no new undefined symbols; one new system selector, -[CALayer borderWidth] (verified in the 20F75 list).

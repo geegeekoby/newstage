@@ -1,0 +1,34 @@
+4.5.829 (on 4.5.828). Log: newstage-publish/Dhdjdbdbdh (uploads829/log.txt, 795 lines, 16:56:11-17:01:11 NZDT).
+keep829 (off: keep829-off; latch keep829-crashed via keep829-trying (DSFeature719MarkAction); core829-off -> 828):
+ Proven from the log:
+  17:00:03.484 "com.beeper.chat.ios stays running in the background" / 17:00:03.496 "bg719 holding ... pid 11258
+  (audio, stage hold)": the process assertion was taken and held; pid 11258 is still alive at 17:00:55 (alive=1).
+  17:00:10.539 minimised: fg=1 active=1 deact=0 (still foreground).
+  17:00:11.569 occl798 card[minimised=1]: from here the card is staysBackgrounded (keepMinimizedCardsBackgrounded).
+  17:00:17.240 home swipe ("tucking the open stage for home"), 17:00:18.173 "parked apps stopped following...".
+  17:00:18.387 SpringBoard's settings block for the scene carried foreground=NO; 18.389 "reg799:
+  appViewControllerDidDeactivateApplication" + "fg801: Live -> Static (scene backgrounded fg=0 ...)".
+  The app stayed backgrounded (Static) in its corner until the restore at 17:00:55.279-285 ("Static -> Live",
+  "had been put in the background off the stage and was woken").
+ Cause (code): FBScene updateSettingsWithBlock: and updateSettings:withTransitionContext:completion: hooks hold the
+  committed foreground of every hosted scene EXCEPT a stays-backgrounded (minimised) one, so SpringBoard's
+  foreground=NO after a home swipe / another app opening landed on minimised cards, and fg801 then took the
+  app view Live -> Static. The running assertion kept the process alive, but the app itself was backgrounded.
+ Fix: one rule. A minimised card keeps the foreground its scene already has, exactly as an on-screen card does
+  (only when the committed value is YES and SpringBoard's incoming value is NO; nothing is written for a scene that is
+  already in the background, no new YES, no hold / replay / timer). Same home-gesture rule as on-screen cards on the
+  updateSettings path (not during the home gesture itself); the block path, like on-screen cards, always holds.
+  Log line: "keep829 <scene> minimised: SpringBoard's foreground=NO not applied (...)".
+Other things in this log (no change):
+ - 17:00:11.568 deactivationReasons=systemAnimation on the minimised card (SpringBoard's own app-switch animation).
+ - restore726 refused 3 pulls (17:00:17.239 at 301,916, 17:00:44.180 at 315,914, 17:00:53.859 at 297,917): they started
+   on the home bar, not in the parked corner (corner is ~400,905), so they were home swipes by design; the corner pull
+   at 17:00:54.400 restored the card.
+ - 17:00:17.239 perf812: 29718 feature-gate calls (624 uncached) in 13 s (cached; informational).
+ - 16:56:13.775 latch754: last exit unknown (respring after install); 4 try markers dropped, nothing latched.
+ - 17:01:11.961 style823/style824 "picker restyled": the new top-card picker got the new look before it was shown (no
+   "only828 ... switched" line), so no old look this time.
+ - no crash section, no safe mode, no latches set.
+Binary: no new undefined symbols, one new own selector (keep829HoldForegroundOfScene:onSettings:identifier:why:),
+ no new system selectors, load commands / plists / file list / constructor body identical to 828; no new hook / ctor /
+ +load / %init / thread / timer.

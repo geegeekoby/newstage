@@ -1,3 +1,7 @@
+## 4.5.829
+- Minimised apps now really stay active: after a home swipe or opening another app, SpringBoard used to put the minimised card's app in the background (it showed a still picture and woke up only when you brought the card back). The minimised app now keeps running in the foreground in its corner, like an on-screen card.
+- Off: keep829-off, core829-off (back to 828).
+
 ## 4.5.828
 - New look only: the old stage panel and the old classic picker no longer show (they appeared in the first ~8 s after a respring, after a latch or Settings switch, or when a picker was shown again without a reload). The pin menu always opens on hold.
 - Pin menu works from the top card: while the menu is up, the stage takes every touch (its buttons sat outside the top card, so taps went to the app behind).

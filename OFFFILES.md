@@ -407,3 +407,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-bg828-off : strip as in 827 (half-based icons, on-screen icon does nothing, strip stays open)
 - /var/mobile/.dynamicstage-core828-off : all of 828 (back to 827)
 - Latches: only828-crashed, sheet828-crashed, bg828-crashed
+
+## 4.5.829
+- /var/mobile/.dynamicstage-keep829-off : a minimised card's app is backgrounded by SpringBoard again (828)
+- /var/mobile/.dynamicstage-core829-off : all of 829 (back to 828)
+- Latch: keep829-crashed

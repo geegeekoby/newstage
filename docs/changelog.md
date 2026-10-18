@@ -1,3 +1,7 @@
+## 4.5.838
+- Swipe right (towards the edge) on the open pill strip to close it.
+- Off: swipe838-off, core838-off (back to 837).
+
 ## 4.5.837
 - Hold the closed edge pill to start a New Stage straight away (no need to open the strip).
 - Off: hold837-off, core837-off (back to 836).

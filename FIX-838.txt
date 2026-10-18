@@ -1,0 +1,6 @@
+4.5.838 (on 4.5.837). Pill feature 2 of 3. No new log after 837 (origin 5931f2e).
+swipe838 (off: swipe838-off, latch swipe838-crashed via DSFeature719MarkAction; core838-off -> 837):
+ a UISwipeGestureRecognizer (right, towards the screen edge) on the open strip view itself, added when the strip is
+ built (on a tap, never at launch); on swipe the strip closes through setOpen:NO (the same close as a tap outside,
+ so the capsule undims). Item taps still work (a tap never becomes a swipe); the + item keeps its drag827 pan.
+ Only our own strip view: no card, rim, keyboard or scene code. No new hook / ctor / timer.

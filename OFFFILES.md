@@ -454,3 +454,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-hold837-off : holding the closed pill does nothing (836)
 - /var/mobile/.dynamicstage-core837-off : all of 837 (back to 836)
 - Latch: hold837-crashed
+
+## 4.5.838
+- /var/mobile/.dynamicstage-swipe838-off : no swipe-to-close on the strip (837)
+- /var/mobile/.dynamicstage-core838-off : all of 838 (back to 837)
+- Latch: swipe838-crashed

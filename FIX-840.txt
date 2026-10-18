@@ -1,0 +1,9 @@
+4.5.840 (on 4.5.839). Picker feature 1. No new log after 839 (origin 254ffe6).
+Already there (no build needed): search by app name (DSAppLibrary applicationsMatchingSearch: case / diacritic
+insensitive substring over the cached list, no reload per key) and A-Z section pills in All Apps (style823).
+index840 (off: index840-off, latch index840-crashed; core840-off -> 839):
+ a letter index (DSLetterIndex840, our own UIControl, no +load) on the right of All Apps, only with the A-Z sections
+ (no search text, All mode, 4+ letters). Touch / slide picks a letter and scrolls the list to that letter's pill
+ (setContentOffset, no animation). It sits 18-38 pt in from the card's right edge, clear of the 14 pt rim catch band;
+ rows are 24 pt narrower while it shows. VoiceOver: 'Section index', adjustable (swipe up / down = next / previous
+ letter). Created on the first styled layout, never at launch. No hook / ctor / timer; no keyboard / scene code. One new undefined symbol: _UIAccessibilityTraitAdjustable (public UIKit constant since iOS 4). New selectors are our own plus UIKit public ones, all in the 20F75 list.

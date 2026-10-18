@@ -1,3 +1,7 @@
+## 4.5.840
+- Picker: an A-Z letter index beside All Apps. Touch or slide on it to jump to a letter (VoiceOver: swipe up / down on it).
+- Off: index840-off, core840-off (back to 839).
+
 ## 4.5.839
 - With no card open, the pill strip shows your last 3 stage apps: one tap opens that app on a stage.
 - Off: recent839-off, core839-off (back to 838).

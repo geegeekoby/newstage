@@ -1,0 +1,9 @@
+4.5.830 (on 4.5.829). No new log after 829.
+swap830 (off: swap830-off; latch swap830-crashed via swap830-trying (DSFeature719MarkAction); core830-off -> 829):
+ The pill strip shows a swap button (arrow.up.arrow.down) when both a top and a bottom card are open on screen.
+ One tap swaps them through the existing swapStackHalvesAnimated: (the same path the drag-swap uses): the two
+ containers trade halves, the scene hosts stay where they are; no scene is created, re-hosted or torn down.
+ Refused (logged "swap830 refused: ...") when two cards are not open, a card is minimised, the cards share a half,
+ the floating card sits in a half, a drag / minimise / restore / home gesture / system transition is running, or
+ the keyboard is up (so keyboard ownership is never touched).
+Binary: no new hook / ctor / +load / %init / thread / timer; no new system selectors (UIKit symbol name only).

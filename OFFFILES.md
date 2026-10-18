@@ -412,3 +412,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-keep829-off : a minimised card's app is backgrounded by SpringBoard again (828)
 - /var/mobile/.dynamicstage-core829-off : all of 829 (back to 828)
 - Latch: keep829-crashed
+
+## 4.5.830
+- /var/mobile/.dynamicstage-swap830-off : no swap button in the pill strip (829)
+- /var/mobile/.dynamicstage-core830-off : all of 830 (back to 829)
+- Latch: swap830-crashed

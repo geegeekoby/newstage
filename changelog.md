@@ -1,3 +1,7 @@
+## 4.5.830
+- Swap the top and bottom cards with one tap: open the pill strip and tap the new up/down arrows button (shown when both cards are open on screen). Not offered while typing or while a card is moving.
+- Off: swap830-off, core830-off (back to 829).
+
 ## 4.5.829
 - Minimised apps now really stay active: after a home swipe or opening another app, SpringBoard used to put the minimised card's app in the background (it showed a still picture and woke up only when you brought the card back). The minimised app now keeps running in the foreground in its corner, like an on-screen card.
 - Off: keep829-off, core829-off (back to 828).

@@ -1,0 +1,9 @@
+4.5.845 (on 4.5.844). Crossfade when a card switches apps. No new log after 844 (origin 48f2dd2).
+Where: launchEntry:slot: when the slot already hosts a different app (the old host is relinquished at once there, so
+the card cut to blank before the placeholder faded in). The picker route (hold card icon -> picker -> app) already had
+fades (exitToPicker 0.22 s, placeholder 0.22 s / 0.3 s) and is unchanged.
+fade845 (off: fade845-off, latch via DSFeature719MarkAction; core845-off -> 844): before the old host goes, if the card
+is visible and the old app's view is in it, one snapshotViewAfterScreenUpdates:NO of the card (the same call the
+minimise flight / remembered picture already use) is laid on top, then faded out over 0.25 s while the new app's
+placeholder fades in, and removed. No hook / ctor / timer; no keyboard / scene code touched (the host is relinquished
+exactly as before).

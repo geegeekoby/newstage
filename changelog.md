@@ -1,3 +1,7 @@
+## 4.5.845
+- A card that switches straight from one app to another now crossfades (0.25 s) instead of cutting away.
+- Off: fade845-off, core845-off (back to 844).
+
 ## 4.5.844
 - Pill strip: "Close all stages" (x in a circle) whenever a card holds an app. Asks first, then closes every card one by one (minimised ones come back briefly, then close).
 - Off: closeall844-off, core844-off (back to 843).

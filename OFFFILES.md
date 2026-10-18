@@ -489,3 +489,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-closeall844-off : no Close all item in the strip (843)
 - /var/mobile/.dynamicstage-core844-off : all of 844 (back to 843)
 - Latch: closeall844-crashed
+
+## 4.5.845
+- /var/mobile/.dynamicstage-fade845-off : a card switching straight to another app cuts away at once (844)
+- /var/mobile/.dynamicstage-core845-off : all of 845 (back to 844)
+- Latch: fade845-crashed

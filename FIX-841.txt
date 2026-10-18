@@ -1,0 +1,5 @@
+4.5.841 (on 4.5.840). Picker feature 2. No new log after 840 (origin d5b6103).
+search841 (off: search841-off, latch search841-crashed via MarkTrying on first search; core841-off -> 840): DSAppLibrary applicationsMatchingSearch ranks over the same cached, already filtered list
+ (no reload per key, no new reads): 0 name prefix, 1 word prefix, 2 initials (2+ letters), 3 name contains,
+ 4 bundle id contains (3+ letters). Each rank keeps the A-Z order. Same 'No apps match' empty state. Main thread only;
+ any exception falls back to the 840 match. No hook / ctor / timer; no keyboard / scene code; new selectors only NSCharacterSet alphanumericCharacterSet / whitespaceCharacterSet / characterIsMember: (20F75 list).

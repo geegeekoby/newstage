@@ -1,3 +1,7 @@
+## 4.5.841
+- Picker search finds more and puts the best match first: names starting with what you type, then a word starting with it, then initials ("gm" finds Google Maps), then anywhere in the name, then the app's bundle id.
+- Off: search841-off, core841-off (back to 840).
+
 ## 4.5.840
 - Picker: an A-Z letter index beside All Apps. Touch or slide on it to jump to a letter (VoiceOver: swipe up / down on it).
 - Off: index840-off, core840-off (back to 839).

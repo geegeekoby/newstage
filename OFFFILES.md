@@ -469,3 +469,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-index840-off : no letter index (839)
 - /var/mobile/.dynamicstage-core840-off : all of 840 (back to 839)
 - Latch: index840-crashed
+
+## 4.5.841
+- /var/mobile/.dynamicstage-search841-off : search = name contains, A-Z order (840)
+- /var/mobile/.dynamicstage-core841-off : all of 841 (back to 840)
+- Latch: search841-crashed

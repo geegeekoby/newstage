@@ -1,0 +1,27 @@
+4.5.835 (on 4.5.834). "sometimes the pill doesnt show over other apps". No new log after 834 (origin 5a21616).
+Evidence (log Dhdjdbdbdh, 4.5.828, SpringBoard pid 11226, NZDT):
+ - SpringBoard has three foreground window scenes on this phone (scenes=fg-active/main x3: com.apple.springboard,
+   SystemAperture, SuperHighLevelSystemAperture - the last two seen as UITextEffectsWindow scene names).
+ - 16:56:11.310 boot: stage window on scene #1 (scenes=fg-active/main*,fg-active/main,fg-active/main).
+ - 16:59:52.848 "stage window moved back to the foreground scene", 16:59:52.849 "taking key from SBHomeScreenWindow on
+   this scene" + scenes=fg-active/main,fg-active/main*,... : the window was NOT on SpringBoard's home-screen scene
+   from boot until a stage was opened (3.5 min). Same flip seen inside one process in 20+ older logs.
+ - The scene move follows the key window: other=SBSystemApertureWindow 254x, key=SBSystemApertureWindow 4x,
+   SBCoverSheetWindow / SBControlCenterWindow key too, so a later move can land the window (and the pill) on an
+   Aperture scene.
+ Proven: the stage window (the pill's window) changes window scene; at boot it is on a scene other than the
+ home-screen one. Inferred: that other scene is not drawn over full-screen apps -> pill missing over apps.
+ Proven too (by design, unchanged): call656 hides the whole stage window while InCallService is the front app
+ (uploads821 10:03:49 "stage hidden so the call screen shows" .. 10:03:52 "stage back").
+ Ruled out (code read): nothing in the manager hides / lowers the shelf or window (only notch746 re-shows);
+ window level is clamped to <= 998 and never lowered; the capsule undims on every close (setOpen:NO -> applyChevron,
+ incl. the 828 outside tap); 834 springs / look touch only cards and corner icons; no fullscreen / video hide path.
+Fix pillshow835 (off: pillshow835-off, latch pillshow835-crashed; core835-off -> 834), one rule:
+ the stage window lives on SpringBoard's main display scene (SBIconController -mainDisplayWindowScene) and is never
+ left hidden unless the call screen has it aside.
+ - attachToForegroundSceneIfNeeded moves onto that scene only (no more following an Aperture / cover-sheet key window).
+ - once after "stayed up" (existing block) and on refreshShelf: if the window is off that scene, move it there
+   (skipped while the keyboard is up, a search field is open or a scene update runs); if hidden with no call aside,
+   unhide it.
+ No new hook / ctor / timer; selectors +[SBIconController sharedInstanceIfExists], -[SBIconController
+ mainDisplayWindowScene] (both in the 20F75 list; already used by presence670). SpringBoard's windows untouched.

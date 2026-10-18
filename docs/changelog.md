@@ -1,3 +1,7 @@
+## 4.5.835
+- Fix: the edge pill sometimes missing over apps. Its window now always sits on SpringBoard's main screen scene (it could start on, or follow the key window to, a Dynamic Island scene), and is put back if found hidden outside a call.
+- Off: pillshow835-off, core835-off (back to 834).
+
 ## 4.5.834
 - Polish: smoother minimise / restore springs (less bounce, same speed), the minimised corner icon keeps its thin outline (no pop at the end of the minimise), slightly softer card shadows, and the same light haptic ticks for strip minimise, swap and floating size changes as for dragging.
 - Off: spring834-off, look834-off, haptic834-off, core834-off (back to 833).

@@ -439,3 +439,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-haptic834-off : no haptics for strip minimise / swap / size change (833)
 - /var/mobile/.dynamicstage-core834-off : all of 834 (back to 833)
 - Latches: spring834-crashed, look834-crashed, haptic834-crashed
+
+## 4.5.835
+- /var/mobile/.dynamicstage-pillshow835-off : stage window scene choice as 834
+- /var/mobile/.dynamicstage-core835-off : all of 835 (back to 834)
+- Latch: pillshow835-crashed

@@ -1,0 +1,7 @@
+4.5.842 (on 4.5.841). Picker feature 3. No new log after 841 (origin a61ac6f).
+badge842 (off: badge842-off; core842-off -> 841):
+ each picker cell (Suggested tiles and All Apps rows) shows SpringBoard's own badge for the app: -[SBApplication
+ badgeValue] (20F75 list), read when the picker builds its cells (show / search), nothing polled. NSNumber > 0 or a
+ numeric string -> the count ('99+' over 99), other non-empty string -> '!', 0 / nil -> no badge. A red capsule on
+ the icon's top-right corner; the cell's VoiceOver value says '<n> badge'. Main thread, @try guarded; off = nil
+ everywhere. No hook / ctor / timer; no keyboard / scene code. System selectors added: badgeValue, systemRedColor (both 20F75 list); undefined symbols unchanged.

@@ -1,3 +1,7 @@
+## 4.5.842
+- Picker tiles and rows show the app's notification badge (red count, like the home screen; VoiceOver reads it).
+- Off: badge842-off, core842-off (back to 841).
+
 ## 4.5.841
 - Picker search finds more and puts the best match first: names starting with what you type, then a word starting with it, then initials ("gm" finds Google Maps), then anywhere in the name, then the app's bundle id.
 - Off: search841-off, core841-off (back to 840).

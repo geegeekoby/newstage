@@ -1,0 +1,18 @@
+4.5.832 (on 4.5.831). No new log after 831.
+pair832 (off: pair832-off; latch pair832-crashed via pair832-trying (DSFeature719MarkAction); core832-off -> 831):
+ Pill strip:
+  - "Save pair" (rectangle.stack.badge.plus) when a top and a bottom card both hold apps (open or minimised) and
+    that pair is not saved yet. Stored in the prefs plist (key pairs832, newest first, at most 6).
+  - each saved pair (up to 4 shown) is one tile with both icons (top card's upper-left, bottom card's lower-right);
+    tap opens both, hold removes it (medium haptic).
+ Opening a pair runs the same steps a user would, through the existing entry points: + New Stage
+ (beginStageOnHalf:1) -> the bottom app in the first card (launchEntry:slot:0) -> + New Stage again (the new
+ stage takes the top, the first is pushed down: addSecondStageOnHalf) -> the top app (launchEntry:slot:1).
+ Each step runs only if the previous one landed and nothing else happened on the stage (_presentGeneration
+ unchanged, no drag / minimise / home gesture / system transition); otherwise it stops and logs
+ "pair832 stopped ...". Only from an empty stage (closed, or one empty picker); refused (logged) when cards are
+ already open, the floating card is open, two empty cards are open, or an app is not installed.
+ The step delays (0.45 s / 1.2 s / 0.45 s) are dispatch_after inside the user's tap, not at launch.
+Binary: no new hook / ctor / +load / %init / thread / timer at launch; no new undefined symbols, no new system
+ selectors (own selectors only); constructor body identical (debdiff.sh now also treats "[xN]" as "[xN, #off]",
+ a selector ref that lands at page offset 0, after 832's first build showed that as the only ctor difference).

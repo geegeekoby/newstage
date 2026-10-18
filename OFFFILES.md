@@ -422,3 +422,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-pref831-off : no Always Open in Top / Bottom in the hold menu, saved choices ignored (830)
 - /var/mobile/.dynamicstage-core831-off : all of 831 (back to 830)
 - Latch: pref831-crashed
+
+## 4.5.832
+- /var/mobile/.dynamicstage-pair832-off : no Save pair / pair tiles in the strip (831); saved pairs are kept in prefs
+- /var/mobile/.dynamicstage-core832-off : all of 832 (back to 831)
+- Latch: pair832-crashed

@@ -1,3 +1,7 @@
+## 4.5.832
+- Saved pairs: with a top and a bottom card open, tap "Save pair" in the pill strip. Each saved pair shows in the strip as one tile with both icons: tap it (with no cards open) to open both apps in their cards; hold it to remove it.
+- Off: pair832-off, core832-off (back to 831).
+
 ## 4.5.831
 - Per-app card: hold an app in the picker and choose "Always Open in Top Card" / "Always Open in Bottom Card" (or "No Card Preference"). When you pick that app (e.g. from + New Stage) it opens on that card if it is free.
 - Off: pref831-off, core831-off (back to 830).

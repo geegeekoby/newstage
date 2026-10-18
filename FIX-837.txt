@@ -1,0 +1,7 @@
+4.5.837 (on 4.5.836). Pill feature 1 of 3. No new log after 836 (origin 000fdd5).
+hold837 (off: hold837-off, latch hold837-crashed via DSFeature719MarkAction; core837-off -> 836):
+ a 0.45 s hold on the closed pill's own tab control (DSStageShelfView _notch) runs the strip's New Stage path
+ (halfHandler(1) -> noteStageUse + beginStageOnHalf:1, same refusal rules), with a medium haptic tick. The long
+ press cancels the tab's tap, so the strip does not open too. Ignored while the strip is open or a drag runs.
+ The recogniser is added once from refreshShelf after 'stayed up' (not at launch). Only our own view: no card, rim,
+ keyboard or scene code touched. No new hook / ctor / timer; no new system selectors.

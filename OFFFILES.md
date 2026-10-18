@@ -449,3 +449,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-sideload836-off : picker leaves jailbreak / TrollStore apps out (835)
 - /var/mobile/.dynamicstage-core836-off : all of 836 (back to 835)
 - Latch: sideload836-crashed
+
+## 4.5.837
+- /var/mobile/.dynamicstage-hold837-off : holding the closed pill does nothing (836)
+- /var/mobile/.dynamicstage-core837-off : all of 837 (back to 836)
+- Latch: hold837-crashed

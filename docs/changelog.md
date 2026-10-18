@@ -1,3 +1,7 @@
+## 4.5.837
+- Hold the closed edge pill to start a New Stage straight away (no need to open the strip).
+- Off: hold837-off, core837-off (back to 836).
+
 ## 4.5.836
 - Picker lists every installed app with an icon: jailbreak and TrollStore apps (Sileo, Zebra, Filza, Santander, NewTerm, TrollStore, NathanLR, ...) now show too, alongside App Store and sideloaded apps. They still run with no tweak code inside them.
 - Off: sideload836-off, core836-off (back to 835).

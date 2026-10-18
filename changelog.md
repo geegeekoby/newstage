@@ -1,3 +1,7 @@
+## 4.5.831
+- Per-app card: hold an app in the picker and choose "Always Open in Top Card" / "Always Open in Bottom Card" (or "No Card Preference"). When you pick that app (e.g. from + New Stage) it opens on that card if it is free.
+- Off: pref831-off, core831-off (back to 830).
+
 ## 4.5.830
 - Swap the top and bottom cards with one tap: open the pill strip and tap the new up/down arrows button (shown when both cards are open on screen). Not offered while typing or while a card is moving.
 - Off: swap830-off, core830-off (back to 829).

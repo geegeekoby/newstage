@@ -417,3 +417,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-swap830-off : no swap button in the pill strip (829)
 - /var/mobile/.dynamicstage-core830-off : all of 830 (back to 829)
 - Latch: swap830-crashed
+
+## 4.5.831
+- /var/mobile/.dynamicstage-pref831-off : no Always Open in Top / Bottom in the hold menu, saved choices ignored (830)
+- /var/mobile/.dynamicstage-core831-off : all of 831 (back to 830)
+- Latch: pref831-crashed

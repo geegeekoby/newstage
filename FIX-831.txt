@@ -1,0 +1,12 @@
+4.5.831 (on 4.5.830). No new log after 830.
+pref831 (off: pref831-off; latch pref831-crashed via pref831-trying (DSFeature719MarkAction); core831-off -> 830):
+ Picker hold menu (the pin825 sheet) gains "Always Open in Top Card", "Always Open in Bottom Card" and
+ "No Card Preference" (only the ones that change something; the sheet says the current setting). Stored in the
+ prefs plist (com.recreated.dynamicstage, key cardPrefs831 = { bundle id : 1 top / 0 bottom }).
+ Picking that app in a picker (e.g. after + New Stage) honours it when that card is free:
+  - the other card shows its empty picker and sits on the wanted half -> the app opens there;
+  - a single empty card with nothing staged (the first + New Stage) -> the card moves to the wanted half
+    (seatCard:onHalf: + layoutAllStackSlotsForState:, the same half change a single-card drag makes), then the app opens;
+  - otherwise (the wanted card holds an app, a drag / minimise / home gesture is running) it opens where it was
+    picked and the log says why ("pref831 ... not free").
+Binary: no new hook / ctor / +load / %init / thread / timer; no new system selectors (CFPreferences calls already used).

@@ -1,3 +1,7 @@
+## 4.5.833
+- Floating card sizes: hold the floating card's icon in the pill strip and pick Small, Medium or Large. The choice is remembered.
+- Off: size833-off, core833-off (back to 832).
+
 ## 4.5.832
 - Saved pairs: with a top and a bottom card open, tap "Save pair" in the pill strip. Each saved pair shows in the strip as one tile with both icons: tap it (with no cards open) to open both apps in their cards; hold it to remove it.
 - Off: pair832-off, core832-off (back to 831).

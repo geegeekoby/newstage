@@ -1,0 +1,13 @@
+4.5.833 (on 4.5.832). No new log after 832. The floating card mode exists (_floatContainer / _floatSceneHost,
+presentHoverStageFromPoint, frameForFloatRest:), so this build was made.
+size833 (off: size833-off; latch size833-crashed via size833-trying (MarkTrying the first time a non-medium size
+is laid out) and DSFeature719MarkAction on each change; core833-off -> 832):
+ Hold the floating card's icon in the pill strip -> "Floating Card Size": Small / Medium / Large (the current one
+ is marked). Stored in the prefs plist (floatSize833: 0 small, 1 medium = the 832 frame, 2 large).
+ frameForFloatRest: (the one function every float layout / drag / swap reads) scales its rest frame about the
+ centre: small 76 % x 76 %, large full width x 132 % height, clamped inside the screen (4 pt sides, 50 pt top,
+ 30 pt bottom). Applying it re-lays out the stage with a 0.42 s spring (none with Reduce Motion) and resizes the
+ floating app's host once (layoutHostedAppInSlot:2) - only when nothing is moving and the keyboard is down;
+ otherwise the size applies at the next layout.
+ Not on the card rim: the rim's touches belong to the drag / gesture logic, which this build does not touch.
+Binary: no new hook / ctor / +load / %init / thread / timer; no new undefined symbols; no new system selectors.

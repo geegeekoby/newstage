@@ -427,3 +427,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-pair832-off : no Save pair / pair tiles in the strip (831); saved pairs are kept in prefs
 - /var/mobile/.dynamicstage-core832-off : all of 832 (back to 831)
 - Latch: pair832-crashed
+
+## 4.5.833
+- /var/mobile/.dynamicstage-size833-off : floating card always the 832 (medium) size, no size menu
+- /var/mobile/.dynamicstage-core833-off : all of 833 (back to 832)
+- Latch: size833-crashed

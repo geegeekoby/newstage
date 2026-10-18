@@ -459,3 +459,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-swipe838-off : no swipe-to-close on the strip (837)
 - /var/mobile/.dynamicstage-core838-off : all of 838 (back to 837)
 - Latch: swipe838-crashed
+
+## 4.5.839
+- /var/mobile/.dynamicstage-recent839-off : no recent-app tiles in the strip (838)
+- /var/mobile/.dynamicstage-core839-off : all of 839 (back to 838)
+- Latch: recent839-crashed

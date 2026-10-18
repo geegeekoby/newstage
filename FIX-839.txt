@@ -1,0 +1,9 @@
+4.5.839 (on 4.5.838). Pill feature 3 of 3. No new log after 838 (origin 0a45278).
+recent839 (off: recent839-off, latch recent839-crashed via DSFeature719MarkAction; core839-off -> 838):
+ when no card is open (top / bottom / floating all empty), the strip lists the first 3 of the picker's own recent
+ stage apps (DSAppLibrary recentApplicationsLimitedTo:3: installed, not switched off) as icon tiles (tags 200+,
+ VoiceOver 'Open <name>'). A tap: recent839Open - refused (logged) when a card is open, the floating card is open,
+ a drag / minimise / restore / home gesture runs, or two empty cards are up; otherwise New Stage (beginStageOnHalf:1
+ if the stage is not up), then 0.45 s later launchEntry:slot:0 only if the picker landed and _presentGeneration is
+ unchanged - the same path a picker tap uses (pair832 pattern). No new hook / ctor / timer; no keyboard / scene code.
+ Not built: vertical drag of the pill (would change the tab's hit area next to the card / rim edge-gesture zone).

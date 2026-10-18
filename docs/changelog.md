@@ -1,3 +1,7 @@
+## 4.5.839
+- With no card open, the pill strip shows your last 3 stage apps: one tap opens that app on a stage.
+- Off: recent839-off, core839-off (back to 838).
+
 ## 4.5.838
 - Swipe right (towards the edge) on the open pill strip to close it.
 - Off: swipe838-off, core838-off (back to 837).

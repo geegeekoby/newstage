@@ -400,3 +400,10 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-drag827-off : no drag of + New Stage out of the pill strip
 - /var/mobile/.dynamicstage-core827-off : all of 827 (back to 826)
 - Latch: /var/mobile/.dynamicstage-pilllook827-crashed (hang marker /var/mobile/.dynamicstage-pilllook827-showing)
+
+## 4.5.828
+- /var/mobile/.dynamicstage-only828-off : old fallbacks back (827 rules: 8 s window, style/pin/pill off files and latches, old panel on a strip error)
+- /var/mobile/.dynamicstage-sheet828-off : the stage window no longer takes every touch while the pin menu is up
+- /var/mobile/.dynamicstage-bg828-off : strip as in 827 (half-based icons, on-screen icon does nothing, strip stays open)
+- /var/mobile/.dynamicstage-core828-off : all of 828 (back to 827)
+- Latches: only828-crashed, sheet828-crashed, bg828-crashed

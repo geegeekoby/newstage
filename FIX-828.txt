@@ -1,0 +1,25 @@
+4.5.828 (on 4.5.827). No new log was uploaded after 827; causes below are from the code.
+only828 (off: only828-off; latch only828-crashed via only828-trying; core828-off -> 827):
+ the new picker look (style823 + style824), the pin menu (pin825) and the pill strip (pill826) are the only path
+ once SpringBoard stayed up OR the user has touched the stage (edge tab tap / noteStageUse). Before: every one of
+ them returned NO for ~8 s after a respring (DSStayedUp823) and on its own off file / latch, and then the old
+ 108x108 panel / the classic 822 picker / hold = full screen showed. A strip exception now logs and stays closed
+ (no fall-through to the old panel). Pickers revealed by layoutAllStackSlotsForState / the corner-pull drag tile /
+ dismissLaunchPlaceholderForSlot (no reloadContent) used to keep their launch-time old look: style828Refresh
+ switches them; all pickers are also switched at the stayed-up moment. While only828 is on, the style823 /
+ style824 / pin825 / pill826 off files, latches and Settings switches are ignored (only828-off restores them).
+ Launch unchanged: before stayed-up and before any user touch every gate returns exactly what 827 did.
+sheet828 (off: sheet828-off; latch sheet828):
+ while a sheet (the pin menu) is presented on the stage window, the window takes every touch. Before, the stage
+ window only took touches inside the cards / rims / tab (shouldWindowCaptureTouchAtPoint), and the action sheet
+ sits at the bottom of the screen: from a top card those buttons were outside every card, so taps went to the app /
+ home screen behind (and could trigger outside707's minimise).
+bg828 (off: bg828-off; latch bg828):
+ - tapping an on-screen card's icon in the pill strip now sends that card to the background (its corner) through
+   minimizeDraggedCard (same as dragging it into the corner); 826 logged "already on screen, nothing to do".
+ - the strip lists the hosted cards themselves (bottom/top card) instead of "whatever is on half 1 / half 0":
+   two minimised cards can share a half, so one was missing and a tap could reach the wrong card.
+ - restoring from the strip shows the card's remembered picture while the backgrounded app wakes (as the corner pull).
+ - a touch anywhere outside the open strip closes it.
+Binary: no new undefined symbols, no new system selectors, load commands / plists / file list / constructor body
+ identical to 827; no new hook / ctor / +load / %init / thread / timer.

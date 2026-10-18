@@ -1,3 +1,9 @@
+## 4.5.828
+- New look only: the old stage panel and the old classic picker no longer show (they appeared in the first ~8 s after a respring, after a latch or Settings switch, or when a picker was shown again without a reload). The pin menu always opens on hold.
+- Pin menu works from the top card: while the menu is up, the stage takes every touch (its buttons sat outside the top card, so taps went to the app behind).
+- Pill strip: tap an on-screen card's icon to send it to the background (corner); tap a minimised one to bring it back (picture shown while it wakes). Both cards always listed correctly. Tapping elsewhere closes the strip.
+- Off: only828-off, sheet828-off, bg828-off, core828-off (back to 827).
+
 ## 4.5.827
 - The edge tab now looks like a floating pill: a slim 6x52 glass capsule a little in from the edge (gradient edge, top sheen, soft shadow) with a short breathing pulse after each respring. Same place and same tap area as before. Respects Reduce Motion and dark/light.
 - Drag the + New Stage button out of the pill strip to open a stage where you let go (like the old panel).

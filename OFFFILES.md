@@ -551,3 +551,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-badge856-off : Strip card and recent tiles show the app's badge count and a green dot for the app playing audio (read each time the strip opens)
 - /var/mobile/.dynamicstage-core856-off : Back to 4.5.855
 - Latch: badge856-crashed
+
+## 4.5.857
+- /var/mobile/.dynamicstage-cycle857-off : Swipe up/down on the closed tab: swap top and bottom when both are on screen, otherwise restore the minimised card
+- /var/mobile/.dynamicstage-core857-off : Back to 4.5.856
+- Latch: cycle857-crashed

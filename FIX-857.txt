@@ -1,0 +1,1 @@
+B2: two UISwipeGestureRecognizers on the shelf's own tab control (installed after stayed-up next to hold837). The swipe refreshes the card list (willOpenHandler) and calls the strip's existing cardTapHandler: 3 = swap830, 1/0 = restore that parked card. No hook. Crash latch cycle857.

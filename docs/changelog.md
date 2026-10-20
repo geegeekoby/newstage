@@ -1,3 +1,6 @@
+## 4.5.857
+4.5.857: swipe the closed tab to cycle cards (cycle857)
+
 ## 4.5.856
 4.5.856: badges and playing-audio dot on strip icons (badge856)
 

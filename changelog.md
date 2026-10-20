@@ -1,3 +1,6 @@
+## 4.5.854
+4.5.854: one unified edge tab replaces the notch/pill switch (tab854)
+
 ## 4.5.853
 - Pill strip: holding a minimised card's icon now brings the card back out of its corner (the normal restore animation) and then turns it into the picker, instead of jumping.
 - Off: unmin853-off, core853-off (back to 852).

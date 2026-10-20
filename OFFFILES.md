@@ -536,3 +536,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-unmin853-off : holding a minimised card's strip icon jumps it from its corner straight to the picker (852)
 - /var/mobile/.dynamicstage-core853-off : all of 853 (back to 852)
 - Latch: unmin853-crashed
+
+## 4.5.854
+- /var/mobile/.dynamicstage-tab854-off : One edge tab, always: slim 8x56 glass tab flush to the right edge with the 824 gradient edge, adapts to dark/light, dims while open; replaces both the old notch and the 827 pill (hit area unchanged)
+- /var/mobile/.dynamicstage-core854-off : Back to 4.5.853
+- Latch: tab854-crashed

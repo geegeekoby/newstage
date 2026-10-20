@@ -1,3 +1,6 @@
+## 4.5.860
+4.5.860: Spotlight no longer hides the stage (spot860)
+
 ## 4.5.859
 4.5.859: Categories segment in the picker, grouped by App Store genre (folders859)
 

@@ -566,3 +566,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-folders859-off : Picker gets a 'Categories' segment: All Apps grouped by App Store genre with genre headers (A-Z All stays the default)
 - /var/mobile/.dynamicstage-core859-off : Back to 4.5.858
 - Latch: folders859-crashed
+
+## 4.5.860
+- /var/mobile/.dynamicstage-spot860-off : Spotlight no longer hides the stage: SpringBoard's window-hiding fade (SBWindowHidingManager setAlpha:forWindow:) is ignored for the stage window only
+- /var/mobile/.dynamicstage-core860-off : Back to 4.5.859
+- Latch: spot860-crashed

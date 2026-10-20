@@ -596,3 +596,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-rimfull865-off : Double-tap a card's rim to open that app full screen (the card lets go the same way as opening the app from the home screen)
 - /var/mobile/.dynamicstage-core865-off : Back to 4.5.864
 - Latch: rimfull865-crashed
+
+## 4.5.866
+- /var/mobile/.dynamicstage-hist866-off : Stage history: the last 10 top+bottom pairs are saved; a clock button next to the picker gear lists them by name and opens one
+- /var/mobile/.dynamicstage-core866-off : Back to 4.5.865
+- Latch: hist866-crashed

@@ -1,3 +1,6 @@
+## 4.5.866
+4.5.866: stage history in the picker (hist866)
+
 ## 4.5.865
 4.5.865: double-tap a card's rim for full screen (rimfull865)
 

@@ -526,3 +526,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-gear851-off : Quick Settings gear stays in the pill strip (850)
 - /var/mobile/.dynamicstage-core851-off : all of 851 (back to 850)
 - Latch: gear851-crashed
+
+## 4.5.852
+- /var/mobile/.dynamicstage-direct852-off : a strip app tile opens the card with the picker, then the app 0.45 s later (851)
+- /var/mobile/.dynamicstage-core852-off : all of 852 (back to 851)
+- Latch: direct852-crashed

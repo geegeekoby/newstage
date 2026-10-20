@@ -1,0 +1,13 @@
+4.5.852 (on 4.5.851). Strip tile -> app directly. No new log (origin a99af3e).
+Before: recent839Open: -> beginStageOnHalf:1 (card + picker, entrance) -> 0.45 s later launchEntry:slot:0, so the picker
+showed, then faded to the launch placeholder.
+direct852 (off: direct852-off, latch via DSFeature719MarkAction; core852-off -> 851): only when the stage is closed
+(the 839 refusals run first, unchanged: a card open, floating card, a drag / minimise / restore / home gesture, two
+empty cards). Same run-loop turn: beginStageOnHalf:1 (if the stage refuses to open -> nothing launched, logged); then
+the picker's own tap path: pref831SlotForEntry:picker:slot: (per-app Top / Bottom card) + launchEntry:slot:. The
+placeholder fade it starts is replaced, without animation, by placeholder alpha 1 / picker alpha 0 before the first
+frame, so the picker is never drawn. _direct852Pending (cleared in attachHostedAppForSlot: and
+dismissLaunchPlaceholderForSlot:, i.e. on success or failure) stops enterStateOverlay's finish from presenting the
+picker again / taking the search keyboard while the app loads. A refused launch (disabled, staged, full screen) shows
+the picker at once; a failed launch shows the picker through the existing dismiss path. With the stage already open
+(one empty card) the 839 path is unchanged. No hook / ctor / timer; no keyboard / scene / gesture code.

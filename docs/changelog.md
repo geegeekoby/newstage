@@ -1,3 +1,7 @@
+## 4.5.852
+- Pill strip app tiles (pinned / recent) now open straight into the app: the card slides in already loading it, no picker in between.
+- Off: direct852-off, core852-off (back to card + picker, then the app).
+
 ## 4.5.851
 - The Quick Settings gear moved out of the pill strip into the stage picker's top-right corner (same sheet: Keep Alive, Haptics, Accents, Pill Hint).
 - Off: gear851-off, core851-off (gear back in the strip); toggles846-off removes it everywhere.

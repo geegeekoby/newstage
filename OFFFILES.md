@@ -581,3 +581,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-dim862-off : Subtle 0.15 dim behind the floating card while it is on screen (visual only, taps pass through as before)
 - /var/mobile/.dynamicstage-core862-off : Back to 4.5.861
 - Latch: dim862-crashed
+
+## 4.5.863
+- /var/mobile/.dynamicstage-lock863-off : Hold a top/bottom card icon in the strip -> menu with Back to Picker and Lock/Unlock Card; a locked card refuses drag swipe-away, drag minimise, strip-icon minimise and outside-tap minimise (it snaps back)
+- /var/mobile/.dynamicstage-core863-off : Back to 4.5.862
+- Latch: lock863-crashed

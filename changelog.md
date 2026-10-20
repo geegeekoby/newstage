@@ -1,3 +1,6 @@
+## 4.5.863
+4.5.863: lock a card from the strip icon menu (lock863)
+
 ## 4.5.862
 4.5.862: subtle dim behind the floating card (dim862)
 

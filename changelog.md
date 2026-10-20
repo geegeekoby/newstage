@@ -1,3 +1,6 @@
+## 4.5.865
+4.5.865: double-tap a card's rim for full screen (rimfull865)
+
 ## 4.5.864
 4.5.864: per-app floating card size (fsize864); corner snapping skipped
 

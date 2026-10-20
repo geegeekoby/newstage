@@ -591,3 +591,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-fsize864-off : The floating card size (Small/Medium/Large from holding its strip icon) is remembered per app
 - /var/mobile/.dynamicstage-core864-off : Back to 4.5.863
 - Latch: fsize864-crashed
+
+## 4.5.865
+- /var/mobile/.dynamicstage-rimfull865-off : Double-tap a card's rim to open that app full screen (the card lets go the same way as opening the app from the home screen)
+- /var/mobile/.dynamicstage-core865-off : Back to 4.5.864
+- Latch: rimfull865-crashed

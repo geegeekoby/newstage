@@ -1,3 +1,6 @@
+## 4.5.855
+4.5.855: diagnostics for Spotlight hiding the stage and call-screen hide churn (diag855, log only)
+
 ## 4.5.854
 4.5.854: one unified edge tab replaces the notch/pill switch (tab854)
 

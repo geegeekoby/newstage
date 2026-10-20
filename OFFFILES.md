@@ -541,3 +541,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-tab854-off : One edge tab, always: slim 8x56 glass tab flush to the right edge with the 824 gradient edge, adapts to dark/light, dims while open; replaces both the old notch and the 827 pill (hit area unchanged)
 - /var/mobile/.dynamicstage-core854-off : Back to 4.5.853
 - Latch: tab854-crashed
+
+## 4.5.855
+- /var/mobile/.dynamicstage-diag855-off : Log only: stage window level/hidden/alpha when Spotlight's keyboard opens/closes, and every call-aside hide/show with reason, DSCallScreenFront and timing
+- /var/mobile/.dynamicstage-core855-off : Back to 4.5.854
+- Latch: diag855-crashed

@@ -1,0 +1,11 @@
+4.5.849 (on 4.5.848). Flicker when creating a new stage. No new log (origin f320894): cause from code.
+PROVEN (code): resetScrollPosition runs s824Entrance (every visible tile set to alpha 0 + 0.94 scale + 14 pt down,
+then a 0.5 s staggered spring). One New Stage runs it more than once: presentPickerOnCard: calls [picker
+resetScrollPosition] and presentPickerOnHalf: calls [_picker resetScrollPosition] again right after; and when the
+stage was closed, enterStateOverlay's finish (after the ~0.3 s card spring) calls presentPickerOnCard: again when no app
+is hosted -> a third entrance: every tile mid-fade or already shown snaps back to alpha 0 and fades again = flicker.
+Checked, not the cause: 845 fade (only when a hosting card switches apps), restore847 (only with a tag 9151 still),
+style828Refresh (only when the look changes; reload, no entrance), launch placeholder (only on app launch).
+flicker849 (off: flicker849-off, latch via DSFeature719MarkAction; core849-off -> 848): s824Entrance keeps the time it
+ran; another call within 0.8 s returns (logged at most every 2 s). The first entrance plays once, untouched. No other
+show code changed. No hook / ctor / timer (a timestamp only).

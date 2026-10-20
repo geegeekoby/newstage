@@ -1,3 +1,7 @@
+## 4.5.849
+- Fix: opening a new stage could flicker (the app tiles faded in, vanished and faded in again). The tiles now fade in once per show.
+- Off: flicker849-off, core849-off (back to 848).
+
 ## 4.5.848
 - Pill: a strip that was marked open but is no longer on screen no longer swallows the next tap or hold (the tap opens it).
 - Every pill tap / hold now writes one log line with the window's state, so the next 'pill does nothing' log shows whether the touch reached the pill.

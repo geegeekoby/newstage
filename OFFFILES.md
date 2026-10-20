@@ -511,3 +511,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-pill848-off : no pill tap / hold log line; a stale open flag can still eat a tap or hold (847)
 - /var/mobile/.dynamicstage-core848-off : all of 848 (back to 847)
 - Latch: pill848-crashed
+
+## 4.5.849
+- /var/mobile/.dynamicstage-flicker849-off : picker tiles re-run their entrance when the show path runs twice (848)
+- /var/mobile/.dynamicstage-core849-off : all of 849 (back to 848)
+- Latch: flicker849-crashed

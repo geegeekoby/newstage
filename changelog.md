@@ -1,3 +1,6 @@
+## 4.5.861
+4.5.861: call screen hide/show hysteresis (call861)
+
 ## 4.5.860
 4.5.860: Spotlight no longer hides the stage (spot860)
 

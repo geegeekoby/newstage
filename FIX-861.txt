@@ -1,0 +1,1 @@
+A2: in DSCallAsideEvaluate the show grace is 1.5 s (was 0.8 s) and a hide requested within 1 s of a show is deferred (re-evaluated at 1.05 s) unless DSCallScreenFront. call653/656/733/749/758 protection unchanged (no scene writes, Live update holds untouched). Cause inferred (no 855 log yet). Crash latch call861.

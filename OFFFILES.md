@@ -571,3 +571,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-spot860-off : Spotlight no longer hides the stage: SpringBoard's window-hiding fade (SBWindowHidingManager setAlpha:forWindow:) is ignored for the stage window only
 - /var/mobile/.dynamicstage-core860-off : Back to 4.5.859
 - Latch: spot860-crashed
+
+## 4.5.861
+- /var/mobile/.dynamicstage-call861-off : Call screen hysteresis: the stage comes back only after the call screen has been gone 1.5 s, and is not re-hidden within 1 s of coming back unless the call screen is in front again
+- /var/mobile/.dynamicstage-core861-off : Back to 4.5.860
+- Latch: call861-crashed

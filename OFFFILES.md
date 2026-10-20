@@ -521,3 +521,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-pins850-off : strip tiles are the last 3 stage apps (recents, 849)
 - /var/mobile/.dynamicstage-core850-off : all of 850 (back to 849)
 - Latch: pins850-crashed
+
+## 4.5.851
+- /var/mobile/.dynamicstage-gear851-off : Quick Settings gear stays in the pill strip (850)
+- /var/mobile/.dynamicstage-core851-off : all of 851 (back to 850)
+- Latch: gear851-crashed

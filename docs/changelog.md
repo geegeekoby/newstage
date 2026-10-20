@@ -1,3 +1,7 @@
+## 4.5.851
+- The Quick Settings gear moved out of the pill strip into the stage picker's top-right corner (same sheet: Keep Alive, Haptics, Accents, Pill Hint).
+- Off: gear851-off, core851-off (gear back in the strip); toggles846-off removes it everywhere.
+
 ## 4.5.850
 - Pill strip: with no card open, the 3 app tiles are now your first 3 pinned apps (pin order); if fewer than 3 are pinned the rest are recents.
 - Off: pins850-off, core850-off (recents only); recent839-off still removes the tiles.

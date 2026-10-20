@@ -1,0 +1,7 @@
+4.5.851 (on 4.5.850). Gear moved to the picker's top-right corner. User request (no log needed).
+gear851 (off: gear851-off, latch via DSFeature699MarkTrying + DSFeature719MarkAction; core851-off -> 850):
+picker s823Layout (the only look under only828) lays out a 32 pt system 'gearshape' button: right end of the 'Opens in ...'
+row in the 824 look (that label is narrowed to make room), else beside the search field (search narrowed by 38 pt).
+It sits inside the card, clear of the 18 pt drag rim. Tap -> new optional delegate appPickerWantsQuickSettings851: ->
+DSStageManager toggles846Show (the same 846 sheet on the stage window's top controller). The strip gear item (tag 6) is
+not added while gear851 is on. Hidden when toggles846 is off. No hook / ctor / timer; no keyboard / scene / gesture code.

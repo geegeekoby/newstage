@@ -1,3 +1,6 @@
+## 4.5.862
+4.5.862: subtle dim behind the floating card (dim862)
+
 ## 4.5.861
 4.5.861: call screen hide/show hysteresis (call861)
 

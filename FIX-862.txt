@@ -1,0 +1,1 @@
+D2: a plain black view (alpha 0.15, userInteractionEnabled NO) inserted below the float card and its rim in the same parent; synced from placeFloatRim and each float show/hide site. Visual only: hit-testing unchanged. Crash latch dim862, hang marker .dynamicstage-dim862-first.

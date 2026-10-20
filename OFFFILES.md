@@ -576,3 +576,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-call861-off : Call screen hysteresis: the stage comes back only after the call screen has been gone 1.5 s, and is not re-hidden within 1 s of coming back unless the call screen is in front again
 - /var/mobile/.dynamicstage-core861-off : Back to 4.5.860
 - Latch: call861-crashed
+
+## 4.5.862
+- /var/mobile/.dynamicstage-dim862-off : Subtle 0.15 dim behind the floating card while it is on screen (visual only, taps pass through as before)
+- /var/mobile/.dynamicstage-core862-off : Back to 4.5.861
+- Latch: dim862-crashed

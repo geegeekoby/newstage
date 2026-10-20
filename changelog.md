@@ -1,3 +1,6 @@
+## 4.5.867
+4.5.867: drag divider to resize the two-card split (divider867)
+
 ## 4.5.866
 4.5.866: stage history in the picker (hist866)
 

@@ -1,3 +1,7 @@
+## 4.5.853
+- Pill strip: holding a minimised card's icon now brings the card back out of its corner (the normal restore animation) and then turns it into the picker, instead of jumping.
+- Off: unmin853-off, core853-off (back to 852).
+
 ## 4.5.852
 - Pill strip app tiles (pinned / recent) now open straight into the app: the card slides in already loading it, no picker in between.
 - Off: direct852-off, core852-off (back to card + picker, then the app).

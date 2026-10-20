@@ -1,0 +1,11 @@
+4.5.853 (on 4.5.852). Hold a minimised card's strip icon -> restore, then picker. No new log (origin 0eae9ca).
+Before (828 hold, returnHalfToPicker:): a parked card was setParked:NO + laid out at once (no animation) and swapped to
+the picker, so it looked like it stayed minimised and then jumped.
+unmin853 (off: unmin853-off, latch via DSFeature719MarkAction; core853-off -> 852): returnHalfToPicker: first checks the
+strip's card for that icon (pill826CardOnHalf:); if it is parked and hosting -> unmin853Restore: (same refusals as the
+strip restore: animation / minimise pending / pull / tracking / home gesture / another unmin853) runs the exact strip
+restore (restore finger at the card's half, _cornerRestoreCard, remembered picture, restoreMinimizedStageAnimated:YES).
+finishCornerRestoreOfCard: (end of the restore, after restore847) calls unmin853AfterRestoreOfCard:, which calls
+returnHalfToPicker: for the card's half (on screen now -> normal picker swap). Chained on the restore completion, no
+timer. Cleared on a stale (re-minimised) completion; skipped (logged) if the card is not on screen at the end.
+No hook / ctor; no keyboard / scene / gesture code.

@@ -531,3 +531,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-direct852-off : a strip app tile opens the card with the picker, then the app 0.45 s later (851)
 - /var/mobile/.dynamicstage-core852-off : all of 852 (back to 851)
 - Latch: direct852-crashed
+
+## 4.5.853
+- /var/mobile/.dynamicstage-unmin853-off : holding a minimised card's strip icon jumps it from its corner straight to the picker (852)
+- /var/mobile/.dynamicstage-core853-off : all of 853 (back to 852)
+- Latch: unmin853-crashed

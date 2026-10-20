@@ -1,3 +1,6 @@
+## 4.5.864
+4.5.864: per-app floating card size (fsize864); corner snapping skipped
+
 ## 4.5.863
 4.5.863: lock a card from the strip icon menu (lock863)
 

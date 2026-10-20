@@ -1,0 +1,1 @@
+C3: hidden list in /var/mobile/Library/Preferences/com.recreated.dynamicstage.hidden858.plist, filtered out of the picker's Suggested/All/Pinned/search lists after reloadContent; 'Hide from Picker' in the existing pin825 hold sheet; 'Unhide All Apps (n)' row in the toggles846 quick settings sheet. No hook. Crash latch hide858, hang marker .dynamicstage-hide858-reading.

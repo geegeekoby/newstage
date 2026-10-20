@@ -556,3 +556,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-cycle857-off : Swipe up/down on the closed tab: swap top and bottom when both are on screen, otherwise restore the minimised card
 - /var/mobile/.dynamicstage-core857-off : Back to 4.5.856
 - Latch: cycle857-crashed
+
+## 4.5.858
+- /var/mobile/.dynamicstage-hide858-off : Hold an app in the picker -> Hide from Picker; quick settings -> Unhide All Apps
+- /var/mobile/.dynamicstage-core858-off : Back to 4.5.857
+- Latch: hide858-crashed

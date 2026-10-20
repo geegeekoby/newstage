@@ -1,3 +1,6 @@
+## 4.5.858
+4.5.858: hide apps from the picker (hide858)
+
 ## 4.5.857
 4.5.857: swipe the closed tab to cycle cards (cycle857)
 

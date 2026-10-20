@@ -506,3 +506,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-restore847-off : a card brought back can still show the frozen home-swipe still over the app until it is dragged (846)
 - /var/mobile/.dynamicstage-core847-off : all of 847 (back to 846)
 - Latch: restore847-crashed
+
+## 4.5.848
+- /var/mobile/.dynamicstage-pill848-off : no pill tap / hold log line; a stale open flag can still eat a tap or hold (847)
+- /var/mobile/.dynamicstage-core848-off : all of 848 (back to 847)
+- Latch: pill848-crashed

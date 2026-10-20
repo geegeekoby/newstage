@@ -1,3 +1,8 @@
+## 4.5.848
+- Pill: a strip that was marked open but is no longer on screen no longer swallows the next tap or hold (the tap opens it).
+- Every pill tap / hold now writes one log line with the window's state, so the next 'pill does nothing' log shows whether the touch reached the pill.
+- Off: pill848-off, core848-off (back to 847).
+
 ## 4.5.847
 - Fix: a card brought back from minimised (corner pull, strip icon, corner icon) could show a frozen picture and ignore touches until it was dragged. The still the home swipe puts on each open card is now dropped when the card is back on screen.
 - Off: restore847-off, core847-off (back to 846).

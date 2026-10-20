@@ -1,0 +1,13 @@
+4.5.848 (on 4.5.847). 'Pill sometimes doesn't work inside apps'. No new log since Dhdjdbdbdh (828, 18 Oct ~17:00
+NZDT; origin 4cf78db), so nothing about this report is logged: the cause is NOT proven.
+Checked in code (all unchanged): the window is only hidden by the call screen (callAside, by design); pillshow835
+puts it on the main display scene and re-checks at every refreshShelf (incl. the tap's willOpenHandler); the touch test
+claims the pill hit frame first (only a presented sheet comes before it, and that claims everything); no keyboard /
+search skip applies to the pill; level 998 is under the keyboard (pill is mid-screen, above it).
+One proven way a pill touch does nothing: the tap toggles _open (setOpen:!_open) and hold837 returns while _open,
+so a strip flag left YES with the strip not on screen turns the next tap into an invisible close and eats holds.
+pill848 (off: pill848-off, latch via DSFeature719MarkAction; core848-off -> 847): on tap / hold, if _open && _open826 but
+the strip is nil / not in a view / hidden / alpha 0 / the shelf has no window -> clear the flags first (logged), then the
+normal toggle. Plus one 'pill848 tap|hold ...' line per touch with open / strip / window hidden / key / level / scene /
+activation state. If the user's next log has no pill848 line for a dead tap, the touch never reached SpringBoard
+(the app or the system took it) - that is the next thing to fix. No hook / ctor / timer; no keyboard / scene / gesture code.

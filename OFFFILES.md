@@ -561,3 +561,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-hide858-off : Hold an app in the picker -> Hide from Picker; quick settings -> Unhide All Apps
 - /var/mobile/.dynamicstage-core858-off : Back to 4.5.857
 - Latch: hide858-crashed
+
+## 4.5.859
+- /var/mobile/.dynamicstage-folders859-off : Picker gets a 'Categories' segment: All Apps grouped by App Store genre with genre headers (A-Z All stays the default)
+- /var/mobile/.dynamicstage-core859-off : Back to 4.5.858
+- Latch: folders859-crashed

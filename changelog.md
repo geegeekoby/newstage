@@ -1,3 +1,6 @@
+## 4.5.859
+4.5.859: Categories segment in the picker, grouped by App Store genre (folders859)
+
 ## 4.5.858
 4.5.858: hide apps from the picker (hide858)
 

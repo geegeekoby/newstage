@@ -1,0 +1,5 @@
+4.5.850 (on 4.5.849). Strip tiles = first 3 pinned apps. User request (no log needed).
+pins850 (off: pins850-off, latch via DSFeature699MarkTrying; core850-off -> 849): in s826Build's recent839 block the list
+is DSAppLibrary pinnedApplications (DSPreferences pinnedApplications order, disabled apps skipped) then
+recentApplicationsLimitedTo:6, de-duplicated, first 3. Same tiles (tags 200+), same tap (recent839Open:, same
+refusals). recent839-off / core839-off still remove the tiles entirely. No new system selectors, no hook / ctor / timer.

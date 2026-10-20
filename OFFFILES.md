@@ -516,3 +516,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-flicker849-off : picker tiles re-run their entrance when the show path runs twice (848)
 - /var/mobile/.dynamicstage-core849-off : all of 849 (back to 848)
 - Latch: flicker849-crashed
+
+## 4.5.850
+- /var/mobile/.dynamicstage-pins850-off : strip tiles are the last 3 stage apps (recents, 849)
+- /var/mobile/.dynamicstage-core850-off : all of 850 (back to 849)
+- Latch: pins850-crashed

@@ -1,3 +1,7 @@
+## 4.5.850
+- Pill strip: with no card open, the 3 app tiles are now your first 3 pinned apps (pin order); if fewer than 3 are pinned the rest are recents.
+- Off: pins850-off, core850-off (recents only); recent839-off still removes the tiles.
+
 ## 4.5.849
 - Fix: opening a new stage could flicker (the app tiles faded in, vanished and faded in again). The tiles now fade in once per show.
 - Off: flicker849-off, core849-off (back to 848).

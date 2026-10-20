@@ -1,0 +1,1 @@
+B1: SBApplication -badgeValue and SBMediaController -nowPlayingApplication/-isPlaying (verified 20F75) read when the strip is built; no hook, no observer, so it refreshes on each open rather than while open. Crash latch badge856, hang marker .dynamicstage-badge856-reading.

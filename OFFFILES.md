@@ -546,3 +546,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-diag855-off : Log only: stage window level/hidden/alpha when Spotlight's keyboard opens/closes, and every call-aside hide/show with reason, DSCallScreenFront and timing
 - /var/mobile/.dynamicstage-core855-off : Back to 4.5.854
 - Latch: diag855-crashed
+
+## 4.5.856
+- /var/mobile/.dynamicstage-badge856-off : Strip card and recent tiles show the app's badge count and a green dot for the app playing audio (read each time the strip opens)
+- /var/mobile/.dynamicstage-core856-off : Back to 4.5.855
+- Latch: badge856-crashed

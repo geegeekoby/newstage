@@ -1,3 +1,6 @@
+## 4.5.856
+4.5.856: badges and playing-audio dot on strip icons (badge856)
+
 ## 4.5.855
 4.5.855: diagnostics for Spotlight hiding the stage and call-screen hide churn (diag855, log only)
 

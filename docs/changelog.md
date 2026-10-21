@@ -1,3 +1,6 @@
+## 4.5.871
+4.5.871: code split only: DSStageManager.m split into category files, no behaviour change
+
 ## 4.5.870
 4.5.870: audit fixes: stale delayed restore/reveal/keyboard/size/report steps are capped or dropped (restore870, reveal870, front870, intro870, kbseq870, size870, host870)
 

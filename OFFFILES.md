@@ -625,3 +625,6 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-host870-off : Every hosting reports after 2.5 s, even when a newer hosting replaced it (869)
 - /var/mobile/.dynamicstage-core870-off : Back to 4.5.869 (all of the above)
 - Latches: restore870-crashed, reveal870-crashed, front870-crashed, intro870-crashed, kbseq870-crashed, size870-crashed, host870-crashed
+
+## 4.5.871
+- No off file: code split only (no behaviour change). Rollback = install 4.5.870.

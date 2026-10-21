@@ -611,3 +611,6 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-perf868-off : Feature switches walk the full 821-867 master chain on every check again (no 1 s per-level cache)
 - /var/mobile/.dynamicstage-core868-off : Back to 4.5.867
 - Latch: none (pure in-memory cache, no new feature path)
+
+## 4.5.869
+- No off file: this build only deletes code that nothing ever called (26 exported functions, 5 helpers, DSCrashReports.m), so there is no running behaviour to switch back. To go back fully, install 4.5.868 from the repo.

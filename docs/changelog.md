@@ -1,3 +1,6 @@
+## 4.5.869
+4.5.869: audit: removed 31 never-called functions and the unused crash-report reader (no behaviour change)
+
 ## 4.5.868
 4.5.868: audit: feature switches answer faster (perf868), no behaviour change
 

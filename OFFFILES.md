@@ -628,3 +628,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 
 ## 4.5.871
 - No off file: code split only (no behaviour change). Rollback = install 4.5.870.
+
+## 4.5.872
+- /var/mobile/.dynamicstage-crash872-off : No last-feature breadcrumb (the 30 s heartbeat no longer writes .dynamicstage-tag872, boot line unchanged)
+- /var/mobile/.dynamicstage-core872-off : Back to 4.5.871
+- Latch: none (file write in the existing heartbeat only)

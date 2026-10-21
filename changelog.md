@@ -1,3 +1,6 @@
+## 4.5.872
+4.5.872: crash872: the boot log line names the feature last active before the previous exit
+
 ## 4.5.871
 4.5.871: code split only: DSStageManager.m split into category files, no behaviour change
 

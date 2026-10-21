@@ -1,0 +1,980 @@
+build 4.5.871 split=0 float=0 half=0 slots=2
+card {{5, 306}, {420, 621}}
+shell {{-31, 270}, {492, 693}}
+outline {{4, 305}, {422, 623}}
+topCard {{5, 5}, {420, 295}}
+topRim {{-31, -31}, {492, 367}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{5, 306}, {420, 621}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=org.whispersystems.signal slot1=- slot2=-
+
+--- log ---
+04:02:53.793 log refreshed after respring
+04:02:53.836 SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohibited: com.junesiphone.webservices(System)
+04:02:53.966 SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+04:02:53.966 [TRACE] ready state=0 split=0 bottom=- top=- hover=-
+04:02:53.967 SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:02:53.967 SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+04:02:53.967 SpringBoard: latch749: no feature is latched off
+04:02:53.969 SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+04:02:53.969 SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+04:02:53.970 SpringBoard: camera660 listening for in-app camera events from 5 apps
+04:02:53.970 SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+04:02:53.971 SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+04:02:53.971 SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+04:02:53.971 SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+04:02:53.971 SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+04:02:53.972 SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+04:02:53.973 SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=20s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=20s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple....
+04:02:56.331 SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 22370 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+04:02:58.181 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+04:02:58.183 SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+04:02:58.259 SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohibited: com.junesiphone.webservices(System)
+04:02:58.261 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+04:02:58.264 SpringBoard: pill826 first strip drawn (hang marker cleared)
+04:03:02.366 SpringBoard: stayed up, boot guard cleared
+04:03:02.378 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+04:03:02.386 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+04:03:02.494 SpringBoard: only828 picker shown by a layout pass switched to the new look
+04:03:02.495 SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+04:03:02.496 SpringBoard: style823 first styled picker drawn (hang marker cleared)
+04:03:02.496 SpringBoard: style824 first styled picker drawn (hang marker cleared)
+04:03:20.143 SpringBoard: recent839 tapped org.whispersystems.signal
+04:03:20.236 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+04:03:20.237 SpringBoard: stage on screen
+04:03:20.237 [TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+04:03:20.237 SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+04:03:20.237 SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:03:20.238 SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:03:20.239 SpringBoard: opened the top stage
+04:03:20.287 SpringBoard: putting org.whispersystems.signal on stack slot 0
+04:03:20.287 [TRACE] launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+04:03:20.287 SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+04:03:20.287 SpringBoard: creating app view for org.whispersystems.signal
+04:03:20.287 SpringBoard: created app view for org.whispersystems.signal
+04:03:20.292 [TRACE] scene transaction org.whispersystems.signal actions=1
+04:03:20.293 SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+04:03:20.294 SpringBoard: reg799: setDelegate on org.whispersystems.signal ctrl=0x12c74d4f0
+04:03:20.294 SpringBoard: reg799: registered contributor on org.whispersystems.signal handle=0x12c728900 ident=org.whispersystems.signal (addSceneUpdateContributer:)
+04:03:20.297 SpringBoard: camera658 org.whispersystems.signal on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+04:03:20.297 SpringBoard: org.whispersystems.signal is on stack slot 0
+04:03:20.297 [TRACE] hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+04:03:20.297 [KEYBOARD LOG] attach org.whispersystems.signal slot 0 stack=1 prim=1
+04:03:20.299 SpringBoard: phonesize680 build 4.5.871 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+04:03:20.303 SpringBoard: org.whispersystems.signal stays running in the background
+04:03:20.304 SpringBoard: direct852 org.whispersystems.signal was not launched: the picker is shown instead
+04:03:20.315 SpringBoard: defer719 touch observer on the bottom card (31 s after start)
+04:03:20.315 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:20.315 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:20.315 SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x0 camera=0
+04:03:20.316 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:20.316 [TRACE] app-view settings update
+04:03:20.317 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281320b10> { statusBarStyleOverridesToSuppress = (none); }; }
+04:03:20.317 [TRACE] app-view settings update done
+04:03:20.337 SpringBoard: fitting org.whispersystems.signal's scene to the card
+04:03:20.337 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+04:03:20.545 SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:20.622 SpringBoard: org.whispersystems.signal stays running in the background
+04:03:20.627 SpringBoard: bg719 holding org.whispersystems.signal pid 7959 (audio, stage hold)
+04:03:20.852 SpringBoard: host750 bottom card org.whispersystems.signal: detached -> live
+04:03:20.854 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+04:03:20.855 SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+04:03:21.868 SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+04:03:22.851 SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+04:03:24.267 SpringBoard: gest770 tap outside the cards at 348,568: minimise queued (0.45 s re-check)
+04:03:24.342 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:24.342 SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:24.342 [TRACE] app-view settings update
+04:03:24.342 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280cd40c0> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:24.342 [TRACE] app-view settings update done
+04:03:24.408 [TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:03:24.412 SpringBoard: phonesize683 build 4.5.871 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+04:03:24.412 SpringBoard: core747 UIKit keyboard {{0, 631}, {430, 301}} not given to org.whispersystems.signal: the keyboard system names no keyboard
+04:03:24.523 SpringBoard: kbvis768 show 1 start owner=com.apple.Spotlight h=243
+04:03:24.530 SpringBoard: kbvis768 show 1 +0.01s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=none | arb on=1 owner=com.apple.Spotlight h=243 | sbkeys={{0, 631}, {430, 301}}
+04:03:24.569 SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=2 windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:24.578 SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:03:24.581 SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: app is not on a stage card (full screen or closed) (no stage shift)
+04:03:24.581 SpringBoard: phonesize675 build 4.5.871 is ON; apps: com.beeper.chat.ios (default)
+04:03:24.582 SpringBoard: why806 SpringBoard update hide went through for com.apple.Spotlight: wasHidden=1 bypass=0 depth=1 | keep776 arbOn=1 stageOnScreen=1 keep776on=1 owner=com.apple.Spotlight ownerOk=1 stageVisible=1 hosted=0 | medusa803 holding=0 sameWindow=0 | keep806 on=1
+04:03:24.582 SpringBoard: why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+04:03:24.586 SpringBoard: why806 SpringBoard update hide went through for com.apple.Spotlight: wasHidden=1 bypass=0 depth=1 | keep776 arbOn=1 stageOnScreen=1 keep776on=1 owner=com.apple.Spotlight ownerOk=1 stageVisible=1 hosted=0 | medusa803 holding=0 sameWindow=0 | keep806 on=1
+04:03:24.586 SpringBoard: why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=YES
+04:03:24.884 SpringBoard: kbdrag744 dismiss keys (minimiseVisibleStages)
+04:03:24.885 SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+04:03:24.886 SpringBoard: kbmin702 a keyboard for com.apple.Spotlight came up (not a staged app's): the staged card is minimised to its corner
+04:03:25.042 SpringBoard: kbvis768 show 1 +0.52s keys visible? NO (Medusa hidden; Medusa layer hidden/transparent; no layer host; Medusa level 20 not above stage 998) (owner com.apple.Spotlight)
+04:03:25.196 SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:25.504 SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+04:03:25.505 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=0 parked=1
+04:03:25.505 SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[888203729,390215454,2071301498] view=in-window pid=7959 alive=1
+04:03:25.506 SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+04:03:25.864 SpringBoard: restore726 corner pull refused at 269,911: started on the home bar (primary parked=1 right, second parked=0 right)
+04:03:25.864 SpringBoard: gest770 edge pull began at 269,911 v=(-47,-490): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=closed)
+04:03:25.864 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+04:03:25.864 SpringBoard: kbdrag744 dismiss keys (tuckOpenStageAwayForHomeGesture)
+04:03:25.865 SpringBoard: tucking the open stage for home
+04:03:25.865 SpringBoard: org.whispersystems.signal is the only minimized app
+04:03:25.867 SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+04:03:25.867 SpringBoard: home gesture began, stage minimized
+04:03:25.967 SpringBoard: keys697 UIKit keyboard frame {{0, 631}, {430, 301}} not given to org.whispersystems.signal: its card is minimised / parked (another app is typing)
+04:03:25.982 SpringBoard: why806 SpringBoard update hide went through for com.apple.Spotlight: wasHidden=1 bypass=0 depth=1 | keep776 arbOn=1 stageOnScreen=1 keep776on=1 owner=com.apple.Spotlight ownerOk=1 stageVisible=0 hosted=0 | medusa803 holding=0 sameWindow=0 | keep806 on=1
+04:03:25.982 SpringBoard: why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+04:03:25.982 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:25.982 SpringBoard: reason800: re-appended org.whispersystems.signal via in-place (was missing; home/layout path bypassed contributor) ctrl=0x12c74d4f0
+04:03:25.983 SpringBoard: keep829 sceneID:org.whispersystems.signal-default minimised: SpringBoard's foreground=NO not applied (settings block); the app stays foreground and active in its corner
+04:03:25.987 SpringBoard: gest770 edge pull ended after 0.12 s (system's) at 264,751 moved (-4,-169) v=(-51,-905) home=1 busy=1 switcher=closed
+04:03:25.987 SpringBoard: home gesture ended
+04:03:25.990 SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:25.990 [TRACE] app-view settings update
+04:03:25.990 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280c0e580> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:03:25.990 [TRACE] app-view settings update done
+04:03:25.994 SpringBoard: why806 SpringBoard update hide went through for com.apple.Spotlight: wasHidden=1 bypass=0 depth=1 | keep776 arbOn=1 stageOnScreen=1 keep776on=1 owner=com.apple.Spotlight ownerOk=1 stageVisible=0 hosted=0 | medusa803 holding=0 sameWindow=0 | keep806 on=1
+04:03:25.995 SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:26.689 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:26.690 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=1 busy=1 stageVisible=0 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:03:26.691 SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:26.691 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28103d890> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:03:26.694 [TRACE] arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:03:26.703 SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:26.847 SpringBoard: kbvis768 show 1 +2.32s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=none | arb on=0 owner=com.apple.Spotlight h=243 | sbkeys=none
+04:03:26.847 SpringBoard: parked apps stopped following the home transition
+04:03:27.202 SpringBoard: corner771 claimed pull in parked corner (right) at 403,920
+04:03:27.202 SpringBoard: corner pull picked up from the system gesture
+04:03:27.203 SpringBoard: gest770 edge pull began at 403,920 v=(-27,-81): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+04:03:27.331 SpringBoard: gest770 edge pull ended after 0.13 s (ours) at 294,703 moved (-110,-222) v=(-1593,-2511) home=0 busy=0 switcher=closed
+04:03:27.332 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+04:03:27.334 SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:27.360 SpringBoard: kbvis768 show 1 ended after 2.8s: keys visible NEVER
+04:03:27.727 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+04:03:27.793 [TRACE] scene transaction org.whispersystems.signal actions=0
+04:03:27.795 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:27.795 SpringBoard: home665 let SpringBoard's update of sceneID:org.whispersystems.signal-default land at card size (corner pull just ended), not refused
+04:03:27.796 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+04:03:27.796 SpringBoard: geo748 org.whispersystems.signal geometry unchanged {{0, 0}, {420, 458}}: no scene write
+04:03:27.952 SpringBoard: keyfocus772 org.whispersystems.signal restored with SBHomeScreenWindow key: taking the key window as on open
+04:03:27.953 SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:03:27.955 SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:03:28.002 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=1 level=998 scene=com.apple.springboard fg=0)
+04:03:28.016 SpringBoard: pill826 strip opened (top -, bottom org.whispersystems.signal, float -)
+04:03:28.256 SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+04:03:28.257 SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[888203729,390215454,2071301498] view=in-window pid=7959 alive=1
+04:03:28.258 SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+04:03:28.470 SpringBoard: pill826 New Stage tapped
+04:03:28.474 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+04:03:28.476 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+04:03:28.634 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+04:03:28.635 SpringBoard: opened another stage
+04:03:29.896 SpringBoard: putting com.beeper.chat.ios on stack slot 1
+04:03:29.896 [TRACE] launch com.beeper.chat.ios state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+04:03:29.897 SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+04:03:29.897 SpringBoard: creating app view for com.beeper.chat.ios
+04:03:29.897 SpringBoard: created app view for com.beeper.chat.ios
+04:03:29.903 [TRACE] scene transaction com.beeper.chat.ios actions=1
+04:03:29.904 SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+04:03:29.904 SpringBoard: reg799: setDelegate on com.beeper.chat.ios ctrl=0x104c39d80
+04:03:29.904 SpringBoard: reg799: registered contributor on com.beeper.chat.ios handle=0x104c3e960 ident=com.beeper.chat.ios (addSceneUpdateContributer:)
+04:03:29.907 SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+04:03:29.907 SpringBoard: com.beeper.chat.ios is on stack slot 1
+04:03:29.907 [TRACE] hosted com.beeper.chat.ios state=2 split=0 bottom=org.whispersystems.signal top=com.beeper.chat.ios hover=-
+04:03:29.907 [KEYBOARD LOG] attach com.beeper.chat.ios slot 1 stack=2 prim=0
+04:03:29.935 SpringBoard: hist866 saved stage pair com.beeper.chat.ios + org.whispersystems.signal (1 in history)
+04:03:29.935 SpringBoard: phonesize684 build 4.5.871 is ON: allowlisted apps without the app dylib get safe area = keyboard in the 430x931 scene (bar fixed), the card's window is fixed (no 680-682 chasing), keys at the phone bottom (keys674 NO)
+04:03:29.935 SpringBoard: phonesize684 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: bottom=auto (learned, default 345) top=auto (card top) mode=safe (applies at the next card open or 1 s after the keyboard goes down)
+04:03:29.936 SpringBoard: phonesize685 build 4.5.871 is OFF (4.5.687: 686's picture is opt-in, /var/mobile/.dynamicstage-phonesize686-on)
+04:03:29.936 SpringBoard: phonesize685 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=14 slack=off (684 scene) top=auto (= app y on the card top) keytop=auto (learned keyboard top, default 586) (applies at the next card open or 1.2 s after the keyboard goes down)
+04:03:29.936 SpringBoard: phonesize687 build 4.5.871 is OFF (4.5.688: opt-in only, /var/mobile/.dynamicstage-phonesize687-on)
+04:03:29.936 SpringBoard: phonesize687 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=8 top=auto (= view) (applies at the next card open or 1.2 s after the keyboard goes down)
+04:03:29.937 SpringBoard: phonesize688 build 4.5.871 is ON: 684 chat geometry; default mode=684 (exact 684); opt-in modes in /var/mobile/.dynamicstage-phonesize688-tune: mode=offset|short|statusbar
+04:03:29.937 SpringBoard: phonesize688 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=684 view=auto (57) offset=auto shift=auto (measured) statusbar=auto (= top inset) (applies at the next card open or 1.2 s after the keyboard goes down)
+04:03:29.938 SpringBoard: phonesize694 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=squash view_top=59 sy=auto
+04:03:29.938 SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+04:03:29.939 SpringBoard: phonesize683 com.beeper.chat.ios not in 683 mode (off file, camera, dylib or not allowlisted): 4.5.682 window rules
+04:03:29.939 SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+4ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app point (x/0.9767, 117 + y/0.9767)
+04:03:29.939 SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+04:03:29.939 SpringBoard: phonesize675 com.beeper.chat.ios has no scene to write, back to card size
+04:03:29.940 SpringBoard: home665 let SpringBoard's update of sceneID:com.beeper.chat.ios-default land at card size (home transition finishing), not refused
+04:03:29.940 [TRACE] scene update begin: 1 identical updates not traced (perf706)
+04:03:29.940 [TRACE] scene update begin sceneID:com.beeper.chat.ios-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:29.940 SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+04:03:29.941 SpringBoard: occl798 ok reason present com.beeper.chat.ios ctrl=0x104c39d80 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:29.941 [TRACE] app-view settings update
+04:03:29.941 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2813f3ae0> { statusBarStyleOverridesToSuppress = (none); }; }
+04:03:29.941 [TRACE] app-view settings update done
+04:03:29.948 SpringBoard: fitting com.beeper.chat.ios's scene to the card
+04:03:29.948 [TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+04:03:30.395 SpringBoard: host750 top card com.beeper.chat.ios: detached -> live
+04:03:30.395 SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card live; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:30.514 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:30.514 SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:30.514 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281121620> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:30.515 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:30.526 SpringBoard: com.beeper.chat.ios stays running in the background
+04:03:30.526 SpringBoard: bg719 holding com.beeper.chat.ios pid 7966 (audio, stage hold)
+04:03:31.288 SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+04:03:31.288 SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+0ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app point (x/0.9767, 117 + y/0.9767)
+04:03:31.288 SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+04:03:31.288 SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+04:03:31.290 SpringBoard: phonesize698 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view_top=59 side_crop=0.0 zoom=off sx=auto sy=auto x_shift=0
+04:03:31.290 SpringBoard: phonesize698 com.beeper.chat.ios not bigger (tune gives 697's picture): 697 picture x0.9767 / y0.8691
+04:03:31.290 SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+04:03:31.290 SpringBoard: beeper707 com.beeper.chat.ios phone-size host drawn flat: 10 nested rounded clips dropped, host clip off (the card clips), squash 0.977x0.869
+04:03:31.290 SpringBoard: phonesize690 tune built-in defaults | in use: on=1 strip_top=59 strip_height=68 place_y=0 touch=forward
+04:03:31.290 SpringBoard: phonesize690 com.beeper.chat.ios no top-bar strip (694 squash: the real top bar is shown (copied bar only with 694 mode=691 or the 694 off file))
+04:03:31.290 [TRACE] force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {430, 931}}
+04:03:31.291 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+04:03:31.292 [TRACE] app-view settings update
+04:03:31.293 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = <BSMutableSettings: 0x280462260> { frame = NSRect: {{0, 0}, {430, 931}}; }; subclassChanges = <BSSettingsDiff: 0x2811d3a80> { safeAreaInsetsPortrait = UIEdgeInsets: {118, 0, 345, 0}; }; }
+04:03:31.293 [TRACE] app-view settings update done
+04:03:31.293 SpringBoard: phonesize675 com.beeper.chat.ios scene size sent t+5ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0} (phone size)
+04:03:31.293 SpringBoard: phonesize678 com.beeper.chat.ios pre-grown t+5ms: mapping bottom-anchored (the app's bottom above the home inset on the card's bottom edge)
+04:03:31.421 SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+04:03:31.605 SpringBoard: phonesize676 com.beeper.chat.ios scene read back t+317ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0}; wanted {{0, 0}, {430, 931}} (landed); host bounds {{0, 0}, {430, 931}} x0.9767 center {210, 353.27703984819732} in card {{0, 0}, {420, 458}}
+04:03:31.605 SpringBoard: phonesize678 com.beeper.chat.ios pre-grown scene landed t+317ms, no keyboard yet: no nudge
+04:03:32.073 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:03:32.075 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281388600> { hostContextIdentifierForSnapshotting = f2b23015; scenePresenterRenderIdentifierForSnapshotting = c8646431608d1702; }; }
+04:03:32.527 SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+04:03:32.769 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+04:03:32.776 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:03:32.777 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:32.777 [TRACE] app-view settings update
+04:03:32.777 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2813890b0> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:32.777 [TRACE] app-view settings update done
+04:03:32.778 SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:33.685 SpringBoard: rim651 system gesture held at 253,464 (rim)
+04:03:34.073 SpringBoard: divider867 split set to 33% top / 67% bottom (cards and scenes laid out once)
+04:03:34.091 [TRACE] scene transaction org.whispersystems.signal actions=0
+04:03:34.093 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:34.093 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:34.093 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:34.094 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 612}}
+04:03:34.095 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:34.096 [TRACE] app-view settings update
+04:03:34.096 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2805a7d80> { frame = NSRect: {{0, 0}, {420, 612}}; }; subclassChanges = (none); }
+04:03:34.096 [TRACE] app-view settings update done
+04:03:34.102 SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x304 shows the real app y 59..586 at x0.9767 (full width) / y0.5769; app y 586 on the card bottom (bar line, as 684); top inset 275, scene/keyboard 684
+04:03:35.138 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 612}}
+04:03:35.139 SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:35.139 [TRACE] app-view settings update
+04:03:35.139 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281129a70> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:35.139 [TRACE] app-view settings update done
+04:03:35.140 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:35.914 SpringBoard: perf812 28517 feature-gate calls (1721 uncached) in 15 s
+04:03:35.914 SpringBoard: rim651 hit top-outer-bottom at 213,324 -> DSStageRimHitView
+04:03:36.071 SpringBoard: rim651 drag began at 215,323 won by top-rim-pan
+04:03:36.294 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 612}}
+04:03:39.497 [TRACE] scene update begin: 3 identical updates not traced (perf706)
+04:03:39.497 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 612}}
+04:03:39.532 SpringBoard: divider867 split set to 65% top / 35% bottom (cards and scenes laid out once)
+04:03:39.538 [TRACE] scene transaction org.whispersystems.signal actions=0
+04:03:39.539 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:39.539 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:39.540 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 320}}
+04:03:39.540 [TRACE] app-view settings update
+04:03:39.540 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2806711c0> { frame = NSRect: {{0, 0}, {420, 320}}; }; subclassChanges = (none); }
+04:03:39.540 [TRACE] app-view settings update done
+04:03:39.545 SpringBoard: phonesize694 com.beeper.chat.ios no squash (the card already shows view_top at the uniform scale): uniform x0.9767
+04:03:39.545 SpringBoard: phonesize698 com.beeper.chat.ios not bigger (694 squash not in use): 697 picture x0.9767 / y0.9767
+04:03:39.546 SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 0..610 in card 420x596; side crop 0.0 pt each side
+04:03:40.477 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 320}}
+04:03:42.625 SpringBoard: divider867 split set to 50% top / 50% bottom (cards and scenes laid out once)
+04:03:42.647 [TRACE] scene transaction org.whispersystems.signal actions=0
+04:03:42.648 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:42.649 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:42.649 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+04:03:42.651 [TRACE] app-view settings update
+04:03:42.651 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2804e8820> { frame = NSRect: {{0, 0}, {420, 458}}; }; subclassChanges = (none); }
+04:03:42.651 [TRACE] app-view settings update done
+04:03:42.656 SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+04:03:42.656 SpringBoard: phonesize698 com.beeper.chat.ios not bigger (tune gives 697's picture): 697 picture x0.9767 / y0.8691
+04:03:42.656 SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+04:03:43.146 [TRACE] scene update begin: 1 identical updates not traced (perf706)
+04:03:43.146 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+04:03:43.289 SpringBoard: rim651 system gesture held at 0,496 (rim)
+04:03:43.340 SpringBoard: rim651 drag began at 11,498 won by top-rim-pan
+04:03:44.491 SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: finger at the corner v=(32,1512) moved (23,420) released at 34,918
+04:03:45.704 SpringBoard: host750 top card com.beeper.chat.ios: live -> minimised
+04:03:45.705 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=1
+04:03:45.705 SpringBoard: gest770 com.beeper.chat.ios live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:03:45.706 SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:46.100 SpringBoard: rim651 system gesture held at 251,469 (rim)
+04:03:46.103 SpringBoard: rim651 hit main-outer-top at 251,469 -> DSStageDragShellView
+04:03:46.249 SpringBoard: rim651 drag began at 247,458 won by main-shell-pan
+04:03:46.302 SpringBoard: phonesize694 squash survived 15 s; crash latch cleared
+04:03:47.432 SpringBoard: gest770 tap outside the cards at 23,901: nothing done (edge)
+04:03:47.692 [TRACE] scene update begin: 4 identical updates not traced (perf706)
+04:03:47.692 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+04:03:47.982 SpringBoard: gest770 tap outside the cards at 28,898: nothing done (edge)
+04:03:48.533 SpringBoard: gest770 tap outside the cards at 25,925: nothing done (edge)
+04:03:48.582 SpringBoard: corner771 claimed pull in parked corner (left) at 25,906
+04:03:48.582 SpringBoard: corner pull picked up from the system gesture
+04:03:48.582 SpringBoard: gest770 edge pull began at 25,906 v=(0,-233): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+04:03:48.715 SpringBoard: phonesize694 com.beeper.chat.ios squash: card 375x404 shows the real app y 59..586 at x0.8731 (full width) / y0.7664; app y 586 on the card bottom (bar line, as 684); top inset 124, scene/keyboard 684
+04:03:48.715 SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.8731 (pre-grown, bottom-anchored): visible app y 123..586 in card 375x404; side crop 0.0 pt each side
+04:03:48.716 SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {124, 0, 345, 0}, squash placed on the first frame (card 375x404), no resize
+04:03:48.748 SpringBoard: gest770 edge pull ended after 0.17 s (ours) at 83,753 moved (58,-170) v=(879,-1393) home=0 busy=0 switcher=closed
+04:03:48.748 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+04:03:49.203 SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+04:03:49.203 SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+04:03:49.335 SpringBoard: keyfocus772 com.beeper.chat.ios restored with SBHomeScreenWindow key: taking the key window as on open
+04:03:49.336 SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:03:49.338 SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:03:49.651 SpringBoard: host750 top card com.beeper.chat.ios: minimised -> live
+04:03:49.651 SpringBoard: gest770 com.beeper.chat.ios minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:03:49.651 SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card live; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:49.752 SpringBoard: rim651 system gesture held at 226,463 (rim)
+04:03:50.391 SpringBoard: divider867 split set to 59% top / 41% bottom (cards and scenes laid out once)
+04:03:50.399 [TRACE] scene transaction org.whispersystems.signal actions=0
+04:03:50.400 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:50.401 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:50.401 [TRACE] scene update begin: 1 identical updates not traced (perf706)
+04:03:50.401 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:50.402 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 537}}
+04:03:50.403 [TRACE] app-view settings update
+04:03:50.403 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x28044ec00> { frame = NSRect: {{0, 0}, {420, 537}}; }; subclassChanges = (none); }
+04:03:50.403 [TRACE] app-view settings update done
+04:03:50.413 SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x379 shows the real app y 59..586 at x0.9767 (full width) / y0.7192; app y 586 on the card bottom (bar line, as 684); top inset 198, scene/keyboard 684
+04:03:51.192 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+04:03:51.196 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:03:51.197 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=DSStageWindow
+04:03:51.197 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280c9b570> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:51.198 SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=DSStageWindow
+04:03:51.991 SpringBoard: rim651 system gesture held at 222,546 (rim)
+04:03:52.114 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 537}}
+04:03:52.330 SpringBoard: divider867 split set to 32% top / 68% bottom (cards and scenes laid out once)
+04:03:52.339 [TRACE] scene transaction org.whispersystems.signal actions=0
+04:03:52.341 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:52.342 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:52.342 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 295}}
+04:03:52.343 [TRACE] app-view settings update
+04:03:52.344 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2805a1820> { frame = NSRect: {{0, 0}, {420, 295}}; }; subclassChanges = (none); }
+04:03:52.344 [TRACE] app-view settings update done
+04:03:52.357 SpringBoard: phonesize694 com.beeper.chat.ios no squash (the card already shows view_top at the uniform scale): uniform x0.9767
+04:03:52.357 SpringBoard: phonesize698 com.beeper.chat.ios not bigger (694 squash not in use): 697 picture x0.9767 / y0.9767
+04:03:52.357 SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 0..636 in card 420x621; side crop 0.0 pt each side
+04:03:53.552 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:03:53.581 SpringBoard: gest770 edge pull began at 239,882 v=(82,-587): left to the system (home / switcher) (parked=0 stage visible=1 home=0 switcher=closed)
+04:03:53.581 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+04:03:53.582 SpringBoard: home gesture began, stage open
+04:03:53.602 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+04:03:53.608 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=1 busy=1 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:53.608 SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=1 busy=1 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBMainSwitcherWindow
+04:03:53.608 [TRACE] app-view settings update
+04:03:53.608 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281172a00> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:53.608 [TRACE] app-view settings update done
+04:03:53.609 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=0 home=1 busy=1 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBMainSwitcherWindow
+04:03:53.618 SpringBoard: home731 the home swipe committed (up 65 pt, v 2247): tucking
+04:03:53.618 SpringBoard: tucking the open stage for home
+04:03:53.618 SpringBoard: home sends the two stages to opposite corners
+04:03:53.633 SpringBoard: slide728 home tuck: 2 card(s) slide out the side, then park in their corner
+04:03:53.659 SpringBoard: reason800: re-appended org.whispersystems.signal via in-place (was missing; home/layout path bypassed contributor) ctrl=0x12c74d4f0
+04:03:53.663 SpringBoard: gest770 edge pull ended after 0.08 s (system's) at 235,745 moved (-4,-171) v=(-53,-3233) home=1 busy=1 switcher=closed
+04:03:53.663 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+04:03:53.663 SpringBoard: home gesture ended
+04:03:53.665 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:53.666 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:53.671 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:53.925 SpringBoard: phonesize695 com.beeper.chat.ios kept 430x931 safeArea {0, 0, 345, 0} while minimised (keyboard down): no shrink, no scene write; restore needs no relayout
+04:03:54.540 SpringBoard: parked apps stopped following the home transition
+04:03:54.999 SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+04:03:54.999 SpringBoard: gest770 layout switcher=closed home=0 busy=1 stage visible=0 parked=1
+04:03:54.999 SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[888203729,390215454,2071301498] view=in-window pid=7959 alive=1
+04:03:55.000 SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:55.000 SpringBoard: host750 top card com.beeper.chat.ios: live -> minimised
+04:03:55.000 SpringBoard: gest770 com.beeper.chat.ios live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:03:55.000 SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:57.400 [TRACE] scene update begin: 1 identical updates not traced (perf706)
+04:03:57.400 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:03:58.658 [TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:03:58.663 SpringBoard: keys697 UIKit keyboard frame {{0, 631}, {430, 301}} not given to com.beeper.chat.ios: its card is minimised / parked (another app is typing)
+04:03:58.668 SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:58.669 SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:03:58.669 SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+04:03:59.293 SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:01.862 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:01.865 SpringBoard: occl798 ok reason present com.beeper.chat.ios ctrl=0x104c39d80 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=0 busy=1 stageVisible=0 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:04:01.865 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:01.865 [TRACE] app-view settings update
+04:04:01.865 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280dac780> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:01.865 [TRACE] app-view settings update done
+04:04:01.866 [TRACE] arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:04:01.875 SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:02.013 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:02.098 [TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:04:02.116 SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:02.116 SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:04:02.500 SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:02.744 SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:03.159 [TRACE] scene update begin: 2 identical updates not traced (perf706)
+04:04:03.159 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:04:03.849 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:03.850 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:03.850 [TRACE] app-view settings update
+04:04:03.851 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2811a4930> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:03.851 [TRACE] app-view settings update done
+04:04:03.851 [TRACE] arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:04:03.862 SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:04.489 SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:04.684 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:04.684 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280f8f510> { targetOfEventDeferringEnvironments = (empty); }; }
+04:04:04.754 [TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:04:04.766 SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:04.767 SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:04:05.394 SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:06.645 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+04:04:06.718 SpringBoard: pill826 strip opened (top org.whispersystems.signal minimised, bottom com.beeper.chat.ios minimised, float -)
+04:04:06.813 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:06.814 SpringBoard: occl798 ok reason present com.beeper.chat.ios ctrl=0x104c39d80 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=0 busy=0 stageVisible=0 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:04:06.814 SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=0 busy=0 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:06.814 [TRACE] app-view settings update
+04:04:06.814 SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280e3f9c0> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:06.814 [TRACE] app-view settings update done
+04:04:06.817 [TRACE] arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:04:06.826 SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:07.142 SpringBoard: corner771 claimed pull in parked corner (right) at 411,911
+04:04:07.142 SpringBoard: corner pull picked up from the system gesture
+04:04:07.143 SpringBoard: gest770 edge pull began at 411,911 v=(-54,-255): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+04:04:07.273 SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {0, 0, 345, 0}, squash placed on the first frame (card 420x621), no resize
+04:04:07.273 SpringBoard: restored the right stage, the other stays minimised
+04:04:07.274 SpringBoard: gest770 edge pull ended after 0.13 s (ours) at 337,638 moved (-75,-279) v=(-697,-4236) home=0 busy=0 switcher=closed
+04:04:07.274 SpringBoard: perf812 27525 feature-gate calls (1749 uncached) in 21 s
+04:04:07.274 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=1
+04:04:07.400 [TRACE] scene update begin: 2 identical updates not traced (perf706)
+04:04:07.400 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:04:07.450 SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:07.715 SpringBoard: restore847 top card back on screen (restore) still had the home-swipe still over the app: dropped (as a drag begin does)
+04:04:07.899 SpringBoard: keyfocus772 com.beeper.chat.ios restored with SBHomeScreenWindow key: taking the key window as on open
+04:04:07.900 SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:04:07.901 SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:04:08.112 SpringBoard: rim651 system gesture held at 235,304 (rim)
+04:04:08.114 SpringBoard: rim651 hit top-outer-top at 235,304 -> DSStageRimHitView
+04:04:08.214 SpringBoard: host750 top card com.beeper.chat.ios: minimised -> live
+04:04:08.214 SpringBoard: gest770 com.beeper.chat.ios minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:04:08.215 SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card live; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:04:08.263 SpringBoard: rim651 drag began at 237,311 won by top-rim-pan
+04:04:08.663 SpringBoard: rim651 system gesture held at 234,302 (rim)
+04:04:09.097 SpringBoard: phonesize695 keep-while-minimised survived 15 s; crash latch cleared
+04:04:09.855 SpringBoard: bg719 released com.beeper.chat.ios pid 7966 (card closed)
+04:04:09.856 SpringBoard: reg799: removed contributor from com.beeper.chat.ios handle=0x104c3e960
+04:04:09.856 SpringBoard: phonesize675 com.beeper.chat.ios OFF (app view torn down)
+04:04:09.856 [TRACE] scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:09.856 SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing (card torn down just now): its last update is not a reason to refit the open stage
+04:04:09.856 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+04:04:09.856 SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing: update landed, no refit of the open stage
+04:04:10.098 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=0 busy=0 stageVisible=1 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:04:10.098 SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=1 home=0 busy=0 stageVisible=1 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=DSStageWindow
+04:04:10.098 [TRACE] app-view settings update
+04:04:10.098 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2812a05a0> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:10.098 [TRACE] app-view settings update done
+04:04:10.381 SpringBoard: host750 top card com.beeper.chat.ios: live -> detached
+04:04:10.430 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=1 level=998 scene=com.apple.springboard fg=0)
+04:04:10.434 SpringBoard: pill826 strip opened (top org.whispersystems.signal minimised, bottom -, float -)
+04:04:11.855 SpringBoard: pill826 New Stage tapped
+04:04:11.937 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+04:04:11.979 [TRACE] scene transaction org.whispersystems.signal actions=0
+04:04:11.980 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:04:11.980 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:04:11.981 [TRACE] scene update begin: 1 identical updates not traced (perf706)
+04:04:11.981 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:04:11.981 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 621}}
+04:04:11.981 [TRACE] app-view settings update
+04:04:11.981 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x28007ca80> { frame = NSRect: {{0, 0}, {420, 621}}; }; subclassChanges = (none); }
+04:04:11.982 [TRACE] app-view settings update done
+04:04:11.988 SpringBoard: opened another stage
+04:04:12.524 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 621}}
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+(trace802: 5 lines of SpringBoard pid=7927 from before the archive)
+04:02:53.792 SpringBoard pid=7927 main | SpringBoard: call653 guard listening (call screen containment is off)
+04:02:53.792 SpringBoard pid=7927 main | SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var/mobile/.dynamicstage-keys674-all)
+04:02:53.792 SpringBoard pid=7927 main | SpringBoard: keep776 installed (Medusa hide from updateMedusaHostedKeyboardWindowForScene: kept out while a staged app owns the keys)
+04:02:53.792 SpringBoard pid=7927 main | SpringBoard: why775 hooks installed: update,sized,target
+04:02:53.792 SpringBoard pid=7927 main | SpringBoard: lock808 installed (SBBacklightController observer)
+04:02:53.835 SpringBoard pid=7927 main | SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohib...
+04:02:53.966 SpringBoard pid=7927 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+04:02:53.966 SpringBoard pid=7927 main | ready state=0 split=0 bottom=- top=- hover=-
+04:02:53.967 SpringBoard pid=7927 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:02:53.967 SpringBoard pid=7927 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+04:02:53.967 SpringBoard pid=7927 main | SpringBoard: latch749: no feature is latched off
+04:02:53.969 SpringBoard pid=7927 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+04:02:53.969 SpringBoard pid=7927 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+04:02:53.970 SpringBoard pid=7927 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+04:02:53.970 SpringBoard pid=7927 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+04:02:53.971 SpringBoard pid=7927 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+04:02:53.971 SpringBoard pid=7927 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+04:02:53.971 SpringBoard pid=7927 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+04:02:53.971 SpringBoard pid=7927 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+04:02:53.972 SpringBoard pid=7927 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+04:02:53.973 SpringBoard pid=7927 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=20s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=20s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.face...
+04:02:56.331 SpringBoard pid=7927 main | SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 22370 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared
+04:02:58.181 SpringBoard pid=7927 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+04:02:58.183 SpringBoard pid=7927 main | SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+04:02:58.259 SpringBoard pid=7927 main | SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohib...
+04:02:58.261 SpringBoard pid=7927 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+04:02:58.264 SpringBoard pid=7927 main | SpringBoard: pill826 first strip drawn (hang marker cleared)
+04:03:02.366 SpringBoard pid=7927 main | SpringBoard: stayed up, boot guard cleared
+04:03:02.378 SpringBoard pid=7927 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+04:03:02.386 SpringBoard pid=7927 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+04:03:02.494 SpringBoard pid=7927 main | SpringBoard: only828 picker shown by a layout pass switched to the new look
+04:03:02.495 SpringBoard pid=7927 main | SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+04:03:02.496 SpringBoard pid=7927 main | SpringBoard: style823 first styled picker drawn (hang marker cleared)
+04:03:02.496 SpringBoard pid=7927 main | SpringBoard: style824 first styled picker drawn (hang marker cleared)
+04:03:20.143 SpringBoard pid=7927 main | SpringBoard: recent839 tapped org.whispersystems.signal
+04:03:20.236 SpringBoard pid=7927 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+04:03:20.237 SpringBoard pid=7927 main | SpringBoard: stage on screen
+04:03:20.237 SpringBoard pid=7927 main | on screen state=2 split=0 bottom=- top=- hover=-
+04:03:20.237 SpringBoard pid=7927 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+04:03:20.237 SpringBoard pid=7927 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:03:20.238 SpringBoard pid=7927 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:03:20.239 SpringBoard pid=7927 main | SpringBoard: opened the top stage
+04:03:20.287 SpringBoard pid=7927 main | SpringBoard: putting org.whispersystems.signal on stack slot 0
+04:03:20.287 SpringBoard pid=7927 main | launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+04:03:20.287 SpringBoard pid=7927 main | SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+04:03:20.287 SpringBoard pid=7927 main | SpringBoard: creating app view for org.whispersystems.signal
+04:03:20.287 SpringBoard pid=7927 main | SpringBoard: created app view for org.whispersystems.signal
+04:03:20.292 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=1
+04:03:20.293 SpringBoard pid=7927 main | SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+04:03:20.294 SpringBoard pid=7927 main | SpringBoard: reg799: setDelegate on org.whispersystems.signal ctrl=0x12c74d4f0
+04:03:20.294 SpringBoard pid=7927 main | SpringBoard: reg799: registered contributor on org.whispersystems.signal handle=0x12c728900 ident=org.whispersystems.signal (addSceneUpdateContributer:)
+04:03:20.297 SpringBoard pid=7927 main | SpringBoard: camera658 org.whispersystems.signal on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+04:03:20.297 SpringBoard pid=7927 main | SpringBoard: org.whispersystems.signal is on stack slot 0
+04:03:20.297 SpringBoard pid=7927 main | hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+04:03:20.299 SpringBoard pid=7927 main | SpringBoard: phonesize680 build 4.5.871 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+04:03:20.303 SpringBoard pid=7927 main | SpringBoard: org.whispersystems.signal stays running in the background
+04:03:20.304 SpringBoard pid=7927 main | SpringBoard: direct852 org.whispersystems.signal was not launched: the picker is shown instead
+04:03:20.315 SpringBoard pid=7927 main | SpringBoard: defer719 touch observer on the bottom card (31 s after start)
+04:03:20.315 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:20.315 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:20.315 SpringBoard pid=7927 main | SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x0 camera=0
+04:03:20.316 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:20.316 SpringBoard pid=7927 main | app-view settings update
+04:03:20.316 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281320b10> { statusBarStyleOverridesToSuppress = (none); }; }
+04:03:20.317 SpringBoard pid=7927 main | app-view settings update done
+04:03:20.337 SpringBoard pid=7927 main | SpringBoard: fitting org.whispersystems.signal's scene to the card
+04:03:20.337 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+04:03:20.545 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:20.622 SpringBoard pid=7927 main | SpringBoard: org.whispersystems.signal stays running in the background
+04:03:20.627 SpringBoard pid=7927 main | SpringBoard: bg719 holding org.whispersystems.signal pid 7959 (audio, stage hold)
+04:03:20.852 SpringBoard pid=7927 main | SpringBoard: host750 bottom card org.whispersystems.signal: detached -> live
+04:03:20.854 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+04:03:20.855 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+04:03:21.868 SpringBoard pid=7927 main | SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+04:03:22.851 SpringBoard pid=7927 main | SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+04:03:24.266 SpringBoard pid=7927 main | SpringBoard: gest770 tap outside the cards at 348,568: minimise queued (0.45 s re-check)
+04:03:24.342 SpringBoard pid=7927 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:24.342 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:24.342 SpringBoard pid=7927 main | app-view settings update
+04:03:24.342 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280cd40c0> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:24.342 SpringBoard pid=7927 main | app-view settings update done
+04:03:24.408 SpringBoard pid=7927 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:03:24.412 SpringBoard pid=7927 main | SpringBoard: phonesize683 build 4.5.871 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+04:03:24.412 SpringBoard pid=7927 main | SpringBoard: core747 UIKit keyboard {{0, 631}, {430, 301}} not given to org.whispersystems.signal: the keyboard system names no keyboard
+04:03:24.523 SpringBoard pid=7927 main | SpringBoard: kbvis768 show 1 start owner=com.apple.Spotlight h=243
+04:03:24.530 SpringBoard pid=7927 main | SpringBoard: kbvis768 show 1 +0.01s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=none | arb on=1 owner=com.apple.Spotlight h=243 | sbkeys={{0, 631}, {430, 301}}
+04:03:24.569 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=2 windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:24.578 SpringBoard pid=7927 main | SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:03:24.581 SpringBoard pid=7927 main | SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: app is not on a stage card (full screen or closed) (no stage shift)
+04:03:24.581 SpringBoard pid=7927 main | SpringBoard: phonesize675 build 4.5.871 is ON; apps: com.beeper.chat.ios (default)
+04:03:24.582 SpringBoard pid=7927 main | SpringBoard: why806 SpringBoard update hide went through for com.apple.Spotlight: wasHidden=1 bypass=0 depth=1 | keep776 arbOn=1 stageOnScreen=1 keep776on=1 owner=com.apple.Spotlight ownerOk=1 stageVisible=1 hosted=0 | medusa803 holding=0 sameWindow=0 | keep806 on=1
+04:03:24.582 SpringBoard pid=7927 main | SpringBoard: why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+04:03:24.586 SpringBoard pid=7927 main | SpringBoard: why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=YES
+04:03:24.884 SpringBoard pid=7927 main | SpringBoard: kbdrag744 dismiss keys (minimiseVisibleStages)
+04:03:24.885 SpringBoard pid=7927 main | SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+04:03:24.886 SpringBoard pid=7927 main | SpringBoard: kbmin702 a keyboard for com.apple.Spotlight came up (not a staged app's): the staged card is minimised to its corner
+04:03:25.042 SpringBoard pid=7927 main | SpringBoard: kbvis768 show 1 +0.52s keys visible? NO (Medusa hidden; Medusa layer hidden/transparent; no layer host; Medusa level 20 not above stage 998) (owner com.apple.Spotlight)
+04:03:25.196 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:25.504 SpringBoard pid=7927 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+04:03:25.505 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=0 parked=1
+04:03:25.505 SpringBoard pid=7927 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[888203729,390215454,2071301498] view=in-window pid=7959 alive=1
+04:03:25.506 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+04:03:25.864 SpringBoard pid=7927 main | SpringBoard: restore726 corner pull refused at 269,911: started on the home bar (primary parked=1 right, second parked=0 right)
+04:03:25.864 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull began at 269,911 v=(-47,-490): left to the system (home / switcher) (parked=1 stage visible=0 home=0 switcher=closed)
+04:03:25.864 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+04:03:25.864 SpringBoard pid=7927 main | SpringBoard: kbdrag744 dismiss keys (tuckOpenStageAwayForHomeGesture)
+04:03:25.865 SpringBoard pid=7927 main | SpringBoard: tucking the open stage for home
+04:03:25.865 SpringBoard pid=7927 main | SpringBoard: org.whispersystems.signal is the only minimized app
+04:03:25.866 SpringBoard pid=7927 main | SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+04:03:25.867 SpringBoard pid=7927 main | SpringBoard: home gesture began, stage minimized
+04:03:25.967 SpringBoard pid=7927 main | SpringBoard: keys697 UIKit keyboard frame {{0, 631}, {430, 301}} not given to org.whispersystems.signal: its card is minimised / parked (another app is typing)
+04:03:25.982 SpringBoard pid=7927 main | SpringBoard: why806 SpringBoard update hide went through for com.apple.Spotlight: wasHidden=1 bypass=0 depth=1 | keep776 arbOn=1 stageOnScreen=1 keep776on=1 owner=com.apple.Spotlight ownerOk=1 stageVisible=0 hosted=0 | medusa803 holding=0 sameWindow=0 | keep806 on=1
+04:03:25.982 SpringBoard pid=7927 main | SpringBoard: why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+04:03:25.982 SpringBoard pid=7927 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:25.982 SpringBoard pid=7927 main | SpringBoard: reason800: re-appended org.whispersystems.signal via in-place (was missing; home/layout path bypassed contributor) ctrl=0x12c74d4f0
+04:03:25.983 SpringBoard pid=7927 main | SpringBoard: keep829 sceneID:org.whispersystems.signal-default minimised: SpringBoard's foreground=NO not applied (settings block); the app stays foreground and active in its corner
+04:03:25.987 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull ended after 0.12 s (system's) at 264,751 moved (-4,-169) v=(-51,-905) home=1 busy=1 switcher=closed
+04:03:25.987 SpringBoard pid=7927 main | SpringBoard: home gesture ended
+04:03:25.990 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:25.990 SpringBoard pid=7927 main | app-view settings update
+04:03:25.990 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280c0e580> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:03:25.990 SpringBoard pid=7927 main | app-view settings update done
+04:03:25.995 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:26.689 SpringBoard pid=7927 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:26.690 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=1 busy=1 stageVisible=0 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:03:26.691 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:26.691 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28103d890> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:03:26.694 SpringBoard pid=7927 bg | arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:03:26.703 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:26.847 SpringBoard pid=7927 main | SpringBoard: kbvis768 show 1 +2.32s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=none | arb on=0 owner=com.apple.Spotlight h=243 | sbkeys=none
+04:03:26.847 SpringBoard pid=7927 main | SpringBoard: parked apps stopped following the home transition
+04:03:27.201 SpringBoard pid=7927 main | SpringBoard: corner771 claimed pull in parked corner (right) at 403,920
+04:03:27.202 SpringBoard pid=7927 main | SpringBoard: corner pull picked up from the system gesture
+04:03:27.203 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull began at 403,920 v=(-27,-81): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+04:03:27.331 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull ended after 0.13 s (ours) at 294,703 moved (-110,-222) v=(-1593,-2511) home=0 busy=0 switcher=closed
+04:03:27.331 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+04:03:27.334 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:27.360 SpringBoard pid=7927 main | SpringBoard: kbvis768 show 1 ended after 2.8s: keys visible NEVER
+04:03:27.727 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+04:03:27.793 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=0
+04:03:27.795 SpringBoard pid=7927 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:27.795 SpringBoard pid=7927 main | SpringBoard: home665 let SpringBoard's update of sceneID:org.whispersystems.signal-default land at card size (corner pull just ended), not refused
+04:03:27.796 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+04:03:27.796 SpringBoard pid=7927 main | SpringBoard: geo748 org.whispersystems.signal geometry unchanged {{0, 0}, {420, 458}}: no scene write
+04:03:27.952 SpringBoard pid=7927 main | SpringBoard: keyfocus772 org.whispersystems.signal restored with SBHomeScreenWindow key: taking the key window as on open
+04:03:27.953 SpringBoard pid=7927 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:03:27.955 SpringBoard pid=7927 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:03:28.002 SpringBoard pid=7927 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=1 level=998 scene=com.apple.springboard fg=0)
+04:03:28.016 SpringBoard pid=7927 main | SpringBoard: pill826 strip opened (top -, bottom org.whispersystems.signal, float -)
+04:03:28.256 SpringBoard pid=7927 main | SpringBoard: host750 bottom card org.whispersystems.signal: minimised -> live
+04:03:28.257 SpringBoard pid=7927 main | SpringBoard: gest770 org.whispersystems.signal minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[888203729,390215454,2071301498] view=in-window pid=7959 alive=1
+04:03:28.257 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+04:03:28.470 SpringBoard pid=7927 main | SpringBoard: pill826 New Stage tapped
+04:03:28.474 SpringBoard pid=7927 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+04:03:28.476 SpringBoard pid=7927 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+04:03:28.634 SpringBoard pid=7927 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+04:03:28.635 SpringBoard pid=7927 main | SpringBoard: opened another stage
+04:03:29.896 SpringBoard pid=7927 main | SpringBoard: putting com.beeper.chat.ios on stack slot 1
+04:03:29.896 SpringBoard pid=7927 main | launch com.beeper.chat.ios state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+04:03:29.897 SpringBoard pid=7927 main | SpringBoard: com.beeper.chat.ios got its default entity with a scene handle provider
+04:03:29.897 SpringBoard pid=7927 main | SpringBoard: creating app view for com.beeper.chat.ios
+04:03:29.897 SpringBoard pid=7927 main | SpringBoard: created app view for com.beeper.chat.ios
+04:03:29.903 SpringBoard pid=7927 main | scene transaction com.beeper.chat.ios actions=1
+04:03:29.904 SpringBoard pid=7927 main | SpringBoard: com.beeper.chat.ios's scene came from SpringBoard's own app view
+04:03:29.904 SpringBoard pid=7927 main | SpringBoard: reg799: setDelegate on com.beeper.chat.ios ctrl=0x104c39d80
+04:03:29.904 SpringBoard pid=7927 main | SpringBoard: reg799: registered contributor on com.beeper.chat.ios handle=0x104c3e960 ident=com.beeper.chat.ios (addSceneUpdateContributer:)
+04:03:29.907 SpringBoard pid=7927 main | SpringBoard: camera658 com.beeper.chat.ios on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+04:03:29.907 SpringBoard pid=7927 main | SpringBoard: com.beeper.chat.ios is on stack slot 1
+04:03:29.907 SpringBoard pid=7927 main | hosted com.beeper.chat.ios state=2 split=0 bottom=org.whispersystems.signal top=com.beeper.chat.ios hover=-
+04:03:29.935 SpringBoard pid=7927 main | SpringBoard: hist866 saved stage pair com.beeper.chat.ios + org.whispersystems.signal (1 in history)
+04:03:29.935 SpringBoard pid=7927 main | SpringBoard: phonesize684 build 4.5.871 is ON: allowlisted apps without the app dylib get safe area = keyboard in the 430x931 scene (bar fixed), the card's window is fixed (no 680-682 chasing), keys at the phone bottom (keys674 NO)
+04:03:29.935 SpringBoard pid=7927 main | SpringBoard: phonesize684 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: bottom=auto (learned, default 345) top=auto (card top) mode=safe (applies at the next card open or 1 s after the keyboard goes down)
+04:03:29.936 SpringBoard pid=7927 main | SpringBoard: phonesize685 build 4.5.871 is OFF (4.5.687: 686's picture is opt-in, /var/mobile/.dynamicstage-phonesize686-on)
+04:03:29.936 SpringBoard pid=7927 main | SpringBoard: phonesize685 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=14 slack=off (684 scene) top=auto (= app y on the card top) keytop=auto (learned keyboard top, default 586) (applies at the next card open or 1.2 s after the keyboard...
+04:03:29.936 SpringBoard pid=7927 main | SpringBoard: phonesize687 build 4.5.871 is OFF (4.5.688: opt-in only, /var/mobile/.dynamicstage-phonesize687-on)
+04:03:29.936 SpringBoard pid=7927 main | SpringBoard: phonesize687 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view=auto (phone top inset, 59) margin=8 top=auto (= view) (applies at the next card open or 1.2 s after the keyboard goes down)
+04:03:29.937 SpringBoard pid=7927 main | SpringBoard: phonesize688 build 4.5.871 is ON: 684 chat geometry; default mode=684 (exact 684); opt-in modes in /var/mobile/.dynamicstage-phonesize688-tune: mode=offset|short|statusbar
+04:03:29.937 SpringBoard pid=7927 main | SpringBoard: phonesize688 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=684 view=auto (57) offset=auto shift=auto (measured) statusbar=auto (= top inset) (applies at the next card open or 1.2 s after the keyboard goes down)
+04:03:29.938 SpringBoard pid=7927 main | SpringBoard: phonesize694 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: mode=squash view_top=59 sy=auto
+04:03:29.938 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+04:03:29.939 SpringBoard pid=7927 main | SpringBoard: phonesize683 com.beeper.chat.ios not in 683 mode (off file, camera, dylib or not allowlisted): 4.5.682 window rules
+04:03:29.939 SpringBoard pid=7927 main | SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+4ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app...
+04:03:29.939 SpringBoard pid=7927 main | SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+04:03:29.939 SpringBoard pid=7927 main | SpringBoard: phonesize675 com.beeper.chat.ios has no scene to write, back to card size
+04:03:29.940 SpringBoard pid=7927 main | SpringBoard: home665 let SpringBoard's update of sceneID:com.beeper.chat.ios-default land at card size (home transition finishing), not refused
+04:03:29.940 SpringBoard pid=7927 main | scene update begin: 1 identical updates not traced (perf706)
+04:03:29.940 SpringBoard pid=7927 main | scene update begin sceneID:com.beeper.chat.ios-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:29.940 SpringBoard pid=7927 main | SpringBoard: camera658 hosted scene sceneID:com.beeper.chat.ios-default fg=1 occluded=0 deactivation=0x0 camera=0
+04:03:29.941 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present com.beeper.chat.ios ctrl=0x104c39d80 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:29.941 SpringBoard pid=7927 main | app-view settings update
+04:03:29.941 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2813f3ae0> { statusBarStyleOverridesToSuppress = (none); }; }
+04:03:29.941 SpringBoard pid=7927 main | app-view settings update done
+04:03:29.948 SpringBoard pid=7927 main | SpringBoard: fitting com.beeper.chat.ios's scene to the card
+04:03:29.948 SpringBoard pid=7927 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {420, 458}}
+04:03:30.395 SpringBoard pid=7927 main | SpringBoard: host750 top card com.beeper.chat.ios: detached -> live
+04:03:30.395 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card live; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:30.514 SpringBoard pid=7927 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+04:03:30.514 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:30.514 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281121620> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:30.515 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:30.526 SpringBoard pid=7927 main | SpringBoard: com.beeper.chat.ios stays running in the background
+04:03:30.526 SpringBoard pid=7927 main | SpringBoard: bg719 holding com.beeper.chat.ios pid 7966 (audio, stage hold)
+04:03:31.288 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios switching to 430x931 (phone width, scaled to the card (4.5.680 always full screen; the 679 scale file is ignored))
+04:03:31.288 SpringBoard pid=7927 main | SpringBoard: phonesize675 com.beeper.chat.ios ON (phonesize678 always: card is showing the app (4.5.680 always full screen)) t+0ms: scene 430x931 safeArea {59, 0, 34, 0} shown at x0.9767 in card {420, 458} (screen {{5, 5}, {420, 458}}); keyboard top y=586 -> visible part of the app y=117..586; card point (x,y) = app...
+04:03:31.288 SpringBoard pid=7927 main | SpringBoard: phonesize684 com.beeper.chat.ios scene 430x931 safeArea {118, 0, 345, 0}: card shows app y 117..586 at x0.9767, fixed (keyboard up or down); K=345 (default (346 pt keyboard, top 586)), 688 mode=684 (exact 684); keys stay at the phone bottom (keys674 NO); no 680-682 window moves
+04:03:31.288 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+04:03:31.290 SpringBoard pid=7927 main | SpringBoard: phonesize698 tune no tune file (4.5.702: tune files are no longer read), built-in values | in use: view_top=59 side_crop=0.0 zoom=off sx=auto sy=auto x_shift=0
+04:03:31.290 SpringBoard pid=7927 main | SpringBoard: phonesize698 com.beeper.chat.ios not bigger (tune gives 697's picture): 697 picture x0.9767 / y0.8691
+04:03:31.290 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+04:03:31.290 SpringBoard pid=7927 main | SpringBoard: beeper707 com.beeper.chat.ios phone-size host drawn flat: 10 nested rounded clips dropped, host clip off (the card clips), squash 0.977x0.869
+04:03:31.290 SpringBoard pid=7927 main | SpringBoard: phonesize690 tune built-in defaults | in use: on=1 strip_top=59 strip_height=68 place_y=0 touch=forward
+04:03:31.290 SpringBoard pid=7927 main | SpringBoard: phonesize690 com.beeper.chat.ios no top-bar strip (694 squash: the real top bar is shown (copied bar only with 694 mode=691 or the 694 off file))
+04:03:31.290 SpringBoard pid=7927 main | force geometry com.beeper.chat.ios depth=0 frame={{0, 0}, {430, 931}}
+04:03:31.290 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {420, 458}}
+04:03:31.292 SpringBoard pid=7927 main | app-view settings update
+04:03:31.293 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = <BSMutableSettings: 0x280462260> { frame = NSRect: {{0, 0}, {430, 931}}; }; subclassChanges = <BSSettingsDiff: 0x2811d3a80> { safeAreaInsetsPortrait = UIEdgeInsets: {118, 0, 345, 0}; }; }
+04:03:31.293 SpringBoard pid=7927 main | app-view settings update done
+04:03:31.293 SpringBoard pid=7927 main | SpringBoard: phonesize675 com.beeper.chat.ios scene size sent t+5ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0} (phone size)
+04:03:31.293 SpringBoard pid=7927 main | SpringBoard: phonesize678 com.beeper.chat.ios pre-grown t+5ms: mapping bottom-anchored (the app's bottom above the home inset on the card's bottom edge)
+04:03:31.421 SpringBoard pid=7927 main | SpringBoard: camera660 com.beeper.chat.ios on a card: asked it to report its camera hooks (a 'camera660 com.beeper.chat.ios hello' line should follow)
+04:03:31.604 SpringBoard pid=7927 main | SpringBoard: phonesize676 com.beeper.chat.ios scene read back t+317ms: frame {{0, 0}, {430, 931}} safeArea {118, 0, 345, 0}; wanted {{0, 0}, {430, 931}} (landed); host bounds {{0, 0}, {430, 931}} x0.9767 center {210, 353.27703984819732} in card {{0, 0}, {420, 458}}
+04:03:31.605 SpringBoard pid=7927 main | SpringBoard: phonesize678 com.beeper.chat.ios pre-grown scene landed t+317ms, no keyboard yet: no nudge
+04:03:32.073 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:03:32.075 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281388600> { hostContextIdentifierForSnapshotting = f2b23015; scenePresenterRenderIdentifierForSnapshotting = c8646431608d1702; }; }
+04:03:32.527 SpringBoard pid=7927 main | SpringBoard: com.beeper.chat.ios after two seconds - hosting the app, scene present, view in the card
+04:03:32.769 SpringBoard pid=7927 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+04:03:32.776 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:03:32.777 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:32.777 SpringBoard pid=7927 main | app-view settings update
+04:03:32.777 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2813890b0> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:32.777 SpringBoard pid=7927 main | app-view settings update done
+04:03:32.778 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:33.685 SpringBoard pid=7927 main | SpringBoard: rim651 system gesture held at 253,464 (rim)
+04:03:34.073 SpringBoard pid=7927 main | SpringBoard: divider867 split set to 33% top / 67% bottom (cards and scenes laid out once)
+04:03:34.091 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=0
+04:03:34.093 SpringBoard pid=7927 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:34.093 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:34.093 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:34.094 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 612}}
+04:03:34.095 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:34.096 SpringBoard pid=7927 main | app-view settings update
+04:03:34.096 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2805a7d80> { frame = NSRect: {{0, 0}, {420, 612}}; }; subclassChanges = (none); }
+04:03:34.096 SpringBoard pid=7927 main | app-view settings update done
+04:03:34.102 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x304 shows the real app y 59..586 at x0.9767 (full width) / y0.5769; app y 586 on the card bottom (bar line, as 684); top inset 275, scene/keyboard 684
+04:03:35.138 SpringBoard pid=7927 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 612}}
+04:03:35.139 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:35.139 SpringBoard pid=7927 main | app-view settings update
+04:03:35.139 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281129a70> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:35.139 SpringBoard pid=7927 main | app-view settings update done
+04:03:35.140 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:35.914 SpringBoard pid=7927 main | SpringBoard: perf812 28517 feature-gate calls (1721 uncached) in 15 s
+04:03:35.914 SpringBoard pid=7927 main | SpringBoard: rim651 hit top-outer-bottom at 213,324 -> DSStageRimHitView
+04:03:36.071 SpringBoard pid=7927 main | SpringBoard: rim651 drag began at 215,323 won by top-rim-pan
+04:03:36.294 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 612}}
+04:03:39.497 SpringBoard pid=7927 main | scene update begin: 3 identical updates not traced (perf706)
+04:03:39.497 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 612}}
+04:03:39.532 SpringBoard pid=7927 main | SpringBoard: divider867 split set to 65% top / 35% bottom (cards and scenes laid out once)
+04:03:39.538 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=0
+04:03:39.539 SpringBoard pid=7927 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:39.539 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:39.540 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 320}}
+04:03:39.540 SpringBoard pid=7927 main | app-view settings update
+04:03:39.540 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2806711c0> { frame = NSRect: {{0, 0}, {420, 320}}; }; subclassChanges = (none); }
+04:03:39.540 SpringBoard pid=7927 main | app-view settings update done
+04:03:39.545 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios no squash (the card already shows view_top at the uniform scale): uniform x0.9767
+04:03:39.545 SpringBoard pid=7927 main | SpringBoard: phonesize698 com.beeper.chat.ios not bigger (694 squash not in use): 697 picture x0.9767 / y0.9767
+04:03:39.546 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 0..610 in card 420x596; side crop 0.0 pt each side
+04:03:40.477 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 320}}
+04:03:42.625 SpringBoard pid=7927 main | SpringBoard: divider867 split set to 50% top / 50% bottom (cards and scenes laid out once)
+04:03:42.647 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=0
+04:03:42.648 SpringBoard pid=7927 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:42.649 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:42.649 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+04:03:42.651 SpringBoard pid=7927 main | app-view settings update
+04:03:42.651 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2804e8820> { frame = NSRect: {{0, 0}, {420, 458}}; }; subclassChanges = (none); }
+04:03:42.651 SpringBoard pid=7927 main | app-view settings update done
+04:03:42.656 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+04:03:42.656 SpringBoard pid=7927 main | SpringBoard: phonesize698 com.beeper.chat.ios not bigger (tune gives 697's picture): 697 picture x0.9767 / y0.8691
+04:03:42.656 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+04:03:43.146 SpringBoard pid=7927 main | scene update begin: 1 identical updates not traced (perf706)
+04:03:43.146 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+04:03:43.289 SpringBoard pid=7927 main | SpringBoard: rim651 system gesture held at 0,496 (rim)
+04:03:43.340 SpringBoard pid=7927 main | SpringBoard: rim651 drag began at 11,498 won by top-rim-pan
+04:03:44.491 SpringBoard pid=7927 main | SpringBoard: drag706 com.beeper.chat.ios minimised by the drag: finger at the corner v=(32,1512) moved (23,420) released at 34,918
+04:03:45.704 SpringBoard pid=7927 main | SpringBoard: host750 top card com.beeper.chat.ios: live -> minimised
+04:03:45.705 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=1
+04:03:45.705 SpringBoard pid=7927 main | SpringBoard: gest770 com.beeper.chat.ios live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:03:45.706 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:46.099 SpringBoard pid=7927 main | SpringBoard: rim651 system gesture held at 251,469 (rim)
+04:03:46.103 SpringBoard pid=7927 main | SpringBoard: rim651 hit main-outer-top at 251,469 -> DSStageDragShellView
+04:03:46.249 SpringBoard pid=7927 main | SpringBoard: rim651 drag began at 247,458 won by main-shell-pan
+04:03:46.302 SpringBoard pid=7927 main | SpringBoard: phonesize694 squash survived 15 s; crash latch cleared
+04:03:47.432 SpringBoard pid=7927 main | SpringBoard: gest770 tap outside the cards at 23,901: nothing done (edge)
+04:03:47.692 SpringBoard pid=7927 main | scene update begin: 4 identical updates not traced (perf706)
+04:03:47.692 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+04:03:47.982 SpringBoard pid=7927 main | SpringBoard: gest770 tap outside the cards at 28,898: nothing done (edge)
+04:03:48.533 SpringBoard pid=7927 main | SpringBoard: gest770 tap outside the cards at 25,925: nothing done (edge)
+04:03:48.582 SpringBoard pid=7927 main | SpringBoard: corner771 claimed pull in parked corner (left) at 25,906
+04:03:48.582 SpringBoard pid=7927 main | SpringBoard: corner pull picked up from the system gesture
+04:03:48.582 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull began at 25,906 v=(0,-233): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+04:03:48.715 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 375x404 shows the real app y 59..586 at x0.8731 (full width) / y0.7664; app y 586 on the card bottom (bar line, as 684); top inset 124, scene/keyboard 684
+04:03:48.715 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.8731 (pre-grown, bottom-anchored): visible app y 123..586 in card 375x404; side crop 0.0 pt each side
+04:03:48.716 SpringBoard pid=7927 main | SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {124, 0, 345, 0}, squash placed on the first frame (card 375x404), no resize
+04:03:48.748 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull ended after 0.17 s (ours) at 83,753 moved (58,-170) v=(879,-1393) home=0 busy=0 switcher=closed
+04:03:48.748 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+04:03:49.203 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x458 shows the real app y 59..586 at x0.9767 (full width) / y0.8691; app y 586 on the card bottom (bar line, as 684); top inset 118, scene/keyboard 684
+04:03:49.203 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 117..586 in card 420x458; side crop 0.0 pt each side
+04:03:49.335 SpringBoard pid=7927 main | SpringBoard: keyfocus772 com.beeper.chat.ios restored with SBHomeScreenWindow key: taking the key window as on open
+04:03:49.336 SpringBoard pid=7927 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:03:49.338 SpringBoard pid=7927 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:03:49.650 SpringBoard pid=7927 main | SpringBoard: host750 top card com.beeper.chat.ios: minimised -> live
+04:03:49.651 SpringBoard pid=7927 main | SpringBoard: gest770 com.beeper.chat.ios minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:03:49.651 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card live; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:49.752 SpringBoard pid=7927 main | SpringBoard: rim651 system gesture held at 226,463 (rim)
+04:03:50.391 SpringBoard pid=7927 main | SpringBoard: divider867 split set to 59% top / 41% bottom (cards and scenes laid out once)
+04:03:50.399 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=0
+04:03:50.400 SpringBoard pid=7927 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:50.401 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:50.401 SpringBoard pid=7927 main | scene update begin: 1 identical updates not traced (perf706)
+04:03:50.401 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:03:50.402 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 537}}
+04:03:50.403 SpringBoard pid=7927 main | app-view settings update
+04:03:50.403 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x28044ec00> { frame = NSRect: {{0, 0}, {420, 537}}; }; subclassChanges = (none); }
+04:03:50.403 SpringBoard pid=7927 main | app-view settings update done
+04:03:50.413 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios squash: card 420x379 shows the real app y 59..586 at x0.9767 (full width) / y0.7192; app y 586 on the card bottom (bar line, as 684); top inset 198, scene/keyboard 684
+04:03:51.192 SpringBoard pid=7927 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+04:03:51.196 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:03:51.197 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=DSStageWindow
+04:03:51.197 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280c9b570> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:51.198 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=DSStageWindow
+04:03:51.991 SpringBoard pid=7927 main | SpringBoard: rim651 system gesture held at 222,546 (rim)
+04:03:52.114 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 537}}
+04:03:52.330 SpringBoard pid=7927 main | SpringBoard: divider867 split set to 32% top / 68% bottom (cards and scenes laid out once)
+04:03:52.339 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=0
+04:03:52.341 SpringBoard pid=7927 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:03:52.342 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:03:52.342 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 295}}
+04:03:52.343 SpringBoard pid=7927 main | app-view settings update
+04:03:52.343 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2805a1820> { frame = NSRect: {{0, 0}, {420, 295}}; }; subclassChanges = (none); }
+04:03:52.344 SpringBoard pid=7927 main | app-view settings update done
+04:03:52.356 SpringBoard pid=7927 main | SpringBoard: phonesize694 com.beeper.chat.ios no squash (the card already shows view_top at the uniform scale): uniform x0.9767
+04:03:52.357 SpringBoard pid=7927 main | SpringBoard: phonesize698 com.beeper.chat.ios not bigger (694 squash not in use): 697 picture x0.9767 / y0.9767
+04:03:52.357 SpringBoard pid=7927 main | SpringBoard: phonesize679 com.beeper.chat.ios scene 430x931 at scale 0.9767 (pre-grown, bottom-anchored): visible app y 0..636 in card 420x621; side crop 0.0 pt each side
+04:03:53.552 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:03:53.581 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull began at 239,882 v=(82,-587): left to the system (home / switcher) (parked=0 stage visible=1 home=0 switcher=closed)
+04:03:53.581 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+04:03:53.582 SpringBoard pid=7927 main | SpringBoard: home gesture began, stage open
+04:03:53.602 SpringBoard pid=7927 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+04:03:53.608 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=1 busy=1 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+04:03:53.608 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default empty minimised=0 home=1 busy=1 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBMainSwitcherWindow
+04:03:53.608 SpringBoard pid=7927 main | app-view settings update
+04:03:53.608 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281172a00> { targetOfEventDeferringEnvironments = (empty); }; }
+04:03:53.608 SpringBoard pid=7927 main | app-view settings update done
+04:03:53.609 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=0 home=1 busy=1 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBMainSwitcherWindow
+04:03:53.617 SpringBoard pid=7927 main | SpringBoard: home731 the home swipe committed (up 65 pt, v 2247): tucking
+04:03:53.618 SpringBoard pid=7927 main | SpringBoard: tucking the open stage for home
+04:03:53.618 SpringBoard pid=7927 main | SpringBoard: home sends the two stages to opposite corners
+04:03:53.633 SpringBoard pid=7927 main | SpringBoard: slide728 home tuck: 2 card(s) slide out the side, then park in their corner
+04:03:53.659 SpringBoard pid=7927 main | SpringBoard: reason800: re-appended org.whispersystems.signal via in-place (was missing; home/layout path bypassed contributor) ctrl=0x12c74d4f0
+04:03:53.663 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull ended after 0.08 s (system's) at 235,745 moved (-4,-171) v=(-53,-3233) home=1 busy=1 switcher=closed
+04:03:53.663 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+04:03:53.663 SpringBoard pid=7927 main | SpringBoard: home gesture ended
+04:03:53.665 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:53.666 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:03:53.925 SpringBoard pid=7927 main | SpringBoard: phonesize695 com.beeper.chat.ios kept 430x931 safeArea {0, 0, 345, 0} while minimised (keyboard down): no shrink, no scene write; restore needs no relayout
+04:03:54.540 SpringBoard pid=7927 main | SpringBoard: parked apps stopped following the home transition
+04:03:54.999 SpringBoard pid=7927 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> minimised
+04:03:54.999 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=0 busy=1 stage visible=0 parked=1
+04:03:54.999 SpringBoard pid=7927 main | SpringBoard: gest770 org.whispersystems.signal live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[888203729,390215454,2071301498] view=in-window pid=7959 alive=1
+04:03:55.000 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:55.000 SpringBoard pid=7927 main | SpringBoard: host750 top card com.beeper.chat.ios: live -> minimised
+04:03:55.000 SpringBoard pid=7927 main | SpringBoard: gest770 com.beeper.chat.ios live -> minimised app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:03:55.000 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:03:57.400 SpringBoard pid=7927 main | scene update begin: 1 identical updates not traced (perf706)
+04:03:57.400 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:03:58.657 SpringBoard pid=7927 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:03:58.663 SpringBoard pid=7927 main | SpringBoard: keys697 UIKit keyboard frame {{0, 631}, {430, 301}} not given to com.beeper.chat.ios: its card is minimised / parked (another app is typing)
+04:03:58.668 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:03:58.669 SpringBoard pid=7927 main | SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:03:58.669 SpringBoard pid=7927 main | SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+04:03:59.293 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:01.861 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:01.865 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present com.beeper.chat.ios ctrl=0x104c39d80 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=0 busy=1 stageVisible=0 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:04:01.865 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:01.865 SpringBoard pid=7927 main | app-view settings update
+04:04:01.865 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280dac780> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:01.865 SpringBoard pid=7927 main | app-view settings update done
+04:04:01.866 SpringBoard pid=7927 bg | arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:04:01.875 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:02.013 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:02.098 SpringBoard pid=7927 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:04:02.115 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:02.116 SpringBoard pid=7927 main | SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:04:02.500 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:02.744 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:03.159 SpringBoard pid=7927 main | scene update begin: 2 identical updates not traced (perf706)
+04:04:03.159 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:04:03.849 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:03.850 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:03.850 SpringBoard pid=7927 main | app-view settings update
+04:04:03.850 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2811a4930> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:03.851 SpringBoard pid=7927 main | app-view settings update done
+04:04:03.851 SpringBoard pid=7927 bg | arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:04:03.862 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:04.489 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:04.684 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default empty minimised=1 home=0 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:04.684 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280f8f510> { targetOfEventDeferringEnvironments = (empty); }; }
+04:04:04.754 SpringBoard pid=7927 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+04:04:04.766 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:04.767 SpringBoard pid=7927 main | SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x9b23c < DynamicStage+0x94824 < DynamicStage+0xc8f88 < DynamicStage+0x175e0 < DynamicStage+0x80f8 < DynamicStage+0x17580 < libdispatch+0x2320
+04:04:05.394 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:06.645 SpringBoard pid=7927 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+04:04:06.718 SpringBoard pid=7927 main | SpringBoard: pill826 strip opened (top org.whispersystems.signal minimised, bottom com.beeper.chat.ios minimised, float -)
+04:04:06.813 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:06.814 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present com.beeper.chat.ios ctrl=0x104c39d80 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=0 busy=0 stageVisible=0 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:04:06.814 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:com.beeper.chat.ios-default keyboardFocus minimised=1 home=0 busy=0 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+04:04:06.814 SpringBoard pid=7927 main | app-view settings update
+04:04:06.814 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:com.beeper.chat.ios-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280e3f9c0> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:06.814 SpringBoard pid=7927 main | app-view settings update done
+04:04:06.817 SpringBoard pid=7927 bg | arbiter on=0 src=com.apple.Spotlight frame={{0, 0}, {0, 0}}
+04:04:06.826 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF (com.apple.Spotlight) state=4 windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:07.142 SpringBoard pid=7927 main | SpringBoard: corner771 claimed pull in parked corner (right) at 411,911
+04:04:07.142 SpringBoard pid=7927 main | SpringBoard: corner pull picked up from the system gesture
+04:04:07.143 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull began at 411,911 v=(-54,-255): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+04:04:07.273 SpringBoard pid=7927 main | SpringBoard: phonesize695 com.beeper.chat.ios restored: scene still 430x931 safeArea {0, 0, 345, 0}, squash placed on the first frame (card 420x621), no resize
+04:04:07.273 SpringBoard pid=7927 main | SpringBoard: restored the right stage, the other stays minimised
+04:04:07.274 SpringBoard pid=7927 main | SpringBoard: gest770 edge pull ended after 0.13 s (ours) at 337,638 moved (-75,-279) v=(-697,-4236) home=0 busy=0 switcher=closed
+04:04:07.274 SpringBoard pid=7927 main | SpringBoard: perf812 27525 feature-gate calls (1749 uncached) in 21 s
+04:04:07.274 SpringBoard pid=7927 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=1
+04:04:07.400 SpringBoard pid=7927 main | scene update begin: 2 identical updates not traced (perf706)
+04:04:07.400 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 295}}
+04:04:07.450 SpringBoard pid=7927 main | SpringBoard: diag855 Spotlight keys OFF +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+04:04:07.715 SpringBoard pid=7927 main | SpringBoard: restore847 top card back on screen (restore) still had the home-swipe still over the app: dropped (as a drag begin does)
+04:04:07.899 SpringBoard pid=7927 main | SpringBoard: keyfocus772 com.beeper.chat.ios restored with SBHomeScreenWindow key: taking the key window as on open
+04:04:07.900 SpringBoard pid=7927 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+04:04:07.901 SpringBoard pid=7927 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+04:04:08.112 SpringBoard pid=7927 main | SpringBoard: rim651 system gesture held at 235,304 (rim)
+04:04:08.114 SpringBoard pid=7927 main | SpringBoard: rim651 hit top-outer-top at 235,304 -> DSStageRimHitView
+04:04:08.214 SpringBoard pid=7927 main | SpringBoard: host750 top card com.beeper.chat.ios: minimised -> live
+04:04:08.214 SpringBoard pid=7927 main | SpringBoard: gest770 com.beeper.chat.ios minimised -> live app view: mode=4 fg=1 active=1 deact=0 layerHosts=[624935224] view=in-window pid=7966 alive=1
+04:04:08.214 SpringBoard pid=7927 main | SpringBoard: pub807: external-foreground now contains com.beeper.chat.ios=YES (card live; external=YES workspace=nil handle=yes scene=yes; 2 external-foreground handle(s))
+04:04:08.263 SpringBoard pid=7927 main | SpringBoard: rim651 drag began at 237,311 won by top-rim-pan
+04:04:08.663 SpringBoard pid=7927 main | SpringBoard: rim651 system gesture held at 234,302 (rim)
+04:04:09.097 SpringBoard pid=7927 main | SpringBoard: phonesize695 keep-while-minimised survived 15 s; crash latch cleared
+04:04:09.855 SpringBoard pid=7927 main | SpringBoard: bg719 released com.beeper.chat.ios pid 7966 (card closed)
+04:04:09.855 SpringBoard pid=7927 main | SpringBoard: reg799: removed contributor from com.beeper.chat.ios handle=0x104c3e960
+04:04:09.856 SpringBoard pid=7927 main | SpringBoard: phonesize675 com.beeper.chat.ios OFF (app view torn down)
+04:04:09.856 SpringBoard pid=7927 main | scene block sceneID:com.beeper.chat.ios-default frame={{0, 0}, {430, 931}}
+04:04:09.856 SpringBoard pid=7927 main | SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing (card torn down just now): its last update is not a reason to refit the open stage
+04:04:09.856 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.beeper.chat.ios-default's phone-size update lands at card size, not refused)
+04:04:09.856 SpringBoard pid=7927 main | SpringBoard: close741 sceneID:com.beeper.chat.ios-default is closing: update landed, no refit of the open stage
+04:04:10.098 SpringBoard pid=7927 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x12c74d4f0 (reg799 holding the claim) card[mode=4 io=1 minimised=1 home=0 busy=0 stageVisible=1 parked=1 win=DSStageWindow hid=0 a=1.00]
+04:04:10.098 SpringBoard pid=7927 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=1 home=0 busy=0 stageVisible=1 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=DSStageWindow
+04:04:10.098 SpringBoard pid=7927 main | app-view settings update
+04:04:10.098 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x2812a05a0> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+04:04:10.098 SpringBoard pid=7927 main | app-view settings update done
+04:04:10.381 SpringBoard pid=7927 main | SpringBoard: host750 top card com.beeper.chat.ios: live -> detached
+04:04:10.430 SpringBoard pid=7927 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=1 level=998 scene=com.apple.springboard fg=0)
+04:04:10.434 SpringBoard pid=7927 main | SpringBoard: pill826 strip opened (top org.whispersystems.signal minimised, bottom -, float -)
+04:04:11.855 SpringBoard pid=7927 main | SpringBoard: pill826 New Stage tapped
+04:04:11.937 SpringBoard pid=7927 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+04:04:11.979 SpringBoard pid=7927 main | scene transaction org.whispersystems.signal actions=0
+04:04:11.980 SpringBoard pid=7927 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+04:04:11.980 SpringBoard pid=7927 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+04:04:11.981 SpringBoard pid=7927 main | scene update begin: 1 identical updates not traced (perf706)
+04:04:11.981 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+04:04:11.981 SpringBoard pid=7927 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 621}}
+04:04:11.981 SpringBoard pid=7927 main | app-view settings update
+04:04:11.981 SpringBoard pid=7927 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x28007ca80> { frame = NSRect: {{0, 0}, {420, 621}}; }; subclassChanges = (none); }
+04:04:11.981 SpringBoard pid=7927 main | app-view settings update done
+04:04:11.988 SpringBoard pid=7927 main | SpringBoard: opened another stage
+04:04:12.524 SpringBoard pid=7927 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 621}}
+
+--- crash ---
+
+--- diagnostics ---
+
+--- kbvis768 ---
+04:03:24.524 kbvis768 show 1 start owner=com.apple.Spotlight h=243
+04:03:24.530 kbvis768 show 1 +0.01s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=none | arb on=1 owner=com.apple.Spotlight h=243 | sbkeys={{0, 631}, {430, 301}}
+04:03:24.583 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+04:03:24.587 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=YES
+04:03:25.043 kbvis768 show 1 +0.52s keys visible? NO (Medusa hidden; Medusa layer hidden/transparent; no layer host; Medusa level 20 not above stage 998) (owner com.apple.Spotlight)
+04:03:25.983 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=YES
+04:03:26.848 kbvis768 show 1 +2.32s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=none | arb on=0 owner=com.apple.Spotlight h=243 | sbkeys=none
+04:03:27.360 kbvis768 show 1 ended after 2.8s: keys visible NEVER

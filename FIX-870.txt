@@ -1,0 +1,9 @@
+4.5.870 audit fixes, each off = exact 869 path:
+restore870 finishCornerRestoreOfCard: gesture-wait retry capped at 20 (6 s), card weak, dropped if no longer _container/_topContainer/_floatContainer. No _spam700Gen check: gen bumps on any minimise/restore, so restoring the other card would drop this card's wake/foreground; the existing parked check already covers "minimised again".
+reveal870 restore reveal block: card weak, skipped if card gone (same gen reasoning).
+front870 returnFrontToWhereItWas: weak self, skipped if !isStageVisible after 0.35 s. No generation check (spam700Gen bumps on "stage on screen" right after hosting and would drop every legit call).
+intro870 showIntroIfNeeded: introShown re-checked inside the 8 s block.
+kbseq870 noteKeyboardFrame scene-update waits: static seq bumped per scheduled replay and per applied frame; stale replays dropped. Lift logic untouched (top card fixed, bottom lifts).
+size870 deliverStageSizeToApp trap deferral capped at 20 (16 s), reset on success.
+host870 reportHostingOutcome: generation counter, only latest report runs.
+Untouched: clampOversizedSubviewsOf, strip790.

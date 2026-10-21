@@ -614,3 +614,14 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 
 ## 4.5.869
 - No off file: this build only deletes code that nothing ever called (26 exported functions, 5 helpers, DSCrashReports.m), so there is no running behaviour to switch back. To go back fully, install 4.5.868 from the repo.
+
+## 4.5.870
+- /var/mobile/.dynamicstage-restore870-off : A restore that waits for a system gesture retries forever and holds the card strongly again (869)
+- /var/mobile/.dynamicstage-reveal870-off : The delayed reveal after a restore runs even if the card is gone (869)
+- /var/mobile/.dynamicstage-front870-off : Putting the previous app / home screen back in front runs even if the stage was closed in the 0.35 s wait (869)
+- /var/mobile/.dynamicstage-intro870-off : The walkthrough's 8 s wait does not re-check whether it was already shown (869)
+- /var/mobile/.dynamicstage-kbseq870-off : Keyboard frames waiting out a scene update are replayed even after a newer frame (869)
+- /var/mobile/.dynamicstage-size870-off : Size delivery that waits for a safe moment retries forever (869)
+- /var/mobile/.dynamicstage-host870-off : Every hosting reports after 2.5 s, even when a newer hosting replaced it (869)
+- /var/mobile/.dynamicstage-core870-off : Back to 4.5.869 (all of the above)
+- Latches: restore870-crashed, reveal870-crashed, front870-crashed, intro870-crashed, kbseq870-crashed, size870-crashed, host870-crashed

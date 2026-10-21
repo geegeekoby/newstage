@@ -1,3 +1,6 @@
+## 4.5.873
+4.5.873: divreset873: closing a card (swipe to close, close all, closing the front card, split collapse, opening the app full screen) resets the divider to the even 50/50 split and clears the saved ratio. Minimise, restore, swap, keyboard and respring keep it.
+
 ## 4.5.872
 4.5.872: crash872: the boot log line names the feature last active before the previous exit
 

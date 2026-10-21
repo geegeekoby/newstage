@@ -633,3 +633,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-crash872-off : No last-feature breadcrumb (the 30 s heartbeat no longer writes .dynamicstage-tag872, boot line unchanged)
 - /var/mobile/.dynamicstage-core872-off : Back to 4.5.871
 - Latch: none (file write in the existing heartbeat only)
+
+## 4.5.873
+- /var/mobile/.dynamicstage-divreset873-off : Closing cards keeps the dragged split ratio (as 872)
+- /var/mobile/.dynamicstage-core873-off : Back to 4.5.872
+- Latch: divreset873 (/var/mobile/.dynamicstage-divreset873-crashed)

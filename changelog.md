@@ -1,3 +1,6 @@
+## 4.5.868
+4.5.868: audit: feature switches answer faster (perf868), no behaviour change
+
 ## 4.5.867
 4.5.867: drag divider to resize the two-card split (divider867)
 

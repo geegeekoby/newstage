@@ -606,3 +606,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-divider867-off : Drag the slim grabber between the two cards to resize the split (30-70%, saved); apps are resized once when you let go
 - /var/mobile/.dynamicstage-core867-off : Back to 4.5.866
 - Latch: divider867-crashed
+
+## 4.5.868
+- /var/mobile/.dynamicstage-perf868-off : Feature switches walk the full 821-867 master chain on every check again (no 1 s per-level cache)
+- /var/mobile/.dynamicstage-core868-off : Back to 4.5.867
+- Latch: none (pure in-memory cache, no new feature path)

@@ -1,3 +1,6 @@
+## 4.5.875
+4.5.875: gate875: feature-gate answers are cached 2 s (off files were already re-read only every 2 s), halving the slow-path checks
+
 ## 4.5.874
 4.5.874: tuck874: a home swipe with every card already minimised no longer re-runs the slide and park
 

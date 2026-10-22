@@ -1,0 +1,1 @@
+4.5.875 gate875: DSPerfFileCached re-reads each off file at most every 2.0 s (code-proven), so the perf812 per-name cache and the perf868 DS868Chain cache now hold 2.0 s (DS875Window) instead of 1.0 s. Off/latched/core875-off -> 1.0 s.

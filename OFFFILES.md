@@ -643,3 +643,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-tuck874-off : Home swipe re-runs the tuck as 873
 - /var/mobile/.dynamicstage-core874-off : Back to 4.5.873
 - Latch: tuck874 (/var/mobile/.dynamicstage-tuck874-crashed)
+
+## 4.5.875
+- /var/mobile/.dynamicstage-gate875-off : Gate answers cached 1 s as 874
+- /var/mobile/.dynamicstage-core875-off : Back to 4.5.874
+- Latch: gate875 (/var/mobile/.dynamicstage-gate875-crashed)

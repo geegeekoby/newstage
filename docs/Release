@@ -6,12 +6,12 @@ Codename: ios
 Architectures: iphoneos-arm64
 Components: main
 Description: Stage Manager Reimagined for iPhone, rebuilt for rootless jailbreaks
-Date: Thu, 22 Oct 2026 13:52:40 GMT
+Date: Thu, 22 Oct 2026 13:58:30 GMT
 MD5Sum:
- 06b7fc5750e7b55d46cdedfc93832405 201596 Packages
- 4db42ea33642c3fd0bc4af9edb6d9f1e 25926 Packages.gz
- 1e1fd69a9cc09324dbee9f8abd7afbd8 21835 Packages.bz2
+ f8b580538a60d9316d800eae2059128a 202423 Packages
+ f3dbea0e6287d91b7f9bf850125796fc 26030 Packages.gz
+ 20b6aab591d3b2af50a925348d833551 21924 Packages.bz2
 SHA256:
- c854d168969991daff0d04df0d82cb6b76b215f0f2c3c9e2b42d162da99d7e81 201596 Packages
- 39ae8ee0ae6cc8c2dfbee582213e9a6aaa584165e33c480bd3eb95dc3d951509 25926 Packages.gz
- 86688433602c2b20a8bce41122aacd7e9a1db0f3c4a803671afdfbef4b702e2d 21835 Packages.bz2
+ e8d6a8755499b6f1153a45bd499d4691a7bd1a8c4e5f9c29875c6f0a80eddf19 202423 Packages
+ aebf007ebb0335894aa6df88c21908f18924b32ddf9b135f0d2e7aefb8b0e8a4 26030 Packages.gz
+ c9bca8f3b5bf29a3ace2e58ede9f0444c094347ce1ecf841df52f5023a15f9a1 21924 Packages.bz2

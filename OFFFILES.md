@@ -638,3 +638,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-divreset873-off : Closing cards keeps the dragged split ratio (as 872)
 - /var/mobile/.dynamicstage-core873-off : Back to 4.5.872
 - Latch: divreset873 (/var/mobile/.dynamicstage-divreset873-crashed)
+
+## 4.5.874
+- /var/mobile/.dynamicstage-tuck874-off : Home swipe re-runs the tuck as 873
+- /var/mobile/.dynamicstage-core874-off : Back to 4.5.873
+- Latch: tuck874 (/var/mobile/.dynamicstage-tuck874-crashed)

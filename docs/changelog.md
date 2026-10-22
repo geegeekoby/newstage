@@ -1,3 +1,6 @@
+## 4.5.874
+4.5.874: tuck874: a home swipe with every card already minimised no longer re-runs the slide and park
+
 ## 4.5.873
 4.5.873: divreset873: closing a card (swipe to close, close all, closing the front card, split collapse, opening the app full screen) resets the divider to the even 50/50 split and clears the saved ratio. Minimise, restore, swap, keyboard and respring keep it.
 

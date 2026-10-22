@@ -653,3 +653,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-divtap876-off : No double-tap reset, snap tick as 875
 - /var/mobile/.dynamicstage-core876-off : Back to 4.5.875
 - Latch: divtap876 (/var/mobile/.dynamicstage-divtap876-crashed)
+
+## 4.5.877
+- /var/mobile/.dynamicstage-divsnap877-off : Only the 50% snap as 876
+- /var/mobile/.dynamicstage-core877-off : Back to 4.5.876
+- Latch: divsnap877 (/var/mobile/.dynamicstage-divsnap877-crashed)

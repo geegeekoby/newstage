@@ -1,0 +1,1 @@
+4.5.876 divtap876: UITapGestureRecognizer (2 taps) on the divider867 grabber -> divider867Refusal check, ratio kDSSplitRatio saved to the divider867 plist, same one-time layout as a drag release, UIImpactFeedbackGenerator light tick. Drag release snapping to the middle (within 3%) gives the light tick instead of haptic834:3. Gate DS876On (core876 + core875 file + chain 874).

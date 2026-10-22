@@ -1,3 +1,6 @@
+## 4.5.876
+4.5.876: divtap876: double-tap the divider grabber to put the split back to 50/50 (saved); light tick on that reset and when a drag snaps back to the middle
+
 ## 4.5.875
 4.5.875: gate875: feature-gate answers are cached 2 s (off files were already re-read only every 2 s), halving the slow-path checks
 

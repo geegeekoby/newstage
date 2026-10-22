@@ -648,3 +648,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-gate875-off : Gate answers cached 1 s as 874
 - /var/mobile/.dynamicstage-core875-off : Back to 4.5.874
 - Latch: gate875 (/var/mobile/.dynamicstage-gate875-crashed)
+
+## 4.5.876
+- /var/mobile/.dynamicstage-divtap876-off : No double-tap reset, snap tick as 875
+- /var/mobile/.dynamicstage-core876-off : Back to 4.5.875
+- Latch: divtap876 (/var/mobile/.dynamicstage-divtap876-crashed)

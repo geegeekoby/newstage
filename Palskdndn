@@ -1,0 +1,536 @@
+build 4.5.891 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+20:48:25.288 log refreshed after respring
+20:48:25.343 SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohibited: com.junesiphone.webservices(System)
+20:48:25.489 SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+20:48:25.489 [TRACE] ready state=0 split=0 bottom=- top=- hover=-
+20:48:25.490 SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+20:48:25.490 SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+20:48:25.490 SpringBoard: latch749: no feature is latched off
+20:48:25.492 SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+20:48:25.492 SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+20:48:25.493 SpringBoard: camera660 listening for in-app camera events from 5 apps
+20:48:25.493 SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+20:48:25.494 SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+20:48:25.494 SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+20:48:25.494 SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+20:48:25.494 SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+20:48:25.496 SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+20:48:25.496 SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=10s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=10s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple....
+20:48:27.514 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=SuperHighLevelSystemAperture fg=0)
+20:48:27.516 SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+20:48:27.531 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+20:48:27.534 SpringBoard: pill826 first strip drawn (hang marker cleared)
+20:48:27.706 SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 810 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared; crash872 last active feature before that exit: core747
+20:48:28.678 SpringBoard: recent839 tapped org.whispersystems.signal
+20:48:28.695 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+20:48:28.701 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+20:48:28.858 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:48:28.859 SpringBoard: pillshow835 stage window (edge pill) moved onto SpringBoard's main display scene from SuperHighLevelSystemAperture
+20:48:28.860 SpringBoard: stage window moved back to the foreground scene
+20:48:28.860 SpringBoard: stage on screen
+20:48:28.860 [TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+20:48:28.860 SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+20:48:28.860 SpringBoard: taking key from SBHomeScreenWindow on this scene
+20:48:28.861 SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+20:48:28.861 SpringBoard: opened the top stage
+20:48:28.911 SpringBoard: putting org.whispersystems.signal on stack slot 0
+20:48:28.911 [TRACE] launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+20:48:28.911 SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+20:48:28.911 SpringBoard: creating app view for org.whispersystems.signal
+20:48:28.911 SpringBoard: created app view for org.whispersystems.signal
+20:48:28.913 [TRACE] scene transaction org.whispersystems.signal actions=1
+20:48:28.915 SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+20:48:28.915 SpringBoard: reg799: setDelegate on org.whispersystems.signal ctrl=0x133dd8e80
+20:48:28.915 SpringBoard: reg799: registered contributor on org.whispersystems.signal handle=0x133dd2f70 ident=org.whispersystems.signal (addSceneUpdateContributer:)
+20:48:28.928 SpringBoard: org.whispersystems.signal stays running in the background
+20:48:28.928 SpringBoard: camera658 org.whispersystems.signal on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+20:48:28.928 SpringBoard: org.whispersystems.signal is on stack slot 0
+20:48:28.929 [TRACE] hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+20:48:28.929 [KEYBOARD LOG] attach org.whispersystems.signal slot 0 stack=1 prim=1
+20:48:28.930 SpringBoard: phonesize680 build 4.5.891 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+20:48:28.942 SpringBoard: direct852 org.whispersystems.signal was not launched: the picker is shown instead
+20:48:28.953 SpringBoard: style823 first styled picker drawn (hang marker cleared)
+20:48:28.954 SpringBoard: style824 first styled picker drawn (hang marker cleared)
+20:48:28.955 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+20:48:28.955 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+20:48:28.955 SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x0 camera=0
+20:48:28.956 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x133dd8e80 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+20:48:28.956 [TRACE] app-view settings update
+20:48:28.956 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283be22b0> { statusBarStyleOverridesToSuppress = (none); }; }
+20:48:28.956 [TRACE] app-view settings update done
+20:48:28.964 SpringBoard: fitting org.whispersystems.signal's scene to the card
+20:48:28.964 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+20:48:29.150 SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+20:48:29.260 SpringBoard: org.whispersystems.signal stays running in the background
+20:48:29.485 SpringBoard: host750 bottom card org.whispersystems.signal: detached -> live
+20:48:29.486 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+20:48:29.487 SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+20:48:29.543 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+20:48:29.556 SpringBoard: pill826 strip opened (top org.whispersystems.signal, bottom -, float -)
+20:48:30.148 SpringBoard: drag827 New Stage drag began from the pill strip
+20:48:30.149 SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {367,416} front=(home) state=2 visible=1 hosting=1/0 split=0 sysOwns=0 busy884=no 884=1
+20:48:30.149 SpringBoard: splitdrop883 drag began at {367,416}: zone unarmed (a stage card is open or parked (staged split rules apply))
+20:48:30.150 [HINT] Stage finger={{367,416}}
+20:48:30.164 [HINT] Stage finger={{345,432}}
+20:48:30.164 [HINT] Stage finger={{345,432}}
+20:48:30.181 [HINT] Stage finger={{323,455}}
+20:48:30.198 [HINT] Lower stage finger={{305,475}}
+20:48:30.214 [HINT] Lower stage finger={{292,497}}
+20:48:30.230 [HINT] Lower stage finger={{281,521}}
+20:48:30.247 [HINT] Lower stage finger={{269,548}}
+20:48:30.264 [HINT] Lower stage finger={{255,578}}
+20:48:30.281 [HINT] Lower stage finger={{247,607}}
+20:48:30.297 [HINT] Lower stage finger={{243,635}}
+20:48:30.314 [HINT] Lower stage finger={{240,668}}
+20:48:30.330 [HINT] Lower stage finger={{237,695}}
+20:48:30.347 [HINT] Lower stage finger={{234,727}}
+20:48:30.364 [HINT] Lower stage finger={{230,759}}
+20:48:30.381 [HINT] Lower stage finger={{226,792}}
+20:48:30.397 [HINT] Lower stage finger={{222,820}}
+20:48:30.413 [HINT] Lower stage finger={{219,841}}
+20:48:30.430 [HINT] Lower stage finger={{218,856}}
+20:48:30.447 [HINT] Lower stage finger={{218,870}}
+20:48:30.463 [HINT] Lower stage finger={{218,880}}
+20:48:30.480 [HINT] Lower stage finger={{218,888}}
+20:48:30.497 [HINT] Split Screen finger={{218,895}}
+20:48:30.499 SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+20:48:30.513 [HINT] Split Screen finger={{218,912}}
+20:48:30.530 [HINT] Split Screen finger={{218,922}}
+20:48:30.547 [HINT] Split Screen finger={{218,923}}
+20:48:30.563 [HINT] Split Screen finger={{221,923}}
+20:48:30.563 SpringBoard: drag827 New Stage dropped at 221,923
+20:48:30.564 SpringBoard: splitone891 B shared split entry: top org.whispersystems.signal front (home) settle fit done scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}}
+20:48:30.566 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+20:48:30.567 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+20:48:30.721 [GEOM-FIX] Outline glued + clamped (second)
+20:48:30.780 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 460}}
+20:48:30.780 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+20:48:30.781 [TRACE] app-view settings update
+20:48:30.781 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2828abd00> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+20:48:30.781 [TRACE] app-view settings update done
+20:48:30.783 [SPLIT] opened under the top app finger={{221,923}}
+20:48:31.007 [TRACE] scene transaction org.whispersystems.signal actions=0
+20:48:31.010 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+20:48:31.011 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+20:48:31.012 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 460}}
+20:48:31.012 SpringBoard: geo748 org.whispersystems.signal geometry unchanged {{0, 0}, {426, 460}}: no scene write
+20:48:31.141 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+20:48:31.465 SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+20:48:32.333 SpringBoard: rim651 hit top-outer-left at 1,558 -> DSStageRimHitView
+20:48:32.362 SpringBoard: rim651 drag began at 11,556 won by top-rim-pan
+20:48:33.581 SpringBoard: stayed up, boot guard cleared
+20:48:33.586 SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+20:48:34.101 SpringBoard: rim651 system gesture held at 0,603 (rim)
+20:48:34.103 SpringBoard: rim651 hit top-outer-left at 0,603 -> DSStageRimHitView
+20:48:34.193 [SCENE] uncover tallH=912 told org.whispersystems.signal H=912
+20:48:34.197 [TRACE] scene transaction org.whispersystems.signal actions=0
+20:48:34.198 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+20:48:34.199 SpringBoard: home665 let SpringBoard's update of sceneID:org.whispersystems.signal-default land at card size (home transition finishing), not refused
+20:48:34.199 [TRACE] scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+20:48:34.199 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 912}}
+20:48:34.200 [TRACE] app-view settings update
+20:48:34.200 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2828c4040> { frame = NSRect: {{0, 0}, {426, 912}}; }; subclassChanges = (none); }
+20:48:34.200 [TRACE] app-view settings update done
+20:48:34.200 [SCENE] org.whispersystems.signal stageH=912 sceneH=912 host={{426,912}} picture={{426,912}} n=1 sent=1 queued=0
+20:48:34.201 [GEOM-FIX] Outline glued + clamped (second)
+20:48:34.326 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 912}}
+20:48:34.556 [GEOM-FIX] Outline glued + clamped (second)
+20:48:34.562 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 912}}
+20:48:34.823 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 912}}
+20:48:35.170 SpringBoard: splitfill888 org.whispersystems.signal scene 426x912 but card content 430x932 (stage 426x912): scene re-sized to the card (try 1)
+20:48:35.170 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {430, 932}}
+20:48:35.171 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {426, 912}}
+20:48:35.173 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x282c81fe0> { frame = NSRect: {{0, 0}, {430, 932}}; }; subclassChanges = (none); }
+20:48:35.285 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {430, 932}}
+20:48:35.285 [TRACE] app-view settings update
+20:48:35.286 [TRACE] app-view settings update done
+20:48:35.286 [SCENE] full screen handoff org.whispersystems.signal frame={{0, 0}, {430, 932}}
+20:48:35.286 SpringBoard: reg799: removed contributor from org.whispersystems.signal handle=0x133dd2f70
+20:48:35.413 SpringBoard: split closed, org.whispersystems.signal is full screen
+20:48:35.726 SpringBoard: host750 bottom card org.whispersystems.signal: live -> detached
+20:48:35.727 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=0 parked=0
+20:48:38.681 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+20:48:38.785 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+20:48:39.484 SpringBoard: drag827 New Stage drag began from the pill strip
+20:48:39.485 SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {373,397} front=org.whispersystems.signal state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+20:48:39.485 SpringBoard: splitdrop883 drag began at {373,397}: zone unarmed (finger in the upper half (y=397 < 466))
+20:48:39.485 [HINT] Stage finger={{373,397}}
+20:48:39.500 SpringBoard: splitdrop883 drag moved at {367,408}: zone unarmed (finger in the upper half (y=408 < 466))
+20:48:39.500 [HINT] Stage finger={{367,408}}
+20:48:39.500 [HINT] Stage finger={{367,408}}
+20:48:39.517 SpringBoard: splitdrop883 drag moved at {363,424}: zone unarmed (finger in the upper half (y=424 < 466))
+20:48:39.517 [HINT] Stage finger={{363,424}}
+20:48:39.534 SpringBoard: splitdrop883 drag moved at {355,439}: zone unarmed (finger in the upper half (y=439 < 466))
+20:48:39.534 [HINT] Stage finger={{355,439}}
+20:48:39.550 SpringBoard: splitdrop883 drag moved at {338,457}: zone unarmed (finger in the upper half (y=457 < 466))
+20:48:39.550 [HINT] Stage finger={{338,457}}
+20:48:39.567 SpringBoard: splitdrop883 drag moved at {312,479}: zone ARMED (org.whispersystems.signal full screen, finger in the lower half)
+20:48:39.567 [HINT] Split Screen finger={{312,479}}
+20:48:39.583 [HINT] Split Screen finger={{290,503}}
+20:48:39.600 [HINT] Split Screen finger={{274,525}}
+20:48:39.617 [HINT] Split Screen finger={{262,547}}
+20:48:39.634 [HINT] Split Screen finger={{251,574}}
+20:48:39.650 [HINT] Split Screen finger={{240,602}}
+20:48:39.667 [HINT] Split Screen finger={{229,636}}
+20:48:39.684 [HINT] Split Screen finger={{222,669}}
+20:48:39.700 [HINT] Split Screen finger={{220,704}}
+20:48:39.717 [HINT] Split Screen finger={{220,733}}
+20:48:39.734 [HINT] Split Screen finger={{221,759}}
+20:48:39.750 [HINT] Split Screen finger={{225,784}}
+20:48:39.767 [HINT] Split Screen finger={{228,806}}
+20:48:39.784 [HINT] Split Screen finger={{233,828}}
+20:48:39.801 [HINT] Split Screen finger={{237,847}}
+20:48:39.817 [HINT] Split Screen finger={{243,864}}
+20:48:39.834 [HINT] Split Screen finger={{248,880}}
+20:48:39.850 [HINT] Split Screen finger={{253,889}}
+20:48:39.867 [HINT] Split Screen finger={{259,895}}
+20:48:39.884 [HINT] Split Screen finger={{265,902}}
+20:48:39.901 [HINT] Split Screen finger={{267,909}}
+20:48:39.917 [HINT] Split Screen finger={{268,910}}
+20:48:39.934 [HINT] Split Screen finger={{268,910}}
+20:48:39.967 [HINT] Split Screen finger={{270,912}}
+20:48:39.984 [HINT] Split Screen finger={{271,912}}
+20:48:40.000 [HINT] Split Screen finger={{271,912}}
+20:48:40.017 [HINT] Split Screen finger={{273,912}}
+20:48:40.034 [HINT] Split Screen finger={{275,914}}
+20:48:40.050 [HINT] Split Screen finger={{275,914}}
+20:48:40.067 SpringBoard: splitdrop883 drag moved at {280,916}: zone ARMED (org.whispersystems.signal full screen, finger in the lower half)
+20:48:40.067 [HINT] Split Screen finger={{280,916}}
+20:48:40.084 [HINT] Split Screen finger={{282,916}}
+20:48:40.101 [HINT] Split Screen finger={{283,916}}
+20:48:40.117 [HINT] Split Screen finger={{284,917}}
+20:48:40.167 [HINT] Split Screen finger={{284,918}}
+20:48:40.201 [HINT] Split Screen finger={{284,919}}
+20:48:40.217 [HINT] Split Screen finger={{285,922}}
+20:48:40.234 [HINT] Split Screen finger={{286,923}}
+20:48:40.284 SpringBoard: drag827 New Stage dropped at 286,923
+20:48:40.287 SpringBoard: splitdrop883 dropped at {286,923}: org.whispersystems.signal (full screen) -> top card, new stage below
+20:48:40.385 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:48:40.386 SpringBoard: taking key from SBMainSwitcherWindow on this scene
+20:48:40.387 SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+20:48:40.438 SpringBoard: opened a stage from the finger
+20:48:40.438 SpringBoard: splitone891 A step 1 +151 ms New Stage card opened, still picture of org.whispersystems.signal under it (cover=1)
+20:48:40.765 SpringBoard: perf812 41404 feature-gate calls (618 uncached) in 11 s
+20:48:40.766 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+20:48:40.766 SpringBoard: splitone891 A step 2 +478 ms card settled=1; Home pressed so org.whispersystems.signal leaves full screen before it is staged (as in B)
+20:48:42.362 SpringBoard: splitone891 A step 3 +2074 ms Home in front=0 (front org.whispersystems.signal); launchEntry org.whispersystems.signal slot 0 (staged top app)
+20:48:42.367 SpringBoard: splitdrop885 org.whispersystems.signal is full screen: picker740 refusal skipped for the split drop (its scene moves onto the top card)
+20:48:42.504 SpringBoard: putting org.whispersystems.signal on stack slot 0
+20:48:42.504 [TRACE] launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+20:48:42.504 SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+20:48:42.504 SpringBoard: creating app view for org.whispersystems.signal
+20:48:42.504 SpringBoard: created app view for org.whispersystems.signal
+20:48:42.507 [TRACE] scene transaction org.whispersystems.signal actions=1
+20:48:42.507 SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+20:48:42.507 SpringBoard: reg799: setDelegate on org.whispersystems.signal ctrl=0x134e54000
+20:48:42.507 SpringBoard: reg799: registered contributor on org.whispersystems.signal handle=0x133dd2f70 ident=org.whispersystems.signal (addSceneUpdateContributer:)
+20:48:42.508 SpringBoard: org.whispersystems.signal stays running in the background
+20:48:42.508 SpringBoard: org.whispersystems.signal is on stack slot 0
+20:48:42.508 [TRACE] hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+20:48:42.508 [KEYBOARD LOG] attach org.whispersystems.signal slot 0 stack=1 prim=1
+20:48:42.508 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {430, 932}}
+20:48:42.508 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x134e54000 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=1 busy=1 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+20:48:42.508 [TRACE] app-view settings update
+20:48:42.508 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283b7aac0> { hostContextIdentifierForSnapshotting = 9c4f5ab6; scenePresenterRenderIdentifierForSnapshotting = 40ba45caed8b3b38; }; }
+20:48:42.508 [TRACE] app-view settings update done
+20:48:42.513 SpringBoard: gest770 tap outside the cards at 277,778: nothing done (system gesture)
+20:48:42.513 SpringBoard: blackfix887 cleared hosting card colour (alpha 1.00, band 0, card 420x458)
+20:48:43.243 SpringBoard: gest770 tap outside the cards at 301,609: nothing done (system gesture)
+20:48:43.528 SpringBoard: splitfill888 org.whispersystems.signal scene 430x932 but card content 420x458 (stage 420x458): scene re-sized to the card (try 1)
+20:48:43.528 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+20:48:43.529 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {430, 932}}
+20:48:43.531 [TRACE] app-view settings update
+20:48:43.531 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x282d2b8c0> { frame = NSRect: {{0, 0}, {420, 458}}; }; subclassChanges = <BSSettingsDiff: 0x2839dff30> { safeAreaInsetsPortrait = UIEdgeInsets: {0, 0, 0, 0}; }; }
+20:48:43.531 [TRACE] app-view settings update done
+20:48:44.031 SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+20:48:44.101 SpringBoard: splitone891 A step 4 +3813 ms org.whispersystems.signal staged top app settled=1 (fit done)
+20:48:44.102 SpringBoard: splitone891 A shared split entry: top org.whispersystems.signal front org.whispersystems.signal settle fit done scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}}
+20:48:44.207 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:48:44.209 [GEOM-FIX] Outline glued + clamped (second)
+20:48:44.259 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 460}}
+20:48:44.259 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+20:48:44.260 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2828aaf00> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+20:48:44.265 [SPLIT] opened under the top app finger={{286,923}}
+20:48:44.488 [TRACE] scene transaction org.whispersystems.signal actions=0
+20:48:44.491 SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+20:48:44.492 SpringBoard: home665 let SpringBoard's update of sceneID:org.whispersystems.signal-default land at card size (home transition finishing), not refused
+20:48:44.493 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 460}}
+20:48:44.493 SpringBoard: geo748 org.whispersystems.signal geometry unchanged {{0, 0}, {426, 460}}: no scene write
+20:48:45.094 SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+20:48:45.933 SpringBoard: rim651 hit top-outer-left at 0,529 -> DSStageRimHitView
+20:48:45.994 SpringBoard: rim651 drag began at 0,543 won by top-rim-pan
+20:48:46.008 [SCENE] uncover tallH=912 told org.whispersystems.signal H=912
+20:48:46.029 [GEOM-FIX] Outline glued + clamped (second)
+20:48:46.395 [GEOM-FIX] Outline glued + clamped (second)
+20:48:46.745 [GEOM-FIX] Outline glued + clamped (second)
+20:48:47.262 SpringBoard: splitfill888 org.whispersystems.signal scene 426x460 but card content 430x932 (stage 426x912): scene re-sized to the card (try 1)
+20:48:47.262 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {430, 932}}
+20:48:47.263 [TRACE] scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {426, 460}}
+20:48:47.266 SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x134e54000 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+20:48:47.266 [TRACE] app-view settings update
+20:48:47.267 SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x282d3c980> { frame = NSRect: {{0, 0}, {430, 932}}; }; subclassChanges = (none); }
+20:48:47.267 [TRACE] app-view settings update done
+20:48:47.382 [TRACE] force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {430, 932}}
+20:48:47.384 [SCENE] full screen handoff org.whispersystems.signal frame={{0, 0}, {430, 932}}
+20:48:47.384 SpringBoard: reg799: removed contributor from org.whispersystems.signal handle=0x133dd2f70
+20:48:47.409 SpringBoard: split closed, org.whispersystems.signal is full screen
+20:48:49.824 app: com.apple.MobileSMS ctor ok
+20:48:50.224 app: com.apple.MobileSMS remote keyboard hooks are in
+20:48:50.225 [KEYS] hook search-cancel _cancelButtonPressed
+20:48:50.225 app: com.apple.MobileSMS is listening for staged keys
+20:48:51.060 SpringBoard: defer719 touch observer on the bottom card (30 s after start)
+20:48:51.705 SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+20:49:35.568 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+20:49:35.668 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+20:49:36.532 SpringBoard: pill826 New Stage tapped
+20:49:36.635 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:49:36.636 SpringBoard: stage on screen
+20:49:36.636 [TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+20:49:36.636 SpringBoard: taking key from SBHomeScreenWindow on this scene
+20:49:36.637 SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+20:49:36.637 SpringBoard: opened the top stage
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+(trace802: 5 lines of SpringBoard pid=19722 from before the archive)
+20:48:25.287 SpringBoard pid=19722 main | SpringBoard: call653 guard listening (call screen containment is off)
+20:48:25.287 SpringBoard pid=19722 main | SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var/mobile/.dynamicstage-keys674-all)
+20:48:25.287 SpringBoard pid=19722 main | SpringBoard: keep776 installed (Medusa hide from updateMedusaHostedKeyboardWindowForScene: kept out while a staged app owns the keys)
+20:48:25.287 SpringBoard pid=19722 main | SpringBoard: why775 hooks installed: update,sized,target
+20:48:25.287 SpringBoard pid=19722 main | SpringBoard: lock808 installed (SBBacklightController observer)
+20:48:25.343 SpringBoard pid=19722 main | SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohib...
+20:48:25.489 SpringBoard pid=19722 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+20:48:25.489 SpringBoard pid=19722 main | ready state=0 split=0 bottom=- top=- hover=-
+20:48:25.490 SpringBoard pid=19722 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+20:48:25.490 SpringBoard pid=19722 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+20:48:25.490 SpringBoard pid=19722 main | SpringBoard: latch749: no feature is latched off
+20:48:25.492 SpringBoard pid=19722 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+20:48:25.492 SpringBoard pid=19722 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+20:48:25.493 SpringBoard pid=19722 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+20:48:25.493 SpringBoard pid=19722 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+20:48:25.494 SpringBoard pid=19722 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+20:48:25.494 SpringBoard pid=19722 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+20:48:25.494 SpringBoard pid=19722 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+20:48:25.494 SpringBoard pid=19722 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+20:48:25.496 SpringBoard pid=19722 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=1 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+20:48:25.496 SpringBoard pid=19722 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=10s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=10s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.face...
+20:48:27.514 SpringBoard pid=19722 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=SuperHighLevelSystemAperture fg=0)
+20:48:27.516 SpringBoard pid=19722 main | SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+20:48:27.530 SpringBoard pid=19722 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+20:48:27.534 SpringBoard pid=19722 main | SpringBoard: pill826 first strip drawn (hang marker cleared)
+20:48:27.705 SpringBoard pid=19722 main | SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 810 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared; crash872 last active feature before that exit: core747
+20:48:28.678 SpringBoard pid=19722 main | SpringBoard: recent839 tapped org.whispersystems.signal
+20:48:28.695 SpringBoard pid=19722 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+20:48:28.701 SpringBoard pid=19722 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+20:48:28.858 SpringBoard pid=19722 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:48:28.859 SpringBoard pid=19722 main | SpringBoard: pillshow835 stage window (edge pill) moved onto SpringBoard's main display scene from SuperHighLevelSystemAperture
+20:48:28.860 SpringBoard pid=19722 main | SpringBoard: stage window moved back to the foreground scene
+20:48:28.860 SpringBoard pid=19722 main | SpringBoard: stage on screen
+20:48:28.860 SpringBoard pid=19722 main | on screen state=2 split=0 bottom=- top=- hover=-
+20:48:28.860 SpringBoard pid=19722 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+20:48:28.860 SpringBoard pid=19722 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+20:48:28.861 SpringBoard pid=19722 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+20:48:28.861 SpringBoard pid=19722 main | SpringBoard: opened the top stage
+20:48:28.911 SpringBoard pid=19722 main | SpringBoard: putting org.whispersystems.signal on stack slot 0
+20:48:28.911 SpringBoard pid=19722 main | launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+20:48:28.911 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+20:48:28.911 SpringBoard pid=19722 main | SpringBoard: creating app view for org.whispersystems.signal
+20:48:28.911 SpringBoard pid=19722 main | SpringBoard: created app view for org.whispersystems.signal
+20:48:28.913 SpringBoard pid=19722 main | scene transaction org.whispersystems.signal actions=1
+20:48:28.914 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+20:48:28.915 SpringBoard pid=19722 main | SpringBoard: reg799: setDelegate on org.whispersystems.signal ctrl=0x133dd8e80
+20:48:28.915 SpringBoard pid=19722 main | SpringBoard: reg799: registered contributor on org.whispersystems.signal handle=0x133dd2f70 ident=org.whispersystems.signal (addSceneUpdateContributer:)
+20:48:28.928 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal stays running in the background
+20:48:28.928 SpringBoard pid=19722 main | SpringBoard: camera658 org.whispersystems.signal on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+20:48:28.928 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal is on stack slot 0
+20:48:28.929 SpringBoard pid=19722 main | hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+20:48:28.930 SpringBoard pid=19722 main | SpringBoard: phonesize680 build 4.5.891 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+20:48:28.942 SpringBoard pid=19722 main | SpringBoard: direct852 org.whispersystems.signal was not launched: the picker is shown instead
+20:48:28.953 SpringBoard pid=19722 main | SpringBoard: style823 first styled picker drawn (hang marker cleared)
+20:48:28.954 SpringBoard pid=19722 main | SpringBoard: style824 first styled picker drawn (hang marker cleared)
+20:48:28.954 SpringBoard pid=19722 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+20:48:28.955 SpringBoard pid=19722 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+20:48:28.955 SpringBoard pid=19722 main | SpringBoard: camera658 hosted scene sceneID:org.whispersystems.signal-default fg=1 occluded=0 deactivation=0x0 camera=0
+20:48:28.955 SpringBoard pid=19722 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x133dd8e80 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+20:48:28.956 SpringBoard pid=19722 main | app-view settings update
+20:48:28.956 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283be22b0> { statusBarStyleOverridesToSuppress = (none); }; }
+20:48:28.956 SpringBoard pid=19722 main | app-view settings update done
+20:48:28.964 SpringBoard pid=19722 main | SpringBoard: fitting org.whispersystems.signal's scene to the card
+20:48:28.964 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+20:48:29.150 SpringBoard pid=19722 main | SpringBoard: focus798 sceneID:org.whispersystems.signal-default keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+20:48:29.260 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal stays running in the background
+20:48:29.485 SpringBoard pid=19722 main | SpringBoard: host750 bottom card org.whispersystems.signal: detached -> live
+20:48:29.486 SpringBoard pid=19722 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+20:48:29.486 SpringBoard pid=19722 main | SpringBoard: pub807: external-foreground now contains org.whispersystems.signal=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+20:48:29.543 SpringBoard pid=19722 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+20:48:29.556 SpringBoard pid=19722 main | SpringBoard: pill826 strip opened (top org.whispersystems.signal, bottom -, float -)
+20:48:30.148 SpringBoard pid=19722 main | SpringBoard: drag827 New Stage drag began from the pill strip
+20:48:30.149 SpringBoard pid=19722 main | SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {367,416} front=(home) state=2 visible=1 hosting=1/0 split=0 sysOwns=0 busy884=no 884=1
+20:48:30.149 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag began at {367,416}: zone unarmed (a stage card is open or parked (staged split rules apply))
+20:48:30.499 SpringBoard pid=19722 main | SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+20:48:30.563 SpringBoard pid=19722 main | SpringBoard: drag827 New Stage dropped at 221,923
+20:48:30.564 SpringBoard pid=19722 main | SpringBoard: splitone891 B shared split entry: top org.whispersystems.signal front (home) settle fit done scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}}
+20:48:30.566 SpringBoard pid=19722 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+20:48:30.567 SpringBoard pid=19722 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+20:48:30.780 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 460}}
+20:48:30.780 SpringBoard pid=19722 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+20:48:30.781 SpringBoard pid=19722 main | app-view settings update
+20:48:30.781 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2828abd00> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+20:48:30.781 SpringBoard pid=19722 main | app-view settings update done
+20:48:31.007 SpringBoard pid=19722 main | scene transaction org.whispersystems.signal actions=0
+20:48:31.010 SpringBoard pid=19722 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+20:48:31.011 SpringBoard pid=19722 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:org.whispersystems.signal-default's phone-size update lands at card size, not refused)
+20:48:31.012 SpringBoard pid=19722 main | SpringBoard: geo748 org.whispersystems.signal geometry unchanged {{0, 0}, {426, 460}}: no scene write
+20:48:31.140 SpringBoard pid=19722 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+20:48:31.465 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+20:48:32.333 SpringBoard pid=19722 main | SpringBoard: rim651 hit top-outer-left at 1,558 -> DSStageRimHitView
+20:48:32.362 SpringBoard pid=19722 main | SpringBoard: rim651 drag began at 11,556 won by top-rim-pan
+20:48:33.581 SpringBoard pid=19722 main | SpringBoard: stayed up, boot guard cleared
+20:48:33.586 SpringBoard pid=19722 main | SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+20:48:34.100 SpringBoard pid=19722 main | SpringBoard: rim651 system gesture held at 0,603 (rim)
+20:48:34.103 SpringBoard pid=19722 main | SpringBoard: rim651 hit top-outer-left at 0,603 -> DSStageRimHitView
+20:48:34.197 SpringBoard pid=19722 main | scene transaction org.whispersystems.signal actions=0
+20:48:34.198 SpringBoard pid=19722 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+20:48:34.199 SpringBoard pid=19722 main | SpringBoard: home665 let SpringBoard's update of sceneID:org.whispersystems.signal-default land at card size (home transition finishing), not refused
+20:48:34.199 SpringBoard pid=19722 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {430, 932}}
+20:48:34.199 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 912}}
+20:48:34.199 SpringBoard pid=19722 main | app-view settings update
+20:48:34.200 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2828c4040> { frame = NSRect: {{0, 0}, {426, 912}}; }; subclassChanges = (none); }
+20:48:34.200 SpringBoard pid=19722 main | app-view settings update done
+20:48:34.562 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 912}} (+1 repeats)
+20:48:34.823 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 912}}
+20:48:35.170 SpringBoard pid=19722 main | SpringBoard: splitfill888 org.whispersystems.signal scene 426x912 but card content 430x932 (stage 426x912): scene re-sized to the card (try 1)
+20:48:35.170 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {430, 932}}
+20:48:35.171 SpringBoard pid=19722 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {426, 912}}
+20:48:35.173 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x282c81fe0> { frame = NSRect: {{0, 0}, {430, 932}}; }; subclassChanges = (none); }
+20:48:35.285 SpringBoard pid=19722 main | app-view settings update
+20:48:35.286 SpringBoard pid=19722 main | app-view settings update done
+20:48:35.286 SpringBoard pid=19722 main | SpringBoard: reg799: removed contributor from org.whispersystems.signal handle=0x133dd2f70
+20:48:35.413 SpringBoard pid=19722 main | SpringBoard: split closed, org.whispersystems.signal is full screen
+20:48:35.726 SpringBoard pid=19722 main | SpringBoard: host750 bottom card org.whispersystems.signal: live -> detached
+20:48:35.727 SpringBoard pid=19722 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=0 parked=0
+20:48:38.681 SpringBoard pid=19722 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+20:48:38.785 SpringBoard pid=19722 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+20:48:39.484 SpringBoard pid=19722 main | SpringBoard: drag827 New Stage drag began from the pill strip
+20:48:39.485 SpringBoard pid=19722 main | SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {373,397} front=org.whispersystems.signal state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+20:48:39.485 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag began at {373,397}: zone unarmed (finger in the upper half (y=397 < 466))
+20:48:39.500 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag moved at {367,408}: zone unarmed (finger in the upper half (y=408 < 466))
+20:48:39.517 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag moved at {363,424}: zone unarmed (finger in the upper half (y=424 < 466))
+20:48:39.534 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag moved at {355,439}: zone unarmed (finger in the upper half (y=439 < 466))
+20:48:39.550 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag moved at {338,457}: zone unarmed (finger in the upper half (y=457 < 466))
+20:48:39.567 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag moved at {312,479}: zone ARMED (org.whispersystems.signal full screen, finger in the lower half)
+20:48:40.067 SpringBoard pid=19722 main | SpringBoard: splitdrop883 drag moved at {280,916}: zone ARMED (org.whispersystems.signal full screen, finger in the lower half)
+20:48:40.284 SpringBoard pid=19722 main | SpringBoard: drag827 New Stage dropped at 286,923
+20:48:40.287 SpringBoard pid=19722 main | SpringBoard: splitdrop883 dropped at {286,923}: org.whispersystems.signal (full screen) -> top card, new stage below
+20:48:40.385 SpringBoard pid=19722 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:48:40.386 SpringBoard pid=19722 main | SpringBoard: taking key from SBMainSwitcherWindow on this scene
+20:48:40.387 SpringBoard pid=19722 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+20:48:40.438 SpringBoard pid=19722 main | SpringBoard: opened a stage from the finger
+20:48:40.438 SpringBoard pid=19722 main | SpringBoard: splitone891 A step 1 +151 ms New Stage card opened, still picture of org.whispersystems.signal under it (cover=1)
+20:48:40.765 SpringBoard pid=19722 main | SpringBoard: perf812 41404 feature-gate calls (618 uncached) in 11 s
+20:48:40.765 SpringBoard pid=19722 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+20:48:40.766 SpringBoard pid=19722 main | SpringBoard: splitone891 A step 2 +478 ms card settled=1; Home pressed so org.whispersystems.signal leaves full screen before it is staged (as in B)
+20:48:42.362 SpringBoard pid=19722 main | SpringBoard: splitone891 A step 3 +2074 ms Home in front=0 (front org.whispersystems.signal); launchEntry org.whispersystems.signal slot 0 (staged top app)
+20:48:42.367 SpringBoard pid=19722 main | SpringBoard: splitdrop885 org.whispersystems.signal is full screen: picker740 refusal skipped for the split drop (its scene moves onto the top card)
+20:48:42.504 SpringBoard pid=19722 main | SpringBoard: putting org.whispersystems.signal on stack slot 0
+20:48:42.504 SpringBoard pid=19722 main | launch org.whispersystems.signal state=2 split=0 bottom=- top=- hover=-
+20:48:42.504 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal got its default entity with a scene handle provider
+20:48:42.504 SpringBoard pid=19722 main | SpringBoard: creating app view for org.whispersystems.signal
+20:48:42.504 SpringBoard pid=19722 main | SpringBoard: created app view for org.whispersystems.signal
+20:48:42.507 SpringBoard pid=19722 main | scene transaction org.whispersystems.signal actions=1
+20:48:42.507 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal's scene came from SpringBoard's own app view
+20:48:42.507 SpringBoard pid=19722 main | SpringBoard: reg799: setDelegate on org.whispersystems.signal ctrl=0x134e54000
+20:48:42.507 SpringBoard pid=19722 main | SpringBoard: reg799: registered contributor on org.whispersystems.signal handle=0x133dd2f70 ident=org.whispersystems.signal (addSceneUpdateContributer:)
+20:48:42.508 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal stays running in the background
+20:48:42.508 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal is on stack slot 0
+20:48:42.508 SpringBoard pid=19722 main | hosted org.whispersystems.signal state=2 split=0 bottom=org.whispersystems.signal top=- hover=-
+20:48:42.508 SpringBoard pid=19722 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {430, 932}}
+20:48:42.508 SpringBoard pid=19722 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x134e54000 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=1 busy=1 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+20:48:42.508 SpringBoard pid=19722 main | app-view settings update
+20:48:42.508 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x283b7aac0> { hostContextIdentifierForSnapshotting = 9c4f5ab6; scenePresenterRenderIdentifierForSnapshotting = 40ba45caed8b3b38; }; }
+20:48:42.508 SpringBoard pid=19722 main | app-view settings update done
+20:48:42.513 SpringBoard pid=19722 main | SpringBoard: gest770 tap outside the cards at 277,778: nothing done (system gesture)
+20:48:42.513 SpringBoard pid=19722 main | SpringBoard: blackfix887 cleared hosting card colour (alpha 1.00, band 0, card 420x458)
+20:48:43.243 SpringBoard pid=19722 main | SpringBoard: gest770 tap outside the cards at 301,609: nothing done (system gesture)
+20:48:43.528 SpringBoard pid=19722 main | SpringBoard: splitfill888 org.whispersystems.signal scene 430x932 but card content 420x458 (stage 420x458): scene re-sized to the card (try 1)
+20:48:43.528 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {420, 458}}
+20:48:43.529 SpringBoard pid=19722 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {430, 932}}
+20:48:43.531 SpringBoard pid=19722 main | app-view settings update
+20:48:43.531 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x282d2b8c0> { frame = NSRect: {{0, 0}, {420, 458}}; }; subclassChanges = <BSSettingsDiff: 0x2839dff30> { safeAreaInsetsPortrait = UIEdgeInsets: {0, 0, 0, 0}; }; }
+20:48:43.531 SpringBoard pid=19722 main | app-view settings update done
+20:48:44.031 SpringBoard pid=19722 main | SpringBoard: camera660 org.whispersystems.signal on a card: asked it to report its camera hooks (a 'camera660 org.whispersystems.signal hello' line should follow)
+20:48:44.101 SpringBoard pid=19722 main | SpringBoard: splitone891 A step 4 +3813 ms org.whispersystems.signal staged top app settled=1 (fit done)
+20:48:44.101 SpringBoard pid=19722 main | SpringBoard: splitone891 A shared split entry: top org.whispersystems.signal front org.whispersystems.signal settle fit done scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}}
+20:48:44.207 SpringBoard pid=19722 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:48:44.259 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {426, 460}} (+1 repeats)
+20:48:44.259 SpringBoard pid=19722 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {420, 458}}
+20:48:44.260 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x2828aaf00> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+20:48:44.488 SpringBoard pid=19722 main | scene transaction org.whispersystems.signal actions=0
+20:48:44.491 SpringBoard pid=19722 main | SpringBoard: reg799: contributor appended reason org.whispersystems.signal (already=1, set={(     "org.whispersystems.signal" )})
+20:48:44.492 SpringBoard pid=19722 main | SpringBoard: home665 let SpringBoard's update of sceneID:org.whispersystems.signal-default land at card size (home transition finishing), not refused
+20:48:44.493 SpringBoard pid=19722 main | SpringBoard: geo748 org.whispersystems.signal geometry unchanged {{0, 0}, {426, 460}}: no scene write
+20:48:45.094 SpringBoard pid=19722 main | SpringBoard: org.whispersystems.signal after two seconds - hosting the app, scene present, view in the card
+20:48:45.933 SpringBoard pid=19722 main | SpringBoard: rim651 hit top-outer-left at 0,529 -> DSStageRimHitView
+20:48:45.994 SpringBoard pid=19722 main | SpringBoard: rim651 drag began at 0,543 won by top-rim-pan
+20:48:47.262 SpringBoard pid=19722 main | SpringBoard: splitfill888 org.whispersystems.signal scene 426x460 but card content 430x932 (stage 426x912): scene re-sized to the card (try 1)
+20:48:47.262 SpringBoard pid=19722 main | force geometry org.whispersystems.signal depth=0 frame={{0, 0}, {430, 932}} (+1 repeats)
+20:48:47.263 SpringBoard pid=19722 main | scene block sceneID:org.whispersystems.signal-default frame={{0, 0}, {426, 460}}
+20:48:47.266 SpringBoard pid=19722 main | SpringBoard: occl798 ok reason present org.whispersystems.signal ctrl=0x134e54000 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+20:48:47.266 SpringBoard pid=19722 main | app-view settings update
+20:48:47.266 SpringBoard pid=19722 main | SpringBoard: appview670 sceneID:org.whispersystems.signal-default mode=4 pass795 update: changes = <BSMutableSettings: 0x282d3c980> { frame = NSRect: {{0, 0}, {430, 932}}; }; subclassChanges = (none); }
+20:48:47.267 SpringBoard pid=19722 main | app-view settings update done
+20:48:47.384 SpringBoard pid=19722 main | SpringBoard: reg799: removed contributor from org.whispersystems.signal handle=0x133dd2f70
+20:48:47.409 SpringBoard pid=19722 main | SpringBoard: split closed, org.whispersystems.signal is full screen
+20:48:49.824 SpringBoard pid=19722 main | app: com.apple.MobileSMS ctor ok
+20:48:49.827 MobileSMS pid=19754 main | app ctor reason=0 bundle=com.apple.MobileSMS
+20:48:50.220 MobileSMS pid=19754 main | layout667 com.apple.MobileSMS camera preview watch on (once a second while on a card)
+20:48:50.220 MobileSMS pid=19754 main | camera658 app capture hooks in, multitask switch present
+20:48:50.223 MobileSMS pid=19754 main | caret788: hooked CKMessageEntryView isKeyboardVisible types=B16@0:8
+20:48:50.223 MobileSMS pid=19754 main | strip790: hooked _updateUIForEntryFieldCollapsedStateChange types=v16@0:8
+20:48:50.223 SpringBoard pid=19722 main | app: com.apple.MobileSMS remote keyboard hooks are in
+20:48:50.225 SpringBoard pid=19722 main | app: com.apple.MobileSMS is listening for staged keys
+20:48:51.060 SpringBoard pid=19722 main | SpringBoard: defer719 touch observer on the bottom card (30 s after start)
+20:48:51.705 SpringBoard pid=19722 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+20:49:35.567 SpringBoard pid=19722 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+20:49:35.668 SpringBoard pid=19722 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+20:49:36.531 SpringBoard pid=19722 main | SpringBoard: pill826 New Stage tapped
+20:49:36.635 SpringBoard pid=19722 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+20:49:36.636 SpringBoard pid=19722 main | SpringBoard: stage on screen
+20:49:36.636 SpringBoard pid=19722 main | on screen state=2 split=0 bottom=- top=- hover=-
+20:49:36.636 SpringBoard pid=19722 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+20:49:36.637 SpringBoard pid=19722 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+20:49:36.637 SpringBoard pid=19722 main | SpringBoard: opened the top stage
+
+--- crash ---
+
+--- diagnostics ---
+
+--- kbvis768 ---
+20:43:55.787 kbvis768 show 1 start owner=org.whispersystems.signal h=288
+20:43:55.788 kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1662472640] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=none | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+20:43:55.797 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+20:43:55.797 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+20:43:55.809 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+20:43:55.809 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+20:43:55.892 kbvis768 show 1 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[733655455,1662472640] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@20:43:55.793 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+20:43:56.102 kbvis768 show 1 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[733655455,1662472640] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@20:43:55.996 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+20:43:56.313 kbvis768 show 1 +0.52s keys visible? YES (owner org.whispersystems.signal)
+20:45:23.100 kbvis768 show 1 +87.31s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[733655455,1662472640] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@20:45:23.099 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+20:45:23.615 kbvis768 show 1 +87.83s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@20:45:23.099 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+20:45:23.616 kbvis768 show 1 ended after 87.8s: keys visible ALL of the time

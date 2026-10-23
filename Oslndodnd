@@ -1,0 +1,860 @@
+build 4.5.898 split=0 float=0 half=1 slots=1
+card {{5, 5}, {420, 458}}
+shell {{-31, -31}, {492, 530}}
+outline {{4, 4}, {422, 460}}
+topCard {{0, 0}, {0, 0}}
+topRim {{0, 0}, {0, 0}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{0, 0}, {0, 0}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=- slot1=- slot2=-
+
+--- log ---
+12:48:46.762 log refreshed after respring
+12:48:46.818 SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohibited: com.junesiphone.webservices(System)
+12:48:46.961 SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+12:48:46.961 [TRACE] ready state=0 split=0 bottom=- top=- hover=-
+12:48:46.961 SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+12:48:46.961 SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+12:48:46.961 SpringBoard: latch749: no feature is latched off
+12:48:46.964 SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+12:48:46.964 SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+12:48:46.965 SpringBoard: camera660 listening for in-app camera events from 5 apps
+12:48:46.965 SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+12:48:46.966 SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+12:48:46.966 SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+12:48:46.966 SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+12:48:46.966 SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+12:48:46.968 SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=0 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+12:48:46.969 SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=25s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=25s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple....
+12:48:49.674 SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 750 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared; crash872 last active feature before that exit: core747
+12:48:51.340 SpringBoard: lock808: screen off (backlight state 4 source 8; stage visible=0, cards left as they are)
+12:48:51.951 SpringBoard: lock808: screen on (backlight state 1 source 9; stage visible=0, cards left as they are)
+12:48:53.477 app: com.apple.MobileSMS ctor ok
+12:48:53.892 app: com.apple.MobileSMS remote keyboard hooks are in
+12:48:53.898 [KEYS] hook search-cancel _cancelButtonPressed
+12:48:53.899 app: com.apple.MobileSMS is listening for staged keys
+12:48:55.064 SpringBoard: stayed up, boot guard cleared
+12:48:55.066 SpringBoard: pillshow835 stage window (edge pill) moved onto SpringBoard's main display scene from SystemAperture
+12:48:55.079 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+12:48:55.084 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+12:48:55.181 SpringBoard: only828 picker shown by a layout pass switched to the new look
+12:48:55.182 SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+12:48:55.182 SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+12:48:55.192 SpringBoard: style823 first styled picker drawn (hang marker cleared)
+12:48:55.192 SpringBoard: style824 first styled picker drawn (hang marker cleared)
+12:48:55.519 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:48:55.527 SpringBoard: phonesize675 build 4.5.898 is ON; apps: com.beeper.chat.ios (default)
+12:48:56.467 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:48:56.470 SpringBoard: phonesize680 build 4.5.898 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+12:48:56.472 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:48:56.478 SpringBoard: phonesize683 build 4.5.898 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+12:48:56.496 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:48:56.497 SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+12:48:56.499 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:48:56.502 SpringBoard: kbrule815 com.apple.MobileSMS keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:48:57.753 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:48:57.783 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:03.997 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:49:04.024 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:04.844 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:49:04.864 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:06.446 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:49:06.471 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:38.771 [TRACE] arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:49:50.015 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:49:51.070 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:49:51.096 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:51.103 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:49:52.254 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:49:52.273 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:58.659 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 337}}
+12:49:58.687 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:59.613 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:49:59.629 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:02.130 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:02.160 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:05.785 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 337}}
+12:50:05.816 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:08.548 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 337}}
+12:50:08.570 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:09.736 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:09.744 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:09.763 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:09.778 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:09.790 [TRACE] arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:50:32.633 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:32.658 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:32.664 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:33.179 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:33.200 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:35.787 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:35.820 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:36.725 [TRACE] arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:50:58.704 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:58.732 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:58.739 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:59.460 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:59.483 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:10.567 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:51:10.592 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:10.944 [TRACE] arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:51:19.862 SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:51:19.940 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:51:19.942 SpringBoard: lag897 sampler on (0.25 s main-queue tick, one summary per busy 10 s)
+12:51:19.989 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:51:19.990 SpringBoard: pill826 first strip drawn (hang marker cleared)
+12:51:24.319 [TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+12:51:24.321 SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=0 windows=[lvl 998 hidden 0 alpha 1.00]
+12:51:24.322 SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{inf, inf}, {0, 0}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:24.322 SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:51:24.950 SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+12:51:26.625 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:29.962 SpringBoard: lag897 10 s: gates 214/s (22 uncached/s) top [core843 34, a11y843 33, core846 12, core842 11] other 46; log 0.9 lines/s; main stalls >100 ms 0 worst 0 ms at -
+12:51:34.611 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:36.777 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:51:36.785 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:51:36.795 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:36.795 SpringBoard: kbrule815 com.apple.MobileSMS keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:51:36.796 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:51:36.810 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:51:37.777 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:51:37.796 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:39.283 [TRACE] arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:51:39.304 SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:39.764 [TRACE] arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:51:41.558 SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:51:41.970 [TRACE] arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+12:51:41.981 SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:41.981 SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:51:44.475 SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:51:45.078 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:51:45.178 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:51:47.865 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:48.458 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:51:48.535 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:51:49.250 SpringBoard: drag827 New Stage drag began from the pill strip
+12:51:49.254 SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {369,404} front=com.apple.MobileSMS state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+12:51:49.255 SpringBoard: splitdrop883 drag began at {369,404}: zone unarmed (finger in the upper half (y=404 < 466))
+12:51:49.256 [HINT] Stage finger={{369,404}}
+12:51:49.264 SpringBoard: splitdrop883 drag moved at {365,413}: zone unarmed (finger in the upper half (y=413 < 466))
+12:51:49.265 [HINT] Stage finger={{365,413}}
+12:51:49.265 [HINT] Stage finger={{365,413}}
+12:51:49.281 SpringBoard: splitdrop883 drag moved at {347,448}: zone unarmed (finger in the upper half (y=448 < 466))
+12:51:49.281 [HINT] Stage finger={{347,448}}
+12:51:49.297 SpringBoard: splitdrop883 drag moved at {337,474}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+12:51:49.298 [HINT] Split Screen finger={{337,474}}
+12:51:49.314 [HINT] Split Screen finger={{327,501}}
+12:51:49.331 [HINT] Split Screen finger={{322,513}}
+12:51:49.348 [HINT] Split Screen finger={{302,562}}
+12:51:49.364 [HINT] Split Screen finger={{286,606}}
+12:51:49.381 [HINT] Split Screen finger={{273,643}}
+12:51:49.398 [HINT] Split Screen finger={{260,684}}
+12:51:49.414 [HINT] Split Screen finger={{251,719}}
+12:51:49.431 [HINT] Split Screen finger={{247,745}}
+12:51:49.448 [HINT] Split Screen finger={{245,766}}
+12:51:49.464 [HINT] Split Screen finger={{245,787}}
+12:51:49.482 [HINT] Split Screen finger={{250,805}}
+12:51:49.497 [HINT] Split Screen finger={{253,817}}
+12:51:49.514 [HINT] Split Screen finger={{256,824}}
+12:51:49.530 [HINT] Split Screen finger={{257,833}}
+12:51:49.547 [HINT] Split Screen finger={{259,842}}
+12:51:49.564 [HINT] Split Screen finger={{262,856}}
+12:51:49.581 [HINT] Split Screen finger={{266,868}}
+12:51:49.598 [HINT] Split Screen finger={{269,880}}
+12:51:49.615 [HINT] Split Screen finger={{270,885}}
+12:51:49.631 [HINT] Split Screen finger={{272,885}}
+12:51:49.648 [HINT] Split Screen finger={{272,886}}
+12:51:49.664 [HINT] Split Screen finger={{272,887}}
+12:51:49.681 [HINT] Split Screen finger={{272,888}}
+12:51:49.698 [HINT] Split Screen finger={{272,894}}
+12:51:49.714 SpringBoard: drag827 New Stage dropped at 272,894
+12:51:49.722 SpringBoard: splitdrop883 dropped at {272,894}: com.apple.MobileSMS (full screen) -> top card, new stage below
+12:51:49.724 SpringBoard: splitone894 step 1 Home pressed (stage closed) to send com.apple.MobileSMS home
+12:51:49.725 SpringBoard: home898 step 1 press used none (no target answered) (SB answers simulate=0 menu=0) front=com.apple.MobileSMS transition=0 depth=0 gesture=0
+12:51:50.009 SpringBoard: home898 step 1 +285 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+12:51:50.323 SpringBoard: home898 step 1 +599 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+12:51:50.445 SpringBoard: lag897 10 s: gates 471/s (41 uncached/s) top [core843 66, a11y843 65, core802 24, core846 23] other 228; log 2.1 lines/s; main stalls >100 ms 0 worst 0 ms at -
+12:51:50.450 SpringBoard: homeretry896 step 1 com.apple.MobileSMS still front +727 ms: Home pressed once more
+12:51:50.451 SpringBoard: home898 retry press used none (no target answered)
+12:51:50.637 SpringBoard: home898 step 1 +914 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+12:51:50.953 SpringBoard: home898 step 1 +1229 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+12:51:51.246 SpringBoard: splitflow895 step 1 home first in front +1522 ms transition=0 depth=0 gesture=0
+12:51:51.246 SpringBoard: splitone894 step 1 done +1522 ms home in front=1 front=(home) transition=0
+12:51:51.304 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+12:51:51.305 SpringBoard: stage on screen
+12:51:51.305 [TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+12:51:51.305 SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+12:51:51.305 SpringBoard: taking key from SBMainSwitcherWindow on this scene
+12:51:51.306 SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+12:51:51.306 SpringBoard: opened the top stage
+12:51:51.357 SpringBoard: putting com.apple.MobileSMS on stack slot 0
+12:51:51.357 [TRACE] launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+12:51:51.357 SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+12:51:51.357 SpringBoard: creating app view for com.apple.MobileSMS
+12:51:51.357 SpringBoard: created app view for com.apple.MobileSMS
+12:51:51.360 [TRACE] scene transaction com.apple.MobileSMS actions=1
+12:51:51.363 SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+12:51:51.363 SpringBoard: reg799: setDelegate on com.apple.MobileSMS ctrl=0x1297578d0
+12:51:51.364 SpringBoard: reg799: registered contributor on com.apple.MobileSMS handle=0x11da19ce0 ident=com.apple.MobileSMS (addSceneUpdateContributer:)
+12:51:51.364 SpringBoard: com.apple.MobileSMS stays running in the background
+12:51:51.364 SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+12:51:51.364 SpringBoard: com.apple.MobileSMS is on stack slot 0
+12:51:51.364 [TRACE] hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+12:51:51.364 [KEYBOARD LOG] attach com.apple.MobileSMS slot 0 stack=1 prim=1
+12:51:51.364 [TRACE] scene block sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A frame={{0, 0}, {430, 932}}
+12:51:51.364 SpringBoard: kept the open stage inside its card while another app opened
+12:51:51.364 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A's phone-size update lands at card size, not refused)
+12:51:51.365 SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x1297578d0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+12:51:51.365 [TRACE] app-view settings update
+12:51:51.365 SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281070390> { hostContextIdentifierForSnapshotting = 187c9be5; scenePresenterRenderIdentifierForSnapshotting = 158c1da804abe056; }; }
+12:51:51.365 [TRACE] app-view settings update done
+12:51:51.365 [TRACE] layoutHost Messages frame={{0, 0}, {430, 932}}
+12:51:51.369 [TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+12:51:51.369 [TRACE] hideStray split=0 depth=0
+12:51:51.370 SpringBoard: splitflow895 direct852 com.apple.MobileSMS was hosted at once (already running, no placeholder): picker kept hidden
+12:51:51.370 SpringBoard: splitone894 step 2 +1646 ms com.apple.MobileSMS staged from home by recent839 / direct852 (hosting=1)
+12:51:51.372 SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A(role=1 level=1 app=1 full=0)
+12:51:51.372 SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A(role=1 level=1 app=1 full=0)
+12:51:51.372 SpringBoard: defer719 touch observer on the bottom card (189 s after start)
+12:51:51.409 SpringBoard: fitting com.apple.MobileSMS's scene to the card
+12:51:51.409 [TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+12:51:51.714 SpringBoard: splitone894 step 3 +1990 ms settled=1 (fit done) scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}} front=(home)
+12:51:51.727 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+12:51:51.731 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+12:51:51.898 [GEOM-FIX] Outline glued + clamped (second)
+12:51:51.943 [TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {426, 460}}
+12:51:51.943 [TRACE] scene block sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A frame={{0, 0}, {420, 458}}
+12:51:51.943 SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = <BSMutableSettings: 0x281bbcfa0> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+12:51:51.943 [TRACE] layoutHost Messages frame={{0, 0}, {426, 460}}
+12:51:51.944 [TRACE] hideStray split=1 depth=0
+12:51:51.944 SpringBoard: hid Messages' full-screen scene presentation outside the split card
+12:51:51.951 [SPLIT] opened under the top app finger={{272,894}}
+12:51:51.952 SpringBoard: splitone894 step 4 split open (B call)
+12:51:51.983 SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+12:51:51.983 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+12:51:51.983 SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=NO (card live; external=YES workspace=nil handle=yes scene=yes; 0 external-foreground handle(s))
+12:51:52.075 SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A fg=1 occluded=0 deactivation=0x1 camera=0
+12:51:52.091 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:52.091 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:52.144 SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{2, 5}, {426, 460}} (old out, then new in)
+12:51:52.169 [TRACE] scene transaction com.apple.MobileSMS actions=0
+12:51:52.171 SpringBoard: reg799: contributor appended reason com.apple.MobileSMS (already=1, set={(     "com.apple.MobileSMS" )})
+12:51:52.172 [TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {426, 460}}
+12:51:52.288 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+12:51:53.464 SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+12:51:53.797 SpringBoard: gest770 tap outside the cards at 311,925: nothing done (system gesture)
+12:51:53.808 SpringBoard: gest770 edge pull began at 308,916 v=(-137,-369): left to the system (home / switcher) (parked=0 stage visible=1 home=1 switcher=closed)
+12:51:53.808 SpringBoard: home gesture began, stage open
+12:51:53.824 [TRACE] scene update begin sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A fg=1 depth=1 frame={{0, 0}, {426, 460}}
+12:51:53.825 SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x1297578d0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=1 busy=1 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+12:51:53.825 [TRACE] app-view settings update
+12:51:53.825 SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280ff63a0> { deactivationReasons = systemGesture; }; }
+12:51:53.825 [TRACE] app-view settings update done
+12:51:53.828 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=0 home=1 busy=1 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBMainSwitcherWindow
+12:51:53.838 SpringBoard: home731 the home swipe committed (up 42 pt, v 1359): tucking
+12:51:53.838 SpringBoard: tucking the open stage for home
+12:51:53.852 SpringBoard: com.apple.MobileSMS is the only minimized app
+12:51:53.853 SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+12:51:53.879 SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+12:51:53.904 SpringBoard: reason800: re-appended com.apple.MobileSMS via in-place (was missing; home/layout path bypassed contributor) ctrl=0x1297578d0
+12:51:53.908 SpringBoard: gest770 edge pull ended after 0.10 s (system's) at 283,769 moved (-25,-151) v=(-355,-2697) home=1 busy=1 switcher=closed
+12:51:53.908 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+12:51:53.908 SpringBoard: home gesture ended
+12:51:53.911 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:53.912 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:53.917 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:54.798 SpringBoard: parked apps stopped following the home transition
+12:51:55.024 SpringBoard: host750 bottom card com.apple.MobileSMS: live -> minimised
+12:51:55.025 SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:51:55.227 SpringBoard: corner771 claimed pull in parked corner (right) at 409,910
+12:51:55.227 SpringBoard: corner pull picked up from the system gesture
+12:51:55.228 SpringBoard: gest770 edge pull began at 409,910 v=(13,-535): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+12:51:55.230 SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+12:51:55.231 SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized (read after the home / switcher gesture)
+12:51:55.232 SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+12:51:55.286 SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (card hidden, parked, minimized or closed), path=layout-off
+12:51:55.286 SpringBoard: camera661 presence com.apple.MobileSMS out of the display layout (card hidden, parked, minimized or closed)
+12:51:55.337 SpringBoard: gest770 edge pull ended after 0.11 s (ours) at 362,791 moved (-46,-132) v=(-1143,-1873) home=0 busy=0 switcher=closed
+12:51:55.337 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+12:51:55.347 SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:51:55.347 SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 469}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:51:55.807 [TRACE] layoutHost Messages frame={{0, 0}, {426, 460}}
+12:51:55.811 [TRACE] hideStray split=0 depth=0
+12:51:55.811 [TRACE] scene transaction com.apple.MobileSMS actions=0
+12:51:55.817 SpringBoard: reg799: contributor appended reason com.apple.MobileSMS (already=1, set={(     "com.apple.MobileSMS" )})
+12:51:55.818 SpringBoard: home665 let SpringBoard's update of sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A land at card size (corner pull just ended), not refused
+12:51:55.818 [TRACE] scene update begin sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A fg=1 depth=1 frame={{0, 0}, {430, 932}}
+12:51:55.819 [TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+12:51:55.820 [TRACE] app-view settings update
+12:51:55.820 SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = <BSMutableSettings: 0x281d94840> { frame = NSRect: {{0, 0}, {420, 458}}; }; subclassChanges = (none); }
+12:51:55.820 [TRACE] app-view settings update done
+12:51:55.820 [TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+12:51:55.829 SpringBoard: restore847 bottom card back on screen (restore) still had the home-swipe still over the app: dropped (as a drag begin does)
+12:51:56.526 SpringBoard: host750 bottom card com.apple.MobileSMS: minimised -> live
+12:51:56.528 SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:51:56.958 [TRACE] arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:56.960 [TRACE] scene block sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A frame={{0, 0}, {420, 458}}
+12:51:56.961 SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x1297578d0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+12:51:56.962 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:56.962 [TRACE] app-view settings update
+12:51:56.963 SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281202ee0> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+12:51:56.963 [TRACE] app-view settings update done
+12:51:57.015 SpringBoard: gest770 edge pull began at 310,914 v=(23,-184): left to the system (home / switcher) (parked=0 stage visible=1 home=0 switcher=closed)
+12:51:57.015 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+12:51:57.016 SpringBoard: home gesture began, stage open
+12:51:57.045 SpringBoard: home731 the home swipe committed (up 50 pt, v 417): tucking
+12:51:57.046 SpringBoard: tucking the open stage for home
+12:51:57.061 SpringBoard: com.apple.MobileSMS is the only minimized app
+12:51:57.062 SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+12:51:57.085 SpringBoard: reason800: re-appended com.apple.MobileSMS via in-place (was missing; home/layout path bypassed contributor) ctrl=0x1297578d0
+12:51:57.088 SpringBoard: gest770 edge pull ended after 0.07 s (system's) at 297,800 moved (-14,-119) v=(-391,-2617) home=1 busy=1 switcher=closed
+12:51:57.088 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+12:51:57.088 SpringBoard: home gesture ended
+12:51:57.091 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:57.092 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:57.099 SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:57.958 SpringBoard: parked apps stopped following the home transition
+12:51:58.101 SpringBoard: host750 bottom card com.apple.MobileSMS: live -> minimised
+12:51:58.102 SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:51:58.312 SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (home / switcher has the screen), path=layout-off
+12:51:58.312 SpringBoard: camera661 presence com.apple.MobileSMS out of the display layout (home / switcher has the screen)
+12:51:59.802 SpringBoard: corner771 claimed pull in parked corner (right) at 404,909
+12:51:59.802 SpringBoard: corner pull picked up from the system gesture
+12:51:59.803 SpringBoard: gest770 edge pull began at 404,909 v=(-46,-206): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+12:51:59.938 SpringBoard: gest770 edge pull ended after 0.13 s (ours) at 356,760 moved (-50,-158) v=(-424,-2885) home=0 busy=0 switcher=closed
+12:51:59.938 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+12:51:59.954 SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:51:59.954 SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 469}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:52:00.402 [TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+12:52:00.406 [TRACE] hideStray split=0 depth=0
+12:52:00.408 SpringBoard: restore847 bottom card back on screen (restore) still had the home-swipe still over the app: dropped (as a drag begin does)
+12:52:00.455 SpringBoard: lag897 10 s: gates 3935/s (70 uncached/s) top [beeper707 2395, core843 189, a11y843 189, core846 49] other 1055; log 15.1 lines/s; main stalls >100 ms 0 worst 0 ms at -
+12:52:00.924 SpringBoard: rim651 system gesture held at 236,458 (rim)
+12:52:00.930 SpringBoard: rim651 hit main-outer-top at 236,458 -> DSStageDragShellView
+12:52:01.008 SpringBoard: rim651 drag began at 243,461 won by main-shell-pan
+12:52:01.061 SpringBoard: camera658 com.apple.MobileSMS layout670 card is moving: display-layout element kept at {{5, 469}, {420, 458}} until the drag settles
+12:52:01.248 SpringBoard: host750 bottom card com.apple.MobileSMS: minimised -> live
+12:52:01.249 SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:52:02.568 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+12:52:02.569 SpringBoard: blackfix887 cleared hosting card colour (alpha 1.00, band 0, card 420x458)
+12:52:02.569 SpringBoard: taking key from SBHomeScreenWindow on this scene
+12:52:02.570 SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+12:52:02.575 SpringBoard: reg799: removed contributor from com.apple.MobileSMS handle=0x11da19ce0
+12:52:02.587 SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (app no longer on a card), path=layout-off
+12:52:02.587 SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:52:02.876 SpringBoard: host750 bottom card com.apple.MobileSMS: live -> detached
+12:52:02.876 SpringBoard: perf812 41032 feature-gate calls (724 uncached) in 11 s
+12:52:02.877 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=0 parked=0
+12:52:04.316 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:52:04.326 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:52:05.460 SpringBoard: pill826 New Stage tapped
+12:52:05.560 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+12:52:05.560 SpringBoard: stage on screen
+12:52:05.560 [TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+12:52:05.560 SpringBoard: taking key from SBHomeScreenWindow on this scene
+12:52:05.561 SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+12:52:05.561 SpringBoard: opened the top stage
+
+--- trace ---
+=== previous session ===
+12:48:30.910 SpringBoard pid=6928 main | scene update begin sceneID:org.whispersystems.signal-default fg=1 depth=1 frame={{0, 0}, {420, 458}}
+=== this session ===
+(trace802: 5 lines of SpringBoard pid=8105 from before the archive)
+12:48:46.761 SpringBoard pid=8105 main | SpringBoard: call653 guard listening (call screen containment is off)
+12:48:46.762 SpringBoard pid=8105 main | SpringBoard: keys674 on: staged apps without the DynamicStage app dylib get no keyboard layer inside their card (off: /var/mobile/.dynamicstage-keys674-off, every staged app: /var/mobile/.dynamicstage-keys674-all)
+12:48:46.762 SpringBoard pid=8105 main | SpringBoard: keep776 installed (Medusa hide from updateMedusaHostedKeyboardWindowForScene: kept out while a staged app owns the keys)
+12:48:46.762 SpringBoard pid=8105 main | SpringBoard: why775 hooks installed: update,sized,target
+12:48:46.762 SpringBoard pid=8105 main | SpringBoard: lock808 installed (SBBacklightController observer)
+12:48:46.818 SpringBoard pid=8105 main | SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohib...
+12:48:46.961 SpringBoard pid=8105 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+12:48:46.961 SpringBoard pid=8105 main | ready state=0 split=0 bottom=- top=- hover=-
+12:48:46.961 SpringBoard pid=8105 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=Bloom.BloomWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+12:48:46.961 SpringBoard pid=8105 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+12:48:46.961 SpringBoard pid=8105 main | SpringBoard: latch749: no feature is latched off
+12:48:46.964 SpringBoard pid=8105 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+12:48:46.964 SpringBoard pid=8105 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+12:48:46.965 SpringBoard pid=8105 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+12:48:46.965 SpringBoard pid=8105 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+12:48:46.966 SpringBoard pid=8105 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+12:48:46.966 SpringBoard pid=8105 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+12:48:46.966 SpringBoard pid=8105 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+12:48:46.966 SpringBoard pid=8105 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+12:48:46.968 SpringBoard pid=8105 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=0 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+12:48:46.969 SpringBoard pid=8105 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=25s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=25s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.face...
+12:48:49.673 SpringBoard pid=8105 main | SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 750 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared; crash872 last active feature before that exit: core747
+12:48:51.340 SpringBoard pid=8105 main | SpringBoard: lock808: screen off (backlight state 4 source 8; stage visible=0, cards left as they are)
+12:48:51.950 SpringBoard pid=8105 main | SpringBoard: lock808: screen on (backlight state 1 source 9; stage visible=0, cards left as they are)
+12:48:53.477 SpringBoard pid=8105 main | app: com.apple.MobileSMS ctor ok
+12:48:53.480 MobileSMS pid=8131 main | app ctor reason=0 bundle=com.apple.MobileSMS
+12:48:53.888 MobileSMS pid=8131 main | layout667 com.apple.MobileSMS camera preview watch on (once a second while on a card)
+12:48:53.888 MobileSMS pid=8131 main | camera658 app capture hooks in, multitask switch present
+12:48:53.891 MobileSMS pid=8131 main | caret788: hooked CKMessageEntryView isKeyboardVisible types=B16@0:8
+12:48:53.891 MobileSMS pid=8131 main | strip790: hooked _updateUIForEntryFieldCollapsedStateChange types=v16@0:8
+12:48:53.892 SpringBoard pid=8105 main | app: com.apple.MobileSMS remote keyboard hooks are in
+12:48:53.899 SpringBoard pid=8105 main | app: com.apple.MobileSMS is listening for staged keys
+12:48:55.064 SpringBoard pid=8105 main | SpringBoard: stayed up, boot guard cleared
+12:48:55.066 SpringBoard pid=8105 main | SpringBoard: pillshow835 stage window (edge pill) moved onto SpringBoard's main display scene from SystemAperture
+12:48:55.079 SpringBoard pid=8105 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+12:48:55.084 SpringBoard pid=8105 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+12:48:55.181 SpringBoard pid=8105 main | SpringBoard: only828 picker shown by a layout pass switched to the new look
+12:48:55.182 SpringBoard pid=8105 main | SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+12:48:55.182 SpringBoard pid=8105 main | SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+12:48:55.192 SpringBoard pid=8105 main | SpringBoard: style823 first styled picker drawn (hang marker cleared)
+12:48:55.192 SpringBoard pid=8105 main | SpringBoard: style824 first styled picker drawn (hang marker cleared)
+12:48:55.519 SpringBoard pid=8105 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:48:55.527 SpringBoard pid=8105 main | SpringBoard: phonesize675 build 4.5.898 is ON; apps: com.beeper.chat.ios (default)
+12:48:55.661 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:48:55.662 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:48:55.665 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:48:55.665 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 89}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:48:55.674 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:48:55.674 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:48:55.674 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:48:55.674 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:48:56.467 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:48:56.469 SpringBoard pid=8105 main | SpringBoard: phonesize680 build 4.5.898 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+12:48:56.472 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:48:56.472 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:48:56.473 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:48:56.478 SpringBoard pid=8105 main | SpringBoard: phonesize683 build 4.5.898 is OFF (opt-in since 4.5.684: /var/mobile/.dynamicstage-phonesize683-on)
+12:48:56.497 SpringBoard pid=8105 main | SpringBoard: SpringBoard put a keyboard up at {{0, 631}, {430, 301}} (the display is {{0, 0}, {430, 932}})
+12:48:56.499 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:48:56.502 SpringBoard pid=8105 main | SpringBoard: kbrule815 com.apple.MobileSMS keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:48:56.502 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:48:56.503 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:48:56.503 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:48:56.503 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:48:57.009 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:48:57.010 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:48:57.752 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:48:57.783 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:03.996 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+1 repeats)
+12:49:04.024 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:04.844 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:49:04.864 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:06.445 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:49:06.471 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:38.752 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:38.752 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:38.753 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:38.754 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:38.771 SpringBoard pid=8105 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:49:38.785 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:39.142 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:50.015 SpringBoard pid=8105 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:49:50.184 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:49:50.184 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:49:50.189 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:49:50.189 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:49:50.202 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:49:50.202 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:49:50.202 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:49:50.202 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:49:51.070 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:49:51.079 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:49:51.079 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:49:51.096 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:51.105 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:49:51.106 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:49:51.106 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:51.106 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:51.615 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:51.616 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:52.253 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:49:52.273 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:58.659 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 337}}
+12:49:58.687 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:58.709 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:49:58.709 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:49:58.710 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:49:58.710 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:49:59.613 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:49:59.627 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 493}, {430, 439}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:59.628 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 493}, {430, 439}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:59.629 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:49:59.629 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 493}, {430, 439}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:49:59.629 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 493}, {430, 439}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:02.129 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+12:50:02.130 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:02.130 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+12:50:02.133 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+12:50:02.134 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 525}, {430, 407}}. cause=frame changed localHidden=0 remote=0
+12:50:02.160 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:05.785 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 337}}
+12:50:05.816 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:05.819 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 525}, {430, 407}} end={{0, 476}, {430, 456}}. cause=frame changed localHidden=0 remote=0
+12:50:05.819 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 525}, {430, 407}} end={{0, 476}, {430, 456}}. cause=frame changed localHidden=0 remote=0
+12:50:05.820 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 525}, {430, 407}} end={{0, 476}, {430, 456}}. cause=frame changed localHidden=0 remote=0
+12:50:05.821 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 525}, {430, 407}} end={{0, 476}, {430, 456}}. cause=frame changed localHidden=0 remote=0
+12:50:08.548 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 476}, {430, 456}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:50:08.548 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 337}}
+12:50:08.548 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 476}, {430, 456}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:50:08.548 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 476}, {430, 456}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:50:08.549 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 476}, {430, 456}} end={{0, 493}, {430, 439}}. cause=frame changed localHidden=0 remote=0
+12:50:08.570 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 337}} visible={{0, 537}, {430, 395}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:09.736 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:09.744 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+1 repeats)
+12:50:09.763 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:09.774 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:09.774 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:09.775 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:09.775 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:09.778 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:09.790 SpringBoard pid=8105 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:50:09.803 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:10.214 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:31.936 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:31.937 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:31.944 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:31.945 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:31.960 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:31.960 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:31.961 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:31.961 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:32.632 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:32.640 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:32.641 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:32.658 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:32.667 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:32.667 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:32.667 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:32.667 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:33.179 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:33.200 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:33.200 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:33.201 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:35.786 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+1 repeats)
+12:50:35.820 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:36.705 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:36.706 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:36.706 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:36.707 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:36.725 SpringBoard pid=8105 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:50:36.735 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:37.126 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:57.850 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:57.851 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:57.856 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:57.856 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:50:57.868 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:57.868 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:57.869 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:57.869 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:50:58.703 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:50:58.713 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:58.713 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:58.731 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:50:58.742 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:58.742 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:50:58.742 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:58.742 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:59.252 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:59.253 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:50:59.460 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:50:59.482 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:10.567 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+1 repeats)
+12:51:10.592 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:10.927 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:10.928 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:10.928 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:10.929 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:10.944 SpringBoard pid=8105 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:51:10.954 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:11.383 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:12.053 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:12.053 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:12.062 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:12.062 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:12.075 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.075 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.075 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.075 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.762 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.763 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.763 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.764 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:12.790 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 932}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:13.058 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 932}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:19.862 SpringBoard pid=8105 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:51:19.940 SpringBoard pid=8105 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:51:19.942 SpringBoard pid=8105 main | SpringBoard: lag897 sampler on (0.25 s main-queue tick, one summary per busy 10 s)
+12:51:19.989 SpringBoard pid=8105 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:51:19.990 SpringBoard pid=8105 main | SpringBoard: pill826 first strip drawn (hang marker cleared)
+12:51:24.319 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+12:51:24.321 SpringBoard pid=8105 main | SpringBoard: diag855 Spotlight keys ON (com.apple.Spotlight) state=0 windows=[lvl 998 hidden 0 alpha 1.00]
+12:51:24.322 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{inf, inf}, {0, 0}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:24.322 SpringBoard pid=8105 main | SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:51:24.950 SpringBoard pid=8105 main | SpringBoard: diag855 Spotlight keys ON +0.6s windows=[lvl 998 hidden 0 alpha 1.00]
+12:51:26.625 SpringBoard pid=8105 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:29.961 SpringBoard pid=8105 main | SpringBoard: lag897 10 s: gates 214/s (22 uncached/s) top [core843 34, a11y843 33, core846 12, core842 11] other 46; log 0.9 lines/s; main stalls >100 ms 0 worst 0 ms at -
+12:51:34.611 SpringBoard pid=8105 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:36.012 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:36.012 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:36.020 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:36.021 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 932}, {430, 243}} end={{0, 843}, {430, 89}}. cause=frame changed localHidden=0 remote=0
+12:51:36.034 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:36.034 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:36.034 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:36.034 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+12:51:36.776 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}}
+12:51:36.784 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:51:36.785 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:51:36.785 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:51:36.795 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:36.795 SpringBoard pid=8105 main | SpringBoard: kbrule815 com.apple.MobileSMS keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:51:36.814 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:51:36.814 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 508}, {430, 424}}. cause=frame changed localHidden=0 remote=0
+12:51:36.814 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:36.814 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:37.348 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:37.348 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 508}, {430, 424}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:37.777 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 288}}
+12:51:37.796 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 288}} visible={{0, 586}, {430, 346}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:39.283 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.MobileSMS frame={{0, 0}, {430, 243}} (+2 repeats)
+12:51:39.304 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.MobileSMS frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:39.747 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:39.747 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:39.747 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:39.748 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 542}, {430, 390}} end={{0, 542}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:39.764 SpringBoard pid=8105 bg | arbiter on=0 src=com.apple.MobileSMS frame={{0, 0}, {0, 0}}
+12:51:39.774 MobileSMS pid=8131 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:39.978 MobileSMS pid=8131 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 542}, {430, 390}} end={{0, 932}, {430, 390}}. cause=frame changed localHidden=0 remote=0
+12:51:41.558 SpringBoard pid=8105 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:51:41.970 SpringBoard pid=8105 bg | arbiter on=1 src=com.apple.Spotlight frame={{0, 0}, {430, 243}}
+12:51:41.981 SpringBoard pid=8105 main | SpringBoard: src746 up com.apple.Spotlight frame={{0, 0}, {430, 243}} visible={{0, 631}, {430, 301}} slot=-1 sinceHide=-1.00 via DynamicStage+0x99df0 < DynamicStage+0x933d8 < DynamicStage+0xc7ca4 < DynamicStage+0x14ccc < DynamicStage+0x57e4 < DynamicStage+0x14c6c < libdispatch+0x2320
+12:51:41.981 SpringBoard pid=8105 main | SpringBoard: kbrule815 com.apple.Spotlight keyboard {{0, 0}, {430, 243}} ignored: stage not on screen (no stage shift)
+12:51:44.475 SpringBoard pid=8105 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:51:45.077 SpringBoard pid=8105 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:51:45.178 SpringBoard pid=8105 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:51:47.865 SpringBoard pid=8105 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:48.458 SpringBoard pid=8105 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:51:48.535 SpringBoard pid=8105 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:51:49.250 SpringBoard pid=8105 main | SpringBoard: drag827 New Stage drag began from the pill strip
+12:51:49.254 SpringBoard pid=8105 main | SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {369,404} front=com.apple.MobileSMS state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+12:51:49.255 SpringBoard pid=8105 main | SpringBoard: splitdrop883 drag began at {369,404}: zone unarmed (finger in the upper half (y=404 < 466))
+12:51:49.264 SpringBoard pid=8105 main | SpringBoard: splitdrop883 drag moved at {365,413}: zone unarmed (finger in the upper half (y=413 < 466))
+12:51:49.281 SpringBoard pid=8105 main | SpringBoard: splitdrop883 drag moved at {347,448}: zone unarmed (finger in the upper half (y=448 < 466))
+12:51:49.297 SpringBoard pid=8105 main | SpringBoard: splitdrop883 drag moved at {337,474}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+12:51:49.714 SpringBoard pid=8105 main | SpringBoard: drag827 New Stage dropped at 272,894
+12:51:49.722 SpringBoard pid=8105 main | SpringBoard: splitdrop883 dropped at {272,894}: com.apple.MobileSMS (full screen) -> top card, new stage below
+12:51:49.724 SpringBoard pid=8105 main | SpringBoard: splitone894 step 1 Home pressed (stage closed) to send com.apple.MobileSMS home
+12:51:49.725 SpringBoard pid=8105 main | SpringBoard: home898 step 1 press used none (no target answered) (SB answers simulate=0 menu=0) front=com.apple.MobileSMS transition=0 depth=0 gesture=0
+12:51:50.009 SpringBoard pid=8105 main | SpringBoard: home898 step 1 +285 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+12:51:50.323 SpringBoard pid=8105 main | SpringBoard: home898 step 1 +599 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+12:51:50.445 SpringBoard pid=8105 main | SpringBoard: lag897 10 s: gates 471/s (41 uncached/s) top [core843 66, a11y843 65, core802 24, core846 23] other 228; log 2.1 lines/s; main stalls >100 ms 0 worst 0 ms at -
+12:51:50.450 SpringBoard pid=8105 main | SpringBoard: homeretry896 step 1 com.apple.MobileSMS still front +727 ms: Home pressed once more
+12:51:50.450 SpringBoard pid=8105 main | SpringBoard: home898 retry press used none (no target answered)
+12:51:50.637 SpringBoard pid=8105 main | SpringBoard: home898 step 1 +914 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+12:51:50.952 SpringBoard pid=8105 main | SpringBoard: home898 step 1 +1229 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+12:51:51.246 SpringBoard pid=8105 main | SpringBoard: splitflow895 step 1 home first in front +1522 ms transition=0 depth=0 gesture=0
+12:51:51.246 SpringBoard pid=8105 main | SpringBoard: splitone894 step 1 done +1522 ms home in front=1 front=(home) transition=0
+12:51:51.304 SpringBoard pid=8105 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+12:51:51.305 SpringBoard pid=8105 main | SpringBoard: stage on screen
+12:51:51.305 SpringBoard pid=8105 main | on screen state=2 split=0 bottom=- top=- hover=-
+12:51:51.305 SpringBoard pid=8105 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+12:51:51.305 SpringBoard pid=8105 main | SpringBoard: taking key from SBMainSwitcherWindow on this scene
+12:51:51.306 SpringBoard pid=8105 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+12:51:51.306 SpringBoard pid=8105 main | SpringBoard: opened the top stage
+12:51:51.357 SpringBoard pid=8105 main | SpringBoard: putting com.apple.MobileSMS on stack slot 0
+12:51:51.357 SpringBoard pid=8105 main | launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+12:51:51.357 SpringBoard pid=8105 main | SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+12:51:51.357 SpringBoard pid=8105 main | SpringBoard: creating app view for com.apple.MobileSMS
+12:51:51.357 SpringBoard pid=8105 main | SpringBoard: created app view for com.apple.MobileSMS
+12:51:51.360 SpringBoard pid=8105 main | scene transaction com.apple.MobileSMS actions=1
+12:51:51.363 SpringBoard pid=8105 main | SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+12:51:51.363 SpringBoard pid=8105 main | SpringBoard: reg799: setDelegate on com.apple.MobileSMS ctrl=0x1297578d0
+12:51:51.363 SpringBoard pid=8105 main | SpringBoard: reg799: registered contributor on com.apple.MobileSMS handle=0x11da19ce0 ident=com.apple.MobileSMS (addSceneUpdateContributer:)
+12:51:51.364 SpringBoard pid=8105 main | SpringBoard: com.apple.MobileSMS stays running in the background
+12:51:51.364 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+12:51:51.364 SpringBoard pid=8105 main | SpringBoard: com.apple.MobileSMS is on stack slot 0
+12:51:51.364 SpringBoard pid=8105 main | hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+12:51:51.364 SpringBoard pid=8105 main | scene block sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A frame={{0, 0}, {430, 932}}
+12:51:51.364 SpringBoard pid=8105 main | SpringBoard: kept the open stage inside its card while another app opened
+12:51:51.364 SpringBoard pid=8105 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A's phone-size update lands at card size, not refused)
+12:51:51.365 SpringBoard pid=8105 main | SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x1297578d0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+12:51:51.365 SpringBoard pid=8105 main | app-view settings update
+12:51:51.365 SpringBoard pid=8105 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281070390> { hostContextIdentifierForSnapshotting = 187c9be5; scenePresenterRenderIdentifierForSnapshotting = 158c1da804abe056; }; }
+12:51:51.365 SpringBoard pid=8105 main | app-view settings update done
+12:51:51.365 SpringBoard pid=8105 main | layoutHost Messages frame={{0, 0}, {430, 932}}
+12:51:51.369 SpringBoard pid=8105 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+12:51:51.369 SpringBoard pid=8105 main | hideStray split=0 depth=0
+12:51:51.370 SpringBoard pid=8105 main | SpringBoard: splitflow895 direct852 com.apple.MobileSMS was hosted at once (already running, no placeholder): picker kept hidden
+12:51:51.370 SpringBoard pid=8105 main | SpringBoard: splitone894 step 2 +1646 ms com.apple.MobileSMS staged from home by recent839 / direct852 (hosting=1)
+12:51:51.372 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A(role=1 level=1 app=1 ...
+12:51:51.372 SpringBoard pid=8105 main | SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A(role=1 level=1 app=1 full=0)
+12:51:51.372 SpringBoard pid=8105 main | SpringBoard: defer719 touch observer on the bottom card (189 s after start)
+12:51:51.409 SpringBoard pid=8105 main | SpringBoard: fitting com.apple.MobileSMS's scene to the card
+12:51:51.409 SpringBoard pid=8105 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+12:51:51.415 MobileSMS pid=8131 main | app left UIToolbar at {{0, 458}, {420, 49}}. cause=the piece under the field is 49pt, and pulling its bottom up to 409 puts it above the field
+12:51:51.427 MobileSMS pid=8131 main | app left _UIVisualEffectBackdropView at {{0, 0}, {420, 91}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+12:51:51.454 MobileSMS pid=8131 main | app left UILabel at {{83.000000000000014, 22.333333333333332}, {210.33333333333334, 35.333333333333329}}. cause=the piece under the field is 35pt, and pulling its bottom up to 9 puts it above the field
+12:51:51.465 MobileSMS pid=8131 main | entry811 input window laid out: card={{0, 0}, {420, 458}} | bar=none | strip=none
+12:51:51.714 SpringBoard pid=8105 main | SpringBoard: splitone894 step 3 +1990 ms settled=1 (fit done) scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}} front=(home)
+12:51:51.727 SpringBoard pid=8105 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+12:51:51.731 SpringBoard pid=8105 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+12:51:51.943 SpringBoard pid=8105 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {426, 460}}
+12:51:51.943 SpringBoard pid=8105 main | scene block sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A frame={{0, 0}, {420, 458}}
+12:51:51.943 SpringBoard pid=8105 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = <BSMutableSettings: 0x281bbcfa0> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+12:51:51.943 SpringBoard pid=8105 main | layoutHost Messages frame={{0, 0}, {426, 460}}
+12:51:51.944 SpringBoard pid=8105 main | hideStray split=1 depth=0
+12:51:51.944 SpringBoard pid=8105 main | SpringBoard: hid Messages' full-screen scene presentation outside the split card
+12:51:51.951 SpringBoard pid=8105 main | SpringBoard: splitone894 step 4 split open (B call)
+12:51:51.982 SpringBoard pid=8105 main | SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+12:51:51.983 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+12:51:51.983 SpringBoard pid=8105 main | SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=NO (card live; external=YES workspace=nil handle=yes scene=yes; 0 external-foreground handle(s))
+12:51:52.075 SpringBoard pid=8105 main | SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A fg=1 occluded=0 deactivation=0x1 camera=0
+12:51:52.091 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:52.091 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:52.144 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{2, 5}, {426, 460}} (old out, then new in)
+12:51:52.169 SpringBoard pid=8105 main | scene transaction com.apple.MobileSMS actions=0
+12:51:52.171 SpringBoard pid=8105 main | SpringBoard: reg799: contributor appended reason com.apple.MobileSMS (already=1, set={(     "com.apple.MobileSMS" )})
+12:51:52.172 SpringBoard pid=8105 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {426, 460}}
+12:51:52.288 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+12:51:53.464 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+12:51:53.797 SpringBoard pid=8105 main | SpringBoard: gest770 tap outside the cards at 311,925: nothing done (system gesture)
+12:51:53.808 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull began at 308,916 v=(-137,-369): left to the system (home / switcher) (parked=0 stage visible=1 home=1 switcher=closed)
+12:51:53.808 SpringBoard pid=8105 main | SpringBoard: home gesture began, stage open
+12:51:53.824 SpringBoard pid=8105 main | scene update begin sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A fg=1 depth=1 frame={{0, 0}, {426, 460}}
+12:51:53.825 SpringBoard pid=8105 main | SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x1297578d0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=1 busy=1 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+12:51:53.825 SpringBoard pid=8105 main | app-view settings update
+12:51:53.825 SpringBoard pid=8105 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x280ff63a0> { deactivationReasons = systemGesture; }; }
+12:51:53.825 SpringBoard pid=8105 main | app-view settings update done
+12:51:53.828 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=0 home=1 busy=1 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBMainSwitcherWindow
+12:51:53.838 SpringBoard pid=8105 main | SpringBoard: home731 the home swipe committed (up 42 pt, v 1359): tucking
+12:51:53.838 SpringBoard pid=8105 main | SpringBoard: tucking the open stage for home
+12:51:53.852 SpringBoard pid=8105 main | SpringBoard: com.apple.MobileSMS is the only minimized app
+12:51:53.853 SpringBoard pid=8105 main | SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+12:51:53.879 SpringBoard pid=8105 main | SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+12:51:53.904 SpringBoard pid=8105 main | SpringBoard: reason800: re-appended com.apple.MobileSMS via in-place (was missing; home/layout path bypassed contributor) ctrl=0x1297578d0
+12:51:53.908 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull ended after 0.10 s (system's) at 283,769 moved (-25,-151) v=(-355,-2697) home=1 busy=1 switcher=closed
+12:51:53.908 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+12:51:53.908 SpringBoard pid=8105 main | SpringBoard: home gesture ended
+12:51:53.911 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:53.911 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:54.797 SpringBoard pid=8105 main | SpringBoard: parked apps stopped following the home transition
+12:51:55.023 SpringBoard pid=8105 main | SpringBoard: host750 bottom card com.apple.MobileSMS: live -> minimised
+12:51:55.025 SpringBoard pid=8105 main | SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:51:55.227 SpringBoard pid=8105 main | SpringBoard: corner771 claimed pull in parked corner (right) at 409,910
+12:51:55.227 SpringBoard pid=8105 main | SpringBoard: corner pull picked up from the system gesture
+12:51:55.228 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull began at 409,910 v=(13,-535): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+12:51:55.230 SpringBoard pid=8105 main | SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+12:51:55.231 SpringBoard pid=8105 main | SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized (read after the home / switcher gesture)
+12:51:55.231 SpringBoard pid=8105 main | SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized
+12:51:55.286 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (card hidden, parked, minimized or closed), path=layout-off
+12:51:55.286 SpringBoard pid=8105 main | SpringBoard: camera661 presence com.apple.MobileSMS out of the display layout (card hidden, parked, minimized or closed)
+12:51:55.337 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull ended after 0.11 s (ours) at 362,791 moved (-46,-132) v=(-1143,-1873) home=0 busy=0 switcher=closed
+12:51:55.337 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+12:51:55.347 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:51:55.347 SpringBoard pid=8105 main | SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 469}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:51:55.806 SpringBoard pid=8105 main | layoutHost Messages frame={{0, 0}, {426, 460}}
+12:51:55.811 SpringBoard pid=8105 main | hideStray split=0 depth=0
+12:51:55.811 SpringBoard pid=8105 main | scene transaction com.apple.MobileSMS actions=0
+12:51:55.817 SpringBoard pid=8105 main | SpringBoard: reg799: contributor appended reason com.apple.MobileSMS (already=1, set={(     "com.apple.MobileSMS" )})
+12:51:55.818 SpringBoard pid=8105 main | SpringBoard: home665 let SpringBoard's update of sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A land at card size (corner pull just ended), not refused
+12:51:55.818 SpringBoard pid=8105 main | scene update begin sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A fg=1 depth=1 frame={{0, 0}, {430, 932}}
+12:51:55.819 SpringBoard pid=8105 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+12:51:55.820 SpringBoard pid=8105 main | app-view settings update
+12:51:55.820 SpringBoard pid=8105 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = <BSMutableSettings: 0x281d94840> { frame = NSRect: {{0, 0}, {420, 458}}; }; subclassChanges = (none); }
+12:51:55.820 SpringBoard pid=8105 main | app-view settings update done
+12:51:55.820 SpringBoard pid=8105 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+12:51:55.829 SpringBoard pid=8105 main | SpringBoard: restore847 bottom card back on screen (restore) still had the home-swipe still over the app: dropped (as a drag begin does)
+12:51:56.526 SpringBoard pid=8105 main | SpringBoard: host750 bottom card com.apple.MobileSMS: minimised -> live
+12:51:56.527 SpringBoard pid=8105 main | SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:51:56.958 SpringBoard pid=8105 bg | arbiter on=0 src=? frame={{0, 0}, {0, 0}}
+12:51:56.960 SpringBoard pid=8105 main | scene block sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A frame={{0, 0}, {420, 458}}
+12:51:56.961 SpringBoard pid=8105 main | SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x1297578d0 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+12:51:56.962 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:56.962 SpringBoard pid=8105 main | app-view settings update
+12:51:56.963 SpringBoard pid=8105 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x281202ee0> { targetOfEventDeferringEnvironments = keyboardFocus; }; }
+12:51:56.963 SpringBoard pid=8105 main | app-view settings update done
+12:51:57.015 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull began at 310,914 v=(23,-184): left to the system (home / switcher) (parked=0 stage visible=1 home=0 switcher=closed)
+12:51:57.015 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+12:51:57.016 SpringBoard pid=8105 main | SpringBoard: home gesture began, stage open
+12:51:57.045 SpringBoard pid=8105 main | SpringBoard: home731 the home swipe committed (up 50 pt, v 417): tucking
+12:51:57.046 SpringBoard pid=8105 main | SpringBoard: tucking the open stage for home
+12:51:57.061 SpringBoard pid=8105 main | SpringBoard: com.apple.MobileSMS is the only minimized app
+12:51:57.062 SpringBoard pid=8105 main | SpringBoard: slide728 home tuck: 1 card(s) slide out the side, then park in their corner
+12:51:57.085 SpringBoard pid=8105 main | SpringBoard: reason800: re-appended com.apple.MobileSMS via in-place (was missing; home/layout path bypassed contributor) ctrl=0x1297578d0
+12:51:57.088 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull ended after 0.07 s (system's) at 297,800 moved (-14,-119) v=(-391,-2617) home=1 busy=1 switcher=closed
+12:51:57.088 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=0 parked=1
+12:51:57.088 SpringBoard pid=8105 main | SpringBoard: home gesture ended
+12:51:57.091 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A empty minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow (+1 repeats)
+12:51:57.092 SpringBoard pid=8105 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-F3D869FF-A737-4F53-9F9D-9A8054170D1A keyboardFocus minimised=1 home=1 busy=1 stageVisible=0 parked=1 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+12:51:57.957 SpringBoard pid=8105 main | SpringBoard: parked apps stopped following the home transition
+12:51:58.101 SpringBoard pid=8105 main | SpringBoard: host750 bottom card com.apple.MobileSMS: live -> minimised
+12:51:58.102 SpringBoard pid=8105 main | SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card minimised; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:51:58.312 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (home / switcher has the screen), path=layout-off
+12:51:58.312 SpringBoard pid=8105 main | SpringBoard: camera661 presence com.apple.MobileSMS out of the display layout (home / switcher has the screen)
+12:51:59.802 SpringBoard pid=8105 main | SpringBoard: corner771 claimed pull in parked corner (right) at 404,909
+12:51:59.802 SpringBoard pid=8105 main | SpringBoard: corner pull picked up from the system gesture
+12:51:59.803 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull began at 404,909 v=(-46,-206): claimed by the stage (parked=1 stage visible=1 home=0 switcher=closed)
+12:51:59.938 SpringBoard pid=8105 main | SpringBoard: gest770 edge pull ended after 0.13 s (ours) at 356,760 moved (-50,-158) v=(-424,-2885) home=0 busy=0 switcher=closed
+12:51:59.938 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+12:51:59.954 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 469}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:51:59.954 SpringBoard pid=8105 main | SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 469}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), com.apple.MobileSMS(role=1 level=1 app=1 full=0)
+12:52:00.402 SpringBoard pid=8105 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+12:52:00.406 SpringBoard pid=8105 main | hideStray split=0 depth=0
+12:52:00.408 SpringBoard pid=8105 main | SpringBoard: restore847 bottom card back on screen (restore) still had the home-swipe still over the app: dropped (as a drag begin does)
+12:52:00.455 SpringBoard pid=8105 main | SpringBoard: lag897 10 s: gates 3935/s (70 uncached/s) top [beeper707 2395, core843 189, a11y843 189, core846 49] other 1055; log 15.1 lines/s; main stalls >100 ms 0 worst 0 ms at -
+12:52:00.923 SpringBoard pid=8105 main | SpringBoard: rim651 system gesture held at 236,458 (rim)
+12:52:00.929 SpringBoard pid=8105 main | SpringBoard: rim651 hit main-outer-top at 236,458 -> DSStageDragShellView
+12:52:01.008 SpringBoard pid=8105 main | SpringBoard: rim651 drag began at 243,461 won by main-shell-pan
+12:52:01.060 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card is moving: display-layout element kept at {{5, 469}, {420, 458}} until the drag settles
+12:52:01.248 SpringBoard pid=8105 main | SpringBoard: host750 bottom card com.apple.MobileSMS: minimised -> live
+12:52:01.249 SpringBoard pid=8105 main | SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=YES (card live; external=YES workspace=nil handle=yes scene=yes; 1 external-foreground handle(s))
+12:52:02.568 SpringBoard pid=8105 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+12:52:02.569 SpringBoard pid=8105 main | SpringBoard: blackfix887 cleared hosting card colour (alpha 1.00, band 0, card 420x458)
+12:52:02.569 SpringBoard pid=8105 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+12:52:02.570 SpringBoard pid=8105 main | SpringBoard: takeKey ok try=- slot=-1 settle=0 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+12:52:02.575 SpringBoard pid=8105 main | SpringBoard: reg799: removed contributor from com.apple.MobileSMS handle=0x11da19ce0
+12:52:02.577 MobileSMS pid=8131 main | app restored the phone layout
+12:52:02.587 SpringBoard pid=8105 main | SpringBoard: camera658 com.apple.MobileSMS taken out of the display layout (app no longer on a card), path=layout-off
+12:52:02.587 SpringBoard pid=8105 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+12:52:02.876 SpringBoard pid=8105 main | SpringBoard: host750 bottom card com.apple.MobileSMS: live -> detached
+12:52:02.876 SpringBoard pid=8105 main | SpringBoard: perf812 41032 feature-gate calls (724 uncached) in 11 s
+12:52:02.877 SpringBoard pid=8105 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=0 parked=0
+12:52:04.315 SpringBoard pid=8105 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+12:52:04.326 SpringBoard pid=8105 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+12:52:05.459 SpringBoard pid=8105 main | SpringBoard: pill826 New Stage tapped
+12:52:05.559 SpringBoard pid=8105 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+12:52:05.560 SpringBoard pid=8105 main | SpringBoard: stage on screen
+12:52:05.560 SpringBoard pid=8105 main | on screen state=2 split=0 bottom=- top=- hover=-
+12:52:05.560 SpringBoard pid=8105 main | SpringBoard: taking key from SBHomeScreenWindow on this scene
+12:52:05.561 SpringBoard pid=8105 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+12:52:05.561 SpringBoard pid=8105 main | SpringBoard: opened the top stage
+
+--- crash ---
+
+--- diagnostics ---
+
+--- kbvis768 ---
+12:47:37.131 kbvis768 show 1 start owner=org.whispersystems.signal h=243
+12:47:37.131 kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[3462629353] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=none | arb on=1 owner=org.whispersystems.signal h=243 | sbkeys=none
+12:47:37.144 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+12:47:37.144 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+12:47:37.146 why775 show 1: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+12:47:37.160 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+12:47:37.160 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+12:47:37.235 kbvis768 show 1 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@12:47:37.134 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+12:47:37.335 kbvis768 show 1 +0.20s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@12:47:37.335 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+12:47:37.540 kbvis768 show 1 +0.41s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@12:47:37.456 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+12:47:37.643 kbvis768 show 1 +0.51s keys visible? YES (owner org.whispersystems.signal)
+12:47:38.055 kbvis768 show 1 +0.92s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@12:47:38.031 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+12:47:38.088 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#3)
+12:47:38.088 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+12:47:38.088 why775 show 1: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+12:47:38.088 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#4)
+12:47:38.088 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+12:47:38.092 why775 show 1: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+12:47:38.157 kbvis768 show 1 +1.03s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@12:47:38.137 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+12:47:38.242 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#5)
+12:47:38.242 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+12:47:38.366 kbvis768 show 1 +1.23s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@12:47:38.288 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+12:47:38.469 kbvis768 show 1 +1.34s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@12:47:38.406 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+12:47:40.234 kbvis768 show 1 +3.10s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1447203845,3462629353] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@12:47:40.124 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+12:47:40.756 kbvis768 show 1 +3.62s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@12:47:40.124 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+12:47:40.756 kbvis768 show 1 ended after 3.6s: keys visible ALL of the time

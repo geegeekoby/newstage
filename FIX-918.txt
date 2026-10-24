@@ -1,0 +1,3 @@
+4.5.918 perf918
+Proven (code, shared/DSStageDebug.m): DS868Chain cached only levels 800-899 (cache[100], level>=900 -> fn(core)), so every DS9xxOn call walked 9xx..900 uncached. Proven (uploads916): 47-111 uncached gate calls/s, 1078 uncached in 10 s at 17:42:30 (perf812).
+Fix: cache[200], levels 800-999, same DS875Window expiry and same off-file reads. 900+ caching gated by perf918 (perf918-off, core918-off, core917-off, latch perf918).

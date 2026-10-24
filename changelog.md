@@ -1,3 +1,6 @@
+## 4.5.918
+4.5.918: perf918: the feature-check cache now also covers the 900+ features (they were re-checked through the whole chain on every call), cutting SpringBoard main-thread work. Off files still take effect within the same short window. Off: perf918-off, core918-off.
+
 ## 4.5.917
 4.5.917: barvis917 (diagnostic): logs what is really on screen over Messages' message bar (every parent's hidden/alpha/clip/transform, the animation layer, and which window or view is on top at the bar) to find why the bar is missing while the log says it is shown. Nothing changes. Off: barvis917-off, core917-off.
 

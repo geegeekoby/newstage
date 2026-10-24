@@ -858,3 +858,8 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-barvis917-off : no barvis917 log lines
 - /var/mobile/.dynamicstage-core917-off : Back to 4.5.916
 - Latch: barvis917 (/var/mobile/.dynamicstage-barvis917-crashed)
+
+## 4.5.918
+- /var/mobile/.dynamicstage-perf918-off : 900+ feature checks uncached again (917 behaviour)
+- /var/mobile/.dynamicstage-core918-off : Back to 4.5.917
+- Latch: perf918 (/var/mobile/.dynamicstage-perf918-crashed)

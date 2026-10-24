@@ -1,0 +1,794 @@
+build 4.5.902 split=1 float=0 half=1 slots=2
+card {{2, 5}, {426, 460}}
+shell {{-34, -31}, {498, 532}}
+outline {{1, 4}, {428, 462}}
+topCard {{2, 467}, {426, 460}}
+topRim {{-34, 431}, {498, 532}}
+front(float) {{0, 0}, {0, 0}}
+floatCard {{0, 0}, {0, 0}}
+host {{2, 5}, {426, 460}}
+topHost {{0, 0}, {0, 0}}
+outlineOffCard=0 topRimOffCard=0 zShell=0 zTop=0 zFloat=0
+lift primary=0 top=0 float=0 kFrame={{0, 0}, {0, 0}} kSlot=0
+slot0=com.apple.MobileSMS slot1=- slot2=-
+
+--- log ---
+15:22:37.160 log refreshed after respring
+15:22:37.233 SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohibited: com.junesiphone.webservices(System)
+15:22:37.375 SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+15:22:37.375 [TRACE] ready state=0 split=0 bottom=- top=- hover=-
+15:22:37.375 SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+15:22:37.375 SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+15:22:37.376 SpringBoard: latch749: no feature is latched off
+15:22:37.378 SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+15:22:37.378 SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+15:22:37.379 SpringBoard: camera660 listening for in-app camera events from 5 apps
+15:22:37.380 SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+15:22:37.380 SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+15:22:37.380 SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+15:22:37.380 SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+15:22:37.381 SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+15:22:37.382 SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=0 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,DisableAppLibrary.dylib,NoRedirect.dylib,PreferenceLoader.dylib,replaced.plist,FilzaCra...
+15:22:37.383 SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=5s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=5s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mo...
+15:22:38.503 app: com.apple.MobileSMS ctor ok
+15:22:39.151 app: com.apple.MobileSMS remote keyboard hooks are in
+15:22:39.152 [KEYS] hook search-cancel _cancelButtonPressed
+15:22:39.153 app: com.apple.MobileSMS is listening for staged keys
+15:22:39.610 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=SystemAperture fg=0)
+15:22:39.616 SpringBoard: lag897 sampler on (0.25 s main-queue tick, one summary per busy 10 s)
+15:22:39.617 SpringBoard: probe899 go-home candidates, one line per class (! = missing, + = class method only); app class SpringBoard
+15:22:39.617 SpringBoard: probe899 SBCoverSheetPresentationManager shared=1 (1): isPresented
+15:22:39.617 SpringBoard: probe899 SBDeviceApplicationSceneEntity shared=0 (1): initWithApplicationForMainDisplay:
+15:22:39.617 SpringBoard: probe899 SBHomeGestureSettings shared=0 (1): isHomeGestureEnabled
+15:22:39.617 SpringBoard: probe899 SBHomeHardwareButton shared=0 (1): singlePressUp: _singlePressUp: emulateHomeButtonEventsIfNeeded: !performSinglePressUpActions !homeButtonActionsForSinglePress
+15:22:39.617 SpringBoard: probe899 SBHomeHardwareButtonActions shared=0 (1): performSinglePressUpActions !performSinglePressAction performTriplePressUpActions
+15:22:39.617 SpringBoard: probe899 SBHomeScreenController class missing
+15:22:39.617 SpringBoard: probe899 SBIconController shared=1 (1): handleHomeButtonTap !dismissModalInteractions !handleHomeButtonPress
+15:22:39.617 SpringBoard: probe899 SBLockScreenManager shared=1 (1): lockUIFromSource:withOptions: isUILocked unlockUIFromSource:withOptions:
+15:22:39.618 SpringBoard: probe899 SBMainDisplaySceneManager shared=0 (1): !_dismissExternalForegroundApplicationSceneHandles externalForegroundApplicationSceneHandles
+15:22:39.618 SpringBoard: probe899 SBMainSwitcherControllerCoordinator shared=1 (1): !dismissSwitcherNoninteractively isAnySwitcherVisible handleHomeButtonPress !_handleHomeButtonPress
+15:22:39.618 SpringBoard: probe899 SBMainSwitcherViewController class missing
+15:22:39.618 SpringBoard: probe899 SBMainWorkspace shared=1 (1): requestTransitionWithBuilder: requestTransitionWithOptions:builder:validator: createRequestWithOptions: createRequestForApplicationActivation:options: executeTransitionRequest:
+15:22:39.618 SpringBoard: probe899 SBMainWorkspace shared=1 (2): _executeTransitionRequest:options:validator: !dismissApp transientOverlayPresentationManager
+15:22:39.618 SpringBoard: probe899 SBMainWorkspaceTransitionRequest shared=0 (1): initWithDisplayConfiguration: modifyApplicationContext:
+15:22:39.618 SpringBoard: probe899 SBReachabilityManager shared=1 (1): deactivateReachability
+15:22:39.618 SpringBoard: probe899 SBSceneManagerCoordinator shared=1 (1): +mainDisplaySceneManager sceneManagerForDisplayIdentity:
+15:22:39.618 SpringBoard: probe899 SBUIController shared=1 (1): !clickedMenuButton !handleHomeButtonSinglePressUp !handleHomeButtonSinglePressUpWithSourceType: handleHomeButtonDoublePressDown !_handleButtonEventToSuspendDisplays:displayWasSuspendedOut:
+15:22:39.618 SpringBoard: probe899 SBUIController shared=1 (2): !_deactivateFrontmostApp !activateApplication: !isAppSwitcherShowing !_dismissShowcase:unhost: !handleMenuDoubleTap
+15:22:39.619 SpringBoard: probe899 SBUIController shared=1 (3): _hideKeyboard !dismissAppAnimated: !_suspendFrontmostApp
+15:22:39.619 SpringBoard: probe899 SBWorkspace shared=0 (1): requestTransitionWithBuilder: createRequestWithOptions: executeTransitionRequest:
+15:22:39.619 SpringBoard: probe899 SBWorkspaceApplicationSceneTransitionContext shared=0 (1): setBackground: setEntity:forLayoutRole: setRequestedUnlockedEnvironmentMode:
+15:22:39.619 SpringBoard: probe899 SBWorkspaceTransitionRequest shared=0 (1): setApplicationContext: modifyApplicationContext:
+15:22:39.619 SpringBoard: probe899 SpringBoard shared=0 (1): !_simulateHomeButtonPress !clickedMenuButton !_handleGoHomeButton !handleHomeButtonSinglePressUp !_handleHomeButtonPress
+15:22:39.619 SpringBoard: probe899 SpringBoard shared=0 (2): !_menuButtonUp: !_menuButtonDown: menuButtonUp: _simulateLockButtonPress isShowingHomescreen
+15:22:39.620 SpringBoard: probe899 SpringBoard shared=0 (3): _accessibilityFrontMostApplication !_returnToHomescreenWithCompletion: !returnToHomescreen homeHardwareButton !?????????????)
+15:22:39.625 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+15:22:39.628 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+15:22:39.771 SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+15:22:39.773 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+15:22:39.781 SpringBoard: style823 first styled picker drawn (hang marker cleared)
+15:22:39.782 SpringBoard: style824 first styled picker drawn (hang marker cleared)
+15:22:39.783 SpringBoard: pill826 first strip drawn (hang marker cleared)
+15:22:39.882 SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 300 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared; crash872 last active feature before that exit: core747
+15:22:40.672 SpringBoard: drag827 New Stage drag began from the pill strip
+15:22:40.673 SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {369,392} front=com.apple.MobileSMS state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+15:22:40.673 SpringBoard: splitdrop883 drag began at {369,392}: zone unarmed (finger in the upper half (y=392 < 466))
+15:22:40.673 [HINT] Stage finger={{369,392}}
+15:22:40.688 SpringBoard: splitdrop883 drag moved at {355,411}: zone unarmed (finger in the upper half (y=411 < 466))
+15:22:40.688 [HINT] Stage finger={{355,411}}
+15:22:40.688 [HINT] Stage finger={{355,411}}
+15:22:40.704 SpringBoard: splitdrop883 drag moved at {342,425}: zone unarmed (finger in the upper half (y=425 < 466))
+15:22:40.704 [HINT] Stage finger={{342,425}}
+15:22:40.722 SpringBoard: splitdrop883 drag moved at {337,434}: zone unarmed (finger in the upper half (y=434 < 466))
+15:22:40.722 [HINT] Stage finger={{337,434}}
+15:22:40.738 SpringBoard: splitdrop883 drag moved at {329,449}: zone unarmed (finger in the upper half (y=449 < 466))
+15:22:40.738 [HINT] Stage finger={{329,449}}
+15:22:40.755 SpringBoard: splitdrop883 drag moved at {311,470}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+15:22:40.755 [HINT] Split Screen finger={{311,470}}
+15:22:40.771 [HINT] Split Screen finger={{284,503}}
+15:22:40.788 [HINT] Split Screen finger={{255,543}}
+15:22:40.804 [HINT] Split Screen finger={{241,573}}
+15:22:40.821 [HINT] Split Screen finger={{236,598}}
+15:22:40.838 [HINT] Split Screen finger={{235,625}}
+15:22:40.855 [HINT] Split Screen finger={{230,652}}
+15:22:40.871 [HINT] Split Screen finger={{228,681}}
+15:22:40.888 [HINT] Split Screen finger={{227,709}}
+15:22:40.905 [HINT] Split Screen finger={{227,733}}
+15:22:40.921 [HINT] Split Screen finger={{229,754}}
+15:22:40.938 [HINT] Split Screen finger={{233,773}}
+15:22:40.954 [HINT] Split Screen finger={{235,792}}
+15:22:40.971 [HINT] Split Screen finger={{238,812}}
+15:22:40.988 [HINT] Split Screen finger={{244,829}}
+15:22:41.004 [HINT] Split Screen finger={{251,842}}
+15:22:41.021 [HINT] Split Screen finger={{256,853}}
+15:22:41.038 [HINT] Split Screen finger={{259,861}}
+15:22:41.054 [HINT] Split Screen finger={{261,866}}
+15:22:41.071 [HINT] Split Screen finger={{261,868}}
+15:22:41.088 [HINT] Split Screen finger={{261,870}}
+15:22:41.104 [HINT] Split Screen finger={{261,872}}
+15:22:41.121 [HINT] Split Screen finger={{261,873}}
+15:22:41.138 [HINT] Split Screen finger={{261,875}}
+15:22:41.172 [HINT] Split Screen finger={{261,875}}
+15:22:41.188 [HINT] Split Screen finger={{261,876}}
+15:22:41.238 [HINT] Split Screen finger={{261,879}}
+15:22:41.255 SpringBoard: drag827 New Stage dropped at 261,879
+15:22:41.256 SpringBoard: splitdrop883 drag released at {261,879}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+15:22:41.257 SpringBoard: splitdrop883 dropped at {261,879}: com.apple.MobileSMS (full screen) -> top card, new stage below
+15:22:41.262 SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:41.262 SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:41.263 SpringBoard: why902 homeHardwareButton type @16@0:8 -> SBHomeHardwareButton
+15:22:41.263 SpringBoard: why902 SBHomeHardwareButton singlePressUp: type v24@0:8@16
+15:22:41.263 SpringBoard: why902 SBHomeHardwareButton _singlePressUp: type v24@0:8@16
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButton emulateHomeButtonEventsIfNeeded: type B24@0:8^{__IOHIDEvent=}16
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButton initialButtonDown: type v24@0:8@16
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButton _initialButtonDown: type missing
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButton buttonDown: type missing
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButton singlePressDown: type missing
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButton acceptHomeButtonSinglePressUp: type missing
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButtonActions performSinglePressUpActions type v16@0:8
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButtonActions performTriplePressUpActions type v16@0:8
+15:22:41.264 SpringBoard: why902 SBHomeHardwareButtonActions performInitialButtonDownActions type v16@0:8
+15:22:41.265 SpringBoard: why902 ivars SBHomeHardwareButton: _fingerDetectEnabledAssertion:@"<BSInvalidatable>" _hintSuppressionAssertions:@"NSMutableSet" _longPressDurationAssertions:@"NSMutableOrderedSet" _longPressDidOccur:B _buttonActions:@"SBHomeHardwareButtonActions" _buttonGestureParameters:@"SBHardwareButtonGestureParameters" _gestureRecognizerConfiguration:@"SBHomeHardwareButtonGestureRecognizerCon...
+15:22:41.265 SpringBoard: why902 ivars SBHomeHardwareButton: _screenshotGestureRecognizer:@"UIGestureRecognizer" _homeButtonType:q _maximumPressCount:q _maximumTapCount:q _emulatedPerSenderDownCount:@"NSMutableDictionary" _buttonDefinition:@"BKSButtonHapticsDefinition"
+15:22:41.266 SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:41.266 SpringBoard: splitone894 step 1 Home pressed (stage closed) to send com.apple.MobileSMS home
+15:22:41.267 SpringBoard: home898 step 1 press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0) (SB answers simulate=0 menu=0) front=com.apple.MobileSMS transition=0 depth=0 gesture=0
+15:22:41.549 SpringBoard: home898 step 1 +292 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:41.865 SpringBoard: home898 step 1 +607 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:41.970 SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:41.970 SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:41.971 SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:41.971 SpringBoard: homeretry896 step 1 com.apple.MobileSMS still front +714 ms: Home pressed once more
+15:22:41.971 SpringBoard: home898 retry press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:42.193 SpringBoard: home898 step 1 +936 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:42.509 SpringBoard: home898 step 1 +1251 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:42.825 SpringBoard: home898 step 1 +1568 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:43.141 SpringBoard: home898 step 1 +1883 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:43.363 SpringBoard: splitone894 step 1 done +2104 ms home in front=0 front=com.apple.MobileSMS transition=0
+15:22:43.363 SpringBoard: splitone894 stopped: home never came to the front
+15:22:45.532 SpringBoard: stayed up, boot guard cleared
+15:22:45.536 SpringBoard: pillshow835 stage window (edge pill) moved onto SpringBoard's main display scene from SystemAperture
+15:22:45.548 SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+15:22:46.557 SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+15:22:49.387 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+15:22:49.520 SpringBoard: pill826 strip opened (top -, bottom -, float -)
+15:22:49.636 SpringBoard: lag897 10 s: gates 442/s (32 uncached/s) top [core843 79, a11y843 78, core846 23, core842 23] other 34; log 8.4 lines/s; main stalls >100 ms 1 worst 139 ms at 0.1 s before this line
+15:22:50.150 SpringBoard: drag827 New Stage drag began from the pill strip
+15:22:50.153 SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {365,394} front=com.apple.MobileSMS state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+15:22:50.153 SpringBoard: splitdrop883 drag began at {365,394}: zone unarmed (finger in the upper half (y=394 < 466))
+15:22:50.154 [HINT] Stage finger={{365,394}}
+15:22:50.166 SpringBoard: splitdrop883 drag moved at {347,408}: zone unarmed (finger in the upper half (y=408 < 466))
+15:22:50.167 [HINT] Stage finger={{347,408}}
+15:22:50.167 [HINT] Stage finger={{347,408}}
+15:22:50.183 SpringBoard: splitdrop883 drag moved at {336,417}: zone unarmed (finger in the upper half (y=417 < 466))
+15:22:50.183 [HINT] Stage finger={{336,417}}
+15:22:50.200 SpringBoard: splitdrop883 drag moved at {332,422}: zone unarmed (finger in the upper half (y=422 < 466))
+15:22:50.200 [HINT] Stage finger={{332,422}}
+15:22:50.216 SpringBoard: splitdrop883 drag moved at {329,429}: zone unarmed (finger in the upper half (y=429 < 466))
+15:22:50.216 [HINT] Stage finger={{329,429}}
+15:22:50.233 SpringBoard: splitdrop883 drag moved at {326,440}: zone unarmed (finger in the upper half (y=440 < 466))
+15:22:50.233 [HINT] Stage finger={{326,440}}
+15:22:50.250 SpringBoard: splitdrop883 drag moved at {323,451}: zone unarmed (finger in the upper half (y=451 < 466))
+15:22:50.250 [HINT] Stage finger={{323,451}}
+15:22:50.266 SpringBoard: splitdrop883 drag moved at {318,464}: zone unarmed (finger in the upper half (y=464 < 466))
+15:22:50.267 [HINT] Stage finger={{318,464}}
+15:22:50.283 SpringBoard: splitdrop883 drag moved at {310,483}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+15:22:50.283 [HINT] Split Screen finger={{310,483}}
+15:22:50.299 [HINT] Split Screen finger={{297,509}}
+15:22:50.317 [HINT] Split Screen finger={{287,534}}
+15:22:50.333 [HINT] Split Screen finger={{281,558}}
+15:22:50.349 [HINT] Split Screen finger={{276,577}}
+15:22:50.366 [HINT] Split Screen finger={{273,593}}
+15:22:50.383 [HINT] Split Screen finger={{272,607}}
+15:22:50.400 [HINT] Split Screen finger={{268,625}}
+15:22:50.416 [HINT] Split Screen finger={{264,638}}
+15:22:50.433 [HINT] Split Screen finger={{261,658}}
+15:22:50.450 [HINT] Split Screen finger={{255,684}}
+15:22:50.466 [HINT] Split Screen finger={{250,715}}
+15:22:50.483 [HINT] Split Screen finger={{247,742}}
+15:22:50.500 [HINT] Split Screen finger={{247,759}}
+15:22:50.516 [HINT] Split Screen finger={{247,770}}
+15:22:50.534 [HINT] Split Screen finger={{247,784}}
+15:22:50.550 [HINT] Split Screen finger={{247,799}}
+15:22:50.566 [HINT] Split Screen finger={{249,815}}
+15:22:50.583 [HINT] Split Screen finger={{250,827}}
+15:22:50.600 [HINT] Split Screen finger={{251,833}}
+15:22:50.616 [HINT] Split Screen finger={{251,834}}
+15:22:50.633 [HINT] Split Screen finger={{246,831}}
+15:22:50.650 [HINT] Split Screen finger={{243,828}}
+15:22:50.651 SpringBoard: drag827 New Stage dropped at 243,828
+15:22:50.653 SpringBoard: splitdrop883 dropped at {243,828}: com.apple.MobileSMS (full screen) -> top card, new stage below
+15:22:50.657 SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:50.657 SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:50.658 SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:50.658 SpringBoard: splitone894 step 1 Home pressed (stage closed) to send com.apple.MobileSMS home
+15:22:50.658 SpringBoard: home898 step 1 press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0) (SB answers simulate=0 menu=0) front=com.apple.MobileSMS transition=0 depth=0 gesture=0
+15:22:50.942 SpringBoard: home898 step 1 +287 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:51.258 SpringBoard: home898 step 1 +604 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:51.386 SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:51.387 SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:51.387 SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:51.388 SpringBoard: homeretry896 step 1 com.apple.MobileSMS still front +733 ms: Home pressed once more
+15:22:51.388 SpringBoard: home898 retry press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:51.497 SpringBoard: splitflow895 step 1 home first in front +843 ms transition=0 depth=0 gesture=0
+15:22:51.497 SpringBoard: splitone894 step 1 done +843 ms home in front=1 front=(home) transition=0
+15:22:51.555 SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+15:22:51.556 SpringBoard: stage on screen
+15:22:51.556 [TRACE] on screen state=2 split=0 bottom=- top=- hover=-
+15:22:51.556 SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+15:22:51.557 SpringBoard: taking key from SBMainSwitcherWindow on this scene
+15:22:51.557 SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+15:22:51.558 SpringBoard: opened the top stage
+15:22:51.609 SpringBoard: putting com.apple.MobileSMS on stack slot 0
+15:22:51.609 [TRACE] launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+15:22:51.609 SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+15:22:51.609 SpringBoard: creating app view for com.apple.MobileSMS
+15:22:51.609 SpringBoard: created app view for com.apple.MobileSMS
+15:22:51.612 [TRACE] scene transaction com.apple.MobileSMS actions=1
+15:22:51.615 SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+15:22:51.615 SpringBoard: reg799: setDelegate on com.apple.MobileSMS ctrl=0x148642440
+15:22:51.615 SpringBoard: reg799: registered contributor on com.apple.MobileSMS handle=0x1483a6560 ident=com.apple.MobileSMS (addSceneUpdateContributer:)
+15:22:51.616 SpringBoard: com.apple.MobileSMS stays running in the background
+15:22:51.616 SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+15:22:51.616 SpringBoard: com.apple.MobileSMS is on stack slot 0
+15:22:51.616 [TRACE] hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+15:22:51.616 [KEYBOARD LOG] attach com.apple.MobileSMS slot 0 stack=1 prim=1
+15:22:51.616 [TRACE] scene block sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C frame={{0, 0}, {430, 932}}
+15:22:51.616 SpringBoard: kept the open stage inside its card while another app opened
+15:22:51.616 SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C's phone-size update lands at card size, not refused)
+15:22:51.617 SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x148642440 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+15:22:51.617 [TRACE] app-view settings update
+15:22:51.617 SpringBoard: appview670 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28244e070> { hostContextIdentifierForSnapshotting = 1f8184af; scenePresenterRenderIdentifierForSnapshotting = f3db8a7fdeea6930; }; }
+15:22:51.617 [TRACE] app-view settings update done
+15:22:51.617 [TRACE] layoutHost Messages frame={{0, 0}, {430, 932}}
+15:22:51.618 SpringBoard: phonesize680 build 4.5.902 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+15:22:51.622 [TRACE] layoutHost Messages frame={{0, 0}, {420, 458}}
+15:22:51.622 [TRACE] hideStray split=0 depth=0
+15:22:51.622 SpringBoard: splitflow895 direct852 com.apple.MobileSMS was hosted at once (already running, no placeholder): picker kept hidden
+15:22:51.622 SpringBoard: splitone894 step 2 +968 ms com.apple.MobileSMS staged from home by recent839 / direct852 (hosting=1)
+15:22:51.633 SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C(role=1 level=1 app=1 full=0)
+15:22:51.633 SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C(role=1 level=1 app=1 full=0)
+15:22:51.661 SpringBoard: fitting com.apple.MobileSMS's scene to the card
+15:22:51.661 [TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+15:22:51.734 [KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+15:22:51.734 SpringBoard: msgfit757 com.apple.MobileSMS reports phone-size keyboard geometry but its scene is {{0, 0}, {420, 458}}: re-sending the card frame (1)
+15:22:51.734 SpringBoard: phonesize675 build 4.5.902 is ON; apps: com.beeper.chat.ios (default)
+15:22:51.735 [KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+15:22:51.736 [KEYS] kb change x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+15:22:51.736 [KEYS] kb show x=0.0 y=851.0 w=430.0 h=81.0 bundle=com.apple.MobileSMS local=1
+15:22:51.968 SpringBoard: splitone894 step 3 +1313 ms settled=1 (fit done) scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}} front=(home)
+15:22:51.977 SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+15:22:51.980 SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+15:22:52.186 [GEOM-FIX] Outline glued + clamped (second)
+15:22:52.187 [TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {426, 460}}
+15:22:52.187 [TRACE] scene block sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C frame={{0, 0}, {420, 458}}
+15:22:52.187 SpringBoard: appview670 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C mode=4 pass795 update: changes = <BSMutableSettings: 0x282f109c0> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+15:22:52.187 [TRACE] layoutHost Messages frame={{0, 0}, {426, 460}}
+15:22:52.187 [TRACE] hideStray split=1 depth=0
+15:22:52.188 SpringBoard: hid Messages' full-screen scene presentation outside the split card
+15:22:52.195 [SPLIT] opened under the top app finger={{243,828}}
+15:22:52.195 SpringBoard: splitone894 step 4 split open (B call)
+15:22:52.237 SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+15:22:52.238 SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+15:22:52.238 SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=NO (card live; external=YES workspace=nil handle=yes scene=yes; 0 external-foreground handle(s))
+15:22:52.309 SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C fg=1 occluded=0 deactivation=0x1 camera=0
+15:22:52.321 SpringBoard: focus798 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+15:22:52.321 SpringBoard: focus798 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+15:22:52.371 SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{2, 5}, {426, 460}} (old out, then new in)
+15:22:52.418 [TRACE] scene transaction com.apple.MobileSMS actions=0
+15:22:52.420 SpringBoard: reg799: contributor appended reason com.apple.MobileSMS (already=1, set={(     "com.apple.MobileSMS" )})
+15:22:52.421 [TRACE] force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {426, 460}}
+15:22:52.538 SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+15:22:53.215 SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+15:22:53.228 SpringBoard: pill826 strip opened (top com.apple.MobileSMS, bottom -, float -)
+15:22:53.703 SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+15:22:54.120 SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+15:22:54.469 SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+15:22:54.470 SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized (read after the home / switcher gesture)
+15:22:54.470 SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized (read after the home / switcher gesture)
+
+--- trace ---
+=== previous session ===
+(none)
+=== this session ===
+(trace802: 1 lines of SpringBoard pid=16543 from before the archive)
+15:22:37.144 SpringBoard pid=16543 main | SpringBoard: call653 guard listening (call screen containment is off)
+15:22:37.233 SpringBoard pid=16543 main | SpringBoard: sideload836 picker list 107 apps from 229 installed; jailbreak / TrollStore apps listed: com.opa334.TrollStore, com.tigisoftware.ADManager, com.tigisoftware.Filza, org.coolstar.SileoStore, ws.hbang.Terminal, xyz.willy.Zebra, com.nathan.nathanlr; non-Apple apps hidden by type / hidden tag / launch-prohib...
+15:22:37.375 SpringBoard pid=16543 main | SpringBoard: stage ready, screen {{0, 0}, {430, 932}}, corner {{0, 0}, {430, 932}}, pull comes from the system edge gesture
+15:22:37.375 SpringBoard pid=16543 main | ready state=0 split=0 bottom=- top=- hover=-
+15:22:37.375 SpringBoard pid=16543 main | SpringBoard: boot try=- slot=-1 settle=0 key=0 hid=0 lvl=998 matchKey=0 other=SBCoverSheetWindow winScene=fg-active field=n/a keys=null scenes=fg-active/main*,fg-active/main,fg-active/main
+15:22:37.375 SpringBoard pid=16543 main | SpringBoard: zone749 home731 / outside726 keep their timer windows (no verified system signal for them); the call tail now follows the call screen
+15:22:37.375 SpringBoard pid=16543 main | SpringBoard: latch749: no feature is latched off
+15:22:37.378 SpringBoard pid=16543 main | SpringBoard: presence670 display layout publisher acquired via SBIconController.mainDisplayWindowScene.displayLayoutPublisher (FBMainDisplayLayoutPublisher)
+15:22:37.378 SpringBoard pid=16543 main | SpringBoard: camera658 arbiter listening (camera hooks only in Messages, Messenger, Signal, Beeper, Phone)
+15:22:37.379 SpringBoard pid=16543 main | SpringBoard: camera660 listening for in-app camera events from 5 apps
+15:22:37.379 SpringBoard pid=16543 main | SpringBoard: camera661 sensor attribution on (green-dot camera users are logged as camera661 sensor lines)
+15:22:37.380 SpringBoard pid=16543 main | SpringBoard: camera661 sensor669 second signal on: SBSensorActivityDataProvider setActiveSensorActivityAttributions: (SpringBoard's own green-dot attributions, sensor 0 = camera)
+15:22:37.380 SpringBoard pid=16543 main | SpringBoard: sbcam670 SpringBoard-side phone-size camera layout is OFF (opt-in file /var/mobile/.dynamicstage-sbcam-on); green-dot reader stays on for logging
+15:22:37.380 SpringBoard pid=16543 main | SpringBoard: camera661 presence on: a visible card is put in the display layout without waiting for a camera event
+15:22:37.381 SpringBoard pid=16543 main | SpringBoard: hooks installed after home screen, corner pull will come from the system edge gesture
+15:22:37.382 SpringBoard pid=16543 main | SpringBoard: app dylib libs=1 tweakinject=1 link=0 injectdylib=1 injectplist=1 payload=0 files=Griddy.plist,ShadowBuster.dylib,RocketPro.dylib,TasksCrack.dylib,Designer.plist,Cephei-compat.plist,SwiftgramPatch.plist,EmojiSkinPrefs.plist,DynamicStageApp.plist,Bloom.plist,AlertControllerllld.plist,0Antho.plist,Disable...
+15:22:37.383 SpringBoard pid=16543 main | SpringBoard: filter at boot ctor=[missing] mapped=[missing] libsPlist=[age=5s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebook.Messenger", "org.whispersystems.signal", "com.beeper.chat.ios", "com.apple.mobilephone", ); }; }] injectPlist=[age=5s { Filter = { Bundles = ( "com.apple.MobileSMS", "com.facebo...
+15:22:38.503 SpringBoard pid=16543 main | app: com.apple.MobileSMS ctor ok
+15:22:38.506 MobileSMS pid=16565 main | app ctor reason=0 bundle=com.apple.MobileSMS
+15:22:39.145 MobileSMS pid=16565 main | layout667 com.apple.MobileSMS camera preview watch on (once a second while on a card)
+15:22:39.146 MobileSMS pid=16565 main | camera658 app capture hooks in, multitask switch present
+15:22:39.150 MobileSMS pid=16565 main | caret788: hooked CKMessageEntryView isKeyboardVisible types=B16@0:8
+15:22:39.150 MobileSMS pid=16565 main | strip790: hooked _updateUIForEntryFieldCollapsedStateChange types=v16@0:8
+15:22:39.151 SpringBoard pid=16543 main | app: com.apple.MobileSMS remote keyboard hooks are in
+15:22:39.153 SpringBoard pid=16543 main | app: com.apple.MobileSMS is listening for staged keys
+15:22:39.610 SpringBoard pid=16543 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=SystemAperture fg=0)
+15:22:39.616 SpringBoard pid=16543 main | SpringBoard: lag897 sampler on (0.25 s main-queue tick, one summary per busy 10 s)
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 go-home candidates, one line per class (! = missing, + = class method only); app class SpringBoard
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBCoverSheetPresentationManager shared=1 (1): isPresented
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBDeviceApplicationSceneEntity shared=0 (1): initWithApplicationForMainDisplay:
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBHomeGestureSettings shared=0 (1): isHomeGestureEnabled
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBHomeHardwareButton shared=0 (1): singlePressUp: _singlePressUp: emulateHomeButtonEventsIfNeeded: !performSinglePressUpActions !homeButtonActionsForSinglePress
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBHomeHardwareButtonActions shared=0 (1): performSinglePressUpActions !performSinglePressAction performTriplePressUpActions
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBHomeScreenController class missing
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBIconController shared=1 (1): handleHomeButtonTap !dismissModalInteractions !handleHomeButtonPress
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBLockScreenManager shared=1 (1): lockUIFromSource:withOptions: isUILocked unlockUIFromSource:withOptions:
+15:22:39.617 SpringBoard pid=16543 main | SpringBoard: probe899 SBMainDisplaySceneManager shared=0 (1): !_dismissExternalForegroundApplicationSceneHandles externalForegroundApplicationSceneHandles
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBMainSwitcherControllerCoordinator shared=1 (1): !dismissSwitcherNoninteractively isAnySwitcherVisible handleHomeButtonPress !_handleHomeButtonPress
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBMainSwitcherViewController class missing
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBMainWorkspace shared=1 (1): requestTransitionWithBuilder: requestTransitionWithOptions:builder:validator: createRequestWithOptions: createRequestForApplicationActivation:options: executeTransitionRequest:
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBMainWorkspace shared=1 (2): _executeTransitionRequest:options:validator: !dismissApp transientOverlayPresentationManager
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBMainWorkspaceTransitionRequest shared=0 (1): initWithDisplayConfiguration: modifyApplicationContext:
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBReachabilityManager shared=1 (1): deactivateReachability
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBSceneManagerCoordinator shared=1 (1): +mainDisplaySceneManager sceneManagerForDisplayIdentity:
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBUIController shared=1 (1): !clickedMenuButton !handleHomeButtonSinglePressUp !handleHomeButtonSinglePressUpWithSourceType: handleHomeButtonDoublePressDown !_handleButtonEventToSuspendDisplays:displayWasSuspendedOut:
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBUIController shared=1 (2): !_deactivateFrontmostApp !activateApplication: !isAppSwitcherShowing !_dismissShowcase:unhost: !handleMenuDoubleTap
+15:22:39.618 SpringBoard pid=16543 main | SpringBoard: probe899 SBUIController shared=1 (3): _hideKeyboard !dismissAppAnimated: !_suspendFrontmostApp
+15:22:39.619 SpringBoard pid=16543 main | SpringBoard: probe899 SBWorkspace shared=0 (1): requestTransitionWithBuilder: createRequestWithOptions: executeTransitionRequest:
+15:22:39.619 SpringBoard pid=16543 main | SpringBoard: probe899 SBWorkspaceApplicationSceneTransitionContext shared=0 (1): setBackground: setEntity:forLayoutRole: setRequestedUnlockedEnvironmentMode:
+15:22:39.619 SpringBoard pid=16543 main | SpringBoard: probe899 SBWorkspaceTransitionRequest shared=0 (1): setApplicationContext: modifyApplicationContext:
+15:22:39.619 SpringBoard pid=16543 main | SpringBoard: probe899 SpringBoard shared=0 (1): !_simulateHomeButtonPress !clickedMenuButton !_handleGoHomeButton !handleHomeButtonSinglePressUp !_handleHomeButtonPress
+15:22:39.619 SpringBoard pid=16543 main | SpringBoard: probe899 SpringBoard shared=0 (2): !_menuButtonUp: !_menuButtonDown: menuButtonUp: _simulateLockButtonPress isShowingHomescreen
+15:22:39.620 SpringBoard pid=16543 main | SpringBoard: probe899 SpringBoard shared=0 (3): _accessibilityFrontMostApplication !_returnToHomescreenWithCompletion: !returnToHomescreen homeHardwareButton !??????????????????)
+15:22:39.625 SpringBoard pid=16543 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+15:22:39.628 SpringBoard pid=16543 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+15:22:39.629 MobileSMS pid=16565 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 843}, {430, 89}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+15:22:39.631 MobileSMS pid=16565 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 843}, {430, 89}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+15:22:39.771 SpringBoard pid=16543 main | SpringBoard: tab854 edge tab (8x56, the only look; hit area unchanged)
+15:22:39.773 SpringBoard pid=16543 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+15:22:39.781 SpringBoard pid=16543 main | SpringBoard: style823 first styled picker drawn (hang marker cleared)
+15:22:39.781 SpringBoard pid=16543 main | SpringBoard: style824 first styled picker drawn (hang marker cleared)
+15:22:39.783 SpringBoard pid=16543 main | SpringBoard: pill826 first strip drawn (hang marker cleared)
+15:22:39.882 SpringBoard pid=16543 main | SpringBoard: latch754 last SpringBoard exit: clean (killed without SIGTERM after about 300 s (beat756 heartbeat, no crash report)); 0 unlatched try marker(s) dropped; 0 latch(es) cleared; crash872 last active feature before that exit: core747
+15:22:40.672 SpringBoard pid=16543 main | SpringBoard: drag827 New Stage drag began from the pill strip
+15:22:40.672 SpringBoard pid=16543 main | SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {369,392} front=com.apple.MobileSMS state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+15:22:40.673 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag began at {369,392}: zone unarmed (finger in the upper half (y=392 < 466))
+15:22:40.688 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {355,411}: zone unarmed (finger in the upper half (y=411 < 466))
+15:22:40.704 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {342,425}: zone unarmed (finger in the upper half (y=425 < 466))
+15:22:40.722 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {337,434}: zone unarmed (finger in the upper half (y=434 < 466))
+15:22:40.738 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {329,449}: zone unarmed (finger in the upper half (y=449 < 466))
+15:22:40.754 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {311,470}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+15:22:41.255 SpringBoard pid=16543 main | SpringBoard: drag827 New Stage dropped at 261,879
+15:22:41.256 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag released at {261,879}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+15:22:41.256 SpringBoard pid=16543 main | SpringBoard: splitdrop883 dropped at {261,879}: com.apple.MobileSMS (full screen) -> top card, new stage below
+15:22:41.262 SpringBoard pid=16543 main | SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:41.262 SpringBoard pid=16543 main | SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:41.263 SpringBoard pid=16543 main | SpringBoard: why902 homeHardwareButton type @16@0:8 -> SBHomeHardwareButton
+15:22:41.263 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton singlePressUp: type v24@0:8@16
+15:22:41.263 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton _singlePressUp: type v24@0:8@16
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton emulateHomeButtonEventsIfNeeded: type B24@0:8^{__IOHIDEvent=}16
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton initialButtonDown: type v24@0:8@16
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton _initialButtonDown: type missing
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton buttonDown: type missing
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton singlePressDown: type missing
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButton acceptHomeButtonSinglePressUp: type missing
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButtonActions performSinglePressUpActions type v16@0:8
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButtonActions performTriplePressUpActions type v16@0:8
+15:22:41.264 SpringBoard pid=16543 main | SpringBoard: why902 SBHomeHardwareButtonActions performInitialButtonDownActions type v16@0:8
+15:22:41.265 SpringBoard pid=16543 main | SpringBoard: why902 ivars SBHomeHardwareButton: _fingerDetectEnabledAssertion:@"<BSInvalidatable>" _hintSuppressionAssertions:@"NSMutableSet" _longPressDurationAssertions:@"NSMutableOrderedSet" _longPressDidOccur:B _buttonActions:@"SBHomeHardwareButtonActions" _buttonGestureParameters:@"SBHardwareButtonGestureParame...
+15:22:41.265 SpringBoard pid=16543 main | SpringBoard: why902 ivars SBHomeHardwareButton: _screenshotGestureRecognizer:@"UIGestureRecognizer" _homeButtonType:q _maximumPressCount:q _maximumTapCount:q _emulatedPerSenderDownCount:@"NSMutableDictionary" _buttonDefinition:@"BKSButtonHapticsDefinition"
+15:22:41.266 SpringBoard pid=16543 main | SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:41.266 SpringBoard pid=16543 main | SpringBoard: splitone894 step 1 Home pressed (stage closed) to send com.apple.MobileSMS home
+15:22:41.267 SpringBoard pid=16543 main | SpringBoard: home898 step 1 press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0) (SB answers simulate=0 menu=0) front=com.apple.MobileSMS transition=0 depth=0 gesture=0
+15:22:41.549 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +292 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:41.864 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +607 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:41.970 SpringBoard pid=16543 main | SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:41.970 SpringBoard pid=16543 main | SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:41.970 SpringBoard pid=16543 main | SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:41.971 SpringBoard pid=16543 main | SpringBoard: homeretry896 step 1 com.apple.MobileSMS still front +714 ms: Home pressed once more
+15:22:41.971 SpringBoard pid=16543 main | SpringBoard: home898 retry press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:42.193 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +936 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:42.509 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +1251 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:42.825 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +1568 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:43.141 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +1883 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=1 visible=0
+15:22:43.362 SpringBoard pid=16543 main | SpringBoard: splitone894 step 1 done +2104 ms home in front=0 front=com.apple.MobileSMS transition=0
+15:22:43.363 SpringBoard pid=16543 main | SpringBoard: splitone894 stopped: home never came to the front
+15:22:45.532 SpringBoard pid=16543 main | SpringBoard: stayed up, boot guard cleared
+15:22:45.536 SpringBoard pid=16543 main | SpringBoard: pillshow835 stage window (edge pill) moved onto SpringBoard's main display scene from SystemAperture
+15:22:45.548 SpringBoard pid=16543 main | SpringBoard: spot860 installed (stage window kept out of SpringBoard's window hiding)
+15:22:46.557 SpringBoard pid=16543 main | SpringBoard: camera658 fff66709 stop from an app that is not on a card, full-screen camera left alone
+15:22:48.465 MobileSMS pid=16565 main | app keyboard note UIKeyboardWillChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+15:22:48.466 MobileSMS pid=16565 main | app keyboard note UIKeyboardWillShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+15:22:48.466 MobileSMS pid=16565 main | app keyboard note UIKeyboardDidChangeFrameNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+15:22:48.466 MobileSMS pid=16565 main | app keyboard note UIKeyboardDidShowNotification begin={{0, 809}, {430, 123}} end={{0, 809}, {430, 123}}. cause=frame changed localHidden=0 remote=0
+15:22:49.387 SpringBoard pid=16543 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+15:22:49.520 SpringBoard pid=16543 main | SpringBoard: pill826 strip opened (top -, bottom -, float -)
+15:22:49.636 SpringBoard pid=16543 main | SpringBoard: lag897 10 s: gates 442/s (32 uncached/s) top [core843 79, a11y843 78, core846 23, core842 23] other 34; log 8.4 lines/s; main stalls >100 ms 1 worst 139 ms at 0.1 s before this line
+15:22:50.150 SpringBoard pid=16543 main | SpringBoard: drag827 New Stage drag began from the pill strip
+15:22:50.153 SpringBoard pid=16543 main | SpringBoard: splitdrop884 drag start path=shelf slotDragHandler -> handleNewStageDrag at {365,394} front=com.apple.MobileSMS state=0 visible=0 hosting=0/0 split=0 sysOwns=0 busy884=no 884=1
+15:22:50.153 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag began at {365,394}: zone unarmed (finger in the upper half (y=394 < 466))
+15:22:50.166 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {347,408}: zone unarmed (finger in the upper half (y=408 < 466))
+15:22:50.183 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {336,417}: zone unarmed (finger in the upper half (y=417 < 466))
+15:22:50.199 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {332,422}: zone unarmed (finger in the upper half (y=422 < 466))
+15:22:50.216 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {329,429}: zone unarmed (finger in the upper half (y=429 < 466))
+15:22:50.233 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {326,440}: zone unarmed (finger in the upper half (y=440 < 466))
+15:22:50.250 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {323,451}: zone unarmed (finger in the upper half (y=451 < 466))
+15:22:50.266 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {318,464}: zone unarmed (finger in the upper half (y=464 < 466))
+15:22:50.283 SpringBoard pid=16543 main | SpringBoard: splitdrop883 drag moved at {310,483}: zone ARMED (com.apple.MobileSMS full screen, finger in the lower half)
+15:22:50.651 SpringBoard pid=16543 main | SpringBoard: drag827 New Stage dropped at 243,828
+15:22:50.652 SpringBoard pid=16543 main | SpringBoard: splitdrop883 dropped at {243,828}: com.apple.MobileSMS (full screen) -> top card, new stage below
+15:22:50.657 SpringBoard pid=16543 main | SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:50.657 SpringBoard pid=16543 main | SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:50.658 SpringBoard pid=16543 main | SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:50.658 SpringBoard pid=16543 main | SpringBoard: splitone894 step 1 Home pressed (stage closed) to send com.apple.MobileSMS home
+15:22:50.658 SpringBoard pid=16543 main | SpringBoard: home898 step 1 press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0) (SB answers simulate=0 menu=0) front=com.apple.MobileSMS transition=0 depth=0 gesture=0
+15:22:50.942 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +287 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:51.258 SpringBoard pid=16543 main | SpringBoard: home898 step 1 +604 ms front=com.apple.MobileSMS transition=0 depth=0 gesture=0 retry896=0 visible=0
+15:22:51.386 SpringBoard pid=16543 main | SpringBoard: home901 threw NSInvalidArgumentException, trying home900
+15:22:51.387 SpringBoard pid=16543 main | SpringBoard: why902 reason -[NSNull state]: unrecognized selector sent to instance 0x1e680ac48
+15:22:51.387 SpringBoard pid=16543 main | SpringBoard: home900 home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:51.387 SpringBoard pid=16543 main | SpringBoard: homeretry896 step 1 com.apple.MobileSMS still front +733 ms: Home pressed once more
+15:22:51.388 SpringBoard pid=16543 main | SpringBoard: home898 retry press used home900 handleHomeButtonPress on SBMainSwitcherControllerCoordinator (returned 0)
+15:22:51.497 SpringBoard pid=16543 main | SpringBoard: splitflow895 step 1 home first in front +843 ms transition=0 depth=0 gesture=0
+15:22:51.497 SpringBoard pid=16543 main | SpringBoard: splitone894 step 1 done +843 ms home in front=1 front=(home) transition=0
+15:22:51.555 SpringBoard pid=16543 main | SpringBoard: flicker849 second picker entrance 0.00 s after the first skipped (tiles keep fading in once)
+15:22:51.556 SpringBoard pid=16543 main | SpringBoard: stage on screen
+15:22:51.556 SpringBoard pid=16543 main | on screen state=2 split=0 bottom=- top=- hover=-
+15:22:51.556 SpringBoard pid=16543 main | SpringBoard: keyboard664 video-on-screen=0 (nothing playing playing=- front=home screen)
+15:22:51.556 SpringBoard pid=16543 main | SpringBoard: taking key from SBMainSwitcherWindow on this scene
+15:22:51.557 SpringBoard pid=16543 main | SpringBoard: takeKey ok try=- slot=-1 settle=1 key=1 hid=0 lvl=998 matchKey=1 other=none winScene=fg-active field=n/a keys=null scenes=fg-active/main,fg-active/main,fg-active/main*
+15:22:51.558 SpringBoard pid=16543 main | SpringBoard: opened the top stage
+15:22:51.609 SpringBoard pid=16543 main | SpringBoard: putting com.apple.MobileSMS on stack slot 0
+15:22:51.609 SpringBoard pid=16543 main | launch com.apple.MobileSMS state=2 split=0 bottom=- top=- hover=-
+15:22:51.609 SpringBoard pid=16543 main | SpringBoard: com.apple.MobileSMS got its default entity with a scene handle provider
+15:22:51.609 SpringBoard pid=16543 main | SpringBoard: creating app view for com.apple.MobileSMS
+15:22:51.609 SpringBoard pid=16543 main | SpringBoard: created app view for com.apple.MobileSMS
+15:22:51.612 SpringBoard pid=16543 main | scene transaction com.apple.MobileSMS actions=1
+15:22:51.615 SpringBoard pid=16543 main | SpringBoard: com.apple.MobileSMS's scene came from SpringBoard's own app view
+15:22:51.615 SpringBoard pid=16543 main | SpringBoard: reg799: setDelegate on com.apple.MobileSMS ctrl=0x148642440
+15:22:51.615 SpringBoard pid=16543 main | SpringBoard: reg799: registered contributor on com.apple.MobileSMS handle=0x1483a6560 ident=com.apple.MobileSMS (addSceneUpdateContributer:)
+15:22:51.616 SpringBoard pid=16543 main | SpringBoard: com.apple.MobileSMS stays running in the background
+15:22:51.616 SpringBoard pid=16543 main | SpringBoard: camera658 com.apple.MobileSMS on a card: in the app dylib filter; if the dylib loads in it a 'camera hook loaded' line follows (relay668 says whether it does)
+15:22:51.616 SpringBoard pid=16543 main | SpringBoard: com.apple.MobileSMS is on stack slot 0
+15:22:51.616 SpringBoard pid=16543 main | hosted com.apple.MobileSMS state=2 split=0 bottom=com.apple.MobileSMS top=- hover=-
+15:22:51.616 SpringBoard pid=16543 main | scene block sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C frame={{0, 0}, {430, 932}}
+15:22:51.616 SpringBoard pid=16543 main | SpringBoard: kept the open stage inside its card while another app opened
+15:22:51.616 SpringBoard pid=16543 main | SpringBoard: home668 kept the open stage inside its card while another app opened (sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C's phone-size update lands at card size, not refused)
+15:22:51.617 SpringBoard pid=16543 main | SpringBoard: occl798 ok reason present com.apple.MobileSMS ctrl=0x148642440 (reg799 holding the claim) card[mode=4 io=1 minimised=0 home=0 busy=0 stageVisible=1 parked=0 win=DSStageWindow hid=0 a=1.00]
+15:22:51.617 SpringBoard pid=16543 main | app-view settings update
+15:22:51.617 SpringBoard pid=16543 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C mode=4 pass795 update: changes = (none); subclassChanges = <BSSettingsDiff: 0x28244e070> { hostContextIdentifierForSnapshotting = 1f8184af; scenePresenterRenderIdentifierForSnapshotting = f3db8a7fdeea6930; }; }
+15:22:51.617 SpringBoard pid=16543 main | app-view settings update done
+15:22:51.617 SpringBoard pid=16543 main | layoutHost Messages frame={{0, 0}, {430, 932}}
+15:22:51.618 SpringBoard pid=16543 main | SpringBoard: phonesize680 build 4.5.902 is ON: allowlisted apps always full screen (430x931 scaled to the card), message bar kept in place, no scene writes on tap or keyboard
+15:22:51.622 SpringBoard pid=16543 main | layoutHost Messages frame={{0, 0}, {420, 458}}
+15:22:51.622 SpringBoard pid=16543 main | hideStray split=0 depth=0
+15:22:51.622 SpringBoard pid=16543 main | SpringBoard: splitflow895 direct852 com.apple.MobileSMS was hosted at once (already running, no placeholder): picker kept hidden
+15:22:51.622 SpringBoard pid=16543 main | SpringBoard: splitone894 step 2 +968 ms com.apple.MobileSMS staged from home by recent839 / direct852 (hosting=1)
+15:22:51.632 SpringBoard pid=16543 main | SpringBoard: camera658 com.apple.MobileSMS card published to the display layout frame={{5, 5}, {420, 458}} role=1 level=1 template=0, path=layout-element; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C(role=1 level=1 app=1 ...
+15:22:51.633 SpringBoard pid=16543 main | SpringBoard: camera661 presence com.apple.MobileSMS in the display layout (card visible) frame={{5, 5}, {420, 458}} role=1 level=1; layout now: com.apple.springboard.home-screen(role=1 level=0 app=0 full=1), sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C(role=1 level=1 app=1 full=0)
+15:22:51.661 SpringBoard pid=16543 main | SpringBoard: fitting com.apple.MobileSMS's scene to the card
+15:22:51.661 SpringBoard pid=16543 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {420, 458}}
+15:22:51.686 MobileSMS pid=16565 main | app left _UIVisualEffectBackdropView at {{0, 0}, {420, 84}}. cause=this is the piece under the field, and fitting its frame lifts it above the field
+15:22:51.702 MobileSMS pid=16565 main | msgpin879 state (entry laid out) bar off card -> reopen782: card={{0, 0}, {420, 458}} | bar win={{0, 809}, {430, 123}} screen={{0, 809}, {430, 123}} h=123 hid=0 a=1.00 hiddenAncestor=0 clip=none inCard=NO window=UITextEffectsWindow{{0, 0}, {430, 932}} | strip win={{0, 860.33333333333337}, {430, 71}} screen={{0, 860....
+15:22:51.703 MobileSMS pid=16565 main | msgscroll880 (entry laid out): barTop=458.0 needed=0.0 inset 123.0 -> 0.0 (contentInset.bottom=0.0 indicator=0.0) offset 1890.0 -> 1890.0 atLatest=0 contentH=2462 viewH=458
+15:22:51.734 SpringBoard pid=16543 main | SpringBoard: msgfit757 com.apple.MobileSMS reports phone-size keyboard geometry but its scene is {{0, 0}, {420, 458}}: re-sending the card frame (1)
+15:22:51.734 SpringBoard pid=16543 main | SpringBoard: phonesize675 build 4.5.902 is ON; apps: com.beeper.chat.ios (default)
+15:22:51.737 MobileSMS pid=16565 main | entry811 input window laid out: card={{0, 0}, {420, 458}} | bar win={{0, 851}, {420, 81}} screen={{0, 851}, {420, 81}} h=81 hid=0 a=1.00 hiddenAncestor=0 clip=none inCard=NO window=UITextEffectsWindow{{0, 0}, {430, 932}} | strip win={{0, 902.33333333333337}, {420, 71}} screen={{0, 902.33333333333337}, {420, 71}} h=7...
+15:22:51.967 SpringBoard pid=16543 main | SpringBoard: splitone894 step 3 +1313 ms settled=1 (fit done) scene {{0, 0}, {420, 458}} card {{36, 36}, {420, 458}} front=(home)
+15:22:51.977 SpringBoard pid=16543 main | SpringBoard: style823 picker restyled (blur, capsule search, Suggested tiles, A-Z sections)
+15:22:51.980 SpringBoard pid=16543 main | SpringBoard: style824 picker restyled (glass edge, accent tiles, carousel, pill filter)
+15:22:52.187 SpringBoard pid=16543 main | force geometry com.apple.MobileSMS depth=0 frame={{0, 0}, {426, 460}}
+15:22:52.187 SpringBoard pid=16543 main | scene block sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C frame={{0, 0}, {420, 458}}
+15:22:52.187 SpringBoard pid=16543 main | SpringBoard: appview670 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C mode=4 pass795 update: changes = <BSMutableSettings: 0x282f109c0> { frame = NSRect: {{0, 0}, {426, 460}}; }; subclassChanges = (none); }
+15:22:52.187 SpringBoard pid=16543 main | layoutHost Messages frame={{0, 0}, {426, 460}}
+15:22:52.187 SpringBoard pid=16543 main | hideStray split=1 depth=0
+15:22:52.188 SpringBoard pid=16543 main | SpringBoard: hid Messages' full-screen scene presentation outside the split card
+15:22:52.195 SpringBoard pid=16543 main | SpringBoard: splitone894 step 4 split open (B call)
+15:22:52.237 SpringBoard pid=16543 main | SpringBoard: host750 bottom card com.apple.MobileSMS: detached -> live
+15:22:52.238 SpringBoard pid=16543 main | SpringBoard: gest770 layout switcher=closed home=0 busy=0 stage visible=1 parked=0
+15:22:52.238 SpringBoard pid=16543 main | SpringBoard: pub807: external-foreground now contains com.apple.MobileSMS=NO (card live; external=YES workspace=nil handle=yes scene=yes; 0 external-foreground handle(s))
+15:22:52.309 SpringBoard pid=16543 main | SpringBoard: camera658 hosted scene sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C fg=1 occluded=0 deactivation=0x1 camera=0
+15:22:52.321 SpringBoard pid=16543 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C keyboardFocus minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+15:22:52.321 SpringBoard pid=16543 main | SpringBoard: focus798 sceneID:com.apple.MobileSMS-D33ACBC0-F3BB-439C-AA57-1D1E02C7FE3C empty minimised=0 home=0 busy=0 stageVisible=1 parked=0 view=yes win=DSStageWindow hid=0 a=1.00 key=SBHomeScreenWindow
+15:22:52.371 SpringBoard pid=16543 main | SpringBoard: camera658 com.apple.MobileSMS layout670 card moved: display-layout element {{5, 5}, {420, 458}} -> {{2, 5}, {426, 460}} (old out, then new in)
+15:22:52.418 SpringBoard pid=16543 main | scene transaction com.apple.MobileSMS actions=0
+15:22:52.420 SpringBoard pid=16543 main | SpringBoard: reg799: contributor appended reason com.apple.MobileSMS (already=1, set={(     "com.apple.MobileSMS" )})
+15:22:52.538 SpringBoard pid=16543 main | SpringBoard: gest770 layout switcher=closed home=1 busy=1 stage visible=1 parked=0
+15:22:53.215 SpringBoard pid=16543 main | SpringBoard: pill848 tap: opening the strip (open=0 strip=0 window=yes hidden=0 key=0 level=998 scene=com.apple.springboard fg=0)
+15:22:53.228 SpringBoard pid=16543 main | SpringBoard: pill826 strip opened (top com.apple.MobileSMS, bottom -, float -)
+15:22:53.702 SpringBoard pid=16543 main | SpringBoard: camera658 com.apple.MobileSMS camera hook loaded (AVFoundation hooks in) staged=1 appActive=1 multitask=0/0 running=0 interrupted=0
+15:22:54.120 SpringBoard pid=16543 main | SpringBoard: com.apple.MobileSMS after two seconds - hosting the app, scene present, view in the card
+15:22:54.468 SpringBoard pid=16543 main | SpringBoard: camera660 com.apple.MobileSMS on a card: asked it to report its camera hooks (a 'camera660 com.apple.MobileSMS hello' line should follow)
+15:22:54.470 SpringBoard pid=16543 main | SpringBoard: camera660 com.apple.MobileSMS hello (app saw it is staged) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized (read after the home / switcher gesture)
+15:22:54.470 SpringBoard pid=16543 main | SpringBoard: camera660 com.apple.MobileSMS hello (answer to the on-card ping) sessions=0 multitaskSwitch=present | staged=1 appActive=1 bg=0 hooks=1 running=0 interrupted=0 multitask=0/0 auth=authorized (read after the home / switcher gesture)
+
+--- crash ---
+
+--- diagnostics ---
+
+--- kbvis768 ---
+13:14:53.479 kbvis768 show 1 start owner=org.whispersystems.signal h=243
+13:14:53.479 kbvis768 show 1 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=none | arb on=1 owner=org.whispersystems.signal h=243 | sbkeys={{0, 631}, {430, 301}}
+13:14:53.484 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+13:14:53.485 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+13:14:53.485 why775 show 1: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+13:14:53.495 keep776 show 1: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+13:14:53.495 why775 show 1: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+13:14:53.581 kbvis768 show 1 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3538392904,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:14:53.481 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:14:53.684 kbvis768 show 1 +0.20s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3538392904,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:14:53.592 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:14:53.791 kbvis768 show 1 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3538392904,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip741->1@13:14:53.685 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:14:53.895 kbvis768 show 1 +0.41s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3538392904,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:14:53.802 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:14:53.999 kbvis768 show 1 +0.52s keys visible? YES (owner org.whispersystems.signal)
+13:15:09.271 kbvis768 show 1 +15.79s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3538392904,1138008498] | above=SBPictureInPictureWindow@30 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=raised->1@13:15:09.245 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:15:09.536 kbvis768 show 1 +16.05s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3538392904,1138008498] | above=SBPictureInPictureWindow@30 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:15:09.361 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:15:09.799 kbvis768 show 1 +16.32s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=SBPictureInPictureWindow@30 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:15:09.361 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:15:09.799 kbvis768 show 1 ended after 16.3s: keys visible ALL of the time
+13:20:16.166 kbvis768 show 2 start owner=org.whispersystems.signal h=288
+13:20:16.166 kbvis768 show 2 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:15:09.361 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:20:16.170 keep776 show 2: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+13:20:16.170 why775 show 2: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+13:20:16.179 keep776 show 2: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+13:20:16.179 why775 show 2: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+13:20:16.271 kbvis768 show 2 +0.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[983465154,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:20:16.167 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:20:16.374 kbvis768 show 2 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[983465154,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:20:16.372 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:20:16.683 kbvis768 show 2 +0.52s keys visible? YES (owner org.whispersystems.signal)
+13:20:19.531 kbvis768 show 2 +3.36s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[983465154,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:20:19.486 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:20:20.051 kbvis768 show 2 ended after 3.9s: keys visible ALL of the time
+13:38:37.219 kbvis768 show 3 start owner=org.whispersystems.signal h=288
+13:38:37.219 kbvis768 show 3 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:20:19.486 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:38:37.226 keep776 show 3: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+13:38:37.226 why775 show 3: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+13:38:37.239 keep776 show 3: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+13:38:37.239 why775 show 3: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+13:38:37.322 kbvis768 show 3 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4275432640,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:38:37.224 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:38:37.533 kbvis768 show 3 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4275432640,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:38:37.429 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:38:37.743 kbvis768 show 3 +0.52s keys visible? YES (owner org.whispersystems.signal)
+13:38:56.928 kbvis768 show 3 +19.71s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4275432640,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:38:56.883 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:38:57.454 kbvis768 show 3 +20.23s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:38:56.883 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:38:57.454 kbvis768 show 3 ended after 20.2s: keys visible ALL of the time
+13:57:06.835 kbvis768 show 4 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:38:56.883 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:06.834 kbvis768 show 4 start owner=org.whispersystems.signal h=288
+13:57:06.842 keep776 show 4: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+13:57:06.842 why775 show 4: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+13:57:06.852 keep776 show 4: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+13:57:06.853 why775 show 4: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+13:57:06.936 kbvis768 show 4 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:57:06.839 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:07.146 kbvis768 show 4 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:57:07.041 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:07.360 kbvis768 show 4 +0.52s keys visible? YES (owner org.whispersystems.signal)
+13:57:09.393 why775 show 4: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+13:57:09.423 kbvis768 show 4 +2.59s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:57:09.399 | arb on=1 owner=org.whispersystems.signal h=337 | sbkeys={{0, 537}, {430, 395}}
+13:57:09.680 kbvis768 show 4 +2.84s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:57:09.626 | arb on=1 owner=org.whispersystems.signal h=337 | sbkeys={{0, 537}, {430, 395}}
+13:57:10.713 kbvis768 show 4 +3.88s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:57:10.679 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:10.968 kbvis768 show 4 +4.13s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:57:10.813 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:43.111 kbvis768 show 4 +36.28s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:57:43.090 | arb on=1 owner=org.whispersystems.signal h=337 | sbkeys={{0, 537}, {430, 395}}
+13:57:43.373 kbvis768 show 4 +36.54s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:57:43.321 | arb on=1 owner=org.whispersystems.signal h=337 | sbkeys={{0, 537}, {430, 395}}
+13:57:44.142 kbvis768 show 4 +37.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:57:44.048 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:44.395 kbvis768 show 4 +37.56s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:57:44.271 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:45.412 kbvis768 show 4 +38.58s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3904189334,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:57:45.280 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:57:45.926 kbvis768 show 4 +39.09s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:57:45.280 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:57:45.926 kbvis768 show 4 ended after 39.1s: keys visible ALL of the time
+13:57:48.647 kbvis768 show 5 start owner=org.whispersystems.signal h=288
+13:57:48.647 kbvis768 show 5 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:57:45.280 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:48.650 keep776 show 5: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+13:57:48.650 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+13:57:48.659 keep776 show 5: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+13:57:48.659 why775 show 5: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+13:57:48.751 kbvis768 show 5 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[346065239,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:57:48.648 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:48.855 kbvis768 show 5 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[346065239,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:57:48.852 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:57:49.168 kbvis768 show 5 +0.52s keys visible? YES (owner org.whispersystems.signal)
+13:58:22.697 why775 show 5: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+13:58:22.953 kbvis768 show 5 +34.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[346065239,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:58:22.919 | arb on=1 owner=org.whispersystems.signal h=337 | sbkeys={{0, 537}, {430, 395}}
+13:58:24.245 kbvis768 show 5 +35.60s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[346065239,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:58:24.133 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:58:24.504 kbvis768 show 5 +35.86s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[346065239,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:58:24.257 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:58:25.024 kbvis768 show 5 +36.38s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[346065239,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@13:58:24.929 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:58:25.289 kbvis768 show 5 +36.64s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[346065239,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:58:25.040 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:58:25.546 kbvis768 show 5 +36.90s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:58:25.040 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:58:25.546 kbvis768 show 5 ended after 36.9s: keys visible ALL of the time
+13:58:31.475 kbvis768 show 6 start owner=org.whispersystems.signal h=288
+13:58:31.475 kbvis768 show 6 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:58:25.040 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:58:31.480 keep776 show 6: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+13:58:31.480 why775 show 6: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+13:58:31.491 keep776 show 6: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+13:58:31.491 why775 show 6: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+13:58:31.582 kbvis768 show 6 +0.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2178168954,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@13:58:31.477 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:58:31.687 kbvis768 show 6 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2178168954,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@13:58:31.684 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+13:58:32.002 kbvis768 show 6 +0.53s keys visible? YES (owner org.whispersystems.signal)
+13:58:47.526 kbvis768 show 6 +16.05s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2178168954,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:58:47.403 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:58:48.053 kbvis768 show 6 +16.58s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@13:58:47.403 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+13:58:48.054 kbvis768 show 6 ended after 16.6s: keys visible ALL of the time
+14:15:08.598 kbvis768 show 7 start owner=org.whispersystems.signal h=288
+14:15:08.598 kbvis768 show 7 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@13:58:47.403 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:15:08.603 keep776 show 7: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:15:08.603 why775 show 7: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:15:08.613 keep776 show 7: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:15:08.613 why775 show 7: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:15:08.703 kbvis768 show 7 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2547550613,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:15:08.601 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:15:08.805 kbvis768 show 7 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2547550613,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:15:08.803 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:15:09.118 kbvis768 show 7 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:15:13.275 kbvis768 show 7 +4.68s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2547550613,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:15:13.199 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:15:13.800 kbvis768 show 7 +5.20s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:15:13.199 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:15:13.800 kbvis768 show 7 ended after 5.2s: keys visible ALL of the time
+14:21:07.020 kbvis768 show 8 start owner=org.whispersystems.signal h=243
+14:21:07.020 kbvis768 show 8 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:15:13.199 | arb on=1 owner=org.whispersystems.signal h=243 | sbkeys=none
+14:21:07.056 keep776 show 8: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:21:07.056 why775 show 8: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+14:21:07.056 why775 show 8: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:21:07.122 kbvis768 show 8 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4122264077,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:21:07.023 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:21:07.220 keep776 show 8: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:21:07.220 why775 show 8: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:21:07.228 kbvis768 show 8 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4122264077,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:21:07.134 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:21:07.331 kbvis768 show 8 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4122264077,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:21:07.229 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:21:07.437 kbvis768 show 8 +0.42s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4122264077,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:21:07.372 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:21:07.543 kbvis768 show 8 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:21:11.746 kbvis768 show 8 +4.73s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4122264077,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@14:21:11.679 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:21:12.005 kbvis768 show 8 +4.99s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[4122264077,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:21:11.782 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:21:12.260 kbvis768 show 8 +5.24s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:21:11.782 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:21:12.261 kbvis768 show 8 ended after 5.2s: keys visible ALL of the time
+14:23:47.824 kbvis768 show 9 start owner=org.whispersystems.signal h=288
+14:23:47.825 kbvis768 show 9 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:21:11.782 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:23:47.830 keep776 show 9: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:23:47.830 why775 show 9: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:23:47.844 keep776 show 9: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:23:47.844 why775 show 9: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:23:47.927 kbvis768 show 9 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2535594808,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:23:47.827 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:23:48.029 kbvis768 show 9 +0.20s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2535594808,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:23:48.027 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:23:48.343 kbvis768 show 9 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:23:50.674 kbvis768 show 9 +2.85s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2535594808,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@14:23:50.581 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:23:50.937 kbvis768 show 9 +3.11s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2535594808,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:23:50.689 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:23:51.196 kbvis768 show 9 +3.37s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:23:50.689 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:23:51.196 kbvis768 show 9 ended after 3.4s: keys visible ALL of the time
+14:24:33.771 kbvis768 show 10 start owner=com.beeper.chat.ios h=243
+14:24:33.772 kbvis768 show 10 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:23:50.689 | arb on=1 owner=com.beeper.chat.ios h=243 | sbkeys={{0, 631}, {430, 301}}
+14:24:33.778 why775 show 10: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:24:33.778 keep776 show 10: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#1)
+14:24:33.778 why775 show 10: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:com.beeper.chat.ios-default> -> 0
+14:24:33.787 why775 show 10: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:24:33.787 keep776 show 10: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#2)
+14:24:33.877 kbvis768 show 10 +0.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3225688079,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:24:33.774 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:24:33.979 kbvis768 show 10 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3225688079,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip741->1@14:24:33.977 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:24:34.191 kbvis768 show 10 +0.42s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3225688079,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:24:34.099 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:24:34.298 kbvis768 show 10 +0.52s keys visible? YES (owner com.beeper.chat.ios)
+14:24:38.952 kbvis768 show 10 +5.18s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3225688079,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=raised->1@14:24:38.847 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:24:39.212 kbvis768 show 10 +5.44s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3225688079,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:24:38.960 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:24:39.468 kbvis768 show 10 ended after 5.7s: keys visible ALL of the time
+14:24:45.127 kbvis768 show 11 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:24:38.960 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:24:45.127 kbvis768 show 11 start owner=com.beeper.chat.ios h=288
+14:24:45.156 keep776 show 11: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#1)
+14:24:45.157 why775 show 11: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:24:45.167 keep776 show 11: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#2)
+14:24:45.167 why775 show 11: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:24:45.232 kbvis768 show 11 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1540000346,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:24:45.129 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:24:45.334 kbvis768 show 11 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1540000346,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:24:45.332 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:24:45.652 kbvis768 show 11 +0.52s keys visible? YES (owner com.beeper.chat.ios)
+14:24:53.661 kbvis768 show 11 +8.53s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1540000346,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:24:53.656 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:24:54.177 kbvis768 show 11 ended after 9.1s: keys visible ALL of the time
+14:25:06.198 kbvis768 show 12 start owner=com.beeper.chat.ios h=288
+14:25:06.198 kbvis768 show 12 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:24:53.656 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:25:06.204 keep776 show 12: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#1)
+14:25:06.205 why775 show 12: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:25:06.214 keep776 show 12: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#2)
+14:25:06.214 why775 show 12: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:25:06.300 kbvis768 show 12 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2432677543,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:25:06.200 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:25:06.407 kbvis768 show 12 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2432677543,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:25:06.406 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:25:06.720 kbvis768 show 12 +0.52s keys visible? YES (owner com.beeper.chat.ios)
+14:25:12.707 kbvis768 show 12 +6.51s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2432677543,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=raised->1@14:25:12.682 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:25:12.967 kbvis768 show 12 +6.77s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2432677543,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:25:12.802 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:25:13.225 kbvis768 show 12 ended after 7.0s: keys visible ALL of the time
+14:25:28.976 kbvis768 show 13 start owner=com.beeper.chat.ios h=288
+14:25:28.977 kbvis768 show 13 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:25:12.802 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:25:28.981 keep776 show 13: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#1)
+14:25:28.981 why775 show 13: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:25:29.000 keep776 show 13: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for com.beeper.chat.ios (#2)
+14:25:29.001 why775 show 13: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:25:29.083 kbvis768 show 13 +0.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3902378465,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:25:28.978 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:25:29.186 kbvis768 show 13 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3902378465,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:25:29.184 | arb on=1 owner=com.beeper.chat.ios h=288 | sbkeys={{0, 586}, {430, 346}}
+14:25:29.499 kbvis768 show 13 +0.52s keys visible? YES (owner com.beeper.chat.ios)
+14:25:33.109 kbvis768 show 13 +4.13s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3902378465,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@14:25:33.056 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:25:33.366 kbvis768 show 13 +4.39s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3902378465,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:25:33.170 | arb on=0 owner=com.beeper.chat.ios h=288 | sbkeys=none
+14:25:33.626 kbvis768 show 13 ended after 4.6s: keys visible ALL of the time
+14:34:54.137 kbvis768 show 14 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:25:33.170 | arb on=1 owner=org.whispersystems.signal h=243 | sbkeys={{0, 631}, {430, 301}}
+14:34:54.137 kbvis768 show 14 start owner=org.whispersystems.signal h=243
+14:34:54.144 keep776 show 14: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:34:54.144 why775 show 14: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:34:54.144 why775 show 14: shouldKeyboardBeWindowSizedForHostWithIdentity:FBSSceneIdentityToken<sceneID:org.whispersystems.signal-default> -> 0
+14:34:54.164 keep776 show 14: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:34:54.164 why775 show 14: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:34:54.242 kbvis768 show 14 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2969970075,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:34:54.142 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:34:54.346 kbvis768 show 14 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2969970075,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:34:54.252 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:34:54.450 kbvis768 show 14 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2969970075,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip741->1@14:34:54.346 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:34:54.554 kbvis768 show 14 +0.42s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2969970075,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:34:54.460 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:34:54.660 kbvis768 show 14 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:35:13.623 kbvis768 show 14 +19.49s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2969970075,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=raised->1@14:35:13.573 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:35:13.883 kbvis768 show 14 +19.75s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2969970075,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:35:13.685 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:35:14.145 kbvis768 show 14 +20.01s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:35:13.685 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:35:14.146 kbvis768 show 14 ended after 20.0s: keys visible ALL of the time
+14:35:28.600 kbvis768 show 15 start owner=org.whispersystems.signal h=288
+14:35:28.600 kbvis768 show 15 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:35:13.685 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:35:28.604 keep776 show 15: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:35:28.604 why775 show 15: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:35:28.615 keep776 show 15: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:35:28.615 why775 show 15: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:35:28.703 kbvis768 show 15 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[744129016,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:35:28.602 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:35:28.807 kbvis768 show 15 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[744129016,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:35:28.803 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:35:29.120 kbvis768 show 15 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:35:34.320 kbvis768 show 15 +5.72s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[744129016,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:35:34.222 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:35:34.844 kbvis768 show 15 +6.24s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:35:34.222 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:35:34.845 kbvis768 show 15 ended after 6.2s: keys visible ALL of the time
+14:40:23.558 kbvis768 show 16 start owner=org.whispersystems.signal h=288
+14:40:23.559 kbvis768 show 16 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:35:34.222 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:40:23.564 keep776 show 16: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:40:23.564 why775 show 16: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:40:23.578 why775 show 16: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:40:23.578 keep776 show 16: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:40:23.665 kbvis768 show 16 +0.11s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3005952081,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:40:23.561 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:40:23.771 kbvis768 show 16 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3005952081,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:40:23.768 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:40:24.083 kbvis768 show 16 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:40:54.257 kbvis768 show 16 +30.70s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3005952081,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:40:54.175 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:40:54.778 kbvis768 show 16 +31.22s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:40:54.175 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:40:54.778 kbvis768 show 16 ended after 31.2s: keys visible ALL of the time
+14:43:02.253 kbvis768 show 17 start owner=org.whispersystems.signal h=288
+14:43:02.254 kbvis768 show 17 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=none below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:40:54.175 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:43:02.261 keep776 show 17: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:43:02.261 why775 show 17: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:43:02.272 why775 show 17: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:43:02.272 keep776 show 17: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:43:02.355 kbvis768 show 17 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3332533035,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:43:02.258 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:43:02.564 kbvis768 show 17 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3332533035,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:43:02.459 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:43:02.771 kbvis768 show 17 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:43:25.285 kbvis768 show 17 +23.03s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3332533035,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:43:25.171 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:43:25.802 kbvis768 show 17 +23.55s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:43:25.171 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:43:25.803 kbvis768 show 17 ended after 23.5s: keys visible ALL of the time
+14:43:30.844 kbvis768 show 18 start owner=org.whispersystems.signal h=288
+14:43:30.844 kbvis768 show 18 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:43:25.171 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:43:30.850 keep776 show 18: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:43:30.850 why775 show 18: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:43:30.863 why775 show 18: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:43:30.863 keep776 show 18: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:43:30.946 kbvis768 show 18 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3014520367,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:43:30.847 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:43:31.154 kbvis768 show 18 +0.31s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3014520367,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:43:31.052 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:43:31.368 kbvis768 show 18 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:43:38.370 kbvis768 show 18 +7.53s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[3014520367,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:43:38.272 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:43:38.897 kbvis768 show 18 +8.05s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:43:38.272 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:43:38.897 kbvis768 show 18 ended after 8.1s: keys visible ALL of the time
+14:48:54.210 kbvis768 show 19 start owner=org.whispersystems.signal h=288
+14:48:54.211 kbvis768 show 19 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:43:38.272 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:48:54.234 keep776 show 19: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:48:54.234 why775 show 19: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:48:54.248 keep776 show 19: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:48:54.248 why775 show 19: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:48:54.314 kbvis768 show 19 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[657853366,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:48:54.214 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:48:54.417 kbvis768 show 19 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[657853366,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:48:54.415 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:48:54.734 kbvis768 show 19 +0.52s keys visible? YES (owner org.whispersystems.signal)
+14:49:13.141 kbvis768 show 19 +18.93s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[657853366,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:49:13.102 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:49:13.653 kbvis768 show 19 +19.44s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:49:13.102 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:49:13.653 kbvis768 show 19 ended after 19.4s: keys visible ALL of the time
+14:49:26.751 kbvis768 show 20 start owner=org.whispersystems.signal h=288
+14:49:26.752 kbvis768 show 20 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:49:13.102 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:49:26.759 keep776 show 20: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+14:49:26.759 why775 show 20: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+14:49:26.771 keep776 show 20: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+14:49:26.771 why775 show 20: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+14:49:26.855 kbvis768 show 20 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2106184475,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@14:49:26.754 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:49:26.965 kbvis768 show 20 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2106184475,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=skip740->1@14:49:26.962 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+14:49:27.278 kbvis768 show 20 +0.53s keys visible? YES (owner org.whispersystems.signal)
+14:49:34.015 kbvis768 show 20 +7.26s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[2106184475,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:49:33.911 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:49:34.533 kbvis768 show 20 +7.78s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@14:49:33.911 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+14:49:34.533 kbvis768 show 20 ended after 7.8s: keys visible ALL of the time
+15:09:38.670 kbvis768 show 21 start owner=org.whispersystems.signal h=288
+15:09:38.671 kbvis768 show 21 +0.00s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=1[1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=trailing->1@14:49:33.911 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys=none
+15:09:38.679 keep776 show 21: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#1)
+15:09:38.679 why775 show 21: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:0 -> window hidden=NO
+15:09:38.704 why775 show 21: updateMedusaHostedKeyboardWindowForScene:FBScene<com.apple.UIKit.remote-keyboard> isForeground:1 -> window hidden=NO
+15:09:38.704 keep776 show 21: SpringBoard's Medusa hide (updateMedusaHostedKeyboardWindowForScene:) kept out for org.whispersystems.signal (#2)
+15:09:38.774 kbvis768 show 21 +0.10s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1107711800,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@15:09:38.673 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+15:09:38.881 kbvis768 show 21 +0.21s medusa lvl=6000 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1107711800,1138008498] | above=UITextEffectsWindow@6000 below=SBRecordingIndicatorWindow@1125 | stage=DSStageWindow@998 | raise=raised->1@15:09:38.877 | arb on=1 owner=org.whispersystems.signal h=288 | sbkeys={{0, 586}, {430, 346}}
+15:09:39.206 kbvis768 show 21 +0.53s keys visible? YES (owner org.whispersystems.signal)
+15:09:40.774 kbvis768 show 21 +2.10s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1107711800,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=skip740->1@15:09:40.717 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+15:09:41.036 kbvis768 show 21 +2.36s medusa lvl=20 hid=0 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=0 op=1.00 hosts=2[1107711800,1138008498] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@15:09:40.830 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+15:09:41.297 kbvis768 show 21 +2.63s medusa lvl=20 hid=1 a=1.00 f={{0, 0}, {430, 932}} scene=com.apple.springboard lh=1 op=1.00 hosts=0[] | above=DSStageWindow@998 below=UITextEffectsWindow@10 | stage=DSStageWindow@998 | raise=trailing->1@15:09:40.830 | arb on=0 owner=org.whispersystems.signal h=288 | sbkeys=none
+15:09:41.297 kbvis768 show 21 ended after 2.6s: keys visible ALL of the time

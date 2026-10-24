@@ -1,0 +1,3 @@
+4.5.917 barvis917 (diagnostic, no behaviour change)
+Proven (uploads916/Hdidbhdid, 916): every {0,4000} park / strip=none follows kbleave743 'left the conversation' (18:12:26.039, 27.773, 49.343) = conversation list, not the chat. In the chat the bar was off-card for 0.3-0.9 s after chat didAppear (27.444 -> 27.757, 48.998 -> 49.323) before barfit915 ran. User reports the bar missing while the log says inCard=YES hid=0 a=1.00, so the log's visibility check is not trusted.
+Log: per msgpin879 pass (only on change, max 150 lines) 'barvis917 (why) centre .. screen .. win=.. lvl .. | pres y/op | own hit=<view>(in bar/NOT bar) | above: <windows at/above level with hit view> | < chain of ancestors (hidden, alpha, opacity, clip, mask, ty, frame)'. Public UIKit/QuartzCore only.

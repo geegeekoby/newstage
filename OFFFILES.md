@@ -658,3 +658,203 @@ Every file lives at `/var/mobile/.dynamicstage-<name>` (rootless also checks `/v
 - /var/mobile/.dynamicstage-divsnap877-off : Only the 50% snap as 876
 - /var/mobile/.dynamicstage-core877-off : Back to 4.5.876
 - Latch: divsnap877 (/var/mobile/.dynamicstage-divsnap877-crashed)
+
+## 4.5.878
+- /var/mobile/.dynamicstage-trim878-off : Log buffer trimmed on every line as 877
+- /var/mobile/.dynamicstage-core878-off : Back to 4.5.877
+- Latch: trim878 (/var/mobile/.dynamicstage-trim878-crashed)
+
+## 4.5.879
+- /var/mobile/.dynamicstage-msgpin879-off : Staged Messages reply bar / app strip not re-shown or re-laid out, as 878
+- /var/mobile/.dynamicstage-core879-off : Back to 4.5.878
+- Latch: msgpin879 (/var/mobile/.dynamicstage-msgpin879-crashed)
+
+## 4.5.880
+- /var/mobile/.dynamicstage-msgscroll880-off : Transcript bottom inset as 879 (keyboard-sized raises dropped)
+- /var/mobile/.dynamicstage-core880-off : Back to 4.5.879
+- Latch: msgscroll880 (/var/mobile/.dynamicstage-msgscroll880-crashed)
+
+## 4.5.881
+- /var/mobile/.dynamicstage-focus881-off : No caret highlight / caret scroll / card edit menu, as 880
+- /var/mobile/.dynamicstage-core881-off : Back to 4.5.880
+- Latch: focus881 (/var/mobile/.dynamicstage-focus881-crashed)
+
+## 4.5.882
+- /var/mobile/.dynamicstage-msgdismiss882-off : Thread drag dismisses only at the phone bottom, no tap-to-dismiss, as 881
+- /var/mobile/.dynamicstage-core882-off : Back to 4.5.881
+- Latch: msgdismiss882 (/var/mobile/.dynamicstage-msgdismiss882-crashed)
+
+## 4.5.883
+- /var/mobile/.dynamicstage-splitdrop883-off : No lower-half split drop over a full-screen app, as 882
+- /var/mobile/.dynamicstage-core883-off : Back to 4.5.882
+- Latch: splitdrop883 (/var/mobile/.dynamicstage-splitdrop883-crashed)
+
+## 4.5.884
+- /var/mobile/.dynamicstage-splitdrop884-off : Split drop zone uses the 883 busy check (stale flag blocks it), as 883
+- /var/mobile/.dynamicstage-core884-off : Back to 4.5.883
+- Latch: splitdrop884 (/var/mobile/.dynamicstage-splitdrop884-crashed)
+
+## 4.5.885
+- /var/mobile/.dynamicstage-splitdrop885-off : picker740 refuses the full-screen app on the split drop again (no split), as 884
+- /var/mobile/.dynamicstage-core885-off : Back to 4.5.884
+- Latch: splitdrop885 (/var/mobile/.dynamicstage-splitdrop885-crashed)
+
+## 4.5.886
+- /var/mobile/.dynamicstage-splitsmooth886-off : 885 split-drop timing (fixed waits)
+- /var/mobile/.dynamicstage-core886-off : Back to 4.5.885
+- Latch: splitsmooth886 (/var/mobile/.dynamicstage-splitsmooth886-crashed)
+
+## 4.5.887
+- /var/mobile/.dynamicstage-blackfix887-off : hosting card keeps its picker colour (886 behaviour)
+- /var/mobile/.dynamicstage-core887-off : Back to 4.5.886
+- Latch: blackfix887 (/var/mobile/.dynamicstage-blackfix887-crashed)
+
+## 4.5.888
+- /var/mobile/.dynamicstage-splitfill888-off : scenes are not re-sized to the card (887 behaviour)
+- /var/mobile/.dynamicstage-core888-off : Back to 4.5.887
+- Latch: splitfill888 (/var/mobile/.dynamicstage-splitfill888-crashed)
+
+## 4.5.889
+- /var/mobile/.dynamicstage-missfast889-off : every picker-list miss reloads the list (888 behaviour)
+- /var/mobile/.dynamicstage-core889-off : Back to 4.5.888
+- Latch: missfast889 (/var/mobile/.dynamicstage-missfast889-crashed)
+
+## 4.5.890
+- /var/mobile/.dynamicstage-splitsame890-off : split drop over a full-screen app uses the 886 path
+- /var/mobile/.dynamicstage-core890-off : Back to 4.5.889
+- Latch: splitsame890 (/var/mobile/.dynamicstage-splitsame890-crashed)
+
+## 4.5.891
+- /var/mobile/.dynamicstage-splitone891-off : split drop over a full-screen app uses the 890 path
+- /var/mobile/.dynamicstage-core891-off : Back to 4.5.890
+- Latch: splitone891 (/var/mobile/.dynamicstage-splitone891-crashed)
+
+## 4.5.892
+- /var/mobile/.dynamicstage-splitold892-off : split drop over a full-screen app uses the 891 path
+- /var/mobile/.dynamicstage-core892-off : Back to 4.5.891
+- Latch: splitold892 (/var/mobile/.dynamicstage-splitold892-crashed)
+
+## 4.5.893
+- /var/mobile/.dynamicstage-homeskip893-off : Home is pressed behind every split (892 behaviour)
+- /var/mobile/.dynamicstage-core893-off : Back to 4.5.892
+- Latch: homeskip893 (/var/mobile/.dynamicstage-homeskip893-crashed)
+
+## 4.5.894
+- /var/mobile/.dynamicstage-splitone894-off : full-screen split drop uses the 893 path
+- /var/mobile/.dynamicstage-core894-off : Back to 4.5.893
+- Latch: splitone894 (/var/mobile/.dynamicstage-splitone894-crashed)
+
+## 4.5.895
+- /var/mobile/.dynamicstage-splitflow895-off : a running app staged by direct852 shows the picker again (894 behaviour)
+- /var/mobile/.dynamicstage-core895-off : Back to 4.5.894
+- Latch: splitflow895 (/var/mobile/.dynamicstage-splitflow895-crashed)
+
+## 4.5.896
+- /var/mobile/.dynamicstage-homeretry896-off : one Home press only in the full-screen split drop (895 behaviour)
+- /var/mobile/.dynamicstage-core896-off : Back to 4.5.895
+- Latch: homeretry896 (/var/mobile/.dynamicstage-homeretry896-crashed)
+
+## 4.5.897
+- /var/mobile/.dynamicstage-lag897-off : no lag897 sampler / summary lines (896 behaviour)
+- /var/mobile/.dynamicstage-core897-off : Back to 4.5.896
+- Latch: lag897 (/var/mobile/.dynamicstage-lag897-crashed)
+
+## 4.5.898
+- /var/mobile/.dynamicstage-home898-off : no home898 step-1 lines (897 behaviour)
+- /var/mobile/.dynamicstage-core898-off : Back to 4.5.897
+- Latch: home898 (/var/mobile/.dynamicstage-home898-crashed)
+
+## 4.5.899
+- /var/mobile/.dynamicstage-probe899-off : no probe899 line (898 behaviour)
+- /var/mobile/.dynamicstage-core899-off : Back to 4.5.898
+- Latch: probe899 (/var/mobile/.dynamicstage-probe899-crashed)
+
+## 4.5.900
+- /var/mobile/.dynamicstage-home900-off : full-screen split step 1 uses the old (dead) Home press again (899 behaviour)
+- /var/mobile/.dynamicstage-core900-off : Back to 4.5.899
+- Latch: home900 (/var/mobile/.dynamicstage-home900-crashed)
+
+## 4.5.901
+- /var/mobile/.dynamicstage-home901-off : split step 1 uses home900's press again (900 behaviour)
+- /var/mobile/.dynamicstage-core901-off : Back to 4.5.900
+- Latch: home901 (/var/mobile/.dynamicstage-home901-crashed)
+
+## 4.5.902
+- /var/mobile/.dynamicstage-why902-off : no why902 detail lines (the reason line stays) (901 behaviour)
+- /var/mobile/.dynamicstage-core902-off : Back to 4.5.901
+- Latch: why902 (/var/mobile/.dynamicstage-why902-crashed)
+
+## 4.5.903
+- /var/mobile/.dynamicstage-home903-off : split step 1 uses the 901/900 presses again (902 behaviour)
+- /var/mobile/.dynamicstage-core903-off : Back to 4.5.902
+- Latch: home903 (/var/mobile/.dynamicstage-home903-crashed)
+
+## 4.5.904
+- /var/mobile/.dynamicstage-together904-off : top card shows before the bottom stage again (903 behaviour)
+- /var/mobile/.dynamicstage-core904-off : Back to 4.5.903
+- Latch: together904 (/var/mobile/.dynamicstage-together904-crashed)
+
+## 4.5.905
+- /var/mobile/.dynamicstage-endsplit905-off : a home swipe over a split tucks it again (904 behaviour)
+- /var/mobile/.dynamicstage-core905-off : Back to 4.5.904
+- Latch: endsplit905 (/var/mobile/.dynamicstage-endsplit905-crashed)
+
+## 4.5.906
+- /var/mobile/.dynamicstage-fullsplit906-off : only an open split ends on home swipe (905 behaviour)
+- /var/mobile/.dynamicstage-core906-off : Back to 4.5.905
+- Latch: fullsplit906 (/var/mobile/.dynamicstage-fullsplit906-crashed)
+
+## 4.5.907
+- /var/mobile/.dynamicstage-select907-off : no bubble menu, focus881 as in 906
+- /var/mobile/.dynamicstage-core907-off : Back to 4.5.906
+- Latch: select907 (/var/mobile/.dynamicstage-select907-crashed)
+
+## 4.5.908
+- /var/mobile/.dynamicstage-predict908-off : no predictive bar (907 behaviour)
+- /var/mobile/.dynamicstage-core908-off : Back to 4.5.907
+- Latch: predict908 (/var/mobile/.dynamicstage-predict908-crashed)
+
+## 4.5.909
+- /var/mobile/.dynamicstage-native909-off : custom select / menu / predictive UI back (908 behaviour)
+- /var/mobile/.dynamicstage-core909-off : Back to 4.5.908
+- Latch: native909 (/var/mobile/.dynamicstage-native909-crashed)
+
+## 4.5.910
+- /var/mobile/.dynamicstage-autocorrect910-off : always type the 909 way
+- /var/mobile/.dynamicstage-core910-off : Back to 4.5.909
+- Latch: autocorrect910 (/var/mobile/.dynamicstage-autocorrect910-crashed)
+
+## 4.5.911
+- /var/mobile/.dynamicstage-autocorrect911-off : typing never focuses the box (910 behaviour)
+- /var/mobile/.dynamicstage-core911-off : Back to 4.5.910
+- Latch: autocorrect911 (/var/mobile/.dynamicstage-autocorrect911-crashed)
+
+## 4.5.912
+- /var/mobile/.dynamicstage-predict912-off : no QuickType/autocorrect on the stage keyboard; app-side 911 path returns (respring)
+- /var/mobile/.dynamicstage-core912-off : Back to 4.5.911
+- Latch: predict912 (/var/mobile/.dynamicstage-predict912-crashed)
+
+## 4.5.913
+- /var/mobile/.dynamicstage-spacefix913-off : field reset after every key again (912 behaviour; respring)
+- /var/mobile/.dynamicstage-core913-off : Back to 4.5.912
+- Latch: spacefix913 (/var/mobile/.dynamicstage-spacefix913-crashed)
+
+## 4.5.914
+- /var/mobile/.dynamicstage-kbwin914-off : no kbwin914 log lines
+- /var/mobile/.dynamicstage-core914-off : Back to 4.5.913
+- Latch: kbwin914 (/var/mobile/.dynamicstage-kbwin914-crashed)
+
+## 4.5.915
+- /var/mobile/.dynamicstage-barfit915-off : bar not moved back onto a short card (914 behaviour)
+- /var/mobile/.dynamicstage-core915-off : Back to 4.5.914
+- Latch: barfit915 (/var/mobile/.dynamicstage-barfit915-crashed)
+
+## 4.5.916
+- /var/mobile/.dynamicstage-acdiag916-off : no acdiag916 log lines
+- /var/mobile/.dynamicstage-core916-off : Back to 4.5.915
+- Latch: acdiag916 (/var/mobile/.dynamicstage-acdiag916-crashed)
+
+## 4.5.917
+- /var/mobile/.dynamicstage-barvis917-off : no barvis917 log lines
+- /var/mobile/.dynamicstage-core917-off : Back to 4.5.916
+- Latch: barvis917 (/var/mobile/.dynamicstage-barvis917-crashed)

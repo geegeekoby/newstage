@@ -1,3 +1,123 @@
+## 4.5.917
+4.5.917: barvis917 (diagnostic): logs what is really on screen over Messages' message bar (every parent's hidden/alpha/clip/transform, the animation layer, and which window or view is on top at the bar) to find why the bar is missing while the log says it is shown. Nothing changes. Off: barvis917-off, core917-off.
+
+## 4.5.916
+acdiag916 (diagnostic): logs exactly what the keyboard does around each space (hidden field text before/after, autocorrect settings, direct insert/delete calls) to find why misspelled words are not corrected. Nothing changes. Off: acdiag916-off, core916-off.
+
+## 4.5.915
+barfit915: in a split (short card), Messages' message bar and app strip are slid back onto the card when iOS places them below it (they were hidden off the card). Off: barfit915-off, core915-off.
+
+## 4.5.914
+kbwin914 (diagnostic): logs the window and scene sizes Messages has for its first 12 s on a card, which code focuses the message box, and what the card-size re-send (msgfit757) leaves in the scene. Nothing changes on screen. Off: kbwin914-off, core914-off.
+
+## 4.5.913
+spacefix913: misspelled words are now auto-corrected when you press space on the stage keyboard. The keyboard's hidden field is no longer wiped after every letter (which made iOS forget the word it was about to correct); iOS edits it itself, and every change, including the correction on space, is sent to the app. Off: spacefix913-off, core913-off (respring to apply).
+
+## 4.5.912
+predict912: the stage keyboard now shows iOS's own QuickType suggestions and autocorrects natively. Tapping a suggestion, autocorrect on space and the double-space full stop are sent to the staged app as the matching deletes and letters through the normal key path. iOS's visible keyboard is the only owner, so the app-side 910/911 engine is skipped while this is on (no double corrections). Off: predict912-off, core912-off (respring to apply).
+
+## 4.5.911
+autocorrect911: when you type with the stage keyboard into a staged Messages box, the box now really takes focus once (only while a key is being delivered; tapping the box still never focuses it, and the in-app keyboard stays hidden) so iOS's own keyboard engine can attach and autocorrect natively through the 910 path. If that focus hides or moves Messages' app strip, a copy taken from the real strip sits in exactly the same place until the real strip is back. Off: autocorrect911-off, core911-off.
+
+## 4.5.910
+autocorrect910: when iOS's own keyboard engine in the staged app is attached to the box being typed into, staged keys now go through it (the same path as normal typing), so iOS autocorrect can run. If it isn't attached, typing works as before and the log records exactly why ("app: autocorrect910 blocked: ..."). No custom autocorrect. Off: autocorrect910-off, core910-off.
+
+## 4.5.909
+native909: our own text selection highlight, Copy menu (select907 / focus881) and predictive bar (predict908) are removed. Holding a message bubble in staged Messages shows Messages' own menu again, without our long press and full-card cover on top of it. Off: native909-off, core909-off.
+
+## 4.5.908
+predict908: staged apps now get their own predictive bar. While you type with the stage keyboard, up to three word suggestions appear in a bar just above the text field, inside the card; tap one to replace the word you are typing (a space is added). On by default. Off: predict908-off, core908-off.
+
+## 4.5.907
+select907: in staged Messages a long press on a message bubble now highlights it and shows our own Copy / Done menu inside the card. The reply box's own highlight and Select / Cut / Copy / Paste menu (focus881) now also works while you type with the stage keyboard, and the log says why if it still does not start. Off: select907-off, core907-off.
+
+## 4.5.906
+fullsplit906: after a split made by dragging a stage over a full-screen app, a home swipe now always closes both stages and puts the divider back to even halves, even if the split had already shrunk to the one app. Before, that app's stage was minimised to a corner. Other stages still minimise on a home swipe as before. Off: fullsplit906-off, core906-off.
+
+## 4.5.905
+endsplit905: swiping home over a split now closes both split stages (the apps are closed the same way as Close All) and puts the divider back to even halves, so apps open normally from the Home Screen afterwards. Before, the split was only tucked into a corner and the app stayed tied to the stage at card size. Off: endsplit905-off, core905-off.
+
+## 4.5.904
+together904: dragging a stage into the lower half over a full-screen app now shows the top app card and the new bottom stage together. The stage stays hidden while the app goes home and settles (about half a second), then both appear at once. Off: together904-off, core904-off.
+
+## 4.5.903
+home903: dragging a stage into the lower half over a full-screen app now runs SpringBoard's own Home-button single-press actions (the Home button's actions object, found by 902), so the app should go home and the split open without a manual swipe. Earlier presses stay as fallbacks. Off: home903-off, core903-off.
+
+## 4.5.902
+why902: on 4.5.901 the Home button press used for the full-screen split was refused by SpringBoard (NSInvalidArgumentException). This build logs, once, the refusal reason and how SpringBoard's Home button object is built (method types, internal fields), so the next build can press it the way SpringBoard does. Behaviour unchanged. Off: why902-off, core902-off.
+
+## 4.5.901
+home901: the full-screen split's Home press now uses the Home button object's own single press (SpringBoard homeHardwareButton -> singlePressUp:, both proven present on iOS 16.5.1 by probe899), so the full-screen app should go home without a manual swipe. home900 and the old press stay as fallbacks. Off: home901-off, core901-off.
+
+## 4.5.900
+home900: dragging a stage into the lower half over a full-screen app now sends that app home itself, so the split opens without a manual swipe up. The old Home press used methods that do not exist on iOS 16.5.1; it now uses SpringBoard's switcher coordinator Home handling (proven present by probe899). Off: home900-off, core900-off.
+
+## 4.5.899
+probe899: one log line, on the first stage use, listing which go-home / dismiss-app classes and methods exist on this iOS (lookup only, nothing is called). 4.5.898 showed the Home press used by the full-screen split finds no method on iOS 16.5.1, so the app only leaves when you swipe home. Off: probe899-off, core899-off.
+
+## 4.5.898
+home898: step-1 evidence for a split dropped over a full-screen app. Logs which Home-press path ran (selector and target), whether SpringBoard answers each selector, and every 300 ms of step 1: front app, transition, scene update depth, home gesture, retry state. Behaviour unchanged. Off: home898-off, core898-off.
+
+## 4.5.897
+lag897: a low-overhead lag diagnostic. From the first stage use, one summary line per busy 10 s: feature-gate calls per second (and the 4 hottest gate names), log lines per second, main-thread stalls over 100 ms (count, worst, when). No per-call lines; quiet 10 s windows are not logged. Off: lag897-off, core897-off.
+
+## 4.5.896
+homeretry896: a split dropped over a full-screen app that was opened only a moment before no longer gives up when the first Home press is ignored: if the app is still in front 0.7 s later with nothing running, Home is pressed once more. Off: homeretry896-off, core896-off.
+
+## 4.5.895
+splitflow895: when the strip / split path stages an app that is already running, the card no longer shows the app picker under the app first (the launch was treated as refused because a running app needs no launch placeholder). The full-screen split drop also logs when home first comes to the front. Off: splitflow895-off, core895-off.
+
+## 4.5.894
+splitone894: a split dropped over a full-screen app first sends that app home with a normal Home press (no card open, no picture), stages it from home the way a strip recent app is staged, then opens the same split as over a staged app. homeskip893 is no longer used. Off: splitone894-off, core894-off.
+
+## 4.5.893
+homeskip893: a split made from a full-screen app no longer presses Home on the app that was just staged (no frozen picture, no wait). Off: homeskip893-off, core893-off.
+
+## 4.5.892
+splitold892: a split dropped over a full-screen app uses only old methods again: the app goes onto a top stage the way a recent app does (recent839 / direct852), then the old split-under-top-app opens as soon as that card has settled. No still picture, no Home press, no custom card setup. Off: splitold892-off, core892-off.
+
+## 4.5.891
+splitone891: one shared split entry for both ways. A split dropped over a full-screen app first sends that app off full screen (Home, under a still picture so it stays visible), stages it like any top app, then opens the split exactly as over a staged app. Fixes the black band at the top of the top card and the 3 s black / wallpaper flash. Off: splitone891-off, core891-off.
+
+## 4.5.890
+splitsame890: a split dropped over a full-screen app now opens the top card by the normal New Stage path, launches the app on it, waits until its scene has settled on the card, then opens the split with the same call as a split over a staged app (no black box). Off: splitsame890-off, core890-off.
+
+## 4.5.889
+missfast889: a strip open with no card no longer reloads the whole 229-app picker list (80-130 ms) when it asks for an app that is not listed; a miss is remembered for 60 s. Off: missfast889-off, core889-off.
+
+## 4.5.888
+4.5.888: splitfill888: the app now fills the split card. Log 887 showed YouTube's scene written once at 426x460 on split open and never re-sized, so in a card of another size the app drew short with its own rounded corner above the card's, leaving black card area. Whenever a hosted (non-Messages, non-phone-size) app's scene size differs from its card content size, the scene is re-sized to the card exactly after the size settles (0.25 s, 3 tries per size): the app lays itself out, no stretch. Covers split open, divider / ratio, keyboard and rotation.
+
+## 4.5.887
+4.5.887: blackfix887: no black piece outside the top stage in split. A card hosting an app kept the picker's near-black card colour; with the keyboard band the card drops its clip and corner radius, so that colour showed outside the rounded app. A hosting card's own colour is now cleared in layout (every ratio, keyboard up or down). Messages strip and bar pinning untouched.
+
+## 4.5.886
+4.5.886: splitsmooth886: split drop is now instant and one animation. The top card appears without its own entrance flight, the front app moves onto it as soon as the card is up (30 ms poll, 0.45 s cap) and the split opens as soon as the scene is hosted (30 ms poll, 1.5 s cap) instead of the fixed 0.45 s + 1.2 s waits (log 885: 2.1 s from drop to split). Fallback unchanged.
+
+## 4.5.885
+4.5.885: splitdrop885: the lower-half split drop now moves the full-screen app onto the top card (picker740 no longer refuses it for the drop), new stage below
+
+## 4.5.884
+4.5.884: splitdrop884: the lower-half split drop over a full-screen app now arms after opening the app from the home screen (stale system-owns-screen flag no longer counts as busy)
+
+## 4.5.883
+4.5.883: splitdrop883: with a normal app full screen, dragging a new stage into the lower half shows the split preview and drops into split screen (front app on top, new stage below)
+
+## 4.5.882
+4.5.882: msgdismiss882: in staged Messages, dragging the thread down to the reply bar or tapping the thread dismisses the keyboard, as stock Messages
+
+## 4.5.881
+4.5.881: focus881: typing in a staged card shows the caret (kept in view) and a long press gives a Copy/Paste/Select menu inside the card
+
+## 4.5.880
+4.5.880: msgscroll880: the staged Messages thread scrolls above the reply bar (keys up or a multi-line bar), keeping the latest message in view
+
+## 4.5.879
+4.5.879: msgpin879: the staged Messages reply bar and app strip are kept shown on the card (re-shown if hidden, relaid out if pushed off the card), with frame/visibility log lines
+
+## 4.5.878
+4.5.878: trim878: the in-memory log is trimmed in 128 KB chunks instead of on every line once full, removing a main-thread stall that grew with uptime
+
 ## 4.5.877
 4.5.877: divsnap877: releasing the divider within 4% of a third, half or two thirds snaps to it with a light tick (30-70 limits kept)
 
